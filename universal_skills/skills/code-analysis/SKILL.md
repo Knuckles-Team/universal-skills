@@ -1,15 +1,18 @@
 ---
 name: systems-manager-code-analysis
 description: Code Analysis using Tree-Sitter and Abstract Syntax Trees (AST).
+categories: [Development]
+tags: [code, analysis, development]
 ---
-# Code Analysis Skill
+# Code Analysis
 
+## Overview
 This skill provides capabilities for deep structural analysis of codebases using Tree-Sitter and ASTs. It enables agents to understand code structure, find definitions, and analyze dependencies beyond simple text search.
 
 ## Overview
 Tree-sitter is a parser generator tool and an incremental parsing library. It builds a concrete syntax tree for a source file and efficiently updates the tree as the source file is edited.
 
-## Capabilities
+## Capabilities/Tools
 
 ### 1. Structural Search (Tree-Sitter Query)
 - **Goal**: Find code elements based on their syntactic structure (e.g., "all function definitions", "calls to function X", "assignments to variable Y").

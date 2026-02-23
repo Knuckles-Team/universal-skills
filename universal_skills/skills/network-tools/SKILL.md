@@ -1,14 +1,17 @@
 ---
 name: network-tools
 description: A suite of networking tools including Subnet calculator, MAC address generator, and HTTP Status Codes.
+categories: [System & Infrastructure]
 tags: [network, system, admin, tools]
 ---
 
 # Network Tools
 
+## Overview
+
 This skill provides a suite of networking tools, modeled after IT-Tools.
 
-## Tools
+## Capabilities/Tools
 *   `subnet`: IPv4 Subnet Calculator. Given a CIDR, it calculates network details.
 *   `mac`: Generate a random MAC address, optionally with a specified prefix.
 *   `http-status`: Get information about an HTTP Status Code.

@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.3*
+*Version: 0.1.4*
 
 ## Overview
 

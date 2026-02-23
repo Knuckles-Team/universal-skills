@@ -1,14 +1,17 @@
 ---
 name: generator-tools
 description: A suite of generation tools including UUID, ULID, Tokens, OTP, Passwords, and Lorem Ipsum.
+categories: [Productivity]
 tags: [generator, random, dev, tools]
 ---
 
 # Generator Tools
 
+## Overview
+
 This skill provides a suite of tools for generating various strings and identifiers, modeled after IT-Tools.
 
-## Tools
+## Capabilities/Tools
 *   `uuid`: Generate UUIDs (v1 or v4).
 *   `ulid`: Generate ULIDs.
 *   `token`: Generate secure random tokens.

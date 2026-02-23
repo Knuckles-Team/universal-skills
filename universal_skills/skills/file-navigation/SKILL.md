@@ -1,12 +1,16 @@
 ---
 name: systems-manager-file-navigation
 description: Efficient file navigation and structure mapping.
+categories: [System & Infrastructure]
+tags: [system, files, navigation]
 ---
-# File Navigation Skill
 
+# File Navigation
+
+## Overview
 This skill encompasses tools and strategies for navigating directory structures, understanding project layouts, and locating files.
 
-## Tools
+## Capabilities/Tools
 
 ### 1. `tree`
 - **Description**: Displays directories and files as a recursive tree.

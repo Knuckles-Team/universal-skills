@@ -1,12 +1,15 @@
 ---
 name: systems-manager-codebase-search
 description: Fast and precise codebase search using ripgrep (rg) and glob patterns.
+categories: [Development]
+tags: [code, search, development]
 ---
-# Codebase Search Skill
+# Codebase Search
 
-This skill provides powerful capabilities for searching codebases using `ripgrep` (rg) and glob patterns. These tools are the foundation for efficient agentic exploration.
+## Overview
+s skill provides powerful capabilities for searching codebases using `ripgrep` (rg) and glob patterns. These tools are the foundation for efficient agentic exploration.
 
-## Tools
+## Capabilities/Tools
 
 ### 1. ripgrep (rg)
 - **Description**: A line-oriented search tool that recursively searches directories for a regex pattern.

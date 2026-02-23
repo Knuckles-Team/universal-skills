@@ -5,6 +5,43 @@ import json
 import uuid
 import argparse
 import sys
+import os
+import re
+
+
+def parse_agents_md(agents_file_path: str, target_agent_name: str) -> str:
+    """
+    Parses an AGENTS.md file to find the URL for a given agent name.
+    Expects a markdown table format with 'Name' and 'Endpoint URL' columns.
+    """
+    if not os.path.exists(agents_file_path):
+        print(f"Error: AGENTS file not found at {agents_file_path}")
+        return None
+
+    try:
+        with open(agents_file_path, "r") as f:
+            lines = f.readlines()
+
+        # Very permissive parsing: Look for lines that look like table rows
+        # with our target agent name and a URL.
+        # This regex matches a markdown table row, looking for the name in the first column
+        # and a URL in the second column.
+        pattern = re.compile(
+            rf"\|\s*{re.escape(target_agent_name)}\s*\|\s*(http[s]?://[^\s|]+)\s*\|",
+            re.IGNORECASE,
+        )
+
+        for line in lines:
+            match = pattern.search(line)
+            if match:
+                return match.group(1).strip()
+
+        print(f"Error: Agent '{target_agent_name}' not found in {agents_file_path}")
+        return None
+
+    except Exception as e:
+        print(f"Error reading AGENTS file: {e}")
+        return None
 
 
 async def validate_agent_card(client, agent_url):
@@ -171,10 +208,22 @@ async def main():
     parser = argparse.ArgumentParser(
         description="A2A Client for communicating with other agents."
     )
+    # Make url optional, as we can now use agent-name
     parser.add_argument(
         "--url",
-        required=True,
-        help="The base URL of the A2A Agent (e.g., http://agent.arpa/a2a/)",
+        required=False,
+        help="The base URL of the A2A Agent (e.g., http://agent.arpa/a2a/). Use this OR --agent-name.",
+    )
+    parser.add_argument(
+        "--agent-name",
+        required=False,
+        help="The name of the target agent to look up in AGENTS.md.",
+    )
+    parser.add_argument(
+        "--agents-file",
+        required=False,
+        default="agent/AGENTS.md",
+        help="Path to the AGENTS.md file (default: agent/AGENTS.md).",
     )
     parser.add_argument(
         "--query", required=True, help="The message/query to send to the agent"
@@ -182,7 +231,20 @@ async def main():
 
     args = parser.parse_args()
 
-    agent_url = args.url
+    if not args.url and not args.agent_name:
+        parser.error("Either --url or --agent-name must be provided.")
+
+    if args.url and args.agent_name:
+        print("Warning: Both --url and --agent-name provided. Using --url.")
+        agent_url = args.url
+    elif args.url:
+        agent_url = args.url
+    else:
+        print(f"Looking up agent '{args.agent_name}' in {args.agents_file}...")
+        agent_url = parse_agents_md(args.agents_file, args.agent_name)
+        if not agent_url:
+            sys.exit(1)
+
     query = args.query
 
     print("Initializing A2A Client...")

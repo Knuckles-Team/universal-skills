@@ -14,6 +14,7 @@ try:
 except ImportError:
     toml = None
 
+
 def yaml_to_json(yaml_str):
     if yaml is None:
         return {"error": "PyYAML is not installed."}
@@ -22,6 +23,7 @@ def yaml_to_json(yaml_str):
         return {"json": json.dumps(data, indent=2)}
     except Exception as e:
         return {"error": str(e)}
+
 
 def json_to_toml(json_str):
     if toml is None:
@@ -32,29 +34,36 @@ def json_to_toml(json_str):
     except Exception as e:
         return {"error": str(e)}
 
+
 def base64_encode(text):
-    return {"encoded": base64.b64encode(text.encode('utf-8')).decode('utf-8')}
+    return {"encoded": base64.b64encode(text.encode("utf-8")).decode("utf-8")}
+
 
 def base64_decode(text):
     try:
-        return {"decoded": base64.b64decode(text.encode('utf-8')).decode('utf-8')}
+        return {"decoded": base64.b64decode(text.encode("utf-8")).decode("utf-8")}
     except Exception as e:
         return {"error": str(e)}
 
+
 def text_to_binary(text):
-    return {"binary": ' '.join(format(ord(c), '08b') for c in text)}
+    return {"binary": " ".join(format(ord(c), "08b") for c in text)}
+
 
 def binary_to_text(binary_str):
     try:
-        return {"text": ''.join(chr(int(b, 2)) for b in binary_str.split(' '))}
+        return {"text": "".join(chr(int(b, 2)) for b in binary_str.split(" "))}
     except Exception as e:
         return {"error": str(e)}
+
 
 def url_encode(text):
     return {"encoded": urllib.parse.quote(text)}
 
+
 def url_decode(text):
     return {"decoded": urllib.parse.unquote(text)}
+
 
 def main():
     parser = argparse.ArgumentParser(description="Converter Tools")
@@ -102,6 +111,7 @@ def main():
             result = url_encode(args.text)
 
     print(json.dumps(result, indent=2))
+
 
 if __name__ == "__main__":
     main()

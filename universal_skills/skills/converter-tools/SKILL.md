@@ -1,14 +1,17 @@
 ---
 name: converter-tools
 description: A suite of data and format conversion tools including Base64, JSON, YAML, TOML, and more.
+categories: [Data & Documents]
 tags: [converter, format, dev, tools]
 ---
 
 # Converter Tools
 
+## Overview
+
 This skill provides a suite of tools for data and format conversion, modeled after IT-Tools.
 
-## Tools
+## Capabilities/Tools
 *   `yaml-to-json`: Convert YAML formatted strings to JSON.
 *   `json-to-toml`: Convert JSON formatted strings to TOML.
 *   `base64`: Encode or decode text to/from Base64.

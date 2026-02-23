@@ -5,6 +5,7 @@ import random
 import ipaddress
 from http import HTTPStatus
 
+
 def ipv4_subnet_calculator(ip_cidr):
     try:
         net = ipaddress.IPv4Network(ip_cidr, strict=False)
@@ -13,25 +14,37 @@ def ipv4_subnet_calculator(ip_cidr):
             "broadcast_address": str(net.broadcast_address),
             "netmask": str(net.netmask),
             "hostmask": str(net.hostmask),
-            "num_hosts": net.num_addresses - 2 if net.num_addresses > 2 else net.num_addresses,
-            "min_host": str(net[1]) if net.num_addresses > 2 else str(net.network_address),
-            "max_host": str(net[-2]) if net.num_addresses > 2 else str(net.broadcast_address)
+            "num_hosts": (
+                net.num_addresses - 2 if net.num_addresses > 2 else net.num_addresses
+            ),
+            "min_host": (
+                str(net[1]) if net.num_addresses > 2 else str(net.network_address)
+            ),
+            "max_host": (
+                str(net[-2]) if net.num_addresses > 2 else str(net.broadcast_address)
+            ),
         }
     except Exception as e:
         return {"error": str(e)}
 
+
 def mac_address_generator(prefix=None):
-    mac = [ 0x00, 0x16, 0x3e,
-        random.randint(0x00, 0x7f),
-        random.randint(0x00, 0xff),
-        random.randint(0x00, 0xff) ]
+    mac = [
+        0x00,
+        0x16,
+        0x3E,
+        random.randint(0x00, 0x7F),
+        random.randint(0x00, 0xFF),
+        random.randint(0x00, 0xFF),
+    ]
     if prefix:
-        parts = prefix.split(':')
+        parts = prefix.split(":")
         for i, p in enumerate(parts):
             if i < 6:
                 mac[i] = int(p, 16)
-    
-    return {"mac": ':'.join(map(lambda x: "%02x" % x, mac))}
+
+    return {"mac": ":".join(map(lambda x: "%02x" % x, mac))}
+
 
 def http_status_info(code):
     try:
@@ -39,10 +52,11 @@ def http_status_info(code):
         return {
             "code": status.value,
             "phrase": status.phrase,
-            "description": status.description
+            "description": status.description,
         }
     except ValueError:
         return {"error": "Invalid HTTP status code"}
+
 
 def main():
     parser = argparse.ArgumentParser(description="Network Tools")
@@ -68,6 +82,7 @@ def main():
         result = http_status_info(args.code)
 
     print(json.dumps(result, indent=2))
+
 
 if __name__ == "__main__":
     main()
