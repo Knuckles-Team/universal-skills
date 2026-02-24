@@ -64,8 +64,35 @@ def retrieve_package_name() -> str:
     return "unknown_package"
 
 
-def get_universal_skills_path() -> str:
+import os
+
+try:
+    from agent_utilities.base_utilities import to_boolean
+except ImportError:
+
+    def to_boolean(val) -> bool:
+        if isinstance(val, bool):
+            return val
+        return str(val).lower() in ("true", "1", "t", "y", "yes")
+
+
+def get_universal_skills_path() -> list[str]:
+    """
+    Returns a list of absolute paths pointing to the individual enabled universal skills.
+    Specific skills can be enabled/disabled via environment variables formatted as:
+    <SKILL_DIR_NAME_UPPER_UNDERSCORES>_ENABLE=True|False
+    """
     skills_dir = files(retrieve_package_name()) / "skills"
     with as_file(skills_dir) as path:
         skills_path = str(path)
-    return skills_path
+
+    enabled_paths = []
+    if os.path.exists(skills_path):
+        for item in os.listdir(skills_path):
+            item_path = os.path.join(skills_path, item)
+            if os.path.isdir(item_path):
+                env_var_name = f"{item.upper().replace('-', '_')}_ENABLE"
+                is_enabled = to_boolean(os.environ.get(env_var_name, "True"))
+                if is_enabled:
+                    enabled_paths.append(item_path)
+    return enabled_paths

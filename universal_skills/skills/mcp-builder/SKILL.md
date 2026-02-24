@@ -1,6 +1,6 @@
 ---
 name: mcp-builder
-description: Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).
+description: Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services using the approved FastMCP Python standardized template.
 categories: [Development]
 tags: [mcp, development, protocol, tools, api]
 ---
@@ -51,20 +51,16 @@ Key pages to review:
 #### 1.3 Study Framework Documentation
 
 **Recommended stack:**
-- **Language**: TypeScript (high-quality SDK support and good compatibility in many execution environments e.g. MCPB. Plus AI models are good at generating TypeScript code, benefiting from its broad usage, static typing and good linting tools)
-- **Transport**: Streamable HTTP for remote servers, using stateless JSON (simpler to scale and maintain, as opposed to stateful sessions and streaming responses). stdio for local servers.
+- **Language**: Python (FastMCP). We build MCPs using our standard custom FastMCP template which includes standard middlewares (auth, timeout, Eunomia) and CLI argument parsing.
+- **Transport**: stdio is standard for local execution, or streamable HTTP as supported by the `mcp_server()` entry point.
 
 **Load framework documentation:**
 
 - **MCP Best Practices**: [📋 View Best Practices](./reference/mcp_best_practices.md) - Core guidelines
 
-**For TypeScript (recommended):**
-- **TypeScript SDK**: Use WebFetch to load `https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md`
-- [⚡ TypeScript Guide](./reference/node_mcp_server.md) - TypeScript patterns and examples
-
-**For Python:**
+**For Python (Required):**
 - **Python SDK**: Use WebFetch to load `https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md`
-- [🐍 Python Guide](./reference/python_mcp_server.md) - Python patterns and examples
+- [🐍 Custom FastMCP Guide](./reference/python_mcp_server.md) - Our standard custom FastMCP server boilerplate, configuration, and patterns. ALL new MCPs must follow this exact pattern.
 
 #### 1.4 Plan Your Implementation
 
@@ -80,9 +76,8 @@ Prioritize comprehensive API coverage. List endpoints to implement, starting wit
 
 #### 2.1 Set Up Project Structure
 
-See language-specific guides for project setup:
-- [⚡ TypeScript Guide](./reference/node_mcp_server.md) - Project structure, package.json, tsconfig.json
-- [🐍 Python Guide](./reference/python_mcp_server.md) - Module organization, dependencies
+See the custom FastMCP guide for project setup:
+- [🐍 Custom FastMCP Guide](./reference/python_mcp_server.md) - Module organization, standard imports, middleware, and dependency requirements.
 
 #### 2.2 Implement Core Infrastructure
 
@@ -97,14 +92,13 @@ Create shared utilities:
 For each tool:
 
 **Input Schema:**
-- Use Zod (TypeScript) or Pydantic (Python)
+- Use Pydantic models to define inputs
 - Include constraints and clear descriptions
 - Add examples in field descriptions
+- Avoid manual validation inside the tool; let Pydantic handle it
 
 **Output Schema:**
-- Define `outputSchema` where possible for structured data
-- Use `structuredContent` in tool responses (TypeScript SDK feature)
-- Helps clients understand and process tool outputs
+- Determine if the output should be a straightforward string/markdown or a structured dictionary format based on the context.
 
 **Tool Description:**
 - Concise summary of functionality
@@ -115,7 +109,7 @@ For each tool:
 - Async/await for I/O operations
 - Proper error handling with actionable messages
 - Support pagination where applicable
-- Return both text content and structured data when using modern SDKs
+- Be sure to properly handle and format API errors, matching the established middleware pattern.
 
 **Annotations:**
 - `readOnlyHint`: true/false
@@ -135,17 +129,14 @@ Review for:
 - Full type coverage
 - Clear tool descriptions
 
-#### 3.2 Build and Test
-
-**TypeScript:**
-- Run `npm run build` to verify compilation
-- Test with MCP Inspector: `npx @modelcontextprotocol/inspector`
+#### 3.2 Run and Test
 
 **Python:**
-- Verify syntax: `python -m py_compile your_server.py`
-- Test with MCP Inspector
+- Verify execution: `python -m your_package.mcp --help` to check CLI args
+- Check linting/pre-commits if applicable to the environment
+- Test with MCP Inspector: `npx @modelcontextprotocol/inspector`
 
-See language-specific guides for detailed testing approaches and quality checklists.
+See the Custom FastMCP Guide for detailed testing approaches and quality checklists.
 
 ---
 
@@ -211,21 +202,13 @@ Load these resources as needed during development:
 
 ### SDK Documentation (Load During Phase 1/2)
 - **Python SDK**: Fetch from `https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md`
-- **TypeScript SDK**: Fetch from `https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md`
 
-### Language-Specific Implementation Guides (Load During Phase 2)
-- [🐍 Python Implementation Guide](./reference/python_mcp_server.md) - Complete Python/FastMCP guide with:
-  - Server initialization patterns
-  - Pydantic model examples
-  - Tool registration with `@mcp.tool`
-  - Complete working examples
-  - Quality checklist
-
-- [⚡ TypeScript Implementation Guide](./reference/node_mcp_server.md) - Complete TypeScript guide with:
-  - Project structure
-  - Zod schema patterns
-  - Tool registration with `server.registerTool`
-  - Complete working examples
+### Implementation Guides (Load During Phase 2)
+- [🐍 Custom FastMCP Guide](./reference/python_mcp_server.md) - Complete custom FastMCP guide mapped to our internal standards containing:
+  - The exact boilerplate required for the `mcp.py` file
+  - Standardization logic for arguments, middlewares, and `mcp_server()`
+  - Tool registration using `@mcp.tool`
+  - Required imports and dependencies (`fastmcp`, `agent_utilities`, etc.)
   - Quality checklist
 
 ### Evaluation Guide (Load During Phase 4)

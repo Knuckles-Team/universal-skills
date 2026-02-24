@@ -3,8 +3,7 @@
 ## Quick Reference
 
 ### Server Naming
-- **Python**: `{service}_mcp` (e.g., `slack_mcp`)
-- **Node/TypeScript**: `{service}-mcp-server` (e.g., `slack-mcp-server`)
+- **Python (FastMCP)**: `{service}MCP` (e.g., `SlackMCP`, `SearXNGMCP`)
 
 ### Tool Naming
 - Use snake_case with service prefix
@@ -32,11 +31,8 @@
 
 Follow these standardized naming patterns:
 
-**Python**: Use format `{service}_mcp` (lowercase with underscores)
+**Python**: Use format `{service}_mcp` (lowercase with underscores) for package names. The internal `FastMCP` initialized name should be `{Service}MCP` (e.g., `FastMCP(name="SlackMCP")`).
 - Examples: `slack_mcp`, `github_mcp`, `jira_mcp`
-
-**Node/TypeScript**: Use format `{service}-mcp-server` (lowercase with hyphens)
-- Examples: `slack-mcp-server`, `github-mcp-server`, `jira-mcp-server`
 
 The name should be general, descriptive of the service being integrated, easy to infer from the task description, and without version numbers.
 
@@ -211,19 +207,25 @@ Provide annotations to help clients understand tool behavior:
 - Clean up resources properly on errors
 
 Example error handling:
-```typescript
-try {
-  const result = performOperation();
-  return { content: [{ type: "text", text: result }] };
-} catch (error) {
-  return {
-    isError: true,
-    content: [{
-      type: "text",
-      text: `Error: ${error.message}. Try using filter='active_only' to reduce results.`
-    }]
-  };
-}
+```python
+try:
+    # Perform operation...
+    return {
+        "status": 200,
+        "message": "Action completed successfully",
+        "data": {"result": "ok"},
+        "error": None,
+    }
+except requests.exceptions.HTTPError as e:
+    status_code = e.response.status_code if e.response else 500
+    error_msg = f"API error: {e.response.json().get('message', str(e)) if e.response else str(e)}"
+    logger.error(f"[API Error] {error_msg}")
+    return {
+        "status": status_code,
+        "message": "Failed to perform action",
+        "data": None,
+        "error": error_msg,
+    }
 ```
 
 ---

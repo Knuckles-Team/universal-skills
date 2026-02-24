@@ -29,11 +29,26 @@ Universal Skills is a collection of shared, reusable skills designed for Pydanti
 
 ## Included Skills
 
-- **a2a_client**: Enables Agent-to-Agent (A2A) communication, allowing agents to discover and call other agents.
-- **bash**: Provides the ability to execute shell commands.
-- **codebase-search**: Integrated `ripgrep` (rg) support for efficient searching across local codebases.
-- **file-navigation**: Integrated `fd` support for fast file and directory navigation.
-- **code-analysis**: Advanced Python code analysis capabilities using tree-sitter.
+The following universal skills are available. You can disable specific skills by setting their corresponding environment variables to `False`.
+
+| Skill Directory         | Description                                                          | Disable Flag (`=False`)             |
+|:------------------------|:---------------------------------------------------------------------|:------------------------------------|
+| `agent-workflows`       | Agent-to-Agent communication, orchestration, and subagent dispatch.  | `AGENT_WORKFLOWS_ENABLE`            |
+| `browser-tools`         | Web browser interaction and E2E visual QA via Playwright.            | `BROWSER_TOOLS_ENABLE`              |
+| `cloudflare-deploy`     | Deploy applications and infrastructure to Cloudflare.                | `CLOUDFLARE_DEPLOY_ENABLE`          |
+| `database-tools`        | Connect and query PostgreSQL, MySQL, and MSSQL databases.            | `DATABASE_TOOLS_ENABLE`             |
+| `developer-utilities`   | Formatting, conversion, generation, cryptographic, and networking. | `DEVELOPER_UTILITIES_ENABLE`        |
+| `document-tools`        | Read, edit, analyze, or create document files (PDF, spreadsheet, etc)| `DOCUMENT_TOOLS_ENABLE`             |
+| `github-tools`          | GitHub workflows, PR comments, CI fixes, and git practices.          | `GITHUB_TOOLS_ENABLE`               |
+| `google-workspace`      | Google Workspace ecosystem integration (Gmail, Drive, Docs, etc).    | `GOOGLE_WORKSPACE_ENABLE`           |
+| `jupyter-notebook`      | Create, scaffold, or edit Jupyter notebooks.                         | `JUPYTER_NOTEBOOK_ENABLE`           |
+| `mcp-builder`           | Guide for creating high-quality FastMCP servers.                     | `MCP_BUILDER_ENABLE`                |
+| `project-planning`      | High-level reasoning, brainstorming, debugging, and research.        | `PROJECT_PLANNING_ENABLE`           |
+| `security-tools`        | Threat modeling, Sentry error logs, and security code analysis.      | `SECURITY_TOOLS_ENABLE`             |
+| `skill-creator`         | Guide for creating effective skills for the universal-skills package.| `SKILL_CREATOR_ENABLE`              |
+| `system-tools`          | Hardware and OS operations (screenshots, bluetooth, tmux).           | `SYSTEM_TOOLS_ENABLE`               |
+| `systems-manager`       | Fast codebase search, file navigation, and structural code analysis. | `SYSTEMS_MANAGER_ENABLE`            |
+| `web-artifacts`         | Frontend design, UI building, and artifact generation.               | `WEB_ARTIFACTS_ENABLE`              |
 
 ## Installation
 
@@ -43,12 +58,12 @@ pip install universal-skills
 
 ## Usage
 
-Universal skills are typically loaded using the `get_universal_skills_path()` utility, which can be integrated into your agent's toolset.
+Universal skills are typically loaded using the `get_universal_skills_path()` utility, which can be integrated into your agent's toolset. The utility will automatically respect the environment variables shown above to filter out disabled skills.
 
 ```python
 from universal_skills.skill_utilities import get_universal_skills_path
 from pydantic_ai_skills import SkillsToolset
 
-# Load universal skills
-skills = SkillsToolset(get_universal_skills_path())
+# Load enabled universal skills
+skills = SkillsToolset(directories=get_universal_skills_path())
 ```
