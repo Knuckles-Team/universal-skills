@@ -3,6 +3,16 @@ Excel Formula Recalculation Script
 Recalculates all formulas in an Excel file using LibreOffice
 """
 
+try:
+    from openpyxl import load_workbook
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import json
 import os
 import platform
@@ -11,8 +21,6 @@ import sys
 from pathlib import Path
 
 from office.soffice import get_soffice_env
-
-from openpyxl import load_workbook
 
 MACRO_DIR_MACOS = "~/Library/Application Support/LibreOffice/4/user/basic/Standard"
 MACRO_DIR_LINUX = "~/.config/libreoffice/4/user/basic/Standard"

@@ -1,7 +1,15 @@
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import json
 import sys
-
-from PIL import Image, ImageDraw
 
 
 def create_validation_image(page_number, fields_json_path, input_path, output_path):

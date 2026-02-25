@@ -2,6 +2,16 @@
 Validator for PowerPoint presentation XML files against XSD schemas.
 """
 
+try:
+    import lxml.etree
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import re
 
 from .base import BaseSchemaValidator
@@ -60,7 +70,6 @@ class PPTXSchemaValidator(BaseSchemaValidator):
         return all_valid
 
     def validate_uuid_ids(self):
-        import lxml.etree
 
         errors = []
         uuid_pattern = re.compile(
@@ -102,7 +111,6 @@ class PPTXSchemaValidator(BaseSchemaValidator):
         return len(clean_value) == 32 and all(c.isalnum() for c in clean_value)
 
     def validate_slide_layout_ids(self):
-        import lxml.etree
 
         errors = []
 
@@ -170,7 +178,6 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             return True
 
     def validate_no_duplicate_slide_layouts(self):
-        import lxml.etree
 
         errors = []
         slide_rels_files = list(self.unpacked_dir.glob("ppt/slides/_rels/*.xml.rels"))
@@ -208,7 +215,6 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             return True
 
     def validate_notes_slide_references(self):
-        import lxml.etree
 
         errors = []
         notes_slide_references = {}

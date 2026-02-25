@@ -5,6 +5,16 @@ Standalone authentication - does not require the MCP server.
 Cross-platform token storage using keyring.
 """
 
+try:
+    import keyring
+except ImportError:
+    print("Error: Missing required dependencies for the 'google-workspace' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[google-workspace]'"
+    )
+    import sys
+
+    sys.exit(1)
 import http.server
 import json
 import secrets
@@ -18,8 +28,6 @@ from typing import Optional
 from urllib.parse import urlencode, parse_qs, urlparse
 import urllib.request
 import urllib.error
-
-import keyring
 
 # OAuth Configuration - uses same cloud function as MCP server
 CLIENT_ID = "338689075775-o75k922vn5fdl18qergr96rp8g63e4d7.apps.googleusercontent.com"

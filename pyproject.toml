@@ -10,6 +10,55 @@ readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.10"
 dependencies = [ ]
+
+[project.optional-dependencies]
+agent-builder = ["PyYAML"]
+agent-workflows = ["httpx", "PyYAML"]
+browser-tools = ["playwright", "Pillow"]
+cloudflare-deploy = ["requests", "python-dotenv"]
+database-tools = ["mysql-connector-python", "psycopg2-binary", "pymssql"]
+developer-utilities = ["bcrypt", "cryptography", "sqlparse", "toml", "user-agents", "PyYAML"]
+document-tools = ["Pillow", "defusedxml", "python-docx", "EbookLib", "lxml", "openpyxl", "pdf2image", "pdfplumber", "python-pptx", "Pygments", "pypdf", "validators"]
+github-tools = ["requests", "python-dotenv"]
+google-workspace = ["keyring", "requests"]
+jupyter-notebook = ["nbformat", "nbconvert"]
+mcp-builder = ["fastmcp"]
+project-planning = ["python-dotenv", "httpx"]
+security-tools = ["networkx", "requests"]
+skill-builder = ["PyYAML"]
+skill-graph-builder = ["crawl4ai", "playwright", "psutil", "requests"]
+system-tools = ["psutil"]
+systems-manager = []
+web-artifacts = ["requests"]
+web-crawler = ["crawl4ai", "playwright", "psutil", "requests"]
+web-searching = ["ddgs", "requests"]
+website-builder = []
+
+
+all = [
+    "universal-skills[agent-builder]>=0.1.5",
+    "universal-skills[agent-workflows]>=0.1.5",
+    "universal-skills[browser-tools]>=0.1.5",
+    "universal-skills[cloudflare-deploy]>=0.1.5",
+    "universal-skills[database-tools]>=0.1.5",
+    "universal-skills[developer-utilities]>=0.1.5",
+    "universal-skills[document-tools]>=0.1.5",
+    "universal-skills[github-tools]>=0.1.5",
+    "universal-skills[google-workspace]>=0.1.5",
+    "universal-skills[jupyter-notebook]>=0.1.5",
+    "universal-skills[mcp-builder]>=0.1.5",
+    "universal-skills[project-planning]>=0.1.5",
+    "universal-skills[security-tools]>=0.1.5",
+    "universal-skills[skill-builder]>=0.1.5",
+    "universal-skills[skill-graph-builder]>=0.1.5",
+    "universal-skills[system-tools]>=0.1.5",
+    "universal-skills[systems-manager]>=0.1.5",
+    "universal-skills[web-artifacts]>=0.1.5",
+    "universal-skills[web-crawler]>=0.1.5",
+    "universal-skills[web-searching]>=0.1.5",
+    "universal-skills[website-builder]>=0.1.5",
+]
+
 [[project.authors]]
 name = "Audel Rouhi"
 email = "knucklessg1@gmail.com"

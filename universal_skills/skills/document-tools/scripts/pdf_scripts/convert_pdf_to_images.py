@@ -1,7 +1,15 @@
+try:
+    from pdf2image import convert_from_path
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import os
 import sys
-
-from pdf2image import convert_from_path
 
 
 def convert(pdf_path, output_dir, max_dim=1000):

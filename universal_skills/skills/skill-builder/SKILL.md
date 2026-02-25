@@ -1,11 +1,11 @@
 ---
-name: skill-creator
+name: skill-builder
 description: Guide for creating effective skills for the universal-skills package. Use this when users want to create a new skill or update an existing skill according to the project's standards.
 categories: [Core, Development]
-tags: [skills, development, guide, creator]
+tags: [skills, development, guide, builder, creator]
 ---
 
-# Skill Creator
+# Skill Builder
 
 This skill provides guidance for creating effective skills for our Pydantic AI agents.
 

@@ -10,11 +10,19 @@ Rules:
 - Only merges if truly adjacent (only whitespace between them)
 """
 
+try:
+    import defusedxml.minidom
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
-
-import defusedxml.minidom
 
 WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 

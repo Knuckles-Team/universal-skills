@@ -5,10 +5,19 @@ Supports two agent profile layouts under `agents/`:
 2) Folder-based: `agents/EMP_0001/AGENTS.md`
 """
 
+try:
+    import yaml
+except ImportError:
+    print("Error: Missing required dependencies for the 'agent-workflows' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[agent-workflows]'"
+    )
+    import sys
+
+    sys.exit(1)
 import os
 import re
 import shlex
-import yaml
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Iterable
 

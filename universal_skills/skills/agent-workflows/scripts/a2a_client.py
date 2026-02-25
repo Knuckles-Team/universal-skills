@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
+try:
+    import httpx
+except ImportError:
+    print("Error: Missing required dependencies for the 'agent-workflows' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[agent-workflows]'"
+    )
+    import sys
+
+    sys.exit(1)
+
 import asyncio
-import httpx
 import json
 import uuid
 import argparse

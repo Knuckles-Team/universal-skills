@@ -15,10 +15,18 @@ This script removes:
 - Content-Type overrides for deleted files
 """
 
+try:
+    import defusedxml.minidom
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import sys
 from pathlib import Path
-
-import defusedxml.minidom
 
 
 import re
