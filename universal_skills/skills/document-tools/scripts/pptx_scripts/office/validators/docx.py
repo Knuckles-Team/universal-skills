@@ -2,13 +2,22 @@
 Validator for Word document XML files against XSD schemas.
 """
 
+try:
+    import defusedxml.minidom
+    import lxml.etree
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import random
 import re
 import tempfile
 import zipfile
 
-import defusedxml.minidom
-import lxml.etree
 
 from .base import BaseSchemaValidator
 

@@ -13,14 +13,22 @@ After running, add markers to document.xml:
   <w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:commentReference w:id="0"/></w:r>
 """
 
+try:
+    import defusedxml.minidom
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import argparse
 import random
 import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-
-import defusedxml.minidom
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 NS = {

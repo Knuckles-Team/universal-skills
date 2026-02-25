@@ -2,11 +2,20 @@
 Base validator with common validation logic for document files.
 """
 
+try:
+    import defusedxml.minidom
+    import lxml.etree
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
+
 import re
 from pathlib import Path
-
-import defusedxml.minidom
-import lxml.etree
 
 
 class BaseSchemaValidator:
@@ -390,7 +399,6 @@ class BaseSchemaValidator:
             return True
 
     def validate_all_relationship_ids(self):
-        import lxml.etree
 
         errors = []
 

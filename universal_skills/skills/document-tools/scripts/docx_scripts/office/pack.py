@@ -10,16 +10,23 @@ Examples:
     python pack.py unpacked/ output.pptx --validate false
 """
 
+try:
+    import defusedxml.minidom
+    from validators import DOCXSchemaValidator, PPTXSchemaValidator, RedliningValidator
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import argparse
 import sys
 import shutil
 import tempfile
 import zipfile
 from pathlib import Path
-
-import defusedxml.minidom
-
-from validators import DOCXSchemaValidator, PPTXSchemaValidator, RedliningValidator
 
 
 def pack(

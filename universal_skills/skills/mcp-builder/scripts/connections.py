@@ -1,13 +1,19 @@
 """Lightweight connection handling for MCP servers."""
 
+try:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.sse import sse_client
+    from mcp.client.stdio import stdio_client
+    from mcp.client.streamable_http import streamablehttp_client
+except ImportError:
+    print("Error: Missing required dependencies for the 'mcp-builder' skill.")
+    print("Please install them by running: pip install 'universal-skills[mcp-builder]'")
+    import sys
+
+    sys.exit(1)
 from abc import ABC, abstractmethod
 from contextlib import AsyncExitStack
 from typing import Any
-
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.sse import sse_client
-from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
 
 
 class MCPConnection(ABC):

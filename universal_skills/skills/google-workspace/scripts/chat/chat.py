@@ -4,6 +4,16 @@ Google Chat API operations.
 Lightweight alternative to the full Google Workspace MCP server.
 """
 
+try:
+    import requests as req_lib
+except ImportError:
+    print("Error: Missing required dependencies for the 'google-workspace' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[google-workspace]'"
+    )
+    import sys
+
+    sys.exit(1)
 import argparse
 import json
 import mimetypes
@@ -54,7 +64,6 @@ def api_request(
 
 def upload_attachment(space_name: str, file_path: str, text: str = "") -> dict:
     """Send a message with a file attachment (two-step: upload then send)."""
-    import requests as req_lib
 
     token = get_valid_access_token()
     if not token:

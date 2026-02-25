@@ -15,6 +15,17 @@ Examples:
     # Creates: grid.jpg (or grid-1.jpg, grid-2.jpg for large decks)
 """
 
+try:
+    import defusedxml.minidom
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import argparse
 import subprocess
 import sys
@@ -22,9 +33,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-import defusedxml.minidom
 from office.soffice import get_soffice_env
-from PIL import Image, ImageDraw, ImageFont
 
 THUMBNAIL_WIDTH = 300
 CONVERSION_DPI = 100

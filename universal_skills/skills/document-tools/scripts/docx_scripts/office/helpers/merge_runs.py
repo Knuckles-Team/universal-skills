@@ -8,9 +8,17 @@ Also:
 - Removes proofErr elements (spell/grammar markers that block merging)
 """
 
-from pathlib import Path
+try:
+    import defusedxml.minidom
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
 
-import defusedxml.minidom
+    sys.exit(1)
+from pathlib import Path
 
 
 def merge_runs(input_dir: str) -> tuple[int, str]:

@@ -1,7 +1,19 @@
+try:
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import DictionaryObject
+    from pypdf.constants import FieldDictionaryAttributes
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
+
 import json
 import sys
 
-from pypdf import PdfReader, PdfWriter
 
 from extract_form_field_info import get_field_info
 
@@ -74,8 +86,6 @@ def validation_error_for_field_value(field_info, field_value):
 
 
 def monkeypatch_pydpf_method():
-    from pypdf.generic import DictionaryObject
-    from pypdf.constants import FieldDictionaryAttributes
 
     original_get_inherited = DictionaryObject.get_inherited
 

@@ -12,9 +12,18 @@ accurate field coordinates for filling.
 Usage: python extract_form_structure.py <input.pdf> <output.json>
 """
 
+try:
+    import pdfplumber
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import json
 import sys
-import pdfplumber
 
 
 def extract_form_structure(pdf_path):

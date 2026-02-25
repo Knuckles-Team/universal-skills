@@ -5,10 +5,19 @@ Standalone authentication - does not require the MCP server.
 Cross-platform support via keyring library.
 """
 
+try:
+    import keyring
+except ImportError:
+    print("Error: Missing required dependencies for the 'google-workspace' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[google-workspace]'"
+    )
+    import sys
+
+    sys.exit(1)
 import base64
 import http.server
 import json
-import keyring
 import secrets
 import socket
 import sys

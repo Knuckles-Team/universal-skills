@@ -5,11 +5,20 @@ This module handles creating proper EPUB3 files from parsed markdown structure
 using the ebooklib library.
 """
 
+try:
+    from ebooklib import epub
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import uuid
 from pathlib import Path
 from typing import List, Optional
 
-from ebooklib import epub
 
 from markdown_processor import Chapter, EbookMetadata, MarkdownProcessor
 

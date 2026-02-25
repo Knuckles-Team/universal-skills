@@ -13,13 +13,21 @@ Auto-repair fixes:
 - Missing xml:space="preserve" on w:t elements with whitespace
 """
 
+try:
+    from validators import DOCXSchemaValidator, PPTXSchemaValidator, RedliningValidator
+except ImportError:
+    print("Error: Missing required dependencies for the 'document-tools' skill.")
+    print(
+        "Please install them by running: pip install 'universal-skills[document-tools]'"
+    )
+    import sys
+
+    sys.exit(1)
 import argparse
 import sys
 import tempfile
 import zipfile
 from pathlib import Path
-
-from validators import DOCXSchemaValidator, PPTXSchemaValidator, RedliningValidator
 
 
 def main():
