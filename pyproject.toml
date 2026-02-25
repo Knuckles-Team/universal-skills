@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "universal-skills"
-version = "0.1.5"
+version = "0.1.6"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -36,27 +36,27 @@ website-builder = []
 
 
 all = [
-    "universal-skills[agent-builder]>=0.1.5",
-    "universal-skills[agent-workflows]>=0.1.5",
-    "universal-skills[browser-tools]>=0.1.5",
-    "universal-skills[cloudflare-deploy]>=0.1.5",
-    "universal-skills[database-tools]>=0.1.5",
-    "universal-skills[developer-utilities]>=0.1.5",
-    "universal-skills[document-tools]>=0.1.5",
-    "universal-skills[github-tools]>=0.1.5",
-    "universal-skills[google-workspace]>=0.1.5",
-    "universal-skills[jupyter-notebook]>=0.1.5",
-    "universal-skills[mcp-builder]>=0.1.5",
-    "universal-skills[project-planning]>=0.1.5",
-    "universal-skills[security-tools]>=0.1.5",
-    "universal-skills[skill-builder]>=0.1.5",
-    "universal-skills[skill-graph-builder]>=0.1.5",
-    "universal-skills[system-tools]>=0.1.5",
-    "universal-skills[systems-manager]>=0.1.5",
-    "universal-skills[web-artifacts]>=0.1.5",
-    "universal-skills[web-crawler]>=0.1.5",
-    "universal-skills[web-searching]>=0.1.5",
-    "universal-skills[website-builder]>=0.1.5",
+    "universal-skills[agent-builder]>=0.1.6",
+    "universal-skills[agent-workflows]>=0.1.6",
+    "universal-skills[browser-tools]>=0.1.6",
+    "universal-skills[cloudflare-deploy]>=0.1.6",
+    "universal-skills[database-tools]>=0.1.6",
+    "universal-skills[developer-utilities]>=0.1.6",
+    "universal-skills[document-tools]>=0.1.6",
+    "universal-skills[github-tools]>=0.1.6",
+    "universal-skills[google-workspace]>=0.1.6",
+    "universal-skills[jupyter-notebook]>=0.1.6",
+    "universal-skills[mcp-builder]>=0.1.6",
+    "universal-skills[project-planning]>=0.1.6",
+    "universal-skills[security-tools]>=0.1.6",
+    "universal-skills[skill-builder]>=0.1.6",
+    "universal-skills[skill-graph-builder]>=0.1.6",
+    "universal-skills[system-tools]>=0.1.6",
+    "universal-skills[systems-manager]>=0.1.6",
+    "universal-skills[web-artifacts]>=0.1.6",
+    "universal-skills[web-crawler]>=0.1.6",
+    "universal-skills[web-searching]>=0.1.6",
+    "universal-skills[website-builder]>=0.1.6",
 ]
 
 [[project.authors]]

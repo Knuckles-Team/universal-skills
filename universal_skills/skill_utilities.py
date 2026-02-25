@@ -35,7 +35,7 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 
 def retrieve_package_name() -> str:
