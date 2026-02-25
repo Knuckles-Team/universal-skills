@@ -10,12 +10,12 @@ Ensure your package specifies proper dependencies and scripts:
 name = "my-multi-agent"
 version = "0.1.0"
 dependencies = [
-    "agent-utilities>=0.1.7",
+    "agent-utilities>=0.1.10",
 ]
 
 [project.optional-dependencies]
 agent = [
-    "agent-utilities[agent]>=0.1.8",
+    "agent-utilities[agent]>=0.1.10",
 ]
 
 [project.scripts]
