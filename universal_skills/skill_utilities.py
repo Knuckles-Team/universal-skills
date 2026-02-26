@@ -35,54 +35,20 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 
-def retrieve_package_name() -> str:
+def get_universal_skills_package_name() -> str:
     """
-    Returns the top-level package name of the module that imported this utils.py.
-
-    Works reliably when utils.py is inside a proper package (with __init__.py or
-    implicit namespace package) and the caller does normal imports.
+    Returns the package name of universal_skills.
     """
-    skip_packages = (
-        "agent_utilities",
-        "universal_skills",
-        "agent-utilities",
-        "universal-skills",
-    )
-    if __package__:
-        top = __package__.partition(".")[0]
-        if top and top not in skip_packages and top != "__main__":
-            return top
-
-    try:
-        file_path = Path(__file__).resolve()
-        for parent in file_path.parents:
-            # Skip searching in the library's own folders
-            if parent.name in skip_packages:
-                continue
-            if (
-                (parent / "pyproject.toml").is_file()
-                or (parent / "setup.py").is_file()
-                or (parent / "__init__.py").is_file()
-            ):
-                if parent.name not in skip_packages:
-                    return parent.name
-    except Exception:
-        pass
-
-    return "unknown_package"
+    return "universal_skills"
 
 
-try:
-    from agent_utilities.base_utilities import to_boolean
-except ImportError:
-
-    def to_boolean(val) -> bool:
-        if isinstance(val, bool):
-            return val
-        return str(val).lower() in ("true", "1", "t", "y", "yes")
+def to_boolean(val) -> bool:
+    if isinstance(val, bool):
+        return val
+    return str(val).lower() in ("true", "1", "t", "y", "yes")
 
 
 # Default enablement state for specific skills or skill-graphs.
@@ -104,7 +70,7 @@ def _get_enabled_paths(sub_dir: str, default_enabled: bool = True) -> list[str]:
     Helper to return absolute paths of items in a sub-directory that are enabled via env vars.
     Checks inside the package directory.
     """
-    base_dir = files(retrieve_package_name()) / sub_dir
+    base_dir = files(get_universal_skills_package_name()) / sub_dir
     with as_file(base_dir) as path:
         abs_path = str(path)
 
