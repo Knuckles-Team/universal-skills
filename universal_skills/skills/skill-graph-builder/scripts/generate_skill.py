@@ -34,9 +34,7 @@ def extract_source_url(skill_dir):
 def generate_skill(
     source_dir_or_url, skill_name, description=None, max_depth=2, target_type="skills"
 ):
-    base_pkg_path = Path(
-        "/home/genius/Workspace/agent-packages/universal-skills/universal_skills"
-    )
+    base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
     target_skill_dir = base_pkg_path / target_type / skill_name
     reference_dir = target_skill_dir / "reference"
 
@@ -133,7 +131,7 @@ def generate_skill(
 
         for md_file in md_files:
             title = extract_title(md_file)
-            f.write(f"- [{title}](file://{reference_dir.absolute()}/{md_file.name})\n")
+            f.write(f"- [{title}](reference/{md_file.name})\n")
 
     print(
         f"Successfully created {target_type[:-1]}: {skill_name} at {target_skill_dir}"

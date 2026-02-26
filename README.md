@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.7*
+*Version: 0.1.8*
 
 ## Overview
 
@@ -37,7 +37,6 @@ The following universal skills are available. You can disable specific skills by
 | `agent-workflows`     | Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
 | `browser-tools`       | Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`               |
 | `cloudflare-deploy`   | Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
-| `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
 | `database-tools`      | Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |
 | `developer-utilities` | Formatting, conversion, generation, cryptographic, and networking.    | `DEVELOPER_UTILITIES_ENABLE=False`    | `universal-skills[developer-utilities]` |
 | `document-tools`      | Read, edit, analyze, or create document files (PDF, spreadsheet, etc) | `DOCUMENT_TOOLS_ENABLE=False`         | `universal-skills[document-tools]`      |
@@ -52,7 +51,7 @@ The following universal skills are available. You can disable specific skills by
 | `system-tools`        | Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
 | `systems-manager`     | Fast codebase search, file navigation, and structural code analysis.  | `SYSTEMS_MANAGER_ENABLE=False`        | `universal-skills[systems-manager]`     |
 | `web-artifacts`       | Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
-| `website-builder`     | World-class frontend engineer for front end development.              | `WEBSITE_BUILDER_ENABLE=True` (D)     | `universal-skills[website-builder]`     |
+| `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
 | `web-crawler`         | High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
 | `web-searching`       | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCHING_ENABLE=False`          | `universal-skills[web-searching]`       |
 

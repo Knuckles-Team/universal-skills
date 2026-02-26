@@ -35,7 +35,7 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 
 def retrieve_package_name() -> str:
@@ -45,20 +45,30 @@ def retrieve_package_name() -> str:
     Works reliably when utils.py is inside a proper package (with __init__.py or
     implicit namespace package) and the caller does normal imports.
     """
+    skip_packages = (
+        "agent_utilities",
+        "universal_skills",
+        "agent-utilities",
+        "universal-skills",
+    )
     if __package__:
         top = __package__.partition(".")[0]
-        if top and top != "__main__":
+        if top and top not in skip_packages and top != "__main__":
             return top
 
     try:
         file_path = Path(__file__).resolve()
         for parent in file_path.parents:
+            # Skip searching in the library's own folders
+            if parent.name in skip_packages:
+                continue
             if (
                 (parent / "pyproject.toml").is_file()
                 or (parent / "setup.py").is_file()
                 or (parent / "__init__.py").is_file()
             ):
-                return parent.name
+                if parent.name not in skip_packages:
+                    return parent.name
     except Exception:
         pass
 
