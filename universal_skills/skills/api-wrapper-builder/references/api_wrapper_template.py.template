@@ -99,7 +99,7 @@ class Api(object):
             )
             response.raise_for_status()
             json_response = response.json()
-            
+
             # Extract data if nested, e.g., result_data = json_response.get("result", json_response)
             parsed_data = ExampleResourceResponse.model_validate(json_response)
             return Response(response=response, data=parsed_data)

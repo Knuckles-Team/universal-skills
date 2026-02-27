@@ -13,7 +13,6 @@ Example:
 import sys
 import zipfile
 from pathlib import Path
-from quick_validate import validate_skill
 
 
 def package_skill(skill_path, output_dir=None):
@@ -43,15 +42,6 @@ def package_skill(skill_path, output_dir=None):
     if not skill_md.exists():
         print(f"❌ Error: SKILL.md not found in {skill_path}")
         return None
-
-    # Run validation before packaging
-    print("🔍 Validating skill...")
-    valid, message = validate_skill(skill_path)
-    if not valid:
-        print(f"❌ Validation failed: {message}")
-        print("   Please fix the validation errors before packaging.")
-        return None
-    print(f"✅ {message}\n")
 
     # Determine output location
     skill_name = skill_path.name

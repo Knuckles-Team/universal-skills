@@ -19,10 +19,10 @@ Review the provided API documentation (e.g., OpenAPI JSON/YAML, developer guides
 
 ### 2. Formulate Pydantic Models
 
-Create a standard input/output models file (e.g., `[api_name]_models.py`). 
+Create a standard input/output models file (e.g., `[api_name]_models.py`).
 - **Input Models**: Define Pydantic models for API request parameters and bodies. If an endpoint supports pagination, include fields like `page_token` or `limit`.
 - **Response Models**: Define Pydantic models to strictly parse and validate the JSON response.
-- Use the provided `references/api_models_template.py` for inspiration.
+- Use the provided `references/api_models_template.py.template` for inspiration.
 
 ### 3. Create the API Wrapper Class
 
@@ -41,7 +41,7 @@ For each endpoint, implement a corresponding method in the class:
 - Parse the resulting JSON using the appropriate response Pydantic model.
 - Catch errors such as 401/403 (raising `AuthError` or `UnauthorizedError` from `agent_utilities.exceptions`) and invalid parameters (raising `ParameterError`).
 - Return a standard wrapper object (e.g., `Response(response=..., result=...)`).
-- Use the provided `references/api_wrapper_template.py` as a blueprint.
+- Use the provided `references/api_wrapper_template.py.template` as a blueprint.
 
 ## Referencing the Templates
 
