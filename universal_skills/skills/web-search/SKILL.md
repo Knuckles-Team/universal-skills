@@ -10,6 +10,20 @@ tags: [web, search, duckduckgo, google, bing, searxng]
 ## Overview
 This skill provides access to multiple web search engines. It allows agents to retrieve search results (titles, snippets, and URLs) for a given query, which can be useful for gathering current information, answering questions that require real-time data, or finding relevant references.
 
+## Usage
+
+Use the provided scripts with the `--query` flag.
+
+```bash
+python scripts/search.py --query "your search query"
+```
+
+You can also use a specific provider directly:
+
+```bash
+python scripts/search_duckduckgo.py --query "your search query" --max-results 5 --json
+```
+
 ## Capabilities/Tools
 
 ### Search (`search.py`)

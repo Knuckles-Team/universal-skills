@@ -335,7 +335,10 @@ async def main():
         description="High-speed Web Crawler Skill using Crawl4AI"
     )
     parser.add_argument(
-        "urls", nargs="+", help="One or more starting URLs or Sitemap XML URLs"
+        "--urls",
+        nargs="+",
+        required=True,
+        help="One or more starting URLs or Sitemap XML URLs",
     )
     parser.add_argument(
         "--strategy",

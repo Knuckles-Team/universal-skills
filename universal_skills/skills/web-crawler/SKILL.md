@@ -14,21 +14,21 @@ This skill provides a robust CLI script (`scripts/crawl.py`) that utilizes `craw
 Use the provided `scripts/crawl.py` to extract text from websites. Always consider if you need to output to a file or stdout. For single pages, stdout is fine. For sitemaps and recursive crawls, always specify `--output-dir`.
 
 ```bash
-python scripts/crawl.py <url> --strategy <strategy> [options]
+python scripts/crawl.py --urls <url> --strategy <strategy> [options]
 ```
 
 ### Strategies
 
 1. **`single`**: Crawls a single page.
-   * `python scripts/crawl.py https://example.com/page --strategy single`
+   * `python scripts/crawl.py --urls https://example.com/page --strategy single`
 2. **`chunked`**: Crawls a single page and splits the markdown by H1/H2 headers (# or ##).
-   * `python scripts/crawl.py https://example.com/page --strategy chunked`
+   * `python scripts/crawl.py --urls https://example.com/page --strategy chunked`
 3. **`sitemap-sequential`**: Fetches all URLs in a `sitemap.xml` and crawls them one by one, reusing the browser session. Best for small numbers of URLs when you need reliable parsing without taxing the target server.
-   * `python scripts/crawl.py https://example.com/sitemap.xml --strategy sitemap-sequential --output-dir ./docs`
+   * `python scripts/crawl.py --urls https://example.com/sitemap.xml --strategy sitemap-sequential --output-dir ./docs`
 4. **`sitemap-parallel`**: Fetches all URLs in a `sitemap.xml` and crawls them concurrently (memory adaptive dispatch). Best for large documentation sites.
-   * `python scripts/crawl.py https://example.com/sitemap.xml --strategy sitemap-parallel --max-concurrent 10 --output-dir ./docs`
+   * `python scripts/crawl.py --urls https://example.com/sitemap.xml --strategy sitemap-parallel --max-concurrent 10 --output-dir ./docs`
 5. **`recursive`**: Crawls a site starting from a single URL and recursively follows internal links up to a depth limit, deduplicating URLs.
-   * `python scripts/crawl.py https://example.com/ --strategy recursive --max-depth 2 --output-dir ./crawled_content`
+   * `python scripts/crawl.py --urls https://example.com/ --strategy recursive --max-depth 2 --output-dir ./crawled_content`
 
 ### Options
 

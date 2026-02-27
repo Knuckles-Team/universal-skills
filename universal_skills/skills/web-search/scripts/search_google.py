@@ -8,9 +8,7 @@ try:
     import requests
 except ImportError:
     print("Error: Missing required dependencies for the 'web-search' skill.")
-    print(
-        "Please install them by running: pip install 'universal-skills[web-search]'"
-    )
+    print("Please install them by running: pip install 'universal-skills[web-search]'")
     sys.exit(1)
 
 
@@ -51,7 +49,7 @@ def search(query: str, api_key: str, cx: str, max_results: int = 10):
 
 def main():
     parser = argparse.ArgumentParser(description="Google Custom Search")
-    parser.add_argument("query", help="The search query")
+    parser.add_argument("--query", required=True, help="The search query")
     parser.add_argument(
         "--max-results",
         type=int,
