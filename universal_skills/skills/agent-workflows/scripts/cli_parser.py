@@ -32,9 +32,12 @@ Examples:
     start_parser.add_argument(
         "agent", help="Agent name (e.g., dev, qa) or file ID (e.g., EMP_0001)"
     )
-    start_parser.add_argument("--working-dir", "-w", help="Override working directory")
+    start_parser.add_argument(
+        "--working-dir", "--working_dir", "-w", help="Override working directory"
+    )
     start_parser.add_argument(
         "--tmux-layout",
+        "--tmux_layout",
         choices=["sessions", "windows"],
         default="sessions",
         help=(
@@ -52,6 +55,7 @@ Examples:
     )
     start_restore_group.add_argument(
         "--no-restore",
+        "--no_restore",
         dest="restore",
         action="store_false",
         help="Fail if the tmux session already exists",
@@ -80,6 +84,7 @@ Examples:
     send_parser.add_argument("agent", help="Agent name")
     send_parser.add_argument(
         "--send-enter",
+        "--send_enter",
         dest="send_enter",
         action="store_true",
         default=True,
@@ -87,6 +92,7 @@ Examples:
     )
     send_parser.add_argument(
         "--no-enter",
+        "--no_enter",
         dest="send_enter",
         action="store_false",
         default=True,
@@ -96,7 +102,9 @@ Examples:
 
     assign_parser = subparsers.add_parser("assign", help="Assign task to agent")
     assign_parser.add_argument("agent", help="Agent name")
-    assign_parser.add_argument("--task-file", "-f", help="Read task from file")
+    assign_parser.add_argument(
+        "--task-file", "--task_file", "-f", help="Read task from file"
+    )
 
     schedule_parser = subparsers.add_parser("schedule", help="Manage scheduled jobs")
     schedule_subparsers = schedule_parser.add_subparsers(
@@ -117,6 +125,7 @@ Examples:
     )
     schedule_sync_parser.add_argument(
         "--dry-run",
+        "--dry_run",
         "-n",
         action="store_true",
         help="Show what would be synced without making changes",
@@ -145,6 +154,7 @@ Examples:
     )
     heartbeat_sync_parser.add_argument(
         "--dry-run",
+        "--dry_run",
         "-n",
         action="store_true",
         help="Show what would be synced without making changes",
@@ -164,21 +174,25 @@ Examples:
     )
     heartbeat_run_parser.add_argument(
         "--backoff-seconds",
+        "--backoff_seconds",
         type=int,
         help="Retry backoff seconds (default: 3)",
     )
     heartbeat_run_parser.add_argument(
         "--fallback-mode",
+        "--fallback_mode",
         choices=["none", "fresh"],
         help="Fallback policy after retries (default: fresh)",
     )
     heartbeat_run_parser.add_argument(
         "--notify-on-failure",
+        "--notify_on_failure",
         action="store_true",
         help="Send notifier alert when recovery still fails",
     )
     heartbeat_run_parser.add_argument(
         "--notifier-channel",
+        "--notifier_channel",
         help="Notifier channel when --notify-on-failure is enabled (default: all)",
     )
 
@@ -186,7 +200,7 @@ Examples:
         "trace", help="Query heartbeat audit trace logs"
     )
     heartbeat_trace_parser.add_argument(
-        "--hb-id", help="Filter by heartbeat id (HB_ID)"
+        "--hb-id", "--hb_id", help="Filter by heartbeat id (HB_ID)"
     )
     heartbeat_trace_parser.add_argument(
         "--agent", help="Filter by agent name/file ID/agent-id"

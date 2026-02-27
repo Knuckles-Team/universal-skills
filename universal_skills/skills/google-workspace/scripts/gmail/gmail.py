@@ -350,14 +350,21 @@ def main():
         help="Gmail search query (e.g., 'from:someone@example.com is:unread')",
     )
     search_parser.add_argument(
-        "--limit", type=int, default=10, help="Max results to return (default: 10)"
+        "--max-lines",
+        "--max_lines",
+        type=int,
+        default=10,
+        help="Max results to return (default: 10)",
     )
-    search_parser.add_argument("--page-token", help="Pagination token")
+    search_parser.add_argument("--page-token", "--page_token", help="Pagination token")
     search_parser.add_argument(
         "--label", action="append", dest="labels", help="Filter by label (can repeat)"
     )
     search_parser.add_argument(
-        "--include-spam-trash", action="store_true", help="Include spam and trash"
+        "--include-spam-trash",
+        "--include_spam_trash",
+        action="store_true",
+        help="Include spam and trash",
     )
 
     # get
@@ -393,7 +400,9 @@ def main():
     )
 
     # create-draft
-    draft_parser = subparsers.add_parser("create-draft", help="Create a draft email")
+    draft_parser = subparsers.add_parser(
+        "create-draft", aliases=["create_draft"], help="Create a draft email"
+    )
     draft_parser.add_argument(
         "--to", required=True, help="Recipient email address(es), comma-separated"
     )
@@ -425,19 +434,23 @@ def main():
     modify_parser.add_argument("message_id", help="Message ID")
     modify_parser.add_argument(
         "--add-label",
+        "--add_label",
         action="append",
         dest="add_labels",
         help="Label to add (can repeat). Common: STARRED, IMPORTANT, UNREAD",
     )
     modify_parser.add_argument(
         "--remove-label",
+        "--remove_label",
         action="append",
         dest="remove_labels",
         help="Label to remove (can repeat). Common: INBOX (archive), UNREAD (mark read)",
     )
 
     # list-labels
-    subparsers.add_parser("list-labels", help="List all Gmail labels")
+    subparsers.add_parser(
+        "list-labels", aliases=["list_labels"], help="List all Gmail labels"
+    )
 
     args = parser.parse_args()
 

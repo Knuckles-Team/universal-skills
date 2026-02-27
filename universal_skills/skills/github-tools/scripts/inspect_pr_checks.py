@@ -89,7 +89,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pr", default=None, help="PR number or URL (defaults to current branch PR)."
     )
-    parser.add_argument("--max-lines", type=int, default=DEFAULT_MAX_LINES)
+    parser.add_argument(
+        "--max-lines", "--max_lines", type=int, default=DEFAULT_MAX_LINES
+    )
     parser.add_argument("--context", type=int, default=DEFAULT_CONTEXT_LINES)
     parser.add_argument(
         "--json", action="store_true", help="Emit JSON instead of text output."

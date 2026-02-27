@@ -160,6 +160,7 @@ def build_parser():
     )
     parser.add_argument(
         "--base-url",
+        "--base_url",
         default=os.environ.get("SENTRY_BASE_URL", DEFAULT_BASE_URL),
         help="Sentry base URL (default: https://sentry.io)",
     )
@@ -175,6 +176,7 @@ def build_parser():
     )
     parser.add_argument(
         "--no-redact",
+        "--no_redact",
         action="store_true",
         help="Do not redact PII in output",
     )
@@ -182,7 +184,7 @@ def build_parser():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_issues = subparsers.add_parser("list-issues", help="List issues")
-    list_issues.add_argument("--time-range", default="24h")
+    list_issues.add_argument("--time-range", "--time_range", default="24h")
     list_issues.add_argument("--environment", default="prod")
     list_issues.add_argument("--query", default="")
     list_issues.add_argument("--limit", type=int, default=20)
@@ -198,6 +200,7 @@ def build_parser():
     event_detail.add_argument("event_id")
     event_detail.add_argument(
         "--include-entries",
+        "--include_entries",
         action="store_true",
         help="Include event entries (may contain stack traces)",
     )

@@ -285,35 +285,41 @@ def main():
     find_parser.add_argument(
         "--limit", type=int, default=10, help="Max results to return"
     )
-    find_parser.add_argument("--page-token", help="Pagination token")
+    find_parser.add_argument("--page-token", "--page_token", help="Pagination token")
 
     # get-text
     get_text_parser = subparsers.add_parser(
-        "get-text", help="Get text content of a doc"
+        "get-text", aliases=["get_text"], help="Get text content of a doc"
     )
     get_text_parser.add_argument("document_id", help="Document ID or URL")
 
     # append-text
     append_text_parser = subparsers.add_parser(
-        "append-text", help="Append text to a doc"
+        "append-text", aliases=["append_text"], help="Append text to a doc"
     )
     append_text_parser.add_argument("document_id", help="Document ID or URL")
     append_text_parser.add_argument("text", help="Text to append")
 
     # insert-text
     insert_text_parser = subparsers.add_parser(
-        "insert-text", help="Insert text at beginning of a doc"
+        "insert-text", aliases=["insert_text"], help="Insert text at beginning of a doc"
     )
     insert_text_parser.add_argument("document_id", help="Document ID or URL")
     insert_text_parser.add_argument("text", help="Text to insert")
 
     # replace-text
     replace_text_parser = subparsers.add_parser(
-        "replace-text", help="Replace text in a doc"
+        "replace-text", aliases=["replace_text"], help="Replace text in a doc"
     )
     replace_text_parser.add_argument("document_id", help="Document ID or URL")
     replace_text_parser.add_argument("find", help="Text to find")
     replace_text_parser.add_argument("replace", help="Replacement text")
+    replace_text_parser.add_argument(
+        "--match-case",
+        "--match_case",
+        action="store_true",
+        help="Case-sensitive search",
+    )
 
     args = parser.parse_args()
 

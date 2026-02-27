@@ -119,18 +119,27 @@ def main():
     jwt = subparsers.add_parser("jwt")
     jwt.add_argument("--token", required=True)
 
-    sql = subparsers.add_parser("sql-format")
+    sql = subparsers.add_parser("sql-format", aliases=["sql_format"])
     sql.add_argument("--query", required=True)
 
     regex = subparsers.add_parser("regex")
     regex.add_argument("--pattern", required=True)
     regex.add_argument("--text", required=True)
-    regex.add_argument("--ignore-case", action="store_true")
+    regex.add_argument("--ignore-case", "--ignore_case", action="store_true")
 
-    ua = subparsers.add_parser("user-agent")
+    # Assuming 'pass' is a new command for password generation or similar,
+    # based on the new arguments provided in the instruction.
+    # If these arguments belong to an existing command, please clarify.
+    pass_parser = subparsers.add_parser("pass")
+    pass_parser.add_argument("--no-upper", "--no_upper", action="store_true")
+    pass_parser.add_argument("--no-lower", "--no_lower", action="store_true")
+    pass_parser.add_argument("--no-numbers", "--no_numbers", action="store_true")
+    pass_parser.add_argument("--no-symbols", "--no_symbols", action="store_true")
+
+    ua = subparsers.add_parser("user-agent", aliases=["user_agent"])
     ua.add_argument("--ua", required=True)
 
-    jmin = subparsers.add_parser("json-minify")
+    jmin = subparsers.add_parser("json-minify", aliases=["json_minify"])
     jmin.add_argument("--json", required=True)
 
     jdiff = subparsers.add_parser("json-diff")

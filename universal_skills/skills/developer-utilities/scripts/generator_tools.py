@@ -100,10 +100,10 @@ def main():
     # password
     pass_parser = subparsers.add_parser("password", help="Generate secure password")
     pass_parser.add_argument("--length", type=int, default=16)
-    pass_parser.add_argument("--no-upper", action="store_true")
-    pass_parser.add_argument("--no-lower", action="store_true")
-    pass_parser.add_argument("--no-numbers", action="store_true")
-    pass_parser.add_argument("--no-symbols", action="store_true")
+    pass_parser.add_argument("--no-upper", "--no_upper", action="store_true")
+    pass_parser.add_argument("--no-lower", "--no_lower", action="store_true")
+    pass_parser.add_argument("--no-numbers", "--no_numbers", action="store_true")
+    pass_parser.add_argument("--no-symbols", "--no_symbols", action="store_true")
 
     # lorem
     lorem_parser = subparsers.add_parser("lorem", help="Generate Lorem Ipsum")

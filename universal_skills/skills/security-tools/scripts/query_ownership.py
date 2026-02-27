@@ -18,6 +18,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--data-dir",
+        "--data_dir",
         default="ownership-map-out",
         help="Directory containing people.csv, files.csv, edges.csv",
     )
@@ -27,17 +28,19 @@ def parse_args() -> argparse.Namespace:
     people = subparsers.add_parser("people", help="List people")
     people.add_argument("--limit", type=int, default=20)
     people.add_argument("--sort", default="touches")
-    people.add_argument("--email-contains", default=None)
-    people.add_argument("--min-touches", type=int, default=0)
-    people.add_argument("--min-sensitive", type=float, default=0.0)
+    people.add_argument("--email-contains", "--email_contains", default=None)
+    people.add_argument("--min-touches", "--min_touches", type=int, default=0)
+    people.add_argument("--min-sensitive", "--min_sensitive", type=float, default=0.0)
 
     files = subparsers.add_parser("files", help="List files")
     files.add_argument("--limit", type=int, default=20)
     files.add_argument("--sort", default="sensitivity_score")
-    files.add_argument("--path-contains", default=None)
+    files.add_argument("--path-contains", "--path_contains", default=None)
     files.add_argument("--tag", default=None)
-    files.add_argument("--bus-factor-max", type=int, default=None)
-    files.add_argument("--sensitivity-min", type=float, default=0.0)
+    files.add_argument("--bus-factor-max", "--bus_factor_max", type=int, default=None)
+    files.add_argument(
+        "--sensitivity-min", "--sensitivity_min", type=float, default=0.0
+    )
 
     person = subparsers.add_parser("person", help="Show person details and top files")
     person.add_argument("--person", required=True, help="Exact email or substring")
@@ -55,8 +58,8 @@ def parse_args() -> argparse.Namespace:
     cochange.add_argument("--file", required=True, help="Exact path or substring")
     cochange.add_argument("--limit", type=int, default=20)
     cochange.add_argument("--sort", default="jaccard")
-    cochange.add_argument("--min-jaccard", type=float, default=0.0)
-    cochange.add_argument("--min-count", type=int, default=1)
+    cochange.add_argument("--min-jaccard", "--min_jaccard", type=float, default=0.0)
+    cochange.add_argument("--min-count", "--min_count", type=int, default=1)
 
     tag = subparsers.add_parser("tag", help="Show top people/files for a sensitive tag")
     tag.add_argument("--tag", required=True)
@@ -71,8 +74,8 @@ def parse_args() -> argparse.Namespace:
 
     community = subparsers.add_parser("community", help="Show community maintainers")
     community.add_argument("--id", type=int, required=True)
-    community.add_argument("--include-files", action="store_true")
-    community.add_argument("--file-limit", type=int, default=50)
+    community.add_argument("--include-files", "--include_files", action="store_true")
+    community.add_argument("--file-limit", "--file_limit", type=int, default=50)
 
     return parser.parse_args()
 

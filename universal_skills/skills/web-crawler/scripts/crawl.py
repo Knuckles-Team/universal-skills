@@ -354,18 +354,21 @@ async def main():
     )
     parser.add_argument(
         "--max-depth",
+        "--max_depth",
         type=int,
         default=3,
         help="Max recursion depth for 'recursive' strategy.",
     )
     parser.add_argument(
         "--max-concurrent",
+        "--max_concurrent",
         type=int,
         default=10,
         help="Max concurrent sessions for parallel strategies.",
     )
     parser.add_argument(
         "--output-dir",
+        "--output_dir",
         type=str,
         help="Directory to save markdown files. If not provided, prints to stdout.",
     )

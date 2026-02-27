@@ -439,29 +439,39 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # list-calendars
-    subparsers.add_parser("list-calendars", help="List all calendars")
+    subparsers.add_parser(
+        "list-calendars", aliases=["list_calendars"], help="List all calendars"
+    )
 
     # list-events
     list_events_parser = subparsers.add_parser(
-        "list-events", help="List events from a calendar"
+        "list-events", aliases=["list_events"], help="List events from a calendar"
     )
     list_events_parser.add_argument("--calendar", help="Calendar ID (default: primary)")
-    list_events_parser.add_argument("--time-min", help="Start time (ISO 8601)")
-    list_events_parser.add_argument("--time-max", help="End time (ISO 8601)")
     list_events_parser.add_argument(
-        "--max-results", type=int, default=50, help="Max events to return"
+        "--time-min", "--time_min", help="Start time (ISO 8601)"
+    )
+    list_events_parser.add_argument(
+        "--time-max", "--time_max", help="End time (ISO 8601)"
+    )
+    list_events_parser.add_argument(
+        "--max-results",
+        "--max_results",
+        type=int,
+        default=50,
+        help="Max events to return",
     )
 
     # get-event
     get_event_parser = subparsers.add_parser(
-        "get-event", help="Get details of a specific event"
+        "get-event", aliases=["get_event"], help="Get details of a specific event"
     )
     get_event_parser.add_argument("event_id", help="Event ID")
     get_event_parser.add_argument("--calendar", help="Calendar ID (default: primary)")
 
     # create-event
     create_event_parser = subparsers.add_parser(
-        "create-event", help="Create a new event"
+        "create-event", aliases=["create_event"], help="Create a new event"
     )
     create_event_parser.add_argument("summary", help="Event title")
     create_event_parser.add_argument(
@@ -479,7 +489,7 @@ def main():
 
     # update-event
     update_event_parser = subparsers.add_parser(
-        "update-event", help="Update an existing event"
+        "update-event", aliases=["update_event"], help="Update an existing event"
     )
     update_event_parser.add_argument("event_id", help="Event ID")
     update_event_parser.add_argument(
@@ -495,7 +505,9 @@ def main():
     )
 
     # delete-event
-    delete_event_parser = subparsers.add_parser("delete-event", help="Delete an event")
+    delete_event_parser = subparsers.add_parser(
+        "delete-event", aliases=["delete_event"], help="Delete an event"
+    )
     delete_event_parser.add_argument("event_id", help="Event ID")
     delete_event_parser.add_argument(
         "--calendar", help="Calendar ID (default: primary)"
@@ -503,7 +515,7 @@ def main():
 
     # find-free-time
     find_free_parser = subparsers.add_parser(
-        "find-free-time", help="Find free time slots"
+        "find-free-time", aliases=["find_free_time"], help="Find free time slots"
     )
     find_free_parser.add_argument(
         "--attendees",
@@ -512,10 +524,13 @@ def main():
         help="Attendee emails (use 'me' for yourself)",
     )
     find_free_parser.add_argument(
-        "--time-min", required=True, help="Start of search range (ISO 8601)"
+        "--time-min",
+        "--time_min",
+        required=True,
+        help="Start of search range (ISO 8601)",
     )
     find_free_parser.add_argument(
-        "--time-max", required=True, help="End of search range (ISO 8601)"
+        "--time-max", "--time_max", required=True, help="End of search range (ISO 8601)"
     )
     find_free_parser.add_argument(
         "--duration", type=int, required=True, help="Meeting duration in minutes"
@@ -523,7 +538,9 @@ def main():
 
     # respond-to-event
     respond_parser = subparsers.add_parser(
-        "respond-to-event", help="Respond to an event invitation"
+        "respond-to-event",
+        aliases=["respond_to_event"],
+        help="Respond to an event invitation",
     )
     respond_parser.add_argument("event_id", help="Event ID")
     respond_parser.add_argument(
@@ -533,7 +550,10 @@ def main():
     )
     respond_parser.add_argument("--calendar", help="Calendar ID (default: primary)")
     respond_parser.add_argument(
-        "--no-notify", action="store_true", help="Don't send notification to organizer"
+        "--no-notify",
+        "--no_notify",
+        action="store_true",
+        help="Don't send notification to organizer",
     )
 
     args = parser.parse_args()

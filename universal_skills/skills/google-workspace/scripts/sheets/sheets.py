@@ -372,7 +372,9 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # get-text
-    get_text_parser = subparsers.add_parser("get-text", help="Get spreadsheet content")
+    get_text_parser = subparsers.add_parser(
+        "get-text", aliases=["get_text"], help="Get spreadsheet content"
+    )
     get_text_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     get_text_parser.add_argument(
         "--format",
@@ -383,7 +385,7 @@ def main():
 
     # get-range
     get_range_parser = subparsers.add_parser(
-        "get-range", help="Get values from a specific range"
+        "get-range", aliases=["get_range"], help="Get values from a specific range"
     )
     get_range_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     get_range_parser.add_argument(
@@ -392,23 +394,23 @@ def main():
 
     # find
     find_parser = subparsers.add_parser(
-        "find", help="Find spreadsheets by search query"
+        "find", aliases=["find"], help="Find spreadsheets by search query"
     )
     find_parser.add_argument("query", help="Search query")
     find_parser.add_argument(
         "--limit", type=int, default=10, help="Max results (default: 10)"
     )
-    find_parser.add_argument("--page-token", help="Pagination token")
+    find_parser.add_argument("--page-token", "--page_token", help="Pagination token")
 
     # get-metadata
     get_metadata_parser = subparsers.add_parser(
-        "get-metadata", help="Get spreadsheet metadata"
+        "get-metadata", aliases=["get_metadata"], help="Get spreadsheet metadata"
     )
     get_metadata_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
 
     # update-range
     update_range_parser = subparsers.add_parser(
-        "update-range", help="Update a range of cells"
+        "update-range", aliases=["update_range"], help="Update a range of cells"
     )
     update_range_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     update_range_parser.add_argument(
@@ -422,7 +424,9 @@ def main():
     )
 
     # append-rows
-    append_parser = subparsers.add_parser("append-rows", help="Append rows to a sheet")
+    append_parser = subparsers.add_parser(
+        "append-rows", aliases=["append_rows"], help="Append rows to a sheet"
+    )
     append_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     append_parser.add_argument("range", help="Target sheet range (e.g., 'Sheet1!A:Z')")
     append_parser.add_argument("values", help="JSON 2D array of row values")
@@ -432,14 +436,14 @@ def main():
 
     # clear-range
     clear_parser = subparsers.add_parser(
-        "clear-range", help="Clear values from a range"
+        "clear-range", aliases=["clear_range"], help="Clear values from a range"
     )
     clear_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     clear_parser.add_argument("range", help="A1 notation range to clear")
 
     # batch-update
     batch_parser = subparsers.add_parser(
-        "batch-update", help="Execute batch update requests"
+        "batch-update", aliases=["batch_update"], help="Execute batch update requests"
     )
     batch_parser.add_argument("spreadsheet_id", help="Spreadsheet ID or URL")
     batch_parser.add_argument(

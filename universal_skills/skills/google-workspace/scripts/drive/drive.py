@@ -523,14 +523,17 @@ def main():
     search_parser.add_argument(
         "--limit", type=int, default=10, help="Max results (default: 10)"
     )
-    search_parser.add_argument("--page-token", help="Pagination token")
+    search_parser.add_argument("--page-token", "--page_token", help="Pagination token")
     search_parser.add_argument(
-        "--shared-with-me", action="store_true", help="Only shared files"
+        "--shared-with-me",
+        "--shared_with_me",
+        action="store_true",
+        help="Only shared files",
     )
 
     # find-folder
     find_folder_parser = subparsers.add_parser(
-        "find-folder", help="Find folder by name"
+        "find-folder", aliases=["find_folder"], help="Find folder by name"
     )
     find_folder_parser.add_argument("name", help="Folder name to find")
 
@@ -542,7 +545,7 @@ def main():
     list_parser.add_argument(
         "--limit", type=int, default=10, help="Max results (default: 10)"
     )
-    list_parser.add_argument("--page-token", help="Pagination token")
+    list_parser.add_argument("--page-token", "--page_token", help="Pagination token")
 
     # download
     download_parser = subparsers.add_parser("download", help="Download a file")
@@ -559,7 +562,7 @@ def main():
 
     # create-folder
     create_folder_parser = subparsers.add_parser(
-        "create-folder", help="Create a new folder"
+        "create-folder", aliases=["create_folder"], help="Create a new folder"
     )
     create_folder_parser.add_argument("name", help="Folder name")
     create_folder_parser.add_argument("--parent", help="Parent folder ID")

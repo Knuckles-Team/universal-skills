@@ -283,7 +283,7 @@ def main():
 
     # get-text
     get_text_parser = subparsers.add_parser(
-        "get-text", help="Get text content from a presentation"
+        "get-text", aliases=["get_text"], help="Get text content from a presentation"
     )
     get_text_parser.add_argument("presentation", help="Presentation ID or URL")
 
@@ -295,11 +295,11 @@ def main():
     find_parser.add_argument(
         "--limit", type=int, default=10, help="Max results to return"
     )
-    find_parser.add_argument("--page-token", help="Pagination token")
+    find_parser.add_argument("--page-token", "--page_token", help="Pagination token")
 
     # get-metadata
     get_metadata_parser = subparsers.add_parser(
-        "get-metadata", help="Get presentation metadata"
+        "get-metadata", aliases=["get_metadata"], help="Get presentation metadata"
     )
     get_metadata_parser.add_argument("presentation", help="Presentation ID or URL")
 
@@ -309,7 +309,7 @@ def main():
 
     # add-slide
     add_slide_parser = subparsers.add_parser(
-        "add-slide", help="Add a slide to a presentation"
+        "add-slide", aliases=["add_slide"], help="Add a slide to a presentation"
     )
     add_slide_parser.add_argument("presentation", help="Presentation ID or URL")
     add_slide_parser.add_argument(
@@ -323,18 +323,23 @@ def main():
 
     # replace-text
     replace_text_parser = subparsers.add_parser(
-        "replace-text", help="Find and replace text across all slides"
+        "replace-text",
+        aliases=["replace_text"],
+        help="Find and replace text across all slides",
     )
     replace_text_parser.add_argument("presentation", help="Presentation ID or URL")
     replace_text_parser.add_argument("find", help="Text to find")
     replace_text_parser.add_argument("replace", help="Replacement text")
     replace_text_parser.add_argument(
-        "--match-case", action="store_true", help="Case-sensitive search"
+        "--match-case",
+        "--match_case",
+        action="store_true",
+        help="Case-sensitive search",
     )
 
     # delete-slide
     delete_slide_parser = subparsers.add_parser(
-        "delete-slide", help="Delete a slide by object ID"
+        "delete-slide", aliases=["delete_slide"], help="Delete a slide by object ID"
     )
     delete_slide_parser.add_argument("presentation", help="Presentation ID or URL")
     delete_slide_parser.add_argument(
@@ -343,7 +348,7 @@ def main():
 
     # batch-update
     batch_parser = subparsers.add_parser(
-        "batch-update", help="Execute batch update requests"
+        "batch-update", aliases=["batch_update"], help="Execute batch update requests"
     )
     batch_parser.add_argument("presentation", help="Presentation ID or URL")
     batch_parser.add_argument(

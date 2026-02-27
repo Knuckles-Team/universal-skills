@@ -52,6 +52,7 @@ def main():
     parser.add_argument("--query", required=True, help="The search query")
     parser.add_argument(
         "--max-results",
+        "--max_results",
         type=int,
         default=10,
         help="Maximum number of results to return (up to 10 supported natively without pagination)",
