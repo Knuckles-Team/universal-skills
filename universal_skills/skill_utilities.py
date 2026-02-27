@@ -35,7 +35,7 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 
 
 def get_universal_skills_package_name() -> str:
@@ -60,7 +60,7 @@ SKILL_DEFAULTS = {
     "jupyter-notebook": False,
     "skill-graph-builder": True,
     "web-crawler": True,
-    "web-searching": True,
+    "web-search": True,
     # Documentation graphs are False by default globally, but can be overridden here if needed.
 }
 

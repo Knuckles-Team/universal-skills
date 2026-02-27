@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.11*
+*Version: 0.1.12*
 
 ## Overview
 
@@ -53,7 +53,7 @@ The following universal skills are available. You can disable specific skills by
 | `web-artifacts`       | Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
 | `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
 | `web-crawler`         | High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
-| `web-searching`       | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCHING_ENABLE=False`          | `universal-skills[web-searching]`       |
+| `web-search`          | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
 
 ## Building Your Own Skill-Graphs
 
@@ -82,7 +82,7 @@ export PYDANTIC_AI_DOCS_ENABLE=True
 pip install universal-skills[all]
 
 # Or install specific skill categories
-pip install universal-skills[systems-manager,web-crawler]
+pip install universal-skills[systems-manager,web-crawler,web-search]
 ```
 
 ## Usage
