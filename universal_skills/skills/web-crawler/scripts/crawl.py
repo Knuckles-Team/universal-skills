@@ -100,6 +100,68 @@ def save_markdown(content: str, url: str, output_dir: str, prefix: str = ""):
         return False
 
 
+def cleanup_filenames(output_dir: str):
+    """
+    Scans the output_dir for .md files and removes common redundant prefixes.
+    A prefix is considered redundant if it's present in a majority of files
+    (> 50% and at least 5 files).
+    """
+    if not output_dir or not os.path.isdir(output_dir):
+        return
+
+    files = [f for f in os.listdir(output_dir) if f.endswith(".md")]
+    if len(files) < 5:
+        return
+
+    # Count prefix occurrences
+    prefix_counts = {}
+    for f in files:
+        parts = f.split("_")
+        if len(parts) > 1:
+            # We check prefixes of increasing length (token by token)
+            current_prefix = ""
+            for i in range(len(parts) - 1):
+                if current_prefix:
+                    current_prefix += "_"
+                current_prefix += parts[i]
+                prefix_counts[current_prefix] = prefix_counts.get(current_prefix, 0) + 1
+
+    # Find the longest prefix that appears in > 50% of files
+    best_prefix = None
+    threshold = len(files) / 2
+    for prefix, count in sorted(
+        prefix_counts.items(), key=lambda x: len(x[0]), reverse=True
+    ):
+        if count > threshold:
+            best_prefix = prefix
+            break
+
+    if not best_prefix:
+        return
+
+    logger.info(f"Cleaning up redundant prefix: '{best_prefix}_'")
+    prefix_with_underscore = f"{best_prefix}_"
+
+    for f in files:
+        if f.startswith(prefix_with_underscore):
+            new_name = f[len(prefix_with_underscore) :]
+            if not new_name or new_name == ".md":
+                new_name = "index.md"
+
+            old_path = os.path.join(output_dir, f)
+            new_path = os.path.join(output_dir, new_name)
+
+            # Avoid collisions
+            if os.path.exists(new_path) and old_path != new_path:
+                logger.warning(f"Skipping rename of {f} to {new_name}: target exists.")
+                continue
+
+            try:
+                os.rename(old_path, new_path)
+            except Exception as e:
+                logger.error(f"Failed to rename {f} to {new_name}: {e}")
+
+
 async def crawl_single(crawler, url: str, crawl_config, output_dir: str):
     logger.info(f"Crawling single page: {url}")
     result = await crawler.arun(url=url, config=crawl_config)
@@ -361,6 +423,9 @@ async def main():
                 dispatcher,
                 args.output_dir,
             )
+
+        if args.output_dir:
+            cleanup_filenames(args.output_dir)
 
 
 if __name__ == "__main__":

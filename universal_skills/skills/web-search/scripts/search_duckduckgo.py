@@ -6,9 +6,9 @@ import sys
 try:
     from ddgs import DDGS
 except ImportError:
-    print("Error: Missing required dependencies for the 'web-searching' skill.")
+    print("Error: Missing required dependencies for the 'web-search' skill.")
     print(
-        "Please install them by running: pip install 'universal-skills[web-searching]'"
+        "Please install them by running: pip install 'universal-skills[web-search]'"
     )
     sys.exit(1)
 

@@ -1,16 +1,20 @@
 ---
-name: web-searching
+name: web-search
 description: "Search the web using various providers (DuckDuckGo, Google, Bing, Searxng) to find current information, news, and links. Use when the agent needs up-to-date context from the internet."
 categories: [Core]
 tags: [web, search, duckduckgo, google, bing, searxng]
 ---
 
-# Web Searching
+# Web Search
 
 ## Overview
 This skill provides access to multiple web search engines. It allows agents to retrieve search results (titles, snippets, and URLs) for a given query, which can be useful for gathering current information, answering questions that require real-time data, or finding relevant references.
 
 ## Capabilities/Tools
+
+### Search (`search.py`)
+- Automatically searches based off environment variable.
+- Executes search queries through the `duckduckgo-search` package as a default.
 
 ### DuckDuckGo Search (`search_duckduckgo.py`)
 - Free and requires no authentication or API keys.
@@ -39,6 +43,7 @@ This skill provides access to multiple web search engines. It allows agents to r
 - Limit the number of search results retrieved per request to avoid unnecessary token usage unless more context is explicitly required.
 
 ## Resources
+- `scripts/search.py`: Comprehensive web search dispatcher.
 - `scripts/search_duckduckgo.py`: DuckDuckGo search script.
 - `scripts/search_google.py`: Google Custom Search API script.
 - `scripts/search_bing.py`: Bing Web Search API script.
