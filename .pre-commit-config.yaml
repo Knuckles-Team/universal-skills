@@ -39,7 +39,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["-L", "ans,linar,nam,tread,ot,afterAll,beforeAll,atLeast,atMost,fPr,ser,provid,lIns,pres,prSet,preced,verticies,nin,nd,userA,userE,userR,fromT"]
+        args: ["-L", "ans,linar,nam,tread,ot,afterAll,beforeAll,atLeast,atMost,fPr,ser,provid,lIns,pres,prSet,preced,verticies,nin,nd,userA,userE,userR,fromT,som"]
         exclude: ^(tests/|test/|scripts/|script/|universal_skills/skill-graphs/)
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1

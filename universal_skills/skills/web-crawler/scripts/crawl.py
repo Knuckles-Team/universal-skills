@@ -16,15 +16,25 @@ except ImportError:
 
     sys.exit(1)
 
+
+def to_boolean(string=None):
+    if isinstance(string, bool):
+        return string
+    if not string:
+        return False
+    normalized = str(string).strip().lower()
+    return normalized in {"t", "true", "y", "yes", "1"}
+
+
+import os
 import asyncio
 import argparse
-import os
 import re
 import logging
 import sys
 from typing import List
 from xml.etree import ElementTree
-from urllib.parse import urlparse, urldefrag
+from urllib.parse import urlparse, urldefrag, urljoin
 
 # Setup logging
 logging.basicConfig(
@@ -203,23 +213,44 @@ async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str):
             print(f"\n--- Chunk {idx+1} ---\n{chunk}\n")
 
 
-def fetch_sitemap_urls(sitemap_url: str) -> List[str]:
+def fetch_sitemap_urls(
+    sitemap_url: str, ssl_verify: bool = True, _depth: int = 0
+) -> List[str]:
+    if _depth > 3:  # Guard against infinite recursion
+        return []
     try:
-        response = requests.get(sitemap_url)
+        response = requests.get(sitemap_url, verify=ssl_verify, timeout=15)
         response.raise_for_status()
         root = ElementTree.fromstring(response.content)
         namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-        urls = [loc.text for loc in root.findall(".//ns:loc", namespace)]
+
+        # Sitemap index: recursively fetch child sitemaps
+        child_sitemaps = root.findall(".//ns:sitemap/ns:loc", namespace)
+        if child_sitemaps:
+            all_urls = []
+            for child_loc in child_sitemaps:
+                child_urls = fetch_sitemap_urls(
+                    child_loc.text, ssl_verify=ssl_verify, _depth=_depth + 1
+                )
+                all_urls.extend(child_urls)
+            return all_urls
+
+        # Regular sitemap: return all <url><loc> entries (skip .xml files)
+        urls = [
+            loc.text
+            for loc in root.findall(".//ns:loc", namespace)
+            if loc.text and not loc.text.rstrip("/").endswith(".xml")
+        ]
         return urls
     except Exception as e:
-        logger.error(f"Error fetching sitemap: {e}")
+        logger.error(f"Error fetching sitemap {sitemap_url}: {e}")
         return []
 
 
 async def crawl_sitemap_sequential(
-    crawler, sitemap_url: str, crawl_config, output_dir: str
+    crawler, sitemap_url: str, crawl_config, output_dir: str, ssl_verify: bool = True
 ):
-    urls = fetch_sitemap_urls(sitemap_url)
+    urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
         logger.warning("No URLs found in sitemap.")
         return
@@ -243,8 +274,9 @@ async def crawl_sitemap_parallel(
     output_dir: str,
     process,
     peak_memory,
+    ssl_verify: bool = True,
 ):
-    urls = fetch_sitemap_urls(sitemap_url)
+    urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
         logger.warning("No URLs found in sitemap.")
         return
@@ -283,10 +315,23 @@ async def crawl_recursive_high_speed(
     crawl_config,
     dispatcher,
     output_dir: str,
+    ssl_verify: bool = True,
 ):
     visited = set()
     current_urls = {normalize_url(u) for u in start_urls}
     allowed_domains = {urlparse(u).netloc for u in start_urls}
+
+    # Compute the common path prefix across start URLs to stay focused.
+    # E.g. for "/docs/r/api-reference/foo.html" the prefix becomes "/docs/".
+    # We take the first two path segments (e.g. "/docs/") so sub-pages are included.
+    def _path_prefix(url):
+        parts = urlparse(url).path.strip("/").split("/")
+        # Use first segment only (e.g. "docs") as the scope boundary
+        return "/" + parts[0] + "/" if parts and parts[0] else "/"
+
+    allowed_prefixes = {_path_prefix(u) for u in start_urls}
+    logger.info(f"Restricting crawl to path prefixes: {allowed_prefixes}")
+
     total_saved = 0
 
     for depth in range(max_depth):
@@ -295,7 +340,6 @@ async def crawl_recursive_high_speed(
         urls_to_crawl = []
         for u in current_urls:
             if u not in visited:
-                # Start or same domain check
                 if depth == 0 or urlparse(u).netloc in allowed_domains:
                     urls_to_crawl.append(u)
 
@@ -313,18 +357,39 @@ async def crawl_recursive_high_speed(
 
             if result.success:
                 md = extract_markdown(result)
-                if save_markdown(md, norm_url, output_dir):
-                    total_saved += 1
 
-                # Collect internal links for next depth
+                # Filter out access-denied pages
+                if (
+                    md
+                    and "Access Denied" not in md
+                    and "permission to access" not in md
+                ):
+                    if save_markdown(md, norm_url, output_dir):
+                        total_saved += 1
+                else:
+                    logger.warning(
+                        f"Skipping {norm_url}: Access Denied or content blocked"
+                    )
+
+                # Collect internal links for next depth, resolving relative hrefs
                 links = result.links.get("internal", [])
+                logger.info(f"DEBUG: Found {len(links)} internal links for {norm_url}")
                 for link in links:
-                    next_url = normalize_url(link["href"])
+                    href = link.get("href", "")
+                    if not href:
+                        continue
+                    # Resolve relative URLs against the current page URL
+                    if not href.startswith(("http://", "https://")):
+                        href = urljoin(norm_url, href)
+                    next_url = normalize_url(href)
                     if next_url not in visited:
                         next_level_urls.add(next_url)
             else:
                 logger.error(f"Failed to crawl {norm_url}: {result.error_message}")
 
+        logger.info(
+            f"DEBUG: Extracted {len(next_level_urls)} unique new links for next depth"
+        )
         current_urls = next_level_urls
 
     logger.info(f"Crawl complete. Total files saved: {total_saved}")
@@ -372,8 +437,22 @@ async def main():
         type=str,
         help="Directory to save markdown files. If not provided, prints to stdout.",
     )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Disable SSL verification (Use with caution)",
+    )
 
     args = parser.parse_args()
+
+    # Precedence: Env Var SSL_VERIFY > CLI --insecure > Default (True)
+    ssl_verify_env = os.getenv("SSL_VERIFY")
+    if ssl_verify_env is not None:
+        ssl_verify = to_boolean(ssl_verify_env)
+    elif args.insecure:
+        ssl_verify = False
+    else:
+        ssl_verify = True
 
     process = psutil.Process(os.getpid())
     peak_memory = [0]
@@ -385,10 +464,8 @@ async def main():
     )
     crawl_config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
-        stream=False,
-        # Wait for content to load for SPAs
-        js_code="await new Promise(r => setTimeout(r, 10000));",
-        wait_for="body",
+        # Wait for content to load
+        js_code="await new Promise(r => setTimeout(r, 20000));",
     )
 
     dispatcher = MemoryAdaptiveDispatcher(
@@ -407,7 +484,7 @@ async def main():
         elif args.strategy == "sitemap-sequential":
             for url in args.urls:
                 await crawl_sitemap_sequential(
-                    crawler, url, crawl_config, args.output_dir
+                    crawler, url, crawl_config, args.output_dir, ssl_verify=ssl_verify
                 )
         elif args.strategy == "sitemap-parallel":
             for url in args.urls:
@@ -419,6 +496,7 @@ async def main():
                     args.output_dir,
                     process,
                     peak_memory,
+                    ssl_verify=ssl_verify,
                 )
         elif args.strategy == "recursive":
             await crawl_recursive_high_speed(
@@ -428,6 +506,7 @@ async def main():
                 crawl_config,
                 dispatcher,
                 args.output_dir,
+                ssl_verify=ssl_verify,
             )
 
         if args.output_dir:

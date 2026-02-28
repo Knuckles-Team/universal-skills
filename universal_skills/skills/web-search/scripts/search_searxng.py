@@ -6,22 +6,23 @@ import sys
 
 try:
     import requests
+    from agent_utilities.base_utilities import to_boolean
 except ImportError:
     print("Error: Missing required dependencies for the 'web-search' skill.")
     print("Please install them by running: pip install 'universal-skills[web-search]'")
     sys.exit(1)
 
 
-def search(query: str, searxng_url: str, max_results: int = 10):
+def search(query: str, base_url: str, max_results: int = 10, ssl_verify: bool = True):
     # Ensure there is no trailing slash
-    base_url = searxng_url.rstrip("/")
+    base_url = base_url.rstrip("/")
     url = f"{base_url}/search"
     results = []
 
     try:
         params = {"q": query, "format": "json"}
 
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, verify=ssl_verify)
         response.raise_for_status()
         data = response.json()
 
@@ -58,16 +59,32 @@ def main():
     parser.add_argument(
         "--json", action="store_true", help="Output results in JSON format"
     )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Disable SSL verification (Use with caution)",
+    )
 
     args = parser.parse_args()
 
-    searxng_url = os.environ.get("SEARXNG_URL")
+    base_url = os.environ.get("SEARXNG_URL")
 
-    if not searxng_url:
-        print("Error: SEARXNG_URL environment variable is required.", file=sys.stderr)
+    if not base_url:
+        print(
+            "Error: SEARXNG_BASE_URL environment variable is required.", file=sys.stderr
+        )
         sys.exit(1)
 
-    results = search(args.query, searxng_url, args.max_results)
+    # Precedence: Env Var SSL_VERIFY > CLI --insecure > Default (True)
+    ssl_verify_env = os.getenv("SSL_VERIFY")
+    if ssl_verify_env is not None:
+        ssl_verify = to_boolean(ssl_verify_env)
+    elif args.insecure:
+        ssl_verify = False
+    else:
+        ssl_verify = True
+
+    results = search(args.query, base_url, args.max_results, ssl_verify=ssl_verify)
 
     if args.json:
         print(json.dumps(results, indent=2))

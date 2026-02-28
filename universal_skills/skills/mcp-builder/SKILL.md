@@ -35,7 +35,14 @@ Agents benefit from concise tool descriptions and the ability to filter/paginate
 **Actionable Error Messages:**
 Error messages should guide agents toward solutions with specific suggestions and next steps.
 
-#### 1.2 Study MCP Protocol Documentation
+#### 1.2 Agent-Centric Design Principles
+
+- **Balance API vs Workflow**: Prioritize comprehensive API coverage. High-level workflow tools are nice for speed, but granular tools allow agentic composition.
+- **Predictable Outcomes**: Tools should be idempotent where possible. Use `readOnlyHint`, `destructiveHint`, and `idempotentHint` annotations.
+- **Structured Data**: Return structured JSON for programmatic consumption, or clean Markdown for direct LLM processing.
+- **Context Preservation**: Avoid overly large responses. Implement pagination filters by default.
+
+#### 1.3 Study MCP Protocol Documentation
 
 **Navigate the MCP specification:**
 
@@ -140,46 +147,29 @@ See the Custom FastMCP Guide for detailed testing approaches and quality checkli
 
 ---
 
-### Phase 4: Create Evaluations
+### Phase 4: Evaluation-Driven Development
 
-After implementing your MCP server, create comprehensive evaluations to test its effectiveness.
+The quality of an MCP server is measured by its effectiveness in helping an LLM complete complex, multi-step tasks.
 
-**Load [✅ Evaluation Guide](./reference/evaluation.md) for complete evaluation guidelines.**
+#### 4.1 Create Evaluations
 
-#### 4.1 Understand Evaluation Purpose
+After implementation, create a set of 10 evaluation questions.
 
-Use evaluations to test whether LLMs can effectively use your MCP server to answer realistic, complex questions.
+**Evaluation Requirements:**
+- **Independent**: No state dependency between questions.
+- **Read-only**: Non-destructive operations only.
+- **Complex**: Requires multiple tool calls and exploration.
+- **Realistic**: Based on actual user intent.
+- **Verifiable**: Clear, deterministic answer.
 
-#### 4.2 Create 10 Evaluation Questions
-
-To create effective evaluations, follow the process outlined in the evaluation guide:
-
-1. **Tool Inspection**: List available tools and understand their capabilities
-2. **Content Exploration**: Use READ-ONLY operations to explore available data
-3. **Question Generation**: Create 10 complex, realistic questions
-4. **Answer Verification**: Solve each question yourself to verify answers
-
-#### 4.3 Evaluation Requirements
-
-Ensure each question is:
-- **Independent**: Not dependent on other questions
-- **Read-only**: Only non-destructive operations required
-- **Complex**: Requiring multiple tool calls and deep exploration
-- **Realistic**: Based on real use cases humans would care about
-- **Verifiable**: Single, clear answer that can be verified by string comparison
-- **Stable**: Answer won't change over time
-
-#### 4.4 Output Format
-
-Create an XML file with this structure:
-
+#### 4.2 Output Format
+Create an XML file for evaluation:
 ```xml
 <evaluation>
   <qa_pair>
-    <question>Find discussions about AI model launches with animal codenames. One model needed a specific safety designation that uses the format ASL-X. What number X was being determined for the model named after a spotted wild cat?</question>
-    <answer>3</answer>
+    <question>...</question>
+    <answer>...</answer>
   </qa_pair>
-<!-- More qa_pairs... -->
 </evaluation>
 ```
 

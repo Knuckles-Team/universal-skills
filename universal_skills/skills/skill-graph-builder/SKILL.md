@@ -9,19 +9,25 @@ tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 
 This skill provides an automation script to turn a directory of markdown files (e.g., from a web crawl) into a fully structured agent skill (knowledge graph).
 
-## Usage
+### Create a New Skill-Graph
 
-Use `scripts/generate_skill.py` to create a new skill from a source directory of markdown files or a URL.
+Use `scripts/generate_skill.py` to create a new skill from a source directory of markdown files or one or more URLs.
 
 ```bash
-python scripts/generate_skill.py <source_path_or_url> <new_skill_name> --description "Description of the skill" --max-depth 2
+# Single URL
+python scripts/generate_skill.py https://example.com/docs my-skill --description "Description"
+
+# Multiple URLs (comma-separated)
+python scripts/generate_skill.py "https://docs.site.com,https://api.site.com" my-skill --max-depth 2
+```
+
 ### Update / Rebuild a Skill-Graph
 
-If a skill-graph was created from a URL, the `source_url` is saved in its `SKILL.md`. You can refresh the documentation by passing the local directory as the source:
+If a skill-graph was created from URL(s), the `source_url` is saved in its `SKILL.md`. You can refresh the documentation by passing the local directory as the source:
 
 ```bash
-# This will find the source_url in the local directory and re-crawl it
-python scripts/generate_skill.py ../../../skill-graphs/pydantic-ai-docs pydantic-ai-docs --target-type skill-graphs
+# This will find the source_url(s) in the local directory and re-crawl them
+python scripts/generate_skill.py ../my-skill-docs my-skill
 ```
 
 ---

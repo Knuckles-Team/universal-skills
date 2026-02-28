@@ -45,6 +45,31 @@ Executable scripts (e.g. `scripts/main.py`). The agent executes these to interac
 ##### Docs/References (`docs/` or `references/`)
 Supplemental markdown files. These are not loaded into the system prompt by default but can be read by the agent if it determines it needs more information (e.g., `docs/api_reference.md`). Keeps the main `SKILL.md` token-efficient.
 
+---
+
+## Best Practices for Agent Skills
+
+### 1. Optimize for Discoverability
+The `name` and `description` in frontmatter are all the agent sees before triggering.
+- **Naming**: 1–64 characters, lowercase, numbers, and hyphens. **Must match parent directory**.
+- **Description**: (Max 1,024 chars). Describe in third person. Include "negative triggers" (when NOT to use).
+
+### 2. Progressive Disclosure
+Maintain a clean context by loading details only when needed.
+- **500-Line Limit**: Keep `SKILL.md` under 500 lines. Focus on high-level navigation.
+- **Flat Directories**: Keep resources exactly one level deep (e.g., `references/api.md`).
+- **Just-in-Time (JiT) Loading**: Explicitly tell the agent WHEN to read a specific reference file.
+
+### 3. Procedural Instructions
+- **Step-by-Step Numbering**: Use strict chronological sequences.
+- **Third-Person Imperative**: Use direct commands (e.g., "Extract the text..." instead of "I will extract...").
+- **Identical Terminology**: Use consistent domain-native terms (e.g., "template" instead of "html").
+
+### 4. Deterministic Scripts
+Offload fragile or repetitive logic to tested scripts in `scripts/`. Returnhuman-readable stdout/stderr so the agent can self-correct.
+
+---
+
 ## Skill Creation Process
 
 Skill creation involves these steps:
@@ -195,9 +220,26 @@ If validation fails, the script will report the errors and exit without creating
 
 After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
 
-**Iteration workflow:**
+---
 
-1. Use the skill on real tasks
-2. Notice struggles or inefficiencies
-3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
+## Validation Guide
+
+Before finalizing, validate the skill with an LLM:
+
+### 1. Discovery Validation
+Test if the description triggers correctly. Prompt:
+> I am building an Agent Skill. Based strictly on this YAML frontmatter: [Paste name/description]
+> 1. Generate 3 user prompts that should trigger this skill.
+> 2. Generate 3 user prompts that sound similar but should NOT trigger it.
+> 3. Critique the description for breadth/specificity.
+
+### 2. Logic Validation
+Ensure instructions are complete and non-ambiguous. Prompt:
+> Here is my SKILL.md and directory tree. [Paste contents]
+> Act as an agent that just triggered this. Simulate execution for [Specific Task].
+> Flag any "Execution Blockers" where you are forced to guess or hallucinate.
+
+### 3. Edge Case Testing
+Prompt:
+> Act as a ruthless QA tester. Your goal is to break this skill.
+> Ask me 3–5 challenging questions about failure states, missing fallbacks, or environment assumptions.

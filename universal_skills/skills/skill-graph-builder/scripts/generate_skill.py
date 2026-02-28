@@ -114,7 +114,13 @@ def generate_skill(
         print(f"🏷️  Enforcing naming convention: Renamed skill to **{skill_name}**")
 
     base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
-    target_skill_dir = base_pkg_path / target_type / skill_name
+    # If target_type is skills, use the parent of the current skill's folder
+    if target_type == "skills":
+        skills_base = Path(__file__).resolve().parent.parent.parent
+        target_skill_dir = skills_base / skill_name
+    else:
+        target_skill_dir = base_pkg_path / target_type / skill_name
+
     reference_dir = target_skill_dir / "reference"
 
     sources = [s.strip() for s in source_input.split(",")]
@@ -126,72 +132,104 @@ def generate_skill(
         shutil.rmtree(reference_dir)
     reference_dir.mkdir(parents=True, exist_ok=True)
 
-    for i, source in enumerate(sources):
-        # --- Rebuild from source_url if we were given an existing skill folder ---
-        if not source.startswith("http"):
+    crawl_urls = []
+    local_sources = []
+
+    for source in sources:
+        if source.startswith("http"):
+            crawl_urls.append(source)
+        else:
             local_path = Path(source)
             if local_path.is_dir():
                 extracted_url = extract_source_url(local_path)
                 if extracted_url:
-                    print(
-                        f"🔄 Found source_url in existing skill. Rebuilding from {extracted_url}..."
-                    )
-                    source = extracted_url
+                    print(f"🔄 Found source_url in existing skill: {extracted_url}")
+                    # If it's a list, split it
+                    for url in extracted_url.split(","):
+                        crawl_urls.append(url.strip())
+                else:
+                    local_sources.append(local_path)
+            else:
+                local_sources.append(local_path)
 
-        is_from_url = source.startswith("http")
-        temp_crawl_dir: Path | None = None
+    # 1. Handle all URLs in one crawl session if possible (faster for recursion)
+    if crawl_urls:
+        source_urls.extend(crawl_urls)
+        crawl_script = base_pkg_path / "skills" / "web-crawler" / "scripts" / "crawl.py"
 
-        if is_from_url:
-            source_urls.append(source)
+        # Determine strategy: if any are sitemaps, we might need a mix, but for simplicity
+        # we'll use recursive if most are standard URLs.
+        strategy = "recursive"
+        if len(crawl_urls) == 1 and crawl_urls[0].endswith(".xml"):
+            strategy = "sitemap-parallel"
+
+        print(
+            f"🌐 Crawling {len(crawl_urls)} URLs using {strategy} (depth={max_depth})..."
+        )
+
+        # If recursive docs (especially complex SPAs like ServiceNow), we use isolated
+        # batch crawling (one process per URL) to ensure a fresh browser context per seed.
+        urls_to_process = (
+            crawl_urls if strategy == "recursive" else [",".join(crawl_urls)]
+        )
+
+        import subprocess
+
+        for i, url_group in enumerate(urls_to_process):
+            active_urls = [u.strip() for u in url_group.split(",")]
+            # Print status without revealing absolute paths for cleaner terminal output
+            print(
+                f"   [{i+1}/{len(urls_to_process)}] Processing: {', '.join(active_urls)}"
+            )
+
+            # Use a unique temporary directory per batch
             temp_crawl_dir = Path(f"/tmp/crawl_{skill_name}_{i}")
             if temp_crawl_dir.exists():
                 shutil.rmtree(temp_crawl_dir)
             temp_crawl_dir.mkdir(parents=True, exist_ok=True)
 
-            crawl_script = (
-                base_pkg_path / "skills" / "web-crawler" / "scripts" / "crawl.py"
+            cmd = (
+                [
+                    "python3",
+                    str(crawl_script),
+                    "--urls",
+                ]
+                + active_urls
+                + [
+                    "--strategy",
+                    strategy,
+                    "--output-dir",
+                    str(temp_crawl_dir),
+                ]
             )
-            strategy = "sitemap-parallel" if source.endswith(".xml") else "recursive"
-
-            print(
-                f"🌐 [{i+1}/{len(sources)}] Crawling {source} using {strategy} (depth={max_depth})..."
-            )
-            cmd = [
-                "python3",
-                str(crawl_script),
-                source,
-                "--strategy",
-                strategy,
-                "--output-dir",
-                str(temp_crawl_dir),
-            ]
             if strategy == "recursive":
                 cmd.extend(["--max-depth", str(max_depth)])
 
-            import subprocess
+            try:
+                subprocess.run(cmd, check=True)
+                print(f"   📂 Merging documentation into {reference_dir}...")
+                shutil.copytree(temp_crawl_dir, reference_dir, dirs_exist_ok=True)
+            except subprocess.CalledProcessError as e:
+                print(f"   ❌ Crawl failed for {url_group}: {e}")
+            finally:
+                if temp_crawl_dir.exists():
+                    shutil.rmtree(temp_crawl_dir)
 
-            subprocess.run(cmd, check=True)
-            source_path = temp_crawl_dir
-        else:
-            source_path = Path(source)
-            # If user passed an existing skill folder, use its reference/ subfolder
-            skill_md = source_path / "SKILL.md"
-            ref_sub = source_path / "reference"
-            if skill_md.exists() and ref_sub.exists():
-                print(
-                    f"📁 [{i+1}/{len(sources)}] Detected existing skill – using reference/ subfolder."
-                )
-                source_path = ref_sub
+    # 2. Handle local sources
+    for i, source_path in enumerate(local_sources):
+        # If user passed an existing skill folder, use its reference/ subfolder
+        skill_md = source_path / "SKILL.md"
+        ref_sub = source_path / "reference"
+        if skill_md.exists() and ref_sub.exists():
+            print(
+                f"📁 Detected existing skill – using reference/ subfolder: {source_path}"
+            )
+            source_path = ref_sub
 
-        print(f"📂 Merging documentation from {source_path} into {reference_dir}...")
-        # Use shutil.copytree with dirs_exist_ok=True for merging
+        print(
+            f"📂 Merging local documentation from {source_path} into {reference_dir}..."
+        )
         shutil.copytree(source_path, reference_dir, dirs_exist_ok=True)
-
-        # Cleanup temp crawl
-        if temp_crawl_dir and temp_crawl_dir.exists():
-            shutil.rmtree(temp_crawl_dir)
-
-    print("🧹 Cleaned up temporary crawl directories.")
 
     # --- Preserve or set description ---
     if not description:
@@ -218,6 +256,7 @@ def generate_skill(
         f.write("---\n")
         f.write(f"name: {skill_name}\n")
         f.write(f"description: {description}\n")
+        f.write(f"crawl_depth: {max_depth}\n")
         if source_urls:
             f.write(f"source_url: {', '.join(source_urls)}\n")
         f.write("categories: [Documentation, Knowledge Base, Reference]\n")
@@ -236,7 +275,7 @@ def generate_skill(
             f.write("\n")
 
         f.write(
-            f"**Contains**: {md_count} markdown files with full folder structure.\n"
+            f"**Contains**: {md_count} markdown files with full folder structure (crawled at depth {max_depth}).\n"
         )
         f.write(f"*Last updated: {datetime.datetime.now().strftime('%B %d, %Y')}*\n\n")
 

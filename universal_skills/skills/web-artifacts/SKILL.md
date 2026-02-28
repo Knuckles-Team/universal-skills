@@ -11,6 +11,22 @@ tags: [frontend, ui, react, tailwind, figma, brand, design, web-builder]
 
 This skill unifies guidelines and tooling for building frontend web artifacts.
 
+---
+
+## Design Discovery (Phase 1)
+Before scaffolding, identify:
+- **Core Narrative**: What story does this artifact tell?
+- **Interactive Depth**: Does the user need to filter, drill-down, or just observe?
+- **Visual Aesthetic**: Map to a preset (see `website-builder` Presets A-D).
+
+## Artifact Design Principles
+1. **Self-Contained**: Artifacts must be portable. Use CDNs for heavy libraries (React, D3, GSAP).
+2. **Interactive Data Visualization**: Use D3.js or SVG for complex data representations.
+3. **Motion for Meaning**: Use GSAP to reveal relationships between data points, not just for decoration.
+4. **Accessibility**: Maintain high contrast and keyboard navigability.
+
+---
+
 ## Capabilities/Tools
 We provide scripts to scaffold and bundle interactive React components using shadcn/ui and Tailwind.
 - `scripts/init-artifact.sh`: Initializes a new frontend project structure.

@@ -12,7 +12,12 @@ tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, auto
 This skill consolidates capabilities for working with various document and office formats. The underlying scripts from the original individual tools have been preserved in their respective subdirectories under `scripts/`.
 
 ## Capabilities/Tools
+### 1. PDF Mastery (`scripts/pdf_scripts`)
 - **Capabilities**: Read, extract text/tables, merge, split, rotate, add watermarks, create PDFs, fill forms, encrypt/decrypt, and OCR scanned PDFs.
+- **Workflow**:
+  - For **extraction**: Prefer `pdfplumber` for tables and `pypdf` for metadata.
+  - For **creation**: Use `reportlab` for high-fidelity programmatic layout.
+  - For **scanned docs**: Always check for image content and trigger OCR if text extraction returns empty or garbled.
 - **Libraries**: `pypdf`, `pdfplumber`, `reportlab`, `pytesseract`.
 - **Command-Line**: `pdftotext`, `qpdf`, `pdftk`, `pdfimages`.
 
