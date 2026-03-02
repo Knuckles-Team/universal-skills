@@ -874,9 +874,11 @@ def build_ownership_map(args: argparse.Namespace) -> Path:
             import networkx as nx
             from networkx.algorithms import bipartite
         except ImportError:
-            raise RuntimeError(
-                "networkx is required for communities/graphml output. Install with: pip install networkx"
+            print("Error: Missing required dependencies for community detection.")
+            print(
+                "Please install them by running: pip install 'universal-skills[security-tools]'"
             )
+            sys.exit(1)
         else:
             graph_bipartite = None
             graph_cochange = None

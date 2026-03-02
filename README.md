@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.18*
+*Version: 0.1.19*
 
 ## Overview
 
@@ -37,6 +37,7 @@ The following universal skills are available. You can disable specific skills by
 | `agent-builder`       | Templates and guidelines for building Single and Multi-Agent systems. | `AGENT_BUILDER_ENABLE=False`          | `universal-skills[agent-builder]`       |
 | `agent-workflows`     | Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
 | `algorithmic-art`      | Generative algorithmic art using p5.js and interactive artifacts.    | `ALGORITHMIC_ART_ENABLE=False`        | `universal-skills[algorithmic-art]`     |
+| `api-wrapper-builder` | Guide for creating robust, standardized API wrappers.                 | `API_WRAPPER_BUILDER_ENABLE=False`    | `universal-skills[api-wrapper-builder]` |
 | `brainstorming`       | Structured ideation, problem-framing, and design research.            | `BRAINSTORMING_ENABLE=False`          | `universal-skills[brainstorming]`       |
 | `brand-guidelines`    | Creating brand identity systems (logos, palettes, voice/tone).         | `BRAND_GUIDELINES_ENABLE=False`       | `universal-skills[brand-guidelines]`    |
 | `browser-tools`       | Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`       |

@@ -140,10 +140,11 @@ def main() -> int:
     try:
         import networkx  # noqa: F401
     except ImportError:
+        print("Error: Missing required dependencies for ownership analysis.")
         print(
-            "networkx is required. Install with: pip install networkx", file=sys.stderr
+            "Please install them by running: pip install 'universal-skills[security-tools]'"
         )
-        return 2
+        sys.exit(1)
 
     script_path = Path(__file__).resolve().parent / "build_ownership_map.py"
     cmd = [
