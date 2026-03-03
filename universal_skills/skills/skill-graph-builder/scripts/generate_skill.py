@@ -107,6 +107,7 @@ def generate_skill(
     description: str | None = None,
     max_depth: int = 2,
     target_type: str = "skills",
+    max_file_kb: int = 50,
 ):
     # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
@@ -134,25 +135,83 @@ def generate_skill(
 
     crawl_urls = []
     local_sources = []
+    pdf_urls = []
+    local_pdfs = []
 
     for source in sources:
         if source.startswith("http"):
-            crawl_urls.append(source)
+            if source.lower().split("?")[0].endswith(".pdf"):
+                pdf_urls.append(source)
+            else:
+                crawl_urls.append(source)
         else:
             local_path = Path(source)
-            if local_path.is_dir():
+            if local_path.is_file() and local_path.suffix.lower() == ".pdf":
+                local_pdfs.append(local_path)
+            elif local_path.is_dir():
                 extracted_url = extract_source_url(local_path)
                 if extracted_url:
                     print(f"🔄 Found source_url in existing skill: {extracted_url}")
                     # If it's a list, split it
                     for url in extracted_url.split(","):
-                        crawl_urls.append(url.strip())
+                        url_stripped = url.strip()
+                        if url_stripped.lower().split("?")[0].endswith(".pdf"):
+                            pdf_urls.append(url_stripped)
+                        else:
+                            crawl_urls.append(url_stripped)
                 else:
                     local_sources.append(local_path)
             else:
                 local_sources.append(local_path)
 
-    # 1. Handle all URLs in one crawl session if possible (faster for recursion)
+    # 1. Handle PDFs (Local and Remote)
+    if pdf_urls or local_pdfs:
+        try:
+            import pymupdf4llm
+        except ImportError:
+            print(
+                "❌ pymupdf4llm not installed. Please install with `pip install 'universal-skills[skill-graph-builder]'`."
+            )
+            pymupdf4llm = None
+
+        if pymupdf4llm:
+            import tempfile
+            import requests
+            import os
+
+            for pdf_url in pdf_urls:
+                print(f"📄 Processing remote PDF: {pdf_url}")
+                try:
+                    response = requests.get(pdf_url, stream=True)
+                    response.raise_for_status()
+                    with tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".pdf"
+                    ) as tmp:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            tmp.write(chunk)
+                        tmp_path = tmp.name
+
+                    md_text = pymupdf4llm.to_markdown(tmp_path)
+                    os.unlink(tmp_path)
+
+                    filename = Path(pdf_url.split("?")[0]).stem + ".md"
+                    target_file = reference_dir / filename
+                    target_file.write_text(md_text, encoding="utf-8")
+                    source_urls.append(pdf_url)
+                except Exception as e:
+                    print(f"❌ Failed to process remote PDF {pdf_url}: {e}")
+
+            for local_pdf in local_pdfs:
+                print(f"📄 Processing local PDF: {local_pdf}")
+                try:
+                    md_text = pymupdf4llm.to_markdown(str(local_pdf))
+                    filename = local_pdf.stem + ".md"
+                    target_file = reference_dir / filename
+                    target_file.write_text(md_text, encoding="utf-8")
+                except Exception as e:
+                    print(f"❌ Failed to process local PDF {local_pdf}: {e}")
+
+    # 2. Handle all URLs in one crawl session if possible (faster for recursion)
     if crawl_urls:
         source_urls.extend(crawl_urls)
         crawl_script = base_pkg_path / "skills" / "web-crawler" / "scripts" / "crawl.py"
@@ -217,19 +276,91 @@ def generate_skill(
 
     # 2. Handle local sources
     for i, source_path in enumerate(local_sources):
-        # If user passed an existing skill folder, use its reference/ subfolder
-        skill_md = source_path / "SKILL.md"
-        ref_sub = source_path / "reference"
-        if skill_md.exists() and ref_sub.exists():
-            print(
-                f"📁 Detected existing skill – using reference/ subfolder: {source_path}"
-            )
-            source_path = ref_sub
+        if source_path.is_dir():
+            # If user passed an existing skill folder, use its reference/ subfolder
+            skill_md = source_path / "SKILL.md"
+            ref_sub = source_path / "reference"
+            if skill_md.exists() and ref_sub.exists():
+                print(
+                    f"📁 Detected existing skill – using reference/ subfolder: {source_path}"
+                )
+                source_path = ref_sub
 
-        print(
-            f"📂 Merging local documentation from {source_path} into {reference_dir}..."
-        )
-        shutil.copytree(source_path, reference_dir, dirs_exist_ok=True)
+            print(
+                f"📂 Merging local directory from {source_path} into {reference_dir}..."
+            )
+            shutil.copytree(source_path, reference_dir, dirs_exist_ok=True)
+        elif source_path.is_file():
+            print(f"📂 Merging local file {source_path} into {reference_dir}...")
+            shutil.copyfile(source_path, reference_dir / source_path.name)
+
+    # 3. Split overly large markdown files
+    if max_file_kb > 0:
+        import subprocess
+
+        max_bytes = max_file_kb * 1024
+        md_files = list(reference_dir.rglob("*.md"))
+        for md_file in md_files:
+            try:
+                if md_file.stat().st_size > max_bytes:
+                    print(
+                        f"✂️  Splitting large file: {md_file.name} ({md_file.stat().st_size // 1024} KB)"
+                    )
+                    output_folder = md_file.parent / md_file.stem
+                    if output_folder.exists():
+                        shutil.rmtree(output_folder)
+                    output_folder.mkdir(parents=True, exist_ok=True)
+
+                    cmd = [
+                        "mdsplit",
+                        str(md_file),
+                        "--max-level",
+                        "1",
+                        "--table-of-contents",
+                        "--output",
+                        str(output_folder),
+                        "--force",
+                    ]
+                    subprocess.run(
+                        cmd,
+                        check=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+
+                    # Check if any resulting split files are still too large
+                    needs_level_2 = False
+                    for split_file in output_folder.rglob("*.md"):
+                        if split_file.stat().st_size > max_bytes:
+                            needs_level_2 = True
+                            break
+
+                    if needs_level_2:
+                        print(
+                            "   ⚠️  Still too large after level 1 split, trying level 2 split..."
+                        )
+                        shutil.rmtree(output_folder)
+                        output_folder.mkdir(parents=True, exist_ok=True)
+                        cmd = [
+                            "mdsplit",
+                            str(md_file),
+                            "--max-level",
+                            "2",
+                            "--table-of-contents",
+                            "--output",
+                            str(output_folder),
+                            "--force",
+                        ]
+                        subprocess.run(
+                            cmd,
+                            check=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+
+                    md_file.unlink()  # Delete the original big file
+            except Exception as e:
+                print(f"❌ Failed to split {md_file.name}: {e}")
 
     # --- Preserve or set description ---
     if not description:
@@ -325,6 +456,12 @@ if __name__ == "__main__":
         default="skills",
         help="Target directory type (default: skills).",
     )
+    parser.add_argument(
+        "--max-file-kb",
+        type=int,
+        default=50,
+        help="Max file size in KB before splitting (default: 50).",
+    )
 
     args = parser.parse_args()
     generate_skill(
@@ -333,4 +470,5 @@ if __name__ == "__main__":
         args.description,
         args.max_depth,
         args.target_type,
+        args.max_file_kb,
     )
