@@ -25,7 +25,13 @@ TOOL_PATHS = {
     "claude": Path("~/.claude/skills").expanduser(),
     "openclaw": Path("~/.openclaw/skills").expanduser(),
     "opencode": Path("~/.config/opencode/skills").expanduser(),
-    "antigravity": Path("~/.agents/skills").expanduser(),
+    "antigravity": Path("~/.gemini/antigravity/skills").expanduser(),
+}
+
+# Workspace-specific skill paths (relative to workspace root)
+WORKSPACE_PATHS = {
+    "antigravity": Path(".agent/skills"),
+    "default": Path(".agent/skills"),
 }
 
 
@@ -55,6 +61,15 @@ def get_universal_skills_source_path() -> Path:
         return workspace_path
 
     return None
+
+
+def get_workspace_root() -> Optional[Path]:
+    """Attempts to find the workspace root by looking for .git or other markers."""
+    current = Path.cwd()
+    for parent in [current] + list(current.parents):
+        if (parent / ".git").exists() or (parent / ".agent").exists():
+            return parent
+    return current
 
 
 def install_skills(
@@ -114,6 +129,12 @@ def main():
     )
     parser.add_argument("--path", help="Explicit custom path to install skills into")
     parser.add_argument(
+        "--scope",
+        choices=["global", "workspace"],
+        default="global",
+        help="Installation scope (default: global)",
+    )
+    parser.add_argument(
         "--skills", help="Comma-separated list of skill names to install (default: all)"
     )
     parser.add_argument(
@@ -125,10 +146,16 @@ def main():
     if args.path:
         target = Path(args.path).expanduser()
     elif args.tool:
-        target = TOOL_PATHS.get(args.tool.lower())
-        if not target:
-            # Fallback to treating tool as a path if not found in TOOL_PATHS
-            target = Path(args.tool).expanduser()
+        tool_key = args.tool.lower()
+        if args.scope == "global":
+            target = TOOL_PATHS.get(tool_key)
+            if not target:
+                # Fallback to treating tool as a path if not found in TOOL_PATHS
+                target = Path(args.tool).expanduser()
+        else:  # workspace scope
+            root = get_workspace_root()
+            rel_path = WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
+            target = root / rel_path
     else:
         print("Error: Either --tool or --path must be specified.", file=sys.stderr)
         sys.exit(1)
