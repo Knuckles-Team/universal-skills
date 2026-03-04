@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "gitlab-api": {
+      "command": "gitlab-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "GITLAB_URL": "${GITLAB_URL}",
+        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
+        "BRANCHESTOOL": "True",
+        "COMMITSTOOL": "True",
+        "CUSTOM_APITOOL": "True",
+        "DEPLOY_TOKENSTOOL": "True",
+        "ENVIRONMENTSTOOL": "True",
+        "GROUPSTOOL": "True",
+        "JOBSTOOL": "True",
+        "MEMBERSTOOL": "True",
+        "MERGE_REQUESTSTOOL": "True",
+        "MERGE_RULESTOOL": "True",
+        "MISCTOOL": "True",
+        "PACKAGESTOOL": "True",
+        "PIPELINESTOOL": "True",
+        "PIPELINE_SCHEDULESTOOL": "True",
+        "PROJECTSTOOL": "True",
+        "PROTECTED_BRANCHESTOOL": "True",
+        "RELEASESTOOL": "True",
+        "RUNNERSTOOL": "True",
+        "TAGSTOOL": "True"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "repository-manager": {
+      "command": "repository-manager-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "FILE_OPERATIONSTOOL": "True",
+        "GIT_OPERATIONSTOOL": "True",
+        "MISCTOOL": "True",
+        "SYSTEM_OPERATIONSTOOL": "True"
+      }
+    }
+  }
+}

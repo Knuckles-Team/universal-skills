@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "container-manager-mcp": {
+      "command": "container-manager-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "LOGTOOL": "True",
+        "MISCTOOL": "True",
+        "NETWORKTOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
+      }
+    }
+  }
+}

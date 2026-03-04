@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "microsoft-agent": {
+      "command": "microsoft-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "MICROSOFT_CLIENT_ID": "${MICROSOFT_CLIENT_ID}",
+        "MICROSOFT_CLIENT_SECRET": "${MICROSOFT_CLIENT_SECRET}",
+        "MICROSOFT_TENANT_ID": "${MICROSOFT_TENANT_ID}",
+        "ADMINTOOL": "True",
+        "AGREEMENTSTOOL": "True",
+        "APPLICATIONSTOOL": "True",
+        "AUDITTOOL": "True",
+        "AUTHTOOL": "True",
+        "CALENDARTOOL": "True",
+        "CHATTOOL": "True",
+        "COMMUNICATIONSTOOL": "True",
+        "CONNECTIONSTOOL": "True",
+        "CONTACTSTOOL": "True",
+        "DEVICESTOOL": "True",
+        "DIRECTORYTOOL": "True",
+        "DOMAINSTOOL": "True",
+        "EDUCATIONTOOL": "True",
+        "EMPLOYEE_EXPERIENCETOOL": "True",
+        "FILESTOOL": "True",
+        "GROUPSTOOL": "True",
+        "IDENTITYTOOL": "True",
+        "MAILTOOL": "True",
+        "METATOOL": "True",
+        "MISCTOOL": "True",
+        "NOTESTOOL": "True",
+        "ORGANIZATIONTOOL": "True",
+        "PLACESTOOL": "True",
+        "POLICIESTOOL": "True",
+        "PRINTTOOL": "True",
+        "PRIVACYTOOL": "True",
+        "REPORTSTOOL": "True",
+        "SEARCHTOOL": "True",
+        "SECURITYTOOL": "True",
+        "SITESTOOL": "True",
+        "SOLUTIONSTOOL": "True",
+        "STORAGETOOL": "True",
+        "SUBSCRIPTIONSTOOL": "True",
+        "TASKSTOOL": "True",
+        "TEAMSTOOL": "True",
+        "USERTOOL": "True"
+      }
+    }
+  }
+}

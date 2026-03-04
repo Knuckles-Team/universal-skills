@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "mealie-mcp": {
+      "command": "mealie-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "MEALIE_URL": "${MEALIE_URL}",
+        "MEALIE_API_KEY": "${MEALIE_API_KEY}",
+        "ADMINTOOL": "True",
+        "APPTOOL": "True",
+        "EXPLORETOOL": "True",
+        "GROUPSTOOL": "True",
+        "HOUSEHOLDSTOOL": "True",
+        "MISCTOOL": "True",
+        "ORGANIZERTOOL": "True",
+        "RECIPESTOOL": "True",
+        "SHAREDTOOL": "True",
+        "USERSTOOL": "True",
+        "UTILSTOOL": "True"
+      }
+    }
+  }
+}

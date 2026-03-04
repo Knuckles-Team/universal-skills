@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "adguard-home-agent": {
+      "command": "adguard-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "ADGUARD_URL": "${ADGUARD_URL}",
+        "ADGUARD_USERNAME": "${ADGUARD_USERNAME}",
+        "ADGUARD_PASSWORD": "${ADGUARD_PASSWORD}",
+        "ACCESSTOOL": "True",
+        "BLOCKED_SERVICESTOOL": "True",
+        "CLIENTSTOOL": "True",
+        "DHCPTOOL": "True",
+        "DNSTOOL": "True",
+        "FILTERINGTOOL": "True",
+        "MISCTOOL": "True",
+        "MOBILETOOL": "True",
+        "PROFILETOOL": "True",
+        "QUERY_LOGTOOL": "True",
+        "REWRITESTOOL": "True",
+        "SETTINGSTOOL": "True",
+        "STATSTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "TLSTOOL": "True"
+      }
+    }
+  }
+}

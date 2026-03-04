@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "servicenow-api": {
+      "command": "servicenow-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "SERVICENOW_INSTANCE_URL": "${SERVICENOW_INSTANCE_URL}",
+        "SERVICENOW_USERNAME": "${SERVICENOW_USERNAME}",
+        "SERVICENOW_PASSWORD": "${SERVICENOW_PASSWORD}",
+        "ACCOUNTTOOL": "True",
+        "ACTIVITY_SUBSCRIPTIONSTOOL": "True",
+        "AGGREGATETOOL": "True",
+        "APPLICATIONTOOL": "True",
+        "ATTACHMENTTOOL": "True",
+        "AUTHTOOL": "True",
+        "BATCHTOOL": "True",
+        "CHANGE_MANAGEMENTTOOL": "True",
+        "CICDTOOL": "True",
+        "CILIFECYCLETOOL": "True",
+        "CMDBTOOL": "True",
+        "CUSTOM_APITOOL": "True",
+        "DATA_CLASSIFICATIONTOOL": "True",
+        "DEVOPSTOOL": "True",
+        "EMAILTOOL": "True",
+        "FLOWSTOOL": "True",
+        "HRTOOL": "True",
+        "IMPORT_SETSTOOL": "True",
+        "INCIDENTSTOOL": "True",
+        "KNOWLEDGE_MANAGEMENTTOOL": "True",
+        "METRICBASETOOL": "True",
+        "MISCTOOL": "True",
+        "PLUGINSTOOL": "True",
+        "PPMTOOL": "True",
+        "PRODUCT_INVENTORYTOOL": "True",
+        "SERVICE_QUALIFICATIONTOOL": "True",
+        "SOURCE_CONTROLTOOL": "True",
+        "TABLE_APITOOL": "True",
+        "TESTINGTOOL": "True",
+        "UPDATE_SETSTOOL": "True"
+      }
+    }
+  }
+}
