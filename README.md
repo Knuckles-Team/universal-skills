@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.21*
+*Version: 0.1.22*
 
 ## Overview
 
@@ -35,6 +35,7 @@ The following universal skills are available. You can disable specific skills by
 |:----------------------|:----------------------------------------------------------------------|:--------------------------------------|:----------------------------------------|
 | `agent-browser`       | Browser automation CLI for agents using the agent-browser tool.      | `AGENT_BROWSER_ENABLE=False`          | `universal-skills[agent-browser]`       |
 | `agent-builder`       | Templates and guidelines for building Single and Multi-Agent systems. | `AGENT_BUILDER_ENABLE=False`          | `universal-skills[agent-builder]`       |
+| `agent-spawner`       | Spawns a Pydantic AI agent dynamically using an MCP configuration.    | `AGENT_SPAWNER_ENABLE=False`          | `universal-skills[agent-spawner]`       |
 | `agent-workflows`     | Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
 | `algorithmic-art`      | Generative algorithmic art using p5.js and interactive artifacts.    | `ALGORITHMIC_ART_ENABLE=False`        | `universal-skills[algorithmic-art]`     |
 | `api-wrapper-builder` | Guide for creating robust, standardized API wrappers.                 | `API_WRAPPER_BUILDER_ENABLE=False`    | `universal-skills[api-wrapper-builder]` |
@@ -61,7 +62,8 @@ The following universal skills are available. You can disable specific skills by
 | `product-strategy`    | Market analysis, TAM/SAM/SOM, positioning, and SaaS metrics.          | `PRODUCT_STRATEGY_ENABLE=False`       | `universal-skills[product-strategy]`    |
 | `project-planning`    | High-level reasoning, brainstorming, debugging, and research.         | `PROJECT_PLANNING_ENABLE=False`       | `universal-skills[project-planning]`    |
 | `qa-planning`         | QA test plans, manual test cases, regression suites, and bug reports. | `QA_PLANNING_ENABLE=False`            | `universal-skills[qa-planning]`         |
-| `react-development`   | Type-safe React + TypeScript components, hooks, and routing.          | `REACT_DEVELOPMENT_ENABLE=False`      | `universal-skills[react-development]`   |
+| `react-development`   | Type-safe React + TypeScript components, routing, and best practices. | `REACT_DEVELOPMENT_ENABLE=False`      | `universal-skills[react-development]`   |
+| `react-native-skills` | React Native and Expo best practices and performance optimization.    | `REACT_NATIVE_SKILLS_ENABLE=False`    | `universal-skills[react-native-skills]` |
 | `security-tools`      | Threat modeling, Sentry error logs, and security code analysis.       | `SECURITY_TOOLS_ENABLE=False`         | `universal-skills[security-tools]`      |
 | `skill-builder`       | Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
 | `skill-graph-builder` | Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
@@ -75,6 +77,7 @@ The following universal skills are available. You can disable specific skills by
 | `web-artifacts`       | Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
 | `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
 | `web-crawler`         | High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
+| `web-design-guidelines`| Review UI code for Web Interface Guidelines compliance.              | `WEB_DESIGN_GUIDELINES_ENABLE=False`  | `universal-skills[web-design-guidelines]`|
 | `web-search`          | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
 
 ## Security & SSL Verification
@@ -127,3 +130,11 @@ from pydantic_ai_skills import SkillsToolset
 skills_directories = [get_universal_skills_path(), get_skill_graph_path()]
 skills = SkillsToolset(directories=skills_directories)
 ```
+
+
+## Attributions
+
+- Claude
+- Vercel
+- Google
+- Many more

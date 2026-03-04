@@ -1,10 +1,12 @@
 ---
-name: "jupyter-notebook"
-description: "Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`) for experiments, explorations, or tutorials; prefer the bundled templates and run the helper script `new_notebook.py` to generate a clean starting notebook."
-categories: [Development, Productivity]
+name: jupyter-notebook
+description: Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`) for experiments, explorations, or tutorials; prefer the bundled templates and run the helper script `new_notebook.py` to generate a clean starting notebook.
+license: MIT
 tags: [jupyter, notebook, python, data-science, research]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Jupyter Notebook
 
 ## Overview

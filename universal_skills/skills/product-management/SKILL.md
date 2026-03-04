@@ -1,10 +1,12 @@
 ---
 name: product-management
 description: Guiding the lifecycle of a product from discovery and requirements through execution and delivery. Use when creating Product Requirements Documents (PRDs), writing user stories, prioritizing features, or planning roadmaps. Incorporates best practices for stakeholder alignment and engineering context.
-categories: [Productivity]
+license: MIT
 tags: [product-management, prd, user-stories, prioritization, roadmap, agile]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Product Management & Execution
 
 Drive product initiatives from ambiguous ideas to clear, executable requirements that align teams and deliver customer value.

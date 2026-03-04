@@ -1,8 +1,12 @@
 ---
 name: systematic-debugging
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+license: MIT
+tags: [planning, project-management, docs, strategy]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Systematic Debugging
 
 ## Overview

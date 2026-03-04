@@ -1,10 +1,12 @@
 ---
 name: project-planning
-description: "High-level reasoning, brainstorming, debugging, research, evaluation, and project execution patterns. Use this before starting complex multi-step tasks to explicitly scaffold plans prior to execution."
-categories: [Productivity]
+description: High-level reasoning, brainstorming, debugging, research, evaluation, and project execution patterns. Use this before starting complex multi-step tasks to explicitly scaffold plans prior to execution.
+license: MIT
 tags: [planning, reasoning, debugging, research, guidelines, evaluation, brainstorming]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Project Planning & Thinking Tools
 
 ## Overview

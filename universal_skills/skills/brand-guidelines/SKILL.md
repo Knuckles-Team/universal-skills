@@ -1,10 +1,12 @@
 ---
 name: brand-guidelines
 description: Creates comprehensive brand identity systems including logo concepts, color palettes, typography scales, imagery direction, and voice/tone guidelines. Use when establishing a new brand, evolving an existing brand identity, or creating brand standards documentation. Do NOT use for general graphic design without a brand strategy context.
-categories: [Creative, Design]
+license: MIT
 tags: [branding, identity, design-system, typography, color, voice-tone]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Brand Guidelines Creation
 
 Build coherent brand identity systems that express a company's values, personality, and positioning through visual and verbal language.

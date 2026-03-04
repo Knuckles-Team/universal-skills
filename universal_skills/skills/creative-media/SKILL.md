@@ -1,10 +1,12 @@
 ---
 name: creative-media
 description: Creates and manipulates creative media assets including animated GIFs, social media videos, image format conversions, and basic video editing workflows. Use when the user requests an animated GIF from images, video clipping, format conversion (PNG to WebP), or creative media processing. Do NOT use for generic data processing or non-creative file management.
-categories: [Creative]
+license: MIT
 tags: [media, gif, video, image-processing, ffmpeg, pillow, conversion]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Creative Media Tools
 
 Handle creative media workflows including image processing, animation creation, and video manipulation using industry-standard tools like FFmpeg and Pillow.

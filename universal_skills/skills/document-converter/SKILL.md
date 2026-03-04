@@ -1,10 +1,12 @@
 ---
 name: document-converter
 description: Bulk convert office documents (.doc, .docx, .pdf) to Markdown format with high-fidelity formatting preservation. Use when preparing documents for LLM processing, building knowledge bases, or converting legacy document archives. Do NOT use for creating new documents — use document-tools instead.
-categories: [Data & Documents]
+license: MIT
 tags: [pdf, docx, markdown, conversion, document-processing]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Document Converter Skill
 
 This skill provides tools for bulk converting documents (.doc, .docx, .pdf) to Markdown (.md) format while preserving complex formatting like headers, tables, lists, bold, and italics. This is useful for building knowledge bases or preparing documents for LLM processing.

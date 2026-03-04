@@ -1,10 +1,12 @@
 ---
 name: agent-workflows
-description: "Consolidated skill for managing, dispatching, and orchestrating other agents via the agent-manager CLI, as well as workflows for A2A communication, orchestration, and parallel subagent dispatch."
-categories: [Core, Productivity]
+description: Consolidated skill for managing, dispatching, and orchestrating other agents via the agent-manager CLI, as well as workflows for A2A communication, orchestration, and parallel subagent dispatch.
+license: MIT
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Agent Workflows & Orchestration
 
 ## Overview

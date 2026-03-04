@@ -1,10 +1,12 @@
 ---
 name: skill-builder
 description: Guide for creating effective skills for the universal-skills package. Use this when users want to create a new skill or update an existing skill according to the project's standards.
-categories: [Core, Development]
+license: MIT
 tags: [skills, development, guide, builder, creator]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Skill Builder
 
 This skill provides guidance for creating effective skills for our Pydantic AI agents.
@@ -23,7 +25,7 @@ Skills are modular, self-contained packages that extend the agent's capabilities
 ```
 universal_skills/skills/skill-name/
 ├── SKILL.md (required)
-│   ├── YAML frontmatter (required): Contains metadata including `name`, `description`, and `categories`. This tells the agent when to load the skill. The description must be comprehensive and outline exactly *when* the skill should be triggered.
+│   ├── YAML frontmatter (required): Contains metadata including `name`, `description`, `license`, `tags`, and `metadata`. This tells the agent when to load the skill. The description must be comprehensive and outline exactly *when* the skill should be triggered.
 │   └── Markdown body (required): The actual prompt instructions dictating how the agent should utilize the skill's bundled scripts or documentation.
 └── Bundled Resources (optional)
     ├── scripts/          - Executable code (Python/Bash/etc.)
@@ -34,7 +36,7 @@ universal_skills/skills/skill-name/
 
 Every SKILL.md consists of:
 
-- **Frontmatter** (YAML): Contains `name`, `description`, and `categories` fields. This tells the system when to load the skill and pass it as a tool to the agent.
+- **Frontmatter** (YAML): Contains `name`, `description`, `license`, `tags`, and `metadata` (`author`, `version`). This tells the system when to load the skill and pass it as a tool to the agent.
 - **Body** (Markdown): The actual prompt instructions dictating how the agent should utilize the skill's bundled scripts or documentation. Keep it concise.
 
 #### Bundled Resources (optional)
@@ -174,16 +176,20 @@ Any example files and directories not needed for the skill should be deleted. Th
 
 ##### Frontmatter
 
-Write the YAML frontmatter with `name`, `description`, and `categories`:
+Write the YAML frontmatter following the universal-skills standard:
 
 - `name`: The skill name (kebab-case)
 - `description`: This is the primary triggering mechanism for your skill, and helps the agent understand when to use the skill.
   - Include both what the Skill does and specific triggers/contexts for when to use it.
   - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to the agent.
   - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when the agent needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
-- `categories`: (Required) List of high-level categories (e.g., [Development, Data & Documents]). Available categories: `Core`, `Development`, `Data & Documents`, `System & Infrastructure`, `Productivity`.
+- `license`: MIT
+- `tags`: A list of relevant keywords to aid in discovery or search (e.g. `[agent, documentation, architecture]`).
+- `metadata`: A set of metadata containing key details.
+  - `author`: The author's name.
+  - `version`: The starting version, typically `'0.1.21'` aligning with universal-skills release version.
 
-Do not include any other fields in YAML frontmatter.
+Do not include any other fields in YAML frontmatter unless instructed.
 
 ##### Body
 

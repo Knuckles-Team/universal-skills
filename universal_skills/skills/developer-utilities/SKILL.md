@@ -1,10 +1,12 @@
 ---
 name: developer-utilities
-description: "A consolidated suite of developer utilities including formatting, conversion, generation, cryptographic, and networking tools."
-categories: [Development, Productivity, System & Infrastructure, Data & Documents]
+description: A consolidated suite of developer utilities including formatting, conversion, generation, cryptographic, and networking tools.
+license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Developer Utilities
 
 ## Overview

@@ -1,10 +1,12 @@
 ---
 name: api-wrapper-builder
 description: Guide for creating API wrappers using the established patterns in the agent-packages repository (like servicenow-api and gitlab-api). Use this when tasked with building a new API integration or creating wrapper classes for REST APIs from OpenAPI specs or documentation.
-categories: [Development, Core]
+license: MIT
 tags: [api, wrapper, integration, development, python, pydantic]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # API Wrapper Builder
 
 This skill provides step-by-step guidance on how to build a robust, standardized API wrapper for our Pydantic AI agents. It uses standard components such as the `requests` library, Pydantic models, and decorators from `agent_utilities`.

@@ -1,10 +1,12 @@
 ---
 name: website-builder
-description: "Act as a World-Class Senior Creative Technologist and Lead Frontend Engineer to build high-fidelity, cinematic '1:1 Pixel Perfect' landing pages. Use when building a site or landing page where premium design aesthetics are required."
-categories: [Development]
+description: Act as a World-Class Senior Creative Technologist and Lead Frontend Engineer to build high-fidelity, cinematic '1:1 Pixel Perfect' landing pages. Use when building a site or landing page where premium design aesthetics are required.
+license: MIT
 tags: [frontend, website, react, tailwind, gsap, cinematic]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Website Builder
 
 ## Role

@@ -1,10 +1,12 @@
 ---
 name: jira-tools
 description: Interact with Jira using natural language. Use when the user mentions Jira issues (e.g., "PROJ-123"), asks about tickets, wants to create/view/update issues, check sprint status, or manage their Jira workflow. Triggers on keywords like "jira", "issue", "ticket", "sprint", "backlog", or issue key patterns (e.g., ABC-123). Do NOT use for GitHub PRs or issues — use github-tools instead.
-categories: [Productivity, Development]
+license: MIT
 tags: [jira, tickets, sprint, backlog, atlassian, project-management]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Jira Tools
 
 Natural language interaction with Jira. Supports two backends: the `jira` CLI tool and the Atlassian MCP server.

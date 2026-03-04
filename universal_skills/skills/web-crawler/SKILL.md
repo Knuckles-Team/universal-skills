@@ -1,10 +1,12 @@
 ---
 name: web-crawler
 description: Comprehensive tool for crawling websites, single pages, and sitemaps to yield markdown content. Use when the agent needs to read or extract knowledge from online documentation, parse entire websites recursively, extract markdown from a single URL, chunk markdown, or bulk-process URLs from a sitemap XML.
-categories: [Data & Documents, Core]
+license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Web Crawler Skill
 
 This skill provides a robust CLI script (`scripts/crawl.py`) that utilizes `crawl4ai` to scrape websites, chunk markdown, process sitemaps, and recursively extract pages.

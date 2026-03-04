@@ -1,10 +1,12 @@
 ---
 name: systems-manager
-description: "Comprehensive codebase search, file navigation, and deep structural analysis using glob, ripgrep, and AST parsing."
-categories: [System & Infrastructure, Development]
+description: Comprehensive codebase search, file navigation, and deep structural analysis using glob, ripgrep, and AST parsing.
+license: MIT
 tags: [system, files, navigation, code, search, analysis, tree-sitter, grep]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Systems Manager
 
 ## Overview

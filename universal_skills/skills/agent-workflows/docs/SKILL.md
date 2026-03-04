@@ -1,8 +1,12 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
+license: MIT
+tags: [workflows, agents, orchestration, docs]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Subagent-Driven Development
 
 Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.

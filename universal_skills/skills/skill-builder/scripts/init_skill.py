@@ -17,7 +17,11 @@ from pathlib import Path
 SKILL_TEMPLATE = """---
 name: {skill_name}
 description: [TODO: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
-categories: [TODO: Choose from Core, Development, Data & Documents, System & Infrastructure, Productivity]
+license: MIT
+tags: [TODO: Add relevant keywords like agent, documentation, workflow, etc.]
+metadata:
+  author: [TODO: Add author name]
+  version: '0.1.21'
 ---
 
 # {skill_title}

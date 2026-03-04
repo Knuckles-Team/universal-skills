@@ -1,10 +1,12 @@
 ---
 name: skill-installer
 description: Install and deploy universal-skills into various agent tool directories. Use when the user wants to install skills into Windsurf, Claude Code, OpenCode, Antigravity, or a custom agent path. Do NOT use for creating or editing skill content.
-categories: [Core]
+license: MIT
 tags: [skills, installer, deployment, agent-tools]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # Skill Installer Skill
 
 This skill allows you to "install" the universal skills by copying them into the dedicated skill folders of various agent tools.

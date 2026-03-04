@@ -1,10 +1,12 @@
 ---
 name: qa-planning
 description: Generate comprehensive QA test plans, manual test cases, regression test suites, and bug reports. Use when planning QA strategy for features or releases, writing test cases, building regression suites, or documenting bugs. Triggers include "test plan", "test cases", "regression suite", "bug report", "QA strategy", "write tests for", "validate the". Do NOT use for automated code-level tests — use tdd-methodology instead.
-categories: [Development, Productivity]
+license: MIT
 tags: [qa, testing, test-plans, regression, bug-reports, quality-assurance]
+metadata:
+  author: Audel Rouhi
+  version: '0.1.22'
 ---
-
 # QA Test Planning
 
 Generate structured QA artifacts: test plans, manual test cases, regression suites, and bug reports. Focuses on manual QA strategy and documentation, complementing automated testing.
