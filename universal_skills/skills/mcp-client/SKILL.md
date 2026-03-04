@@ -8,7 +8,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Audel Rouhi
-  version: '0.1.0'
+  version: '0.1.23'
 ---
 # MCP Client Skill
 
