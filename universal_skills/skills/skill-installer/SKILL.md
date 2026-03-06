@@ -5,7 +5,7 @@ license: MIT
 tags: [skills, installer, deployment, agent-tools]
 metadata:
   author: Audel Rouhi
-  version: '0.1.24'
+  version: '0.1.25'
 ---
 # Skill Installer Skill
 

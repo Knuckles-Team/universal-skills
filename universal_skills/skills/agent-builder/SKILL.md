@@ -5,7 +5,7 @@ license: MIT
 tags: [agent, development, pydantic-ai, architecture]
 metadata:
   author: Audel Rouhi
-  version: '0.1.24'
+  version: '0.1.25'
 ---
 # Agent Builder Guide
 
@@ -34,12 +34,21 @@ Create an `IDENTITY.md` file in the `agent/` directory. This file injects the ag
 - Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
 - Critically, you **must instruct the agent to use the `mcp-client` skill** to interact with its targeted MCP server. State explicitly which platform's reference guide the agent should consult (e.g., `servicenow-api.md`, `gitlab-api.md`).
 
+### 3. Configure User Context (`USER.md`)
+Create a `USER.md` file in the `agent/` directory. This file stores metadata about the end user (name, style, preferences).
+
+- Follow the standard bullet-point format.
+- Ensure the agent is instructed (via its system prompt) to read this file to personalize its interactions.
+
 ### 3. Implement the Agent Entry Point (`agent.py`)
 Create `agent.py` in the `agent/` directory.
 Use `load_identity()` to fetch the `[default]` metadata. Capture the environmental default variables (including OTel, host, port, mcp config, and A2A configurations) and pass them to `create_agent_server()`.
 Ensure you extract the appropriate arguments from `create_agent_parser` to pass to `create_agent_server`, including:
 - `otel_endpoint`, `otel_headers`, `otel_public_key`, `otel_secret_key`, `otel_protocol`
 - `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
+
+### 4. System Prompt and User Context
+When initializing the `Agent`, ensure the system prompt is built dynamically to include both `IDENTITY.md` and `USER.md`. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files are combined.
 
 ### 4. Verification
 After implementation:

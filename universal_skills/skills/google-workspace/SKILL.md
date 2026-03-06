@@ -5,7 +5,7 @@ license: MIT
 tags: [google, workspace, gmail, calendar, chat, docs, drive, sheets, slides, api]
 metadata:
   author: Audel Rouhi
-  version: '0.1.24'
+  version: '0.1.25'
 ---
 # Google Workspace
 

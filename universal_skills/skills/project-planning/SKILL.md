@@ -5,7 +5,7 @@ license: MIT
 tags: [planning, reasoning, debugging, research, guidelines, evaluation, brainstorming]
 metadata:
   author: Audel Rouhi
-  version: '0.1.24'
+  version: '0.1.25'
 ---
 # Project Planning & Thinking Tools
 
