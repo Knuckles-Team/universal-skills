@@ -5,7 +5,7 @@ license: MIT
 tags: [github, git, pull-requests, ci, code-review, workflow, worktrees, gh-cli]
 metadata:
   author: Audel Rouhi
-  version: '0.1.25'
+  version: '0.1.26'
 ---
 # GitHub & Git Workflow Tools
 

@@ -5,7 +5,7 @@ license: MIT
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
 metadata:
   author: Audel Rouhi
-  version: '0.1.25'
+  version: '0.1.26'
 ---
 # Agent Workflows & Orchestration
 

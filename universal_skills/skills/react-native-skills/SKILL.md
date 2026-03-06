@@ -5,7 +5,7 @@ license: MIT
 tags: [react-native, mobile, expo, ui, performance]
 metadata:
   author: Audel Rouhi
-  version: '0.1.25'
+  version: '0.1.26'
 ---
 # React Native Skills
 

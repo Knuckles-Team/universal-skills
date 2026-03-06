@@ -5,7 +5,7 @@ license: MIT
 tags: [frontend, ui, react, tailwind, figma, brand, design, web-builder]
 metadata:
   author: Audel Rouhi
-  version: '0.1.25'
+  version: '0.1.26'
 ---
 # Web & UI Artifacts
 
