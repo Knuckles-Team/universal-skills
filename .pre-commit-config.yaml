@@ -36,7 +36,7 @@ repos:
         args: ["--fix", "--ignore=E402"]
         exclude: ^(tests/|test/|scripts/|script/)
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         args: ["-L", "ans,linar,nam,tread,ot,afterAll,beforeAll,atLeast,atMost,fPr,ser,provid,lIns,pres,prSet,preced,verticies,nin,nd,userA,userE,userR,fromT,som"]

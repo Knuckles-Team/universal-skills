@@ -1,31 +1,21 @@
 ---
 name: agent-builder
-description: Guide for building scalable Pydantic AI agents operating either as a single agent or a multi-agent system. Use this skill when the user wants to create a new agent package or modify an existing agent's architecture, to ensure it follows the standardized agent patterns using `agent-utilities`.
+description: Guide for building scalable Pydantic AI agents. Use this skill when the user wants to create a new agent package or modify an existing agent's architecture, to ensure it follows the standardized agent patterns using `agent-utilities`.
 license: MIT
-tags: [agent, development, pydantic-ai, multi-agent, architecture]
+tags: [agent, development, pydantic-ai, architecture]
 metadata:
   author: Audel Rouhi
-  version: '0.1.23'
+  version: '0.1.24'
 ---
 # Agent Builder Guide
 
 This skill provides guidelines and templates for building Pydantic AI agents that adhere to our standardized architecture using the `agent-utilities` package.
 
-## Architecture Selection: Single vs. Multi-Agent
+## Architecture: Agent Pattern
 
-When building a new agent, you must first choose the appropriate architectural pattern based on the number of MCP tools and the complexity of the domain.
+When building a new agent, you must use the **Agent Pattern**. Agent will have access to all authorized capabilities via the `mcp-client` universal skill.
 
-### Single-Agent Pattern
-**When to choose:** Select this pattern when the agent only interacts with a handful of tools (e.g., `< 10`) within a single, cohesive domain.
-**Why:** It is simpler to manage and the single agent's context window can easily handle the smaller set of tools without getting confused or hitting context limits.
-**Example:** `searxng-mcp`, which manages a small set of web search tools via a single agent.
-**Reference:** `reference/single_agent_template.md` contains the required boilerplate.
-
-### Multi-Agent Pattern
-**When to choose:** Select this pattern when interacting with a large number of MCP tools, or across distinct domains requiring differing capabilities.
-**Why:** Tools are distributed across specialized child agents (sub-agents) by their MCP tool tag category. A supervisor agent routes requests to the appropriate child agent. This keeps the context window of each individual agent small, improving reliability and reasoning performance.
-**Example:** `servicenow-api`, which routes requests to specialized agents like `[cmdb]`, `[incidents]`, `[hr]`, etc.
-**Reference:** `reference/multi_agent_template.md` contains the required boilerplate.
+**Reference:** `reference/agent_template.md` contains the required boilerplate.
 
 ---
 
@@ -41,14 +31,15 @@ Follow these steps when defining a new agent package:
 ### 2. Configure Agent Identity (`IDENTITY.md`)
 Create an `IDENTITY.md` file in the `agent/` directory. This file injects the agent's name, role, system prompt, and tools instructions.
 
-- **Single-Agent:** Use a single `[default]` block containing the metadata and prompt. (See `reference/single_agent_template.md`).
-- **Multi-Agent:** Define a `[supervisor]` block for the main router agent, followed by individual blocks for each child agent (e.g., `[cmdb]`, `[incidents]`). (See `reference/multi_agent_template.md`).
+- Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
+- Critically, you **must instruct the agent to use the `mcp-client` skill** to interact with its targeted MCP server. State explicitly which platform's reference guide the agent should consult (e.g., `servicenow-api.md`, `gitlab-api.md`).
 
 ### 3. Implement the Agent Entry Point (`agent.py`)
 Create `agent.py` in the `agent/` directory.
-
-- **For Single-Agents:** Use `load_identity()` to fetch the `[default]` metadata and pass it to `create_agent_server()`.
-- **For Multi-Agents:** Use `load_identities()` to fetch all blocks. Extract the `supervisor` for the main agent, and use dictionary comprehension to map the remaining identities to `CHILD_AGENT_DEFS`, which are passed as the `agent_definitions` parameter to `create_agent_server()`.
+Use `load_identity()` to fetch the `[default]` metadata. Capture the environmental default variables (including OTel, host, port, mcp config, and A2A configurations) and pass them to `create_agent_server()`.
+Ensure you extract the appropriate arguments from `create_agent_parser` to pass to `create_agent_server`, including:
+- `otel_endpoint`, `otel_headers`, `otel_public_key`, `otel_secret_key`, `otel_protocol`
+- `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
 
 ### 4. Verification
 After implementation:
@@ -58,5 +49,4 @@ After implementation:
 ## Reference Documents
 
 The following references are provided alongside this skill:
-- [Single Agent Boilerplate](reference/single_agent_template.md)
-- [Multi Agent Boilerplate](reference/multi_agent_template.md)
+- [Agent Boilerplate](reference/agent_template.md)

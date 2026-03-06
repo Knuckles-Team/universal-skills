@@ -394,7 +394,28 @@ async def run_cli(args):
             if not args.tool_name:
                 print("Error: --tool-name is required for call-tool", file=sys.stderr)
                 sys.exit(1)
-            tool_args = json.loads(args.tool_args) if args.tool_args else {}
+
+            tool_args = {}
+            if args.tool_args:
+                # Check if it's a file path
+                if os.path.isfile(args.tool_args):
+                    try:
+                        with open(args.tool_args, "r", encoding="utf-8") as f:
+                            tool_args = json.load(f)
+                    except Exception as e:
+                        print(
+                            f"Error reading JSON from file {args.tool_args}: {e}",
+                            file=sys.stderr,
+                        )
+                        sys.exit(1)
+                else:
+                    # Otherwise parse as raw JSON string
+                    try:
+                        tool_args = json.loads(args.tool_args)
+                    except Exception as e:
+                        print(f"Error parsing JSON string: {e}", file=sys.stderr)
+                        sys.exit(1)
+
             result = await client.call_tool(args.tool_name, tool_args)
             print(json.dumps(result, indent=2, default=str))
 

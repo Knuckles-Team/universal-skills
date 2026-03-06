@@ -8,7 +8,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Audel Rouhi
-  version: '0.1.23'
+  version: '0.1.24'
 ---
 # MCP Client Skill
 
@@ -45,15 +45,51 @@ python scripts/mcp_client.py \
 
 ### Call a Specific Tool
 
+You can pass arguments as a JSON string or as a path to a JSON file.
+
+#### Option A: JSON String
 ```bash
 python scripts/mcp_client.py \
     --command servicenow-mcp \
     --args "--transport stdio" \
     --env INCIDENTSTOOL=True \
+    --dotenv .env \
     --action call-tool \
     --tool-name get_incidents \
     --tool-args '{"sysparm_limit": "5"}'
 ```
+
+#### Option B: JSON File
+```bash
+# Create an arguments file
+echo '{"sysparm_limit": "10", "sysparm_query": "active=true"}' > args.json
+
+# Call the tool using the file
+python scripts/mcp_client.py \
+    --command servicenow-mcp \
+    --args "--transport stdio" \
+    --dotenv .env \
+    --action call-tool \
+    --tool-name get_incidents \
+    --tool-args args.json
+```
+
+### Advanced: ServiceNow Flow to Mermaid
+
+Generate full relationship diagrams for ServiceNow Flow Designer flows:
+
+```bash
+# 1. Prepare your .env with ServiceNow credentials
+# 2. Call the workflow_to_mermaid tool
+python scripts/mcp_client.py \
+    --command servicenow-mcp \
+    --dotenv .env \
+    --action call-tool \
+    --tool-name workflow_to_mermaid \
+    --tool-args '{"flow_identifiers": ["sys_id_1", "sys_id_2"], "save_to_file": true, "output_dir": "."}'
+```
+
+The tool will generate a Markdown file containing the Mermaid diagrams, which you can then view in any Mermaid-compatible viewer.
 
 ### Generate an mcp_config.json
 
@@ -121,7 +157,7 @@ asyncio.run(main())
 | `--headers` | HTTP header `KEY=VALUE` for remote (repeatable) |
 | `--action` | `list-tools`, `call-tool`, `list-resources`, `list-prompts`, `generate-config` |
 | `--tool-name` | Tool name for `call-tool` |
-| `--tool-args` | JSON arguments for `call-tool` |
+| `--tool-args` | JSON arguments for `call-tool` (string OR path to `.json` file) |
 | `--mcp-command` | MCP command for `generate-config` |
 | `--enable-tag` | Env var to enable for `generate-config` |
 | `--all-tags` | Comma-separated list of all tool tag env vars |
@@ -141,10 +177,13 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | Container Manager | [container-manager-mcp.md](references/container-manager-mcp.md) | [container-manager-mcp.json](references/container-manager-mcp.json) | 10 |
 | Nextcloud | [nextcloud-agent.md](references/nextcloud-agent.md) | [nextcloud-agent.json](references/nextcloud-agent.json) | 6 |
 | Systems Manager | [systems-manager.md](references/systems-manager.md) | [systems-manager.json](references/systems-manager.json) | 17 |
+| Wger Fitness | [wger-agent.md](references/wger-agent.md) | [wger-agent.json](references/wger-agent.json) | 7 |
 | Mealie | [mealie-mcp.md](references/mealie-mcp.md) | [mealie-mcp.json](references/mealie-mcp.json) | 11 |
 | Repository Manager | [repository-manager.md](references/repository-manager.md) | [repository-manager.json](references/repository-manager.json) | 4 |
 | Ansible Tower | [ansible-tower-mcp.md](references/ansible-tower-mcp.md) | [ansible-tower-mcp.json](references/ansible-tower-mcp.json) | 0 |
 | Jellyfin | [jellyfin-mcp.md](references/jellyfin-mcp.md) | [jellyfin-mcp.json](references/jellyfin-mcp.json) | 62 |
+| Portainer | [portainer-agent.md](references/portainer-agent.md) | [portainer-agent.json](references/portainer-agent.json) | 10 |
+| Stirling PDF Agent | [stirlingpdf-agent.md](references/stirlingpdf-agent.md) | [stirlingpdf-agent.json](references/stirlingpdf-agent.json) | 1 |
 
 ## Dependencies
 

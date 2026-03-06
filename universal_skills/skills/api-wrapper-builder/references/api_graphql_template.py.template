@@ -1,0 +1,231 @@
+#!/usr/bin/python
+# coding: utf-8
+"""
+GraphQL API Wrapper Template
+
+This template provides the standard pattern for creating a GraphQL API wrapper
+that mirrors REST API methods using the `gql` library.
+
+Dependencies:
+    pip install gql[requests]
+    # or in pyproject.toml optional deps: gql = ["gql>=4.0.0"]
+"""
+
+import logging
+from typing import Dict, Any, Optional, Union, List
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+from agent_utilities.decorators import require_auth
+from agent_utilities.exceptions import (
+    MissingParameterError,
+    ParameterError,
+    AuthError,
+)
+
+
+class GraphQL:
+    """A class to interact with the service's GraphQL API.
+
+    This class provides methods to execute GraphQL queries and mutations,
+    offering parity with the REST API wrapper methods.
+
+    The GraphQL endpoint is typically at: {base_url}/api/graphql
+    or {base_url}/graphql
+
+    Args:
+        url: Base URL of the service (e.g., "https://service.example.com").
+        token: Authentication token (Bearer token).
+        proxies: Optional proxy configuration dict.
+        verify: Whether to verify TLS certificates.
+        debug: Enable debug logging.
+    """
+
+    def __init__(
+        self,
+        url: str = None,
+        token: str = None,
+        proxies: Dict = None,
+        verify: bool = True,
+        debug: bool = False,
+    ):
+        if not url:
+            raise MissingParameterError("URL is required")
+        if not token:
+            raise MissingParameterError("Token is required")
+
+        # Adjust the GraphQL endpoint path as needed for your service
+        self.url = f"{url.rstrip('/')}/api/graphql"
+        self.token = token
+        self.proxies = proxies
+        self.verify = verify
+        self.debug = debug
+
+        logging.basicConfig(
+            level=logging.DEBUG if debug else logging.ERROR,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+
+        headers = {"Authorization": f"Bearer {token}"}
+        self.transport = RequestsHTTPTransport(
+            url=self.url,
+            headers=headers,
+            verify=verify,
+            proxies=proxies,
+        )
+        self.client = Client(
+            transport=self.transport, fetch_schema_from_transport=True
+        )
+
+    @require_auth
+    def execute_gql(
+        self,
+        query_str: str,
+        variables: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a GraphQL query or mutation.
+
+        Args:
+            query_str: The GraphQL query or mutation string.
+            variables: Optional dictionary of variables for the query.
+            operation_name: Optional name of the operation.
+
+        Returns:
+            Dict[str, Any]: The raw GraphQL response dictionary.
+
+        Raises:
+            ParameterError: If the query execution fails or returns errors.
+        """
+        try:
+            query = gql(query_str)
+            result = self.client.execute(
+                query, variable_values=variables, operation_name=operation_name
+            )
+            if "errors" in result:
+                raise ParameterError(f"GraphQL errors: {result['errors']}")
+            return result
+        except Exception as e:
+            logging.error(f"GraphQL execution failed: {str(e)}")
+            raise ParameterError(f"Query execution failed: {str(e)}")
+
+    # ── Example domain methods ───────────────────────────────────────────
+    # Mirror your REST API methods here with GraphQL queries/mutations.
+    # Use cursor-based pagination (first/after) for list queries.
+
+    @require_auth
+    def get_items(
+        self,
+        first: Optional[int] = 20,
+        after: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get items using GraphQL (mirrors REST get_items).
+
+        Args:
+            first: Number of items to return (cursor pagination).
+            after: Cursor for pagination.
+
+        Returns:
+            Dict[str, Any]: Raw GraphQL response with items data.
+        """
+        query_str = """
+        query GetItems($first: Int, $after: String) {
+            items(first: $first, after: $after) {
+                nodes {
+                    id
+                    name
+                    description
+                    createdAt
+                    updatedAt
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+        """
+        variables = {"first": first}
+        if after:
+            variables["after"] = after
+        return self.execute_gql(query_str, variables=variables)
+
+    @require_auth
+    def get_item(self, item_id: Union[int, str]) -> Dict[str, Any]:
+        """
+        Get a specific item by ID using GraphQL.
+
+        Args:
+            item_id: Item ID or global ID.
+
+        Returns:
+            Dict[str, Any]: Raw GraphQL response with item data.
+        """
+        query_str = """
+        query GetItem($id: ID!) {
+            item(id: $id) {
+                id
+                name
+                description
+                createdAt
+                updatedAt
+            }
+        }
+        """
+        return self.execute_gql(query_str, variables={"id": str(item_id)})
+
+    @require_auth
+    def create_item(
+        self, name: str, description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Create an item using a GraphQL mutation.
+
+        Args:
+            name: Name of the item.
+            description: Optional description.
+
+        Returns:
+            Dict[str, Any]: Raw GraphQL response with created item.
+        """
+        mutation_str = """
+        mutation CreateItem($input: CreateItemInput!) {
+            createItem(input: $input) {
+                item {
+                    id
+                    name
+                    description
+                }
+                errors
+            }
+        }
+        """
+        input_data = {"name": name}
+        if description:
+            input_data["description"] = description
+        return self.execute_gql(
+            mutation_str, variables={"input": input_data}
+        )
+
+    @require_auth
+    def delete_item(self, item_id: Union[int, str]) -> Dict[str, Any]:
+        """
+        Delete an item using a GraphQL mutation.
+
+        Args:
+            item_id: Item ID or global ID.
+
+        Returns:
+            Dict[str, Any]: Raw GraphQL response with deletion result.
+        """
+        mutation_str = """
+        mutation DeleteItem($input: DeleteItemInput!) {
+            deleteItem(input: $input) {
+                errors
+            }
+        }
+        """
+        return self.execute_gql(
+            mutation_str, variables={"input": {"id": str(item_id)}}
+        )

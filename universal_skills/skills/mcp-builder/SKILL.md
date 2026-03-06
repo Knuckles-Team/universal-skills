@@ -5,7 +5,7 @@ license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
   author: Audel Rouhi
-  version: '0.1.23'
+  version: '0.1.24'
 ---
 # MCP Server Development Guide
 
@@ -125,6 +125,31 @@ For each tool:
 - `destructiveHint`: true/false
 - `idempotentHint`: true/false
 - `openWorldHint`: true/false
+
+#### 2.4 Tool Grouping and Registration
+
+Organize your `@mcp.tool` endpoints by common `tags` (e.g., `tags={"action"}`) and wrap related tools in a dedicated registration function named `register_<tag>_tools(mcp: FastMCP)`.
+
+**CRITICAL: Tag Casing Constraint**
+Tags **MUST** be strictly lowercase string names without special characters or spaces. (e.g. `tag="usermanagement"`, env var=`USERMANAGEMENTTOOL`). Do NOT use CamelCase or uppercase letters in tags, as it breaks downward integrations.
+
+To provide a standard mechanism for configuring which tools are exposed by the MCP server depending on the environment, consider the following:
+- **Consolidated Boilerplate**: Use the `create_mcp_server` high-level helper from `agent_utilities.mcp_utilities` to handle argument parsing, auth setup, and middleware assembly in a single call.
+- **FastMCP**: Use the custom `FastMCP` available in `Workspace/fastmcp-python` which supports OIDC, JWT, and middleware out of the box.
+- **Modularity**: Break down tool registration into logical groups (e.g., `register-admin-tools`).
+  - **Naming**: Tags MUST be strictly lowercase. Use hyphens to split words (e.g., `user-auth` instead of `userauth`).
+  - **Prefixing**: For dynamic agents, prefix tags with the service name (e.g., `leanix-pathfinder`).
+  - **Toggles**: Every group MUST be triggered by explicit, human-readable static environment variables.
+Use environment variables and `.env` files via `python-dotenv`:
+1. Use `load_dotenv(find_dotenv())` at the start of your `mcp_server()` function.
+2. For each registration function (even dynamically generated ones), define a default environment variable constant explicitly in `mcp.py` to allow administrators an easy visual reference of what can be toggled:
+   ```python
+   DEFAULT_ACTIONTOOL = to_boolean(os.getenv("ACTIONTOOL", "True"))
+   if DEFAULT_ACTIONTOOL:
+       register_action_tools(mcp)
+   ```
+
+This static layout is mandatory for ALL MCP servers, including massive ones combining metaprogramming routing (like `arr-mcp`), so administrators can secure environments efficiently without needing to read JSON files or code introspections to know what can be disabled.
 
 ---
 

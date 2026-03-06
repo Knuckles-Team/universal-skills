@@ -5,7 +5,7 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.23'
+  version: '0.1.24'
 ---
 # Skill-Graph-Builder (Docs-to-Skill Transformation)
 
@@ -13,7 +13,7 @@ This skill provides an automation script to turn a directory of markdown files (
 
 ### Create a New Skill-Graph
 
-Use `scripts/generate_skill.py` to create a new skill from a source directory of markdown files or one or more URLs.
+Use `scripts/generate_skill.py` to create a new skill from a source directory of markdown files, one or more URLs, or remote/local document links (PDF, DOCX, PPTX, XLSX, CSV).
 
 ```bash
 # Single URL
@@ -36,8 +36,8 @@ python scripts/generate_skill.py ../my-skill-docs my-skill
 
 ## How it Works
 
-1.  **Crawl**: If a URL is provided (or found in an existing skill), it uses the `web-crawler` skill to recursively download markdown content.
-2.  **Transform**: It organizes the content into a `reference/` directory.
+1.  **Crawl/Extract**: If a URL is provided (or found in an existing skill), it uses the `web-crawler` skill to recursively download markdown content. If the URL points to a document (PDF, DOCX, PPTX, XLSX, CSV) or a local document is provided, it utilizes `markitdown` (or `pymupdf4llm` as fallback) to extract its contents into Markdown.
+2.  **Transform**: It organizes the content into a `reference/` directory. Large markdown files will be automatically split into smaller thematic chunks using `mdsplit`.
 3.  **Index**: It generates a structured `SKILL.md` with links to all captured documents and tracks the `source_url` for future updates.
 4.  **SKILL.md Generation**: Generates a `SKILL.md` in the new skill directory that lists all documentation files as clickable links with their titles extracted from the content.
 

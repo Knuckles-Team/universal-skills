@@ -1,0 +1,22 @@
+{
+    "mcpServers": {
+        "wger-agent": {
+            "command": "wger-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "WGER_INSTANCE": "${WGER_INSTANCE}",
+                "WGER_ACCESS_TOKEN": "${WGER_ACCESS_TOKEN}",
+                "ROUTINETOOL": "True",
+                "ROUTINECONFIGTOOL": "True",
+                "EXERCISETOOL": "True",
+                "WORKOUTTOOL": "True",
+                "NUTRITIONTOOL": "True",
+                "BODYTOOL": "True",
+                "USERTOOL": "True"
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "stirlingpdf-agent": {
+            "command": "stirlingpdf-agent-mcp",
+            "args": [],
+            "env": {
+                "STIRLINGPDF_URL": "http://localhost:8080",
+                "STIRLINGPDF_API_KEY": "",
+                "PDFTOOL": "True"
+            }
+        }
+    }
+}

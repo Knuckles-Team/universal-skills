@@ -70,17 +70,21 @@ def log_memory(process, peak_memory, prefix: str = ""):
 
 
 def extract_markdown(result):
+    md = ""
     if hasattr(result, "markdown_v2") and result.markdown_v2:
-        return getattr(
+        md = getattr(
             result.markdown_v2,
             "raw_markdown",
             getattr(result.markdown_v2, "fit_markdown", str(result.markdown_v2)),
         )
-    if hasattr(result, "markdown") and hasattr(result.markdown, "raw_markdown"):
-        return result.markdown.raw_markdown
-    if hasattr(result, "markdown") and isinstance(result.markdown, str):
-        return result.markdown
-    return str(getattr(result, "markdown", ""))
+    elif hasattr(result, "markdown") and hasattr(result.markdown, "raw_markdown"):
+        md = result.markdown.raw_markdown
+    elif hasattr(result, "markdown") and isinstance(result.markdown, str):
+        md = result.markdown
+    else:
+        md = str(getattr(result, "markdown", ""))
+
+    return md.strip()
 
 
 def save_markdown(content: str, url: str, output_dir: str, prefix: str = ""):
@@ -462,10 +466,109 @@ async def main():
         verbose=False,
         extra_args=["--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"],
     )
+    MAGIC_JS = """
+    (async () => {
+        // 1. Initial scrolls to trigger lazy loading
+        window.scrollTo(0, 0);
+        await new Promise(r => setTimeout(r, 500));
+        window.scrollTo(0, document.body.scrollHeight);
+        await new Promise(r => setTimeout(r, 1000));
+
+        // 2. Dispatch ESCAPE key to clear popups
+        for (let i = 0; i < 3; i++) {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        window.scrollTo(0, document.body.scrollHeight);
+        await new Promise(r => setTimeout(r, 500));
+        window.scrollTo(0, 0);
+        await new Promise(r => setTimeout(r, 500));
+
+        // 3. Scroll through the page and remove popups/fixed elements
+        let scrollHeight = document.body.scrollHeight || 1080;
+        let innerHeight = window.innerHeight || 1080;
+        let maxScroll = 15000;
+        if (scrollHeight > maxScroll) scrollHeight = maxScroll;
+
+        for (let offset = 0; offset <= scrollHeight; offset += innerHeight) {
+            window.scrollTo(0, offset);
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+            await new Promise(r => setTimeout(r, 200));
+
+            // Handle locked scrollbars
+            try {
+                for (let e of document.getElementsByClassName("Scroll--locked")) {
+                    e.style.overflow = "hidden";
+                    e.style.position = "relative";
+                }
+                let htmlElem = document.querySelector('html');
+                if (htmlElem) {
+                    htmlElem.style.overflow = 'hidden';
+                    htmlElem.style.position = 'relative';
+                }
+            } catch (e) {}
+
+            // Remove dynamically floating fixed/sticky popups/cookie banners, but guard against deleting SPA root containers
+            // Temporarily disabled floating popup removal to test if it's the culprit destroying ServiceNow's root DOM
+            /*
+            try {
+                let elements = document.querySelectorAll('div, dialog');
+                for (let i = 0; i < elements.length; i++) {
+                    let style = window.getComputedStyle(elements[i]);
+                    if (style.position === 'fixed' || style.position === 'sticky' || style.position === '-webkit-sticky') {
+                        let zIdx = parseInt(style.zIndex, 10);
+                        if (isNaN(zIdx) || zIdx < 10) continue;
+                        if (elements[i].innerText && elements[i].innerText.length > 2000) continue;
+                        if (elements[i].clientWidth > window.innerWidth * 0.9 && elements[i].clientHeight > window.innerHeight * 0.9) continue;
+                        elements[i].parentNode.removeChild(elements[i]);
+                    }
+                }
+            } catch (e) {}
+            */
+        }
+
+        // 4. Purge all headers, footers, sidebars from the DOM natively, fulfilling the user's request
+        try {
+            let noiseElements = document.querySelectorAll('header, footer, aside, [role="banner"], [role="contentinfo"]');
+            noiseElements.forEach(el => el.remove());
+        } catch(e) {}
+
+        // 5. Reset scroll to top and explicitly enable scroll
+        window.scrollTo(0, 0);
+        try {
+            let body = document.querySelector('body');
+            if (body) body.setAttribute('style', 'overflow: scroll; overflow-x: scroll;');
+            let html = document.querySelector('html');
+            if (html) html.setAttribute('style', 'overflow: scroll; overflow-x: scroll;');
+        } catch(e) {}
+
+        // Final wait to ensure content stabilizes
+        await new Promise(r => setTimeout(r, 2000));
+    })();
+    """
+
     crawl_config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
-        # Wait for content to load
-        js_code="await new Promise(r => setTimeout(r, 20000));",
+        # Enable basic anti-bot evasion techniques (simulates human, sets headers, hides webdriver flags)
+        magic=True,
+        # Wait for the main body/article to explicitly populate with text, bypassing cookie banner race conditions
+        wait_for="""js:() => {
+            let els = document.querySelectorAll('main, article, #content, .content, [role="main"]');
+            for (let e of els) {
+                if (e.innerText && e.innerText.length > 50) return true;
+            }
+            return false;
+        }""",
+        # Execute JS to clear popups, remove fixed navigation/modals, and explicitly blast headers/footers
+        js_code=MAGIC_JS,
+        # Process iframes natively, which many enterprise techdocs use (e.g. ServiceNow)
+        process_iframes=True,
+        page_timeout=60000,
+        delay_before_return_html=5.0,
+        # Exclude common noise elements (Notice: 'nav' is intentionally omitted to protect the API Index which resides in a <nav>)
+        # excluded_tags=["footer", "header"],
+        exclude_external_links=True,
     )
 
     dispatcher = MemoryAdaptiveDispatcher(

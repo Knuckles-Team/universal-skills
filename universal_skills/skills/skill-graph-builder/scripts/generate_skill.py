@@ -108,6 +108,7 @@ def generate_skill(
     max_depth: int = 2,
     target_type: str = "skills",
     max_file_kb: int = 50,
+    output_dir: str | None = None,
 ):
     # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
@@ -115,8 +116,10 @@ def generate_skill(
         print(f"🏷️  Enforcing naming convention: Renamed skill to **{skill_name}**")
 
     base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
-    # If target_type is skills, use the parent of the current skill's folder
-    if target_type == "skills":
+    # If --output-dir is provided, use it directly as the parent for the skill
+    if output_dir:
+        target_skill_dir = Path(output_dir) / skill_name
+    elif target_type == "skills":
         skills_base = Path(__file__).resolve().parent.parent.parent
         target_skill_dir = skills_base / skill_name
     else:
@@ -146,7 +149,13 @@ def generate_skill(
                 crawl_urls.append(source)
         else:
             local_path = Path(source)
-            if local_path.is_file() and local_path.suffix.lower() == ".pdf":
+            if local_path.is_file() and local_path.suffix.lower() in [
+                ".pdf",
+                ".docx",
+                ".pptx",
+                ".xlsx",
+                ".csv",
+            ]:
                 local_pdfs.append(local_path)
             elif local_path.is_dir():
                 extracted_url = extract_source_url(local_path)
@@ -155,7 +164,13 @@ def generate_skill(
                     # If it's a list, split it
                     for url in extracted_url.split(","):
                         url_stripped = url.strip()
-                        if url_stripped.lower().split("?")[0].endswith(".pdf"):
+                        if (
+                            url_stripped.lower().split("?")[0].endswith(".pdf")
+                            or url_stripped.lower().split("?")[0].endswith(".docx")
+                            or url_stripped.lower().split("?")[0].endswith(".pptx")
+                            or url_stripped.lower().split("?")[0].endswith(".xlsx")
+                            or url_stripped.lower().split("?")[0].endswith(".csv")
+                        ):
                             pdf_urls.append(url_stripped)
                         else:
                             crawl_urls.append(url_stripped)
@@ -164,52 +179,76 @@ def generate_skill(
             else:
                 local_sources.append(local_path)
 
-    # 1. Handle PDFs (Local and Remote)
+    # 1. Handle Documents (PDF, Office files) (Local and Remote)
     if pdf_urls or local_pdfs:
+        markitdown_instance = None
         try:
-            import pymupdf4llm
-        except ImportError:
-            print(
-                "❌ pymupdf4llm not installed. Please install with `pip install 'universal-skills[skill-graph-builder]'`."
-            )
-            pymupdf4llm = None
+            from markitdown import MarkItDown
 
-        if pymupdf4llm:
+            markitdown_instance = MarkItDown()
+        except ImportError:
+            try:
+                import pymupdf4llm
+
+                print(
+                    "⚠️ markitdown not installed. Falling back to pymupdf4llm for PDF conversion (Office files may fail)."
+                )
+            except ImportError:
+                print(
+                    "❌ markitdown and pymupdf4llm not installed. Please install with `pip install 'universal-skills[skill-graph-builder]'`."
+                )
+                pymupdf4llm = None
+
+        if markitdown_instance or pymupdf4llm:
             import tempfile
             import requests
             import os
 
-            for pdf_url in pdf_urls:
-                print(f"📄 Processing remote PDF: {pdf_url}")
+            for doc_url in pdf_urls:
+                print(f"📄 Processing remote document: {doc_url}")
                 try:
-                    response = requests.get(pdf_url, stream=True)
+                    response = requests.get(doc_url, stream=True)
                     response.raise_for_status()
-                    with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=".pdf"
-                    ) as tmp:
+
+                    # Extract extension or default to .pdf
+                    ext = Path(doc_url.split("?")[0]).suffix.lower()
+                    if not ext:
+                        ext = ".pdf"
+
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
                         for chunk in response.iter_content(chunk_size=8192):
                             tmp.write(chunk)
                         tmp_path = tmp.name
 
-                    md_text = pymupdf4llm.to_markdown(tmp_path)
+                    if markitdown_instance:
+                        md_text = markitdown_instance.convert(tmp_path).text_content
+                    else:
+                        md_text = pymupdf4llm.to_markdown(tmp_path)
+
                     os.unlink(tmp_path)
 
-                    filename = Path(pdf_url.split("?")[0]).stem + ".md"
+                    filename = Path(doc_url.split("?")[0]).stem + ".md"
                     target_file = reference_dir / filename
                     target_file.write_text(md_text, encoding="utf-8")
-                    source_urls.append(pdf_url)
+                    source_urls.append(doc_url)
                 except Exception as e:
-                    print(f"❌ Failed to process remote PDF {pdf_url}: {e}")
+                    print(f"❌ Failed to process remote document {doc_url}: {e}")
 
-            for local_pdf in local_pdfs:
-                print(f"📄 Processing local PDF: {local_pdf}")
+            for local_doc in local_pdfs:
+                print(f"📄 Processing local document: {local_doc}")
                 try:
-                    md_text = pymupdf4llm.to_markdown(str(local_pdf))
-                    filename = local_pdf.stem + ".md"
+                    if markitdown_instance:
+                        md_text = markitdown_instance.convert(
+                            str(local_doc)
+                        ).text_content
+                    else:
+                        md_text = pymupdf4llm.to_markdown(str(local_doc))
+
+                    filename = local_doc.stem + ".md"
                     target_file = reference_dir / filename
                     target_file.write_text(md_text, encoding="utf-8")
                 except Exception as e:
-                    print(f"❌ Failed to process local PDF {local_pdf}: {e}")
+                    print(f"❌ Failed to process local document {local_doc}: {e}")
 
     # 2. Handle all URLs in one crawl session if possible (faster for recursion)
     if crawl_urls:
@@ -358,6 +397,65 @@ def generate_skill(
                             stderr=subprocess.DEVNULL,
                         )
 
+                    # --- Emergency Fallback Split ---
+                    # If MarkItDown produced a PDF with NO markdown headers, mdsplit will fail
+                    # and leave a massive file in the output_folder (or just one file).
+                    for split_file in list(output_folder.rglob("*.md")):
+                        if (
+                            split_file.stat().st_size > max_bytes
+                            and split_file.name != "toc.md"
+                        ):
+                            print(
+                                f"   ⚠️  File {split_file.name} still too large ({split_file.stat().st_size // 1024} KB). Forcing chunk by lines."
+                            )
+                            with open(split_file, "r", encoding="utf-8") as f:
+                                lines = f.readlines()
+
+                            if not lines:
+                                continue
+
+                            # Target bytes per chunk (safely under max_bytes)
+                            target_chunk_bytes = (
+                                max_bytes - (50 * 1024)
+                                if max_bytes > (50 * 1024)
+                                else max_bytes // 2
+                            )
+                            if target_chunk_bytes <= 0:
+                                target_chunk_bytes = max_bytes
+
+                            current_chunk = []
+                            current_bytes = 0
+                            chunk_index = 1
+
+                            # Keep original name prefix
+                            base_name = split_file.stem
+
+                            for line in lines:
+                                current_chunk.append(line)
+                                current_bytes += len(line.encode("utf-8"))
+
+                                if current_bytes >= target_chunk_bytes:
+                                    chunk_file = (
+                                        output_folder
+                                        / f"{base_name}_pt{chunk_index}.md"
+                                    )
+                                    chunk_file.write_text(
+                                        "".join(current_chunk), encoding="utf-8"
+                                    )
+                                    chunk_index += 1
+                                    current_chunk = []
+                                    current_bytes = 0
+
+                            if current_chunk:
+                                chunk_file = (
+                                    output_folder / f"{base_name}_pt{chunk_index}.md"
+                                )
+                                chunk_file.write_text(
+                                    "".join(current_chunk), encoding="utf-8"
+                                )
+
+                            split_file.unlink()  # Delete the oversized un-splittable chunk
+
                     md_file.unlink()  # Delete the original big file
             except Exception as e:
                 print(f"❌ Failed to split {md_file.name}: {e}")
@@ -462,6 +560,11 @@ if __name__ == "__main__":
         default=50,
         help="Max file size in KB before splitting (default: 50).",
     )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help="Custom output directory. If provided, the skill is created at <output-dir>/<skill-name>/ instead of the default location.",
+    )
 
     args = parser.parse_args()
     generate_skill(
@@ -471,4 +574,5 @@ if __name__ == "__main__":
         args.max_depth,
         args.target_type,
         args.max_file_kb,
+        args.output_dir,
     )

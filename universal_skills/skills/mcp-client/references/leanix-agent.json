@@ -1,0 +1,17 @@
+{
+    "mcpServers": {
+        "leanix-agent": {
+            "command": "leanix-agent-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "LEANIX_WORKSPACE": "${LEANIX_WORKSPACE}",
+                "LEANIX_API_TOKEN": "${LEANIX_API_TOKEN}",
+                "FACTSHEETSTOOL": "True",
+                "GRAPHQLTOOL": "True"
+            }
+        }
+    }
+}
