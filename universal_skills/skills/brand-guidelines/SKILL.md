@@ -5,7 +5,7 @@ license: MIT
 tags: [branding, identity, design-system, typography, color, voice-tone]
 metadata:
   author: Audel Rouhi
-  version: '0.1.30'
+  version: '0.1.31'
 ---
 # Brand Guidelines Creation
 
