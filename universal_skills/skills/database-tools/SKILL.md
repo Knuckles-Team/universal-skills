@@ -5,7 +5,7 @@ license: MIT
 tags: [database, sql, postgresql, mysql, mssql, querying, schema, data-extraction]
 metadata:
   author: Audel Rouhi
-  version: '0.1.28'
+  version: '0.1.29'
 ---
 # Database Tools
 

@@ -5,7 +5,7 @@ license: MIT
 tags: [workflows, agents, orchestration, docs]
 metadata:
   author: Audel Rouhi
-  version: '0.1.28'
+  version: '0.1.29'
 ---
 # Subagent-Driven Development
 

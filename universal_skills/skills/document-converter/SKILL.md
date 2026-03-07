@@ -5,7 +5,7 @@ license: MIT
 tags: [pdf, docx, markdown, conversion, document-processing]
 metadata:
   author: Audel Rouhi
-  version: '0.1.28'
+  version: '0.1.29'
 ---
 # Document Converter Skill
 
