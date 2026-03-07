@@ -5,7 +5,7 @@ license: MIT
 tags: [api, wrapper, integration, development, python, pydantic, graphql, gql]
 metadata:
   author: Audel Rouhi
-  version: '0.1.29'
+  version: '0.1.30'
 ---
 # API Wrapper Builder
 

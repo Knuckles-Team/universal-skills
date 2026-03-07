@@ -5,7 +5,7 @@ license: MIT
 tags: [qa, testing, test-plans, regression, bug-reports, quality-assurance]
 metadata:
   author: Audel Rouhi
-  version: '0.1.29'
+  version: '0.1.30'
 ---
 # QA Test Planning
 
