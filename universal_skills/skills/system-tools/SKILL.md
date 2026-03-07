@@ -5,7 +5,7 @@ license: MIT
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
 metadata:
   author: Audel Rouhi
-  version: '0.1.31'
+  version: '0.1.32'
 ---
 # System Tools
 

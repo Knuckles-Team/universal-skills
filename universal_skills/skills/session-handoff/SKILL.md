@@ -5,7 +5,7 @@ license: MIT
 tags: [handoff, context, session, resumption, continuity, memory]
 metadata:
   author: Audel Rouhi
-  version: '0.1.31'
+  version: '0.1.32'
 ---
 # Session Handoff
 

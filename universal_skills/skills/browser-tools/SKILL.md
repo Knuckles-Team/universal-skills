@@ -5,7 +5,7 @@ license: MIT
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
 metadata:
   author: Audel Rouhi
-  version: '0.1.31'
+  version: '0.1.32'
 ---
 # Browser Tools
 

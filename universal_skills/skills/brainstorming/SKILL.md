@@ -5,7 +5,7 @@ license: MIT
 tags: [planning, design, ideation, requirements, architecture]
 metadata:
   author: Audel Rouhi
-  version: '0.1.31'
+  version: '0.1.32'
 ---
 # Brainstorming & Design Workflow
 
