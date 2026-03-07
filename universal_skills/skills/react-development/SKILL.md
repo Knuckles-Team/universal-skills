@@ -5,7 +5,7 @@ license: MIT
 tags: [react, typescript, hooks, components, server-components, frontend, react-19, performance, architecture, nextjs]
 metadata:
   author: Audel Rouhi
-  version: '0.1.27'
+  version: '0.1.28'
 ---
 # React Development (TypeScript)
 

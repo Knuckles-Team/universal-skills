@@ -5,7 +5,7 @@ license: MIT
 tags: [user-research, discovery, personas, jtbd, journey-mapping, qualitative]
 metadata:
   author: Audel Rouhi
-  version: '0.1.27'
+  version: '0.1.28'
 ---
 # User Research & Discovery
 
