@@ -5,7 +5,7 @@ license: MIT
 tags: [planning, project-management, docs, strategy]
 metadata:
   author: Audel Rouhi
-  version: '0.1.26'
+  version: '0.1.27'
 ---
 # Systematic Debugging
 
