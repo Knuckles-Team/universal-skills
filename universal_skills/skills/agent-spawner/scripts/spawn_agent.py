@@ -66,7 +66,7 @@ async def main():
     )
     parser.add_argument(
         "--model-id",
-        default=os.getenv("MODEL_ID", "qwen/qwen3-coder-next"),
+        default=os.getenv("MODEL_ID", "qwen/qwen3.5-35b-a3b"),
         help="LLM Model ID",
     )
     parser.add_argument(

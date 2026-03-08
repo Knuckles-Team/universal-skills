@@ -5,7 +5,7 @@ license: MIT
 tags: [agent, development, pydantic-ai, architecture]
 metadata:
   author: Audel Rouhi
-  version: '0.1.32'
+  version: '0.1.33'
 ---
 # Agent Builder Guide
 
@@ -28,17 +28,21 @@ Follow these steps when defining a new agent package:
 2. Ensure `pyproject.toml` depends on `agent-utilities>=0.1.10` (and includes `agent` under optional dependencies).
 3. Configure `project.scripts` in `pyproject.toml` to expose the agent entry point (e.g., `my-agent = "my_package.agent:agent_server"`).
 
-### 2. Configure Agent Identity (`IDENTITY.md`)
-Create an `IDENTITY.md` file in the `agent/` directory. This file injects the agent's name, role, system prompt, and tools instructions.
+### 2. Configure Agent Workspace Files
+The agent's behavior and state are controlled by several core files in the `agent/` directory:
 
-- Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
-- Critically, you **must instruct the agent to use the `mcp-client` skill** to interact with its targeted MCP server. State explicitly which platform's reference guide the agent should consult (e.g., `servicenow-api.md`, `gitlab-api.md`).
+- **IDENTITY.md**: Injects the agent's name, role, system prompt, and tools instructions. Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
+- **USER.md**: Information about the user (name, style, preferences).
+- **AGENTS.md**: Registry of known A2A peer agents.
+- **MEMORY.md**: Long-term memory and event logs.
+- **CRON.md**: Persistent scheduled tasks.
+- **CRON_LOG.md**: History of execution for scheduled tasks.
+- **HEARTBEAT.md**: Periodic self-check tasks and instructions.
+- **chats/**: (Directory) Persistent storage for background job conversations.
+- **mcp_config.json**: Configuration for MCP servers.
+- **icon.png**: Visual representation of the agent.
 
-### 3. Configure User Context (`USER.md`)
-Create a `USER.md` file in the `agent/` directory. This file stores metadata about the end user (name, style, preferences).
-
-- Follow the standard bullet-point format.
-- Ensure the agent is instructed (via its system prompt) to read this file to personalize its interactions.
+Each file plays a critical role in how the agent operates and interacts within the workspace.
 
 ### 3. Implement the Agent Entry Point (`agent.py`)
 Create `agent.py` in the `agent/` directory.
@@ -47,8 +51,8 @@ Ensure you extract the appropriate arguments from `create_agent_parser` to pass 
 - `otel_endpoint`, `otel_headers`, `otel_public_key`, `otel_secret_key`, `otel_protocol`
 - `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
 
-### 4. System Prompt and User Context
-When initializing the `Agent`, ensure the system prompt is built dynamically to include both `IDENTITY.md` and `USER.md`. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files are combined.
+### 4. System Prompt and Context
+When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files (`IDENTITY.md`, `USER.md`, `AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, etc.) are combined into a rich prompt.
 
 ### 4. Verification
 After implementation:

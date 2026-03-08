@@ -5,11 +5,18 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.32'
+  version: '0.1.33'
 ---
 # Skill-Graph-Builder (Docs-to-Skill Transformation)
 
 This skill provides an automation script to turn a directory of markdown files (e.g., from a web crawl) into a fully structured agent skill (knowledge graph).
+
+* `--max-depth`: Max depth for recursive web crawl (default: 2).
+* `--max-pages`: Max total pages to crawl in recursive mode (default: 500).
+* `--max-file-kb`: Max file size in KB before splitting (default: 50).
+* `--disable-magic-js`: Disable heavy element-scrubbing JS/CSS in web-crawler.
+* `--wait-for`: Custom CSS selector or JS expression to wait for.
+* `--target-type`: Target directory type (skills or skill-graphs).
 
 ### Create a New Skill-Graph
 

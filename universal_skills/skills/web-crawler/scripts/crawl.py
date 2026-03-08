@@ -251,6 +251,30 @@ def fetch_sitemap_urls(
         return []
 
 
+def discover_sitemap(start_url: str, ssl_verify: bool = True) -> str | None:
+    """Check robots.txt for Sitemap: line, fallback to /sitemap.xml"""
+    parsed = urlparse(start_url)
+    base_url = f"{parsed.scheme}://{parsed.netloc}"
+    robots_url = f"{base_url}/robots.txt"
+    try:
+        r = requests.get(robots_url, verify=ssl_verify, timeout=10)
+        if r.status_code == 200:
+            for line in r.text.splitlines():
+                if line.lower().startswith("sitemap:"):
+                    return line.split(":", 1)[1].strip()
+    except Exception:
+        pass
+    # Fallback
+    candidate = f"{base_url}/sitemap.xml"
+    try:
+        r = requests.head(candidate, verify=ssl_verify, timeout=5)
+        if r.status_code in (200, 301, 302):
+            return candidate
+    except Exception:
+        pass
+    return None
+
+
 async def crawl_sitemap_sequential(
     crawler, sitemap_url: str, crawl_config, output_dir: str, ssl_verify: bool = True
 ):
@@ -319,6 +343,8 @@ async def crawl_recursive_high_speed(
     crawl_config,
     dispatcher,
     output_dir: str,
+    max_pages: int = 1000,
+    ignore_prefix_restriction: bool = False,
     ssl_verify: bool = True,
 ):
     visited = set()
@@ -337,8 +363,13 @@ async def crawl_recursive_high_speed(
     logger.info(f"Restricting crawl to path prefixes: {allowed_prefixes}")
 
     total_saved = 0
+    max_pages = max_pages
+    ignore_prefix = ignore_prefix_restriction
 
     for depth in range(max_depth):
+        if total_saved >= max_pages:
+            logger.warning(f"Reached max pages limit ({max_pages}). Stopping.")
+            break
         logger.info(f"Crawling Depth {depth+1}, URLs: {len(current_urls)}")
 
         urls_to_crawl = []
@@ -391,6 +422,14 @@ async def crawl_recursive_high_speed(
             else:
                 logger.error(f"Failed to crawl {norm_url}: {result.error_message}")
 
+        # Filter internal links to allowed prefixes (fixes the dead code)
+        if not ignore_prefix and allowed_prefixes and next_level_urls:
+            next_level_urls = {
+                u
+                for u in next_level_urls
+                if any(urlparse(u).path.startswith(p) for p in allowed_prefixes)
+            }
+
         logger.info(
             f"DEBUG: Extracted {len(next_level_urls)} unique new links for next depth"
         )
@@ -429,6 +468,9 @@ async def main():
         help="Max recursion depth for 'recursive' strategy.",
     )
     parser.add_argument(
+        "--no-sitemap", action="store_true", help="Disable sitemap auto-discovery"
+    )
+    parser.add_argument(
         "--max-concurrent",
         "--max_concurrent",
         type=int,
@@ -446,6 +488,27 @@ async def main():
         action="store_true",
         help="Disable SSL verification (Use with caution)",
     )
+    parser.add_argument(
+        "--disable-magic-js",
+        action="store_true",
+        help="Disable the complex MAGIC_JS payload",
+    )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=1000,
+        help="Limit the total number of pages crawled in recursive mode.",
+    )
+    parser.add_argument(
+        "--ignore-prefix-restriction",
+        action="store_true",
+        help="Do not restrict recursive crawling to the starting path prefix.",
+    )
+    parser.add_argument(
+        "--wait-for",
+        type=str,
+        help="Custom CSS selector or JS expression to wait for.",
+    )
 
     args = parser.parse_args()
 
@@ -457,6 +520,20 @@ async def main():
         ssl_verify = False
     else:
         ssl_verify = True
+
+    # Auto-discovery of sitemap
+    if not args.no_sitemap:
+        for url in args.urls:
+            sitemap = discover_sitemap(url, ssl_verify=ssl_verify)
+            if sitemap:
+                logger.info(f"Auto-discovered sitemap: {sitemap}")
+                if args.strategy == "recursive":
+                    logger.info(
+                        "Switching to sitemap-parallel strategy for complete coverage."
+                    )
+                    args.strategy = "sitemap-parallel"
+                args.urls = [sitemap]  # Update args.urls with the discovered sitemap
+                break  # Stop after finding the first sitemap
 
     process = psutil.Process(os.getpid())
     peak_memory = [0]
@@ -548,24 +625,31 @@ async def main():
     })();
     """
 
+    # Improved wait_for logic with fallback
+    default_wait_for = """js:() => {
+        // Primary: common content containers
+        let els = document.querySelectorAll('main, article, #content, .content, [role="main"], .md-content, .doc-content, .markdown');
+        for (let e of els) {
+            if (e.innerText && e.innerText.length > 30) return true;
+        }
+        // Fallback: any body text at all
+        return document.body && document.body.innerText.length > 100;
+    }"""
+
     crawl_config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
         # Enable basic anti-bot evasion techniques (simulates human, sets headers, hides webdriver flags)
         magic=True,
+        wait_until="networkidle",
         # Wait for the main body/article to explicitly populate with text, bypassing cookie banner race conditions
-        wait_for="""js:() => {
-            let els = document.querySelectorAll('main, article, #content, .content, [role="main"]');
-            for (let e of els) {
-                if (e.innerText && e.innerText.length > 50) return true;
-            }
-            return false;
-        }""",
+        wait_for=args.wait_for or default_wait_for,
         # Execute JS to clear popups, remove fixed navigation/modals, and explicitly blast headers/footers
-        js_code=MAGIC_JS,
+        js_code=None if args.disable_magic_js else MAGIC_JS,
         # Process iframes natively, which many enterprise techdocs use (e.g. ServiceNow)
         process_iframes=True,
-        page_timeout=60000,
-        delay_before_return_html=5.0,
+        page_timeout=90000,
+        wait_for_timeout=30000,
+        delay_before_return_html=3.0,
         # Exclude common noise elements (Notice: 'nav' is intentionally omitted to protect the API Index which resides in a <nav>)
         # excluded_tags=["footer", "header"],
         exclude_external_links=True,
@@ -609,6 +693,8 @@ async def main():
                 crawl_config,
                 dispatcher,
                 args.output_dir,
+                max_pages=args.max_pages,
+                ignore_prefix_restriction=args.ignore_prefix_restriction,
                 ssl_verify=ssl_verify,
             )
 

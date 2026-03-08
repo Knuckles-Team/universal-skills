@@ -5,7 +5,7 @@ license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
 metadata:
   author: Audel Rouhi
-  version: '0.1.32'
+  version: '0.1.33'
 ---
 # Developer Utilities
 

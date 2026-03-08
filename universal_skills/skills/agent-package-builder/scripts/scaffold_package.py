@@ -311,7 +311,7 @@ services:
       - "PROVIDER=openai"
       - "LLM_BASE_URL=${{LLM_BASE_URL:-http://host.docker.internal:1234/v1}}"
       - "LLM_API_KEY=${{LLM_API_KEY:-llama}}"
-      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3-coder-next}}"
+      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3.5-35b-a3b}}"
       - "DEBUG=False"
       - "ENABLE_WEB_UI=True"
       - "ENABLE_OTEL=True"
@@ -1366,7 +1366,16 @@ HEARTBEAT_ALERT — [summary of issues found]
 - Action needed: ...
 ```
 """
+CRON_LOG_MD = """# CRON_LOG.md - Scheduled Task History
+Last updated: {date}
 
+| Timestamp | Task ID | Status | Message |
+|-----------|---------|--------|---------|
+"""
+
+MCP_CONFIG_MD = """{{
+  "mcpServers": {{}}
+}}"""
 MEMORY_MD = """\
 # MEMORY.md - Long-term Memory
 Last updated: {date}
@@ -1682,10 +1691,17 @@ def scaffold(
         files[pkg / "agent.py"] = AGENT_PY
         files[agent_dir / "IDENTITY.md"] = IDENTITY_MD
         files[agent_dir / "CRON.md"] = CRON_MD
+        files[agent_dir / "CRON_LOG.md"] = CRON_LOG_MD
         files[agent_dir / "HEARTBEAT.md"] = HEARTBEAT_MD
         files[agent_dir / "MEMORY.md"] = MEMORY_MD
         files[agent_dir / "AGENTS.md"] = AGENTS_MD_PEER
         files[agent_dir / "USER.md"] = USER_MD
+        files[agent_dir / "mcp_config.json"] = MCP_CONFIG_MD
+
+        # Create empty icon.png
+        (agent_dir / "icon.png").write_bytes(b"")
+        # Create chats directory
+        (agent_dir / "chats").mkdir(parents=True, exist_ok=True)
 
     if "graphql" in types:
         files[pkg / f"{gql_module_name}.py"] = GQL_PY

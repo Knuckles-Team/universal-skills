@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import re
 import argparse
 import shutil
@@ -106,9 +107,13 @@ def generate_skill(
     skill_name: str,
     description: str | None = None,
     max_depth: int = 2,
-    target_type: str = "skills",
+    target_type: str = "skill-graphs",
     max_file_kb: int = 50,
     output_dir: str | None = None,
+    max_pages: int = 1000,
+    disable_magic_js: bool = False,
+    wait_for: str | None = None,
+    no_sitemap: bool = False,
 ):
     # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
@@ -122,6 +127,24 @@ def generate_skill(
     elif target_type == "skills":
         skills_base = Path(__file__).resolve().parent.parent.parent
         target_skill_dir = skills_base / skill_name
+    elif target_type == "skill-graphs":
+        # Check if skill-graphs repo exists in the same workspace (agent-packages/)
+        # base_pkg_path is .../universal-skills/universal_skills/
+        # base_pkg_path.parent is .../universal-skills/
+        # base_pkg_path.parent.parent is .../agent-packages/
+        workspace_root = base_pkg_path.parent.parent
+        skill_graphs_repo = workspace_root / "skill-graphs"
+
+        if skill_graphs_repo.exists() and (skill_graphs_repo / "skill_graphs").is_dir():
+            target_skill_dir = skill_graphs_repo / "skill_graphs" / skill_name
+        else:
+            # Fallback to local cache if repo not found
+            cache_base = os.environ.get(
+                "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
+            )
+            target_skill_dir = (
+                Path(cache_base) / "universal-skills" / "skill-graphs" / skill_name
+            )
     else:
         target_skill_dir = base_pkg_path / target_type / skill_name
 
@@ -202,7 +225,6 @@ def generate_skill(
         if markitdown_instance or pymupdf4llm:
             import tempfile
             import requests
-            import os
 
             for doc_url in pdf_urls:
                 print(f"📄 Processing remote document: {doc_url}")
@@ -302,6 +324,14 @@ def generate_skill(
             )
             if strategy == "recursive":
                 cmd.extend(["--max-depth", str(max_depth)])
+                cmd.extend(["--max-pages", str(max_pages)])
+
+            if disable_magic_js:
+                cmd.append("--disable-magic-js")
+            if no_sitemap:
+                cmd.append("--no-sitemap")
+            if wait_for:
+                cmd.extend(["--wait-for", wait_for])
 
             try:
                 subprocess.run(cmd, check=True)
@@ -551,8 +581,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--target-type",
         choices=["skills", "skill-graphs"],
-        default="skills",
-        help="Target directory type (default: skills).",
+        default="skill-graphs",
+        help="Target directory type (default: skill-graphs).",
     )
     parser.add_argument(
         "--max-file-kb",
@@ -565,6 +595,25 @@ if __name__ == "__main__":
         default=None,
         help="Custom output directory. If provided, the skill is created at <output-dir>/<skill-name>/ instead of the default location.",
     )
+    parser.add_argument(
+        "--no-sitemap", action="store_true", help="Disable sitemap auto-discovery"
+    )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=1000,
+        help="Limit the total number of pages crawled in recursive mode.",
+    )
+    parser.add_argument(
+        "--disable-magic-js",
+        action="store_true",
+        help="Disable the complex MAGIC_JS payload in web-crawler.",
+    )
+    parser.add_argument(
+        "--wait-for",
+        type=str,
+        help="Custom CSS selector or JS expression to wait for in web-crawler.",
+    )
 
     args = parser.parse_args()
     generate_skill(
@@ -575,4 +624,8 @@ if __name__ == "__main__":
         args.target_type,
         args.max_file_kb,
         args.output_dir,
+        args.max_pages,
+        args.disable_magic_js,
+        args.wait_for,
+        args.no_sitemap,
     )
