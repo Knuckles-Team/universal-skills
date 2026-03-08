@@ -5,7 +5,7 @@ license: MIT
 tags: [cloudflare, deployment, edge, infrastructure]
 metadata:
   author: Audel Rouhi
-  version: '0.1.33'
+  version: '0.1.34'
 ---
 # Cloudflare Deploy
 
