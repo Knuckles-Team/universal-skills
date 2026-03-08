@@ -114,6 +114,7 @@ def generate_skill(
     disable_magic_js: bool = False,
     wait_for: str | None = None,
     no_sitemap: bool = False,
+    append: bool = False,
 ):
     # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
@@ -155,9 +156,12 @@ def generate_skill(
 
     # Create fresh target
     target_skill_dir.mkdir(parents=True, exist_ok=True)
-    if reference_dir.exists():
-        shutil.rmtree(reference_dir)
-    reference_dir.mkdir(parents=True, exist_ok=True)
+    if not append:
+        if reference_dir.exists():
+            shutil.rmtree(reference_dir)
+        reference_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        reference_dir.mkdir(parents=True, exist_ok=True)
 
     crawl_urls = []
     local_sources = []
@@ -614,6 +618,11 @@ if __name__ == "__main__":
         type=str,
         help="Custom CSS selector or JS expression to wait for in web-crawler.",
     )
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="Append to existing reference files instead of wiping them.",
+    )
 
     args = parser.parse_args()
     generate_skill(
@@ -628,4 +637,5 @@ if __name__ == "__main__":
         args.disable_magic_js,
         args.wait_for,
         args.no_sitemap,
+        args.append,
     )

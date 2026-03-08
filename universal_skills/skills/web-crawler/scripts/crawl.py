@@ -276,12 +276,32 @@ def discover_sitemap(start_url: str, ssl_verify: bool = True) -> str | None:
 
 
 async def crawl_sitemap_sequential(
-    crawler, sitemap_url: str, crawl_config, output_dir: str, ssl_verify: bool = True
+    crawler,
+    sitemap_url: str,
+    crawl_config,
+    output_dir: str,
+    ssl_verify: bool = True,
+    allowed_prefixes: List[str] = None,
 ):
     urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
         logger.warning("No URLs found in sitemap.")
         return
+
+    if allowed_prefixes:
+        logger.info(f"Filtering sitemap URLs by prefixes: {allowed_prefixes}")
+        original_count = len(urls)
+        urls = [
+            u
+            for u in urls
+            if any(urlparse(u).path.startswith(p) for p in allowed_prefixes)
+        ]
+        logger.info(f"Filtered {original_count} URLs down to {len(urls)}")
+
+    if not urls:
+        logger.warning("No URLs remaining after filtering.")
+        return
+
     logger.info(f"Found {len(urls)} URLs to crawl sequentially.")
     session_id = "sitemap_session"
     for url in urls:
@@ -303,11 +323,27 @@ async def crawl_sitemap_parallel(
     process,
     peak_memory,
     ssl_verify: bool = True,
+    allowed_prefixes: List[str] = None,
 ):
     urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
         logger.warning("No URLs found in sitemap.")
         return
+
+    if allowed_prefixes:
+        logger.info(f"Filtering sitemap URLs by prefixes: {allowed_prefixes}")
+        original_count = len(urls)
+        urls = [
+            u
+            for u in urls
+            if any(urlparse(u).path.startswith(p) for p in allowed_prefixes)
+        ]
+        logger.info(f"Filtered {original_count} URLs down to {len(urls)}")
+
+    if not urls:
+        logger.warning("No URLs remaining after filtering.")
+        return
+
     logger.info(f"Found {len(urls)} URLs to crawl in parallel.")
 
     log_memory(process, peak_memory, "Before crawl:")
@@ -522,6 +558,8 @@ async def main():
         ssl_verify = True
 
     # Auto-discovery of sitemap
+    original_seed_urls = list(args.urls)
+    discovered_sitemap = None
     if not args.no_sitemap:
         for url in args.urls:
             sitemap = discover_sitemap(url, ssl_verify=ssl_verify)
@@ -532,8 +570,26 @@ async def main():
                         "Switching to sitemap-parallel strategy for complete coverage."
                     )
                     args.strategy = "sitemap-parallel"
+                discovered_sitemap = sitemap
                 args.urls = [sitemap]  # Update args.urls with the discovered sitemap
                 break  # Stop after finding the first sitemap
+
+    # Determine allowed prefixes for filtering (only if we auto-discovered a sitemap)
+    allowed_prefixes = None
+    if discovered_sitemap and not args.ignore_prefix_restriction:
+
+        def _path_prefix(url):
+            parsed = urlparse(url)
+            path = parsed.path
+            if not path or path == "/":
+                return "/"
+            parts = path.strip("/").split("/")
+            # If it looks like a deep path, use a stricter prefix
+            if len(parts) > 1:
+                return "/" + "/".join(parts[:2]) + "/"
+            return "/" + (parts[0] if parts else "") + "/"
+
+        allowed_prefixes = [_path_prefix(u) for u in original_seed_urls]
 
     process = psutil.Process(os.getpid())
     peak_memory = [0]
@@ -671,7 +727,12 @@ async def main():
         elif args.strategy == "sitemap-sequential":
             for url in args.urls:
                 await crawl_sitemap_sequential(
-                    crawler, url, crawl_config, args.output_dir, ssl_verify=ssl_verify
+                    crawler,
+                    url,
+                    crawl_config,
+                    args.output_dir,
+                    ssl_verify=ssl_verify,
+                    allowed_prefixes=allowed_prefixes if discovered_sitemap else None,
                 )
         elif args.strategy == "sitemap-parallel":
             for url in args.urls:
@@ -684,6 +745,7 @@ async def main():
                     process,
                     peak_memory,
                     ssl_verify=ssl_verify,
+                    allowed_prefixes=allowed_prefixes if discovered_sitemap else None,
                 )
         elif args.strategy == "recursive":
             await crawl_recursive_high_speed(
