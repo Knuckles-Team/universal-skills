@@ -5,7 +5,7 @@ license: MIT
 tags: [media, gif, video, image-processing, ffmpeg, pillow, conversion]
 metadata:
   author: Audel Rouhi
-  version: '0.1.35'
+  version: '0.1.36'
 ---
 # Creative Media Tools
 

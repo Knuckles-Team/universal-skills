@@ -5,7 +5,7 @@ license: MIT
 tags: [jira, tickets, sprint, backlog, atlassian, project-management]
 metadata:
   author: Audel Rouhi
-  version: '0.1.35'
+  version: '0.1.36'
 ---
 # Jira Tools
 
