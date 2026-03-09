@@ -5,7 +5,7 @@ license: MIT
 tags: [theming, design-tokens, design-system, css-variables, color-schemes, dark-mode]
 metadata:
   author: Audel Rouhi
-  version: '0.1.34'
+  version: '0.1.35'
 ---
 # Theme Factory
 
