@@ -5,7 +5,7 @@ license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.36'
+  version: '0.1.37'
 ---
 # C4 Architecture Documentation
 
