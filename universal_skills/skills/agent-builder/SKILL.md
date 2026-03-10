@@ -24,16 +24,16 @@ When building a new agent, you must use the **Agent Pattern**. Agent will have a
 Follow these steps when defining a new agent package:
 
 ### 1. Initialize the Package
-1. Create a `my_agent/agent` directory within the package.
-2. Ensure `pyproject.toml` depends on `agent-utilities>=0.1.10` (and includes `agent` under optional dependencies).
-3. Configure `project.scripts` in `pyproject.toml` to expose the agent entry point (e.g., `my-agent = "my_package.agent:agent_server"`).
+1. Create a `my_agent/agent_data` directory within the package.
+2. Ensure `pyproject.toml` depends on `agent-utilities>=0.2.23` (and includes `agent` under optional dependencies).
+3. Configure `project.scripts` in `pyproject.toml` to expose the agent entry point (e.g., `my-agent = "my_package.agent_server:agent_server"`).
 
 ### 2. Configure Agent Workspace Files
-The agent's behavior and state are controlled by several core files in the `agent/` directory:
+The agent's behavior and state are controlled by several core files in the `agent_data/` directory:
 
 - **IDENTITY.md**: Injects the agent's name, role, system prompt, and tools instructions. Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
 - **USER.md**: Information about the user (name, style, preferences).
-- **AGENTS.md**: Registry of known A2A peer agents.
+- **A2A_AGENTS.md**: Registry of known A2A peer agents.
 - **MEMORY.md**: Long-term memory and event logs.
 - **CRON.md**: Persistent scheduled tasks.
 - **CRON_LOG.md**: History of execution for scheduled tasks.
@@ -44,15 +44,15 @@ The agent's behavior and state are controlled by several core files in the `agen
 
 Each file plays a critical role in how the agent operates and interacts within the workspace.
 
-### 3. Implement the Agent Entry Point (`agent.py`)
-Create `agent.py` in the `agent/` directory.
+### 3. Implement the Agent Entry Point (`agent_server.py`)
+Create `agent_server.py` in the package source directory (NOT in `agent_data`).
 Use `load_identity()` to fetch the `[default]` metadata. Capture the environmental default variables (including OTel, host, port, mcp config, and A2A configurations) and pass them to `create_agent_server()`.
 Ensure you extract the appropriate arguments from `create_agent_parser` to pass to `create_agent_server`, including:
 - `otel_endpoint`, `otel_headers`, `otel_public_key`, `otel_secret_key`, `otel_protocol`
 - `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
 
 ### 4. System Prompt and Context
-When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files (`IDENTITY.md`, `USER.md`, `AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, etc.) are combined into a rich prompt.
+When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files (`IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, etc.) are combined into a rich prompt.
 
 ### 4. Verification
 After implementation:

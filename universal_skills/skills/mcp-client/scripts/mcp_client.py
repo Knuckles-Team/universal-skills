@@ -33,10 +33,20 @@ Usage examples:
 import argparse
 import asyncio
 import json
+import logging
 import os
 import sys
 from pathlib import Path
 from typing import Optional, Union
+
+# Setup logging to stderr
+logger = logging.getLogger("mcp-client")
+handler = logging.StreamHandler(sys.stderr)
+handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+)
+logger.addHandler(handler)
+logger.propagate = False  # Don't let it bubble up to root logger
 
 # ── Optional dependency guardrail ──
 try:
@@ -286,19 +296,20 @@ def generate_mcp_config(
 # ─────────────────────────────────────────────
 async def run_cli(args):
     """Main CLI logic."""
-    if args.action == "generate-config":
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    if args.action == "generate-mcp-config":
         if not args.mcp_command:
-            print(
-                "Error: --mcp-command is required for generate-config", file=sys.stderr
-            )
+            logger.error("--mcp-command is required for generate-mcp-config")
             sys.exit(1)
         if not args.enable_tag:
-            print(
-                "Error: --enable-tag is required for generate-config", file=sys.stderr
-            )
+            logger.error("--enable-tag is required for generate-mcp-config")
             sys.exit(1)
         if not args.all_tags:
-            print("Error: --all-tags is required for generate-config", file=sys.stderr)
+            logger.error("--all-tags is required for generate-mcp-config")
             sys.exit(1)
 
         tags = [t.strip() for t in args.all_tags.split(",")]
@@ -311,9 +322,8 @@ async def run_cli(args):
                 if env_vars:
                     extra_env.update(env_vars)
             except ImportError:
-                print(
-                    "Error: python-dotenv is not installed. Install it with: pip install python-dotenv",
-                    file=sys.stderr,
+                logger.error(
+                    "python-dotenv is not installed. Install it with: pip install python-dotenv"
                 )
                 sys.exit(1)
 
@@ -333,107 +343,145 @@ async def run_cli(args):
         output = json.dumps(config, indent=2)
         if args.output:
             Path(args.output).write_text(output, encoding="utf-8")
-            print(f"Config written to {args.output}")
+            if not args.quiet:
+                print(f"Config written to {args.output}", file=sys.stderr)
         else:
             print(output)
         return
 
     # ── Build the client ──
-    # Default to os.environ so existing vars are preserved by StdioTransport
-    env = dict(os.environ)
+    try:
+        # Default to os.environ so existing vars are preserved by StdioTransport
+        env = dict(os.environ)
 
-    if args.dotenv:
-        try:
-            from dotenv import dotenv_values
+        if args.dotenv:
+            try:
+                from dotenv import dotenv_values
 
-            env_vars = dotenv_values(args.dotenv)
-            if env_vars:
-                env.update(env_vars)
-        except ImportError:
-            print(
-                "Error: python-dotenv is not installed. Install it with: pip install python-dotenv",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    if args.env:
-        for pair in args.env:
-            k, v = pair.split("=", 1)
-            env[k] = v
-
-    if args.config:
-        client = await create_mcp_client(
-            Path(args.config), args.server, env=env or None
-        )
-    elif args.url:
-        client = await create_mcp_client(
-            args.url, headers=dict(h.split("=", 1) for h in (args.headers or []))
-        )
-    elif args.command:
-        cmd_args = args.args.split() if args.args else ["--transport", "stdio"]
-        client = await create_mcp_client(
-            {"command": args.command, "args": cmd_args, "env": env}
-        )
-    else:
-        print(
-            "Error: Provide --config, --url, or --command to connect.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    # ── Execute action ──
-    async with client:
-        if args.action == "list-tools":
-            tools = await client.list_tools()
-            print(f"Found {len(tools)} tools:")
-            for t in tools:
-                desc = (t.description or "")[:80]
-                print(f"  • {t.name}: {desc}")
-
-        elif args.action == "call-tool":
-            if not args.tool_name:
-                print("Error: --tool-name is required for call-tool", file=sys.stderr)
+                env_vars = dotenv_values(args.dotenv)
+                if env_vars:
+                    env.update(env_vars)
+            except ImportError:
+                logger.error(
+                    "python-dotenv is not installed. Install it with: pip install python-dotenv"
+                )
                 sys.exit(1)
 
-            tool_args = {}
-            if args.tool_args:
-                # Check if it's a file path
-                if os.path.isfile(args.tool_args):
-                    try:
-                        with open(args.tool_args, "r", encoding="utf-8") as f:
-                            tool_args = json.load(f)
-                    except Exception as e:
-                        print(
-                            f"Error reading JSON from file {args.tool_args}: {e}",
-                            file=sys.stderr,
-                        )
-                        sys.exit(1)
-                else:
-                    # Otherwise parse as raw JSON string
-                    try:
-                        tool_args = json.loads(args.tool_args)
-                    except Exception as e:
-                        print(f"Error parsing JSON string: {e}", file=sys.stderr)
-                        sys.exit(1)
+        if args.env:
+            for pair in args.env:
+                k, v = pair.split("=", 1)
+                env[k] = v
 
-            result = await client.call_tool(args.tool_name, tool_args)
-            print(json.dumps(result, indent=2, default=str))
-
-        elif args.action == "list-resources":
-            resources = await client.list_resources()
-            print(f"Found {len(resources)} resources:")
-            for r in resources:
-                print(f"  • {r.uri}: {r.name}")
-
-        elif args.action == "list-prompts":
-            prompts = await client.list_prompts()
-            print(f"Found {len(prompts)} prompts:")
-            for p in prompts:
-                print(f"  • {p.name}: {p.description or ''}")
-
+        if args.config:
+            client_coro = create_mcp_client(
+                Path(args.config), args.server, env=env or None
+            )
+        elif args.url:
+            client_coro = create_mcp_client(
+                args.url, headers=dict(h.split("=", 1) for h in (args.headers or []))
+            )
+        elif args.command:
+            cmd_args = args.args.split() if args.args else ["--transport", "stdio"]
+            client_coro = create_mcp_client(
+                {"command": args.command, "args": cmd_args, "env": env}
+            )
         else:
-            print(f"Unknown action: {args.action}", file=sys.stderr)
+            logger.error("Provide --config, --url, or --command to connect.")
             sys.exit(1)
+
+        logger.debug(f"Connecting to MCP server with {args.timeout}s timeout...")
+        client = await asyncio.wait_for(client_coro, timeout=args.timeout)
+
+        # ── Execute action ──
+        async with client:
+            if args.action == "list-mcp-tools":
+                tools = await asyncio.wait_for(
+                    client.list_tools(), timeout=args.timeout
+                )
+                if not args.quiet:
+                    logger.info(f"Found {len(tools)} tools:")
+                for t in tools:
+                    desc = (t.description or "")[:80]
+                    print(f"  • {t.name}: {desc}", file=sys.stderr)
+                # Output machine-readable tools to stdout
+                print(
+                    json.dumps(
+                        [{"name": t.name, "description": t.description} for t in tools]
+                    )
+                )
+
+            elif args.action == "call-mcp-tool":
+                if not args.tool_name:
+                    logger.error("--tool-name is required for call-mcp-tool")
+                    sys.exit(1)
+
+                tool_args = {}
+                if args.tool_args:
+                    # Check if it's a file path
+                    if os.path.isfile(args.tool_args):
+                        try:
+                            with open(args.tool_args, "r", encoding="utf-8") as f:
+                                tool_args = json.load(f)
+                        except Exception as e:
+                            logger.error(
+                                f"Error reading JSON from file {args.tool_args}: {e}"
+                            )
+                            sys.exit(1)
+                    else:
+                        # Otherwise parse as raw JSON string
+                        try:
+                            tool_args = json.loads(args.tool_args)
+                        except Exception as e:
+                            logger.error(f"Error parsing JSON string: {e}")
+                            sys.exit(1)
+
+                logger.debug(f"Calling tool '{args.tool_name}' with args: {tool_args}")
+                result = await asyncio.wait_for(
+                    client.call_tool(args.tool_name, tool_args), timeout=args.timeout
+                )
+                print(json.dumps(result, indent=2, default=str))
+
+            elif args.action == "list-mcp-resources":
+                resources = await asyncio.wait_for(
+                    client.list_resources(), timeout=args.timeout
+                )
+                if not args.quiet:
+                    logger.info(f"Found {len(resources)} resources:")
+                for r in resources:
+                    print(f"  • {r.uri}: {r.name}", file=sys.stderr)
+                print(json.dumps([{"uri": r.uri, "name": r.name} for r in resources]))
+
+            elif args.action == "list-mcp-prompts":
+                prompts = await asyncio.wait_for(
+                    client.list_prompts(), timeout=args.timeout
+                )
+                if not args.quiet:
+                    logger.info(f"Found {len(prompts)} prompts:")
+                for p in prompts:
+                    print(f"  • {p.name}: {p.description or ''}", file=sys.stderr)
+                print(
+                    json.dumps(
+                        [
+                            {"name": p.name, "description": p.description}
+                            for p in prompts
+                        ]
+                    )
+                )
+
+    except asyncio.TimeoutError:
+        logger.error(f"Operation timed out after {args.timeout} seconds")
+        if args.action == "call-mcp-tool":
+            print(
+                json.dumps(
+                    {"status": "error", "message": f"Timeout after {args.timeout}s"}
+                )
+            )
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Error: {e}", exc_info=args.debug)
+        if args.action == "call-mcp-tool":
+            print(json.dumps({"status": "error", "message": str(e)}))
+        sys.exit(1)
 
 
 def main():
@@ -471,11 +519,11 @@ def main():
         "--action",
         required=True,
         choices=[
-            "list-tools",
-            "call-tool",
-            "list-resources",
-            "list-prompts",
-            "generate-config",
+            "list-mcp-tools",
+            "call-mcp-tool",
+            "list-mcp-resources",
+            "list-mcp-prompts",
+            "generate-mcp-config",
         ],
         help="Action to perform",
     )
@@ -490,7 +538,7 @@ def main():
     # Config generation options
     gen_group = parser.add_argument_group("Config Generation")
     gen_group.add_argument(
-        "--mcp-command", help="MCP server command for generate-config"
+        "--mcp-command", help="MCP server command for generate-mcp-config"
     )
     gen_group.add_argument(
         "--enable-tag", help="Tool tag env var to enable (e.g., INCIDENTSTOOL)"
@@ -500,7 +548,21 @@ def main():
         help="Comma-separated list of all tool tag env vars for this MCP server",
     )
     gen_group.add_argument(
-        "--output", "-o", help="Output file path for generate-config"
+        "--output", "-o", help="Output file path for generate-mcp-config"
+    )
+
+    # General options
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=60,
+        help="Timeout in seconds for connection and tool calls",
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging to stderr"
+    )
+    parser.add_argument(
+        "--quiet", action="store_true", help="Suppress non-result output to stdout"
     )
 
     # Dotenv support

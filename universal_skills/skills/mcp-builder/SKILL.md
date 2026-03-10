@@ -142,7 +142,7 @@ To provide a standard mechanism for configuring which tools are exposed by the M
   - **Toggles**: Every group MUST be triggered by explicit, human-readable static environment variables.
 Use environment variables and `.env` files via `python-dotenv`:
 1. Use `load_dotenv(find_dotenv())` at the start of your `mcp_server()` function.
-2. For each registration function (even dynamically generated ones), define a default environment variable constant explicitly in `mcp.py` to allow administrators an easy visual reference of what can be toggled:
+2. For each registration function (even dynamically generated ones), define a default environment variable constant explicitly in `mcp_server.py` to allow administrators an easy visual reference of what can be toggled:
    ```python
    DEFAULT_ACTIONTOOL = to_boolean(os.getenv("ACTIONTOOL", "True"))
    if DEFAULT_ACTIONTOOL:
@@ -166,7 +166,7 @@ Review for:
 #### 3.2 Run and Test
 
 **Python:**
-- Verify execution: `python -m your_package.mcp --help` to check CLI args
+- Verify execution: `python -m your_package.mcp_server --help` to check CLI args
 - Check linting/pre-commits if applicable to the environment
 - Test with MCP Inspector: `npx @modelcontextprotocol/inspector`
 
@@ -222,7 +222,7 @@ Load these resources as needed during development:
 
 ### Implementation Guides (Load During Phase 2)
 - [🐍 Custom FastMCP Guide](./reference/python_mcp_server.md) - Complete custom FastMCP guide mapped to our internal standards containing:
-  - The exact boilerplate required for the `mcp.py` file
+  - The exact boilerplate required for the `mcp_server.py` file
   - Standardization logic for arguments, middlewares, and `mcp_server()`
   - Tool registration using `@mcp.tool`
   - Required imports and dependencies (`fastmcp`, `agent_utilities`, etc.)

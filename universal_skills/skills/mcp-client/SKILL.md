@@ -14,11 +14,17 @@ metadata:
 
 Universal MCP client for connecting to any MCP server directly from a skill. This replaces the old multi-agent pattern where the parent agent held all MCP tools — instead, each skill spawns its own MCP connection with only the tools it needs.
 
-## Why This Exists
-
-Previously, agents used `mcp_url` and `mcp_config` parameters to connect to MCP servers at the agent level, exposing ALL tools to the LLM context window. This overwhelmed context. Now each skill connects independently, enabling only the specific tool tag it needs.
-
 ## Usage
+
+The `mcp_client.py` script is a robust, universal client. It separates informative logs (`stderr`) from machine-readable results (`stdout`), making it ideal for agent consumption.
+
+### General Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--timeout` | Timeout in seconds for connection and tool calls | 60 |
+| `--debug` | Enable verbose debugging logs to `stderr` | False |
+| `--quiet` | Suppress non-essential informative messages | False |
 
 ### List Available Tools
 
@@ -29,18 +35,18 @@ python scripts/mcp_client.py \
     --args "--transport stdio" \
     --env INCIDENTSTOOL=True \
     --env CMDBTOOL=False \
-    --action list-tools
+    --action list-mcp-tools
 
 # From a remote MCP server (HTTP)
 python scripts/mcp_client.py \
     --url http://github-mcp:8787/mcp \
-    --action list-tools
+    --action list-mcp-tools
 
 # From an mcp_config.json
 python scripts/mcp_client.py \
     --config mcp_config.json \
     --server my-server \
-    --action list-tools
+    --action list-mcp-tools
 ```
 
 ### Call a Specific Tool
@@ -54,7 +60,7 @@ python scripts/mcp_client.py \
     --args "--transport stdio" \
     --env INCIDENTSTOOL=True \
     --dotenv .env \
-    --action call-tool \
+    --action call-mcp-tool \
     --tool-name get_incidents \
     --tool-args '{"sysparm_limit": "5"}'
 ```
@@ -69,7 +75,7 @@ python scripts/mcp_client.py \
     --command servicenow-mcp \
     --args "--transport stdio" \
     --dotenv .env \
-    --action call-tool \
+    --action call-mcp-tool \
     --tool-name get_incidents \
     --tool-args args.json
 ```
@@ -84,7 +90,7 @@ Generate full relationship diagrams for ServiceNow Flow Designer flows:
 python scripts/mcp_client.py \
     --command servicenow-mcp \
     --dotenv .env \
-    --action call-tool \
+    --action call-mcp-tool \
     --tool-name workflow_to_mermaid \
     --tool-args '{"flow_identifiers": ["sys_id_1", "sys_id_2"], "save_to_file": true, "output_dir": "."}'
 ```
@@ -97,7 +103,7 @@ Generate a config that enables only one tool tag and disables all others:
 
 ```bash
 python scripts/mcp_client.py \
-    --action generate-config \
+    --action generate-mcp-config \
     --mcp-command servicenow-mcp \
     --enable-tag INCIDENTSTOOL \
     --all-tags "MISCTOOL,FLOWSTOOL,APPLICATIONTOOL,CMDBTOOL,CICDTOOL,PLUGINSTOOL,INCIDENTSTOOL,TABLE_APITOOL" \
@@ -107,8 +113,8 @@ python scripts/mcp_client.py \
 ### List Resources and Prompts
 
 ```bash
-python scripts/mcp_client.py --config mcp_config.json --action list-resources
-python scripts/mcp_client.py --config mcp_config.json --action list-prompts
+python scripts/mcp_client.py --config mcp_config.json --action list-mcp-resources
+python scripts/mcp_client.py --config mcp_config.json --action list-mcp-prompts
 ```
 
 ## Programmatic Usage
@@ -155,13 +161,20 @@ asyncio.run(main())
 | `--args` | Space-separated args for the MCP command |
 | `--env` | Environment variable `KEY=VALUE` (repeatable) |
 | `--headers` | HTTP header `KEY=VALUE` for remote (repeatable) |
-| `--action` | `list-tools`, `call-tool`, `list-resources`, `list-prompts`, `generate-config` |
-| `--tool-name` | Tool name for `call-tool` |
-| `--tool-args` | JSON arguments for `call-tool` (string OR path to `.json` file) |
-| `--mcp-command` | MCP command for `generate-config` |
-| `--enable-tag` | Env var to enable for `generate-config` |
+| `--action` | `list-mcp-tools`, `call-mcp-tool`, `list-mcp-resources`, `list-mcp-prompts`, `generate-mcp-config` |
+| `--tool-name` | Tool name for `call-mcp-tool` |
+| `--tool-args` | JSON arguments for `call-mcp-tool` (string OR path to `.json` file) |
+| `--mcp-command` | MCP command for `generate-mcp-config` |
+| `--enable-tag` | Env var to enable for `generate-mcp-config` |
 | `--all-tags` | Comma-separated list of all tool tag env vars |
-| `-o, --output` | Output file for `generate-config` |
+| `-o, --output` | Output file for `generate-mcp-config` |
+
+## Troubleshooting
+
+- **Timeout Errors**: If you see "Operation timed out", increase the `--timeout` value (e.g., `--timeout 120`).
+- **Connection Refused**: Ensure the MCP server is running and the `--url` or `--command` is correct.
+- **Dependency Issues**: Run with `--debug` to see detailed import or protocol errors.
+- **No Result on stdout**: Check `stderr` for errors. If using `call-tool`, the script should always output a JSON response even on failure.
 
 ## References
 

@@ -10,7 +10,7 @@ All new Python MCP servers MUST follow this precise structural pattern.
 
 ## The Standard Boilerplate
 
-Your `mcp.py` must use the custom CLI argument parsing tool `create_mcp_parser()`, the standard context `config`, and include the required `Eunomia`, `RateLimiting`, and `UserToken` middlewares dynamically built in the `mcp_server()` function.
+Your `mcp_server.py` must use the custom CLI argument parsing tool `create_mcp_parser()`, the standard context `config`, and include the required `Eunomia`, `RateLimiting`, and `UserToken` middlewares dynamically built in the `mcp_server()` function.
 
 Below is the complete generic template. You must copy and adapt this code, customizing the constants, name, tool signatures, and inner implementations as needed.
 
