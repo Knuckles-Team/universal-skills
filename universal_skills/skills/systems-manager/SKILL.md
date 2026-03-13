@@ -5,7 +5,7 @@ license: MIT
 tags: [system, files, navigation, code, search, analysis, tree-sitter, grep]
 metadata:
   author: Audel Rouhi
-  version: '0.1.42'
+  version: '0.1.43'
 ---
 # Systems Manager
 

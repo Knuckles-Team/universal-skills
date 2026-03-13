@@ -5,7 +5,7 @@ license: MIT
 tags: [ui, design, guidelines, accessibility, audit]
 metadata:
   author: Audel Rouhi
-  version: '0.1.42'
+  version: '0.1.43'
 ---
 # Web Interface Guidelines
 
