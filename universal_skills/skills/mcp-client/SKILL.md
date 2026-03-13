@@ -8,7 +8,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Audel Rouhi
-  version: '0.1.41'
+  version: '0.1.42'
 ---
 # MCP Client Skill
 
@@ -30,7 +30,7 @@ The `mcp_client.py` script is a robust, universal client. It separates informati
 
 ```bash
 # From a local MCP server (stdio)
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --command servicenow-mcp \
     --args "--transport stdio" \
     --env INCIDENTSTOOL=True \
@@ -38,12 +38,12 @@ python scripts/mcp_client.py \
     --action list-mcp-tools
 
 # From a remote MCP server (HTTP)
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --url http://github-mcp:8787/mcp \
     --action list-mcp-tools
 
 # From an mcp_config.json
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --config mcp_config.json \
     --server my-server \
     --action list-mcp-tools
@@ -55,7 +55,7 @@ You can pass arguments as a JSON string or as a path to a JSON file.
 
 #### Option A: JSON String
 ```bash
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --command servicenow-mcp \
     --args "--transport stdio" \
     --env INCIDENTSTOOL=True \
@@ -71,7 +71,7 @@ python scripts/mcp_client.py \
 echo '{"sysparm_limit": "10", "sysparm_query": "active=true"}' > args.json
 
 # Call the tool using the file
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --command servicenow-mcp \
     --args "--transport stdio" \
     --dotenv .env \
@@ -87,7 +87,7 @@ Generate full relationship diagrams for ServiceNow Flow Designer flows:
 ```bash
 # 1. Prepare your .env with ServiceNow credentials
 # 2. Call the workflow_to_mermaid tool
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --command servicenow-mcp \
     --dotenv .env \
     --action call-mcp-tool \
@@ -102,7 +102,7 @@ The tool will generate a Markdown file containing the Mermaid diagrams, which yo
 Generate a config that enables only one tool tag and disables all others:
 
 ```bash
-python scripts/mcp_client.py \
+python -m universal_skills.skills.mcp-client.scripts.mcp_client \
     --action generate-mcp-config \
     --mcp-command servicenow-mcp \
     --enable-tag INCIDENTSTOOL \
@@ -113,8 +113,8 @@ python scripts/mcp_client.py \
 ### List Resources and Prompts
 
 ```bash
-python scripts/mcp_client.py --config mcp_config.json --action list-mcp-resources
-python scripts/mcp_client.py --config mcp_config.json --action list-mcp-prompts
+python -m universal_skills.skills.mcp-client.scripts.mcp_client --config mcp_config.json --action list-mcp-resources
+python -m universal_skills.skills.mcp-client.scripts.mcp_client --config mcp_config.json --action list-mcp-prompts
 ```
 
 ## Programmatic Usage
