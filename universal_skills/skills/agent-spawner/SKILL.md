@@ -39,12 +39,54 @@ python -m universal_skills.skills.agent-spawner.scripts.spawn_agent \
     --system-prompt "You are a security scanning agent. Always use available tools."
 ```
 
+**Spawning an Agent using an MCP reference from mcp-client:**
+
+```bash
+# This will automatically resolve 'servicenow-api.json'
+# from universal_skills/skills/mcp-client/references/
+python -m universal_skills.skills.agent-spawner.scripts.spawn_agent \
+    --mcp-config servicenow-api.json \
+    --prompt "What tools are available to you?"
+```
+
+**Loading configuration from a .env file:**
+
+```bash
+python -m universal_skills.skills.agent-spawner.scripts.spawn_agent \
+    --dotenv .env \
+    --mcp-config servicenow-api.json \
+    --prompt "What tools are available to you?"
+```
+
+## Available MCP Servers
+
+You can easily connect to any of these pre-configured MCP servers by passing their JSON filename to the `--mcp-config` argument.
+
+| MCP Server | Config File | Description |
+|------------|-------------|-------------|
+| ServiceNow | `servicenow-api.json` | ITSM and Workflow automation |
+| AdGuard Home | `adguard-home-agent.json` | Network-wide ad & tracker blocking |
+| GitLab | `gitlab-api.json` | DevOps platform for source control & CI/CD |
+| Microsoft 365 | `microsoft-agent.json` | Office 365, Outlook, OneDrive, Teams |
+| Systems Manager | `systems-manager.json` | System administration and OS-level tools |
+| Ansible Tower | `ansible-tower-mcp.json` | Automation controller for Ansible |
+| Portainer | `portainer-agent.json` | Container management for Docker/K8s |
+| Jellyfin | `jellyfin-mcp.json` | Media server management |
+| Arr Stack | `arr-mcp.json` | Media management for PVRs (Sonarr, Radarr) |
+| Container Manager | `container-manager-mcp.json` | Docker and container management |
+| Nextcloud | `nextcloud-agent.json` | File sharing and collaboration server |
+| Mealie | `mealie-mcp.json` | Recipe manager and meal planner |
+| Repository Manager | `repository-manager.json` | Maintenance and management of git repos |
+| Stirling PDF Agent | `stirlingpdf-agent.json` | PDF manipulation and processing |
+| Wger Fitness | `wger-agent.json` | Fitness, workout, and diet tracking |
+
 ## Arguments
 
 - `--prompt`: (Required) The instruction/prompt to send to the newly spawned agent.
-- `--mcp-config`: Path to the `mcp_config.json` file configuring the capabilities. (Defaults to `MCP_CONFIG` env).
+- `--mcp-config`: Path to the `mcp_config.json` file configuring the capabilities. (Defaults to `MCP_CONFIG` env). If the file doesn't exist locally, it will automatically check for a matching reference in the `mcp-client` skill.
 - `--mcp-url`: Alternative to config, a URL directly to a single MCP server. (Defaults to `MCP_URL` env).
 - `--custom-skills-directory`: Path to directory to load custom Universal Skills. (Defaults to `CUSTOM_SKILLS_DIRECTORY` env).
+- `--dotenv`: Path to a `.env` file to load environment variables from.
 - `--name`: The name of the spawned agent. (Defaults to `DEFAULT_AGENT_NAME` env).
 - `--system-prompt`: The system prompt to apply. (Defaults to `AGENT_SYSTEM_PROMPT` env).
 - `--provider`: The LLM Provider to use inside the agent (e.g. `openai`, `anthropic`). (Defaults to `PROVIDER` env).

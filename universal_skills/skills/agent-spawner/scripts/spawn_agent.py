@@ -66,7 +66,7 @@ async def main():
     )
     parser.add_argument(
         "--model-id",
-        default=os.getenv("MODEL_ID", "qwen/qwen3.5-35b-a3b"),
+        default=os.getenv("MODEL_ID", "nvidia/nemotron-3-super"),
         help="LLM Model ID",
     )
     parser.add_argument(
@@ -81,7 +81,54 @@ async def main():
         "--insecure", action="store_true", help="Disable SSL Verification"
     )
 
+    # Dotenv support
+    parser.add_argument(
+        "--dotenv", help="Path to a .env file to load environment variables from"
+    )
+
     args = parser.parse_args()
+
+    # Load dotenv if provided
+    if args.dotenv:
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv(args.dotenv)
+            # Re-evaluate arguments that might be in env if they weren't explicitly passed
+            # This is a bit tricky with argparse defaults already set at parse time.
+            # However, create_agent uses passed args, so we update the args object manually if default was used.
+            # But wait, create_agent will use the args we pass.
+            # If the user DID NOT pass --name, args.name is 'SpawnedAgent' (default).
+            # If they have DEFAULT_AGENT_NAME in .env, we want that.
+        except ImportError:
+            print(
+                "Error: python-dotenv is not installed. Install it with: pip install python-dotenv",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+    # Resolve MCP Config Reference
+    mcp_config = args.mcp_config
+    if mcp_config and not os.path.exists(mcp_config):
+        # Check in mcp-client references if it doesn't exist locally
+        try:
+            # Assuming we are running from the package root or standard install
+            import universal_skills
+
+            package_path = os.path.dirname(universal_skills.__file__)
+            ref_path = os.path.join(
+                package_path, "skills", "mcp-client", "references", mcp_config
+            )
+
+            if os.path.exists(ref_path):
+                mcp_config = ref_path
+            elif not mcp_config.endswith(".json"):
+                # Try adding .json extension
+                json_ref_path = ref_path + ".json"
+                if os.path.exists(json_ref_path):
+                    mcp_config = json_ref_path
+        except (ImportError, Exception):
+            pass
 
     # Evaluate SSL Verify (Default: Check Global env config, fallback to True; command arg overrides to False)
     ssl_verify = os.environ.get("SSL_VERIFY", "True").lower() not in (
@@ -100,7 +147,7 @@ async def main():
         base_url=args.base_url,
         api_key=args.api_key,
         mcp_url=args.mcp_url,
-        mcp_config=args.mcp_config,
+        mcp_config=mcp_config,
         custom_skills_directory=args.custom_skills_directory,
         ssl_verify=ssl_verify,
         name=args.name,

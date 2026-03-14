@@ -5,7 +5,7 @@ license: MIT
 tags: [agent, development, pydantic-ai, architecture]
 metadata:
   author: Audel Rouhi
-  version: '0.1.43'
+  version: '0.1.44'
 ---
 # Agent Builder Guide
 

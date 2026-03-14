@@ -7,7 +7,7 @@
 
 | Variable | Description |
 |----------|-------------|
-| `SERVICENOW_INSTANCE_URL` | Required for authentication |
+| `SERVICENOW_INSTANCE` | Required for authentication |
 | `SERVICENOW_USERNAME` | Required for authentication |
 | `SERVICENOW_PASSWORD` | Required for authentication |
 
@@ -60,7 +60,7 @@ Spawns the MCP server locally as a subprocess:
         "stdio"
       ],
       "env": {
-        "SERVICENOW_INSTANCE_URL": "${SERVICENOW_INSTANCE_URL}",
+        "SERVICENOW_INSTANCE": "${SERVICENOW_INSTANCE}",
         "SERVICENOW_USERNAME": "${SERVICENOW_USERNAME}",
         "SERVICENOW_PASSWORD": "${SERVICENOW_PASSWORD}",
         "ACCOUNTTOOL": "True",
@@ -128,7 +128,7 @@ Enable only `ACCOUNTTOOL` and disable all others:
         "stdio"
       ],
       "env": {
-        "SERVICENOW_INSTANCE_URL": "${SERVICENOW_INSTANCE_URL}",
+        "SERVICENOW_INSTANCE": "${SERVICENOW_INSTANCE}",
         "SERVICENOW_USERNAME": "${SERVICENOW_USERNAME}",
         "SERVICENOW_PASSWORD": "${SERVICENOW_PASSWORD}",
         "ACCOUNTTOOL": "True",

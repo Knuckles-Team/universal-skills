@@ -36,8 +36,9 @@ import json
 import logging
 import os
 import sys
+import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 # Setup logging to stderr
 logger = logging.getLogger("mcp-client")
@@ -146,6 +147,30 @@ async def create_mcp_client(
 
 
 # ─────────────────────────────────────────────
+# Utils: Environment Variable Substitution
+# ─────────────────────────────────────────────
+def substitute_env_vars(data: Any, env: dict[str, str]) -> Any:
+    """
+    Recursively replace ${VAR} or $VAR in strings with values from env.
+    Works on dicts, lists, and strings.
+    """
+    if isinstance(data, dict):
+        return {k: substitute_env_vars(v, env) for k, v in data.items()}
+    if isinstance(data, list):
+        return [substitute_env_vars(i, env) for i in data]
+    if isinstance(data, str):
+        # Match ${VAR} or $VAR (preferring ${VAR})
+        pattern = re.compile(r"\$\{([^}]+)\}|\$([a-zA-Z_][a-zA-Z0-9_]*)")
+
+        def replace(match):
+            name = match.group(1) or match.group(2)
+            return env.get(name, match.group(0))
+
+        return pattern.sub(replace, data)
+    return data
+
+
+# ─────────────────────────────────────────────
 # Transport builders
 # ─────────────────────────────────────────────
 def _build_transport_from_canonical(
@@ -170,11 +195,21 @@ def _build_transport_from_canonical(
         )
 
     if server_cfg.transport in {"stdio", "subprocess"}:
+        base_env = env or {}
+        # Resolve config's env/args/command/cwd using the base environment
+        res_config_env = substitute_env_vars(server_cfg.env or {}, base_env)
+        res_command = substitute_env_vars(server_cfg.command or command, base_env)
+        res_args = substitute_env_vars(server_cfg.args or args or [], base_env)
+        res_cwd = substitute_env_vars(server_cfg.cwd or cwd, base_env)
+
+        # Final environment is base + resolved config overrides
+        final_env = {**base_env, **res_config_env}
+
         return StdioTransport(
-            command=server_cfg.command or command,
-            args=server_cfg.args or args or [],
-            env={**(env or {}), **(server_cfg.env or {})},
-            cwd=server_cfg.cwd or cwd,
+            command=res_command,
+            args=res_args,
+            env=final_env,
+            cwd=res_cwd,
         )
     elif server_cfg.transport in {"http", "httpstream", "streamablehttp"}:
         url = (
@@ -184,9 +219,15 @@ def _build_transport_from_canonical(
         )
         if not url:
             raise ValueError("No URL found in HTTP server config")
+
+        resolved_url = substitute_env_vars(url, env or {})
+        resolved_headers = substitute_env_vars(
+            {**(headers or {}), **(server_cfg.headers or {})}, env or {}
+        )
+
         return StreamableHttpTransport(
-            url=url,
-            headers={**(headers or {}), **(server_cfg.headers or {})},
+            url=resolved_url,
+            headers=resolved_headers,
         )
     else:
         raise ValueError(f"Unsupported transport in config: {server_cfg.transport}")
@@ -222,11 +263,19 @@ def _build_transport_from_raw(
         )
 
     # Stdio transport
+    base_env = env or {}
+    res_config_env = substitute_env_vars(cfg.get("env", {}), base_env)
+    res_command = substitute_env_vars(cfg.get("command", command), base_env)
+    res_args = substitute_env_vars(cfg.get("args", args or []), base_env)
+    res_cwd = substitute_env_vars(cfg.get("cwd", cwd), base_env)
+
+    final_env = {**base_env, **res_config_env}
+
     return StdioTransport(
-        command=cfg.get("command", command),
-        args=cfg.get("args", args or []),
-        env={**(env or {}), **cfg.get("env", {})},
-        cwd=cfg.get("cwd", cwd),
+        command=res_command,
+        args=res_args,
+        env=final_env,
+        cwd=res_cwd,
     )
 
 
@@ -238,11 +287,19 @@ def _build_transport_from_dict(target, command, args, env, cwd, headers):
             url=url,
             headers={**(headers or {}), **target.get("headers", {})},
         )
+    base_env = env or {}
+    res_config_env = substitute_env_vars(target.get("env", {}), base_env)
+    res_command = substitute_env_vars(target.get("command", command), base_env)
+    res_args = substitute_env_vars(target.get("args", args or []), base_env)
+    res_cwd = substitute_env_vars(target.get("cwd", cwd), base_env)
+
+    final_env = {**base_env, **res_config_env}
+
     return StdioTransport(
-        command=target.get("command", command),
-        args=target.get("args", args or []),
-        env={**(env or {}), **target.get("env", {})},
-        cwd=target.get("cwd", cwd),
+        command=res_command,
+        args=res_args,
+        env=final_env,
+        cwd=res_cwd,
     )
 
 
