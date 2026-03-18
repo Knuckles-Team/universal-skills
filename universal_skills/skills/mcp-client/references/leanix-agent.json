@@ -9,8 +9,8 @@
             "env": {
                 "LEANIX_WORKSPACE": "${LEANIX_WORKSPACE}",
                 "LEANIX_API_TOKEN": "${LEANIX_API_TOKEN}",
-                "FACTSHEETSTOOL": "True",
-                "GRAPHQLTOOL": "True"
+                "FACTSHEETSTOOL": "${FACTSHEETSTOOL:-True}",
+                "GRAPHQLTOOL": "${GRAPHQLTOOL:-True}"
             }
         }
     }

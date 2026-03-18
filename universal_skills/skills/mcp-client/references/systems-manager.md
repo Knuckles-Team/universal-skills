@@ -1,7 +1,6 @@
 # Systems Manager MCP Reference
 
 **Project:** `systems-manager`
-**Entrypoint:** `systems-manager-mcp`
 
 ## Available Tool Tags (17)
 

@@ -4,9 +4,9 @@
             "command": "stirlingpdf-agent-mcp",
             "args": [],
             "env": {
-                "STIRLINGPDF_URL": "http://localhost:8080",
-                "STIRLINGPDF_API_KEY": "",
-                "PDFTOOL": "True"
+                "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
+                "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
+                "PDFTOOL": "${PDFTOOL:-True}"
             }
         }
     }

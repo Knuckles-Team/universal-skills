@@ -1,9 +1,5 @@
 # Stirling PDF Agent Reference
 
-**Mcp Client Tool Tags:** `PDFTOOL`
-
-This agent provides an interface to the [Stirling PDF](https://docs.stirlingpdf.com/API/) tool via its REST API, allowing AI agents to manipulate PDF files.
-
 ## Environment Variables
 
 | Variable | Description | Default | Required |

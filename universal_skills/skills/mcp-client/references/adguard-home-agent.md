@@ -1,7 +1,6 @@
 # AdGuard Home MCP Reference
 
 **Project:** `adguard-home-agent`
-**Entrypoint:** `adguard-mcp`
 
 ## Required Environment Variables
 

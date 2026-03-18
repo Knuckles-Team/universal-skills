@@ -1,7 +1,6 @@
 # LeanIX Agent MCP Reference
 
 **Project:** `leanix-agent`
-**Entrypoint:** `leanix-agent-mcp`
 
 ## Required Environment Variables
 

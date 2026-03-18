@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "tunnel-manager-mcp": {
+            "command": "tunnel-manager-mcp",
+            "args": ["--transport", "stdio"],
+            "env": {
+                "TUNNEL_IDENTITY_FILE": "${TUNNEL_IDENTITY_FILE}",
+                "TUNNELMANAGERTOOL": "${TUNNELMANAGERTOOL:-True}"
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "media-downloader-mcp": {
+            "command": "media-downloader-mcp",
+            "args": ["--transport", "stdio"],
+            "env": {
+                "DOWNLOAD_DIRECTORY": "${DOWNLOAD_DIRECTORY}",
+                "AUDIO_ONLY": "${AUDIO_ONLY:-False}",
+                "MEDIADOWNLOADERTOOL": "${MEDIADOWNLOADERTOOL:-True}"
+            }
+        }
+    }
+}

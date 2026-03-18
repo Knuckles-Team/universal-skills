@@ -982,6 +982,8 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+from agent_utilities.exceptions import AuthError, UnauthorizedError
+
 # TODO: Import your API wrapper class here
 # from {pkg_dir}.{api_module_name} import {api_class_name}
 
@@ -996,18 +998,26 @@ def get_client():
         token = os.getenv("{auth_env}", "")
         verify = os.getenv("{verify_env}", "True").lower() in ("true", "1", "yes")
 
-        # TODO: Uncomment and configure once the API wrapper class is created
-        # _client = {api_class_name}(
-        #     base_url=base_url,
-        #     token=token,
-        #     verify=verify,
-        # )
+        try:
+            # TODO: Uncomment and configure once the API wrapper class is created
+            # _client = {api_class_name}(
+            #     base_url=base_url,
+            #     token=token,
+            #     verify=verify,
+            # )
 
-        # Placeholder: return a simple session-based client
-        session = requests.Session()
-        session.headers.update({{"Authorization": f"Bearer {{token}}"}})
-        session.verify = verify
-        _client = type("Client", (), {{"session": session, "base_url": base_url}})()
+            # Placeholder until API wrapper is implemented
+            if _client is None:
+                session = requests.Session()
+                session.headers.update({{"Authorization": f"Bearer {{token}}"}})
+                session.verify = verify
+                _client = type("Client", (), {{"session": session, "base_url": base_url}})()
+        except (AuthError, UnauthorizedError) as e:
+            raise RuntimeError(
+                f"AUTHENTICATION ERROR: The credentials provided are not valid for '{{base_url}}'. "
+                f"Please check your {auth_env} and {service_url_env} environment variables. "
+                f"Error details: {{str(e)}}"
+            ) from e
 
     return _client
 """

@@ -1,7 +1,6 @@
 # Ansible Tower MCP Reference
 
 **Project:** `ansible-tower-mcp`
-**Entrypoint:** `ansible-tower-mcp`
 
 ## Required Environment Variables
 

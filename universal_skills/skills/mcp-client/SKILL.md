@@ -8,7 +8,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Audel Rouhi
-  version: '0.1.44'
+  version: '0.1.45'
 ---
 # MCP Client Skill
 
@@ -185,10 +185,12 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | ServiceNow | [servicenow-api.md](references/servicenow-api.md) | [servicenow-api.json](references/servicenow-api.json) | 30 |
 | AdGuard Home | [adguard-home-agent.md](references/adguard-home-agent.md) | [adguard-home-agent.json](references/adguard-home-agent.json) | 15 |
 | Arr Stack | [arr-mcp.md](references/arr-mcp.md) | [arr-mcp.json](references/arr-mcp.json) | 7 |
+| GitHub | [github-mcp.md](references/github-mcp.md) | [github-mcp.json](references/github-mcp.json) | 19 |
 | GitLab | [gitlab-api.md](references/gitlab-api.md) | [gitlab-api.json](references/gitlab-api.json) | 19 |
 | Microsoft 365 | [microsoft-agent.md](references/microsoft-agent.md) | [microsoft-agent.json](references/microsoft-agent.json) | 37 |
 | Container Manager | [container-manager-mcp.md](references/container-manager-mcp.md) | [container-manager-mcp.json](references/container-manager-mcp.json) | 10 |
 | Nextcloud | [nextcloud-agent.md](references/nextcloud-agent.md) | [nextcloud-agent.json](references/nextcloud-agent.json) | 6 |
+| Plane | [plane-mcp.md](references/plane-mcp.md) | [plane-mcp.json](references/plane-mcp.json) | 10 |
 | Systems Manager | [systems-manager.md](references/systems-manager.md) | [systems-manager.json](references/systems-manager.json) | 17 |
 | Wger Fitness | [wger-agent.md](references/wger-agent.md) | [wger-agent.json](references/wger-agent.json) | 7 |
 | Mealie | [mealie-mcp.md](references/mealie-mcp.md) | [mealie-mcp.json](references/mealie-mcp.json) | 11 |
@@ -197,6 +199,15 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | Jellyfin | [jellyfin-mcp.md](references/jellyfin-mcp.md) | [jellyfin-mcp.json](references/jellyfin-mcp.json) | 62 |
 | Portainer | [portainer-agent.md](references/portainer-agent.md) | [portainer-agent.json](references/portainer-agent.json) | 10 |
 | Stirling PDF Agent | [stirlingpdf-agent.md](references/stirlingpdf-agent.md) | [stirlingpdf-agent.json](references/stirlingpdf-agent.json) | 1 |
+| LeanIX Agent | [leanix-agent.md](references/leanix-agent.md) | [leanix-agent.json](references/leanix-agent.json) | 2 |
+| ArchiveBox API | [archivebox-api.md](references/archivebox-api.md) | [archivebox-api.json](references/archivebox-api.json) | 3 |
+| Audio Transcriber | [audio-transcriber-mcp.md](references/audio-transcriber-mcp.md) | [audio-transcriber-mcp.json](references/audio-transcriber-mcp.json) | 1 |
+| DocumentDB MCP | [documentdb-mcp.md](references/documentdb-mcp.md) | [documentdb-mcp.json](references/documentdb-mcp.json) | 1 |
+| Media Downloader | [media-downloader-mcp.md](references/media-downloader-mcp.md) | [media-downloader-mcp.json](references/media-downloader-mcp.json) | 1 |
+| SearXNG MCP | [searxng-mcp.md](references/searxng-mcp.md) | [searxng-mcp.json](references/searxng-mcp.json) | 1 |
+| Tunnel Manager | [tunnel-manager-mcp.md](references/tunnel-manager-mcp.md) | [tunnel-manager-mcp.json](references/tunnel-manager-mcp.json) | 1 |
+| Vector MCP | [vector-mcp.md](references/vector-mcp.md) | [vector-mcp.json](references/vector-mcp.json) | 1 |
+
 
 ## Dependencies
 

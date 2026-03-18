@@ -9,13 +9,13 @@
             "env": {
                 "WGER_INSTANCE": "${WGER_INSTANCE}",
                 "WGER_ACCESS_TOKEN": "${WGER_ACCESS_TOKEN}",
-                "ROUTINETOOL": "True",
-                "ROUTINECONFIGTOOL": "True",
-                "EXERCISETOOL": "True",
-                "WORKOUTTOOL": "True",
-                "NUTRITIONTOOL": "True",
-                "BODYTOOL": "True",
-                "USERTOOL": "True"
+                "ROUTINETOOL": "${ROUTINETOOL:-True}",
+                "ROUTINECONFIGTOOL": "${ROUTINECONFIGTOOL:-True}",
+                "EXERCISETOOL": "${EXERCISETOOL:-True}",
+                "WORKOUTTOOL": "${WORKOUTTOOL:-True}",
+                "NUTRITIONTOOL": "${NUTRITIONTOOL:-True}",
+                "BODYTOOL": "${BODYTOOL:-True}",
+                "USERTOOL": "${USERTOOL:-True}"
             }
         }
     }

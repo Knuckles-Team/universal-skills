@@ -4,6 +4,7 @@
 import os
 from pathlib import Path
 from importlib.resources import files, as_file
+from typing import Optional
 
 try:
     from openai import AsyncOpenAI
@@ -35,7 +36,7 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.44"
+__version__ = "0.1.45"
 
 
 def get_universal_skills_package_name() -> str:
@@ -122,3 +123,42 @@ def get_skill_graph_path() -> list[str]:
                     enabled_paths.append(str(item_path.resolve()))
 
     return enabled_paths
+
+
+def resolve_mcp_reference(filename: str) -> Optional[str]:
+    """
+    Resolves an MCP configuration filename to its absolute path within the mcp-client skill.
+    Supports .json, .md, and extensionless filenames (defaults to .json).
+    """
+    if not filename:
+        return None
+
+    # Check if it's already an absolute or relative path that exists
+    if os.path.exists(filename):
+        return str(Path(filename).resolve())
+
+    try:
+        # Standardize filename: if no extension, default to .json
+        # If it has an extension (like .md), keep it.
+        has_extension = any(filename.endswith(ext) for ext in [".json", ".md"])
+        target_file = filename if has_extension else f"{filename}.json"
+
+        # Resolve via importlib.resources
+        ref_base = (
+            files(get_universal_skills_package_name())
+            / "skills"
+            / "mcp-client"
+            / "references"
+            / target_file
+        )
+        with as_file(ref_base) as path:
+            if path.exists():
+                return str(path)
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).debug(
+            f"Error resolving MCP reference {filename}: {e}"
+        )
+
+    return None

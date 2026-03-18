@@ -7,10 +7,10 @@
         "stdio"
       ],
       "env": {
-        "FILE_OPERATIONSTOOL": "True",
-        "GIT_OPERATIONSTOOL": "True",
-        "MISCTOOL": "True",
-        "SYSTEM_OPERATIONSTOOL": "True"
+        "FILE_OPERATIONSTOOL": "${FILE_OPERATIONSTOOL:-True}",
+        "GIT_OPERATIONSTOOL": "${GIT_OPERATIONSTOOL:-True}",
+        "MISCTOOL": "${MISCTOOL:-True}",
+        "SYSTEM_OPERATIONSTOOL": "${SYSTEM_OPERATIONSTOOL:-True}"
       }
     }
   }

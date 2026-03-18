@@ -1,7 +1,6 @@
 # Portainer Agent MCP Reference
 
 **Project:** `portainer-agent`
-**Entrypoint:** `portainer-mcp`
 
 ## Required Environment Variables
 

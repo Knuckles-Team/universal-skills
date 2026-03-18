@@ -1,7 +1,6 @@
 # Mealie MCP Reference
 
 **Project:** `mealie-mcp`
-**Entrypoint:** `mealie-mcp`
 
 ## Required Environment Variables
 

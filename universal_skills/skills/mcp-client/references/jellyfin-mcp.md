@@ -1,7 +1,6 @@
 # Jellyfin MCP Reference
 
 **Project:** `jellyfin-mcp`
-**Entrypoint:** `jellyfin-mcp`
 
 ## Required Environment Variables
 

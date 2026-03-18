@@ -7,23 +7,23 @@
         "stdio"
       ],
       "env": {
-        "CRONTOOL": "True",
-        "DISKTOOL": "True",
-        "FILESYSTEMTOOL": "True",
-        "FIREWALL_MANAGEMENTTOOL": "True",
-        "LOGTOOL": "True",
-        "MISCTOOL": "True",
-        "NETWORKTOOL": "True",
-        "NODEJSTOOL": "True",
-        "PROCESSTOOL": "True",
-        "PYTHONTOOL": "True",
-        "SERVICETOOL": "True",
-        "SHELLTOOL": "True",
-        "SSH_MANAGEMENTTOOL": "True",
-        "SYSTEMTOOL": "True",
-        "SYSTEM_MANAGEMENTTOOL": "True",
-        "TEXT_EDITORTOOL": "True",
-        "USERTOOL": "True"
+        "CRONTOOL": "${CRONTOOL:-True}",
+        "DISKTOOL": "${DISKTOOL:-True}",
+        "FILESYSTEMTOOL": "${FILESYSTEMTOOL:-True}",
+        "FIREWALL_MANAGEMENTTOOL": "${FIREWALL_MANAGEMENTTOOL:-True}",
+        "LOGTOOL": "${LOGTOOL:-True}",
+        "MISCTOOL": "${MISCTOOL:-True}",
+        "NETWORKTOOL": "${NETWORKTOOL:-True}",
+        "NODEJSTOOL": "${NODEJSTOOL:-True}",
+        "PROCESSTOOL": "${PROCESSTOOL:-True}",
+        "PYTHONTOOL": "${PYTHONTOOL:-True}",
+        "SERVICETOOL": "${SERVICETOOL:-True}",
+        "SHELLTOOL": "${SHELLTOOL:-True}",
+        "SSH_MANAGEMENTTOOL": "${SSH_MANAGEMENTTOOL:-True}",
+        "SYSTEMTOOL": "${SYSTEMTOOL:-True}",
+        "SYSTEM_MANAGEMENTTOOL": "${SYSTEM_MANAGEMENTTOOL:-True}",
+        "TEXT_EDITORTOOL": "${TEXT_EDITORTOOL:-True}",
+        "USERTOOL": "${USERTOOL:-True}"
       }
     }
   }

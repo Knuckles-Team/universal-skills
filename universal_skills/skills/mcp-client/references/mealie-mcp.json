@@ -9,17 +9,17 @@
       "env": {
         "MEALIE_URL": "${MEALIE_URL}",
         "MEALIE_API_KEY": "${MEALIE_API_KEY}",
-        "ADMINTOOL": "True",
-        "APPTOOL": "True",
-        "EXPLORETOOL": "True",
-        "GROUPSTOOL": "True",
-        "HOUSEHOLDSTOOL": "True",
-        "MISCTOOL": "True",
-        "ORGANIZERTOOL": "True",
-        "RECIPESTOOL": "True",
-        "SHAREDTOOL": "True",
-        "USERSTOOL": "True",
-        "UTILSTOOL": "True"
+        "ADMINTOOL": "${ADMINTOOL:-True}",
+        "APPTOOL": "${APPTOOL:-True}",
+        "EXPLORETOOL": "${EXPLORETOOL:-True}",
+        "GROUPSTOOL": "${GROUPSTOOL:-True}",
+        "HOUSEHOLDSTOOL": "${HOUSEHOLDSTOOL:-True}",
+        "MISCTOOL": "${MISCTOOL:-True}",
+        "ORGANIZERTOOL": "${ORGANIZERTOOL:-True}",
+        "RECIPESTOOL": "${RECIPESTOOL:-True}",
+        "SHAREDTOOL": "${SHAREDTOOL:-True}",
+        "USERSTOOL": "${USERSTOOL:-True}",
+        "UTILSTOOL": "${UTILSTOOL:-True}"
       }
     }
   }

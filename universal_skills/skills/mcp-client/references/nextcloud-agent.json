@@ -10,12 +10,12 @@
         "NEXTCLOUD_URL": "${NEXTCLOUD_URL}",
         "NEXTCLOUD_USERNAME": "${NEXTCLOUD_USERNAME}",
         "NEXTCLOUD_PASSWORD": "${NEXTCLOUD_PASSWORD}",
-        "CALENDARTOOL": "True",
-        "CONTACTSTOOL": "True",
-        "FILESTOOL": "True",
-        "MISCTOOL": "True",
-        "SHARINGTOOL": "True",
-        "USERTOOL": "True"
+        "CALENDARTOOL": "${CALENDARTOOL:-True}",
+        "CONTACTSTOOL": "${CONTACTSTOOL:-True}",
+        "FILESTOOL": "${FILESTOOL:-True}",
+        "MISCTOOL": "${MISCTOOL:-True}",
+        "SHARINGTOOL": "${SHARINGTOOL:-True}",
+        "USERTOOL": "${USERTOOL:-True}"
       }
     }
   }

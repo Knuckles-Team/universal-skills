@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "searxng-mcp": {
+            "command": "searxng-mcp",
+            "args": ["--transport", "stdio"],
+            "env": {
+                "SEARXNG_INSTANCE_URL": "${SEARXNG_INSTANCE_URL}",
+                "SEARXNG_USERNAME": "${SEARXNG_USERNAME}",
+                "SEARXNG_PASSWORD": "${SEARXNG_PASSWORD}",
+                "USE_RANDOM_INSTANCE": "${USE_RANDOM_INSTANCE:-false}",
+                "SEARXNGTOOL": "${SEARXNGTOOL:-True}"
+            }
+        }
+    }
+}

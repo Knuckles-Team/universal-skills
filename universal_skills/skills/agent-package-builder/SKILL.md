@@ -57,7 +57,7 @@ After scaffolding, implement the domain-specific code by delegating to the appro
 Read the `api-wrapper-builder` skill and follow its instructions to:
 1. Create `{pkg_dir}/{name}_api.py` — The API wrapper class.
 2. Create `{pkg_dir}/{name}_models.py` — Pydantic input/output models.
-3. Update `{pkg_dir}/auth.py` — Configure authentication for the target service.
+3. Update `{pkg_dir}/auth.py` — Configure authentication for the target service. Ensure you follow the standardized pattern: wrap API instantiation in a `try...except (AuthError, UnauthorizedError)` block and raise a descriptive `RuntimeError` with troubleshooting advice.
 
 #### 3b. MCP Server (if type includes `mcp`)
 
