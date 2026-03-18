@@ -5,7 +5,7 @@ license: MIT
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.46'
+  version: '0.1.47'
 ---
 # Mermaid Diagramming
 

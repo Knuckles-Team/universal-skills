@@ -5,7 +5,7 @@ license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
 metadata:
   author: Audel Rouhi
-  version: '0.1.46'
+  version: '0.1.47'
 ---
 # Security Tools
 
