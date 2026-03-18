@@ -5,7 +5,7 @@ license: MIT
 tags: [product-management, prd, user-stories, prioritization, roadmap, agile]
 metadata:
   author: Audel Rouhi
-  version: '0.1.45'
+  version: '0.1.46'
 ---
 # Product Management & Execution
 

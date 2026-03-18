@@ -5,7 +5,7 @@ license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
   author: Audel Rouhi
-  version: '0.1.45'
+  version: '0.1.46'
 ---
 # MCP Server Development Guide
 

@@ -5,7 +5,7 @@ license: MIT
 tags: [skills, development, guide, builder, creator]
 metadata:
   author: Audel Rouhi
-  version: '0.1.45'
+  version: '0.1.46'
 ---
 # Skill Builder
 

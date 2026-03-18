@@ -5,7 +5,7 @@ license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
   author: Audel Rouhi
-  version: '0.1.45'
+  version: '0.1.46'
 ---
 # Web Search
 
