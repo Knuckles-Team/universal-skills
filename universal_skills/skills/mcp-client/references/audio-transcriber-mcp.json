@@ -2,11 +2,15 @@
     "mcpServers": {
         "audio-transcriber-mcp": {
             "command": "audio-transcriber-mcp",
-            "args": ["--transport", "stdio"],
+            "args": [
+                "--transport",
+                "stdio"
+            ],
             "env": {
                 "TRANSCRIBE_DIRECTORY": "${TRANSCRIBE_DIRECTORY}",
                 "WHISPER_MODEL": "${WHISPER_MODEL:-base}",
-                "AUDIOTRANSCRIBERTOOL": "${AUDIOTRANSCRIBERTOOL:-True}"
+                "AUDIO_PROCESSINGTOOL": "${ AUDIO_PROCESSINGTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }"
             }
         }
     }

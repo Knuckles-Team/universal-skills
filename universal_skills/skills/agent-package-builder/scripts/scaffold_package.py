@@ -1313,6 +1313,15 @@ if __name__ == "__main__":
     agent_server()
 """
 
+MAIN_PY = """\
+#!/usr/bin/python
+# coding: utf-8
+from {pkg_dir}.agent_server import agent_server
+
+if __name__ == "__main__":
+    agent_server()
+"""
+
 IDENTITY_MD = """\
 # IDENTITY.md - {display_name} Agent Identity
 
@@ -1707,6 +1716,7 @@ def scaffold(
         files[agent_dir / "AGENTS.md"] = AGENTS_MD_PEER
         files[agent_dir / "USER.md"] = USER_MD
         files[agent_dir / "mcp_config.json"] = MCP_CONFIG_MD
+        files[pkg / "__main__.py"] = MAIN_PY
 
         # Create empty icon.png
         (agent_dir / "icon.png").write_bytes(b"")

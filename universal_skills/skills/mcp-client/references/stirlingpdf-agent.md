@@ -1,26 +1,21 @@
-# Stirling PDF Agent Reference
+# Stirlingpdf Agent Reference
 
-## Environment Variables
+**Project:** `stirlingpdf-agent`
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `STIRLINGPDF_URL` | The base URL of the Stirling PDF instance | `http://localhost:8080` | No |
-| `STIRLINGPDF_API_KEY` | API key if authentication is enabled | `""` | No |
-| `STIRLINGPDF_VERIFY` | Whether to verify SSL certificates | `True` | No |
-| `PDFTOOL` | Enable/Disable the PDF manipulation tools | `True` | No |
+## Required Environment Variables
 
-## Connection (stdio)
+| Variable | Description |
+|----------|-------------|
+| `STIRLINGPDF_API_KEY` | Required for authentication/configuration |
+| `STIRLINGPDF_URL` | Required for authentication/configuration |
 
-The `stirlingpdf-agent` runs over standard input/output (stdio) when spawned as a subprocess.
+## Available Tool Tags (1)
 
-## Tag Workflows
+| Env Variable | Default | Tools |
+|-------------|---------|-------|
+| `PDFTOOL` | `True` | (No tools found) |
 
-### 🏷️ PDFTOOL
-
-When `PDFTOOL=True` is set, the server exposes PDF tools including:
-*   `add_watermark`: Adds a text watermark to a PDF.
-
-#### Example MCP Client JSON
+## Stdio Connection (Default)
 
 ```json
 {
@@ -29,8 +24,34 @@ When `PDFTOOL=True` is set, the server exposes PDF tools including:
       "command": "stirlingpdf-agent-mcp",
       "args": [],
       "env": {
-        "STIRLINGPDF_URL": "http://localhost:8080",
-        "STIRLINGPDF_API_KEY": "YOUR_API_KEY",
+        "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
+        "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
+        "PDFTOOL": "${ PDFTOOL:-True }"
+      }
+    }
+  }
+}
+```
+
+## HTTP Connection
+
+```bash
+stirlingpdf-agent-mcp --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+## Single-Tag Config Example
+
+Only PDFTOOL enabled:
+
+```json
+{
+  "mcpServers": {
+    "stirlingpdf-agent": {
+      "command": "stirlingpdf-agent-mcp",
+      "args": [],
+      "env": {
+        "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
+        "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
         "PDFTOOL": "True"
       }
     }
@@ -41,9 +62,6 @@ When `PDFTOOL=True` is set, the server exposes PDF tools including:
 ## CLI Usage
 
 ```bash
-# Run the MCP server
-STIRLINGPDF_URL="http://localhost:8080" stirlingpdf-agent-mcp
-
-# Or specifically connect to testing endpoint
-STIRLINGPDF_API_KEY="my-secret-key" stirlingpdf-agent-mcp
+# List all resources (example)
+python mcp_client.py stirlingpdf-agent help
 ```

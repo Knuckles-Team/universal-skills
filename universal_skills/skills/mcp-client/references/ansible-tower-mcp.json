@@ -1,15 +1,15 @@
 {
-  "mcpServers": {
-    "ansible-tower-mcp": {
-      "command": "ansible-tower-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "ANSIBLE_TOWER_URL": "${ANSIBLE_TOWER_URL}",
-        "ANSIBLE_TOWER_TOKEN": "${ANSIBLE_TOWER_TOKEN}"
-      }
+    "mcpServers": {
+        "ansible-tower-mcp": {
+            "command": "ansible-tower-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "ANSIBLE_TOWER_URL": "${ANSIBLE_TOWER_URL}",
+                "ANSIBLE_TOWER_TOKEN": "${ANSIBLE_TOWER_TOKEN}"
+            }
+        }
     }
-  }
 }

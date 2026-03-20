@@ -1,31 +1,31 @@
 {
-  "mcpServers": {
-    "adguard-home-agent": {
-      "command": "adguard-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "ADGUARD_URL": "${ADGUARD_URL}",
-        "ADGUARD_USERNAME": "${ADGUARD_USERNAME}",
-        "ADGUARD_PASSWORD": "${ADGUARD_PASSWORD}",
-        "ACCESSTOOL": "${ACCESSTOOL:-True}",
-        "BLOCKED_SERVICESTOOL": "${BLOCKED_SERVICESTOOL:-True}",
-        "CLIENTSTOOL": "${CLIENTSTOOL:-True}",
-        "DHCPTOOL": "${DHCPTOOL:-True}",
-        "DNSTOOL": "${DNSTOOL:-True}",
-        "FILTERINGTOOL": "${FILTERINGTOOL:-True}",
-        "MISCTOOL": "${MISCTOOL:-True}",
-        "MOBILETOOL": "${MOBILETOOL:-True}",
-        "PROFILETOOL": "${PROFILETOOL:-True}",
-        "QUERY_LOGTOOL": "${QUERY_LOGTOOL:-True}",
-        "REWRITESTOOL": "${REWRITESTOOL:-True}",
-        "SETTINGSTOOL": "${SETTINGSTOOL:-True}",
-        "STATSTOOL": "${STATSTOOL:-True}",
-        "SYSTEMTOOL": "${SYSTEMTOOL:-True}",
-        "TLSTOOL": "${TLSTOOL:-True}"
-      }
+    "mcpServers": {
+        "adguard-home-agent": {
+            "command": "adguard-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "ADGUARD_URL": "${ADGUARD_URL}",
+                "ADGUARD_USERNAME": "${ADGUARD_USERNAME}",
+                "ADGUARD_PASSWORD": "${ADGUARD_PASSWORD}",
+                "DHCPTOOL": "${ DHCPTOOL:-True }",
+                "BLOCKED_SERVICESTOOL": "${ BLOCKED_SERVICESTOOL:-True }",
+                "ACCESSTOOL": "${ ACCESSTOOL:-True }",
+                "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
+                "SETTINGSTOOL": "${ SETTINGSTOOL:-True }",
+                "REWRITESTOOL": "${ REWRITESTOOL:-True }",
+                "FILTERINGTOOL": "${ FILTERINGTOOL:-True }",
+                "TLSTOOL": "${ TLSTOOL:-True }",
+                "MOBILETOOL": "${ MOBILETOOL:-True }",
+                "STATSTOOL": "${ STATSTOOL:-True }",
+                "CLIENTSTOOL": "${ CLIENTSTOOL:-True }",
+                "DNSTOOL": "${ DNSTOOL:-True }",
+                "PROFILETOOL": "${ PROFILETOOL:-True }",
+                "QUERY_LOGTOOL": "${ QUERY_LOGTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }"
+            }
+        }
     }
-  }
 }

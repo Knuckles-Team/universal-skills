@@ -1,26 +1,26 @@
 {
-  "mcpServers": {
-    "mealie-mcp": {
-      "command": "mealie-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MEALIE_URL": "${MEALIE_URL}",
-        "MEALIE_API_KEY": "${MEALIE_API_KEY}",
-        "ADMINTOOL": "${ADMINTOOL:-True}",
-        "APPTOOL": "${APPTOOL:-True}",
-        "EXPLORETOOL": "${EXPLORETOOL:-True}",
-        "GROUPSTOOL": "${GROUPSTOOL:-True}",
-        "HOUSEHOLDSTOOL": "${HOUSEHOLDSTOOL:-True}",
-        "MISCTOOL": "${MISCTOOL:-True}",
-        "ORGANIZERTOOL": "${ORGANIZERTOOL:-True}",
-        "RECIPESTOOL": "${RECIPESTOOL:-True}",
-        "SHAREDTOOL": "${SHAREDTOOL:-True}",
-        "USERSTOOL": "${USERSTOOL:-True}",
-        "UTILSTOOL": "${UTILSTOOL:-True}"
-      }
+    "mcpServers": {
+        "mealie-mcp": {
+            "command": "mealie-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "MEALIE_URL": "${MEALIE_URL}",
+                "MEALIE_API_KEY": "${MEALIE_API_KEY}",
+                "GROUPSTOOL": "${ GROUPSTOOL:-True }",
+                "ADMINTOOL": "${ ADMINTOOL:-True }",
+                "USERSTOOL": "${ USERSTOOL:-True }",
+                "ORGANIZERTOOL": "${ ORGANIZERTOOL:-True }",
+                "HOUSEHOLDSTOOL": "${ HOUSEHOLDSTOOL:-True }",
+                "EXPLORETOOL": "${ EXPLORETOOL:-True }",
+                "RECIPESTOOL": "${ RECIPESTOOL:-True }",
+                "UTILSTOOL": "${ UTILSTOOL:-True }",
+                "SHAREDTOOL": "${ SHAREDTOOL:-True }",
+                "APPTOOL": "${ APPTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }"
+            }
+        }
     }
-  }
 }

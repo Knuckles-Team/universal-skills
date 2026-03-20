@@ -2,12 +2,20 @@
     "mcpServers": {
         "documentdb-mcp": {
             "command": "documentdb-mcp",
-            "args": ["--transport", "stdio"],
+            "args": [
+                "--transport",
+                "stdio"
+            ],
             "env": {
                 "MONGODB_URI": "${MONGODB_URI}",
                 "MONGODB_HOST": "${MONGODB_HOST:-localhost}",
                 "MONGODB_PORT": "${MONGODB_PORT:-10260}",
-                "DOCUMENTDBTOOL": "${DOCUMENTDBTOOL:-True}"
+                "ANALYSISTOOL": "${ ANALYSISTOOL:-True }",
+                "USERSTOOL": "${ USERSTOOL:-True }",
+                "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
+                "COLLECTIONSTOOL": "${ COLLECTIONSTOOL:-True }",
+                "CRUDTOOL": "${ CRUDTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }"
             }
         }
     }

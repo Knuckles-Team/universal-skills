@@ -5,7 +5,7 @@ license: MIT
 tags: [tdd, testing, red-green-refactor, quality, python]
 metadata:
   author: Audel Rouhi
-  version: '0.1.47'
+  version: '0.1.48'
 ---
 # TDD Methodology Expert
 

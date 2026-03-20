@@ -89,7 +89,7 @@ Read the `agent-builder` skill and follow its instructions to:
    - Instructions to run `list_skills` first.
    - Instructions to use the `mcp-client` skill and check `{package_name}.md` reference.
 3. Update `{pkg_dir}/agent_data/CRON.md` with appropriate scheduled tasks.
-4. Ensure the `agent_data/` directory contains all required core files: `IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, and `icon.png`.
+4. Ensure the `agent_data/` directory contains all required core files: `IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, and `icon.png`. A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
 
 #### 3d. GraphQL Wrapper (if type includes `graphql`)
 

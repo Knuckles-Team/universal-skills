@@ -2,10 +2,15 @@
     "mcpServers": {
         "tunnel-manager-mcp": {
             "command": "tunnel-manager-mcp",
-            "args": ["--transport", "stdio"],
+            "args": [
+                "--transport",
+                "stdio"
+            ],
             "env": {
                 "TUNNEL_IDENTITY_FILE": "${TUNNEL_IDENTITY_FILE}",
-                "TUNNELMANAGERTOOL": "${TUNNELMANAGERTOOL:-True}"
+                "HOST_MANAGEMENTTOOL": "${ HOST_MANAGEMENTTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "REMOTE_ACCESSTOOL": "${ REMOTE_ACCESSTOOL:-True }"
             }
         }
     }

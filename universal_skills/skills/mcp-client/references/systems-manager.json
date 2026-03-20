@@ -1,30 +1,30 @@
 {
-  "mcpServers": {
-    "systems-manager": {
-      "command": "systems-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "CRONTOOL": "${CRONTOOL:-True}",
-        "DISKTOOL": "${DISKTOOL:-True}",
-        "FILESYSTEMTOOL": "${FILESYSTEMTOOL:-True}",
-        "FIREWALL_MANAGEMENTTOOL": "${FIREWALL_MANAGEMENTTOOL:-True}",
-        "LOGTOOL": "${LOGTOOL:-True}",
-        "MISCTOOL": "${MISCTOOL:-True}",
-        "NETWORKTOOL": "${NETWORKTOOL:-True}",
-        "NODEJSTOOL": "${NODEJSTOOL:-True}",
-        "PROCESSTOOL": "${PROCESSTOOL:-True}",
-        "PYTHONTOOL": "${PYTHONTOOL:-True}",
-        "SERVICETOOL": "${SERVICETOOL:-True}",
-        "SHELLTOOL": "${SHELLTOOL:-True}",
-        "SSH_MANAGEMENTTOOL": "${SSH_MANAGEMENTTOOL:-True}",
-        "SYSTEMTOOL": "${SYSTEMTOOL:-True}",
-        "SYSTEM_MANAGEMENTTOOL": "${SYSTEM_MANAGEMENTTOOL:-True}",
-        "TEXT_EDITORTOOL": "${TEXT_EDITORTOOL:-True}",
-        "USERTOOL": "${USERTOOL:-True}"
-      }
+    "mcpServers": {
+        "systems-manager": {
+            "command": "systems-manager-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "TEXT_EDITORTOOL": "${ TEXT_EDITORTOOL:-True }",
+                "FILESYSTEMTOOL": "${ FILESYSTEMTOOL:-True }",
+                "PROCESSTOOL": "${ PROCESSTOOL:-True }",
+                "LOGTOOL": "${ LOGTOOL:-True }",
+                "USERTOOL": "${ USERTOOL:-True }",
+                "SSH_MANAGEMENTTOOL": "${ SSH_MANAGEMENTTOOL:-True }",
+                "SHELLTOOL": "${ SHELLTOOL:-True }",
+                "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
+                "CRONTOOL": "${ CRONTOOL:-True }",
+                "NETWORKTOOL": "${ NETWORKTOOL:-True }",
+                "NODEJSTOOL": "${ NODEJSTOOL:-True }",
+                "SERVICETOOL": "${ SERVICETOOL:-True }",
+                "SYSTEM_MANAGEMENTTOOL": "${ SYSTEM_MANAGEMENTTOOL:-True }",
+                "FIREWALL_MANAGEMENTTOOL": "${ FIREWALL_MANAGEMENTTOOL:-True }",
+                "PYTHONTOOL": "${ PYTHONTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "DISKTOOL": "${ DISKTOOL:-True }"
+            }
+        }
     }
-  }
 }

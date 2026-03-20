@@ -6,7 +6,7 @@
             "env": {
                 "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
                 "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
-                "PDFTOOL": "${PDFTOOL:-True}"
+                "PDFTOOL": "${ PDFTOOL:-True }"
             }
         }
     }

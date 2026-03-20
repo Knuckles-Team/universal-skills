@@ -1,34 +1,53 @@
 # Plane MCP Reference
 
-## Configuration
+**Project:** `plane-agent`
 
-The reference uses the following environment variables:
+## Required Environment Variables
 
-- `PLANE_API_KEY`: Your Plane API Key.
-- `PLANE_WORKSPACE_SLUG`: Your Plane Workspace Slug.
-- `PLANE_BASE_URL`: The base URL for your Plane instance (defaults to `https://api.plane.so`).
+| Variable | Description |
+|----------|-------------|
+| `PLANE_API_KEY` | Required for authentication/configuration |
+| `PLANE_BASE_URL` | Required for authentication/configuration |
+| `PLANE_WORKSPACE_SLUG` | Required for authentication/configuration |
 
-## MCP Configuration
+## Available Tool Tags (0)
+
+| Env Variable | Default | Tools |
+|-------------|---------|-------|
+
+
+## Stdio Connection (Default)
 
 ```json
 {
   "mcpServers": {
-    "plane": {
+    "plane-agent": {
       "command": "uvx",
-      "args": ["plane-mcp-server", "stdio"],
+      "args": [
+        "--transport",
+        "stdio"
+      ],
       "env": {
-        "PLANE_API_KEY": "<your-api-key>",
-        "PLANE_WORKSPACE_SLUG": "<your-workspace-slug>",
-        "PLANE_BASE_URL": "https://api.plane.so"
+        "PLANE_API_KEY": "${PLANE_API_KEY}",
+        "PLANE_WORKSPACE_SLUG": "${PLANE_WORKSPACE_SLUG}",
+        "PLANE_BASE_URL": "${PLANE_BASE_URL}"
       }
     }
   }
 }
 ```
 
-## Usage
+## HTTP Connection
 
 ```bash
-# Example CLI usage via mcp-client
-python -m universal_skills.skills.mcp_client.run_mcp_tool plane list-projects
+uvx --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+## Single-Tag Config Example
+
+## CLI Usage
+
+```bash
+# List all resources (example)
+python mcp_client.py plane-agent help
 ```

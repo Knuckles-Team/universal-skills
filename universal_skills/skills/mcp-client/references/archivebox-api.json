@@ -2,7 +2,10 @@
     "mcpServers": {
         "archivebox-mcp": {
             "command": "archivebox-mcp",
-            "args": ["--transport", "stdio"],
+            "args": [
+                "--transport",
+                "stdio"
+            ],
             "env": {
                 "ARCHIVEBOX_URL": "${ARCHIVEBOX_URL}",
                 "ARCHIVEBOX_TOKEN": "${ARCHIVEBOX_TOKEN}",
@@ -10,9 +13,10 @@
                 "ARCHIVEBOX_PASSWORD": "${ARCHIVEBOX_PASSWORD}",
                 "ARCHIVEBOX_API_KEY": "${ARCHIVEBOX_API_KEY}",
                 "ARCHIVEBOX_VERIFY": "${ARCHIVEBOX_VERIFY:-True}",
-                "AUTHENTICATIONTOOL": "${AUTHENTICATIONTOOL:-True}",
-                "CORETOOL": "${CORETOOL:-True}",
-                "CLITOOL": "${CLITOOL:-True}"
+                "AUTHENTICATIONTOOL": "${ AUTHENTICATIONTOOL:-True }",
+                "CLITOOL": "${ CLITOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "CORETOOL": "${ CORETOOL:-True }"
             }
         }
     }

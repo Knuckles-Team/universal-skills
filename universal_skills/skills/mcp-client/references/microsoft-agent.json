@@ -1,53 +1,53 @@
 {
-  "mcpServers": {
-    "microsoft-agent": {
-      "command": "microsoft-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MICROSOFT_CLIENT_ID": "${MICROSOFT_CLIENT_ID}",
-        "MICROSOFT_CLIENT_SECRET": "${MICROSOFT_CLIENT_SECRET}",
-        "MICROSOFT_TENANT_ID": "${MICROSOFT_TENANT_ID}",
-        "ADMINTOOL": "${ADMINTOOL:-True}",
-        "AGREEMENTSTOOL": "${AGREEMENTSTOOL:-True}",
-        "APPLICATIONSTOOL": "${APPLICATIONSTOOL:-True}",
-        "AUDITTOOL": "${AUDITTOOL:-True}",
-        "AUTHTOOL": "${AUTHTOOL:-True}",
-        "CALENDARTOOL": "${CALENDARTOOL:-True}",
-        "CHATTOOL": "${CHATTOOL:-True}",
-        "COMMUNICATIONSTOOL": "${COMMUNICATIONSTOOL:-True}",
-        "CONNECTIONSTOOL": "${CONNECTIONSTOOL:-True}",
-        "CONTACTSTOOL": "${CONTACTSTOOL:-True}",
-        "DEVICESTOOL": "${DEVICESTOOL:-True}",
-        "DIRECTORYTOOL": "${DIRECTORYTOOL:-True}",
-        "DOMAINSTOOL": "${DOMAINSTOOL:-True}",
-        "EDUCATIONTOOL": "${EDUCATIONTOOL:-True}",
-        "EMPLOYEE_EXPERIENCETOOL": "${EMPLOYEE_EXPERIENCETOOL:-True}",
-        "FILESTOOL": "${FILESTOOL:-True}",
-        "GROUPSTOOL": "${GROUPSTOOL:-True}",
-        "IDENTITYTOOL": "${IDENTITYTOOL:-True}",
-        "MAILTOOL": "${MAILTOOL:-True}",
-        "METATOOL": "${METATOOL:-True}",
-        "MISCTOOL": "${MISCTOOL:-True}",
-        "NOTESTOOL": "${NOTESTOOL:-True}",
-        "ORGANIZATIONTOOL": "${ORGANIZATIONTOOL:-True}",
-        "PLACESTOOL": "${PLACESTOOL:-True}",
-        "POLICIESTOOL": "${POLICIESTOOL:-True}",
-        "PRINTTOOL": "${PRINTTOOL:-True}",
-        "PRIVACYTOOL": "${PRIVACYTOOL:-True}",
-        "REPORTSTOOL": "${REPORTSTOOL:-True}",
-        "SEARCHTOOL": "${SEARCHTOOL:-True}",
-        "SECURITYTOOL": "${SECURITYTOOL:-True}",
-        "SITESTOOL": "${SITESTOOL:-True}",
-        "SOLUTIONSTOOL": "${SOLUTIONSTOOL:-True}",
-        "STORAGETOOL": "${STORAGETOOL:-True}",
-        "SUBSCRIPTIONSTOOL": "${SUBSCRIPTIONSTOOL:-True}",
-        "TASKSTOOL": "${TASKSTOOL:-True}",
-        "TEAMSTOOL": "${TEAMSTOOL:-True}",
-        "USERTOOL": "${USERTOOL:-True}"
-      }
+    "mcpServers": {
+        "microsoft-agent": {
+            "command": "microsoft-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "MICROSOFT_CLIENT_ID": "${MICROSOFT_CLIENT_ID}",
+                "MICROSOFT_CLIENT_SECRET": "${MICROSOFT_CLIENT_SECRET}",
+                "MICROSOFT_TENANT_ID": "${MICROSOFT_TENANT_ID}",
+                "AUTHTOOL": "${ AUTHTOOL:-True }",
+                "GROUPSTOOL": "${ GROUPSTOOL:-True }",
+                "AGREEMENTSTOOL": "${ AGREEMENTSTOOL:-True }",
+                "FILESTOOL": "${ FILESTOOL:-True }",
+                "NOTESTOOL": "${ NOTESTOOL:-True }",
+                "ORGANIZATIONTOOL": "${ ORGANIZATIONTOOL:-True }",
+                "AUDITTOOL": "${ AUDITTOOL:-True }",
+                "PLACESTOOL": "${ PLACESTOOL:-True }",
+                "PRINTTOOL": "${ PRINTTOOL:-True }",
+                "TASKSTOOL": "${ TASKSTOOL:-True }",
+                "SEARCHTOOL": "${ SEARCHTOOL:-True }",
+                "EMPLOYEE_EXPERIENCETOOL": "${ EMPLOYEE_EXPERIENCETOOL:-True }",
+                "METATOOL": "${ METATOOL:-True }",
+                "CHATTOOL": "${ CHATTOOL:-True }",
+                "SITESTOOL": "${ SITESTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "DIRECTORYTOOL": "${ DIRECTORYTOOL:-True }",
+                "POLICIESTOOL": "${ POLICIESTOOL:-True }",
+                "ADMINTOOL": "${ ADMINTOOL:-True }",
+                "TEAMSTOOL": "${ TEAMSTOOL:-True }",
+                "APPLICATIONSTOOL": "${ APPLICATIONSTOOL:-True }",
+                "CALENDARTOOL": "${ CALENDARTOOL:-True }",
+                "REPORTSTOOL": "${ REPORTSTOOL:-True }",
+                "PRIVACYTOOL": "${ PRIVACYTOOL:-True }",
+                "SOLUTIONSTOOL": "${ SOLUTIONSTOOL:-True }",
+                "SUBSCRIPTIONSTOOL": "${ SUBSCRIPTIONSTOOL:-True }",
+                "DOMAINSTOOL": "${ DOMAINSTOOL:-True }",
+                "USERTOOL": "${ USERTOOL:-True }",
+                "CONNECTIONSTOOL": "${ CONNECTIONSTOOL:-True }",
+                "STORAGETOOL": "${ STORAGETOOL:-True }",
+                "SECURITYTOOL": "${ SECURITYTOOL:-True }",
+                "DEVICESTOOL": "${ DEVICESTOOL:-True }",
+                "CONTACTSTOOL": "${ CONTACTSTOOL:-True }",
+                "EDUCATIONTOOL": "${ EDUCATIONTOOL:-True }",
+                "IDENTITYTOOL": "${ IDENTITYTOOL:-True }",
+                "COMMUNICATIONSTOOL": "${ COMMUNICATIONSTOOL:-True }",
+                "MAILTOOL": "${ MAILTOOL:-True }"
+            }
+        }
     }
-  }
 }

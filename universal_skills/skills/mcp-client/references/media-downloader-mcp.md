@@ -1,20 +1,21 @@
 # Media Downloader MCP Reference
 
 **Project:** `media-downloader`
-**Entrypoint:** `media-downloader-mcp`
 
 ## Required Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `DOWNLOAD_DIRECTORY` | Directory where downloaded media will be saved |
 | `AUDIO_ONLY` | Whether to download only audio (True/False) |
+| `DOWNLOAD_DIRECTORY` | Directory where downloaded media will be saved |
 
-## Available Tool Tags (1)
+## Available Tool Tags (3)
 
-| Env Variable | Default |
-|-------------|----------|
-| `MEDIADOWNLOADERTOOL` | `True` |
+| Env Variable | Default | Tools |
+|-------------|---------|-------|
+| `COLLECTION_MANAGEMENTTOOL` | `True` | download_media, run_command |
+| `MISCTOOL` | `True` | (Internal tools) |
+| `TEXT_EDITORTOOL` | `True` | text_editor |
 
 ## Stdio Connection (Default)
 
@@ -23,11 +24,47 @@
   "mcpServers": {
     "media-downloader-mcp": {
       "command": "media-downloader-mcp",
-      "args": ["--transport", "stdio"],
+      "args": [
+        "--transport",
+        "stdio"
+      ],
       "env": {
         "DOWNLOAD_DIRECTORY": "${DOWNLOAD_DIRECTORY}",
-        "AUDIO_ONLY": "False",
-        "MEDIADOWNLOADERTOOL": "True"
+        "AUDIO_ONLY": "${AUDIO_ONLY:-False}",
+        "TEXT_EDITORTOOL": "${ TEXT_EDITORTOOL:-True }",
+        "MISCTOOL": "${ MISCTOOL:-True }",
+        "COLLECTION_MANAGEMENTTOOL": "${ COLLECTION_MANAGEMENTTOOL:-True }"
+      }
+    }
+  }
+}
+```
+
+## HTTP Connection
+
+```bash
+media-downloader-mcp --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+## Single-Tag Config Example
+
+Only COLLECTION_MANAGEMENTTOOL enabled:
+
+```json
+{
+  "mcpServers": {
+    "media-downloader-mcp": {
+      "command": "media-downloader-mcp",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "DOWNLOAD_DIRECTORY": "${DOWNLOAD_DIRECTORY}",
+        "AUDIO_ONLY": "${AUDIO_ONLY:-False}",
+        "TEXT_EDITORTOOL": "False",
+        "MISCTOOL": "False",
+        "COLLECTION_MANAGEMENTTOOL": "True"
       }
     }
   }
@@ -37,5 +74,6 @@
 ## CLI Usage
 
 ```bash
-mcp-client query --server "media-downloader-mcp" --tool "download_video" --tool-args '{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}'
+# List all resources (example)
+python mcp_client.py media-downloader-mcp help
 ```

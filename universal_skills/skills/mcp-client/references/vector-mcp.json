@@ -2,7 +2,10 @@
     "mcpServers": {
         "vector-mcp": {
             "command": "vector-mcp",
-            "args": ["--transport", "stdio"],
+            "args": [
+                "--transport",
+                "stdio"
+            ],
             "env": {
                 "DATABASE_TYPE": "${DATABASE_TYPE:-chromadb}",
                 "DATABASE_PATH": "${DATABASE_PATH}",
@@ -14,7 +17,9 @@
                 "DB_HOST": "${DB_HOST}",
                 "DB_PORT": "${DB_PORT}",
                 "DOCUMENT_DIRECTORY": "${DOCUMENT_DIRECTORY:-/documents}",
-                "VECTORTOOL": "${VECTORTOOL:-True}"
+                "SEARCHTOOL": "${ SEARCHTOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "COLLECTION_MANAGEMENTTOOL": "${ COLLECTION_MANAGEMENTTOOL:-True }"
             }
         }
     }

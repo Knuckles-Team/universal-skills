@@ -9,16 +9,16 @@
             "env": {
                 "PORTAINER_URL": "${PORTAINER_URL}",
                 "PORTAINER_TOKEN": "${PORTAINER_TOKEN}",
-                "AUTHTOOL": "${AUTHTOOL:-True}",
-                "ENVIRONMENTTOOL": "${ENVIRONMENTTOOL:-True}",
-                "DOCKERTOOL": "${DOCKERTOOL:-True}",
-                "STACKTOOL": "${STACKTOOL:-True}",
-                "KUBERNETESTOOL": "${KUBERNETESTOOL:-True}",
-                "EDGETOOL": "${EDGETOOL:-True}",
-                "TEMPLATETOOL": "${TEMPLATETOOL:-True}",
-                "USERTOOL": "${USERTOOL:-True}",
-                "REGISTRYTOOL": "${REGISTRYTOOL:-True}",
-                "SYSTEMTOOL": "${SYSTEMTOOL:-True}"
+                "AUTHTOOL": "${ AUTHTOOL:-True }",
+                "USERTOOL": "${ USERTOOL:-True }",
+                "DOCKERTOOL": "${ DOCKERTOOL:-True }",
+                "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
+                "REGISTRYTOOL": "${ REGISTRYTOOL:-True }",
+                "ENVIRONMENTTOOL": "${ ENVIRONMENTTOOL:-True }",
+                "KUBERNETESTOOL": "${ KUBERNETESTOOL:-True }",
+                "TEMPLATETOOL": "${ TEMPLATETOOL:-True }",
+                "STACKTOOL": "${ STACKTOOL:-True }",
+                "EDGETOOL": "${ EDGETOOL:-True }"
             }
         }
     }

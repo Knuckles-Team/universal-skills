@@ -1,24 +1,24 @@
 {
-  "mcpServers": {
-    "container-manager-mcp": {
-      "command": "container-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
-        "COMPOSETOOL": "${COMPOSETOOL:-True}",
-        "CONTAINERTOOL": "${CONTAINERTOOL:-True}",
-        "IMAGETOOL": "${IMAGETOOL:-True}",
-        "INFOTOOL": "${INFOTOOL:-True}",
-        "LOGTOOL": "${LOGTOOL:-True}",
-        "MISCTOOL": "${MISCTOOL:-True}",
-        "NETWORKTOOL": "${NETWORKTOOL:-True}",
-        "SWARMTOOL": "${SWARMTOOL:-True}",
-        "SYSTEMTOOL": "${SYSTEMTOOL:-True}",
-        "VOLUMETOOL": "${VOLUMETOOL:-True}"
-      }
+    "mcpServers": {
+        "container-manager-mcp": {
+            "command": "container-manager-mcp",
+            "args": [
+                "--transport",
+                "stdio"
+            ],
+            "env": {
+                "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
+                "LOGTOOL": "${ LOGTOOL:-True }",
+                "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
+                "INFOTOOL": "${ INFOTOOL:-True }",
+                "IMAGETOOL": "${ IMAGETOOL:-True }",
+                "NETWORKTOOL": "${ NETWORKTOOL:-True }",
+                "SWARMTOOL": "${ SWARMTOOL:-True }",
+                "CONTAINERTOOL": "${ CONTAINERTOOL:-True }",
+                "COMPOSETOOL": "${ COMPOSETOOL:-True }",
+                "MISCTOOL": "${ MISCTOOL:-True }",
+                "VOLUMETOOL": "${ VOLUMETOOL:-True }"
+            }
+        }
     }
-  }
 }
