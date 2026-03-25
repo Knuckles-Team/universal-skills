@@ -107,6 +107,33 @@ DEFAULT_A2A_BROKER_URL = os.getenv("A2A_BROKER_URL", None)
 DEFAULT_A2A_STORAGE = os.getenv("A2A_STORAGE", "in-memory")
 DEFAULT_A2A_STORAGE_URL = os.getenv("A2A_STORAGE_URL", None)
 
+def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
+    """Factory function returning the fully initialized agent for execution."""
+    from agent_utilities import create_agent
+
+    # In-process MCP loading: if no external URL/Config, load the local FastMCP instance
+    mcp_toolsets = []
+    effective_mcp_url = mcp_url or os.getenv("MCP_URL")
+    effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG")
+
+    if not effective_mcp_url and not effective_mcp_config:
+        try:
+            from my_package.mcp_server import get_mcp_instance
+            mcp, _, _ = get_mcp_instance()
+            mcp_toolsets.append(mcp)
+            logger.info("My Agent: Using in-process MCP instance.")
+        except (ImportError, Exception) as e:
+            logger.warning(f"My Agent: Could not load in-process MCP: {e}")
+
+    return create_agent(
+        mcp_url=effective_mcp_url,
+        mcp_config=effective_mcp_config or "",
+        mcp_toolsets=mcp_toolsets,
+        name=DEFAULT_AGENT_NAME,
+        system_prompt=DEFAULT_AGENT_SYSTEM_PROMPT,
+        **kwargs
+    )
+
 def agent_server():
     print(f"{DEFAULT_AGENT_NAME} v{__version__}")
     parser = create_agent_parser()

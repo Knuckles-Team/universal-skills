@@ -350,6 +350,7 @@ compose.yml
 
 ENV_TEMPLATE = """\
 LLM_BASE_URL=http://10.0.0.18:1234/v1
+LLM_API_KEY=llama
 ENABLE_OTEL=True
 OTEL_EXPORTER_OTLP_ENDPOINT=http://langfuse.arpa/api/public/otel
 OTEL_EXPORTER_OTLP_PUBLIC_KEY=""
@@ -910,7 +911,12 @@ INIT_PY = """\
 
 import importlib
 import inspect
+import warnings
 from typing import List
+
+# Suppress RequestsDependencyWarning due to chardet 6.x / requests 2.32.x mismatch
+# Centralized here to ensure it runs before any sub-package imports
+warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
 
 __all__: List[str] = []
 
@@ -919,8 +925,8 @@ CORE_MODULES = [
 ]
 
 OPTIONAL_MODULES = {{
-    "{pkg_dir}.agent": "agent",
-    "{pkg_dir}.mcp": "mcp",{gql_optional_module}
+    "{pkg_dir}.agent_server": "agent",
+    "{pkg_dir}.mcp_server": "mcp",{gql_optional_module}
 }}
 
 
@@ -957,10 +963,10 @@ for module_name, extra_name in OPTIONAL_MODULES.items():
     else:
         globals()[f"_{{extra_name.upper()}}_AVAILABLE"] = False
 
-_MCP_AVAILABLE = OPTIONAL_MODULES.get("{pkg_dir}.mcp") in [
+_MCP_AVAILABLE = OPTIONAL_MODULES.get("{pkg_dir}.mcp_server") in [
     m.__name__ for m in globals().values() if hasattr(m, "__name__")
 ]
-_AGENT_AVAILABLE = "{pkg_dir}.agent" in globals()
+_AGENT_AVAILABLE = "{pkg_dir}.agent_server" in globals()
 
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
 
@@ -1026,40 +1032,24 @@ MCP_PY = """\
 #!/usr/bin/python
 # coding: utf-8
 
-from dotenv import load_dotenv, find_dotenv
-from agent_utilities.base_utilities import to_boolean
 import os
 import sys
 import logging
 from typing import Optional, List, Dict, Union, Any
 
-import requests
-from pydantic import Field
-from eunomia_mcp.middleware import EunomiaMcpMiddleware
+from dotenv import load_dotenv, find_dotenv
 from fastmcp import FastMCP
-from fastmcp.server.auth.oidc_proxy import OIDCProxy
-from fastmcp.server.auth import OAuthProxy, RemoteAuthProvider
-from fastmcp.server.auth.providers.jwt import JWTVerifier, StaticTokenVerifier
-from fastmcp.server.middleware.logging import LoggingMiddleware
-from fastmcp.server.middleware.timing import TimingMiddleware
-from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
-from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
-from fastmcp.utilities.logging import get_logger
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    config,
-)
-from agent_utilities.middlewares import (
-    UserTokenMiddleware,
-    JWTClaimsLoggingMiddleware,
-)
+from pydantic import Field
+from agent_utilities.base_utilities import to_boolean
+from agent_utilities.mcp_utilities import create_mcp_server, config
+from agent_utilities.utilities import get_logger
 from {pkg_dir}.auth import get_client
 
 __version__ = "0.1.0"
-print(f"{display_name} MCP v{{__version__}}")
 
-logger = get_logger(name="TokenMiddleware")
-logger.setLevel(logging.DEBUG)
+# Redirect logging to stderr to prevent MCP stdout corruption
+logger = get_logger(name="MCP_Server")
+logger.setLevel(logging.INFO)
 
 
 def register_prompts(mcp: FastMCP):
@@ -1071,27 +1061,10 @@ def register_prompts(mcp: FastMCP):
         return f"Please help with '{{query}}' using {display_name}"
 
 
-# TODO: Add tool registration functions here.
-# Follow the pattern: register_<tag>_tools(mcp: FastMCP)
-# Each function registers tools with @mcp.tool() and tags={{\"TagName\"}}
-# Example:
-#
-# def register_example_tools(mcp: FastMCP):
-#     @mcp.tool(
-#         name="get_items",
-#         description="Get items from the service.",
-#         tags={{"Items"}},
-#     )
-#     def get_items_tool(
-#         limit: Optional[int] = Field(default=None, description="Max results."),
-#     ) -> Any:
-#         \"\"\"Get items from the service.\"\"\"
-#         api = get_client()
-#         return api.get_items(limit=limit)
-
-
-def mcp_server():
+def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
+    \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.\"\"\"
     load_dotenv(find_dotenv())
+
     args, mcp, middlewares = create_mcp_server(
         name="{display_name} MCP",
         version=__version__,
@@ -1099,20 +1072,26 @@ def mcp_server():
     )
 
     # TODO: Register tool groups here with env-var toggles.
-    # Example:
-    # if to_boolean(os.getenv("EXAMPLETOOL", "True")):
-    #     register_example_tools(mcp)
+    # Pattern: if to_boolean(os.getenv("TOOL_TAG_NAME", "True")): register_tools(mcp)
 
     register_prompts(mcp)
 
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    print(f"\\nStarting {display_name} MCP Server")
-    print(f"  Transport: {{args.transport.upper()}}")
-    print(f"  Auth: {{args.auth_type}}")
-    print(f"  Delegation: {{'ON' if config['enable_delegation'] else 'OFF'}}")
-    print(f"  Eunomia: {{args.eunomia_type}}")
+    registered_tags = []
+    return mcp, args, middlewares, registered_tags
+
+
+def mcp_server():
+    mcp, args, middlewares, registered_tags = get_mcp_instance()
+
+    # Clean version announcement (stderr or logger preferred)
+    print(f"{display_name} MCP v{{__version__}}", file=sys.stderr)
+    print("\\nStarting MCP Server", file=sys.stderr)
+    print(f"  Transport: {{args.transport.upper()}}", file=sys.stderr)
+    print(f"  Auth: {{args.auth_type}}", file=sys.stderr)
+    print(f"  Dynamic Tags Loaded: {{len(registered_tags)}}", file=sys.stderr)
 
     if args.transport == "stdio":
         mcp.run(transport="stdio")
@@ -1121,7 +1100,7 @@ def mcp_server():
     elif args.transport == "sse":
         mcp.run(transport="sse", host=args.host, port=args.port)
     else:
-        logger.error("Invalid transport", extra={{"transport": args.transport}})
+        logger.error(f"Invalid transport: {{args.transport}}")
         sys.exit(1)
 
 
@@ -1245,11 +1224,12 @@ AGENT_PY = """\
 # coding: utf-8
 import os
 import logging
+import warnings
 
 from agent_utilities import (
     build_system_prompt_from_workspace,
     create_agent_parser,
-    create_agent_server,
+    create_graph_agent_server,
     initialize_workspace,
     load_identity,
 )
@@ -1267,50 +1247,102 @@ logger = logging.getLogger(__name__)
 initialize_workspace()
 meta = load_identity()
 DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
-DEFAULT_AGENT_DESCRIPTION = os.getenv(
-    "AGENT_DESCRIPTION",
-    meta.get("description", "{description}"),
-)
 DEFAULT_AGENT_SYSTEM_PROMPT = os.getenv(
     "AGENT_SYSTEM_PROMPT",
     meta.get("content") or build_system_prompt_from_workspace(),
 )
 
 
-def agent_server():
-    print(f"{{DEFAULT_AGENT_NAME}} v{{__version__}}")
-    parser = create_agent_parser()
+def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
+    \"\"\"Factory function returning the fully initialized graph for execution.\"\"\"
+    from agent_utilities import create_graph_agent
+    from {pkg_dir}.graph_config import TAG_PROMPTS, TAG_ENV_VARS
 
+    # In-process MCP loading: if no external URL/Config, load the local FastMCP instance
+    mcp_toolsets = []
+    effective_mcp_url = mcp_url or os.getenv("MCP_URL")
+    effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG")
+
+    if not effective_mcp_url and not effective_mcp_config:
+        try:
+            from {pkg_dir}.mcp_server import get_mcp_instance
+            mcp, _, _, _ = get_mcp_instance()
+            mcp_toolsets.append(mcp)
+            logger.info("{display_name}: Using in-process MCP instance.")
+        except (ImportError, Exception) as e:
+            logger.warning("{display_name}: Could not load in-process MCP: {{e}}")
+
+    return create_graph_agent(
+        tag_prompts=TAG_PROMPTS,
+        tag_env_vars=TAG_ENV_VARS,
+        mcp_url=effective_mcp_url,
+        mcp_config=effective_mcp_config or "",
+        mcp_toolsets=mcp_toolsets,
+        name=f"{{DEFAULT_AGENT_NAME}} Graph Agent",
+        **kwargs
+    )
+
+
+def agent_server():
+    logger.info(f"{{DEFAULT_AGENT_NAME}} v{{__version__}}")
+    parser = create_agent_parser()
     args = parser.parse_args()
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
 
-    create_agent_server(
+    # Create graph and config using standardized template
+    graph_bundle = agent_template(
+        mcp_url=args.mcp_url,
+        mcp_config=args.mcp_config,
         provider=args.provider,
-        model_id=args.model_id,
+        agent_model=args.model_id,
         base_url=args.base_url,
         api_key=args.api_key,
         custom_skills_directory=args.custom_skills_directory,
         debug=args.debug,
+        ssl_verify=not args.insecure,
+    )
+
+    # Start server using the pre-built graph bundle
+    create_graph_agent_server(
+        graph_bundle=graph_bundle,
         host=args.host,
         port=args.port,
         enable_web_ui=args.web,
-        ssl_verify=not args.insecure,
-        name=DEFAULT_AGENT_NAME,
-        system_prompt=DEFAULT_AGENT_SYSTEM_PROMPT,
         enable_otel=args.otel,
         otel_endpoint=args.otel_endpoint,
         otel_headers=args.otel_headers,
         otel_public_key=args.otel_public_key,
         otel_secret_key=args.otel_secret_key,
         otel_protocol=args.otel_protocol,
+        debug=args.debug,
     )
 
 
 if __name__ == "__main__":
     agent_server()
+"""
+
+GRAPH_CONFIG_PY = """\
+\"\"\"{display_name} graph configuration — tag prompts and env var mappings.
+
+Standardized graph configuration to support hierarchical and specialized domain routing.
+\"\"\"
+
+# ── Tag → System Prompt Mapping ──────────────────────────────────────
+TAG_PROMPTS: dict[str, str] = {{
+    "core": (
+        "You are a {display_name} Core specialist. Help users interact with core functionality."
+    ),
+}}
+
+
+# ── Tag → Environment Variable Mapping ────────────────────────────────
+TAG_ENV_VARS: dict[str, str] = {{
+    "core": "CORETOOL",
+}}
 """
 
 MAIN_PY = """\
@@ -1704,10 +1736,11 @@ def scaffold(
     files[pkg / "auth.py"] = AUTH_PY
 
     if "mcp" in types:
-        files[pkg / "mcp.py"] = MCP_PY
+        files[pkg / "mcp_server.py"] = MCP_PY
 
     if "agent" in types:
-        files[pkg / "agent.py"] = AGENT_PY
+        files[pkg / "agent_server.py"] = AGENT_PY
+        files[pkg / "graph_config.py"] = GRAPH_CONFIG_PY
         files[agent_dir / "IDENTITY.md"] = IDENTITY_MD
         files[agent_dir / "CRON.md"] = CRON_MD
         files[agent_dir / "CRON_LOG.md"] = CRON_LOG_MD

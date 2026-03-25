@@ -99,6 +99,57 @@ Read the `api-wrapper-builder` skill (Step 5 — GraphQL) and follow its instruc
 3. Implement domain-specific query and mutation methods mirroring the REST API wrapper.
 4. Use cursor-based pagination (`first`/`after`) for list queries.
 
+#### 3e. Graph Agent (for agents with ≥3 tool tags)
+
+Agents with many tool tags benefit from **graph orchestration** — a pydantic-graph based router that classifies queries and executes them with only the relevant domain tools loaded, saving LLM context.
+
+**Upgrade Criteria:**
+| Tag Count | Action |
+|-----------|--------|
+| ≥10 tags | Strongly recommended |
+| 5–9 tags | Recommended |
+| 3–4 tags | Optional |
+| ≤2 tags | Do not upgrade |
+
+**Implementation requires only 2 files:**
+
+1. **Create `{pkg_dir}/graph_config.py`** — Maps each tag to a domain prompt and env var:
+   ```python
+   TAG_PROMPTS: dict[str, str] = {
+       "incidents": "You are a ServiceNow Incident Management specialist...",
+       "cmdb": "You are a ServiceNow CMDB specialist...",
+       # One entry per register_*_tools tag from mcp_server.py
+   }
+   TAG_ENV_VARS: dict[str, str] = {
+       "incidents": "INCIDENTSTOOL",
+       "cmdb": "CMDBTOOL",
+       # Maps tag → the env var that toggles it in mcp_server.py
+   }
+   ```
+
+    2. **Modify `{pkg_dir}/agent_server.py`** — Replace `create_agent_server()` with `create_graph_agent_server()`. The standardized `agent_server()` entry point must include warning suppression and version printing to `sys.stderr`:
+        ```python
+        def agent_server():
+
+            # Suppress RequestsDependencyWarning and FastMCP DeprecationWarnings
+            warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
+            warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
+
+            print(f"{DEFAULT_AGENT_NAME} v{__version__}", file=sys.stderr)
+
+            # Create graph and bundle using standardized template
+            graph_bundle = agent_template(...)
+
+            create_graph_agent_server(
+                graph_bundle=graph_bundle,
+                ...
+            )
+        ```
+
+    `create_graph_agent_server()` handles everything internally: graph construction, mermaid diagram logging, system prompt enhancement with domain list, and delegating to `create_agent_server()`. No manual graph setup needed.
+
+No changes to `mcp_server.py` are required — the existing env-var gating handles per-domain tool filtering.
+
 ### Phase 4: Build Skill-Graph (Optional)
 
 If documentation URLs or PDF files were provided via `--doc-urls`:

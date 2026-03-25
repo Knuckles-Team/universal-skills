@@ -5,7 +5,7 @@ license: MIT
 tags: [marp, presentations, slides, markdown, design]
 metadata:
   author: Audel Rouhi
-  version: '0.1.48'
+  version: '0.1.49'
 ---
 # Marp Presentation Creator
 

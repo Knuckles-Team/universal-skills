@@ -138,7 +138,8 @@ def register_prompts(mcp: FastMCP):
 # If there are resources to register, add a register_resources(mcp: FastMCP) method here as well.
 
 
-def mcp_server():
+def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
+    """Initialize and return the MCP instance, args, and middlewares."""
     load_dotenv(find_dotenv())
 
     args, mcp, middlewares = create_mcp_server(
@@ -164,12 +165,17 @@ def mcp_server():
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    print(f"MyService MCP v{__version__}")
-    print("\nStarting MyService MCP Server")
-    print(f"  Transport: {args.transport.upper()}")
-    print(f"  Auth: {args.auth_type}")
-    print(f"  Delegation: {'ON' if config['enable_delegation'] else 'OFF'}")
-    print(f"  Eunomia: {args.eunomia_type}")
+    registered_tags = []
+    return mcp, args, middlewares, registered_tags
+
+def mcp_server() -> None:
+    mcp, args, middlewares, registered_tags = get_mcp_instance()
+
+    # Standardized logging (stderr)
+    print(f"MyService MCP v{__version__}", file=sys.stderr)
+    print(f"Starting MyService MCP Server ({args.transport.upper()})", file=sys.stderr)
+    print(f"  Auth: {args.auth_type}", file=sys.stderr)
+    print(f"  Dynamic Tags Loaded: {len(registered_tags)}", file=sys.stderr)
 
     if args.transport == "stdio":
         mcp.run(transport="stdio")

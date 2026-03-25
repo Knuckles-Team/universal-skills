@@ -5,7 +5,7 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.48'
+  version: '0.1.49'
 ---
 # Skill-Graph-Builder (Docs-to-Skill Transformation)
 
