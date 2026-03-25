@@ -5,7 +5,7 @@ license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
 metadata:
   author: Audel Rouhi
-  version: '0.1.49'
+  version: '0.1.50'
 ---
 # Web Crawler Skill
 
