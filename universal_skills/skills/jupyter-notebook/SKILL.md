@@ -5,7 +5,7 @@ license: MIT
 tags: [jupyter, notebook, python, data-science, research]
 metadata:
   author: Audel Rouhi
-  version: '0.1.53'
+  version: '0.1.54'
 ---
 # Jupyter Notebook
 

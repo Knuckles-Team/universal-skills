@@ -5,7 +5,7 @@ license: MIT
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
 metadata:
   author: Audel Rouhi
-  version: '0.1.53'
+  version: '0.1.54'
 ---
 # Document Tools
 
