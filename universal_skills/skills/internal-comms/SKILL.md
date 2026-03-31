@@ -5,7 +5,7 @@ license: MIT
 tags: [communications, announcements, memos, all-hands, status-updates, async]
 metadata:
   author: Audel Rouhi
-  version: '0.1.52'
+  version: '0.1.53'
 ---
 # Internal Communications
 

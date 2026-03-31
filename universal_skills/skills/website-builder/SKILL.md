@@ -5,7 +5,7 @@ license: MIT
 tags: [frontend, website, react, tailwind, gsap, cinematic]
 metadata:
   author: Audel Rouhi
-  version: '0.1.52'
+  version: '0.1.53'
 ---
 # Website Builder
 
