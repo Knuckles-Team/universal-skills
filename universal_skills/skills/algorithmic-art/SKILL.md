@@ -5,7 +5,7 @@ license: MIT
 tags: [generative-art, p5js, creative-coding, algorithmic, canvas, interactive]
 metadata:
   author: Audel Rouhi
-  version: '0.1.55'
+  version: '0.1.56'
 ---
 # Algorithmic Art Creation
 
