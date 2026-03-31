@@ -61,7 +61,8 @@ all = [
     "{all_dep_line}"]
 
 [project.scripts]
-{mcp_entry}{agent_entry}
+{mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
+{agent_cmd} = "{pkg_dir}.agent_server:agent_server"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -91,11 +92,11 @@ replace = Version: {{new_version}}
 search = {package_name}[all]>={{current_version}}
 replace = {package_name}[all]>={{new_version}}
 
-[bumpversion:file:{pkg_dir}/agent.py]
+[bumpversion:file:{pkg_dir}/agent_server.py]
 search = __version__ = "{{current_version}}"
 replace = __version__ = "{{new_version}}"
 
-[bumpversion:file:{pkg_dir}/mcp.py]
+[bumpversion:file:{pkg_dir}/mcp_server.py]
 search = __version__ = "{{current_version}}"
 replace = __version__ = "{{new_version}}"
 """
@@ -1257,29 +1258,52 @@ def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
     \"\"\"Factory function returning the fully initialized graph for execution.\"\"\"
     from agent_utilities import create_graph_agent
     from {pkg_dir}.graph_config import TAG_PROMPTS, TAG_ENV_VARS
+    from pathlib import Path
 
-    # In-process MCP loading: if no external URL/Config, load the local FastMCP instance
-    mcp_toolsets = []
+    # 1. Determine effective configuration
+    # Favor external config (mcp_config.json) for ALL tools.
+    effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG") or "mcp_config.json"
     effective_mcp_url = mcp_url or os.getenv("MCP_URL")
-    effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG")
-
-    if not effective_mcp_url and not effective_mcp_config:
+    
+    # 2. Tool Loading Strategy:
+    mcp_toolsets = []
+    if effective_mcp_config:
+        from agent_utilities.mcp_utilities import load_mcp_config
         try:
-            from {pkg_dir}.mcp_server import get_mcp_instance
-            mcp, _, _, _ = get_mcp_instance()
-            mcp_toolsets.append(mcp)
-            logger.info("{display_name}: Using in-process MCP instance.")
-        except (ImportError, Exception) as e:
-            logger.warning("{display_name}: Could not load in-process MCP: {{e}}")
+            # Use utility to find the config file path if it's relative
+            config_path = effective_mcp_config
+            if not os.path.isabs(config_path) and "/" not in config_path:
+                from importlib.resources import files, as_file
+                try:
+                    # pkg_dir is the actual package name (e.g. adguard_home_agent)
+                    pkg_res = files("{pkg_dir}") / config_path
+                    if pkg_res.is_file():
+                        with as_file(pkg_res) as path:
+                            config_path = str(path)
+                except Exception:
+                    pass
+
+                if not os.path.isabs(config_path):
+                    from agent_utilities import get_workspace_path
+                    # Search in workspace fallback
+                    ws_config = get_workspace_path(config_path)
+                    if ws_config.exists():
+                        config_path = str(ws_config)
+            
+            if os.path.exists(config_path):
+                mcp_toolsets = load_mcp_config(config_path)
+                logger.info("{display_name}: Loaded {{len(mcp_toolsets)}} MCP servers from {{config_path}}")
+        except Exception as e:
+            logger.error("{display_name}: Failed to load MCP config {{effective_mcp_config}}: {{e}}")
 
     return create_graph_agent(
-        tag_prompts=TAG_PROMPTS,
-        tag_env_vars=TAG_ENV_VARS,
         mcp_url=effective_mcp_url,
         mcp_config=effective_mcp_config or "",
         mcp_toolsets=mcp_toolsets,
         name=f"{{DEFAULT_AGENT_NAME}} Graph Agent",
-        **kwargs
+        tag_prompts=TAG_PROMPTS,
+        tag_env_vars=TAG_ENV_VARS,
+        **kwargs,
     )
 
 
@@ -1425,8 +1449,39 @@ Last updated: {date}
 """
 
 MCP_CONFIG_MD = """{{
-  "mcpServers": {{}}
+  "mcpServers": {{
+    "{mcp_short_name}": {{
+      "command": "{mcp_cmd}",
+      "env": {{
+        "{service_url_env}": "${{{service_url_env}:-http://localhost:8080}}",
+        "{auth_env}": "${{{auth_env}}}"
+      }}
+    }}
+  }}
 }}"""
+
+PIPELINE_YML = """\
+name: Build|Upload|Release Python Package
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  publish-pypi:
+    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@latest
+    secrets:
+      PYPI_API_TOKEN: ${{{{ secrets.PYPI_API_TOKEN }}}}
+  publish-docker:
+    needs: publish-pypi
+    uses: Knuckles-Team/pipelines/.github/workflows/container_pipeline.yml@latest
+    secrets:
+      DOCKER_REGISTRY: ${{{{ secrets.DOCKER_REGISTRY }}}}
+      DOCKER_USERNAME: ${{{{ secrets.DOCKER_USERNAME }}}}
+      DOCKER_PASSWORD: ${{{{ secrets.DOCKER_PASSWORD }}}}
+      DOCKER_REPOSITORY: ${{{{ secrets.DOCKER_REPOSITORY }}}}
+"""
 MEMORY_MD = """\
 # MEMORY.md - Long-term Memory
 Last updated: {date}
@@ -1447,8 +1502,8 @@ ROOT_AGENTS_MD = """# AGENTS.md
 - Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
 - Architecture:
-    - `mcp.py`: Main MCP server entry point and tool registration.
-    - `agent.py`: Pydantic AI agent definition and logic.
+    - `mcp_server.py`: Main MCP server entry point and tool registration.
+    - `agent_server.py`: Pydantic AI agent definition and logic.
     - `skills/`: Directory containing modular agent skills (if applicable).
     - `agent/`: Internal agent logic and prompt templates.
 
@@ -1496,8 +1551,8 @@ pre-commit run --all-files
 {agent_cmd}
 
 ## Project Structure Quick Reference
-- MCP Entry Point → `mcp.py`
-- Agent Entry Point → `agent.py`
+- MCP Entry Point → `mcp_server.py`
+- Agent Entry Point → `agent_server.py`
 - Source Code → {pkg_dir}/
 - Skills → `skills/` (if exists)
 
@@ -1518,9 +1573,9 @@ pre-commit run --all-files
 ├── debug.Dockerfile
 ├── {pkg_dir}
 │   ├── __init__.py
-│   ├── agent.py
+│   ├── agent_server.py
 │   ├── auth.py
-│   ├── mcp.py
+│   ├── mcp_server.py
 │   └── agent/
 ├── pyproject.toml
 └── requirements.txt
@@ -1563,7 +1618,7 @@ async def my_tool(param: str) -> str:
 - Use `agent-utilities` base classes.
 
 **Ask first:**
-- Major refactors of `mcp.py` or `agent.py`.
+- Major refactors of `mcp_server.py` or `agent_server.py`.
 - Deleting or renaming public tool functions.
 
 **Never do:**
@@ -1658,9 +1713,9 @@ def scaffold(
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
     # Entry point lines
-    mcp_entry = f'{mcp_cmd} = "{pkg_dir}.mcp:mcp_server"'
+    mcp_entry = f'{mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"'
     agent_entry = (
-        f'\n{agent_cmd} = "{pkg_dir}.agent:agent_server"' if "agent" in types else ""
+        f'\n{agent_cmd} = "{pkg_dir}.agent_server:agent_server"' if "agent" in types else ""
     )
 
     # GraphQL-conditional template placeholders
@@ -1729,6 +1784,7 @@ def scaffold(
         root / "MANIFEST.in": MANIFEST_IN,
         root / "README.md": README_MD,
         root / "requirements.txt": REQUIREMENTS_TXT,
+        root / ".github/workflows/pipeline.yml": PIPELINE_YML,
     }
 
     # ── Package files ────────────────────────────────────────────────────

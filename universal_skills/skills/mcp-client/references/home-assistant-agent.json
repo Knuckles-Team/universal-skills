@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "home-assistant-agent": {
+      "command": "home-assistant-agent",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "HOME_ASSISTANT_URL": "${HOME_ASSISTANT_URL}",
+        "HOME_ASSISTANT_TOKEN": "${HOME_ASSISTANT_TOKEN}",
+        "CONFIGTOOL": "True",
+        "STATESTOOL": "True",
+        "SERVICESTOOL": "True",
+        "EVENTSTOOL": "True",
+        "HISTORYTOOL": "True",
+        "LOGBOOKTOOL": "True",
+        "CALENDARTOOL": "True"
+      }
+    }
+  }
+}

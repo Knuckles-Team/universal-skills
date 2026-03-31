@@ -5,7 +5,7 @@ license: MIT
 tags: [browser, automation, playwright, web-scraping, testing, screenshots]
 metadata:
   author: Audel Rouhi
-  version: '0.1.50'
+  version: '0.1.51'
 ---
 # Browser Automation with agent-browser
 

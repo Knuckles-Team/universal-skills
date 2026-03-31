@@ -62,17 +62,17 @@ Read the `api-wrapper-builder` skill and follow its instructions to:
 #### 3b. MCP Server (if type includes `mcp`)
 
 Read the `mcp-builder` skill and follow its instructions to:
-1. Implement tool registrations in `{pkg_dir}/mcp.py`.
+1. Implement tool registrations in `{pkg_dir}/mcp_server.py`.
 2. Wire tools to the API wrapper methods created in 3a.
 3. Register tools by tag with env-var-based enable/disable pattern.
 4. **IMPORTANT**: All MCP tool tags MUST be strictly lowercase and use hyphens to separate words (e.g. `tag="user-management"`, env var=`USER_MANAGEMENTTOOL`). No camelCase or underscores are allowed in tags.
 5. **Scale Pattern (Option 3)**: For agents with >50 API calls (e.g. `arr-mcp`, `leanix-agent`), use **Dynamic Runtime Generation**.
    - **Tag Prefixing**: For Option 3, prefix tool tags with the API/Service name (e.g. `leanix-pathfinder`).
    - **No Duplicates**: Ensure tool tags are unique across the entire registration.
-   - Do not write massive `mcp.py` files with hundreds of static `@mcp.tool` decorators.
+   - Do not write massive `mcp_server.py` files with hundreds of static `@mcp.tool` decorators.
    - Use metaprogramming (e.g. `exec()` mapping python method signatures to FastMCP Pydantic schemas) similar to the `arr-mcp` pattern.
    - Feed the router a `tool_tags.json` mapping of `{"service": {"method_name": "lowercasetag"}}`.
-   - **CRITICAL**: Even when dynamically generating tools, you MUST explicitly define static environment variables for *each* tag block in `mcp.py` so the users can clearly see and disable them:
+   - **CRITICAL**: Even when dynamically generating tools, you MUST explicitly define static environment variables for *each* tag block in `mcp_server.py` so the users can clearly see and disable them:
      ```python
      DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
      if DEFAULT_MISCTOOL:
@@ -220,7 +220,7 @@ Create the reference markdown file following the established pattern (see existi
 {Example mcp_client.py commands}
 ```
 
-Once MCP tools are implemented (Phase 3b), populate the "Available Tool Tags" with the actual `register_*_tools` env var names from `mcp.py`, and add a "Tailored Skills Reference" section documenting each tool tag group and its tools with parameters.
+Once MCP tools are implemented (Phase 3b), populate the "Available Tool Tags" with the actual `register_*_tools` env var names from `mcp_server.py`, and add a "Tailored Skills Reference" section documenting each tool tag group and its tools with parameters.
 
 #### 5b. Create `references/{package-name}.json`
 

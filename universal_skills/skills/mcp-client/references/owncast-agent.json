@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "owncast-agent": {
+      "command": "owncast-agent",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "OWNCAST_URL": "${OWNCAST_URL}",
+        "OWNCAST_TOKEN": "${OWNCAST_TOKEN}",
+        "STATUSTOOL": "True",
+        "CHATTOOL": "True"
+      }
+    }
+  }
+}

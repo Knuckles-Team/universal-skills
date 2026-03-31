@@ -10,7 +10,7 @@ TEMPLATE = """# AGENTS.md
 - Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
 - Architecture:
-    - `mcp.py`: Main MCP server entry point and tool registration.
+    - `mcp_server.py`: Main MCP server entry point and tool registration.
     - `agent.py`: Pydantic AI agent definition and logic.
     - `skills/`: Directory containing modular agent skills (if applicable).
     - `agent/`: Internal agent logic and prompt templates.
@@ -56,7 +56,7 @@ pre-commit run --all-files
 {SCRIPTS_MD}
 
 ## Project Structure Quick Reference
-- MCP Entry Point → `mcp.py`
+- MCP Entry Point → `mcp_server.py`
 - Agent Entry Point → `agent.py`
 - Source Code → `{SOURCE_DIR}/`
 - Skills → `skills/` (if exists)
@@ -103,7 +103,7 @@ async def my_tool(param: str) -> str:
 - Use `agent-utilities` base classes.
 
 **Ask first:**
-- Major refactors of `mcp.py` or `agent.py`.
+- Major refactors of `mcp_server.py` or `agent.py`.
 - Deleting or renaming public tool functions.
 
 **Never do:**
@@ -192,7 +192,7 @@ def generate_agents_md(metadata):
             [f"# {desc}\n{cmd}" for desc, cmd in metadata["scripts"].items()]
         )
     else:
-        scripts_md = "# Run MCP Server (if applicable)\npython3 mcp.py\n# Run Agent (if applicable)\npython3 agent.py"
+        scripts_md = "# Run MCP Server (if applicable)\npython3 mcp_server.py\n# Run Agent (if applicable)\npython3 agent.py"
 
     tree_view = get_tree_view(metadata["path"])
 

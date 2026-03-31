@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "langfuse-agent": {
+      "command": "langfuse-agent",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "LANGFUSE_HOST": "${LANGFUSE_HOST}",
+        "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
+        "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
+        "TELEMETRYTOOL": "True",
+        "ANNOTATIONTOOL": "True"
+      }
+    }
+  }
+}

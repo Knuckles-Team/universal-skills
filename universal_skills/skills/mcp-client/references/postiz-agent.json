@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "postiz-agent": {
+      "command": "postiz-agent",
+      "args": [
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "POSTIZ_URL": "${POSTIZ_URL}",
+        "POSTIZ_TOKEN": "${POSTIZ_TOKEN}",
+        "INTEGRATIONSTOOL": "True",
+        "POSTSTOOL": "True",
+        "UPLOADSTOOL": "True",
+        "ANALYTICSTOOL": "True",
+        "NOTIFICATIONSTOOL": "True"
+      }
+    }
+  }
+}

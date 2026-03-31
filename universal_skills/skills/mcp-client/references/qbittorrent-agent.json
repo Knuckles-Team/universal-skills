@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "qbittorrent-agent": {
+      "command": "python",
+      "args": ["-m", "qbittorrent_agent.mcp", "--transport", "stdio"],
+      "env": {
+        "QBITTORRENT_URL": "${QBITTORRENT_URL}",
+        "QBITTORRENT_USERNAME": "${QBITTORRENT_USERNAME}",
+        "QBITTORRENT_PASSWORD": "${QBITTORRENT_PASSWORD}",
+        "APPTOOL": "True",
+        "TORRENTSTOOL": "True",
+        "TRANSFERTOOL": "True",
+        "RSSTOOL": "True",
+        "SEARCHTOOL": "True",
+        "LOGTOOL": "True"
+      }
+    }
+  }
+}

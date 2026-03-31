@@ -8,7 +8,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Audel Rouhi
-  version: '0.1.50'
+  version: '0.1.51'
 ---
 # MCP Client Skill
 
@@ -187,6 +187,7 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | Arr Stack | [arr-mcp.md](references/arr-mcp.md) | [arr-mcp.json](references/arr-mcp.json) | 7 |
 | GitHub | [github-mcp.md](references/github-mcp.md) | [github-mcp.json](references/github-mcp.json) | 19 |
 | GitLab | [gitlab-api.md](references/gitlab-api.md) | [gitlab-api.json](references/gitlab-api.json) | 19 |
+| Home Assistant | [home-assistant-agent.md](references/home-assistant-agent.md) | [home-assistant-agent.json](references/home-assistant-agent.json) | 7 |
 | Microsoft 365 | [microsoft-agent.md](references/microsoft-agent.md) | [microsoft-agent.json](references/microsoft-agent.json) | 37 |
 | Container Manager | [container-manager-mcp.md](references/container-manager-mcp.md) | [container-manager-mcp.json](references/container-manager-mcp.json) | 10 |
 | Nextcloud | [nextcloud-agent.md](references/nextcloud-agent.md) | [nextcloud-agent.json](references/nextcloud-agent.json) | 6 |
@@ -197,7 +198,12 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | Repository Manager | [repository-manager.md](references/repository-manager.md) | [repository-manager.json](references/repository-manager.json) | 4 |
 | Ansible Tower | [ansible-tower-mcp.md](references/ansible-tower-mcp.md) | [ansible-tower-mcp.json](references/ansible-tower-mcp.json) | 0 |
 | Jellyfin | [jellyfin-mcp.md](references/jellyfin-mcp.md) | [jellyfin-mcp.json](references/jellyfin-mcp.json) | 62 |
+| qBittorrent Manager | [qbittorrent-agent.md](references/qbittorrent-agent.md) | [qbittorrent-agent.json](references/qbittorrent-agent.json) | 6 |
 | Portainer | [portainer-agent.md](references/portainer-agent.md) | [portainer-agent.json](references/portainer-agent.json) | 10 |
+| Postiz Agent | [postiz-agent.md](references/postiz-agent.md) | [postiz-agent.json](references/postiz-agent.json) | 5 |
+| Uptime Kuma | [uptime-kuma-agent.md](references/uptime-kuma-agent.md) | [uptime-kuma-agent.json](references/uptime-kuma-agent.json) | 2 |
+| Owncast Agent | [owncast-agent.md](references/owncast-agent.md) | [owncast-agent.json](references/owncast-agent.json) | 2 |
+| Langfuse Agent | [langfuse-agent.md](references/langfuse-agent.md) | [langfuse-agent.json](references/langfuse-agent.json) | 2 |
 | Stirling PDF Agent | [stirlingpdf-agent.md](references/stirlingpdf-agent.md) | [stirlingpdf-agent.json](references/stirlingpdf-agent.json) | 1 |
 | LeanIX Agent | [leanix-agent.md](references/leanix-agent.md) | [leanix-agent.json](references/leanix-agent.json) | 2 |
 | ArchiveBox API | [archivebox-api.md](references/archivebox-api.md) | [archivebox-api.json](references/archivebox-api.json) | 3 |
