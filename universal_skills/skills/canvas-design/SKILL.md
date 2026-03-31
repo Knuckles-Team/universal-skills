@@ -5,7 +5,7 @@ license: MIT
 tags: [canvas, svg, graphic-design, programmatic-design, composition]
 metadata:
   author: Audel Rouhi
-  version: '0.1.51'
+  version: '0.1.52'
 ---
 # Canvas & SVG Design
 

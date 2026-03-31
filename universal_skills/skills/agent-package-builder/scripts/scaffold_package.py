@@ -1264,7 +1264,7 @@ def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
     # Favor external config (mcp_config.json) for ALL tools.
     effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG") or "mcp_config.json"
     effective_mcp_url = mcp_url or os.getenv("MCP_URL")
-    
+
     # 2. Tool Loading Strategy:
     mcp_toolsets = []
     if effective_mcp_config:
@@ -1289,7 +1289,7 @@ def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
                     ws_config = get_workspace_path(config_path)
                     if ws_config.exists():
                         config_path = str(ws_config)
-            
+
             if os.path.exists(config_path):
                 mcp_toolsets = load_mcp_config(config_path)
                 logger.info("{display_name}: Loaded {{len(mcp_toolsets)}} MCP servers from {{config_path}}")
@@ -1715,7 +1715,9 @@ def scaffold(
     # Entry point lines
     mcp_entry = f'{mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"'
     agent_entry = (
-        f'\n{agent_cmd} = "{pkg_dir}.agent_server:agent_server"' if "agent" in types else ""
+        f'\n{agent_cmd} = "{pkg_dir}.agent_server:agent_server"'
+        if "agent" in types
+        else ""
     )
 
     # GraphQL-conditional template placeholders
