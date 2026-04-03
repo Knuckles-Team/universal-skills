@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Agent Package Builder — Scaffolds a complete agent-package project.
 
@@ -213,7 +214,12 @@ ENV HOST=${{HOST}} \\
 RUN apt-get update \\
     && apt-get install -y ripgrep tree fd-find curl nano \\
     && curl -LsSf https://astral.sh/uv/install.sh | sh \\
+    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
+    && mkdir -p /root/.config \\
+    && echo 'eval "$(starship init bash)"' >> /root/.bashrc \\
     && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
+
+COPY starship.toml /root/.config/starship.toml
 
 CMD ["{mcp_cmd}"]
 """
@@ -277,7 +283,12 @@ COPY . /app
 RUN apt-get update \\
     && apt-get install -y ripgrep tree fd-find curl nano \\
     && curl -LsSf https://astral.sh/uv/install.sh | sh \\
+    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
+    && mkdir -p /root/.config \\
+    && echo 'eval "$(starship init bash)"' >> /root/.bashrc \\
     && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[all]
+
+COPY starship.toml /root/.config/starship.toml
 
 CMD ["{mcp_cmd}"]
 """
@@ -324,6 +335,79 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+"""
+
+STARSHIP_TOML = """\
+"$schema" = "https://starship.rs/config-schema.json"
+
+add_newline = true
+command_timeout = 1000
+
+format = \"\"\"\\
+${{custom.shell}}\\
+${{directory}}\\
+${{git_branch}}${{git_status}}\\
+${{line_break}}\\
+${{character}}\"\"\"
+
+right_format = \"\"\"${{nodejs}}${{time}}\"\"\"
+
+# ── Left side ───────────────────────────────────────────────────────────────
+
+# Shell name (blue diamond like your first segment)
+[custom.shell]
+command = \"\"\"echo ${{SHELL##*/}}\"\"\"
+when = true
+format = "[ ╭─](fg:#0077c2)[ $output ](fg:#ffffff bg:#0077c2)[ ](fg:#0077c2)"
+
+# Directory (gray powerline)
+[directory]
+style = "fg:#E4E4E4 bg:#444444"
+format = "[ $path ](fg:#E4E4E4 bg:#444444)[ ](fg:#444444)"
+truncation_len = 0
+truncate_to_repo = false
+use_logical_path = false
+
+# Git
+[git_branch]
+format = "[ ](fg:#FFFB38)[ $branch ](fg:#011627 bg:#FFFB38)"
+style = "fg:#011627 bg:#FFFB38"
+
+[git_status]
+format = "[$all_status$ahead_behind ](fg:#011627 bg:#FFFB38)"
+style = "fg:#011627 bg:#FFFB38"
+ahead = "↑$count"
+behind = "↓$count"
+diverged = "↑$ahead_count↓$behind_count"
+modified = "!"
+staged = "+"
+untracked = "?"
+deleted = "✘"
+renamed = "»"
+
+# ── Right side ──────────────────────────────────────────────────────────────
+
+# Node.js (green on dark)
+[nodejs]
+format = "[ ](fg:#303030)[  $version ](fg:#3C873A bg:#303030)[ ](fg:#303030)"
+detect_files = ["package.json"]
+
+# Time (cyan diamond)
+[time]
+disabled = false
+format = "[ ](fg:#40c4ff)[  $time ](fg:#ffffff bg:#40c4ff)[ ](fg:#40c4ff)"
+time_format = "%H:%M:%S"
+
+# ── Bottom line ─────────────────────────────────────────────────────────────
+
+[character]
+success_symbol = "[╰─❯ ](fg:#e0f8ff)"
+error_symbol = "[╰─❯ ](fg:#ef5350)"
+
+# Python module (nice to have in a Python container)
+[python]
+format = "[  $version ](fg:#3776AB bg:#444444)[ ](fg:#444444)"
+style = "fg:#3776AB bg:#444444"
 """
 
 DOCKERIGNORE = """\
@@ -1224,8 +1308,10 @@ AGENT_PY = """\
 #!/usr/bin/python
 # coding: utf-8
 import os
+import sys
 import logging
 import warnings
+from pathlib import Path
 
 from agent_utilities import (
     build_system_prompt_from_workspace,
@@ -1233,6 +1319,7 @@ from agent_utilities import (
     create_graph_agent_server,
     initialize_workspace,
     load_identity,
+    get_workspace_path,
 )
 
 __version__ = "0.1.0"
@@ -1248,67 +1335,21 @@ logger = logging.getLogger(__name__)
 initialize_workspace()
 meta = load_identity()
 DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
+DEFAULT_AGENT_DESCRIPTION = os.getenv(
+    "AGENT_DESCRIPTION",
+    meta.get("description", "{description}"),
+)
 DEFAULT_AGENT_SYSTEM_PROMPT = os.getenv(
     "AGENT_SYSTEM_PROMPT",
     meta.get("content") or build_system_prompt_from_workspace(),
 )
 
 
-def agent_template(mcp_url: str = None, mcp_config: str = None, **kwargs):
-    \"\"\"Factory function returning the fully initialized graph for execution.\"\"\"
-    from agent_utilities import create_graph_agent
-    from {pkg_dir}.graph_config import TAG_PROMPTS, TAG_ENV_VARS
-    from pathlib import Path
-
-    # 1. Determine effective configuration
-    # Favor external config (mcp_config.json) for ALL tools.
-    effective_mcp_config = mcp_config or os.getenv("MCP_CONFIG") or "mcp_config.json"
-    effective_mcp_url = mcp_url or os.getenv("MCP_URL")
-
-    # 2. Tool Loading Strategy:
-    mcp_toolsets = []
-    if effective_mcp_config:
-        from agent_utilities.mcp_utilities import load_mcp_config
-        try:
-            # Use utility to find the config file path if it's relative
-            config_path = effective_mcp_config
-            if not os.path.isabs(config_path) and "/" not in config_path:
-                from importlib.resources import files, as_file
-                try:
-                    # pkg_dir is the actual package name (e.g. adguard_home_agent)
-                    pkg_res = files("{pkg_dir}") / config_path
-                    if pkg_res.is_file():
-                        with as_file(pkg_res) as path:
-                            config_path = str(path)
-                except Exception:
-                    pass
-
-                if not os.path.isabs(config_path):
-                    from agent_utilities import get_workspace_path
-                    # Search in workspace fallback
-                    ws_config = get_workspace_path(config_path)
-                    if ws_config.exists():
-                        config_path = str(ws_config)
-
-            if os.path.exists(config_path):
-                mcp_toolsets = load_mcp_config(config_path)
-                logger.info("{display_name}: Loaded {{len(mcp_toolsets)}} MCP servers from {{config_path}}")
-        except Exception as e:
-            logger.error("{display_name}: Failed to load MCP config {{effective_mcp_config}}: {{e}}")
-
-    return create_graph_agent(
-        mcp_url=effective_mcp_url,
-        mcp_config=effective_mcp_config or "",
-        mcp_toolsets=mcp_toolsets,
-        name=f"{{DEFAULT_AGENT_NAME}} Graph Agent",
-        tag_prompts=TAG_PROMPTS,
-        tag_env_vars=TAG_ENV_VARS,
-        **kwargs,
-    )
-
-
 def agent_server():
-    logger.info(f"{{DEFAULT_AGENT_NAME}} v{{__version__}}")
+    warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
+
+    print(f"{{DEFAULT_AGENT_NAME}} v{{__version__}}", file=sys.stderr)
     parser = create_agent_parser()
     args = parser.parse_args()
 
@@ -1316,24 +1357,19 @@ def agent_server():
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
 
-    # Create graph and config using standardized template
-    graph_bundle = agent_template(
+    # Start server using the auto-discovery pattern (from mcp_config.json)
+    create_graph_agent_server(
         mcp_url=args.mcp_url,
-        mcp_config=args.mcp_config,
+        mcp_config=args.mcp_config or "mcp_config.json",
+        host=args.host,
+        port=args.port,
         provider=args.provider,
+        model_id=args.model_id,
+        router_model=args.model_id,
         agent_model=args.model_id,
         base_url=args.base_url,
         api_key=args.api_key,
         custom_skills_directory=args.custom_skills_directory,
-        debug=args.debug,
-        ssl_verify=not args.insecure,
-    )
-
-    # Start server using the pre-built graph bundle
-    create_graph_agent_server(
-        graph_bundle=graph_bundle,
-        host=args.host,
-        port=args.port,
         enable_web_ui=args.web,
         enable_otel=args.otel,
         otel_endpoint=args.otel_endpoint,
@@ -1347,26 +1383,6 @@ def agent_server():
 
 if __name__ == "__main__":
     agent_server()
-"""
-
-GRAPH_CONFIG_PY = """\
-\"\"\"{display_name} graph configuration — tag prompts and env var mappings.
-
-Standardized graph configuration to support hierarchical and specialized domain routing.
-\"\"\"
-
-# ── Tag → System Prompt Mapping ──────────────────────────────────────
-TAG_PROMPTS: dict[str, str] = {{
-    "core": (
-        "You are a {display_name} Core specialist. Help users interact with core functionality."
-    ),
-}}
-
-
-# ── Tag → Environment Variable Mapping ────────────────────────────────
-TAG_ENV_VARS: dict[str, str] = {{
-    "core": "CORETOOL",
-}}
 """
 
 MAIN_PY = """\
@@ -1459,6 +1475,21 @@ MCP_CONFIG_MD = """{{
     }}
   }}
 }}"""
+
+MCP_AGENTS_MD = """# MCP_AGENTS.md - Dynamic Agent Registry
+
+This file tracks the generated agents from MCP servers. You can manually modify the 'Tools' list to customize agent expertise.
+
+## Agent Mapping Table
+
+| Name | Description | System Prompt | Tools | Tag | Source MCP |
+|------|-------------|---------------|-------|-----|------------|
+
+## Tool Inventory Table
+
+| Tool Name | Description | Tag | Source |
+|-----------|-------------|-----|--------|
+"""
 
 PIPELINE_YML = """\
 name: Build|Upload|Release Python Package
@@ -1576,7 +1607,11 @@ pre-commit run --all-files
 │   ├── agent_server.py
 │   ├── auth.py
 │   ├── mcp_server.py
-│   └── agent/
+│   └── agent_data/
+│       ├── IDENTITY.md
+│       ├── USER.md
+│       ├── MCP_AGENTS.md
+│       └── ...
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -1786,6 +1821,7 @@ def scaffold(
         root / "MANIFEST.in": MANIFEST_IN,
         root / "README.md": README_MD,
         root / "requirements.txt": REQUIREMENTS_TXT,
+        root / "starship.toml": STARSHIP_TOML,
         root / ".github/workflows/pipeline.yml": PIPELINE_YML,
     }
 
@@ -1798,7 +1834,6 @@ def scaffold(
 
     if "agent" in types:
         files[pkg / "agent_server.py"] = AGENT_PY
-        files[pkg / "graph_config.py"] = GRAPH_CONFIG_PY
         files[agent_dir / "IDENTITY.md"] = IDENTITY_MD
         files[agent_dir / "CRON.md"] = CRON_MD
         files[agent_dir / "CRON_LOG.md"] = CRON_LOG_MD
@@ -1807,6 +1842,7 @@ def scaffold(
         files[agent_dir / "AGENTS.md"] = AGENTS_MD_PEER
         files[agent_dir / "USER.md"] = USER_MD
         files[agent_dir / "mcp_config.json"] = MCP_CONFIG_MD
+        files[agent_dir / "MCP_AGENTS.md"] = MCP_AGENTS_MD
         files[pkg / "__main__.py"] = MAIN_PY
 
         # Create empty icon.png

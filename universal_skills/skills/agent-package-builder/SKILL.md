@@ -7,7 +7,7 @@ tags: [agent, package, scaffold, bootstrap, project, mcp, api-wrapper, builder]
 
 # Agent Package Builder
 
-Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`Dockerfile`, `debug.Dockerfile`, `compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, `icon.png`) in the `agent_data/` directory. It also includes a best-in-class `A2A_AGENTS.md` in the project root to optimize for AI coding tools.
+Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`Dockerfile`, `debug.Dockerfile`, `compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`IDENTITY.md`, `USER.md`, `MCP_AGENTS.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, `icon.png`) in the `agent_data/` directory. It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
 
 ---
 
@@ -89,7 +89,7 @@ Read the `agent-builder` skill and follow its instructions to:
    - Instructions to run `list_skills` first.
    - Instructions to use the `mcp-client` skill and check `{package_name}.md` reference.
 3. Update `{pkg_dir}/agent_data/CRON.md` with appropriate scheduled tasks.
-4. Ensure the `agent_data/` directory contains all required core files: `IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, and `icon.png`. A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
+4. Ensure the `agent_data/` directory contains all required core files: `IDENTITY.md`, `USER.md`, `MCP_AGENTS.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, and `icon.png`. A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
 
 #### 3d. GraphQL Wrapper (if type includes `graphql`)
 

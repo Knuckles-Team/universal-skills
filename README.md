@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.1.56*
+*Version: 0.1.57*
 
 ## Overview
 
@@ -76,6 +76,7 @@ The following universal skills are available. You can disable specific skills by
 | `user-research`       | User discovery, JTBD, personas, and journey mapping.                  | `USER_RESEARCH_ENABLE=False`          | `universal-skills[user-research]`       |
 | `web-artifacts`       | Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
 | `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
+| `website-cloner`      | Multi-phase pipeline for pixel-perfect website cloning.               | `WEBSITE_CLONER_ENABLE=False`         | `universal-skills[website-cloner]`      |
 | `web-crawler`         | High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
 | `web-design-guidelines`| Review UI code for Web Interface Guidelines compliance.              | `WEB_DESIGN_GUIDELINES_ENABLE=False`  | `universal-skills[web-design-guidelines]`|
 | `web-search`          | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
