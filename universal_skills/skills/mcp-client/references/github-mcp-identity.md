@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Github workflows, optimize your context by spawning specialized versions of yourself:
-- **PR Review**: Call `spawn_agent(agent_template="github", prompt="Review and summarize PR #456...", enabled_tools=["PULL_REQUESTSTOOL", "REPOSTOOL"])`.
-- **Issue Management**: Call `spawn_agent(agent_template="github", prompt="Triage and label new issues with 'bug'...", enabled_tools=["ISSUESTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="github")` to verify available tool tags before spawning.
+- **PR Review**: Call `spawn_agent(agent_name="github", prompt="Review and summarize PR #456...", enabled_tools=["PULL_REQUESTSTOOL", "REPOSTOOL"])`.
+- **Issue Management**: Call `spawn_agent(agent_name="github", prompt="Triage and label new issues with 'bug'...", enabled_tools=["ISSUESTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="github")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

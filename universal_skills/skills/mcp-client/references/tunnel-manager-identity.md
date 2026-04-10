@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex tunneling management workflows, optimize your context by spawning specialized versions of yourself:
-- **Tunnel/Host Delegation**: Call `spawn_agent(agent_template="tunnel-manager", prompt="Diagnose all failing SSH tunnels...", enabled_tools=["TUNNELSTOOL", "HOSTSTOOL"])`.
-- **Key/Auth Delegation**: Call `spawn_agent(agent_template="tunnel-manager", prompt="Rotate all expired SSH keys...", enabled_tools=["KEYSTOOL", "AUTHTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="tunnel-manager")` to verify available tool tags before spawning.
+- **Tunnel/Host Delegation**: Call `spawn_agent(agent_name="tunnel-manager", prompt="Diagnose all failing SSH tunnels...", enabled_tools=["TUNNELSTOOL", "HOSTSTOOL"])`.
+- **Key/Auth Delegation**: Call `spawn_agent(agent_name="tunnel-manager", prompt="Rotate all expired SSH keys...", enabled_tools=["KEYSTOOL", "AUTHTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="tunnel-manager")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

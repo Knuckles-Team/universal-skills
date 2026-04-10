@@ -15,8 +15,6 @@ This skill provides guidelines and templates for building Pydantic AI agents tha
 
 When building a new agent, you must use the **Agent Pattern**. Agent will have access to all authorized capabilities via the `mcp-client` universal skill.
 
-**Reference:** `reference/agent_template.md` contains the required boilerplate.
-
 ---
 
 ## Implementation Workflow
@@ -31,7 +29,7 @@ Follow these steps when defining a new agent package:
 ### 2. Configure Agent Workspace Files
 The agent's behavior and state are controlled by several core files in the `agent_data/` directory:
 
-- **IDENTITY.md**: Injects the agent's name, role, system prompt, and tools instructions. Use a single `[default]` block containing the metadata and prompt. (See `reference/agent_template.md`).
+- **IDENTITY.md**: Injects the agent's name, role, system prompt, and tools instructions. Use a single `[default]` block containing the metadata and prompt.
 - **USER.md**: Information about the user (name, style, preferences).
 - **A2A_AGENTS.md**: Registry of known A2A peer agents.
 - **MEMORY.md**: Long-term memory and event logs.
@@ -62,4 +60,4 @@ After implementation:
 ## Reference Documents
 
 The following references are provided alongside this skill:
-- [Agent Boilerplate](reference/agent_template.md)
+- [Agent Identity Pattern](reference/identity.md)

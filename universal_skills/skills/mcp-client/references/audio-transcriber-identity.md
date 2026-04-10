@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Audio-Transcriber workflows, optimize your context by spawning specialized versions of yourself:
-- **Batch Transcription**: Call `spawn_agent(agent_template="audio-transcriber", prompt="Transcribe all audio files in the 'interviews' folder...", enabled_tools=["TRANSCRIBETOOL"])`.
-- **Analysis**: Call `spawn_agent(agent_template="audio-transcriber", prompt="Identify speakers in audio.mp3...", enabled_tools=["TRANSCRIBETOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="audio-transcriber-mcp")` to verify available tool tags before spawning.
+- **Batch Transcription**: Call `spawn_agent(agent_name="audio-transcriber", prompt="Transcribe all audio files in the 'interviews' folder...", enabled_tools=["TRANSCRIBETOOL"])`.
+- **Analysis**: Call `spawn_agent(agent_name="audio-transcriber", prompt="Identify speakers in audio.mp3...", enabled_tools=["TRANSCRIBETOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="audio-transcriber-mcp")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

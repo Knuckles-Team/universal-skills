@@ -137,8 +137,8 @@ Agents with many tool tags benefit from **graph orchestration** — a pydantic-g
 
             print(f"{DEFAULT_AGENT_NAME} v{__version__}", file=sys.stderr)
 
-            # Create graph and bundle using standardized template
-            graph_bundle = agent_template(...)
+            # Create graph and bundle
+            graph_bundle = create_agent(...)
 
             create_graph_agent_server(
                 graph_bundle=graph_bundle,

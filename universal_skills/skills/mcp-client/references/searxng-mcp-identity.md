@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Searxng workflows, optimize your context by spawning specialized versions of yourself:
-- **Deep Research**: Call `spawn_agent(agent_template="searxng", prompt="Conduct deep research on recent AI trends...", enabled_tools=["SEARCHTOOL"])`.
-- **Discovery**: Call `spawn_agent(agent_template="searxng", prompt="Find scholarly articles on quantum computing...", enabled_tools=["SEARCHTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="searxng")` to verify available tool tags before spawning.
+- **Deep Research**: Call `spawn_agent(agent_name="searxng", prompt="Conduct deep research on recent AI trends...", enabled_tools=["SEARCHTOOL"])`.
+- **Discovery**: Call `spawn_agent(agent_name="searxng", prompt="Find scholarly articles on quantum computing...", enabled_tools=["SEARCHTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="searxng")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

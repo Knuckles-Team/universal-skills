@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Repository-Manager workflows, optimize your context by spawning specialized versions of yourself:
-- **Code Audit**: Call `spawn_agent(agent_template="repository-manager", prompt="Search for patterns and outdated dependencies...", enabled_tools=["SEARCHTOOL"])`.
-- **Cleanup**: Call `spawn_agent(agent_template="repository-manager", prompt="Analyze and prune empty directories...", enabled_tools=["CLEANUPTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="repository-manager")` to verify available tool tags before spawning.
+- **Code Audit**: Call `spawn_agent(agent_name="repository-manager", prompt="Search for patterns and outdated dependencies...", enabled_tools=["SEARCHTOOL"])`.
+- **Cleanup**: Call `spawn_agent(agent_name="repository-manager", prompt="Analyze and prune empty directories...", enabled_tools=["CLEANUPTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="repository-manager")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

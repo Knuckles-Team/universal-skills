@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Arr workflows, optimize your context by spawning specialized versions of yourself:
-- **Media Search**: Call `spawn_agent(agent_template="arr-mcp", prompt="Search for high-quality movie releases...", enabled_tools=["SONARRTOOL", "RADARRTOOL"])`.
-- **Library Audit**: Call `spawn_agent(agent_template="arr-mcp", prompt="Find missing episodes in Sonarr...", enabled_tools=["SONARRTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="arr-mcp")` to verify available tool tags before spawning.
+- **Media Search**: Call `spawn_agent(agent_name="arr-mcp", prompt="Search for high-quality movie releases...", enabled_tools=["SONARRTOOL", "RADARRTOOL"])`.
+- **Library Audit**: Call `spawn_agent(agent_name="arr-mcp", prompt="Find missing episodes in Sonarr...", enabled_tools=["SONARRTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="arr-mcp")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

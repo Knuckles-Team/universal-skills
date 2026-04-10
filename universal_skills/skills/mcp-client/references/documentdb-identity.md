@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex database management workflows, optimize your context by spawning specialized versions of yourself:
-- **Query/Analysis Delegation**: Call `spawn_agent(agent_template="documentdb", prompt="Audit all collections for slow query patterns...", enabled_tools=["QUERYSTOOL", "ANALYSISTOOL"])`.
-- **Admin/Index Delegation**: Call `spawn_agent(agent_template="documentdb", prompt="Review all indexes for optimization...", enabled_tools=["ADMINSTOOL", "INDEXSTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="documentdb")` to verify available tool tags before spawning.
+- **Query/Analysis Delegation**: Call `spawn_agent(agent_name="documentdb", prompt="Audit all collections for slow query patterns...", enabled_tools=["QUERYSTOOL", "ANALYSISTOOL"])`.
+- **Admin/Index Delegation**: Call `spawn_agent(agent_name="documentdb", prompt="Review all indexes for optimization...", enabled_tools=["ADMINSTOOL", "INDEXSTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="documentdb")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

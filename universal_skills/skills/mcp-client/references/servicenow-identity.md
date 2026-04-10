@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex ServiceNow workflows, optimize your context by spawning specialized versions of yourself:
-- **Module-Specific Spawning**: Call `spawn_agent(agent_template="servicenow", prompt="Review all P1 incidents...", enabled_tools=["INCIDENTSTOOL", "NOTFICATIONTOOL"])`.
-- **CMDB/Asset Delegation**: Call `spawn_agent(agent_template="servicenow", prompt="Audit all server assets...", enabled_tools=["CMDBTOOL", "KNOWLEDGETOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="servicenow")` to verify available tool tags before spawning.
+- **Module-Specific Spawning**: Call `spawn_agent(agent_name="servicenow", prompt="Review all P1 incidents...", enabled_tools=["INCIDENTSTOOL", "NOTFICATIONTOOL"])`.
+- **CMDB/Asset Delegation**: Call `spawn_agent(agent_name="servicenow", prompt="Audit all server assets...", enabled_tools=["CMDBTOOL", "KNOWLEDGETOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="servicenow")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

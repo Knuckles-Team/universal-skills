@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Microsoft workflows, optimize your context by spawning specialized versions of yourself:
-- **Email Audit**: Call `spawn_agent(agent_template="microsoft", prompt="Find and summarize high-priority unread emails...", enabled_tools=["MESSAGESTOOL"])`.
-- **File Management**: Call `spawn_agent(agent_template="microsoft", prompt="Organize shared documents in OneDrive...", enabled_tools=["DRIVESTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="microsoft")` to verify available tool tags before spawning.
+- **Email Audit**: Call `spawn_agent(agent_name="microsoft", prompt="Find and summarize high-priority unread emails...", enabled_tools=["MESSAGESTOOL"])`.
+- **File Management**: Call `spawn_agent(agent_name="microsoft", prompt="Organize shared documents in OneDrive...", enabled_tools=["DRIVESTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="microsoft")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

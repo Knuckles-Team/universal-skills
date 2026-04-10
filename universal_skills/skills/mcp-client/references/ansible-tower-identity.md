@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex automation workflows, optimize your context by spawning specialized versions of yourself:
-- **Inventory/Host Delegation**: Call `spawn_agent(agent_template="ansible-tower", prompt="Audit all hosts in inventory <ID>...", enabled_tools=["INVENTORYSTOOL", "HOSTSTOOL"])`.
-- **Job/Template Delegation**: Call `spawn_agent(agent_template="ansible-tower", prompt="Monitor all running job templates...", enabled_tools=["JOBSTOOL", "TEMPLATESTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="ansible-tower")` to verify available tool tags before spawning.
+- **Inventory/Host Delegation**: Call `spawn_agent(agent_name="ansible-tower", prompt="Audit all hosts in inventory <ID>...", enabled_tools=["INVENTORYSTOOL", "HOSTSTOOL"])`.
+- **Job/Template Delegation**: Call `spawn_agent(agent_name="ansible-tower", prompt="Monitor all running job templates...", enabled_tools=["JOBSTOOL", "TEMPLATESTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="ansible-tower")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

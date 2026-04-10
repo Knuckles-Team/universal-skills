@@ -37,29 +37,72 @@ WORKSPACE_PATHS = {
 
 def get_universal_skills_source_path() -> Path:
     """Locates the source directory of the universal skills."""
-    # Try relative to this script
-    script_dir = Path(__file__).parent.parent.parent
-    if (script_dir / "web-search").exists():
-        return script_dir
-
-    # Try via package metadata
+    # Try via package metadata (this works for pip-installed packages)
     try:
         from importlib.resources import files
 
-        source = files("universal_skills") / "skills"
-        with source.as_file() as p:
+        with files("universal_skills").joinpath("skills") as p:
             if p.exists():
                 return p
     except Exception:
         pass
+    
+    # If we still can't find the package, check common source locations
+    try:
+        from pathlib import Path
+        
+        # Check if we're running from the source directory (common in development)
+        script_dir = Path(__file__).parent.parent.parent
+        possible_sources = [
+            script_dir,
+            Path("/home/genius/Workspace/agent-packages/universal-skills/universal_skills/skills"),
+        ]
+        
+        for source_path in possible_sources:
+            if source_path.exists() and source_path.is_dir():
+                # Verify it looks like a skills directory by checking for a few skill directories
+                if any((source_path / skill).exists() for skill in ["web-search", "agent-builder"] if (source_path / skill).is_dir()):
+                    return source_path
+    except Exception:
+        pass
+    
+    # If we still can't find the package, return None
+    # The skill should be installed via pip for this to work
+    return None
 
-    # Fallback to current workspace structure
-    workspace_path = Path(
-        "/home/genius/Workspace/agent-packages/universal-skills/universal_skills/skills"
-    )
-    if workspace_path.exists():
-        return workspace_path
+def get_skill_graphs_source_path() -> Path:
+    """Locates the source directory of the skill graphs."""
+    # Try via package metadata (this works for pip-installed packages)
+    try:
+        from importlib.resources import files
 
+        with files("skill_graphs").joinpath("skill_graphs") as p:
+            if p.exists():
+                return p
+    except Exception:
+        pass
+    
+    # If we still can't find the package, check common source locations
+    try:
+        from pathlib import Path
+        
+        # Check if we're running from the source directory (common in development)
+        script_dir = Path(__file__).parent.parent.parent
+        possible_sources = [
+            script_dir,
+            Path("/home/genius/Workspace/agent-packages/skills/skill-graphs/skill_graphs/skill_graphs"),
+        ]
+        
+        for source_path in possible_sources:
+            if source_path.exists() and source_path.is_dir():
+                # Verify it looks like a skill_graphs directory by checking for a few skill directories
+                if any((source_path / skill).exists() for skill in ["aws-docs", "azure-docs"] if (source_path / skill).is_dir()):
+                    return source_path
+    except Exception:
+        pass
+    
+    # If we still can't find the package, return None
+    # The skill should be installed via pip for this to work
     return None
 
 
@@ -73,9 +116,11 @@ def get_workspace_root() -> Optional[Path]:
 
 
 def install_skills(
-    target_path: Path, skill_names: Optional[List[str]] = None, force: bool = False
+    target_path: Path, skill_names: Optional[List[str]] = None, force: bool = False,
+    install_skill_graphs: bool = False
 ):
     """Copies skills to the target path."""
+    # Install universal skills
     source_dir = get_universal_skills_source_path()
     if not source_dir:
         logger.error("Could not locate universal-skills source directory.")
@@ -116,7 +161,41 @@ def install_skills(
         except Exception as e:
             logger.error(f"Failed to install {skill_src.name}: {e}")
 
-    logger.info(f"Successfully installed {installed_count} skills.")
+    # Install skill graphs if requested
+    if install_skill_graphs:
+        skill_graphs_dir = get_skill_graphs_source_path()
+        if not skill_graphs_dir:
+            logger.warning("Could not locate skill-graphs source directory.")
+        else:
+            # Create skill-graphs directory in target if it doesn't exist
+            skill_graphs_target = target_path / "skill-graphs"
+            if not skill_graphs_target.exists():
+                logger.info(f"Creating skill-graphs directory: {skill_graphs_target}")
+                skill_graphs_target.mkdir(parents=True, exist_ok=True)
+
+            # Get available skill graphs (directories)
+            available_skill_graphs = [
+                d for d in skill_graphs_dir.iterdir() if d.is_dir()
+            ]
+
+            for skill_graph_src in available_skill_graphs:
+                skill_graph_dst = skill_graphs_target / skill_graph_src.name
+                if skill_graph_dst.exists() and not force:
+                    logger.info(
+                        f"Skipping skill-graph {skill_graph_src.name} (already exists). Use --force to overwrite."
+                    )
+                    continue
+
+                logger.info(f"Installing skill-graph {skill_graph_src.name} to {skill_graph_dst}...")
+                try:
+                    if skill_graph_dst.exists():
+                        shutil.rmtree(skill_graph_dst)
+                    shutil.copytree(skill_graph_src, skill_graph_dst)
+                    installed_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to install skill-graph {skill_graph_src.name}: {e}")
+
+    logger.info(f"Successfully installed {installed_count} skills and skill-graphs.")
     return True
 
 
@@ -140,6 +219,11 @@ def main():
     parser.add_argument(
         "--force", action="store_true", help="Overwrite existing skills"
     )
+    parser.add_argument(
+        "--install-skill-graphs",
+        action="store_true",
+        help="Also install skill-graphs from the skill-graphs repository",
+    )
 
     args = parser.parse_args()
 
@@ -162,7 +246,7 @@ def main():
 
     skill_names = args.skills.split(",") if args.skills else None
 
-    install_skills(target, skill_names, args.force)
+    install_skills(target, skill_names, args.force, args.install_skill_graphs)
 
 
 if __name__ == "__main__":

@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Mealie workflows, optimize your context by spawning specialized versions of yourself:
-- **Weekly Planning**: Call `spawn_agent(agent_template="mealie", prompt="Generate a healthy weekly meal plan...", enabled_tools=["MEAL_PLANSTOOL", "RECIPESTOOL"])`.
-- **Shopping List Automation**: Call `spawn_agent(agent_template="mealie", prompt="Aggregate ingredients for the next 3 days...", enabled_tools=["SHOPPING_LISTSTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="mealie")` to verify available tool tags before spawning.
+- **Weekly Planning**: Call `spawn_agent(agent_name="mealie", prompt="Generate a healthy weekly meal plan...", enabled_tools=["MEAL_PLANSTOOL", "RECIPESTOOL"])`.
+- **Shopping List Automation**: Call `spawn_agent(agent_name="mealie", prompt="Aggregate ingredients for the next 3 days...", enabled_tools=["SHOPPING_LISTSTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="mealie")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:

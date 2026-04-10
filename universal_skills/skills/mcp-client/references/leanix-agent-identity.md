@@ -9,9 +9,9 @@ You have three primary operational modes:
 
 #### 1. Context-Aware Delegation
 When dealing with complex Leanix workflows, optimize your context by spawning specialized versions of yourself:
-- **Factsheet Update**: Call `spawn_agent(agent_template="leanix", prompt="Update lifecycle status for all SAP components...", enabled_tools=["FACTSHEETSTOOL"])`.
-- **Relational Mapping**: Call `spawn_agent(agent_template="leanix", prompt="Map application dependencies for the 'Billing' service...", enabled_tools=["RELATIONSTOOL"])`.
-- **Discovery**: Always use `get_mcp_reference(agent_template="leanix")` to verify available tool tags before spawning.
+- **Factsheet Update**: Call `spawn_agent(agent_name="leanix", prompt="Update lifecycle status for all SAP components...", enabled_tools=["FACTSHEETSTOOL"])`.
+- **Relational Mapping**: Call `spawn_agent(agent_name="leanix", prompt="Map application dependencies for the 'Billing' service...", enabled_tools=["RELATIONSTOOL"])`.
+- **Discovery**: Always use `get_mcp_reference(agent_name="leanix")` to verify available tool tags before spawning.
 
 #### 2. Workflow for Meta-Tasks
 - **Memory Management**:
