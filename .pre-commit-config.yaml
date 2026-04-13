@@ -11,6 +11,7 @@ repos:
     rev: v6.0.0
     hooks:
     - id: check-added-large-files
+      args: ['--maxkb', '1000']
     - id: check-ast
       exclude: ^(tests/|test/|scripts/|script/)
     - id: check-yaml
@@ -47,7 +48,7 @@ repos:
     hooks:
       - id: codespell
         args: ["-L", "ans,linar,nam,tread,ot,afterAll,beforeAll,atLeast,atMost,fPr,ser,provid,lIns,pres,prSet,preced,verticies,nin,nd,userA,userE,userR,fromT,som"]
-        exclude: ^(tests/|test/|scripts/|script/|universal_skills/skill-graphs/)
+        exclude: ^(tests/|test/|scripts/|script/|universal_skills/skill-graphs/|.*package-lock\.json)
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1
     hooks:

@@ -46,29 +46,36 @@ def get_universal_skills_source_path() -> Path:
                 return p
     except Exception:
         pass
-    
+
     # If we still can't find the package, check common source locations
     try:
         from pathlib import Path
-        
+
         # Check if we're running from the source directory (common in development)
         script_dir = Path(__file__).parent.parent.parent
         possible_sources = [
             script_dir,
-            Path("/home/genius/Workspace/agent-packages/universal-skills/universal_skills/skills"),
+            Path(
+                "/home/genius/Workspace/agent-packages/universal-skills/universal_skills/skills"
+            ),
         ]
-        
+
         for source_path in possible_sources:
             if source_path.exists() and source_path.is_dir():
                 # Verify it looks like a skills directory by checking for a few skill directories
-                if any((source_path / skill).exists() for skill in ["web-search", "agent-builder"] if (source_path / skill).is_dir()):
+                if any(
+                    (source_path / skill).exists()
+                    for skill in ["web-search", "agent-builder"]
+                    if (source_path / skill).is_dir()
+                ):
                     return source_path
     except Exception:
         pass
-    
+
     # If we still can't find the package, return None
     # The skill should be installed via pip for this to work
     return None
+
 
 def get_skill_graphs_source_path() -> Path:
     """Locates the source directory of the skill graphs."""
@@ -81,26 +88,32 @@ def get_skill_graphs_source_path() -> Path:
                 return p
     except Exception:
         pass
-    
+
     # If we still can't find the package, check common source locations
     try:
         from pathlib import Path
-        
+
         # Check if we're running from the source directory (common in development)
         script_dir = Path(__file__).parent.parent.parent
         possible_sources = [
             script_dir,
-            Path("/home/genius/Workspace/agent-packages/skills/skill-graphs/skill_graphs/skill_graphs"),
+            Path(
+                "/home/genius/Workspace/agent-packages/skills/skill-graphs/skill_graphs/skill_graphs"
+            ),
         ]
-        
+
         for source_path in possible_sources:
             if source_path.exists() and source_path.is_dir():
                 # Verify it looks like a skill_graphs directory by checking for a few skill directories
-                if any((source_path / skill).exists() for skill in ["aws-docs", "azure-docs"] if (source_path / skill).is_dir()):
+                if any(
+                    (source_path / skill).exists()
+                    for skill in ["aws-docs", "azure-docs"]
+                    if (source_path / skill).is_dir()
+                ):
                     return source_path
     except Exception:
         pass
-    
+
     # If we still can't find the package, return None
     # The skill should be installed via pip for this to work
     return None
@@ -116,8 +129,10 @@ def get_workspace_root() -> Optional[Path]:
 
 
 def install_skills(
-    target_path: Path, skill_names: Optional[List[str]] = None, force: bool = False,
-    install_skill_graphs: bool = False
+    target_path: Path,
+    skill_names: Optional[List[str]] = None,
+    force: bool = False,
+    install_skill_graphs: bool = False,
 ):
     """Copies skills to the target path."""
     # Install universal skills
@@ -186,14 +201,18 @@ def install_skills(
                     )
                     continue
 
-                logger.info(f"Installing skill-graph {skill_graph_src.name} to {skill_graph_dst}...")
+                logger.info(
+                    f"Installing skill-graph {skill_graph_src.name} to {skill_graph_dst}..."
+                )
                 try:
                     if skill_graph_dst.exists():
                         shutil.rmtree(skill_graph_dst)
                     shutil.copytree(skill_graph_src, skill_graph_dst)
                     installed_count += 1
                 except Exception as e:
-                    logger.error(f"Failed to install skill-graph {skill_graph_src.name}: {e}")
+                    logger.error(
+                        f"Failed to install skill-graph {skill_graph_src.name}: {e}"
+                    )
 
     logger.info(f"Successfully installed {installed_count} skills and skill-graphs.")
     return True

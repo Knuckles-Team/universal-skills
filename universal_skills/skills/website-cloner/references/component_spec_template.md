@@ -1,6 +1,6 @@
 # Component Specification Template
 
-Use this template to create `docs/research/components/<ComponentName>.spec.md` for each section of the page before dispatching builders.
+Use this template to create a detailed blueprint for each component or section BEFORE dispatching a builder agent. Save to `docs/research/components/<ComponentName>.spec.md`.
 
 ---
 
@@ -12,7 +12,7 @@ Use this template to create `docs/research/components/<ComponentName>.spec.md` f
 - **Interaction model:** <static | click-driven | scroll-driven | time-driven>
 
 ## DOM Structure
-<Describe the element hierarchy — what contains what>
+<Describe the element hierarchy — what contains what. E.g., "Outer div with relative positioning containing a sticky nav and a scrollable content area.">
 
 ## Computed Styles (exact values from getComputedStyle)
 
@@ -20,49 +20,47 @@ Use this template to create `docs/research/components/<ComponentName>.spec.md` f
 - display: ...
 - padding: ...
 - maxWidth: ...
-- (every relevant property with exact values)
+- (List every property from extraction result that isn't default)
 
 ### <Child element 1>
 - fontSize: ...
+- fontWeight: ...
 - color: ...
-- (every relevant property)
+- (List every relevant property)
 
 ### <Child element N>
 ...
 
 ## States & Behaviors
 
-### <Behavior name, e.g., "Scroll-triggered floating mode">
-- **Trigger:** <exact mechanism — scroll position 50px, IntersectionObserver rootMargin "-30% 0px", click on .tab-button, hover>
-- **State A (before):** maxWidth: 100vw, boxShadow: none, borderRadius: 0
-- **State B (after):** maxWidth: 1200px, boxShadow: 0 4px 20px rgba(0,0,0,0.1), borderRadius: 16px
+### <Behavior Name, e.g., "Scroll-triggered Floating Mode">
+- **Trigger:** <Exact mechanism — e.g., "scroll position > 50px", "IntersectionObserver rootMargin: -30% 0px">
+- **State A (Before):** maxWidth: 100vw, boxShadow: none, borderRadius: 0
+- **State B (After):** maxWidth: 1200px, boxShadow: 0 4px 20px rgba(0,0,0,0.1), borderRadius: 16px
 - **Transition:** transition: all 0.3s ease
-- **Implementation approach:** <CSS transition + scroll listener | IntersectionObserver | CSS animation-timeline | etc.>
+- **Implementation Approach:** <CSS transition + scroll listener | Framer Motion | CSS animation-timeline | etc.>
 
-### Hover states
-- **<Element>:** <property>: <before> → <after>, transition: <value>
+### Hover States
+- **<Element Name>:** <Property>: <Before Value> → <After Value>, transition: <Value>
 
 ## Per-State Content (if applicable)
 
-### State: "Featured"
+### State: "<State Name>"
 - Title: "..."
 - Subtitle: "..."
-- Cards: [{ title, description, image, link }, ...]
-
-### State: "Productivity"
-- Title: "..."
-- Cards: [...]
+- Cards Data: [...]
 
 ## Assets
 - Background image: `public/images/<file>.webp`
 - Overlay image: `public/images/<file>.png`
-- Icons used: <ArrowIcon>, <SearchIcon> from icons.tsx
+- Icons used: `<SearchIcon>`, `<ArrowRightIcon>` from `src/components/icons.tsx`
 
 ## Text Content (verbatim)
-<All text content, copy-pasted from the live site>
+<Copy-paste all text content exactly as it appears on the live site>
 
 ## Responsive Behavior
-- **Desktop (1440px):** <layout description>
-- **Tablet (768px):** <what changes — e.g., "maintains 2-column, gap reduces to 16px">
-- **Mobile (390px):** <what changes — e.g., "stacks to single column, images full-width">
-- **Breakpoint:** layout switches at ~<N>px
+
+- **Desktop (1440px):** <Layout description>
+- **Tablet (768px):** <What changes — e.g., "sidebar collapses into menu">
+- **Mobile (390px):** <What changes — e.g., "stacks to single column, images reduced to 80%">
+- **Breakpoint:** Layout switches at approximately <N>px

@@ -1,11 +1,12 @@
 # Extraction Scripts (JavaScript Reference)
 
-Use these snippets with your browser tool (e.g., `agent-browser`) to perform deep style and asset discovery.
+Use these snippets with your browser tool (e.g., `agent-browser`) to perform deep style and asset discovery. Run these results in your browser's console or via an MCP tool execution.
 
 ## 1. Deep Asset Discovery
 Discover all images, videos, background images, and SVGs on the page.
 
 ```javascript
+/* Run this via browser console or MCP to discover all assets */
 (function() {
   const assets = {
     images: [...document.querySelectorAll('img')].map(img => ({
@@ -13,7 +14,9 @@ Discover all images, videos, background images, and SVGs on the page.
       alt: img.alt,
       width: img.naturalWidth,
       height: img.naturalHeight,
+      // Include parent info to detect layered compositions
       parentClasses: img.parentElement?.className,
+      siblings: img.parentElement ? [...img.parentElement.querySelectorAll('img')].length : 0,
       position: getComputedStyle(img).position,
       zIndex: getComputedStyle(img).zIndex
     })),
@@ -40,9 +43,10 @@ Discover all images, videos, background images, and SVGs on the page.
 ```
 
 ## 2. Per-Component Style Extraction
-Extract every relevant CSS property for a specific element and its immediate children.
+Extract every relevant CSS property for a specific element and its layout hierarchy.
 
 ```javascript
+/* Per-component extraction — replace 'SELECTOR' with the actual CSS selector */
 (function(selector) {
   const el = document.querySelector(selector);
   if (!el) return JSON.stringify({ error: 'Element not found: ' + selector });
@@ -85,28 +89,12 @@ Extract every relevant CSS property for a specific element and its immediate chi
     };
   }
   return JSON.stringify(walk(el, 0), null, 2);
-})('.your-selector-here');
+})('SELECTOR');
 ```
 
 ## 3. Behavior Diff (Multi-State Extraction)
-To capture a behavior (e.g., scroll-triggered header change), use this process:
-1. Capture styles in **State A** (default).
-2. Trigger the change (scroll, click, hover).
-3. Capture styles again in **State B**.
-4. The diff is the behavior specification.
-
-```javascript
-/*
-Step 1: Capture State A
-const stateA = (function() { ... extraction script ... })();
-
-Step 2: Trigger Behavior
-window.scrollTo(0, 100);
-
-Step 3: Capture State B
-const stateB = (function() { ... extraction script ... })();
-
-Step 4: Compute Diff
-// Use your internal logic to diff stateA and stateB for key property changes.
-*/
-```
+To capture scroll-triggered or hover behaviors:
+1.  **State A**: Capture styles at current state (e.g., scroll position 0).
+2.  **Trigger**: Scroll, click, or hover via your browser tool.
+3.  **State B**: Re-run the extraction script on the same element.
+4.  **Diff**: Document precisely which properties changed and the transition timing.

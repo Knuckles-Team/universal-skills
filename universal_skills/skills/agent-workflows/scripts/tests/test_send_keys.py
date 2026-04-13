@@ -20,7 +20,7 @@ class SendKeysTests(unittest.TestCase):
     ):
         commands = []
 
-        def fake_run(args, *pargs, **kwargs):
+        def fake_run(args, *_pargs, **kwargs):
             commands.append(args)
             return subprocess.CompletedProcess(args=args, returncode=0)
 
@@ -55,7 +55,7 @@ class SendKeysTests(unittest.TestCase):
     ):
         commands = []
 
-        def fake_run(args, *pargs, **kwargs):
+        def fake_run(args, *_pargs, **kwargs):
             commands.append(args)
             if args[:4] == ["tmux", "send-keys", "-t", "%1"] and args[-1] in {
                 "C-m",
