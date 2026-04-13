@@ -26,7 +26,7 @@ const { text } = await generateText({
   model: gateway([
     openai('gpt-4o'),
     ai_provider('agent-sonnet-4-5'),
-    openai('nvidia/nemotron-3-super')
+    openai('google/gemma-4-31b')
   ]),
   prompt: 'Complex task'
 });
