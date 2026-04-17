@@ -36,7 +36,7 @@ except ImportError:
     AsyncAnthropic = None
     AnthropicProvider = None
 
-__version__ = "0.1.57"
+__version__ = "0.1.58"
 
 
 def get_universal_skills_package_name() -> str:
@@ -90,13 +90,72 @@ def _get_enabled_paths(sub_dir: str, default_enabled: bool = True) -> list[str]:
     return enabled_paths
 
 
-def get_universal_skills_path() -> list[str]:
+def get_universal_skills_path(
+    category: Optional[str] = None, name: Optional[str] = None
+) -> list[str]:
     """
     Returns a list of absolute paths pointing to the individual enabled universal skills.
     Specific skills can be enabled/disabled via environment variables formatted as:
     <SKILL_DIR_NAME_UPPER_UNDERSCORES>_ENABLE=True|False
+
+    Args:
+        category: Optional category folder name (e.g. 'web-dev')
+        name: Optional single skill name (e.g. 'web-search')
     """
-    return _get_enabled_paths("skills", default_enabled=True)
+    package_name = get_universal_skills_package_name()
+    # The package root is now the collection of categories
+    base_dir = files(package_name)
+
+    try:
+        with as_file(base_dir) as path:
+            abs_root_path = Path(path)
+    except Exception:
+        return []
+
+    if not abs_root_path.exists():
+        return []
+
+    enabled_paths = []
+
+    # Helper to check if a directory is a valid skill (contains SKILL.md or is a leaf)
+    def is_skill_dir(p: Path) -> bool:
+        return p.is_dir() and (p / "SKILL.md").exists()
+
+    # If a specific name is requested, search recursively across all subdirectories
+    if name:
+        for p in abs_root_path.rglob(name):
+            if is_skill_dir(p):
+                # Check if enabled
+                item_default = SKILL_DEFAULTS.get(name, True)
+                env_var_name = f"{name.upper().replace('-', '_')}_ENABLE"
+                if to_boolean(os.environ.get(env_var_name, item_default)):
+                    enabled_paths.append(str(p.resolve()))
+                return enabled_paths  # Found (even if disabled), stop search
+        return []
+
+    # If a category is requested, just search that one. Otherwise, search all.
+    if category:
+        cat_dir = abs_root_path / category
+        if cat_dir.is_dir():
+            for skill_dir in cat_dir.iterdir():
+                if is_skill_dir(skill_dir):
+                    item_name = skill_dir.name
+                    item_default = SKILL_DEFAULTS.get(item_name, True)
+                    env_var_name = f"{item_name.upper().replace('-', '_')}_ENABLE"
+                    if to_boolean(os.environ.get(env_var_name, item_default)):
+                        enabled_paths.append(str(skill_dir.resolve()))
+        return enabled_paths
+
+    # Get All: Recursively find all skill directories
+    for p in abs_root_path.rglob("*"):
+        if is_skill_dir(p):
+            item_name = p.name
+            item_default = SKILL_DEFAULTS.get(item_name, True)
+            env_var_name = f"{item_name.upper().replace('-', '_')}_ENABLE"
+            if to_boolean(os.environ.get(env_var_name, item_default)):
+                enabled_paths.append(str(p.resolve()))
+
+    return enabled_paths
 
 
 def get_skill_graph_path() -> list[str]:
@@ -146,7 +205,7 @@ def resolve_mcp_reference(filename: str) -> Optional[str]:
         # Resolve via importlib.resources
         ref_base = (
             files(get_universal_skills_package_name())
-            / "skills"
+            / "agent-tools"
             / "mcp-client"
             / "references"
             / target_file
