@@ -26,10 +26,10 @@ Follow these steps when defining a new agent package:
 ### 2. Configure Agent Workspace Files
 The agent's behavior and state are controlled by several core files in the `agent_data/` directory:
 
-- **IDENTITY.md**: Injects the agent's name, role, system prompt, and tools instructions. Use a single `[default]` block containing the metadata and prompt.
+- **prompts/main_agent.md**: Injects the agent's name, role, system prompt, and tools instructions. Use the standard YAML frontmatter for metadata.
 - **USER.md**: Information about the user (name, style, preferences).
 - **A2A_AGENTS.md**: Registry of known A2A peer agents.
-- **MEMORY.md**: Long-term memory and event logs.
+- **Knowledge Graph** (`knowledge_graph.db`): Long-term memory and topological intelligence (managed via `knowledge_tools`).
 - **CRON.md**: Persistent scheduled tasks.
 - **CRON_LOG.md**: History of execution for scheduled tasks.
 - **HEARTBEAT.md**: Periodic self-check tasks and instructions.
@@ -47,7 +47,7 @@ Ensure you extract the appropriate arguments from `create_agent_parser` to pass 
 - `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
 
 ### 4. System Prompt and Context
-When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure all core context files (`IDENTITY.md`, `USER.md`, `A2A_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, etc.) are combined into a rich prompt.
+When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure core context files (`prompts/main_agent.md`) are combined into a rich prompt. Historical context, logs, and cron data are injected dynamically during the execution graph's `memory_selection_step` via the Knowledge Graph.
 
 ### 4. Verification
 After implementation:

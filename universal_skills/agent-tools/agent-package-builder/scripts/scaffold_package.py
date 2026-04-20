@@ -1435,7 +1435,7 @@ You are running a scheduled heartbeat. Perform these checks and report results c
 ## Checks
 
 1. **Tool Availability** — Call `list_tools` or equivalent to verify your MCP tools are reachable. Report any connection failures.
-2. **Memory Review** — Read `MEMORY.md` and check for any pending follow-up tasks or action items. List any that are overdue.
+2. **Memory Review** — Query the **Knowledge Graph** for any pending follow-up tasks, architectural decisions, or action items.
 3. **Cron Log** — Read `CRON_LOG.md` and check for recent errors (❌). Summarize any failures from the last 24 hours.
 4. **Peer Agents** — Read `AGENTS.md` and note if any registered peers need attention.
 5. **Domain-Specific Checks**:
@@ -1512,16 +1512,6 @@ jobs:
       DOCKER_USERNAME: ${{{{ secrets.DOCKER_USERNAME }}}}
       DOCKER_PASSWORD: ${{{{ secrets.DOCKER_PASSWORD }}}}
       DOCKER_REPOSITORY: ${{{{ secrets.DOCKER_REPOSITORY }}}}
-"""
-MEMORY_MD = """\
-# MEMORY.md - Long-term Memory
-Last updated: {date}
-
-This file stores important decisions, user preferences, and historical outcomes.
-The agent should read this if the user asks "remember when" or similar.
-
-## Log of Important Events
-- [{date}] Workspace initialized with advanced agent features.
 """
 
 # ── AGENTS.md (Root for coding agents) ────────────────────────────────
@@ -1838,7 +1828,6 @@ def scaffold(
         files[agent_dir / "CRON.md"] = CRON_MD
         files[agent_dir / "CRON_LOG.md"] = CRON_LOG_MD
         files[agent_dir / "HEARTBEAT.md"] = HEARTBEAT_MD
-        files[agent_dir / "MEMORY.md"] = MEMORY_MD
         files[agent_dir / "AGENTS.md"] = AGENTS_MD_PEER
         files[agent_dir / "USER.md"] = USER_MD
         files[agent_dir / "mcp_config.json"] = MCP_CONFIG_MD

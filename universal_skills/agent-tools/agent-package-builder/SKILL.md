@@ -7,7 +7,7 @@ version: '0.1.58'
 
 # Agent Package Builder
 
-Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`Dockerfile`, `debug.Dockerfile`, `compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`IDENTITY.md`, `USER.md`, `NODE_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, `icon.png`) in the `agent_data/` directory. It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
+Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`Dockerfile`, `debug.Dockerfile`, `compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`prompts/main_agent.md`, `agent_data/NODE_AGENTS.md`, `agent_data/mcp_config.json`, `agent_data/icon.png`). Flat-file logging and memory (`MEMORY.md`, `USER.md`, `HEARTBEAT.md`, `CRON.md`, etc.) have been deprecated; all state, logs, memory, and chat history are handled natively via the **Knowledge Graph** (`agent_data/ladybug.db` or configured backend). It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
 
 ---
 
@@ -84,12 +84,12 @@ Read the `mcp-builder` skill and follow its instructions to:
 
 Read the `agent-builder` skill and follow its instructions to:
 1. Configure `{pkg_dir}/agent_server.py` with proper identity loading.
-2. Update `{pkg_dir}/agent_data/IDENTITY.md` with:
-   - The agent's name, role, and emoji.
-   - Instructions to run `list_skills` first.
+2. Update `{pkg_dir}/prompts/main_agent.md` with the new standard frontmatter:
+   - The agent's `name`, `type`, `skills`, and `description` in the YAML frontmatter.
+   - Instructions to run `list_skills` first in the markdown body.
    - Instructions to use the `mcp-client` skill and check `{package_name}.md` reference.
-3. Update `{pkg_dir}/agent_data/CRON.md` with appropriate scheduled tasks.
-4. Ensure the `agent_data/` directory contains all required core files: `IDENTITY.md`, `USER.md`, `NODE_AGENTS.md`, `MEMORY.md`, `CRON.md`, `CRON_LOG.md`, `HEARTBEAT.md`, `chats/`, `mcp_config.json`, and `icon.png`. A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
+3. Configure the graph execution tools to log telemetry and cron tasks directly to the **Knowledge Graph** (no `CRON.md` or `HEARTBEAT.md`).
+4. Ensure the `agent_data/` directory contains `NODE_AGENTS.md`, `mcp_config.json`, and `icon.png`. Long-term memory is managed via the **Knowledge Graph** tool suite (`search_knowledge_graph`, `add_knowledge_memory`, etc.). A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
 
 #### 3d. GraphQL Wrapper (if type includes `graphql`)
 
@@ -163,7 +163,7 @@ If documentation URLs or PDF files were provided via `--doc-urls`:
    ```
    This creates `{pkg_dir}/skills/{package-name}-docs/` directly inside the agent package.
    The generated `pyproject.toml` already includes `skills/**` in `package-data`, so the skill-graph ships with the distribution.
-3. Update `IDENTITY.md` to reference the generated documentation skill.
+3. Update `prompts/main_agent.md` to reference the generated documentation skill.
 
 ### Phase 5: Register in MCP-Client References
 

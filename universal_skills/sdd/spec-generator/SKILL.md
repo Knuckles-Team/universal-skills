@@ -35,4 +35,4 @@ You are a Senior Product Engineer specialized in Spec-Driven Development (SDD). 
 
 ## Integration
 - Save the result to `agent_data/specs/{feature_id}.md`.
-- **Structured Persistence**: In addition to the markdown file, always save the structured state as a `FeatureSpec` JSON in `agent_data/specs/{feature_id}.json` using the `SDDManager` from `agent-utilities`.
+- **Structured Persistence**: In addition to the markdown file, always save the structured state as a `Spec` JSON in `agent_data/specs/{feature_id}.json` using the `SDDManager` from `agent-utilities`.
