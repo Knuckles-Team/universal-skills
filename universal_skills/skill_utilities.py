@@ -63,6 +63,9 @@ SKILL_DEFAULTS = {
     "web-crawler": True,
     "web-search": True,
     "tdd-methodology": True,
+    "manual-testing-enhanced": True,
+    "code-walkthrough": True,
+    "interactive-explain": True,
 }
 
 
