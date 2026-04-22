@@ -85,7 +85,9 @@ def main():
     output_dir = (
         Path(args.output_dir)
         if args.output_dir
-        else source_path if source_path.is_dir() else source_path.parent
+        else source_path
+        if source_path.is_dir()
+        else source_path.parent
     )
     output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -198,7 +198,7 @@ class MarkdownProcessor:
 
         def save_code_block(match):
             code_blocks.append(match.group(0))
-            return f"\n__CODE_BLOCK_{len(code_blocks)-1}__\n"
+            return f"\n__CODE_BLOCK_{len(code_blocks) - 1}__\n"
 
         content_no_code = re.sub(
             code_block_pattern, save_code_block, content, flags=re.DOTALL

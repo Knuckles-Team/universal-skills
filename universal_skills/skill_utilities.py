@@ -62,7 +62,7 @@ SKILL_DEFAULTS = {
     "skill-graph-builder": True,
     "web-crawler": True,
     "web-search": True,
-    # Documentation graphs are False by default globally, but can be overridden here if needed.
+    "tdd-methodology": True,
 }
 
 
@@ -88,7 +88,6 @@ def _get_enabled_paths(sub_dir: str, default_enabled: bool = True) -> list[str]:
                 if is_enabled:
                     enabled_paths.append(item_path)
     return enabled_paths
-
 
 def get_universal_skills_path(
     category: Optional[str] = None, name: Optional[str] = None

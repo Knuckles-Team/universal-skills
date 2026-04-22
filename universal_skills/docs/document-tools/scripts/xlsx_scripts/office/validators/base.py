@@ -19,7 +19,6 @@ from pathlib import Path
 
 
 class BaseSchemaValidator:
-
     IGNORED_VALIDATION_ERRORS = [
         "hyphenationZone",
         "purl.org/dc/terms",

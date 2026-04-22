@@ -303,7 +303,7 @@ def generate_skill(
             active_urls = [u.strip() for u in url_group.split(",")]
             # Print status without revealing absolute paths for cleaner terminal output
             print(
-                f"   [{i+1}/{len(urls_to_process)}] Processing: {', '.join(active_urls)}"
+                f"   [{i + 1}/{len(urls_to_process)}] Processing: {', '.join(active_urls)}"
             )
 
             # Use a unique temporary directory per batch

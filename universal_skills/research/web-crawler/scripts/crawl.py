@@ -208,13 +208,13 @@ async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str):
         parsed = urlparse(url)
         safe_name = parsed.path.strip("/").replace("/", "_") or "index"
         for idx, chunk in enumerate(chunks):
-            filepath = os.path.join(output_dir, f"{safe_name}_chunk_{idx+1}.md")
+            filepath = os.path.join(output_dir, f"{safe_name}_chunk_{idx + 1}.md")
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(chunk)
-            logger.info(f"Saved chunk {idx+1} to {filepath}")
+            logger.info(f"Saved chunk {idx + 1} to {filepath}")
     else:
         for idx, chunk in enumerate(chunks):
-            print(f"\n--- Chunk {idx+1} ---\n{chunk}\n")
+            print(f"\n--- Chunk {idx + 1} ---\n{chunk}\n")
 
 
 def fetch_sitemap_urls(
@@ -406,7 +406,7 @@ async def crawl_recursive_high_speed(
         if total_saved >= max_pages:
             logger.warning(f"Reached max pages limit ({max_pages}). Stopping.")
             break
-        logger.info(f"Crawling Depth {depth+1}, URLs: {len(current_urls)}")
+        logger.info(f"Crawling Depth {depth + 1}, URLs: {len(current_urls)}")
 
         urls_to_crawl = []
         for u in current_urls:

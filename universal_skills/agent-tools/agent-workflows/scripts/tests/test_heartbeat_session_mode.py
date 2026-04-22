@@ -21,9 +21,7 @@ class HeartbeatSessionModeTests(unittest.TestCase):
         self.assertEqual(main._normalize_heartbeat_session_mode(None), "restore")
 
     def test_extract_context_left_percent_prefers_latest_match(self):
-        output = (
-            "... 43% context left\n" "... some more text\n" "... 18% context left\n"
-        )
+        output = "... 43% context left\n... some more text\n... 18% context left\n"
         self.assertEqual(
             main._extract_context_left_percent(output, launcher="codex"), 18
         )

@@ -71,10 +71,9 @@ class MainAgentLifecycleTests(unittest.TestCase):
             _should_use_codex_file_pointer=lambda _msg: False,
             get_repo_root=lambda: Path("/tmp"),
             write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/message.md"),
-            send_keys=lambda agent_id, message, **kwargs: calls.append(
-                (agent_id, message, kwargs)
-            )
-            or True,
+            send_keys=lambda agent_id, message, **kwargs: (
+                calls.append((agent_id, message, kwargs)) or True
+            ),
         )
 
         output = io.StringIO()
@@ -107,10 +106,9 @@ class MainAgentLifecycleTests(unittest.TestCase):
             _should_use_codex_file_pointer=lambda _msg: False,
             get_repo_root=lambda: Path("/tmp"),
             write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/assign.md"),
-            send_keys=lambda agent_id, message, **kwargs: calls.append(
-                (agent_id, message, kwargs)
-            )
-            or True,
+            send_keys=lambda agent_id, message, **kwargs: (
+                calls.append((agent_id, message, kwargs)) or True
+            ),
             Path=Path,
             sys=SimpleNamespace(stdin=io.StringIO("run health check")),
         )

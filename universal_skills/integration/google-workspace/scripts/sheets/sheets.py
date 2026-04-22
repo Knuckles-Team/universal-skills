@@ -158,7 +158,7 @@ def get_text(spreadsheet_id: str, output_format: str = "text") -> dict:
                             cell_str = str(cell) if cell else ""
                             if "," in cell_str or '"' in cell_str or "\n" in cell_str:
                                 csv_row.append(
-                                    f'"{cell_str.replace(chr(34), chr(34)+chr(34))}"'
+                                    f'"{cell_str.replace(chr(34), chr(34) + chr(34))}"'
                                 )
                             else:
                                 csv_row.append(cell_str)

@@ -253,7 +253,6 @@ async def stream_task(client, agent_url, task_id):
             json=payload,
             headers={"Content-Type": "application/json", "Accept": "text/event-stream"},
         ) as response:
-
             if response.status_code != 200:
                 print(f"Subscription Failed. Status Code: {response.status_code}")
                 # Fallback to polling if streaming isn't supported
