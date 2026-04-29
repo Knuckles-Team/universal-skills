@@ -20,7 +20,7 @@ from commands.lifecycle import cmd_assign, cmd_monitor, cmd_send  # noqa: E402
 
 class MainAgentConfigTests(unittest.TestCase):
     def test_resolve_agent_main_returns_reserved_config(self):
-        config = agent_config.resolve_agent("main", agents_dir=Path("/tmp/not-needed"))
+        config = agent_config.resolve_agent("main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager")))
 
         self.assertIsNotNone(config)
         self.assertEqual(config.get("name"), "main")
@@ -39,7 +39,7 @@ class MainAgentConfigTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"AGENT_MANAGER_MAIN_LAUNCHER": "custom-launcher"})
     def test_main_launcher_env_override(self):
-        config = agent_config.resolve_agent("main", agents_dir=Path("/tmp/not-needed"))
+        config = agent_config.resolve_agent("main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager")))
         self.assertEqual(config.get("launcher"), "custom-launcher")
 
 
@@ -69,7 +69,7 @@ class MainAgentLifecycleTests(unittest.TestCase):
             Path=Path,
             resolve_launcher_command=lambda launcher: launcher,
             _should_use_codex_file_pointer=lambda _msg: False,
-            get_repo_root=lambda: Path("/tmp"),
+            get_repo_root=lambda: Path(tempfile.mkdtemp(prefix="test-repo-root-")),
             write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/message.md"),
             send_keys=lambda agent_id, message, **kwargs: (
                 calls.append((agent_id, message, kwargs)) or True
@@ -104,7 +104,7 @@ class MainAgentLifecycleTests(unittest.TestCase):
             time=SimpleNamespace(sleep=lambda _s: None),
             resolve_launcher_command=lambda launcher: launcher,
             _should_use_codex_file_pointer=lambda _msg: False,
-            get_repo_root=lambda: Path("/tmp"),
+            get_repo_root=lambda: Path(tempfile.mkdtemp(prefix="test-repo-root-")),
             write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/assign.md"),
             send_keys=lambda agent_id, message, **kwargs: (
                 calls.append((agent_id, message, kwargs)) or True

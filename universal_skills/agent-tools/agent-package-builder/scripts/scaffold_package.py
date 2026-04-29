@@ -128,10 +128,7 @@ repos:
     - id: trailing-whitespace
     - id: end-of-file-fixer
     - id: no-commit-to-branch
-  - repo: https://github.com/psf/black
-    rev: 26.1.0
-    hooks:
-    - id: black
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.4
     hooks:
@@ -143,7 +140,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["-L", "ans,linar,nam,tread,ot,"]
+        args: ["-L", "nam,tread,ot,"]
         exclude: |
             (?x)^(
               \\./test/.*|
@@ -153,7 +150,7 @@ repos:
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1
     hooks:
-      - id: nbqa-black
+      - id: nbqa-ruff
         exclude: ^(tests/|test/|scripts/|script/)
 """
 
@@ -212,7 +209,7 @@ ENV HOST=${{HOST}} \\
     UV_COMPILE_BYTECODE=1
 
 RUN apt-get update \\
-    && apt-get install -y ripgrep tree fd-find curl nano \\
+    && apt-get install -y default-jre ripgrep tree fd-find curl nano \\
     && curl -LsSf https://astral.sh/uv/install.sh | sh \\
     && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
     && mkdir -p /root/.config \\
@@ -281,7 +278,7 @@ ENV HOST=${{HOST}} \\
 WORKDIR /app
 COPY . /app
 RUN apt-get update \\
-    && apt-get install -y ripgrep tree fd-find curl nano \\
+    && apt-get install -y default-jre ripgrep tree fd-find curl nano \\
     && curl -LsSf https://astral.sh/uv/install.sh | sh \\
     && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
     && mkdir -p /root/.config \\
@@ -323,7 +320,7 @@ services:
       - "PROVIDER=openai"
       - "LLM_BASE_URL=${{LLM_BASE_URL:-http://host.docker.internal:1234/v1}}"
       - "LLM_API_KEY=${{LLM_API_KEY:-llama}}"
-      - "MODEL_ID=${{MODEL_ID:-nvidia/nemotron-3-super}}"
+      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3.5-9b}}"
       - "DEBUG=False"
       - "ENABLE_WEB_UI=True"
       - "ENABLE_OTEL=True"
@@ -1597,7 +1594,7 @@ pre-commit run --all-files
 │   ├── agent_server.py
 │   ├── auth.py
 │   ├── mcp_server.py
-│   └── agent_data/
+│   └── agent/
 │       ├── IDENTITY.md
 │       ├── USER.md
 │       ├── MCP_AGENTS.md
@@ -1685,7 +1682,7 @@ USER_MD = """\
 def scaffold(
     package_name: str,
     output_dir: str = ".",
-    pkg_types: str = "api_wrapper,mcp,agent,graphql",
+    pkg_types: str = "api_client,mcp,agent,graphql",
     display_name: str = "",
     description: str = "",
     author: str = "Audel Rouhi",
@@ -1727,12 +1724,16 @@ def scaffold(
 
     agent_service_name = agent_cmd
     verify_env = f"{upper_name}_VERIFY"
-    api_module_name = (
-        f"{pkg_dir.split('_')[0]}_api" if "_" in pkg_dir else f"{pkg_dir}_api"
-    )
+    api_module_name = "api_client"
     api_class_name = (
-        "".join(w.capitalize() for w in api_module_name.replace("_api", "").split("_"))
-        + "Api"
+        "".join(
+            w.capitalize()
+            for w in package_name.replace("-mcp", "")
+            .replace("-agent", "")
+            .replace("-api", "")
+            .split("-")
+        )
+        + "ApiClient"
     )
     year = datetime.datetime.now().year
     date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -1746,9 +1747,7 @@ def scaffold(
     )
 
     # GraphQL-conditional template placeholders
-    gql_module_name = (
-        f"{pkg_dir.split('_')[0]}_gql" if "_" in pkg_dir else f"{pkg_dir}_gql"
-    )
+    gql_module_name = "gql_client"
     has_graphql = "graphql" in types
     gql_dep = '\ngql = [\n    "gql>=4.0.0"]\n' if has_graphql else "\n"
     all_dep_line = (
@@ -1874,10 +1873,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--type",
-        default="api_wrapper,mcp,agent,graphql",
+        default="api_client,mcp,agent,graphql",
         dest="pkg_types",
         type=str,
-        help="Comma-separated types: api_wrapper, mcp, agent, graphql (default: all)",
+        help="Comma-separated types: api_client, mcp, agent, graphql (default: all)",
     )
     parser.add_argument(
         "--display-name",

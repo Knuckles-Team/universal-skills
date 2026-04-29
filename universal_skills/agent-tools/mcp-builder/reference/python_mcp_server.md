@@ -204,7 +204,7 @@ This ensures the `mcp_server()` function remains purely about parsing runtime co
 
 ## Type Hints & Pydantic Validation
 
-All standard input fields into `@mcp.tool` signatures must be fully type-hinted and use Pydantic's `Field(...)` validator to include descriptions and default values. You may also utilize dependencies or contexts via `_client = Depends(get_client)` or `ctx: Context`.
+All standard input fields into `@mcp.tool` signatures must be fully type-hinted and use Pydantic's `Field(...)` validator to include descriptions and default values. You may also utilize dependencies or contexts via `_client = Depends(get_client)` or `ctx: Context`. For standardized interactions like progress reporting and destructive guards, refer to the [🛠 Context Helpers Guide](./ctx_helpers.md).
 
 ## Return Strategy
 

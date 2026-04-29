@@ -46,6 +46,7 @@ ruff format .
 │   ├── skills/                # All universal skills
 │   │   ├── agent-browser/
 │   │   ├── agent-workflows/
+│   │   ├── code-enhancer/         # 12-domain code analysis & grading
 │   │   ├── systems-manager/
 │   │   └── ... (40+ skills)
 │   ├── skill_utilities.py     # Utilities for loading skills

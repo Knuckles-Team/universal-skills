@@ -8,13 +8,15 @@ version = "0.1.58"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [ ]
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "PyYAML",
+    "httpx"
 ]
 agent-browser = []
 agent-builder = ["PyYAML"]
@@ -61,6 +63,7 @@ web-search = ["ddgs", "requests"]
 web-fetch = ["crawl4ai", "playwright", "psutil", "requests"]
 website-builder = []
 website-cloner = []
+code-enhancer = ["requests", "packaging"]
 
 
 
@@ -106,8 +109,13 @@ all = [
     "universal-skills[web-fetch]>=0.1.57",
     "universal-skills[website-builder]>=0.1.57",
     "universal-skills[website-cloner]>=0.1.57",
+    "universal-skills[code-enhancer]>=0.1.58",
 ]
 
+
+
+[project.scripts]
+install-skills = "universal_skills.core.skill_installer:main"
 
 [[project.authors]]
 name = "Audel Rouhi"

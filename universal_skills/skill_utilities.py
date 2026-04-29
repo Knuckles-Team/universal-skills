@@ -10,31 +10,31 @@ try:
     from openai import AsyncOpenAI
     from pydantic_ai.providers.openai import OpenAIProvider
 except ImportError:
-    AsyncOpenAI = None
-    OpenAIProvider = None
+    AsyncOpenAI = None  # type: ignore
+    OpenAIProvider = None  # type: ignore
 
 try:
     from groq import AsyncGroq
     from pydantic_ai.providers.groq import GroqProvider
 except ImportError:
-    AsyncGroq = None
-    GroqProvider = None
+    AsyncGroq = None  # type: ignore
+    GroqProvider = None  # type: ignore
 
 try:
     from mistralai import Mistral
     from pydantic_ai.providers.mistral import MistralProvider
 except ImportError:
-    Mistral = None
-    MistralProvider = None
+    Mistral = None  # type: ignore
+    MistralProvider = None  # type: ignore
 
 try:
     from pydantic_ai.models.anthropic import AnthropicModel
     from anthropic import AsyncAnthropic
     from pydantic_ai.providers.anthropic import AnthropicProvider
 except ImportError:
-    AnthropicModel = None
-    AsyncAnthropic = None
-    AnthropicProvider = None
+    AnthropicModel = None  # type: ignore
+    AsyncAnthropic = None  # type: ignore
+    AnthropicProvider = None  # type: ignore
 
 __version__ = "0.1.58"
 
@@ -91,6 +91,7 @@ def _get_enabled_paths(sub_dir: str, default_enabled: bool = True) -> list[str]:
                 if is_enabled:
                     enabled_paths.append(item_path)
     return enabled_paths
+
 
 def get_universal_skills_path(
     category: Optional[str] = None, name: Optional[str] = None

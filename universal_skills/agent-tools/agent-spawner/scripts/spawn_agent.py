@@ -66,7 +66,7 @@ async def main():
     )
     parser.add_argument(
         "--model-id",
-        default=os.getenv("MODEL_ID", "nvidia/nemotron-3-super"),
+        default=os.getenv("MODEL_ID", "qwen/qwen3.5-9b"),
         help="LLM Model ID",
     )
     parser.add_argument(

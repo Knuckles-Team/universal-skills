@@ -45,7 +45,7 @@ Start → GPT-4 → On error: Agent → On error: Llama
 ```
 Conditional: tier == 'enterprise' → GPT-4 (no limit)
 Conditional: tier == 'pro' → Rate Limit 1000/hr → GPT-4o
-Conditional: tier == 'free' → Rate Limit 10/hr → nvidia/nemotron-3-super
+Conditional: tier == 'free' → Rate Limit 10/hr → qwen/qwen3.5-9b
 ```
 
 **Gradual rollout:**
@@ -57,7 +57,7 @@ Percentage: 10% → New model, 90% → Old model
 ```
 Budget Limit: $100/day per teamId
   < 80%: GPT-4
-  >= 80%: nvidia/nemotron-3-super
+  >= 80%: qwen/qwen3.5-9b
   >= 100%: Error
 ```
 

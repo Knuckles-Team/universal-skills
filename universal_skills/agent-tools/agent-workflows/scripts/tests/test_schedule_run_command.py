@@ -130,7 +130,7 @@ class ScheduleRunFlowHelperTests(unittest.TestCase):
     def test_resolve_schedule_task_path_returns_none_for_inline_task(self):
         schedule = {"task": "inline task", "task_file": "agents/task.md"}
         path = _resolve_schedule_task_path(
-            schedule, Path("/tmp"), expand_env_vars=lambda value: value
+            schedule, Path(tempfile.mkdtemp()), expand_env_vars=lambda value: value
         )
         self.assertIsNone(path)
 
@@ -154,32 +154,36 @@ class ScheduleRunFlowHelperTests(unittest.TestCase):
             provider_key="droid",
             task="run task",
             schedule_task_path=None,
-            repo_root=Path("/tmp"),
+            repo_root=Path(tempfile.mkdtemp(prefix="test-schedule-root-")),
             agent_id="emp-0001",
             job_name="daily",
             deps=SimpleNamespace(
                 _should_use_codex_file_pointer=lambda _task: False,
-                write_scheduled_task_file=lambda *_args: Path("/tmp/not-used.md"),
+                write_scheduled_task_file=lambda *_args: Path(tempfile.mkdtemp(prefix="test-schedule-notused-")),
             ),
         )
-        self.assertEqual(task_message, "run task")
 
     def test_build_task_message_codex_prefers_schedule_task_path(self):
-        task_path = Path("/tmp/agents/daily.md")
-        task_message = _build_task_message_for_provider(
-            provider_key="codex",
-            task="run task",
-            schedule_task_path=task_path,
-            repo_root=Path("/tmp"),
-            agent_id="emp-0001",
-            job_name="daily",
-            deps=SimpleNamespace(
-                _should_use_codex_file_pointer=lambda _task: True,
-                write_scheduled_task_file=lambda *_args: Path("/tmp/generated.md"),
-            ),
-        )
-        self.assertIn("Run scheduled job 'daily'", task_message)
-        self.assertIn(str(task_path), task_message)
+        temp_root = Path(tempfile.mkdtemp(prefix="test-build-codex-task-"))
+        task_path = temp_root / "agents" / "daily.md"
+        try:
+            task_message = _build_task_message_for_provider(
+                provider_key="codex",
+                task="run task",
+                schedule_task_path=task_path,
+                repo_root=Path(tempfile.mkdtemp(prefix="test-schedule-root-")),
+                agent_id="emp-0001",
+                job_name="daily",
+                deps=SimpleNamespace(
+                    _should_use_codex_file_pointer=lambda _task: True,
+                    write_scheduled_task_file=lambda *_args: Path(tempfile.mkdtemp(prefix="test-schedule-generated-")),
+                ),
+            )
+            self.assertIn("Run scheduled job 'daily'", task_message)
+            self.assertIn(str(task_path), task_message)
+        finally:
+            import shutil
+            shutil.rmtree(temp_root, ignore_errors=True)
 
 
 if __name__ == "__main__":

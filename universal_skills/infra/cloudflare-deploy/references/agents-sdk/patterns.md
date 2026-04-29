@@ -147,7 +147,7 @@ export class EmailAgent extends Agent<Env> {
     this.sql`INSERT INTO emails (from_addr, subject, body) VALUES (${from}, ${subject}, ${text})`;
 
     const { text: summary } = await generateText({
-      model: openai("nvidia/nemotron-3-super"), prompt: `Summarize: ${subject}\n\n${text}`
+      model: openai("qwen/qwen3.5-9b"), prompt: `Summarize: ${subject}\n\n${text}`
     });
 
     this.connections.forEach(c => c.send(JSON.stringify({type: "new_email", from, summary})));

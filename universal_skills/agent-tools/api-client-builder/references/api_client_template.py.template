@@ -7,7 +7,7 @@ import requests
 import urllib3
 from pydantic import ValidationError
 
-from {api_name}_models import (
+from models import (
     ExampleResourceModel,
     ExampleResourceResponse,
     Response

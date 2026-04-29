@@ -44,6 +44,7 @@ The following universal skills are available. You can disable specific skills by
 | `browser-tools`       | Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`       |
 | `c4-architecture`     | Software architecture documentation using the C4 model in Mermaid.   | `C4_ARCHITECTURE_ENABLE=False`        | `universal-skills[c4-architecture]`     |
 | `canvas-design`       | Programmatic graphic design using HTML Canvas or SVG APIs.            | `CANVAS_DESIGN_ENABLE=False`          | `universal-skills[canvas-design]`       |
+| `code-enhancer`       | 12-domain code analysis with 0-100 grading, security/arch/dep audit. | `CODE_ENHANCER_ENABLE=False`          | `universal-skills[code-enhancer]`       |
 | `cloudflare-deploy`   | Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
 | `creative-media`      | Creative media processing (animations, GIFs, image conversion).       | `CREATIVE_MEDIA_ENABLE=False`         | `universal-skills[creative-media]`     |
 | `database-tools`      | Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |

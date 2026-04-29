@@ -241,7 +241,7 @@ def expand_config_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Configuration with expanded environment variables
     """
-    expanded = {}
+    expanded: Dict[str, Any] = {}
 
     for key, value in config.items():
         if isinstance(value, str):

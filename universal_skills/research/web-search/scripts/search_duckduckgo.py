@@ -19,7 +19,7 @@ def search(query: str, max_results: int = 10, ssl_verify: bool = True):
         url = "https://api.duckduckgo.com/"
         params = {"q": query, "format": "json", "no_html": 1, "skip_disambig": 1}
 
-        response = requests.get(url, params=params, verify=ssl_verify)
+        response = requests.get(url, params=params, verify=ssl_verify, timeout=30)
         response.raise_for_status()  # Raise an exception for HTTP errors
 
         data = response.json()

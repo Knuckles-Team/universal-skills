@@ -116,6 +116,7 @@ For each tool:
 - Proper error handling with actionable messages
 - Support pagination where applicable
 - Be sure to properly handle and format API errors, matching the established middleware pattern.
+- **Context Helpers**: Use `ctx_confirm_destructive`, `ctx_progress`, and `ctx_log` to enhance tool interaction. See the [🛠 Context Helpers Guide](./reference/ctx_helpers.md).
 
 **Annotations:**
 - `readOnlyHint`: true/false
@@ -224,6 +225,8 @@ Load these resources as needed during development:
   - Tool registration using `@mcp.tool`
   - Required imports and dependencies (`fastmcp`, `agent_utilities`, etc.)
   - Quality checklist
+- [🛠 Context Helpers Guide](./reference/ctx_helpers.md) - Standard patterns for destructive guards, progress reporting, and logging.
+- [📋 Phase 2 Implementation Plan](./reference/ctx_implementation_plan_phase_2.md) - Details on the fleet-wide instrumentation of context helpers.
 
 ### Evaluation Guide (Load During Phase 4)
 - [✅ Evaluation Guide](./reference/evaluation.md) - Complete evaluation creation guide with:

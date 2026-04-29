@@ -26,7 +26,7 @@ def search(
         num = min(10, max_results)
         params = {"key": api_key, "cx": cx, "q": query, "num": num}
 
-        response = requests.get(url, params=params, verify=ssl_verify)
+        response = requests.get(url, params=params, verify=ssl_verify, timeout=30)
         response.raise_for_status()
         data = response.json()
 

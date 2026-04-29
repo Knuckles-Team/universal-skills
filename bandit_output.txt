@@ -1,0 +1,2037 @@
+bandit...................................................................Failed
+- hook id: bandit
+- exit code: 1
+
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: B101,B404,B603
+[main]	INFO	running on Python 3.13.7
+Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:04
+Run started:2026-04-28 14:45:23.963330+00:00
+
+Test results:
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/agent_config.py:122:12
+121	                break  # first match wins
+122	            except Exception:
+123	                continue
+124
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/agent_config.py:459:8
+458	            skill_contents.append(f"### {skill_name}\n\n{description}\n")
+459	        except Exception:
+460	            # Skip skills that can't be loaded
+461	            continue
+462
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/commands/doctor.py:57:17
+56	    try:
+57	        result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+58	        if result.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/commands/status.py:37:8
+36	            payload = json.loads(line)
+37	        except Exception:
+38	            continue
+39	        if isinstance(payload, dict):
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/heartbeat_slo.py:98:20
+97	                        payload = json.loads(line)
+98	                    except Exception:
+99	                        continue
+100	                    if not isinstance(payload, dict):
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/heartbeat_slo.py:115:8
+114	                    events.append(payload)
+115	        except Exception:
+116	            continue
+117
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/main.py:396:8
+395	                return str(payload.get("id") or p.stem).strip()
+396	        except Exception:
+397	            continue
+398
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/main.py:626:8
+625	            compiled.append(re.compile(str(raw), re.IGNORECASE))
+626	        except Exception:
+627	            continue
+628
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/main.py:650:16
+649	                    percent = int(str(value))
+650	                except Exception:
+651	                    continue
+652	                if 0 <= percent <= 100:
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/main.py:922:20
+921	                        payload = json.loads(line)
+922	                    except Exception:
+923	                        continue
+924	                    if not isinstance(payload, dict):
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/main.py:941:8
+940	                    events.append(payload)
+941	        except Exception:
+942	            continue
+943
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/repo_root.py:24:17
+23	    try:
+24	        result = subprocess.run(
+25	            ["git", *args],
+26	            cwd=str(cwd),
+27	            stdout=subprocess.PIPE,
+28	            stderr=subprocess.DEVNULL,
+29	            text=True,
+30	            check=True,
+31	        )
+32	        value = (result.stdout or "").strip()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/schedule_helper.py:61:17
+60	    try:
+61	        result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+62	        if result.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/schedule_helper.py:78:17
+77
+78	        result = subprocess.run(["crontab", temp_file], capture_output=True, text=True)
+79
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tests/test_main_agent_support.py:73:68
+72	            get_repo_root=lambda: Path(tempfile.mkdtemp(prefix="test-repo-root-")),
+73	            write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/message.md"),
+74	            send_keys=lambda agent_id, message, **kwargs: (
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tests/test_main_agent_support.py:108:68
+107	            get_repo_root=lambda: Path(tempfile.mkdtemp(prefix="test-repo-root-")),
+108	            write_codex_message_file=lambda *_args, **_kwargs: Path("/tmp/assign.md"),
+109	            send_keys=lambda agent_id, message, **kwargs: (
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tests/test_start_command.py:15:24
+14	        cmd = main.build_start_command(
+15	            working_dir="/tmp/a b",
+16	            launcher="/path/with space/codex",
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tests/test_start_command.py:25:24
+24	        cmd = main.build_start_command(
+25	            working_dir="/tmp/test-dynamic-root-001",
+26	            launcher="codex",
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:50:13
+49	def _tmux_has_session(session_name: str) -> bool:
+50	    result = subprocess.run(
+51	        ["tmux", "has-session", "-t", session_name], capture_output=True
+52	    )
+53	    return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:63:13
+62	    window_name = _window_name_for_agent(agent_id)
+63	    result = subprocess.run(
+64	        ["tmux", "list-windows", "-t", group, "-F", "#{window_name}"],
+65	        capture_output=True,
+66	        text=True,
+67	    )
+68	    if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:100:13
+99	    expected_title = _window_name_for_agent(agent_id)
+100	    result = subprocess.run(
+101	        ["tmux", "list-panes", "-t", container, "-F", "#{pane_id}\t#{pane_title}"],
+102	        capture_output=True,
+103	        text=True,
+104	    )
+105	    if result.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:125:4
+124	    # Best-effort; older tmux versions may not support -T.
+125	    subprocess.run(
+126	        ["tmux", "select-pane", "-t", container, "-T", title],
+127	        capture_output=True,
+128	        text=True,
+129	    )
+130
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:144:13
+143	    """
+144	    result = subprocess.run(["which", "tmux"], capture_output=True)
+145	    return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:157:13
+156
+157	    result = subprocess.run(["tmux", "ls"], capture_output=True, text=True)
+158	    if result.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:168:13
+167	    group = get_group_session_name()
+168	    result = subprocess.run(
+169	        ["tmux", "list-windows", "-t", group, "-F", "#{window_name}"],
+170	        capture_output=True,
+171	        text=True,
+172	    )
+173	    if result.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:217:21
+216	        if _group_session_exists():
+217	            result = subprocess.run(
+218	                ["tmux", "new-window", "-d", "-t", group, "-n", window_name, command],
+219	                capture_output=True,
+220	                text=True,
+221	            )
+222	        else:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:223:21
+222	        else:
+223	            result = subprocess.run(
+224	                ["tmux", "new-session", "-d", "-s", group, "-n", window_name, command],
+225	                capture_output=True,
+226	                text=True,
+227	            )
+228	        ok = result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:234:13
+233	    session_name = _session_name_for_agent(agent_id)
+234	    result = subprocess.run(
+235	        ["tmux", "new-session", "-d", "-s", session_name, command],
+236	        capture_output=True,
+237	        text=True,
+238	    )
+239	    ok = result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:322:13
+321	def _resolve_pane_id(target: str) -> str:
+322	    result = subprocess.run(
+323	        ["tmux", "display-message", "-p", "-t", target, "#{pane_id}"],
+324	        capture_output=True,
+325	        text=True,
+326	    )
+327	    if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:337:4
+336	def _set_pane_title(pane_target: str, title: str) -> None:
+337	    subprocess.run(
+338	        ["tmux", "select-pane", "-t", pane_target, "-T", title],
+339	        capture_output=True,
+340	        text=True,
+341	    )
+342
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:346:13
+345	    split_flag = "-h" if split == "h" else "-v"
+346	    result = subprocess.run(
+347	        [
+348	            "tmux",
+349	            "split-window",
+350	            split_flag,
+351	            "-d",
+352	            "-t",
+353	            pane_id,
+354	            "-P",
+355	            "-F",
+356	            "#{pane_id}",
+357	        ],
+358	        capture_output=True,
+359	        text=True,
+360	    )
+361	    if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:427:17
+426	        target_pane = pane_map[target]
+427	        result = subprocess.run(
+428	            ["tmux", "respawn-pane", "-k", "-t", target_pane, command],
+429	            capture_output=True,
+430	            text=True,
+431	        )
+432	        if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:436:8
+435
+436	        subprocess.run(
+437	            ["tmux", "select-pane", "-t", target_pane], capture_output=True, text=True
+438	        )
+439	        return target_pane
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:457:17
+456	    if _tmux_has_session(session_name):
+457	        result = subprocess.run(
+458	            ["tmux", "kill-session", "-t", session_name],
+459	            capture_output=True,
+460	            text=True,
+461	        )
+462	        return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:467:17
+466	        window_name = _window_name_for_agent(agent_id)
+467	        result = subprocess.run(
+468	            ["tmux", "kill-window", "-t", f"{group}:{window_name}"],
+469	            capture_output=True,
+470	            text=True,
+471	        )
+472	        return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:495:13
+494
+495	    result = subprocess.run(
+496	        ["tmux", "capture-pane", "-p", "-t", target, f"-S-{lines}"],
+497	        capture_output=True,
+498	        text=True,
+499	    )
+500
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:538:17
+537	    def _send_tmux_key(key: str) -> bool:
+538	        result = subprocess.run(
+539	            ["tmux", "send-keys", "-t", target, key],
+540	            capture_output=True,
+541	            text=True,
+542	        )
+543	        return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:548:17
+547	            return True
+548	        result = subprocess.run(
+549	            ["tmux", "send-keys", "-t", target, "-l", text],
+550	            capture_output=True,
+551	            text=True,
+552	        )
+553	        return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:564:12
+563	        try:
+564	            subprocess.run(
+565	                ["tmux", "load-buffer", "-b", "enter-key", "-"],
+566	                input="\n",
+567	                capture_output=True,
+568	                text=True,
+569	                check=True,
+570	            )
+571	            subprocess.run(
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:571:12
+570	            )
+571	            subprocess.run(
+572	                ["tmux", "paste-buffer", "-d", "-b", "enter-key", "-t", target],
+573	                capture_output=True,
+574	                text=True,
+575	                check=True,
+576	            )
+577	            return True
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:598:12
+597	        try:
+598	            subprocess.run(
+599	                ["tmux", "load-buffer", "-b", "agent-send", temp_file],
+600	                capture_output=True,
+601	                check=True,
+602	            )
+603	            subprocess.run(
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:603:12
+602	            )
+603	            subprocess.run(
+604	                ["tmux", "paste-buffer", "-d", "-b", "agent-send", "-t", target],
+605	                capture_output=True,
+606	                check=True,
+607	            )
+608	            # Wait for paste to complete before sending Enter
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:617:12
+616	                os.unlink(temp_file)
+617	            except Exception:
+618	                pass
+619	    else:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:659:13
+658	        return False
+659	    result = subprocess.run(
+660	        ["tmux", "send-keys", "-t", target, key],
+661	        capture_output=True,
+662	        text=True,
+663	    )
+664	    return result.returncode == 0
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:720:8
+719	        # This is more reliable than send-keys for multi-line content
+720	        subprocess.run(
+721	            ["tmux", "load-buffer", "-b", "agent-prompt", temp_file],
+722	            capture_output=True,
+723	            check=True,
+724	        )
+725
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:727:8
+726	        # Paste the buffer content
+727	        subprocess.run(
+728	            ["tmux", "paste-buffer", "-d", "-b", "agent-prompt", "-t", target],
+729	            capture_output=True,
+730	            check=True,
+731	        )
+732
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:737:8
+736	        # Send Enter to execute the pasted content using load-buffer (more reliable)
+737	        subprocess.run(
+738	            ["tmux", "load-buffer", "-b", "enter-key", "-"],
+739	            input="\n",
+740	            capture_output=True,
+741	            text=True,
+742	            check=True,
+743	        )
+744	        subprocess.run(
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:744:8
+743	        )
+744	        subprocess.run(
+745	            ["tmux", "paste-buffer", "-d", "-b", "enter-key", "-t", target],
+746	            capture_output=True,
+747	            text=True,
+748	            check=True,
+749	        )
+750
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:760:8
+759	            os.unlink(temp_file)
+760	        except Exception:
+761	            pass
+762
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:812:17
+811	        # Capture recent output
+812	        result = subprocess.run(
+813	            ["tmux", "capture-pane", "-p", "-t", target, "-S-15"],
+814	            capture_output=True,
+815	            text=True,
+816	        )
+817
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:893:17
+892	        # Get session info from tmux ls
+893	        result = subprocess.run(["tmux", "ls"], capture_output=True, text=True)
+894
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:985:4
+984	            runtime_config.update(provider_runtime_config)
+985	    except Exception:
+986	        pass
+987	    return runtime_config
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:1015:13
+1014
+1015	    result = subprocess.run(
+1016	        ["tmux", "capture-pane", "-p", "-t", target, "-S-200"],
+1017	        capture_output=True,
+1018	        text=True,
+1019	    )
+1020
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:1052:24
+1051	            time.sleep(0.5)
+1052	            recapture = subprocess.run(
+1053	                ["tmux", "capture-pane", "-p", "-t", target, "-S-200"],
+1054	                capture_output=True,
+1055	                text=True,
+1056	            )
+1057	            if recapture.returncode == 0:
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:1102:13
+1101	    # This will block and take over the terminal
+1102	    result = subprocess.run(["tmux", "attach", "-t", attach_target])
+1103
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/agent-tools/agent-workflows/scripts/tmux_helper.py:1153:17
+1152	        # Capture last few lines of output
+1153	        result = subprocess.run(
+1154	            ["tmux", "capture-pane", "-p", "-t", target, "-S-20"],
+1155	            capture_output=True,
+1156	            text=True,
+1157	        )
+1158
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/agents-md-generator/scripts/generate_agents_md.py:149:4
+148	                tree.append(get_tree_view(item, next_indent, depth - 1))
+149	    except Exception:
+150	        pass
+151	    return "\n".join([t for t in tree if t])
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/agent-tools/mcp-builder/scripts/evaluation.py:13:0
+12	import traceback
+13	import xml.etree.ElementTree as ET
+14	from pathlib import Path
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/agent-tools/mcp-builder/scripts/evaluation.py:59:15
+58	    try:
+59	        tree = ET.parse(file_path)
+60	        root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/skill-graph-builder/scripts/generate_skill.py:39:4
+38
+39	    except Exception:
+40	        pass
+41
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/skill-graph-builder/scripts/generate_skill.py:58:4
+57	                return match.group(1).strip()
+58	    except Exception:
+59	        pass
+60	    return None
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/agent-tools/skill-graph-builder/scripts/generate_skill.py:310:36
+309	            # Use a unique temporary directory per batch
+310	            temp_crawl_dir = Path(f"/tmp/crawl_{skill_name}_{i}")
+311	            if temp_crawl_dir.exists():
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/agent-tools/skill-graph-builder/scripts/generate_skill.py:506:12
+505	                        description = match.group(1).strip()
+506	            except Exception:
+507	                pass
+508	        if not description:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/core/self-improver/scripts/check_pypi_updates.py:15:4
+14	            return data["info"]["version"]
+15	    except Exception:
+16	        pass
+17	    return None
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b108_hardcoded_tmp_directory.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/accept_changes.py:16:22
+15
+16	LIBREOFFICE_PROFILE = "/tmp/libreoffice_docx_profile"
+17	MACRO_DIR = f"{LIBREOFFICE_PROFILE}/user/basic/Standard"
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/accept_changes.py:99:8
+98	    if not macro_dir.exists():
+99	        subprocess.run(
+100	            [
+101	                "soffice",
+102	                "--headless",
+103	                f"-env:UserInstallation=file://{LIBREOFFICE_PROFILE}",
+104	                "--terminate_after_init",
+105	            ],
+106	            capture_output=True,
+107	            timeout=10,
+108	            check=False,
+109	            env=get_soffice_env(),
+110	        )
+111	        macro_dir.mkdir(parents=True, exist_ok=True)
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/comment.py:77:14
+76	def _generate_hex_id() -> str:
+77	    return f"{random.randint(0, 0x7FFFFFFE):08X}"
+78
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/helpers/simplify_redlines.py:23:0
+22	    sys.exit(1)
+23	import xml.etree.ElementTree as ET
+24	import zipfile
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/helpers/simplify_redlines.py:139:15
+138	    try:
+139	        tree = ET.parse(doc_xml_path)
+140	        root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/helpers/simplify_redlines.py:163:23
+162	            with zf.open("word/document.xml") as f:
+163	                tree = ET.parse(f)
+164	                root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/soffice.py:58:4
+57	    src.write_text(_SHIM_SOURCE)
+58	    subprocess.run(
+59	        ["gcc", "-shared", "-fPIC", "-o", str(_SHIM_SO), str(src), "-ldl"],
+60	        check=True,
+61	        capture_output=True,
+62	    )
+63	    src.unlink()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/unpack.py:96:4
+95	        xml_file.write_bytes(dom.toprettyxml(indent="  ", encoding="utf-8"))
+96	    except Exception:
+97	        pass
+98
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/unpack.py:106:4
+105	        xml_file.write_text(content, encoding="utf-8")
+106	    except Exception:
+107	        pass
+108
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/base.py:154:12
+153
+154	            except Exception:
+155	                pass
+156
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/base.py:578:16
+577
+578	                except Exception:
+579	                    continue
+580
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/docx.py:295:12
+294	                                )
+295	            except Exception:
+296	                pass
+297
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/docx.py:431:32
+430	                    if needs_repair:
+431	                        value = random.randint(1, 0x7FFFFFFE)
+432	                        if xml_file.name == "numbering.xml":
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/docx.py:447:12
+446
+447	            except Exception:
+448	                pass
+449
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:31:12
+30	        try:
+31	            import xml.etree.ElementTree as ET
+32
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:33:19
+32
+33	            tree = ET.parse(modified_file)
+34	            root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:55:8
+54
+55	        except Exception:
+56	            pass
+57
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:76:16
+75	            try:
+76	                import xml.etree.ElementTree as ET
+77
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:78:32
+77
+78	                modified_tree = ET.parse(modified_file)
+79	                modified_root = modified_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:80:32
+79	                modified_root = modified_tree.getroot()
+80	                original_tree = ET.parse(original_file)
+81	                original_root = original_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:137:25
+136
+137	                result = subprocess.run(
+138	                    [
+139	                        "git",
+140	                        "diff",
+141	                        "--word-diff=plain",
+142	                        "--word-diff-regex=.",
+143	                        "-U0",
+144	                        "--no-index",
+145	                        str(original_file),
+146	                        str(modified_file),
+147	                    ],
+148	                    capture_output=True,
+149	                    text=True,
+150	                )
+151
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/docx_scripts/office/validators/redlining.py:166:25
+165
+166	                result = subprocess.run(
+167	                    [
+168	                        "git",
+169	                        "diff",
+170	                        "--word-diff=plain",
+171	                        "-U0",
+172	                        "--no-index",
+173	                        str(original_file),
+174	                        str(modified_file),
+175	                    ],
+176	                    capture_output=True,
+177	                    text=True,
+178	                )
+179
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/epub_scripts/markdown_processor.py:690:12
+689	                pass
+690	            except Exception:
+691	                # Any other error, fall back to plain text
+692	                pass
+693
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/helpers/simplify_redlines.py:23:0
+22	    sys.exit(1)
+23	import xml.etree.ElementTree as ET
+24	import zipfile
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/helpers/simplify_redlines.py:139:15
+138	    try:
+139	        tree = ET.parse(doc_xml_path)
+140	        root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/helpers/simplify_redlines.py:163:23
+162	            with zf.open("word/document.xml") as f:
+163	                tree = ET.parse(f)
+164	                root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/soffice.py:58:4
+57	    src.write_text(_SHIM_SOURCE)
+58	    subprocess.run(
+59	        ["gcc", "-shared", "-fPIC", "-o", str(_SHIM_SO), str(src), "-ldl"],
+60	        check=True,
+61	        capture_output=True,
+62	    )
+63	    src.unlink()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/unpack.py:96:4
+95	        xml_file.write_bytes(dom.toprettyxml(indent="  ", encoding="utf-8"))
+96	    except Exception:
+97	        pass
+98
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/unpack.py:106:4
+105	        xml_file.write_text(content, encoding="utf-8")
+106	    except Exception:
+107	        pass
+108
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/base.py:154:12
+153
+154	            except Exception:
+155	                pass
+156
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/base.py:578:16
+577
+578	                except Exception:
+579	                    continue
+580
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/docx.py:295:12
+294	                                )
+295	            except Exception:
+296	                pass
+297
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/docx.py:431:32
+430	                    if needs_repair:
+431	                        value = random.randint(1, 0x7FFFFFFE)
+432	                        if xml_file.name == "numbering.xml":
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/docx.py:447:12
+446
+447	            except Exception:
+448	                pass
+449
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:31:12
+30	        try:
+31	            import xml.etree.ElementTree as ET
+32
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:33:19
+32
+33	            tree = ET.parse(modified_file)
+34	            root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:55:8
+54
+55	        except Exception:
+56	            pass
+57
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:76:16
+75	            try:
+76	                import xml.etree.ElementTree as ET
+77
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:78:32
+77
+78	                modified_tree = ET.parse(modified_file)
+79	                modified_root = modified_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:80:32
+79	                modified_root = modified_tree.getroot()
+80	                original_tree = ET.parse(original_file)
+81	                original_root = original_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:137:25
+136
+137	                result = subprocess.run(
+138	                    [
+139	                        "git",
+140	                        "diff",
+141	                        "--word-diff=plain",
+142	                        "--word-diff-regex=.",
+143	                        "-U0",
+144	                        "--no-index",
+145	                        str(original_file),
+146	                        str(modified_file),
+147	                    ],
+148	                    capture_output=True,
+149	                    text=True,
+150	                )
+151
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/office/validators/redlining.py:166:25
+165
+166	                result = subprocess.run(
+167	                    [
+168	                        "git",
+169	                        "diff",
+170	                        "--word-diff=plain",
+171	                        "-U0",
+172	                        "--no-index",
+173	                        str(original_file),
+174	                        str(modified_file),
+175	                    ],
+176	                    capture_output=True,
+177	                    text=True,
+178	                )
+179
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/thumbnail.py:170:13
+169
+170	    result = subprocess.run(
+171	        [
+172	            "soffice",
+173	            "--headless",
+174	            "--convert-to",
+175	            "pdf",
+176	            "--outdir",
+177	            str(temp_dir),
+178	            str(pptx_path),
+179	        ],
+180	        capture_output=True,
+181	        text=True,
+182	        env=get_soffice_env(),
+183	    )
+184	    if result.returncode != 0 or not pdf_path.exists():
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/pptx_scripts/thumbnail.py:187:13
+186
+187	    result = subprocess.run(
+188	        [
+189	            "pdftoppm",
+190	            "-jpeg",
+191	            "-r",
+192	            str(CONVERSION_DPI),
+193	            str(pdf_path),
+194	            str(temp_dir / "slide"),
+195	        ],
+196	        capture_output=True,
+197	        text=True,
+198	    )
+199	    if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/helpers/simplify_redlines.py:23:0
+22	    sys.exit(1)
+23	import xml.etree.ElementTree as ET
+24	import zipfile
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/helpers/simplify_redlines.py:139:15
+138	    try:
+139	        tree = ET.parse(doc_xml_path)
+140	        root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/helpers/simplify_redlines.py:163:23
+162	            with zf.open("word/document.xml") as f:
+163	                tree = ET.parse(f)
+164	                root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/soffice.py:58:4
+57	    src.write_text(_SHIM_SOURCE)
+58	    subprocess.run(
+59	        ["gcc", "-shared", "-fPIC", "-o", str(_SHIM_SO), str(src), "-ldl"],
+60	        check=True,
+61	        capture_output=True,
+62	    )
+63	    src.unlink()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/unpack.py:96:4
+95	        xml_file.write_bytes(dom.toprettyxml(indent="  ", encoding="utf-8"))
+96	    except Exception:
+97	        pass
+98
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/unpack.py:106:4
+105	        xml_file.write_text(content, encoding="utf-8")
+106	    except Exception:
+107	        pass
+108
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/base.py:154:12
+153
+154	            except Exception:
+155	                pass
+156
+
+--------------------------------------------------
+>> Issue: [B112:try_except_continue] Try, Except, Continue detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b112_try_except_continue.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/base.py:578:16
+577
+578	                except Exception:
+579	                    continue
+580
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/docx.py:295:12
+294	                                )
+295	            except Exception:
+296	                pass
+297
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/docx.py:431:32
+430	                    if needs_repair:
+431	                        value = random.randint(1, 0x7FFFFFFE)
+432	                        if xml_file.name == "numbering.xml":
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/docx.py:447:12
+446
+447	            except Exception:
+448	                pass
+449
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:31:12
+30	        try:
+31	            import xml.etree.ElementTree as ET
+32
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:33:19
+32
+33	            tree = ET.parse(modified_file)
+34	            root = tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:55:8
+54
+55	        except Exception:
+56	            pass
+57
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:76:16
+75	            try:
+76	                import xml.etree.ElementTree as ET
+77
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:78:32
+77
+78	                modified_tree = ET.parse(modified_file)
+79	                modified_root = modified_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:80:32
+79	                modified_root = modified_tree.getroot()
+80	                original_tree = ET.parse(original_file)
+81	                original_root = original_tree.getroot()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:137:25
+136
+137	                result = subprocess.run(
+138	                    [
+139	                        "git",
+140	                        "diff",
+141	                        "--word-diff=plain",
+142	                        "--word-diff-regex=.",
+143	                        "-U0",
+144	                        "--no-index",
+145	                        str(original_file),
+146	                        str(modified_file),
+147	                    ],
+148	                    capture_output=True,
+149	                    text=True,
+150	                )
+151
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/office/validators/redlining.py:166:25
+165
+166	                result = subprocess.run(
+167	                    [
+168	                        "git",
+169	                        "diff",
+170	                        "--word-diff=plain",
+171	                        "-U0",
+172	                        "--no-index",
+173	                        str(original_file),
+174	                        str(modified_file),
+175	                    ],
+176	                    capture_output=True,
+177	                    text=True,
+178	                )
+179
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/recalc.py:42:8
+41	    try:
+42	        subprocess.run(
+43	            ["gtimeout", "--version"], capture_output=True, timeout=1, check=False
+44	        )
+45	        return True
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/docs/document-tools/scripts/xlsx_scripts/recalc.py:63:8
+62	    if not os.path.exists(macro_dir):
+63	        subprocess.run(
+64	            ["soffice", "--headless", "--terminate_after_init"],
+65	            capture_output=True,
+66	            timeout=10,
+67	            env=get_soffice_env(),
+68	        )
+69	        os.makedirs(macro_dir, exist_ok=True)
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/infra/security-tools/scripts/sentry_api.py:62:17
+61	        try:
+62	            with urlopen(req) as resp:
+63	                body = resp.read().decode("utf-8")
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'password'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b105_hardcoded_password_string.html
+   Location: ./universal_skills/integration/database-tools/scripts/mssql_query.py:120:28
+119	                            "user": "user",
+120	                            "password": "password",
+121	                            "tds_version": "7.3",
+122	                        }
+123	                    ]
+124	                },
+125	                indent=2,
+126	            )
+127	        )
+128	        sys.exit(1)
+129
+130	    validate_config_permissions(path)
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'password'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b105_hardcoded_password_string.html
+   Location: ./universal_skills/integration/database-tools/scripts/mysql_query.py:102:28
+101	                            "user": "user",
+102	                            "password": "password",
+103	                            "ssl_disabled": False,
+104	                        }
+105	                    ]
+106	                },
+107	                indent=2,
+108	            )
+109	        )
+110	        sys.exit(1)
+111
+112	    validate_config_permissions(path)
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'password'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b105_hardcoded_password_string.html
+   Location: ./universal_skills/integration/database-tools/scripts/postgres_query.py:94:28
+93	                            "user": "user",
+94	                            "password": "password",
+95	                            "sslmode": "prefer",
+96	                        }
+97	                    ]
+98	                },
+99	                indent=2,
+100	            )
+101	        )
+102	        sys.exit(1)
+103
+104	    validate_config_permissions(path)
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/integration/github-tools/scripts/inspect_pr_checks.py:59:14
+58	def run_gh_command(args: Sequence[str], cwd: Path) -> GhResult:
+59	    process = subprocess.run(
+60	        ["gh", *args],
+61	        cwd=cwd,
+62	        text=True,
+63	        capture_output=True,
+64	    )
+65	    return GhResult(process.returncode, process.stdout, process.stderr)
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/integration/github-tools/scripts/inspect_pr_checks.py:69:14
+68	def run_gh_command_raw(args: Sequence[str], cwd: Path) -> tuple[int, bytes, str]:
+69	    process = subprocess.run(
+70	        ["gh", *args],
+71	        cwd=cwd,
+72	        capture_output=True,
+73	    )
+74	    stderr = process.stderr.decode(errors="replace")
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/integration/github-tools/scripts/inspect_pr_checks.py:145:13
+144	def find_git_root(start: Path) -> Path | None:
+145	    result = subprocess.run(
+146	        ["git", "rev-parse", "--show-toplevel"],
+147	        cwd=start,
+148	        text=True,
+149	        capture_output=True,
+150	    )
+151	    if result.returncode != 0:
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/calendar/auth.py:161:13
+160
+161	        with urllib.request.urlopen(req, timeout=30) as response:
+162	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/calendar/gcal.py:76:13
+75	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+76	        with urllib.request.urlopen(req, timeout=30) as response:
+77	            response_text = response.read().decode("utf-8")
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/chat/auth.py:148:13
+147
+148	        with urllib.request.urlopen(req, timeout=30) as response:
+149	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/chat/chat.py:54:13
+53	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+54	        with urllib.request.urlopen(req, timeout=30) as response:
+55	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/docs/auth.py:156:13
+155
+156	        with urllib.request.urlopen(req, timeout=30) as response:
+157	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/docs/docs.py:39:13
+38	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+39	        with urllib.request.urlopen(req, timeout=30) as response:
+40	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/drive/auth.py:141:13
+140
+141	        with urllib.request.urlopen(req, timeout=30) as response:
+142	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/drive/drive.py:58:13
+57	        req = urllib.request.Request(url, headers=headers, method=method)
+58	        with urllib.request.urlopen(req, timeout=60) as response:
+59	            if stream:
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/drive/drive.py:338:13
+337	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+338	        with urllib.request.urlopen(req, timeout=60) as response:
+339	            response_data = response.read().decode("utf-8")
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/drive/drive.py:409:13
+408	        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+409	        with urllib.request.urlopen(req, timeout=120) as response:
+410	            result = json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/gmail/auth.py:131:13
+130
+131	        with urllib.request.urlopen(req, timeout=30) as response:
+132	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/gmail/gmail.py:45:13
+44	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+45	        with urllib.request.urlopen(req, timeout=30) as response:
+46	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/sheets/auth.py:132:13
+131
+132	        with urllib.request.urlopen(req, timeout=30) as response:
+133	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/sheets/sheets.py:46:13
+45	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+46	        with urllib.request.urlopen(req, timeout=30) as response:
+47	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/sheets/sheets.py:87:13
+86	        req = urllib.request.Request(url, headers=headers, method="GET")
+87	        with urllib.request.urlopen(req, timeout=30) as response:
+88	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/slides/auth.py:132:13
+131
+132	        with urllib.request.urlopen(req, timeout=30) as response:
+133	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: ./universal_skills/integration/google-workspace/scripts/slides/slides.py:53:13
+52	        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+53	        with urllib.request.urlopen(req, timeout=30) as response:
+54	            return json.loads(response.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B405:blacklist] Using ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+   Severity: Low   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_imports.html#b405-import-xml-etree
+   Location: ./universal_skills/research/web-crawler/scripts/crawl.py:36:0
+35	from typing import List
+36	from xml.etree import ElementTree
+37	from urllib.parse import urlparse, urldefrag, urljoin
+
+--------------------------------------------------
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: ./universal_skills/research/web-crawler/scripts/crawl.py:228:15
+227	        response.raise_for_status()
+228	        root = ElementTree.fromstring(response.content)
+229	        namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/research/web-crawler/scripts/crawl.py:265:4
+264	                    return line.split(":", 1)[1].strip()
+265	    except Exception:
+266	        pass
+267	    # Fallback
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b110_try_except_pass.html
+   Location: ./universal_skills/research/web-crawler/scripts/crawl.py:273:4
+272	            return candidate
+273	    except Exception:
+274	        pass
+275	    return None
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/system/developer-utilities/scripts/network_tools.py:36:8
+35	        0x3E,
+36	        random.randint(0x00, 0x7F),
+37	        random.randint(0x00, 0xFF),
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/system/developer-utilities/scripts/network_tools.py:37:8
+36	        random.randint(0x00, 0x7F),
+37	        random.randint(0x00, 0xFF),
+38	        random.randint(0x00, 0xFF),
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/blacklists/blacklist_calls.html#b311-random
+   Location: ./universal_skills/system/developer-utilities/scripts/network_tools.py:38:8
+37	        random.randint(0x00, 0xFF),
+38	        random.randint(0x00, 0xFF),
+39	    ]
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/system/system-tools/scripts/take_screenshot.py:110:15
+109	    try:
+110	        proc = subprocess.run(
+111	            ["defaults", "read", "com.apple.screencapture", "location"],
+112	            check=False,
+113	            capture_output=True,
+114	            text=True,
+115	        )
+116	        location = proc.stdout.strip()
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/system/system-tools/scripts/take_screenshot.py:239:4
+238	        return
+239	    subprocess.run(["bash", str(MAC_PERM_HELPER)], check=False)
+240	    if not macos_screen_capture_granted():
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/system/system-tools/scripts/take_screenshot.py:249:4
+248	    script = f'tell application "{safe_app}" to activate'
+249	    subprocess.run(
+250	        ["osascript", "-e", script], check=False, capture_output=True, text=True
+251	    )
+252
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/0.0.0/plugins/b607_start_process_with_partial_path.html
+   Location: ./universal_skills/system/system-tools/scripts/take_screenshot.py:412:21
+411	        if imagemagick and xdotool:
+412	            win_id = subprocess.check_output(
+413	                ["xdotool", "getactivewindow"], text=True
+414	            ).strip()
+415	            run(["import", "-window", win_id, str(output)])
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 32846
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 1
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 123
+		Medium: 41
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 9
+		High: 155
+Files skipped (0):

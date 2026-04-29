@@ -2,7 +2,7 @@ import os
 import yaml
 
 def check_skills():
-    skills_dir = "universal_skills/skills"
+    skills_dir = "universal_skills"
     errors = 0
     for root, _, files in os.walk(skills_dir):
         if "SKILL.md" in files:

@@ -233,7 +233,7 @@ def generate_skill(
             for doc_url in pdf_urls:
                 print(f"📄 Processing remote document: {doc_url}")
                 try:
-                    response = requests.get(doc_url, stream=True)
+                    response = requests.get(doc_url, stream=True, timeout=60)
                     response.raise_for_status()
 
                     # Extract extension or default to .pdf

@@ -22,7 +22,7 @@ def search(query: str, base_url: str, max_results: int = 10, ssl_verify: bool = 
     try:
         params = {"q": query, "format": "json"}
 
-        response = requests.get(url, params=params, verify=ssl_verify)
+        response = requests.get(url, params=params, verify=ssl_verify, timeout=30)
         response.raise_for_status()
         data = response.json()
 

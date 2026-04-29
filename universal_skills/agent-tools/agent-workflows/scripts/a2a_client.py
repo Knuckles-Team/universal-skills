@@ -18,8 +18,10 @@ import sys
 import os
 import re
 
+from typing import Optional
 
-def parse_agents_md(agents_file_path: str, target_agent_name: str) -> str:
+
+def parse_agents_md(agents_file_path: str, target_agent_name: str) -> Optional[str]:
     """
     Parses an AGENTS.md file to find the URL for a given agent name.
     Expects a markdown table format with 'Name' and 'Endpoint URL' columns.
@@ -129,7 +131,7 @@ async def list_tasks(client, agent_url):
         print(f"Failed to decode response JSON: {resp.text}")
 
 
-async def send_message(client, agent_url, message_text):
+async def send_message(client, agent_url, message_text) -> Optional[str]:
     """
     Sends a message to the agent via JSON-RPC.
     """

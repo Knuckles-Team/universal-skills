@@ -23,6 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from agent_config import (
     resolve_agent,
     parse_duration,
+    build_system_prompt,  # noqa: F401
+    list_all_agents,  # noqa: F401
 )
 
 from repo_root import get_repo_root
@@ -33,6 +35,12 @@ from tmux_helper import (
     capture_output,
     send_keys,
     get_agent_runtime_state,
+    get_session_info,  # noqa: F401
+    wait_for_prompt,  # noqa: F401
+    inject_system_prompt,  # noqa: F401
+    wait_for_agent_ready,  # noqa: F401
+    start_session,  # noqa: F401
+    start_session_with_layout,  # noqa: F401
 )
 
 # Import provider system (lives at .agent/skills/agent-manager/providers)
@@ -41,6 +49,15 @@ from providers import (
     resolve_launcher_command,
     get_provider_key,
     get_context_left_patterns,
+    get_session_restore_mode,  # noqa: F401
+    get_session_restore_flag,  # noqa: F401
+    get_system_prompt_mode,  # noqa: F401
+    get_system_prompt_flag,  # noqa: F401
+    get_system_prompt_key,  # noqa: F401
+    get_agents_md_mode,  # noqa: F401
+    get_mcp_config_mode,  # noqa: F401
+    get_mcp_config_flag,  # noqa: F401
+    get_startup_wait,  # noqa: F401
 )
 
 from cli_parser import create_parser

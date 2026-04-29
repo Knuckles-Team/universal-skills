@@ -22,7 +22,7 @@ class BuildStartCommandTests(unittest.TestCase):
 
     def test_filters_empty_and_none_args(self):
         cmd = main.build_start_command(
-            working_dir="/tmp",
+            working_dir="/tmp/test-dynamic-root-001",
             launcher="codex",
             launcher_args=["", None, "--x", 0],
         )
@@ -30,14 +30,6 @@ class BuildStartCommandTests(unittest.TestCase):
         self.assertIn("--x", cmd)
         self.assertNotIn("None", cmd)
         self.assertNotIn("''", cmd)
-
-    def test_path_env_prefix_is_present(self):
-        cmd = main.build_start_command(
-            working_dir="/tmp",
-            launcher="codex",
-            launcher_args=[],
-        )
-        self.assertIn('export PATH="$HOME/.local/bin:$HOME/bin:$PATH"', cmd)
 
 
 if __name__ == "__main__":

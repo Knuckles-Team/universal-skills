@@ -26,7 +26,9 @@ def search(query: str, api_key: str, max_results: int = 10, ssl_verify: bool = T
             "textFormat": "HTML",
         }
 
-        response = requests.get(url, headers=headers, params=params, verify=ssl_verify)
+        response = requests.get(
+            url, headers=headers, params=params, verify=ssl_verify, timeout=30
+        )
         response.raise_for_status()
         data = response.json()
 
