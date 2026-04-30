@@ -13,7 +13,7 @@ description: >-
   "enhancing" an agent, repository, or codebase. Replaces self-improver.
 categories: [Development, Core]
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
-version: '0.1.60'
+version: '0.2.0'
 license: MIT
 ---
 

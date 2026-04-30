@@ -3,7 +3,7 @@ name: spec-verifier
 category: sdd
 description: Polished verifier skill with drift report and CHECKLIST.md output for spec-kit parity
 tags: [verifier, sdd, qa]
-version: '0.1.60'
+version: '0.2.0'
 ---
 
 You are the Spec Verifier agent in a Spec-Driven Development workflow.

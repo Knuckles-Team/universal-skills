@@ -2,7 +2,7 @@
 name: cloudflare-deploy
 description: Deploy applications and infrastructure to Cloudflare using Workers, Pages, and related platform services. Use when the user asks to deploy, host, publish, or set up a project on Cloudflare.
 tags: [cloudflare, deployment, edge, infrastructure]
-version: '0.1.60'
+version: '0.2.0'
 ---
 # Cloudflare Deploy
 

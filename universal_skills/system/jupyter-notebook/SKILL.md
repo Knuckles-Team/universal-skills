@@ -2,7 +2,7 @@
 name: jupyter-notebook
 description: Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`) for experiments, explorations, or tutorials; prefer the bundled templates and run the helper script `new_notebook.py` to generate a clean starting notebook.
 tags: [jupyter, notebook, python, data-science, research]
-version: '0.1.60'
+version: '0.2.0'
 ---
 # Jupyter Notebook
 

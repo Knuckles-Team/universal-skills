@@ -2,7 +2,7 @@
 name: system-tools
 description: Hardware and OS-level operations including capturing screenshots, webcam photos, Bluetooth management, and remote-controlling tmux sessions.
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
-version: '0.1.60'
+version: '0.2.0'
 ---
 # System Tools
 

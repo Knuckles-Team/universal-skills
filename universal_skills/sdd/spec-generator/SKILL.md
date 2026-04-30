@@ -2,7 +2,7 @@
 name: spec-generator
 description: Generates spec.md with user stories and acceptance criteria. Replaces product-management.
 tags: ['spec generator']
-version: '0.1.60'
+version: '0.2.0'
 ---
 
 # SDD Spec Generator

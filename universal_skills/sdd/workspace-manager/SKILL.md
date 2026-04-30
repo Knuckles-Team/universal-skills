@@ -1,5 +1,5 @@
 ---
-version: '0.1.60'
+version: '0.2.0'
 name: workspace-manager
 category: sdd
 description: Bootstraps the exact .specify/ folder layout for 1:1 spec-kit compatibility
