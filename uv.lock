@@ -1670,6 +1670,15 @@ wheels = [
 ]
 
 [[package]]
+name = "keepachangelog"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/2e/951923e56c149b6772dbffee0dcac00738405d7d7a0fdd30537047cf6727/keepachangelog-2.0.0.tar.gz", hash = "sha256:6839f0646690ae514aca6dedbc7b8aa652c56db3be43081a1940c55c1c807709", size = 24488, upload-time = "2024-06-14T12:56:28.442Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/06/b4f06ca7afb5d9e942c642980c308ffcfa1fa0e8b0a3ddbec78483ef1614/keepachangelog-2.0.0-py3-none-any.whl", hash = "sha256:0b2259fd73b55f2b99e61035ff83f3d86d0f2764841a7e2de86e31e675e42fee", size = 13349, upload-time = "2024-06-14T12:56:26.884Z" },
+]
+
+[[package]]
 name = "keyring"
 version = "25.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3773,8 +3782,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography" },
-    { name = "jeepney" },
+    { name = "cryptography", marker = "sys_platform != 'win32'" },
+    { name = "jeepney", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -4205,6 +4214,7 @@ all = [
     { name = "ebooklib" },
     { name = "fastmcp" },
     { name = "httpx" },
+    { name = "keepachangelog" },
     { name = "keyring" },
     { name = "lxml" },
     { name = "mammoth" },
@@ -4249,6 +4259,7 @@ cloudflare-deploy = [
     { name = "requests" },
 ]
 code-enhancer = [
+    { name = "keepachangelog" },
     { name = "packaging" },
     { name = "requests" },
 ]
@@ -4366,6 +4377,7 @@ requires-dist = [
     { name = "fastmcp", marker = "extra == 'mcp-client'" },
     { name = "httpx", marker = "extra == 'agent-workflows'" },
     { name = "httpx", marker = "extra == 'test'" },
+    { name = "keepachangelog", marker = "extra == 'code-enhancer'", specifier = ">=2.0.0" },
     { name = "keyring", marker = "extra == 'google-workspace'" },
     { name = "lxml", marker = "extra == 'document-tools'" },
     { name = "mammoth", marker = "extra == 'document-converter'" },

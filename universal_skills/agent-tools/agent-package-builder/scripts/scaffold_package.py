@@ -1070,7 +1070,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from agent_utilities.exceptions import AuthError, UnauthorizedError
+from agent_utilities.core.exceptions import AuthError, UnauthorizedError
 
 # TODO: Import your API wrapper class here
 # from {pkg_dir}.{api_module_name} import {api_class_name}
@@ -1205,8 +1205,8 @@ import logging
 from typing import Dict, Any, Optional, Union, List
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
-from agent_utilities.decorators import require_auth
-from agent_utilities.exceptions import (
+from agent_utilities.core.decorators import require_auth
+from agent_utilities.core.exceptions import (
     MissingParameterError,
     ParameterError,
 )

@@ -1,3 +1,7 @@
+---
+version: '0.1.59'
+---
+
 # Manual Testing Enhanced
 
 Specialized skill for exploratory testing, curl verification, and structured execution logging.

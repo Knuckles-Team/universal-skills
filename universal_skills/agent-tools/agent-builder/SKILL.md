@@ -2,7 +2,7 @@
 name: agent-builder
 description: Guide for building scalable Pydantic AI agents. Use this skill when the user wants to create a new agent package or modify an existing agent's architecture, to ensure it follows the standardized agent patterns using `agent-utilities`.
 tags: [agent, development, pydantic-ai, architecture]
-version: '0.1.58'
+version: '0.1.59'
 ---
 # Agent Builder Guide
 

@@ -8,7 +8,6 @@ CONCEPT:CE-002 — Dependency Health Audit
 """
 
 import json
-import sys
 import tomllib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -114,6 +113,31 @@ def _score_to_grade(score: int) -> str:
     return "F"
 
 
+def _get_installed_version(package_name: str) -> str | None:
+    """Get the installed version of a package via importlib.metadata.
+
+    This is critical for accuracy: we must compare the ACTUAL installed
+    version against PyPI, NOT the floor constraint from pyproject.toml.
+
+    Example:
+        pyproject.toml says ``networkx>=3.0`` (floor constraint)
+        installed version is ``3.6.1``
+        PyPI latest is ``3.6.1``
+        → Result: "up-to-date" (not "minor update 3.0 → 3.6.1")
+    """
+    try:
+        import importlib.metadata as meta
+        return meta.version(package_name)
+    except Exception:
+        # Try common name normalization (underscores ↔ hyphens)
+        try:
+            import importlib.metadata as meta
+            alt_name = package_name.replace("-", "_")
+            return meta.version(alt_name)
+        except Exception:
+            return None
+
+
 def audit_dependencies(root_dir: str = ".", insecure: bool = False) -> dict:
     root = Path(root_dir).resolve()
     pyproject = root / "pyproject.toml"
@@ -142,31 +166,55 @@ def audit_dependencies(root_dir: str = ".", insecure: bool = False) -> dict:
             pkg = futures[future]
             info = future.result()
             if info:
+                # ACCURACY FIX: Use installed version, not floor constraint
+                installed = _get_installed_version(pkg)
+                effective_version = installed if installed else deps[pkg]
+                version_source = "installed" if installed else "constraint"
+
                 packages[pkg] = {
-                    "current": deps[pkg], "latest": info["latest"],
-                    "status": _compare_versions(deps[pkg], info["latest"]),
+                    "current": effective_version,
+                    "constraint": deps[pkg],
+                    "installed": installed,
+                    "latest": info["latest"],
+                    "status": _compare_versions(effective_version, info["latest"]),
+                    "version_source": version_source,
                     "summary": info["summary"],
                 }
 
     score = 100
     findings: list[str] = []
     major_count = minor_count = patch_count = 0
+    not_installed_count = 0
+
     for pkg, info in packages.items():
         if info["status"] == "major":
-            score -= 10; major_count += 1
-            findings.append(f"MAJOR update: {pkg} {info['current']} -> {info['latest']}")
+            score -= 10
+            major_count += 1
+            src_label = " (installed)" if info["version_source"] == "installed" else " (constraint — not installed)"
+            findings.append(f"MAJOR update: {pkg} {info['current']}{src_label} -> {info['latest']}")
         elif info["status"] == "minor":
-            score -= 3; minor_count += 1
-            findings.append(f"Minor update: {pkg} {info['current']} -> {info['latest']}")
+            score -= 3
+            minor_count += 1
+            src_label = " (installed)" if info["version_source"] == "installed" else " (constraint — not installed)"
+            findings.append(f"Minor update: {pkg} {info['current']}{src_label} -> {info['latest']}")
         elif info["status"] == "patch":
-            score -= 1; patch_count += 1
+            score -= 1
+            patch_count += 1
         elif info["latest"] == "NOT_FOUND":
             findings.append(f"Package not found on PyPI: {pkg}")
 
+        if info["version_source"] == "constraint":
+            not_installed_count += 1
+
+    # NOTE: Changelog validation moved to audit_changelog.py (CE-023).
+    # The old `changelogs` (pyupio) integration was removed — it uses the
+    # deprecated `imp` module and is broken on Python 3.12+.
+
     score = max(0, score)
     justifications = [{"criterion": "dependency_freshness", "points": score,
-        "evidence": f"source={source} total={len(deps)} major={major_count} minor={minor_count} patch={patch_count}",
-        "reasoning": f"Audited {len(deps)} deps. {major_count} major, {minor_count} minor, {patch_count} patch updates."}]
+        "evidence": f"source={source} total={len(deps)} major={major_count} minor={minor_count} patch={patch_count} not_installed={not_installed_count}",
+        "reasoning": f"Audited {len(deps)} deps ({len(deps) - not_installed_count} installed, {not_installed_count} constraint-only). "
+                     f"{major_count} major, {minor_count} minor, {patch_count} patch updates."}]
 
     return {"domain": "Dependency Audit", "score": score, "grade": _score_to_grade(score),
             "findings": findings, "justifications": justifications, "packages": packages}

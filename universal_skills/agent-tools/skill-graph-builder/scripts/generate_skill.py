@@ -7,6 +7,11 @@ import datetime
 from pathlib import Path
 
 
+def sanitize_for_windows(name: str) -> str:
+    """Sanitize a string to be a valid Windows filename."""
+    return re.sub(r'[<>:"/\\|?*]', "-", name)
+
+
 def extract_title(file_path: Path) -> str:
     """Extract title from YAML frontmatter, then H1, then humanized filename."""
     try:
@@ -120,6 +125,8 @@ def generate_skill(
     if not skill_name.endswith("-docs"):
         skill_name = f"{skill_name}-docs"
         print(f"🏷️  Enforcing naming convention: Renamed skill to **{skill_name}**")
+        
+    skill_name = sanitize_for_windows(skill_name)
 
     base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
     # If --output-dir is provided, use it directly as the parent for the skill
@@ -253,7 +260,7 @@ def generate_skill(
 
                     os.unlink(tmp_path)
 
-                    filename = Path(doc_url.split("?")[0]).stem + ".md"
+                    filename = sanitize_for_windows(Path(doc_url.split("?")[0]).stem) + ".md"
                     target_file = reference_dir / filename
                     target_file.write_text(md_text, encoding="utf-8")
                     source_urls.append(doc_url)
@@ -270,7 +277,7 @@ def generate_skill(
                     else:
                         md_text = pymupdf4llm.to_markdown(str(local_doc))
 
-                    filename = local_doc.stem + ".md"
+                    filename = sanitize_for_windows(local_doc.stem) + ".md"
                     target_file = reference_dir / filename
                     target_file.write_text(md_text, encoding="utf-8")
                 except Exception as e:

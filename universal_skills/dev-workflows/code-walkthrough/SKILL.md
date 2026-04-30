@@ -1,3 +1,7 @@
+---
+version: '0.1.59'
+---
+
 # Code Walkthrough
 
 Generates linear, step-by-step walkthroughs of a codebase or implementation.

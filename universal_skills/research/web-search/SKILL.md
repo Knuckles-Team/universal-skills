@@ -2,7 +2,7 @@
 name: web-search
 description: Search the web using various providers (DuckDuckGo, Google, Bing, Searxng) to find current information, news, and links. Use when the agent needs up-to-date context from the internet.
 tags: [web, search, duckduckgo, google, bing, searxng]
-version: '0.1.58'
+version: '0.1.59'
 ---
 # Web Search
 

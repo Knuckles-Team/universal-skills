@@ -41,6 +41,12 @@ README_CRITERIA = {
     "has_docs_refs": {"weight": 2, "description": "References /docs directory material"},
     "no_broken_links": {"weight": 1, "description": "No obviously broken markdown links"},
     "reasonable_length": {"weight": 1, "description": "README is between 200-10000 lines"},
+    "has_cli_api_details": {"weight": 2, "description": "Has CLI parameters or API endpoints details"},
+    "has_mcp_configs": {"weight": 2, "description": "Has mcp_server.py deployment configurations"},
+    "has_agent_configs": {"weight": 2, "description": "Has agent_server.py deployment configurations"},
+    "has_env_var_docs": {"weight": 2, "description": "Documents all environment variables in a table or section"},
+    "has_mcp_tool_table": {"weight": 2, "description": "Has MCP tools mapping table with descriptions"},
+    "has_deployment_docs": {"weight": 2, "description": "Has bare-metal and container deployment instructions"},
 }
 
 
@@ -96,6 +102,16 @@ def _detect_code_doc_drift(root: Path) -> list[dict]:
         # Find file references (paths with extensions)
         file_refs = re.findall(r"`([^`]+\.\w{1,4})`", content)
         for ref in file_refs:
+            # ACCURACY FIX: Filter out version constraints that look like
+            # file refs (e.g., "pydantic>=2.8.2" → ".2" matches the regex)
+            if any(op in ref for op in [">=", "<=", "==", "~=", "!=", ">", "<"]):
+                continue
+            # Skip pure version strings (e.g., "1.73.0")
+            if re.match(r"^[\d.]+$", ref):
+                continue
+            # Skip Python package specifiers (e.g., "pydantic[email]>=2.8.2")
+            if "[" in ref and "]" in ref:
+                continue
             ref_path = root / ref
             if not ref_path.exists() and not any(
                 p.name == Path(ref).name for p in root.rglob(Path(ref).name)
@@ -234,6 +250,73 @@ def _grade_readme(root: Path) -> dict:
         findings.append(f"README.md is short ({len(lines)} lines) — consider expanding")
     elif len(lines) > 10000:
         findings.append(f"README.md is very long ({len(lines)} lines) — consider splitting")
+
+    # Agent / Server Specific Fields
+    has_mcp = list(root.rglob("mcp_server.py"))
+    has_agent = list(root.rglob("agent_server.py"))
+    
+    results["has_cli_api_details"] = True
+    if has_mcp or has_agent:
+        results["has_cli_api_details"] = any(
+            "cli" in h or "api" in h or "parameter" in h or "endpoint" in h or "credential" in h 
+            for h in headings_lower
+        ) or "cli" in content.lower() or "api" in content.lower()
+
+    results["has_mcp_configs"] = True
+    if has_mcp:
+        results["has_mcp_configs"] = any(
+            "mcp" in h for h in headings_lower
+        ) or "stdio" in content.lower() or "http" in content.lower()
+
+    results["has_agent_configs"] = True
+    if has_agent:
+        results["has_agent_configs"] = any(
+            "agent server" in h or "deploy" in h for h in headings_lower
+        ) or "bare-metal" in content.lower() or "container" in content.lower()
+
+    # Environment variable documentation
+    results["has_env_var_docs"] = True
+    if has_mcp or has_agent:
+        # Check for env var table or section
+        has_env_section = any(
+            "environment" in h or "env var" in h or "configuration" in h
+            for h in headings_lower
+        )
+        has_env_table = bool(re.search(
+            r"\|\s*(?:Variable|Env|Name|Parameter)\s*\|", content, re.IGNORECASE
+        ))
+        results["has_env_var_docs"] = has_env_section or has_env_table
+        if not results["has_env_var_docs"]:
+            findings.append("README missing: Environment variables documentation table")
+
+    # MCP tools mapping table
+    results["has_mcp_tool_table"] = True
+    if has_mcp:
+        has_tool_section = any(
+            "tool" in h and ("mcp" in h or "available" in h or "list" in h)
+            for h in headings_lower
+        )
+        has_tool_table = bool(re.search(
+            r"\|\s*(?:Tool|Function|Command)\s*\|.*\|.*(?:Description|Details)",
+            content, re.IGNORECASE,
+        ))
+        results["has_mcp_tool_table"] = has_tool_section or has_tool_table
+        if not results["has_mcp_tool_table"]:
+            findings.append("README missing: MCP tools mapping table with descriptions")
+
+    # Deployment documentation (bare-metal + container)
+    results["has_deployment_docs"] = True
+    if has_mcp or has_agent:
+        has_docker = "docker" in content.lower() or "container" in content.lower()
+        has_bare = any(
+            "local" in h or "install" in h or "bare" in h or "pip" in h
+            for h in headings_lower
+        ) or "pip install" in content
+        results["has_deployment_docs"] = has_docker and has_bare
+        if not results["has_deployment_docs"]:
+            findings.append(
+                "README missing: Both bare-metal (pip) and container (Docker) deployment docs"
+            )
 
     # Score
     score = sum(

@@ -2,7 +2,7 @@
 name: skill-builder
 description: Guide for creating effective skills for the universal-skills package. Use this when users want to create a new skill or update an existing skill according to the project's standards.
 tags: [skills, development, guide, builder, creator]
-version: '0.1.58'
+version: '0.1.59'
 ---
 # Skill Builder
 

@@ -25,13 +25,37 @@ _SOURCE_EXTENSIONS = frozenset({
     ".py", ".pyi", ".go", ".js", ".jsx", ".ts", ".tsx", ".rs",
     ".java", ".kt", ".kts", ".rb", ".cs", ".cpp", ".c", ".h",
     ".html", ".css", ".scss", ".vue", ".svelte", ".sh", ".sql",
-    ".yaml", ".yml", ".toml", ".json", ".md",
+    ".yaml", ".yml", ".toml", ".json", ".md", ".rst",
 })
+
+# Rogue/throwaway script prefixes that should not be in the codebase
+_ROGUE_PREFIXES = (
+    "fix_", "validate_", "cleanup_", "patch_", "repair_",
+    "resolve_", "debug_", "tmp_", "temp_", "hack_",
+)
 
 
 def _should_skip(path: Path) -> bool:
     """Check if any path component is in the skip set."""
     return any(part in _SKIP_DIRS for part in path.parts)
+
+
+def _detect_rogue_scripts(root: Path) -> list[dict]:
+    """Detect throwaway/rogue scripts that pollute the codebase."""
+    rogue_files: list[dict] = []
+    for f in root.rglob("*.py"):
+        if _should_skip(f):
+            continue
+        name = f.name.lower()
+        for prefix in _ROGUE_PREFIXES:
+            if name.startswith(prefix):
+                rogue_files.append({
+                    "file": str(f.relative_to(root)),
+                    "prefix": prefix.rstrip("_"),
+                    "recommendation": "Remove or integrate into project modules",
+                })
+                break
+    return rogue_files
 
 
 def _score_to_grade(score: int) -> str:
@@ -189,6 +213,17 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
                 f"{md['percentage']}% of all files ({md['file_count']}/{total_files})"
             )
 
+    # Rogue script detection
+    rogue_scripts = _detect_rogue_scripts(root)
+    if rogue_scripts:
+        rogue_penalty = min(15, len(rogue_scripts) * 3)
+        score -= rogue_penalty
+        rogue_names = [r["file"] for r in rogue_scripts[:5]]
+        findings.append(
+            f"{len(rogue_scripts)} rogue/throwaway scripts detected "
+            f"(fix_*, validate_*, patch_*, etc.): {', '.join(rogue_names)}"
+        )
+
     score = max(0, score)
 
     metrics = {
@@ -201,6 +236,7 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
         "monolithic_dirs": len(monolithic_dirs),
         "empty_dirs": len(empty_dirs),
         "avg_files_per_dir": round(total_files / max(len(dir_files), 1), 1),
+        "rogue_scripts": len(rogue_scripts),
     }
 
     justifications = [{
@@ -211,7 +247,8 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
             f"{total_files} files across {len(dir_files)} directories. "
             f"Max depth: {max_depth}, avg files/dir: {metrics['avg_files_per_dir']}. "
             f"{len(crowded_dirs)} crowded, {len(severely_crowded_dirs)} severely crowded, "
-            f"{len(monolithic_dirs)} monolithic."
+            f"{len(monolithic_dirs)} monolithic, "
+            f"{len(rogue_scripts)} rogue scripts."
         ),
     }]
 
@@ -225,6 +262,7 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
         "crowded_dirs": severely_crowded_dirs + crowded_dirs,
         "monolithic_dirs": monolithic_dirs,
         "suggestions": suggestions,
+        "rogue_scripts": rogue_scripts,
     }
 
 

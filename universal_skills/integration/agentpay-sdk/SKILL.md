@@ -2,7 +2,7 @@
 name: agentpay-sdk
 description: Install and operate the AgentPay SDK. Trigger this when an agent needs to install `agentpay`, explain AgentPay SDK capabilities without probing the machine first, set up or reuse a wallet, check funding, generate funding instructions or a QR, guide the user through policy changes in the TUI or exact admin CLI when explicitly requested, route manual approvals to the local admin approval commands, execute transfers, approvals, or broadcasts using the current CLI behavior instead of stale examples, or use supported plugin-backed merchant payment flows when explicitly relevant.
 tags: ['agentpay sdk']
-version: '0.1.58'
+version: '0.1.59'
 ---
 
 # AgentPay SDK

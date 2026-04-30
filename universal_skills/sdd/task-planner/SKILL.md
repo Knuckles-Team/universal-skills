@@ -1,6 +1,6 @@
 ---
 name: task-planner
-version: '0.1.58'
+version: '0.1.59'
 category: sdd
 description: Generates executable tasks.md with dependency graph and [P] parallelism markers
 tags: [planner, sdd]

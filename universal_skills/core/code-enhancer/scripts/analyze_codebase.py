@@ -10,6 +10,7 @@ CONCEPT:CE-003 — Codebase Quality Analysis
 import ast
 import hashlib
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -114,7 +115,9 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     root = Path(root_dir).resolve()
     py_files = [f for f in root.rglob("*.py")
                 if ".venv" not in f.parts and "__pycache__" not in f.parts
-                and "node_modules" not in f.parts and ".git" not in f.parts]
+                and "node_modules" not in f.parts and ".git" not in f.parts
+                and "build" not in f.parts and "dist" not in f.parts
+                and ".egg-info" not in str(f)]
 
     if not py_files:
         return {"domain": "Codebase Optimization", "score": 0, "grade": "F",
@@ -164,7 +167,17 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     # Deep nesting (>4)
     deep_functions = [f for f in all_functions if f["nesting_depth"] > 4]
 
-    # Monolithic files (>1000 lines) — should be split into directories or logical modules
+    # ----------------------------------------------------------------
+    # Structural analysis: composite heuristics (replaces >1000L check)
+    #
+    # Industry-aligned thresholds from:
+    #   - Cognitive Complexity (SonarSource): focus on comprehension cost
+    #   - SRP (Single Responsibility): measure concept diversity, not lines
+    #   - Data vs Code: exclude schema dicts, Pydantic registries, configs
+    #
+    # Key insight: a 1800-line Pydantic model file with 85 tiny classes
+    # is LESS problematic than a 500-line file with 3 unrelated domains.
+    # ----------------------------------------------------------------
     file_sizes: dict[str, int] = {}
     for f in py_files:
         try:
@@ -172,8 +185,128 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             file_sizes[str(f)] = line_count
         except Exception:
             pass
-    monolithic_files = [(path, lc) for path, lc in file_sizes.items() if lc > 1000]
-    monolithic_files.sort(key=lambda x: x[1], reverse=True)
+
+    # Classify large files (>500 lines) as data, cohesive, or monolithic
+    structural_issues: list[dict] = []
+    for filepath_str, line_count in file_sizes.items():
+        if line_count < 500:
+            continue
+        filepath = Path(filepath_str)
+        if filepath.name.startswith("test_") or filepath.name == "__init__.py":
+            continue
+
+        try:
+            source = filepath.read_text(encoding="utf-8", errors="ignore")
+            tree = ast.parse(source, filename=filepath_str)
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+
+        top_classes = [n for n in ast.iter_child_nodes(tree) if isinstance(n, ast.ClassDef)]
+        top_functions = [n for n in ast.iter_child_nodes(tree)
+                         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        top_assigns = [n for n in ast.iter_child_nodes(tree)
+                       if isinstance(n, (ast.Assign, ast.AnnAssign))]
+
+        # --- Classification 1: Data file ---
+        # Files that are essentially one large dict/list literal, or pure
+        # Pydantic/StrEnum model registries with high class count + low avg size.
+        is_data_file = False
+        if len(top_classes) == 0 and len(top_functions) == 0 and len(top_assigns) > 0:
+            # Pure data module (e.g., SCHEMA = {...})
+            is_data_file = True
+        elif len(top_classes) > 20:
+            avg_class_lines = line_count / len(top_classes)
+            if avg_class_lines < 30:
+                # Model registry: many tiny classes (Pydantic, StrEnum, dataclass)
+                is_data_file = True
+
+        if is_data_file:
+            continue  # Don't penalize data files
+
+        # --- Classification 2: Concept cohesion ---
+        # Count distinct "concept domains" from class/function name prefixes
+        concept_words: set[str] = set()
+        for cls in top_classes:
+            words = re.findall(r"[A-Z][a-z]+", cls.name)
+            concept_words.update(w.lower() for w in words if len(w) > 3)
+        for fn in top_functions:
+            parts = fn.name.split("_")
+            concept_words.update(p for p in parts if len(p) > 3 and not p.startswith("_"))
+
+        # --- Classification 3: Function-level complexity ---
+        # The REAL issue is individual functions that are too long or too complex,
+        # not the file being large.
+        func_issues: list[dict] = []
+        for fn in top_functions:
+            end = getattr(fn, "end_lineno", fn.lineno + 1)
+            fn_len = end - fn.lineno + 1
+            fn_cc = _cyclomatic_complexity(fn)
+            # Industry thresholds:
+            #   - Function >200 lines: definitely needs splitting
+            #   - Function CC > 15: hard to test and maintain
+            #   - Function nesting > 4: cognitive overload
+            fn_depth = _max_nesting_depth(fn)
+            if fn_len > 200 or fn_cc > 15 or fn_depth > 5:
+                func_issues.append({
+                    "name": fn.name,
+                    "lines": fn_len,
+                    "complexity": fn_cc,
+                    "nesting": fn_depth,
+                })
+
+        # Also check methods inside classes
+        for cls in top_classes:
+            for method in ast.iter_child_nodes(cls):
+                if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    end = getattr(method, "end_lineno", method.lineno + 1)
+                    m_len = end - method.lineno + 1
+                    m_cc = _cyclomatic_complexity(method)
+                    m_depth = _max_nesting_depth(method)
+                    if m_len > 200 or m_cc > 15 or m_depth > 5:
+                        func_issues.append({
+                            "name": f"{cls.name}.{method.name}",
+                            "lines": m_len,
+                            "complexity": m_cc,
+                            "nesting": m_depth,
+                        })
+
+        # --- Composite scoring: is this file genuinely problematic? ---
+        # Criteria for "needs refactoring" (must meet 2+ of these):
+        #   1. Has functions/methods >200L or CC>15
+        #   2. Concept diversity >5 distinct domains in one file
+        #   3. File has >10 top-level public functions (low cohesion)
+        #   4. Single class with >20 methods (god class)
+        issues = []
+        public_functions = [f for f in top_functions if not f.name.startswith("_")]
+        god_classes = [(c.name, len([m for m in ast.iter_child_nodes(c)
+                        if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]))
+                       for c in top_classes]
+        god_classes = [(name, count) for name, count in god_classes if count > 20]
+
+        if func_issues:
+            top_offender = max(func_issues, key=lambda x: x["lines"])
+            issues.append(f"{len(func_issues)} functions with high complexity "
+                          f"(worst: {top_offender['name']} at {top_offender['lines']}L, "
+                          f"CC={top_offender['complexity']})")
+        if len(concept_words) > 8:
+            issues.append(f"Low cohesion: {len(concept_words)} distinct concepts in one file")
+        if len(public_functions) > 15:
+            issues.append(f"{len(public_functions)} public functions — consider grouping into modules")
+        if god_classes:
+            for name, count in god_classes:
+                issues.append(f"God class: {name} ({count} methods) — consider mixins/composition")
+
+        if len(issues) >= 1:  # At least one real structural problem
+            structural_issues.append({
+                "file": filepath.name,
+                "path": filepath_str,
+                "lines": line_count,
+                "issues": issues,
+                "func_issues": func_issues[:5],
+                "classification": "monolithic" if len(issues) >= 2 else "needs_attention",
+            })
+
+    structural_issues.sort(key=lambda x: len(x["issues"]), reverse=True)
 
     # Scoring (start at 100, deduct)
     score = 100
@@ -189,32 +322,39 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     elif avg_complexity > 5:
         score -= 3
 
-    # Long function penalty
-    if len(long_functions) > 10:
-        score -= 15
+    # Long function penalty (>50 lines — informational, >200 lines — actionable)
+    very_long_functions = [f for f in all_functions if f["length"] > 200]
+    if very_long_functions:
+        score -= min(15, len(very_long_functions) * 3)
+        findings.append(
+            f"{len(very_long_functions)} functions exceed 200 lines (actionable refactoring targets): "
+            + ", ".join(f"{f['name']} ({f['length']}L)" for f in
+                        sorted(very_long_functions, key=lambda x: -x["length"])[:5])
+        )
+    elif len(long_functions) > 20:
+        score -= 8
         findings.append(f"{len(long_functions)} functions exceed 50 lines")
     elif len(long_functions) > 5:
-        score -= 8
-    elif len(long_functions) > 0:
         score -= 3
 
-    # Monolithic file penalty (>1000 lines)
-    if len(monolithic_files) > 3:
-        score -= 15
-        findings.append(
-            f"{len(monolithic_files)} monolithic files (>1000 lines) — "
-            "consider splitting into packages or logical modules"
-        )
-    elif len(monolithic_files) > 1:
-        score -= 8
-        findings.append(
-            f"{len(monolithic_files)} monolithic files (>1000 lines): "
-            + ", ".join(Path(p).name + f" ({lc}L)" for p, lc in monolithic_files[:5])
-        )
-    elif len(monolithic_files) == 1:
-        score -= 4
-        p, lc = monolithic_files[0]
-        findings.append(f"Monolithic file: {Path(p).name} ({lc} lines) — consider refactoring")
+    # Structural issues penalty (replaces raw monolithic file count)
+    truly_monolithic = [si for si in structural_issues if si["classification"] == "monolithic"]
+    needs_attention = [si for si in structural_issues if si["classification"] == "needs_attention"]
+
+    if truly_monolithic:
+        score -= min(15, len(truly_monolithic) * 5)
+        for si in truly_monolithic[:3]:
+            findings.append(
+                f"Monolithic: {si['file']} ({si['lines']}L) — "
+                + "; ".join(si["issues"][:2])
+            )
+    if needs_attention:
+        score -= min(8, len(needs_attention) * 2)
+        for si in needs_attention[:3]:
+            findings.append(
+                f"Needs attention: {si['file']} ({si['lines']}L) — "
+                + si["issues"][0]
+            )
 
     # Duplication penalty
     if duplication_ratio > 0.2:
@@ -247,13 +387,38 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         "max_nesting_depth": max_depth, "duplication_ratio": round(duplication_ratio, 3),
         "long_functions": len(long_functions), "complex_functions": len(complex_functions),
         "deep_nesting_functions": len(deep_functions), "parse_errors": parse_errors,
-        "monolithic_files": len(monolithic_files),
+        "structural_issues": len(structural_issues),
+        "truly_monolithic": len([si for si in structural_issues if si["classification"] == "monolithic"]),
     }
 
     # Top offenders
     top_complex = sorted(all_functions, key=lambda x: x["complexity"], reverse=True)[:5]
     top_long = sorted(all_functions, key=lambda x: x["length"], reverse=True)[:5]
-    top_monolithic = [{"file": Path(p).name, "lines": lc} for p, lc in monolithic_files[:5]]
+
+    # Flat directory detection: directories with >15 Python source files
+    flat_dirs: list[dict] = []
+    checked_dirs: set[str] = set()
+    for f in py_files:
+        parent = str(f.parent)
+        if parent in checked_dirs:
+            continue
+        checked_dirs.add(parent)
+        sibling_py = [
+            s for s in f.parent.glob("*.py")
+            if s.name != "__init__.py" and not s.name.startswith("test_")
+        ]
+        if len(sibling_py) > 15:
+            flat_dirs.append({
+                "directory": str(f.parent.relative_to(root)),
+                "python_files": len(sibling_py),
+                "suggestion": "Consider organizing into subdirectories by domain/feature",
+            })
+
+    if flat_dirs:
+        findings.append(
+            f"{len(flat_dirs)} flat directories with >15 Python files: "
+            + ", ".join(d["directory"] for d in flat_dirs[:3])
+        )
 
     justifications = [{
         "criterion": "code_quality",
@@ -262,14 +427,16 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         "reasoning": (f"Analyzed {file_count} files, {len(all_functions)} functions. "
                       f"Avg CC={avg_complexity:.1f}, max length={max_length}, "
                       f"duplication={duplication_ratio:.1%}, "
-                      f"{len(monolithic_files)} monolithic files (>1000 lines)."),
+                      f"{len(structural_issues)} structural issues "
+                      f"({len([s for s in structural_issues if s['classification']=='monolithic'])} monolithic)."),
     }]
 
     return {
         "domain": "Codebase Optimization", "score": score, "grade": _score_to_grade(score),
         "findings": findings, "justifications": justifications,
         "metrics": metrics, "top_complex": top_complex, "top_long": top_long,
-        "top_monolithic": top_monolithic,
+        "structural_issues": structural_issues[:10],
+        "flat_directories": flat_dirs,
     }
 
 

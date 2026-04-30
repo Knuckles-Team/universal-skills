@@ -275,7 +275,7 @@ def run_precommit(root_dir: str = ".") -> dict:
 
     if pytest_hooks:
         findings.append(
-            f"Pytest hooks skipped (handled by CE-016 Test Execution): "
+            "Pytest hooks skipped (handled by CE-016 Test Execution): "
             + ", ".join(pytest_hooks)
         )
 

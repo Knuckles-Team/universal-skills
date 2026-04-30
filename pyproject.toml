@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "universal-skills"
-version = "0.1.58"
+version = "0.1.59"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -63,7 +63,7 @@ web-search = ["ddgs", "requests"]
 web-fetch = ["crawl4ai", "playwright", "psutil", "requests"]
 website-builder = []
 website-cloner = []
-code-enhancer = ["requests", "packaging"]
+code-enhancer = ["requests", "packaging", "keepachangelog>=2.0.0"]
 
 
 

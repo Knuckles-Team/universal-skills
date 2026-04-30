@@ -66,6 +66,23 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
                     concept_id = concept_match.group(1)
 
                 intent = _classify_test_intent(node.name, body_source)
+
+                # ACCURACY FIX: Use precise assertion detection instead of
+                # naive `"assert" in body_source` which matches comments,
+                # docstrings, and variable names.
+                has_assertions = False
+                # Check for actual assert statements in the AST
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Assert):
+                        has_assertions = True
+                        break
+                # Also check for pytest.raises and mock assertions
+                if not has_assertions:
+                    if ("pytest.raises" in body_source
+                            or ".assert_called" in body_source
+                            or ".assert_any_call" in body_source):
+                        has_assertions = True
+
                 tests.append({
                     "name": node.name,
                     "file": str(filepath),
@@ -74,7 +91,7 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
                     "intent": intent,
                     "markers": markers,
                     "concept_id": concept_id,
-                    "has_assertions": "assert" in body_source,
+                    "has_assertions": has_assertions,
                 })
     return tests
 

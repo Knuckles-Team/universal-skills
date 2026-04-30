@@ -10,7 +10,6 @@ CONCEPT:CE-020 — Multi-Project Orchestration
 
 import asyncio
 import json
-import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
@@ -82,6 +81,10 @@ def _run_single_project(project_dir: str) -> dict:
         ("run_tests", "run_tests"),
         ("analyze_directory_density", "analyze_directory_density"),
         ("analyze_ui", "analyze_ui"),
+        ("analyze_version_sync", "analyze_version_sync"),
+        ("audit_changelog", "audit_changelog"),
+        ("grade_pytest", "grade_pytest"),
+        ("scan_env_vars", "scan_env_vars"),
     ]
 
     for module_name, func_name in analyzers:
@@ -215,15 +218,36 @@ async def run_multi_project(
             except Exception as e:
                 integration_result = {"error": str(e)}
 
-    # Write per-project reports if output_dir given
+    # Write per-project reports and SDD handoffs to each project's own .specify/
     if output_dir:
         out_root = Path(output_dir)
         for proj in successful:
-            proj_dir = out_root / proj["project"]
-            proj_dir.mkdir(parents=True, exist_ok=True)
-            (proj_dir / "results.json").write_text(
+            proj_report_dir = out_root / proj["project"]
+            proj_report_dir.mkdir(parents=True, exist_ok=True)
+            (proj_report_dir / "results.json").write_text(
                 json.dumps(proj, indent=2), encoding="utf-8"
             )
+
+            # Write SDD handoff to each project's own .specify/ folder
+            proj_path = Path(proj["path"])
+            if proj_path.is_dir():
+                try:
+                    scripts_dir = Path(__file__).parent
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location(
+                        "generate_sdd_handoff",
+                        str(scripts_dir / "generate_sdd_handoff.py"),
+                    )
+                    if spec and spec.loader:
+                        mod = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(mod)
+                        mod.generate_sdd_handoff(
+                            proj["domain_results"],
+                            project_name=proj["project"],
+                            output_dir=str(proj_path),  # per-project .specify/
+                        )
+                except Exception:
+                    pass  # SDD handoff is best-effort
 
         # Write unified summary
         summary_path = out_root / "summary.json"

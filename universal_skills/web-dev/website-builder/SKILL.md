@@ -2,7 +2,7 @@
 name: website-builder
 description: Act as a World-Class Senior Creative Technologist and Lead Frontend Engineer to build high-fidelity, cinematic '1:1 Pixel Perfect' landing pages. Use when building a site or landing page where premium design aesthetics are required.
 tags: [frontend, website, react, tailwind, gsap, cinematic]
-version: '0.1.58'
+version: '0.1.59'
 ---
 # Website Builder
 

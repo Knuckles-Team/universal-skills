@@ -134,7 +134,7 @@ def generate_report(results: list[dict], project_name: str = "Unknown",
     gpa = _compute_gpa(results)
 
     sections = [
-        f"# 🔬 Code Enhancement Report",
+        "# 🔬 Code Enhancement Report",
         "",
         f"> **Generated**: {timestamp} | **Target**: {project_name} | **Overall GPA**: {gpa}/4.0",
         "",

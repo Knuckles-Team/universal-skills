@@ -1,18 +1,19 @@
 ---
 name: code-enhancer
 description: >-
-  Comprehensive code analysis and enhancement skill that performs 20-domain deep-dive reviews
-  of any codebase. Covers project analysis, dependency audit, codebase optimization, security
-  analysis, test coverage, test execution, pre-commit compliance, documentation governance,
-  directory organization, language detection, UI/UX heuristics, architecture review, concept
-  traceability, linting, vulnerability scanning, brainstorming, multi-project orchestration,
-  cross-project integration, and actionable reporting with standardized 0-100 grading and SDD
-  handoff integration. Language-agnostic: supports Python, Go, Node, Rust, Java. Use when
+  Comprehensive code analysis and enhancement skill that performs 23-domain deep-dive reviews
+  of any codebase. Covers project analysis, dependency audit, changelog audit, codebase
+  optimization, security analysis, test coverage, pytest quality grading, test execution,
+  pre-commit compliance, documentation governance, directory organization, language detection,
+  UI/UX heuristics, architecture review, concept traceability, linting, vulnerability scanning,
+  environment variable scanning, brainstorming, multi-project orchestration, cross-project
+  integration, and actionable reporting with standardized 0-100 grading and SDD handoff
+  integration. Language-agnostic: supports Python, Go, Node, Rust, Java. Use when
   tasked with "auditing", "optimizing", "updating", "improving", "reviewing", "grading", or
   "enhancing" an agent, repository, or codebase. Replaces self-improver.
 categories: [Development, Core]
-tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration]
-version: '0.2.0'
+tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
+version: '0.1.59'
 license: MIT
 ---
 
@@ -20,7 +21,7 @@ license: MIT
 
 This skill enables the agent to perform a comprehensive, multi-domain "Code Enhancement Review"
 of any codebase. It produces a prettified, graded report with standardized 0–100 scoring across
-20 analysis domains, actionable TODOs prioritized by impact and risk, and structured SDD handoff
+23 analysis domains, actionable TODOs prioritized by impact and risk, and structured SDD handoff
 for implementation.
 
 Supports **language-agnostic** analysis for Python, Go, Node/TypeScript, Rust, and Java projects.
@@ -47,7 +48,10 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 17. **UI/UX Quality** — Grade web and terminal UIs using Nielsen's 10 Usability Heuristics via static file analysis. WCAG 2.1 AA accessibility checks for web projects.
 18. **Multi-Project Orchestration** — Run all analysis domains across multiple projects in parallel with configurable concurrency. Per-project reports + unified cross-project summary.
 19. **Cross-Project Integration** — Analyze inter-project dependency graphs, detect version conflicts, circular dependencies, and unused internal dependencies.
-20. **README Grading** — Industry best-practice scoring for README.md: title, badges, description, ToC, installation, usage, architecture, contributing, license, code blocks, docs references, broken links, length.
+20. **README Grading** — Industry best-practice scoring for README.md: title, badges, description, ToC, installation, usage, architecture, contributing, license, code blocks, docs references, broken links, length, env var docs, MCP tool tables, deployment docs.
+21. **Changelog Audit** — Validate CHANGELOG.md against Keep a Changelog standard using `keepachangelog` library. Check version drift against pyproject.toml, analyze dependency changelogs for version deltas (new features, breaking changes, deprecations, security fixes).
+22. **Pytest Quality Grading** — Grade pytest suites against F.I.R.S.T. rubric: naming quality, structure/organization, fixture/parametrize usage, assertion quality, and AI slop detection (duplicate bodies, over-mocking, generic names).
+23. **Environment Variable Scanning** — Scan Python source, Dockerfiles, compose.yml, .env/.env.example for all env var usage. Cross-reference against README documentation to identify undocumented variables.
 
 ## Grading System
 
@@ -84,7 +88,12 @@ Every grade includes a justification with specific file paths and evidence citat
 - **Run `analyze_architecture.py`**: Evaluate against SOLID, hexagonal, clean architecture patterns.
 
 ### Phase 2.5: Structure Analysis
-- **Run `analyze_directory_density.py`**: Measure files-per-directory, detect crowded/flat/deep structures, suggest reorganizations.
+- **Run `analyze_directory_density.py`**: Measure files-per-directory, detect crowded/flat/deep structures, rogue scripts, suggest reorganizations.
+
+### Phase 2.6: Changelog & Environment
+- **Run `audit_changelog.py`**: Validate CHANGELOG.md format, check version drift, analyze dependency changelogs for version deltas.
+- **Run `scan_env_vars.py`**: Scan all sources for env var usage, cross-reference against README documentation.
+- **Run `grade_pytest.py`**: Grade pytest suite against F.I.R.S.T. rubric with AI slop detection.
 
 ### Phase 3: Traceability & Governance
 - **Run `trace_concepts.py`**: Scan for `CONCEPT:CE-XXX` markers in code docstrings, docs, pytest markers and decorators. Detect orphans, drift, and missing markers. Cross-reference against AGENTS.md concept registry.
@@ -114,9 +123,10 @@ Every grade includes a justification with specific file paths and evidence citat
 - **Ecosystem Focus**: Prioritize standards defined in `agent-utilities` (e.g., loading prompts from `prompts/*.md`).
 - **Context Awareness**: Scale recommendations to project size. Do not suggest complex graph architectures for small projects.
 - **Assumption Validation**: Validate all assumptions before taking them at face value. Check actual file contents, run commands, verify paths.
-- **SDD Integration**: Output reports to `.specify/` directory structure for compatibility with the SDD toolset (spec-kit standard).
+- **SDD Integration**: Output reports to `.specify/` directory structure for compatibility with the SDD toolset (spec-kit standard). Each project gets its own `.specify/` folder — do NOT use the monorepo root.
 - **Smart Deduplication**: Pytest hooks in pre-commit are automatically skipped — CE-016 provides richer test analysis.
 - **Language Awareness**: Always run `detect_language.py` first to adapt analysis to the project's ecosystem.
+- **Per-Project .specify**: When running multi-project analysis, SDD handoffs go to each individual project's `.specify/` folder (e.g., `agents/github-agent/.specify/`), NOT the parent directory.
 
 ## Bundled Resources
 
@@ -137,8 +147,12 @@ Every grade includes a justification with specific file paths and evidence citat
 - `scripts/analyze_ui.py` — UI/UX heuristic evaluation (CE-019)
 - `scripts/run_multi_project.py` — Multi-project parallel orchestration (CE-020)
 - `scripts/analyze_integration.py` — Cross-project integration analysis (CE-021)
+- `scripts/analyze_version_sync.py` — Version synchronization and drift detection (CE-022)
 - `scripts/generate_report.py` — Consolidated graded report generation (FR-012, FR-013)
 - `scripts/generate_sdd_handoff.py` — SDD-compatible TODO generation (FR-014)
+- `scripts/audit_changelog.py` — Changelog validation and dependency delta analysis (CE-023)
+- `scripts/grade_pytest.py` — Pytest quality grading with F.I.R.S.T. rubric (CE-024)
+- `scripts/scan_env_vars.py` — Environment variable scanning and documentation check (CE-025)
 
 ### References
 - `references/grading_rubric.md` — Standardized scoring criteria and justification templates
@@ -148,3 +162,5 @@ Every grade includes a justification with specific file paths and evidence citat
 - `references/report_template.md` — Prettified report template with Mermaid and table patterns
 - `references/ui_heuristics.md` — Nielsen's heuristics, WCAG criteria, SUS reference
 - `references/integration_patterns.md` — Cross-project dependency and interface patterns
+- `references/changelog_standard.md` — Keep a Changelog 1.1.0 format reference and validation criteria
+- `references/pytest_rubric.md` — F.I.R.S.T. rubric, AI slop detection criteria, organization best practices

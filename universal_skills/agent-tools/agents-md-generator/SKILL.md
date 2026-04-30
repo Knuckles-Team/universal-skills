@@ -2,7 +2,7 @@
 name: agents-md-generator
 description: Generate or update a robust AGENTS.md file (the "README for AI coding agents") for a project. This skill ensures your repository is optimized for AI tools (like Copilot, Cursor, and Windsurf) by providing structured context, commands, architecture diagrams, and coding standards. It automatically detects project metadata from pyproject.toml and generates a project tree view.
 tags: [agent, agents.md, documentation, ai-optimization, mcp, architecture]
-version: '0.1.58'
+version: '0.1.59'
 ---
 
 # AGENTS.md Generator

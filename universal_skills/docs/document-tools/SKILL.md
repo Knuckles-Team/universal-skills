@@ -2,7 +2,7 @@
 name: document-tools
 description: Use this skill whenever the user wants to read, edit, analyze, or create document files. This includes PDFs (reading, merging, splitting, OCR, forms, watermarks), Spreadsheets (.xlsx, .csv, DataFrames, formulas with zero errors), Word Documents (.docx), PowerPoint Presentations (.pptx), and Markdown to EPUB conversion. Treat this as the primary tool for any standard office file or document formatting/extraction task.
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
-version: '0.1.58'
+version: '0.1.59'
 ---
 # Document Tools
 

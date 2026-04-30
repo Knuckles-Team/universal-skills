@@ -92,28 +92,45 @@ def analyze_project(root_dir: str = ".") -> dict:
     pyproject_path = root / "pyproject.toml"
     requirements_path = root / "requirements.txt"
     deps: list[str] = []
+    
+    criterion_score = 0
+    has_pyproject = pyproject_path.exists()
+    has_requirements = requirements_path.exists()
+    
+    if has_pyproject:
+        deps.extend(_parse_deps_from_pyproject(pyproject_path))
+        criterion_score += 5
+        details["has_pyproject"] = True
+        
+    if has_requirements:
+        deps.extend(_parse_deps_from_requirements(requirements_path))
+        criterion_score += 5
+        details["has_requirements"] = True
 
-    if pyproject_path.exists():
-        deps = _parse_deps_from_pyproject(pyproject_path)
-        score += 10
+    score += criterion_score
+    details["dep_count"] = len(set(deps))
+
+    if has_pyproject and has_requirements:
         justifications.append({
             "criterion": "has_pyproject",
             "points": 10,
-            "evidence": str(pyproject_path),
-            "reasoning": "pyproject.toml exists with proper TOML structure",
+            "evidence": "pyproject.toml and requirements.txt",
+            "reasoning": "Both pyproject.toml and requirements.txt exist, fulfilling mandatory Python project requirements",
         })
-        details["has_pyproject"] = True
-        details["dep_count"] = len(deps)
-    elif requirements_path.exists():
-        deps = _parse_deps_from_requirements(requirements_path)
-        score += 5
+    elif has_pyproject:
+        justifications.append({
+            "criterion": "has_pyproject",
+            "points": 5,
+            "evidence": str(pyproject_path),
+            "reasoning": "pyproject.toml found, but requirements.txt is missing (mandatory to build python packages)",
+        })
+    elif has_requirements:
         justifications.append({
             "criterion": "has_pyproject",
             "points": 5,
             "evidence": str(requirements_path),
-            "reasoning": "requirements.txt found but pyproject.toml preferred (PEP 621)",
+            "reasoning": "requirements.txt found, but pyproject.toml is missing",
         })
-        details["has_requirements"] = True
     else:
         justifications.append({
             "criterion": "has_pyproject",

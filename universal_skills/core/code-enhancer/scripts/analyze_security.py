@@ -91,7 +91,8 @@ def _count_attack_surface(root: Path, py_files: list[Path]) -> dict:
         surface["subprocess_calls"] += source.count("subprocess.")
         surface["file_io_calls"] += source.count("open(") + source.count("Path(")
         surface["network_endpoints"] += source.count("@app.") + source.count("@router.")
-        surface["eval_exec_usage"] += source.count("eval(") + source.count("exec(")
+        import re
+        surface["eval_exec_usage"] += len(re.findall(r"(?<!\.)\b(?:eval|exec)\s*\(", source))
         surface["sql_usage"] += source.lower().count("execute(") + source.lower().count("cursor.")
     return surface
 
