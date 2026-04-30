@@ -2,7 +2,7 @@
 name: constitution-generator
 description: Creates or updates constitution.md with project governance rules and principles.
 tags: ['constitution generator']
-version: '0.1.59'
+version: '0.1.60'
 ---
 
 # SDD Constitution Generator

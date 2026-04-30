@@ -2,7 +2,7 @@
 name: agent-workflows
 description: Consolidated skill for managing, dispatching, and orchestrating other agents via the agent-manager CLI, as well as workflows for A2A communication, orchestration, and parallel subagent dispatch.
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Agent Workflows & Orchestration
 

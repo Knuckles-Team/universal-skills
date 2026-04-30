@@ -2,7 +2,7 @@
 name: marp-presentations
 description: Create professional Marp presentation slides using Markdown. Use when the user requests slide creation, presentations, pitch decks, lecture materials, or Marp documents. Triggers include "create slides", "make a presentation", "Marp document", or requests to "make it look good" for slides. Do NOT use for web-based interactive presentations — use web-artifacts instead.
 tags: [marp, presentations, slides, markdown, design]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Marp Presentation Creator
 

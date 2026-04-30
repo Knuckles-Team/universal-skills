@@ -1,12 +1,12 @@
 ---
-version: '0.1.59'
+version: '0.1.60'
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
 license: MIT
 tags: [workflows, agents, orchestration, docs]
 metadata:
   author: Audel Rouhi
-  version: '0.1.59'
+  version: '0.1.60'
 ---
 # Subagent-Driven Development
 

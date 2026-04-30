@@ -2,7 +2,7 @@
 name: internal-comms
 description: Creates internal communications including all-hands presentations, team announcements, project status updates, async memos, meeting agendas, and executive briefings. Use when crafting messages from leadership, team updates, or structured internal documents. Do NOT use for external-facing marketing or customer communications.
 tags: [communications, announcements, memos, all-hands, status-updates, async]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Internal Communications
 

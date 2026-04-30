@@ -2,7 +2,7 @@
 name: web-artifacts
 description: Consolidated skill for frontend design, UI building, and artifact generation. Use when building React/Tailwind/shadcn web applications, creating Figma-based implementations, or adhering to brand guidelines.
 tags: [frontend, ui, react, tailwind, figma, brand, design, web-builder]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Web & UI Artifacts
 

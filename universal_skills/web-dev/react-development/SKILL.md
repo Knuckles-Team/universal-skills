@@ -2,7 +2,7 @@
 name: react-development
 description: Type-safe React development with TypeScript covering components, hooks, events, Server Components, routing, performance optimization, and architectural best practices. Use when building React applications, optimizing rendering/bundle size, refactoring component APIs, or working with React 18/19 features. Triggers include "React component", "React performance", "Next.js optimization", "composition patterns", "Server Components", "React 19". Do NOT use for non-React TypeScript or vanilla JavaScript projects.
 tags: [react, typescript, hooks, components, server-components, frontend, react-19, performance, architecture, nextjs]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # React Development (TypeScript)
 

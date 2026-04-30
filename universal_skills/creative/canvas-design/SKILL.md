@@ -2,7 +2,7 @@
 name: canvas-design
 description: Creates visual designs using HTML Canvas or SVG APIs for banners, social media assets, posters, or UI components. Use when the user requests programmatic graphic design, visual composition, or custom image generation without using a photo editor. Do NOT use for photo realistic image generation or general web UI layouts unless it specifically requires canvas/SVG.
 tags: [canvas, svg, graphic-design, programmatic-design, composition]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Canvas & SVG Design
 

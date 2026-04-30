@@ -2,7 +2,7 @@
 name: agent-spawner
 description:
 tags: [agent, sub-agent, mcp, dynamic, spawner, pydantic-ai, orchestration]
-version: '0.1.59'
+version: '0.1.60'
 ---
 # Agent Spawner Skill
 
