@@ -2,7 +2,7 @@
 name: agent-package-builder
 description: Scaffold a complete agent-package project with all config files, Docker infrastructure, MCP server, A2A agent, and API client stubs. Use when creating a brand-new agent-package from scratch, bootstrapping a new MCP/agent/api-client project, or when the user says "create a new agent package". This delegates domain-specific implementation to existing skills (api-client-builder, mcp-builder, agent-builder, skill-graph-builder). Do NOT use for modifying an existing agent package — use the individual skills directly.
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
-version: '0.3.0'
+version: '0.4.0'
 ---
 
 # Agent Package Builder

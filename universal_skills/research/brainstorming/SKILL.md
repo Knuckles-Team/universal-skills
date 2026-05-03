@@ -2,7 +2,7 @@
 name: brainstorming
 description: Structured ideation and design workflow for clarifying requirements before implementation. Use when starting any new feature, component, or significant behavior change to explore options, gather requirements, and get user approval on a design before writing code. Do NOT use for pure documentation tasks, minor bug fixes, or when the user explicitly wants immediate implementation.
 tags: [planning, design, ideation, requirements, architecture]
-version: '0.3.0'
+version: '0.4.0'
 ---
 # Brainstorming & Design Workflow
 

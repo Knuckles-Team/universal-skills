@@ -2,7 +2,7 @@
 name: sdd-implementer
 description: Executes tasks and tracks progress natively with Tasks Pydantic models.
 tags: ['sdd implementer']
-version: '0.3.0'
+version: '0.4.0'
 ---
 
 # SDD Implementer
