@@ -2,7 +2,7 @@
 name: web-fetch
 description: Fetch and extract high-fidelity markdown content from a single URL. Supports JavaScript rendering and optional LLM-based information extraction. Use when you need the full content of a specific web page to answer a query or analyze its details.
 tags: [web, fetch, markdown, crawl4ai, extraction]
-version: '0.2.0'
+version: '0.3.0'
 ---
 
 # Web Fetch

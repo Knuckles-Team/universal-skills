@@ -2,7 +2,7 @@
 name: developer-utilities
 description: A consolidated suite of developer utilities including formatting, conversion, generation, cryptographic, and networking tools.
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
-version: '0.2.0'
+version: '0.3.0'
 ---
 # Developer Utilities
 

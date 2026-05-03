@@ -2,7 +2,7 @@
 name: document-converter
 description: Bulk convert office documents (.doc, .docx, .pdf) to Markdown format with high-fidelity formatting preservation. Use when preparing documents for LLM processing, building knowledge bases, or converting legacy document archives. Do NOT use for creating new documents — use document-tools instead.
 tags: [pdf, docx, markdown, conversion, document-processing]
-version: '0.2.0'
+version: '0.3.0'
 ---
 # Document Converter Skill
 
