@@ -15,8 +15,8 @@ import re
 import sys
 from pathlib import Path
 
-CONCEPT_PATTERN = re.compile(r"CONCEPT:(\S+)")
-MARKER_PATTERN = re.compile(r'@pytest\.mark\.concept\(\s*["\'](\S+?)["\']\s*\)')
+CONCEPT_PATTERN = re.compile(r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)")
+MARKER_PATTERN = re.compile(r'@pytest\.mark\.concept\(\s*["\']([A-Z]+-\d+(?:\.\d+)?)["\']\s*\)')
 
 _SKIP_DIRS = frozenset({
     ".venv", "venv", "__pycache__", "node_modules", ".git",

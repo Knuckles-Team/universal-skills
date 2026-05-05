@@ -2,7 +2,7 @@
 name: api-client-builder
 description: Guide for creating API clients using the established patterns in the agent-packages repository (like servicenow-api and gitlab-api). Use this when tasked with building a new API integration or creating client classes for REST or GraphQL APIs from OpenAPI specs or documentation.
 tags: [api, client, integration, development, python, pydantic, graphql, gql]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # API Client Builder
 

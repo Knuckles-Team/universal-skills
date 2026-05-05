@@ -2,7 +2,7 @@
 name: brainstorming
 description: Structured ideation and design workflow for clarifying requirements before implementation. Use when starting any new feature, component, or significant behavior change to explore options, gather requirements, and get user approval on a design before writing code. Do NOT use for pure documentation tasks, minor bug fixes, or when the user explicitly wants immediate implementation.
 tags: [planning, design, ideation, requirements, architecture]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Brainstorming & Design Workflow
 
@@ -56,6 +56,13 @@ Before asking anything, check:
 - Prefer multiple-choice questions when possible; open-ended when needed
 - Focus on: purpose, constraints, success criteria, non-goals
 - Apply YAGNI ruthlessly — remove unnecessary complexity from the design
+
+#### Scrutiny Mode
+When triggered or when the plan is highly complex/ambiguous, activate **Scrutiny Mode**:
+- Interview the user relentlessly about every aspect of the plan until a shared understanding is reached.
+- Walk down each branch of the design tree, resolving dependencies between decisions one-by-one.
+- For each question, provide your recommended answer.
+- Do not let vague answers pass. Push for clarity.
 
 ### Step 3: Propose Approaches
 

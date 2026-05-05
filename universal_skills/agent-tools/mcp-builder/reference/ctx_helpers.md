@@ -6,15 +6,27 @@ This guide covers the standardized patterns for using MCP context helpers to pro
 
 The following helpers are available in `agent_utilities.mcp_utilities` (or should be implemented according to these patterns) to standardize common MCP tool interactions.
 
-### 1. `ctx_confirm_destructive()` — Destructive Operation Guards
+### 1. `ctx.elicit()` — Destructive Operation Guards
 
-**Purpose**: Prevent accidental execution of destructive actions (delete, remove, stop, etc.) by requiring explicit user confirmation.
+**Purpose**: Prevent accidental execution of destructive actions (delete, remove, stop, etc.) by requiring explicit user confirmation via the built-in FastMCP elicitation mechanism.
 
 **Pattern**:
 ```python
-async def delete_item_tool(item_id, ctx):
-    if not await ctx_confirm_destructive(ctx, f"delete item {item_id}"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+from fastmcp import Context
+
+@mcp.tool(tags={"admin"}, annotations={"destructiveHint": True})
+async def delete_item(
+    item_id: str = Field(description="Item ID to delete"),
+    ctx: Context = None,
+) -> dict:
+    """Delete an item permanently."""
+    if ctx:
+        confirm = await ctx.elicit(
+            message=f"Are you sure you want to delete item {item_id}?",
+            schema={"type": "boolean"},
+        )
+        if not confirm.data:
+            return {"status": "cancelled", "message": "Operation cancelled by user"}
     return get_client().delete_item(item_id)
 ```
 

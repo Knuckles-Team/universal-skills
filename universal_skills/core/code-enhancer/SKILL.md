@@ -13,7 +13,7 @@ description: >-
   "enhancing" an agent, repository, or codebase. Replaces self-improver.
 categories: [Development, Core]
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
-version: '0.4.0'
+version: '0.5.0'
 license: MIT
 ---
 
@@ -39,7 +39,7 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 8.  **Concept Traceability** — Implement executable documentation with bidirectional traceability using stable concept IDs embedded in code docstrings, docs, and pytest markers (including `@pytest.mark.concept()` decorators), with drift detection, registry cross-reference, and missing-marker detection.
 9.  **Linting & Formatting** — Execute language-appropriate linters (ruff/mypy/bandit for Python, go vet for Go, eslint for Node). Parse and categorize findings.
 10. **Vulnerability Scanning** — Integrate bandit, pip-audit, and repository-manager validation. Consolidate into unified vulnerability register.
-11. **Architecture & Design Patterns** — Evaluate against industry patterns: hexagonal/clean architecture, SOLID principles, event-driven orchestration, large-codebase scaling.
+11. **Architecture & Design Patterns** — Evaluate against industry patterns (hexagonal/clean architecture, SOLID principles, event-driven orchestration) and find deepening opportunities to turn shallow modules into deep ones. Conduct conversational architectural reviews based on ADRs and domain glossary.
 12. **Actionable Reporting** — Generate consolidated report with specific TODOs, prioritized by impact and risk, with SDD handoff for implementation.
 13. **Pre-Commit Compliance** — Run `pre-commit run --all-files`, detect outdated hooks, parse per-hook pass/fail. Smart pytest deduplication (pytest hooks skipped → CE-016 handles them).
 14. **Test Execution** — Detect test framework (pytest, go test, npm test, cargo test, maven, gradle), execute tests with 300s timeout, grade based on pass/fail ratio.
@@ -52,6 +52,8 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 21. **Changelog Audit** — Validate CHANGELOG.md against Keep a Changelog standard using `keepachangelog` library. Check version drift against pyproject.toml, analyze dependency changelogs for version deltas (new features, breaking changes, deprecations, security fixes).
 22. **Pytest Quality Grading** — Grade pytest suites against F.I.R.S.T. rubric: naming quality, structure/organization, fixture/parametrize usage, assertion quality, and AI slop detection (duplicate bodies, over-mocking, generic names).
 23. **Environment Variable Scanning** — Scan Python source, Dockerfiles, compose.yml, .env/.env.example for all env var usage. Cross-reference against README documentation to identify undocumented variables.
+24. **Agent Skill Quality** — Auto-detect SKILL.md files in any repository and grade them using a rule engine ported from skill-check: frontmatter validation, description quality, body structure, link resolution, and duplicate detection. Contextual — only activates when skills are present.
+25. **Engineering Heuristics** — Evaluate codebase against battle-tested principles synthesized from 13 industry-standard software engineering books (Clean Code, Clean Architecture, Refactoring, The Pragmatic Programmer, Release It!, DDIA, DDD, and more). Uses contextual activation — domain modeling rules only fire when DDD patterns are detected; production resilience rules only fire for service/API projects.
 
 ## Grading System
 
@@ -94,6 +96,10 @@ Every grade includes a justification with specific file paths and evidence citat
 - **Run `audit_changelog.py`**: Validate CHANGELOG.md format, check version drift, analyze dependency changelogs for version deltas.
 - **Run `scan_env_vars.py`**: Scan all sources for env var usage, cross-reference against README documentation.
 - **Run `grade_pytest.py`**: Grade pytest suite against F.I.R.S.T. rubric with AI slop detection.
+
+### Phase 2.7: Skill Quality & Engineering Heuristics
+- **Run `grade_skills.py`**: Discover and grade agent skills (if detected in Phase 1). Uses skill-check rule engine.
+- **Run `evaluate_heuristics.py`**: Assess codebase against engineering book heuristics with contextual activation.
 
 ### Phase 3: Traceability & Governance
 - **Run `trace_concepts.py`**: Scan for `CONCEPT:CE-XXX` markers in code docstrings, docs, pytest markers and decorators. Detect orphans, drift, and missing markers. Cross-reference against AGENTS.md concept registry.
@@ -153,6 +159,8 @@ Every grade includes a justification with specific file paths and evidence citat
 - `scripts/audit_changelog.py` — Changelog validation and dependency delta analysis (CE-023)
 - `scripts/grade_pytest.py` — Pytest quality grading with F.I.R.S.T. rubric (CE-024)
 - `scripts/scan_env_vars.py` — Environment variable scanning and documentation check (CE-025)
+- `scripts/grade_skills.py` — Agent skill quality grading with skill-check rule engine (CE-026)
+- `scripts/evaluate_heuristics.py` — Engineering heuristics evaluation from 13 books (CE-027)
 
 ### References
 - `references/grading_rubric.md` — Standardized scoring criteria and justification templates
@@ -164,3 +172,8 @@ Every grade includes a justification with specific file paths and evidence citat
 - `references/integration_patterns.md` — Cross-project dependency and interface patterns
 - `references/changelog_standard.md` — Keep a Changelog 1.1.0 format reference and validation criteria
 - `references/pytest_rubric.md` — F.I.R.S.T. rubric, AI slop detection criteria, organization best practices
+- `references/skill_quality_rubric.md` — Agent skill grading rules, scoring model, and attribution
+- `references/engineering_heuristics.md` — Unified heuristic framework from 13 books with architecture flow diagram
+- `references/DEEPENING.md` — Strategies for creating deep modules
+- `references/INTERFACE-DESIGN.md` — Principles for designing testable, deep interfaces
+- `references/LANGUAGE.md` — Architectural domain language and terminology

@@ -2,7 +2,7 @@
 name: agent-package-builder
 description: Scaffold a complete agent-package project with all config files, Docker infrastructure, MCP server, A2A agent, and API client stubs. Use when creating a brand-new agent-package from scratch, bootstrapping a new MCP/agent/api-client project, or when the user says "create a new agent package". This delegates domain-specific implementation to existing skills (api-client-builder, mcp-builder, agent-builder, skill-graph-builder). Do NOT use for modifying an existing agent package — use the individual skills directly.
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
-version: '0.4.0'
+version: '0.5.0'
 ---
 
 # Agent Package Builder
@@ -129,24 +129,46 @@ Agents with many tool tags benefit from **graph orchestration** — a pydantic-g
 
     2. **Modify `{pkg_dir}/agent_server.py`** — Replace `create_agent_server()` with `create_graph_agent_server()`. The standardized `agent_server()` entry point must include warning suppression and version printing to `sys.stderr`:
         ```python
-        def agent_server():
+        import warnings
+        import sys
+        from agent_utilities import (
+            build_system_prompt_from_workspace,
+            create_agent_parser,
+            create_graph_agent_server,
+            initialize_workspace,
+            load_identity,
+        )
 
-            # Suppress RequestsDependencyWarning and FastMCP DeprecationWarnings
+        initialize_workspace()
+        meta = load_identity()
+
+        DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "MyAgent"))
+
+        def agent_server():
+            # Suppress known warnings
             warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
             warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
 
             print(f"{DEFAULT_AGENT_NAME} v{__version__}", file=sys.stderr)
 
-            # Create graph and bundle
-            graph_bundle = create_agent(...)
+            parser = create_agent_parser()
+            args = parser.parse_args()
 
             create_graph_agent_server(
-                graph_bundle=graph_bundle,
-                ...
+                mcp_url=args.mcp_url,
+                mcp_config=args.mcp_config or "mcp_config.json",
+                host=args.host,
+                port=args.port,
+                provider=args.provider,
+                model_id=args.model_id,
+                base_url=args.base_url,
+                api_key=args.api_key,
+                enable_web_ui=args.web,
+                debug=args.debug,
             )
         ```
 
-    `create_graph_agent_server()` handles everything internally: graph construction, mermaid diagram logging, system prompt enhancement with domain list, and delegating to `create_agent_server()`. No manual graph setup needed.
+    `create_graph_agent_server()` handles everything internally: graph construction, mermaid diagram logging, system prompt enhancement with domain list, and agent lifecycle. No manual graph setup needed.
 
 No changes to `mcp_server.py` are required — the existing env-var gating handles per-domain tool filtering.
 

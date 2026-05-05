@@ -2,7 +2,7 @@
 name: database-tools
 description: Use this skill whenever the user wants to connect to, query, or manage databases, including PostgreSQL, MySQL, and MS SQL Server (MSSQL). Requires setting up a connections.json file with credentials. Can execute SQL queries, inspect schemas, dump data, and repair broken tables depending on dialect.
 tags: [database, sql, postgresql, mysql, mssql, querying, schema, data-extraction]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Database Tools
 

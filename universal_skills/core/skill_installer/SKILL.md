@@ -2,7 +2,7 @@
 name: skill-installer
 description: Install and deploy universal-skills and skill-graphs into various agent tool directories. Use when the user wants to install skills into Windsurf, Claude Code, OpenCode, Antigravity, or a custom agent path. Both universal-skills and skill-graphs should be installed via pip first. Do NOT use for creating or editing skill content.
 tags: [skills, installer, deployment, agent-tools]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Skill Installer Skill
 

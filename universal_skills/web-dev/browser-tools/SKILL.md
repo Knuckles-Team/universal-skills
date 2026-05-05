@@ -2,7 +2,7 @@
 name: browser-tools
 description: Use when interacting with web pages, automating browser actions, performing E2E web application testing, navigating visually, scraping dynamic content, or starting a local dev server to test against. Triggers include requests to open a website, fill a form, click a button, take a screenshot, scrape dynamic content, test a web app, login to a site, or automate any browser-based task. Do NOT use for fetching static API JSON or simple HTTP requests — use web-search or web-crawler for those.
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Browser Tools
 

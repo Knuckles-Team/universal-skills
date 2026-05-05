@@ -2,7 +2,7 @@
 name: mermaid-diagrams
 description: Comprehensive guide for creating software diagrams using Mermaid syntax. Use when users need to create, visualize, or document software through diagrams including class diagrams, sequence diagrams, flowcharts, entity relationship diagrams (ERD), C4 architecture diagrams, state diagrams, git graphs, gantt charts, or pie charts. Triggers include requests to "diagram", "visualize", "model", "map out", "show the flow", or when explaining system architecture, database design, code structure, or user/application flows. Do NOT use for general image creation or UI mockups.
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Mermaid Diagramming
 

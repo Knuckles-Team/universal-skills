@@ -83,3 +83,40 @@ class Service:
 | **Lazy Loading** | Heavy imports slow startup | Import time >2s |
 | **Feature Flags** | Gradual rollout needed | Environment variable toggles |
 | **Package Extraction** | Reusable component identified | Shared utility across projects |
+
+## Dependency Rule Verification (Clean Architecture)
+
+Automated checks derived from *Clean Architecture* (Martin) decision rules:
+
+| Check | What It Detects | Violation Signal |
+|-------|----------------|------------------|
+| Domain→infrastructure imports | `from infrastructure import ...` in domain modules | Dependency rule violation |
+| Framework types in core | HTTP/ORM/SDK types used in business logic | Domain impurity |
+| Layer-oriented top dirs | controllers/services/repos as top-level packages | Structure anti-pattern |
+| Cross-layer shortcuts | Direct DB calls from handlers bypassing use cases | Boundary violation |
+
+**Trigger rules** (from agent-rules-books):
+- When framework or ORM types appear in domain code → move translation to adapter
+- When a controller carries business rules → move policy inward to use case
+- When adding external dep → introduce a port if core would learn vendor details
+
+## Deep Module Metric (A Philosophy of Software Design)
+
+**Principle**: A small interface hiding meaningful internal complexity beats extra pass-through layers.
+
+**Measurable indicator**: Public-to-private interface ratio per module.
+
+```
+Module Depth = 1 - (public_symbols / total_symbols)
+```
+
+| Depth | Assessment | Action |
+|-------|-----------|--------|
+| >0.7 | Deep (good) | Module hides complexity well |
+| 0.5-0.7 | Moderate | Acceptable for most modules |
+| 0.3-0.5 | Shallow | Consider whether extra layers add value |
+| <0.3 | Very shallow | Likely pass-through — consolidate or deepen |
+
+**Trigger rules** (from agent-rules-books):
+- When adding a module/layer, prove it hides real complexity instead of forwarding
+- When one change spreads across many files, look for missing information hiding

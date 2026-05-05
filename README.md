@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 0.4.0*
+*Version: 0.5.0*
 
 ## Overview
 
@@ -33,54 +33,58 @@ The following universal skills are available. You can disable specific skills by
 
 | Skill Directory       | Description                                                           | Disable Flag                          | Install Command                         |
 |:----------------------|:----------------------------------------------------------------------|:--------------------------------------|:----------------------------------------|
-| `agent-browser`       | Browser automation CLI for agents using the agent-browser tool.      | `AGENT_BROWSER_ENABLE=False`          | `universal-skills[agent-browser]`       |
-| `agent-builder`       | Templates and guidelines for building Single and Multi-Agent systems. | `AGENT_BUILDER_ENABLE=False`          | `universal-skills[agent-builder]`       |
-| `agent-spawner`       | Spawns a Pydantic AI agent dynamically using an MCP configuration.    | `AGENT_SPAWNER_ENABLE=False`          | `universal-skills[agent-spawner]`       |
-| `agent-workflows`     | Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
-| `algorithmic-art`      | Generative algorithmic art using p5.js and interactive artifacts.    | `ALGORITHMIC_ART_ENABLE=False`        | `universal-skills[algorithmic-art]`     |
+| `agent-tools/agent-browser`| Browser automation CLI for agents using the agent-browser tool.      | `AGENT_BROWSER_ENABLE=False`          | `universal-skills[agent-browser]`       |
+| `agent-tools/agent-builder`| Templates and guidelines for building Single and Multi-Agent systems. | `AGENT_BUILDER_ENABLE=False`          | `universal-skills[agent-builder]`       |
+| `agent-tools/agent-spawner`| Spawns a Pydantic AI agent dynamically using an MCP configuration.    | `AGENT_SPAWNER_ENABLE=False`          | `universal-skills[agent-spawner]`       |
+| `agent-tools/agent-workflows`| Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
+| `creative/algorithmic-art`| Generative algorithmic art using p5.js and interactive artifacts.    | `ALGORITHMIC_ART_ENABLE=False`        | `universal-skills[algorithmic-art]`     |
 | `api-wrapper-builder` | Guide for creating robust, standardized API wrappers.                 | `API_WRAPPER_BUILDER_ENABLE=False`    | `universal-skills[api-wrapper-builder]` |
-| `brainstorming`       | Structured ideation, problem-framing, and design research.            | `BRAINSTORMING_ENABLE=False`          | `universal-skills[brainstorming]`       |
-| `brand-guidelines`    | Creating brand identity systems (logos, palettes, voice/tone).         | `BRAND_GUIDELINES_ENABLE=False`       | `universal-skills[brand-guidelines]`    |
-| `browser-tools`       | Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`       |
-| `c4-architecture`     | Software architecture documentation using the C4 model in Mermaid.   | `C4_ARCHITECTURE_ENABLE=False`        | `universal-skills[c4-architecture]`     |
-| `canvas-design`       | Programmatic graphic design using HTML Canvas or SVG APIs.            | `CANVAS_DESIGN_ENABLE=False`          | `universal-skills[canvas-design]`       |
-| `code-enhancer`       | 12-domain code analysis with 0-100 grading, security/arch/dep audit. | `CODE_ENHANCER_ENABLE=False`          | `universal-skills[code-enhancer]`       |
-| `cloudflare-deploy`   | Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
-| `creative-media`      | Creative media processing (animations, GIFs, image conversion).       | `CREATIVE_MEDIA_ENABLE=False`         | `universal-skills[creative-media]`     |
-| `database-tools`      | Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |
-| `developer-utilities` | Formatting, conversion, generation, cryptographic, and networking.    | `DEVELOPER_UTILITIES_ENABLE=False`    | `universal-skills[developer-utilities]` |
-| `document-converter` | Bulk convert .docx and .pdf to Markdown with high fidelity. | `DOCUMENT_CONVERTER_ENABLE=False`    | `universal-skills[document-converter]` |
-| `document-tools`      | Read, edit, analyze, or create document files (PDF, spreadsheet, etc) | `DOCUMENT_TOOLS_ENABLE=False`         | `universal-skills[document-tools]`      |
-| `github-tools`        | GitHub workflows, PR comments, CI fixes, and git practices.           | `GITHUB_TOOLS_ENABLE=False`           | `universal-skills[github-tools]`        |
-| `google-workspace`    | Google Workspace ecosystem integration (Gmail, Drive, Docs, etc).     | `GOOGLE_WORKSPACE_ENABLE=True` (D)    | `universal-skills[google-workspace]`    |
-| `internal-comms`      | Creating internal announcements, memos, and executive briefings.      | `INTERNAL_COMMS_ENABLE=False`         | `universal-skills[internal-comms]`      |
+| `research/brainstorming`| Structured ideation, problem-framing, and design research.            | `BRAINSTORMING_ENABLE=False`          | `universal-skills[brainstorming]`       |
+| `creative/brand-guidelines`| Creating brand identity systems (logos, palettes, voice/tone).         | `BRAND_GUIDELINES_ENABLE=False`       | `universal-skills[brand-guidelines]`    |
+| `web-dev/browser-tools`| Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`       |
+| `dev-workflows/c4-architecture`| Software architecture documentation using the C4 model in Mermaid.   | `C4_ARCHITECTURE_ENABLE=False`        | `universal-skills[c4-architecture]`     |
+| `creative/canvas-design`| Programmatic graphic design using HTML Canvas or SVG APIs.            | `CANVAS_DESIGN_ENABLE=False`          | `universal-skills[canvas-design]`       |
+| `infra/cloudflare-deploy`| Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
+| `core/code-enhancer`| 12-domain code analysis with 0-100 grading, security/arch/dep audit. | `CODE_ENHANCER_ENABLE=False`          | `universal-skills[code-enhancer]`       |
+| `creative/creative-media`| Creative media processing (animations, GIFs, image conversion).       | `CREATIVE_MEDIA_ENABLE=False`         | `universal-skills[creative-media]`     |
+| `integration/database-tools`| Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |
+| `system/developer-utilities`| Formatting, conversion, generation, cryptographic, and networking.    | `DEVELOPER_UTILITIES_ENABLE=False`    | `universal-skills[developer-utilities]` |
+| `dev-workflows/diagnose`| Disciplined diagnosis loop for hard bugs and performance regressions. | `DIAGNOSE_ENABLE=False`               | `universal-skills[diagnose]`            |
+| `docs/document-converter`| Bulk convert .docx and .pdf to Markdown with high fidelity.           | `DOCUMENT_CONVERTER_ENABLE=False`     | `universal-skills[document-converter]`  |
+| `docs/document-tools`| Read, edit, analyze, or create document files (PDF, spreadsheet, etc) | `DOCUMENT_TOOLS_ENABLE=False`         | `universal-skills[document-tools]`      |
+| `core/efficient-mode`| Ultra-compressed communication mode to reduce token usage.            | `EFFICIENT_MODE_ENABLE=False`         | `universal-skills[efficient-mode]`      |
+| `integration/github-tools`| GitHub workflows, PR comments, CI fixes, and git practices.           | `GITHUB_TOOLS_ENABLE=False`           | `universal-skills[github-tools]`        |
+| `integration/google-workspace`| Google Workspace ecosystem integration (Gmail, Drive, Docs, etc).     | `GOOGLE_WORKSPACE_ENABLE=True` (D)    | `universal-skills[google-workspace]`    |
+| `product/internal-comms`| Creating internal announcements, memos, and executive briefings.      | `INTERNAL_COMMS_ENABLE=False`         | `universal-skills[internal-comms]`      |
+| `integration/issue-triage`| Triage GitHub issues through a state machine of triage roles.         | `ISSUE_TRIAGE_ENABLE=False`           | `universal-skills[issue-triage]`        |
 | `jira-tools`          | Interact with Jira via CLI or Atlassian MCP for ticket management.    | `JIRA_TOOLS_ENABLE=False`             | `universal-skills[jira-tools]`          |
-| `jupyter-notebook`    | Create, scaffold, or edit Jupyter notebooks.                          | `JUPYTER_NOTEBOOK_ENABLE=True` (D)    | `universal-skills[jupyter-notebook]`    |
-| `marp-presentations`  | Create professional Marp Markdown presentation slides.                | `MARP_PRESENTATIONS_ENABLE=False`     | `universal-skills[marp-presentations]`  |
-| `mcp-builder`         | Guide for creating high-quality FastMCP servers.                      | `MCP_BUILDER_ENABLE=False`            | `universal-skills[mcp-builder]`         |
-| `mermaid-diagrams`    | Create software diagrams (class, sequence, flowchart, ERD, C4, etc). | `MERMAID_DIAGRAMS_ENABLE=False`       | `universal-skills[mermaid-diagrams]`    |
+| `system/jupyter-notebook`| Create, scaffold, or edit Jupyter notebooks.                          | `JUPYTER_NOTEBOOK_ENABLE=True` (D)    | `universal-skills[jupyter-notebook]`    |
+| `docs/marp-presentations`| Create professional Marp Markdown presentation slides.                | `MARP_PRESENTATIONS_ENABLE=False`     | `universal-skills[marp-presentations]`  |
+| `agent-tools/mcp-builder`| Guide for creating high-quality FastMCP servers.                      | `MCP_BUILDER_ENABLE=False`            | `universal-skills[mcp-builder]`         |
+| `docs/mermaid-diagrams`| Create software diagrams (class, sequence, flowchart, ERD, C4, etc). | `MERMAID_DIAGRAMS_ENABLE=False`       | `universal-skills[mermaid-diagrams]`    |
 | `product-management`  | PRD development, user stories, prioritization, and roadmapping.       | `PRODUCT_MANAGEMENT_ENABLE=False`     | `universal-skills[product-management]`  |
-| `product-strategy`    | Market analysis, TAM/SAM/SOM, positioning, and SaaS metrics.          | `PRODUCT_STRATEGY_ENABLE=False`       | `universal-skills[product-strategy]`    |
+| `product/product-strategy`| Market analysis, TAM/SAM/SOM, positioning, and SaaS metrics.          | `PRODUCT_STRATEGY_ENABLE=False`       | `universal-skills[product-strategy]`    |
 | `project-planning`    | High-level reasoning, brainstorming, debugging, and research.         | `PROJECT_PLANNING_ENABLE=False`       | `universal-skills[project-planning]`    |
 | `qa-planning`         | QA test plans, manual test cases, regression suites, and bug reports. | `QA_PLANNING_ENABLE=False`            | `universal-skills[qa-planning]`         |
-| `react-development`   | Type-safe React + TypeScript components, routing, and best practices. | `REACT_DEVELOPMENT_ENABLE=False`      | `universal-skills[react-development]`   |
-| `react-native-skills` | React Native and Expo best practices and performance optimization.    | `REACT_NATIVE_SKILLS_ENABLE=False`    | `universal-skills[react-native-skills]` |
-| `security-tools`      | Threat modeling, Sentry error logs, and security code analysis.       | `SECURITY_TOOLS_ENABLE=False`         | `universal-skills[security-tools]`      |
-| `skill-builder`       | Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
-| `skill-graph-builder` | Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
+| `web-dev/react-development`| Type-safe React + TypeScript components, routing, and best practices. | `REACT_DEVELOPMENT_ENABLE=False`      | `universal-skills[react-development]`   |
+| `web-dev/react-native-skills`| React Native and Expo best practices and performance optimization.    | `REACT_NATIVE_SKILLS_ENABLE=False`    | `universal-skills[react-native-skills]` |
+| `infra/security-tools`| Threat modeling, Sentry error logs, and security code analysis.       | `SECURITY_TOOLS_ENABLE=False`         | `universal-skills[security-tools]`      |
+| `core/skill-builder`| Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
+| `agent-tools/skill-graph-builder`| Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
 | `skill-installer`     | Install skills into Windsurf, Claude Code, Antigravity, etc.          | `SKILL_INSTALLER_ENABLE=False`        | `universal-skills[skill-installer]`     |
-| `session-handoff`     | Create and restore agent session handoff documents.                   | `SESSION_HANDOFF_ENABLE=False`        | `universal-skills[session-handoff]`     |
-| `system-tools`        | Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
+| `core/session-handoff`| Create and restore agent session handoff documents.                   | `SESSION_HANDOFF_ENABLE=False`        | `universal-skills[session-handoff]`     |
+| `system/system-tools`| Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
 | `systems-manager`     | Fast codebase search, file navigation, and structural code analysis.  | `SYSTEMS_MANAGER_ENABLE=False`        | `universal-skills[systems-manager]`     |
-| `tdd-methodology`     | Test-Driven Development workflow (Red-Green-Refactor cycle).          | `TDD_METHODOLOGY_ENABLE=False`        | `universal-skills[tdd-methodology]`     |
-| `theme-factory`       | Designing themes, design tokens, and CSS variable systems.            | `THEME_FACTORY_ENABLE=False`          | `universal-skills[theme-factory]`       |
-| `user-research`       | User discovery, JTBD, personas, and journey mapping.                  | `USER_RESEARCH_ENABLE=False`          | `universal-skills[user-research]`       |
-| `web-artifacts`       | Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
-| `website-builder`     | World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
-| `website-cloner`      | Multi-phase pipeline for pixel-perfect website cloning.               | `WEBSITE_CLONER_ENABLE=False`         | `universal-skills[website-cloner]`      |
-| `web-crawler`         | High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
-| `web-design-guidelines`| Review UI code for Web Interface Guidelines compliance.              | `WEB_DESIGN_GUIDELINES_ENABLE=False`  | `universal-skills[web-design-guidelines]`|
-| `web-search`          | Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
+| `dev-workflows/tdd-methodology`| Test-Driven Development workflow (Red-Green-Refactor cycle).          | `TDD_METHODOLOGY_ENABLE=False`        | `universal-skills[tdd-methodology]`     |
+| `web-dev/theme-factory`| Designing themes, design tokens, and CSS variable systems.            | `THEME_FACTORY_ENABLE=False`          | `universal-skills[theme-factory]`       |
+| `research/user-research`| User discovery, JTBD, personas, and journey mapping.                  | `USER_RESEARCH_ENABLE=False`          | `universal-skills[user-research]`       |
+| `web-dev/web-artifacts`| Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
+| `web-dev/website-builder`| World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
+| `web-dev/website-cloner`| Multi-phase pipeline for pixel-perfect website cloning.               | `WEBSITE_CLONER_ENABLE=False`         | `universal-skills[website-cloner]`      |
+| `research/web-crawler`| High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
+| `web-dev/web-design-guidelines`| Review UI code for Web Interface Guidelines compliance.              | `WEB_DESIGN_GUIDELINES_ENABLE=False`  | `universal-skills[web-design-guidelines]`|
+| `research/web-search`| Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
+| `system/zoom-out`| Meta-skill to tell the agent to step back and give broader context.   | `ZOOM_OUT_ENABLE=False`               | `universal-skills[zoom-out]`            |
 
 ## Security & SSL Verification
 

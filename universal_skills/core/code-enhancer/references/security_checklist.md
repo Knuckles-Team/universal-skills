@@ -53,3 +53,43 @@ Reference material for the code-enhancer security analysis domain.
 | SSL/TLS | B501, B503 | Always flag |
 | Pickle | B301, B302 | Always flag |
 | YAML | B506 | Flag if using `yaml.load()` without SafeLoader |
+
+## Production Resilience (Release It! + DDIA)
+
+Checks derived from *Release It!* (Nygard) and *Designing Data-Intensive
+Applications* (Kleppmann):
+
+### Timeout Coverage
+
+| Library | Check | Action |
+|---------|-------|--------|
+| `requests` | `timeout=` parameter present | Flag calls without explicit timeout |
+| `httpx` | `timeout=` parameter present | Flag calls without explicit timeout |
+| `aiohttp` | `timeout=` in session/request | Flag calls without explicit timeout |
+| `urllib3` | `timeout` parameter | Flag calls without explicit timeout |
+
+### Retry Safety
+
+| Pattern | Check | Risk |
+|---------|-------|------|
+| Unbounded retry | `while True` retry without max | Retry storm |
+| No backoff | Retry without delay/jitter | Thundering herd |
+| Non-idempotent retry | POST/PUT retried without safety | Data corruption |
+| Missing `tenacity`/`backoff` | No structured retry library | Ad-hoc retry logic |
+
+### Circuit Breaker & Bulkhead
+
+| Pattern | Detection | Note |
+|---------|-----------|------|
+| `pybreaker` usage | Import detection | Standard circuit breaker |
+| Custom circuit breaker | State machine pattern | Manual implementation |
+| Bulkhead isolation | Thread pool / semaphore limits | Resource isolation |
+| Rate limiting | `ratelimit` / token bucket | Overload protection |
+
+### Consistency Boundaries (DDIA)
+
+| Check | What It Detects |
+|-------|----------------|
+| Multi-aggregate writes | Transaction spanning multiple roots |
+| Missing idempotency keys | Retry-sensitive endpoints without dedup |
+| Undocumented staleness | Cache/view reads without freshness annotation |

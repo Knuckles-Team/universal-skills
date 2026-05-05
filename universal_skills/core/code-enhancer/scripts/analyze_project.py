@@ -331,6 +331,17 @@ def analyze_project(root_dir: str = ".") -> dict:
             "reasoning": "No A2A, ACP, or MCP protocol support detected",
         })
 
+    # --- Additional Detection: Agent Skills ---
+    skill_files = [f for f in root.rglob("SKILL.md")
+                   if ".venv" not in str(f) and "node_modules" not in str(f)]
+    if skill_files:
+        details["has_agent_skills"] = True
+        details["skill_count"] = len(skill_files)
+        details["skill_paths"] = [str(f.relative_to(root)) for f in skill_files[:20]]
+        findings.append(f"Detected {len(skill_files)} agent skill(s) — will grade in CE-026")
+    else:
+        details["has_agent_skills"] = False
+
     # --- Compute grade ---
     grade = _score_to_grade(score)
 

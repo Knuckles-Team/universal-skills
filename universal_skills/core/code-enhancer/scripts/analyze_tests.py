@@ -61,7 +61,7 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
 
                 # Check for concept markers
                 concept_id = ""
-                concept_match = re.search(r"CONCEPT:(\S+)", body_source)
+                concept_match = re.search(r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)", body_source)
                 if concept_match:
                     concept_id = concept_match.group(1)
 

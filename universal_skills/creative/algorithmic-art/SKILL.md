@@ -2,7 +2,7 @@
 name: algorithmic-art
 description: Creates generative algorithmic art using p5.js with seeded randomness and interactive HTML artifacts. Use when the user requests generative art, algorithmic art, computational aesthetics, flow fields, particle systems, or creative coding. Output is self-contained interactive HTML. Do NOT use for UI design, data visualization charts, or photo editing.
 tags: [generative-art, p5js, creative-coding, algorithmic, canvas, interactive]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Algorithmic Art Creation
 

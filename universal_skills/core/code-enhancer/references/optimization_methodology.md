@@ -75,3 +75,34 @@ Industry-proven methodologies for identifying and resolving code quality issues.
 | `collections.defaultdict` | Dictionary with default values | Speed +20%, readability |
 | `dataclasses.dataclass` | Simple data containers | Readability, less boilerplate |
 | Lazy imports | Heavy modules rarely used | Startup time -50% |
+
+## Refactoring Trigger Rules (Fowler)
+
+Automated detection patterns derived from *Refactoring* (Fowler):
+
+| Trigger | Detectable Signal | Automated Check |
+|---------|------------------|-----------------|
+| Patch mixes behavior + structure | Git diff contains both test changes and structural moves | Diff analysis |
+| Conditional tree keeps growing | Nesting depth increases in recent commits | AST nesting delta |
+| Risky area lacks tests | Modified files with 0 test coverage | Coverage + git log |
+| Rewrite urge | Large file deletion + creation in same commit | Git diff stats |
+| Duplicate structure | Near-identical AST subtrees across modules | Hash-based clone detection |
+
+**Key principle**: Refactoring preserves observable behavior.  If behavior must
+change, keep the behavioral delta distinct from structural cleanup.
+
+## Legacy Code Seam Detection (Feathers)
+
+Patterns from *Working Effectively with Legacy Code* (Feathers) for identifying
+safe modification points:
+
+| Seam Type | Python Indicator | Opportunity |
+|-----------|-----------------|-------------|
+| Object seam | Constructor injection possible | Replace dependency in tests |
+| Preprocessing seam | Module-level imports | Mock at import boundary |
+| Link seam | Abstract base class / Protocol | Substitute implementation |
+| Extract & override | Long method with testable core | Sprout method pattern |
+
+**Detection heuristic**: Files with >100 lines, no corresponding test file,
+and >3 external dependencies are candidates for seam introduction before
+modification.

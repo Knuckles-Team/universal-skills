@@ -2,7 +2,7 @@
 name: spec-generator
 description: Generates spec.md with user stories and acceptance criteria. Replaces product-management.
 tags: ['spec generator']
-version: '0.4.0'
+version: '0.5.0'
 ---
 
 # SDD Spec Generator
@@ -36,3 +36,4 @@ You are a Senior Product Engineer specialized in Spec-Driven Development (SDD). 
 ## Integration
 - Save the result to `agent_data/specs/{feature_id}.md`.
 - **Structured Persistence**: In addition to the markdown file, always save the structured state as a `Spec` JSON in `agent_data/specs/{feature_id}.json` using the `SDDManager` from `agent-utilities`.
+- **Issue Tracker Publishing (Optional)**: If the user requests it, or if configured, publish the generated PRD/Spec to the project's issue tracker. Apply appropriate labels (e.g., `needs-triage` or `spec`) so it enters the normal triage and planning flow.

@@ -2,7 +2,7 @@
 name: skill-builder
 description: Guide for creating effective skills for the universal-skills package. Use this when users want to create a new skill or update an existing skill according to the project's standards.
 tags: [skills, development, guide, builder, creator]
-version: '0.4.0'
+version: '0.5.0'
 ---
 # Skill Builder
 
@@ -176,10 +176,12 @@ Any example files and directories not needed for the skill should be deleted. Th
 Write the YAML frontmatter following the universal-skills standard:
 
 - `name`: The skill name (kebab-case)
-- `description`: This is the primary triggering mechanism for your skill, and helps the agent understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to the agent.
-  - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when the agent needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+- `description`: This is the primary triggering mechanism for your skill, and helps the agent understand when to use the skill. It is **the only thing your agent sees** when deciding which skill to load.
+  - **Goal**: Give your agent just enough info to know what it does and when/why to trigger it.
+  - **Format**: Max 1024 chars, written in third person.
+  - **Structure**: First sentence explains what it does. Second sentence starts with "Use when [specific triggers]".
+  - **Good Example**: "Comprehensive document creation and analysis. Use when the agent needs to work with professional documents (.docx files) or when the user mentions PDFs, forms, or text extraction."
+  - **Bad Example**: "Helps with documents." (Gives the agent no way to distinguish this from other document skills).
 - `license`: MIT
 - `tags`: A list of relevant keywords to aid in discovery or search (e.g. `[agent, documentation, architecture]`).
 - `metadata`: A set of metadata containing key details.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the standard architectural pattern, configuration boilerplate, and template required for building custom MCP servers based on the `fastmcp` client and `agent_utilities` libraries.
+This document provides the standard architectural pattern, configuration boilerplate, and template required for building custom MCP servers based on `fastmcp` and `agent_utilities`.
 
 All new Python MCP servers MUST follow this precise structural pattern.
 
@@ -10,62 +10,41 @@ All new Python MCP servers MUST follow this precise structural pattern.
 
 ## The Standard Boilerplate
 
-Your `mcp_server.py` must use the custom CLI argument parsing tool `create_mcp_parser()`, the standard context `config`, and include the required `Eunomia`, `RateLimiting`, and `UserToken` middlewares dynamically built in the `mcp_server()` function.
+Your `mcp_server.py` must use `create_mcp_server()` from `agent_utilities.mcp_utilities` which handles argument parsing, auth setup, and middleware assembly in a single call. It returns a `(args, mcp, middlewares)` tuple.
 
-Below is the complete generic template. You must copy and adapt this code, customizing the constants, name, tool signatures, and inner implementations as needed.
+Below is the complete generic template. Customize the constants, tool signatures, and inner implementations as needed.
 
 ```python
 #!/usr/bin/python
-# coding: utf-8
 import os
 import sys
-import requests
 import logging
-from typing import Optional, Dict, List, Union, Any
 
 from dotenv import load_dotenv, find_dotenv
-from eunomia_mcp.middleware import EunomiaMcpMiddleware
+from pydantic import Field
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from pydantic import Field
-from fastmcp import FastMCP, Context
-from fastmcp.server.auth.oidc_proxy import OIDCProxy
-from fastmcp.server.auth import OAuthProxy, RemoteAuthProvider
-from fastmcp.server.auth.providers.jwt import JWTVerifier, StaticTokenVerifier
-from fastmcp.server.middleware.logging import LoggingMiddleware
-from fastmcp.server.middleware.timing import TimingMiddleware
-from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
-from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
-from fastmcp.utilities.logging import get_logger
 
 # Import standard internal utilities
 from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    config,
-)
-from agent_utilities.middlewares import (
-    UserTokenMiddleware,
-    JWTClaimsLoggingMiddleware,
-)
+from agent_utilities.mcp_utilities import create_mcp_server
 
 __version__ = "1.0.0"
 
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = get_logger("MyServiceMCPServer")
+logger = logging.getLogger(__name__)
 
 # Fetch environment variables early
 API_URL = os.environ.get("SERVICE_API_URL", None)
 API_KEY = os.environ.get("SERVICE_API_KEY", None)
 
-def register_misc_tools(mcp: FastMCP):
+
+def register_misc_tools(mcp):
     @mcp.custom_route("/health", methods=["GET"])
     async def health_check(request: Request) -> JSONResponse:
         return JSONResponse({"status": "OK"})
 
-def register_action_tools(mcp: FastMCP):
+
+def register_action_tools(mcp):
     @mcp.tool(
         annotations={
             "title": "Service Action",
@@ -74,18 +53,12 @@ def register_action_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"action"}, # Add appropriate tool tags
+        tags={"action"},
     )
     async def run_action(
         parameter: str = Field(description="Action parameter", default=None),
-        ctx: Context = Field(description="MCP context for progress reporting.", default=None),
-    ) -> Dict[str, Any]:
-        """
-        Executes a specific action using the API.
-        Returns a Dictionary response with status, message, data, and error.
-        """
-        logger.debug(f"Executing action with parameter: {parameter}")
-
+    ) -> dict:
+        """Executes a specific action using the API."""
         try:
             if not parameter:
                 return {
@@ -94,61 +67,39 @@ def register_action_tools(mcp: FastMCP):
                     "data": None,
                     "error": "parameter must not be empty",
                 }
-
-            if ctx:
-                await ctx.report_progress(progress=0, total=100)
-
             # Perform API interaction here
-
-            if ctx:
-                await ctx.report_progress(progress=100, total=100)
-
             return {
                 "status": 200,
                 "message": "Action completed successfully",
                 "data": {"result": "ok", "parameter": parameter},
                 "error": None,
             }
-
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code if e.response else None
-            error_msg = f"API error: {e.response.json().get('message', str(e)) if e.response else str(e)}"
-            logger.error(f"[API Error] {error_msg}")
-            return {
-                "status": status_code or 500,
-                "message": "Failed to perform action",
-                "data": None,
-                "error": error_msg,
-            }
         except Exception as e:
-            logger.error(f"[Error] {str(e)}")
-            return {
-                "status": 500,
-                "message": "Failed to perform action",
-                "data": None,
-                "error": str(e),
-            }
+            logger.error(f"[Error] {e}")
+            return {"status": 500, "message": "Failed", "data": None, "error": str(e)}
 
 
-def register_prompts(mcp: FastMCP):
-    @mcp.prompt
+def register_prompts(mcp):
+    @mcp.prompt()
     def action_prompt(topic: str) -> str:
         return f"Executing the action prompt for: {topic}."
 
-# If there are resources to register, add a register_resources(mcp: FastMCP) method here as well.
 
-
-def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
-    """Initialize and return the MCP instance, args, and middlewares."""
+def get_mcp_instance():
+    """Initialize and return the MCP instance and args."""
     load_dotenv(find_dotenv())
 
+    # create_mcp_server returns (args, mcp, middlewares)
+    # - args: parsed CLI arguments (transport, host, port, auth_type, etc.)
+    # - mcp: configured FastMCP instance
+    # - middlewares: list of middleware instances (auto-applied internally)
     args, mcp, middlewares = create_mcp_server(
         name="MyService MCP",
         version=__version__,
-        instructions="MyService MCP Server - Manage your services with specialized tools.",
+        instructions="MyService MCP Server - Manage your services.",
     )
 
-    # Register components dynamically based on toggles
+    # Register tools dynamically based on env-var toggles
     DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
     if DEFAULT_MISCTOOL:
         register_misc_tools(mcp)
@@ -159,56 +110,155 @@ def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
 
     register_prompts(mcp)
 
-    # Optionally register resources
-    # register_resources(mcp)
+    return args, mcp
 
-    for mw in middlewares:
-        mcp.add_middleware(mw)
-
-    registered_tags = []
-    return mcp, args, middlewares, registered_tags
 
 def mcp_server() -> None:
-    mcp, args, middlewares, registered_tags = get_mcp_instance()
-
-    # Standardized logging (stderr)
+    """MCP server entry point — registered as console_scripts in pyproject.toml."""
     print(f"MyService MCP v{__version__}", file=sys.stderr)
-    print(f"Starting MyService MCP Server ({args.transport.upper()})", file=sys.stderr)
-    print(f"  Auth: {args.auth_type}", file=sys.stderr)
-    print(f"  Dynamic Tags Loaded: {len(registered_tags)}", file=sys.stderr)
+    args, mcp = get_mcp_instance()
 
-    if args.transport == "stdio":
+    transport = getattr(args, "transport", os.getenv("TRANSPORT", "stdio"))
+    host = getattr(args, "host", os.getenv("HOST", "0.0.0.0"))
+    port = int(getattr(args, "port", os.getenv("PORT", "8000")))
+
+    if transport == "stdio":
         mcp.run(transport="stdio")
-    elif args.transport == "streamable-http":
-        mcp.run(transport="streamable-http", host=args.host, port=args.port)
-    elif args.transport == "sse":
-        mcp.run(transport="sse", host=args.host, port=args.port)
     else:
-        logger.error("Invalid transport", extra={"transport": args.transport})
-        sys.exit(1)
+        mcp.run(transport="streamable-http", host=host, port=port)
+
 
 if __name__ == "__main__":
     mcp_server()
 ```
 
+---
+
+## Key Architecture Points
+
+### `create_mcp_server()` Return Signature
+
+```python
+args, mcp, middlewares = create_mcp_server(name=..., version=..., instructions=...)
+```
+
+- **`args`**: Parsed CLI arguments (transport, host, port, auth_type, debug, etc.)
+- **`mcp`**: Configured `FastMCP` instance with auth and middleware pre-applied
+- **`middlewares`**: List of middleware instances (ErrorHandling, RateLimiting, Timing, Logging, JWTClaims, UserToken, Eunomia) — these are automatically added to the server, you do NOT need to call `mcp.add_middleware()` manually in most cases
+
+### What `create_mcp_server` handles automatically:
+- CLI argument parsing (transport, host, port, auth type, Eunomia config)
+- Auth setup (JWT, OIDC, OAuth, static token) based on `--auth-type` flag
+- Middleware stack assembly and registration
+- SSL verification configuration
+
+You should NOT import middleware classes directly unless you need custom middleware beyond the standard stack.
+
+### Transport Options
+
+| Transport | Use Case | Flag |
+|-----------|----------|------|
+| `stdio` | Local agent integration, MCP clients | `--transport stdio` (default) |
+| `streamable-http` | Remote HTTP access, Docker containers | `--transport streamable-http` |
+
+> **Note**: The `http` transport is deprecated. Use `streamable-http` instead.
+
+---
+
 ## Modularity Strategy
 
-Notice that our standard template delegates logic using explicit `register_*` functions:
-- `register_misc_tools(mcp: FastMCP)`
-- `register_action_tools(mcp: FastMCP)`
-- `register_prompts(mcp: FastMCP)`
+Tools are organized using `register_*` functions with tag-based grouping:
 
-This tag-based grouping strategy combined with environment variable toggles (e.g., `os.getenv("ACTIONTOOL", "True")`) provides a standardized mechanism for enabling or disabling tools without code changes.
+```python
+def register_search_tools(mcp):
+    @mcp.tool(tags={"search"})
+    async def search_items(...): ...
 
-This ensures the `mcp_server()` function remains purely about parsing runtime configuration parameters and bootstrapping the networking/server functionality. Never implement tool logic directly inside `mcp_server()`.
+def register_admin_tools(mcp):
+    @mcp.tool(tags={"admin"})
+    async def delete_item(...): ...
+```
+
+### Environment Variable Toggles
+
+Every tag group MUST have an explicit toggle:
+
+```python
+DEFAULT_SEARCHTOOL = to_boolean(os.getenv("SEARCHTOOL", "True"))
+if DEFAULT_SEARCHTOOL:
+    register_search_tools(mcp)
+
+DEFAULT_ADMINTOOL = to_boolean(os.getenv("ADMINTOOL", "True"))
+if DEFAULT_ADMINTOOL:
+    register_admin_tools(mcp)
+```
+
+This ensures administrators can disable tool groups without code changes.
+
+### Tag Rules
+- Tags MUST be strictly lowercase
+- No special characters or spaces
+- Use hyphens for multi-word tags if needed (e.g., `user-auth`)
+
+---
 
 ## Type Hints & Pydantic Validation
 
-All standard input fields into `@mcp.tool` signatures must be fully type-hinted and use Pydantic's `Field(...)` validator to include descriptions and default values. You may also utilize dependencies or contexts via `_client = Depends(get_client)` or `ctx: Context`. For standardized interactions like progress reporting and destructive guards, refer to the [🛠 Context Helpers Guide](./ctx_helpers.md).
+All tool inputs must use Pydantic `Field(...)` for descriptions and defaults:
+
+```python
+@mcp.tool(tags={"search"})
+async def search_items(
+    query: str = Field(description="Search query string"),
+    max_results: int = Field(default=20, ge=1, le=100, description="Max results"),
+) -> dict:
+    """Search for items matching the query."""
+    ...
+```
+
+For dependency injection, use `Depends()` from FastMCP:
+
+```python
+from fastmcp import Depends
+
+def get_client():
+    return MyAPIClient(api_key=os.getenv("API_KEY"))
+
+@mcp.tool()
+async def get_item(item_id: str, _client=Depends(get_client)) -> dict:
+    ...
+```
+
+---
+
+## Destructive Operations — `ctx.elicit()`
+
+For destructive operations (delete, stop, purge), use `ctx.elicit()` for user confirmation:
+
+```python
+from fastmcp import Context
+
+@mcp.tool(tags={"admin"}, annotations={"destructiveHint": True})
+async def delete_item(
+    item_id: str = Field(description="Item ID to delete"),
+    ctx: Context = None,
+) -> dict:
+    """Delete an item permanently."""
+    if ctx:
+        confirm = await ctx.elicit(
+            message=f"Are you sure you want to delete item {item_id}?",
+            schema={"type": "boolean"},
+        )
+        if not confirm.data:
+            return {"status": "cancelled", "message": "Operation cancelled by user"}
+    # ... proceed with deletion
+```
+
+---
 
 ## Return Strategy
 
-Responses from endpoints typically return an object formatted like:
+Standard response format:
 
 ```python
 {
@@ -218,4 +268,18 @@ Responses from endpoints typically return an object formatted like:
     "error": None
 }
 ```
-Or it returns a strongly typed modeled output, like `Response` or `str`. Use your discretion based on how simple the API is.
+
+Or return strongly typed Pydantic models for structured output.
+
+---
+
+## Quality Checklist
+
+- [ ] All tools use `Field()` for input descriptions
+- [ ] All tag groups have env-var toggles
+- [ ] Tags are strictly lowercase
+- [ ] `create_mcp_server()` is used (not manual server setup)
+- [ ] Transport defaults to `stdio`
+- [ ] Destructive tools use `ctx.elicit()` guards
+- [ ] `--help` flag works: `python -m your_package.mcp_server --help`
+- [ ] Test with MCP Inspector: `npx @modelcontextprotocol/inspector`

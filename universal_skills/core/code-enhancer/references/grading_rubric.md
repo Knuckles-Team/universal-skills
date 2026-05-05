@@ -187,6 +187,43 @@ Meta-domain — runs all analysis domains across multiple projects in parallel.
 | Unused internal dependencies | -3 per dep (max -15) |
 | No integration detected | N/A (not scored for standalone) |
 
+### Agent Skill Quality (CE-026)
+
+Weighted category model (skill-check scoring):
+
+| Category | Weight | What It Measures |
+|----------|--------|------------------|
+| Frontmatter | 30% | Required fields, naming conventions, field order |
+| Description | 30% | Length, "Use when" phrasing, anti-trigger phrases |
+| Body | 20% | Line/token limits, section structure |
+| Links | 10% | Local markdown resolution, reference resolution |
+| File/Meta | 10% | Trailing newlines, duplicate names/descriptions |
+
+Per-skill: errors deduct 1× category weight, warnings deduct 0.5×.
+Domain aggregate = mean of all per-skill scores.
+If no skills detected: **N/A** (excluded from GPA).
+
+See `references/skill_quality_rubric.md` for the full rule reference.
+
+### Engineering Heuristics (CE-027)
+
+Contextually activated — only active categories are scored:
+
+| Category | Weight | Source Books | Activated When |
+|----------|--------|-------------|----------------|
+| H1: Construction Quality | 20% | Clean Code, Code Complete | Always |
+| H2: Architecture Boundaries | 15% | Clean Architecture, Philosophy of Software Design | >5 modules or arch dirs |
+| H3: Refactoring Discipline | 10% | Refactoring, Working Effectively with Legacy Code | Always |
+| H4: Domain Modeling | 10% | DDD, DDD Distilled, Implementing DDD | DDD patterns detected |
+| H5: Production Resilience | 15% | Release It!, DDIA | Service/API deps detected |
+| H6: Enterprise Patterns | 10% | PoEAA | Enterprise dirs detected |
+| H7: Engineering Practice | 20% | The Pragmatic Programmer | Always |
+
+Active category weights are normalized to 100%.  Each category starts at 100
+and applies deductions per failed heuristic.
+
+See `references/engineering_heuristics.md` for the full check reference.
+
 ## Justification Requirements
 
 Every grade MUST include:
