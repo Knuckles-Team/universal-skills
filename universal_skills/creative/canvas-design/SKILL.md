@@ -10,7 +10,7 @@ license: MIT
 tags: [canvas, svg, graphic-design, programmatic-design, composition]
 metadata:
   author: Genius
-  version: '0.7.0'
+  version: '0.7.1'
 ---
 # Canvas & SVG Design
 
