@@ -8,7 +8,7 @@ license: MIT
 tags: [zoom out, meta, overview, context]
 metadata:
   author: Genius
-  version: '0.7.1'
+  version: '0.7.2'
 ---
 
 I don't know this area of code well. Go up a layer of abstraction. Give me a map of all the relevant modules and callers, using the project's domain glossary vocabulary.

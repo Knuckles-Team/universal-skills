@@ -36,7 +36,7 @@ except ImportError:
     AsyncAnthropic = None  # type: ignore
     AnthropicProvider = None  # type: ignore
 
-__version__ = "0.7.1"
+__version__ = "0.7.2"
 
 
 def get_universal_skills_package_name() -> str:
