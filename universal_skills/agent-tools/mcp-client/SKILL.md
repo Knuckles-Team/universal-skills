@@ -2,7 +2,7 @@
 name: mcp-client
 description:
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
-version: '0.5.0'
+version: '0.6.0'
 ---
 # MCP Client Skill
 

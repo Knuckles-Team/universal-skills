@@ -2,7 +2,7 @@
 name: website-cloner
 description: High-fidelity website reverse-engineering and cloning into a Next.js/Tailwind v4/shadcn codebase. Extracts assets, CSS, and behavior section-by-section and dispatches parallel builder agents. Use when the user wants to clone, replicate, rebuild, or copy any website. Triggers on "make a copy of this site", "rebuild this page", "pixel-perfect clone". Provide one or more target URLs as arguments.
 tags: [frontend, website, cloner, nextjs, tailwind, shadcn, reverse-engineering]
-version: '0.5.0'
+version: '0.6.0'
 ---
 
 # Website Cloner

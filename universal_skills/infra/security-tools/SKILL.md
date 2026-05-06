@@ -2,7 +2,7 @@
 name: security-tools
 description: Security analysis tools including checking Sentry error logs, conducting threat models, analyzing source code git repositories for security ownership and bus factors, and applying security best practices.
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
-version: '0.5.0'
+version: '0.6.0'
 ---
 # Security Tools
 

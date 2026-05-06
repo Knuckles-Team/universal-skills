@@ -1,0 +1,96 @@
+{
+  "version": "0.1.0",
+  "description": "Relevance taxonomy for scoring research papers against agent-utilities concepts. Customize weights and keywords for your target domain.",
+  "domains": {
+    "orchestration": {
+      "weight": 3.0,
+      "description": "Multi-agent coordination, workflow orchestration, task decomposition",
+      "keywords": [
+        "orchestrat", "multi-agent", "multiagent", "multi agent",
+        "agent coordination", "task decomposition", "workflow",
+        "agent framework", "agent system", "agentic",
+        "tool orchestration", "agent architecture"
+      ]
+    },
+    "knowledge_graph": {
+      "weight": 3.0,
+      "description": "Knowledge graphs, ontologies, semantic reasoning, entity relations",
+      "keywords": [
+        "knowledge graph", "ontology", "owl", "semantic web",
+        "entity relation", "graph neural", "graph reasoning",
+        "node embedding", "link prediction", "triple",
+        "knowledge base", "structured knowledge"
+      ]
+    },
+    "planning_reasoning": {
+      "weight": 2.5,
+      "description": "LLM reasoning, planning, search strategies, deliberation",
+      "keywords": [
+        "planning", "tree of thought", "chain of thought",
+        "reasoning", "deliberat", "test-time compute",
+        "inference-time", "search agent", "mcts",
+        "monte carlo tree", "beam search", "self-refin",
+        "step-by-step", "problem solving"
+      ]
+    },
+    "memory_retrieval": {
+      "weight": 2.5,
+      "description": "Memory systems, RAG, retrieval, continual learning",
+      "keywords": [
+        "memory", "retrieval augmented", "rag", "episodic",
+        "experience replay", "context window", "long-context",
+        "vector store", "embedding retrieval", "hybrid retrieval",
+        "continual learning", "catastrophic forgetting"
+      ]
+    },
+    "tool_use": {
+      "weight": 2.0,
+      "description": "Tool calling, function calling, API integration, MCP",
+      "keywords": [
+        "tool use", "tool calling", "function calling",
+        "api integration", "mcp", "model context protocol",
+        "tool learning", "code generation", "code execution",
+        "plugin", "tool augmented"
+      ]
+    },
+    "evaluation_safety": {
+      "weight": 2.0,
+      "description": "Benchmarks, red teaming, safety, alignment, hallucination detection",
+      "keywords": [
+        "evaluation", "benchmark", "red team", "safety",
+        "alignment", "guardrail", "adversarial", "robustness",
+        "hallucination", "faithfulness", "grounding",
+        "reward model", "reward shaping"
+      ]
+    },
+    "swarm_evolution": {
+      "weight": 2.0,
+      "description": "Swarm intelligence, evolutionary methods, biomimicry, collective behavior",
+      "keywords": [
+        "swarm", "evolutionary", "genetic algorithm",
+        "population-based", "ant colony", "stigmergy",
+        "quorum sensing", "self-organizing", "emergence",
+        "collective intelligence", "biomimicry"
+      ]
+    },
+    "llm_architecture": {
+      "weight": 1.5,
+      "description": "Transformer architectures, training methods, efficiency",
+      "keywords": [
+        "transformer", "attention mechanism", "scaling law",
+        "mixture of experts", "moe", "fine-tuning", "sft",
+        "reinforcement learning from", "rlhf", "dpo",
+        "distillation", "quantization", "efficient inference"
+      ]
+    },
+    "human_ai": {
+      "weight": 1.0,
+      "description": "Human-AI interaction, collaborative systems, decision support",
+      "keywords": [
+        "human-in-the-loop", "human-ai", "collaborative",
+        "interactive", "conversational", "dialogue",
+        "user interface", "decision support"
+      ]
+    }
+  }
+}

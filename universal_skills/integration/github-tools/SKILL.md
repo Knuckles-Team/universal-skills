@@ -2,7 +2,7 @@
 name: github-tools
 description: Consolidated skill for GitHub workflows and git practices. Use when managing PR comments, fixing CI failures, using the gh CLI for issues/PRs/workflow runs, finishing development branches, performing code review, or managing git worktrees. Do NOT use for general git operations that don't involve GitHub (use standard git commands instead).
 tags: [github, git, pull-requests, ci, code-review, workflow, worktrees, gh-cli]
-version: '0.5.0'
+version: '0.6.0'
 ---
 # GitHub & Git Workflow Tools
 

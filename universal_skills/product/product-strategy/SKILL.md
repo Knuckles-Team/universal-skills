@@ -2,7 +2,7 @@
 name: product-strategy
 description: Developing product vision, market positioning, and financial modeling for product initiatives. Use when performing PESTEL/SWOT analysis, calculating TAM/SAM/SOM, defining market positioning, or creating SaaS financial diagnostics.
 tags: [strategy, market-analysis, positioning, financial-modeling, saas-metrics]
-version: '0.5.0'
+version: '0.6.0'
 ---
 # Product Strategy & Market Analysis
 
