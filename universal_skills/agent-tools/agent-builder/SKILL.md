@@ -1,8 +1,14 @@
 ---
 name: agent-builder
-description: Guide for building scalable Pydantic AI agents. Use this skill when the user wants to create a new agent package or modify an existing agent's architecture, to ensure it follows the standardized agent patterns using `agent-utilities`.
+description: >-
+  Guide for building scalable Pydantic AI agents. Use this skill when the user
+  wants to create a new agent package or modify an existing agent's architecture,
+  to ensure it follows the standardized agent patterns using `agent-utilities`.
+license: MIT
 tags: [agent, development, pydantic-ai, architecture]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Agent Builder Guide
 

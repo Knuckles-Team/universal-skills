@@ -1,8 +1,16 @@
 ---
 name: agent-spawner
-description:
+description: >-
+  The `agent-spawner` skill provides the ability to dynamically create a new
+  Pydantic AI agent configured with an external MCP server toolkit. This is
+  extremely useful when an agent wants to spin up a sub-agent with specialized
+  tools defined in an `mcp_config.json`, and interact with that agent immediately
+  without modifying the parent agent's state or toolset.
+license: MIT
 tags: [agent, sub-agent, mcp, dynamic, spawner, pydantic-ai, orchestration]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Agent Spawner Skill
 

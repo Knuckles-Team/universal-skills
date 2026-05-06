@@ -1,8 +1,13 @@
 ---
 name: spec-generator
-description: Generates spec.md with user stories and acceptance criteria. Replaces product-management.
-tags: ['spec generator']
-version: '0.6.0'
+description: >-
+  Generates spec.md with user stories and acceptance criteria. Replaces product-
+  management.
+license: MIT
+tags: [spec generator]
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # SDD Spec Generator

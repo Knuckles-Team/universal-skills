@@ -1,8 +1,14 @@
 ---
 name: issue-triage
-description: Triage issues through a state machine driven by triage roles. Use when user wants to create an issue, triage issues, review incoming bugs or feature requests, prepare issues for an AFK agent, or manage issue workflow.
+description: >-
+  Triage issues through a state machine driven by triage roles. Use when user
+  wants to create an issue, triage issues, review incoming bugs or feature
+  requests, prepare issues for an AFK agent, or manage issue workflow.
+license: MIT
 tags: [github, issues, triage, bug tracking]
-version: '0.4.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Triage

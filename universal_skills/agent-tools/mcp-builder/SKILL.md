@@ -1,8 +1,15 @@
 ---
 name: mcp-builder
-description: Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services using the approved FastMCP Python standardized template.
+description: >-
+  Guide for creating high-quality MCP (Model Context Protocol) servers that enable
+  LLMs to interact with external services through well-designed tools. Use when
+  building MCP servers to integrate external APIs or services using the approved
+  FastMCP Python standardized template.
+license: MIT
 tags: [mcp, development, protocol, tools, api]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # MCP Server Development Guide
 

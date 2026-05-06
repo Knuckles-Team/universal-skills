@@ -1,8 +1,14 @@
 ---
 name: jupyter-notebook
-description: Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`) for experiments, explorations, or tutorials; prefer the bundled templates and run the helper script `new_notebook.py` to generate a clean starting notebook.
+description: >-
+  Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`)
+  for experiments, explorations, or tutorials; prefer the bundled templates and
+  run the helper script `new_notebook.py` to generate a clean starting notebook.
+license: MIT
 tags: [jupyter, notebook, python, data-science, research]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Jupyter Notebook
 

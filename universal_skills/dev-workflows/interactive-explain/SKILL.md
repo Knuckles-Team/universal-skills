@@ -1,5 +1,11 @@
 ---
-version: '0.6.0'
+name: interactive-explain
+description: Interactive codebase explanations
+license: MIT
+tags: []
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Interactive Explain

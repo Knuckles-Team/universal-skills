@@ -1,12 +1,15 @@
 ---
 name: efficient-mode
-description: >
-  Ultra-compressed communication mode. Cuts token usage ~75% by dropping
-  filler, articles, and pleasantries while keeping full technical accuracy.
-  Use when user says "efficient mode", "compressed mode", "less tokens",
-  "be brief", or invokes /efficient.
+description: >-
+  Ultra-compressed communication mode. Cuts token usage ~75% by dropping filler,
+  articles, and pleasantries while keeping full technical accuracy. Use when user
+  says "efficient mode", "compressed mode", "less tokens", "be brief", or invokes
+  /efficient.
+license: MIT
 tags: [efficient, tokens, brief, mode]
-version: '0.4.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 Respond terse like smart engineer. All technical substance stay. Only fluff die.

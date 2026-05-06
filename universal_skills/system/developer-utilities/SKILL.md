@@ -1,8 +1,13 @@
 ---
 name: developer-utilities
-description: A consolidated suite of developer utilities including formatting, conversion, generation, cryptographic, and networking tools.
+description: >-
+  A consolidated suite of developer utilities including formatting, conversion,
+  generation, cryptographic, and networking tools.
+license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Developer Utilities
 

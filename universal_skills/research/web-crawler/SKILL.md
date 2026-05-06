@@ -1,8 +1,15 @@
 ---
 name: web-crawler
-description: Comprehensive tool for crawling websites, single pages, and sitemaps to yield markdown content. Use when the agent needs to read or extract knowledge from online documentation, parse entire websites recursively, extract markdown from a single URL, chunk markdown, or bulk-process URLs from a sitemap XML.
+description: >-
+  Comprehensive tool for crawling websites, single pages, and sitemaps to yield
+  markdown content. Use when the agent needs to read or extract knowledge from
+  online documentation, parse entire websites recursively, extract markdown from a
+  single URL, chunk markdown, or bulk-process URLs from a sitemap XML.
+license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Web Crawler Skill
 

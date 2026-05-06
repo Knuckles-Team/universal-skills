@@ -1,8 +1,14 @@
 ---
 name: security-tools
-description: Security analysis tools including checking Sentry error logs, conducting threat models, analyzing source code git repositories for security ownership and bus factors, and applying security best practices.
+description: >-
+  Security analysis tools including checking Sentry error logs, conducting threat
+  models, analyzing source code git repositories for security ownership and bus
+  factors, and applying security best practices.
+license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Security Tools
 

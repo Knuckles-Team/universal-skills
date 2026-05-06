@@ -1,8 +1,16 @@
 ---
 name: algorithmic-art
-description: Creates generative algorithmic art using p5.js with seeded randomness and interactive HTML artifacts. Use when the user requests generative art, algorithmic art, computational aesthetics, flow fields, particle systems, or creative coding. Output is self-contained interactive HTML. Do NOT use for UI design, data visualization charts, or photo editing.
+description: >-
+  Creates generative algorithmic art using p5.js with seeded randomness and
+  interactive HTML artifacts. Use when the user requests generative art,
+  algorithmic art, computational aesthetics, flow fields, particle systems, or
+  creative coding. Output is self-contained interactive HTML. Do NOT use for UI
+  design, data visualization charts, or photo editing.
+license: MIT
 tags: [generative-art, p5js, creative-coding, algorithmic, canvas, interactive]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Algorithmic Art Creation
 

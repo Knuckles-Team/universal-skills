@@ -1,8 +1,18 @@
 ---
 name: session-handoff
-description: Create and restore comprehensive context handoff documents for agent session transfers. Use when context is getting full, a major task milestone is complete, work is pausing, or when resuming from a previous session. Triggers include "create handoff", "save state", "context is full", "I need to pause", "load handoff", "resume where we left off", or proactively after 5+ file edits or complex multi-step work. Do NOT use for project documentation — this is for agent-to-agent context preservation.
+description: >-
+  Create and restore comprehensive context handoff documents for agent session
+  transfers. Use when context is getting full, a major task milestone is complete,
+  work is pausing, or when resuming from a previous session. Triggers include
+  "create handoff", "save state", "context is full", "I need to pause", "load
+  handoff", "resume where we left off", or proactively after 5+ file edits or
+  complex multi-step work. Do NOT use for project documentation — this is for
+  agent-to-agent context preservation.
+license: MIT
 tags: [handoff, context, session, resumption, continuity, memory]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Session Handoff
 

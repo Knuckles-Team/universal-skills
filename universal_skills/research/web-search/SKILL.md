@@ -1,8 +1,14 @@
 ---
 name: web-search
-description: Search the web using various providers (DuckDuckGo, Google, Bing, Searxng) to find current information, news, and links. Use when the agent needs up-to-date context from the internet.
+description: >-
+  Search the web using various providers (DuckDuckGo, Google, Bing, Searxng) to
+  find current information, news, and links. Use when the agent needs up-to-date
+  context from the internet.
+license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Web Search
 

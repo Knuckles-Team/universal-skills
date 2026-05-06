@@ -59,6 +59,7 @@ ruff format .
 ## Code Style & Conventions
 **Always:**
 - Include a `SKILL.md` in every new skill directory.
+- Ensure any new `SKILL.md` is tracked in `.bumpversion.cfg` to maintain version parity.
 - Use the standard `try/except ImportError` guardrail for all external library imports.
 - Implement the `--insecure` flag and `SSL_VERIFY` env var check in all network-calling scripts.
 - Follow the directory structure: `SKILL.md`, `scripts/`, `resources/` (optional).

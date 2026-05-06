@@ -1,8 +1,15 @@
 ---
 name: theme-factory
-description: Creates design themes and token systems for applications, websites, and UI components. Use when the user requests a new visual theme, dark/light mode variants, color scheme expansion, or design token definitions. Do NOT use for general branding or individual component styling.
+description: >-
+  Creates design themes and token systems for applications, websites, and UI
+  components. Use when the user requests a new visual theme, dark/light mode
+  variants, color scheme expansion, or design token definitions. Do NOT use for
+  general branding or individual component styling.
+license: MIT
 tags: [theming, design-tokens, design-system, css-variables, color-schemes, dark-mode]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Theme Factory
 

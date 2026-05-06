@@ -1,20 +1,23 @@
 ---
 name: code-enhancer
 description: >-
-  Comprehensive code analysis and enhancement skill that performs 23-domain deep-dive reviews
-  of any codebase. Covers project analysis, dependency audit, changelog audit, codebase
-  optimization, security analysis, test coverage, pytest quality grading, test execution,
-  pre-commit compliance, documentation governance, directory organization, language detection,
-  UI/UX heuristics, architecture review, concept traceability, linting, vulnerability scanning,
-  environment variable scanning, brainstorming, multi-project orchestration, cross-project
-  integration, and actionable reporting with standardized 0-100 grading and SDD handoff
-  integration. Language-agnostic: supports Python, Go, Node, Rust, Java. Use when
-  tasked with "auditing", "optimizing", "updating", "improving", "reviewing", "grading", or
-  "enhancing" an agent, repository, or codebase. Replaces self-improver.
-categories: [Development, Core]
-tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
-version: '0.6.0'
+  Comprehensive code analysis and enhancement skill that performs 23-domain deep-
+  dive reviews of any codebase. Covers project analysis, dependency audit,
+  changelog audit, codebase optimization, security analysis, test coverage, pytest
+  quality grading, test execution, pre-commit compliance, documentation
+  governance, directory organization, language detection, UI/UX heuristics,
+  architecture review, concept traceability, linting, vulnerability scanning,
+  environment variable scanning, brainstorming, multi-project orchestration,
+  cross-project integration, and actionable reporting with standardized 0-100
+  grading and SDD handoff integration. Language-agnostic: supports Python, Go,
+  Node, Rust, Java. Use when tasked with "auditing", "optimizing", "updating",
+  "improving", "reviewing", "grading", or "enhancing" an agent, repository, or
+  codebase. Replaces self-improver.
 license: MIT
+tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Code Enhancer

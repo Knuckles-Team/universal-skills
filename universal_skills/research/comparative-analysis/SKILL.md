@@ -2,26 +2,13 @@
 name: comparative-analysis
 description: >-
   Comprehensive multi-modal comparative analysis engine for codebases, research papers,
-  and cross-domain innovation extraction. Performs enterprise-grade evaluation across 8
-  analysis domains (56+ metrics): governance, ecosystem health, architecture, code quality,
-  security, testing, documentation, and performance. Supports 4 analysis modes: codebase
-  vs codebase(s), codebase vs research paper(s), research paper vs research paper(s), and
-  cross-domain innovation extraction (biomimicry, analogical reasoning, TRIZ, emergent
-  value discovery). Produces graded comparison matrices with Mermaid radar charts, winner
-  determination per domain, weighted GPA rankings, and actionable integration
-  recommendations. Configurable output location: .specify/reports/ for codebase analysis,
-  or user-specified directory (e.g., ~/Documents) for research-only analysis. Use when
-  asked to "compare", "evaluate against", "benchmark", "analyze differences between",
-  "assess maturity of", "which is better", "review N projects", "compare research papers",
-  "find innovations in", or "what can we learn from". Do NOT use for single-project code
-  review (use code-enhancer instead) or general web research (use web-search).
+  and cross-domain innovation extraction. Evaluates governance, architecture, quality,
+  security, testing, docs, and performance.
 license: MIT
-tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance,
-  research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license,
-  compliance, enterprise, grading, radar-chart]
+tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart]
 metadata:
   author: Genius
-  version: '0.1.0'
+  version: '0.7.0'
 ---
 
 # Comparative Analysis

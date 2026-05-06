@@ -1,8 +1,14 @@
 ---
 name: skill-graph-builder
-description: Tool to transform crawled documentation into a structured agent skill. It automates the creation of a new skill directory, copies markdown files, and generates a SKILL.md with references.
+description: >-
+  Tool to transform crawled documentation into a structured agent skill. It
+  automates the creation of a new skill directory, copies markdown files, and
+  generates a SKILL.md with references.
+license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Skill-Graph-Builder (Docs-to-Skill Transformation)
 

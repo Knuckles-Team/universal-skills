@@ -1,9 +1,11 @@
 ---
-version: '0.6.0'
 name: workspace-manager
-category: sdd
 description: Bootstraps the exact .specify/ folder layout for 1:1 spec-kit compatibility
+license: MIT
 tags: [sdd, bootstrap]
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 You are the Workspace Manager agent.

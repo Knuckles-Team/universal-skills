@@ -1,5 +1,11 @@
 ---
-version: '0.6.0'
+name: manual-testing-enhanced
+description: Enhanced manual testing workflows
+license: MIT
+tags: []
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Manual Testing Enhanced

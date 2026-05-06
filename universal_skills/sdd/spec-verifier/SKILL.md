@@ -1,9 +1,13 @@
 ---
 name: spec-verifier
-category: sdd
-description: Polished verifier skill with drift report and CHECKLIST.md output for spec-kit parity
+description: >-
+  Polished verifier skill with drift report and CHECKLIST.md output for spec-kit
+  parity
+license: MIT
 tags: [verifier, sdd, qa]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 You are the Spec Verifier agent in a Spec-Driven Development workflow.

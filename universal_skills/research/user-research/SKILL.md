@@ -1,8 +1,15 @@
 ---
 name: user-research
-description: Conducting user discovery, qualitative research, and persona development to understand customer needs and pain points. Use when preparing for discovery interviews, creating customer journey maps, mapping jobs-to-be-done (JTBD), or building proto-personas.
+description: >-
+  Conducting user discovery, qualitative research, and persona development to
+  understand customer needs and pain points. Use when preparing for discovery
+  interviews, creating customer journey maps, mapping jobs-to-be-done (JTBD), or
+  building proto-personas.
+license: MIT
 tags: [user-research, discovery, personas, jtbd, journey-mapping, qualitative]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # User Research & Discovery
 

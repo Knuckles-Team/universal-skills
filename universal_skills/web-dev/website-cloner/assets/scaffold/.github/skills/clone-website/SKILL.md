@@ -3,7 +3,7 @@ name: clone-website
 description: Reverse-engineer and clone one or more websites in one shot — extracts assets, CSS, and content section-by-section and proactively dispatches parallel builder agents in worktrees as it goes. Use this whenever the user wants to clone, replicate, rebuild, reverse-engineer, or copy any website. Also triggers on phrases like "make a copy of this site", "rebuild this page", "pixel-perfect clone". Provide one or more target URLs as arguments.
 argument-hint: "<url1> [<url2> ...]"
 user-invocable: true
-version: '0.6.0'
+version: '0.7.0'
 ---
 
 # Clone Website

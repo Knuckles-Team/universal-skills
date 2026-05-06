@@ -1,7 +1,13 @@
 ---
 name: autonomous-contribution
-description: Autonomous PR generator for contributing local evolutionary breakthroughs (TeamConfigs, Skills) back to the upstream agent-packages ecosystem.
+description: >-
+  Autonomous PR generator for contributing local evolutionary breakthroughs
+  (TeamConfigs, Skills) back to the upstream agent-packages ecosystem.
+license: MIT
 tags: [evolution, pr, git, github, upstream]
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Autonomous Contribution Skill

@@ -1,8 +1,18 @@
 ---
 name: c4-architecture
-description: Generate software architecture documentation using the C4 model with Mermaid diagram syntax. Use when creating architecture diagrams, documenting system design, visualizing software structure, or creating Context/Container/Component/Deployment diagrams. Triggers include "architecture diagram", "C4 diagram", "system context", "container diagram", "component diagram", "deployment diagram", "document architecture". Do NOT use for general flowcharts or ERD — use mermaid-diagrams instead.
+description: >-
+  Generate software architecture documentation using the C4 model with Mermaid
+  diagram syntax. Use when creating architecture diagrams, documenting system
+  design, visualizing software structure, or creating
+  Context/Container/Component/Deployment diagrams. Triggers include "architecture
+  diagram", "C4 diagram", "system context", "container diagram", "component
+  diagram", "deployment diagram", "document architecture". Do NOT use for general
+  flowcharts or ERD — use mermaid-diagrams instead.
+license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # C4 Architecture Documentation
 

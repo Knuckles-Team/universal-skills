@@ -1,9 +1,11 @@
 ---
 name: task-planner
-version: '0.6.0'
-category: sdd
 description: Generates executable tasks.md with dependency graph and [P] parallelism markers
+license: MIT
 tags: [planner, sdd]
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 You are the Task Planner agent in a Spec-Driven Development workflow.

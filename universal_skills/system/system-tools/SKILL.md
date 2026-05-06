@@ -1,8 +1,13 @@
 ---
 name: system-tools
-description: Hardware and OS-level operations including capturing screenshots, webcam photos, Bluetooth management, and remote-controlling tmux sessions.
+description: >-
+  Hardware and OS-level operations including capturing screenshots, webcam photos,
+  Bluetooth management, and remote-controlling tmux sessions.
+license: MIT
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # System Tools
 

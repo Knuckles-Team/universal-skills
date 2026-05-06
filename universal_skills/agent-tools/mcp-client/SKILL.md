@@ -1,8 +1,15 @@
 ---
 name: mcp-client
-description:
+description: >-
+  Universal MCP client for connecting to any MCP server directly from a skill.
+  This replaces the old multi-agent pattern where the parent agent held all MCP
+  tools — instead, each skill spawns its own MCP connection with only the tools it
+  needs.
+license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # MCP Client Skill
 

@@ -1,19 +1,19 @@
 ---
 name: research-scanner
 description: >-
-  Periodically scan academic paper sources (arXiv, PMC, bioRxiv, Semantic Scholar) for
-  new research, score relevance against a target codebase or concept taxonomy, filter out
-  low-value papers, and download the valuable ones for comparative analysis. Uses the
-  ScholarX MCP server for paper search and download. Triggers on "scan for papers",
-  "find new research", "check arxiv", "research scan", "paper discovery", "what's new
-  in AI research", or when the agent needs to proactively discover research that could
-  enhance a codebase. Do NOT use for general web search — use web-search instead.
-categories: [Research]
-tags: [arxiv, research, papers, scholarx, mcp, discovery, relevance-scoring]
+  Periodically scan academic paper sources (arXiv, PMC, bioRxiv, Semantic Scholar)
+  for new research, score relevance against a target codebase or concept taxonomy,
+  filter out low-value papers, and download the valuable ones for comparative
+  analysis. Uses the ScholarX MCP server for paper search and download. Triggers
+  on "scan for papers", "find new research", "check arxiv", "research scan",
+  "paper discovery", "what's new in AI research", or when the agent needs to
+  proactively discover research that could enhance a codebase. Do NOT use for
+  general web search — use web-search instead.
 license: MIT
+tags: [arxiv, research, papers, scholarx, mcp, discovery, relevance-scoring]
 metadata:
   author: Genius
-  version: '0.1.0'
+  version: '0.7.0'
 ---
 
 # Research Scanner

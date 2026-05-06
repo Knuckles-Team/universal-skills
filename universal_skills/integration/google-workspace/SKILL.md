@@ -1,8 +1,15 @@
 ---
 name: google-workspace
-description: Use this skill to interact with the Google Workspace ecosystem, including Gmail, Google Calendar, Google Chat, Google Docs, Google Drive, Google Sheets, and Google Slides. You can search for files, read emails, manage calendar events, send messages, read/write docs and sheets, and interact with slides.
+description: >-
+  Use this skill to interact with the Google Workspace ecosystem, including Gmail,
+  Google Calendar, Google Chat, Google Docs, Google Drive, Google Sheets, and
+  Google Slides. You can search for files, read emails, manage calendar events,
+  send messages, read/write docs and sheets, and interact with slides.
+license: MIT
 tags: [google, workspace, gmail, calendar, chat, docs, drive, sheets, slides, api]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # Google Workspace
 

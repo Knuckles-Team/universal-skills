@@ -1,5 +1,11 @@
 ---
-version: '0.6.0'
+name: code-walkthrough
+description: Generates code walkthroughs
+license: MIT
+tags: []
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 
 # Code Walkthrough

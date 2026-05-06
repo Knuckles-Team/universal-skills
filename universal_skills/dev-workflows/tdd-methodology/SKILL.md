@@ -1,8 +1,16 @@
 ---
 name: tdd-methodology
-description: Strict Test-Driven Development (TDD) methodology guide using the Red-Green-Refactor cycle. Use when implementing features or fixing bugs with TDD, or when the user mentions TDD, test-first development, or comprehensive test coverage requirements. Do NOT use for pure design discussions, documentation tasks, or research-only work.
+description: >-
+  Strict Test-Driven Development (TDD) methodology guide using the Red-Green-
+  Refactor cycle. Use when implementing features or fixing bugs with TDD, or when
+  the user mentions TDD, test-first development, or comprehensive test coverage
+  requirements. Do NOT use for pure design discussions, documentation tasks, or
+  research-only work.
+license: MIT
 tags: [tdd, testing, red-green-refactor, quality, python]
-version: '0.6.0'
+metadata:
+  author: Genius
+  version: '0.7.0'
 ---
 # TDD Methodology Expert
 
