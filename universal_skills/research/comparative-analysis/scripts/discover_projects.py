@@ -219,27 +219,48 @@ def discover_project(path: Path) -> dict:
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: discover_projects.py <path1> [path2] [...]"}))
+        print(json.dumps({"error": "Usage: discover_projects.py <path1> [path2] [--kg-query <query>] [--mode <mode>]"}))
         sys.exit(1)
 
-    # Check for --mode flag
+    # Check for --mode and --kg-query flags
     mode = "auto"
+    kg_query = ""
     paths = []
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "--mode" and i + 1 < len(sys.argv):
             mode = sys.argv[i + 1]
             i += 2
+        elif sys.argv[i] == "--kg-query" and i + 1 < len(sys.argv):
+            kg_query = sys.argv[i + 1]
+            i += 2
         else:
             paths.append(sys.argv[i])
             i += 1
 
     projects = []
+
+    # Resolve KG sources if --kg-query is provided (CONCEPT:KG-2.12)
+    if kg_query:
+        kg_sources = _resolve_kg_sources(kg_query)
+        for src in kg_sources:
+            projects.append({
+                "path": src.get("file_path", ""),
+                "name": src.get("name", ""),
+                "type": src.get("source_type", "research"),
+                "exists": Path(src.get("file_path", "")).exists() if src.get("file_path") else False,
+                "source": "knowledge_graph",
+                "kg_metadata": src.get("kg_metadata", {}),
+                "relevance_score": src.get("relevance_score", 0.0),
+            })
+
+    # Discover filesystem projects
     for p in paths:
         path = Path(p).resolve()
         project = discover_project(path)
         if mode == "research":
             project["type"] = "research"
+        project["source"] = "filesystem"
         projects.append(project)
 
     # Determine analysis mode
@@ -254,10 +275,44 @@ def main():
     output = {
         "analysis_mode": analysis_mode,
         "project_count": len(projects),
+        "kg_query": kg_query if kg_query else None,
         "projects": projects,
     }
     print(json.dumps(output, indent=2))
 
 
+def _resolve_kg_sources(query: str) -> list[dict]:
+    """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.12).
+
+    This is optional — if agent_utilities is not installed or no KG
+    engine is available, returns an empty list gracefully.
+
+    Args:
+        query: Search query for KG resolution.
+
+    Returns:
+        List of resolved source dicts with file_path, name, source_type.
+    """
+    try:
+        from agent_utilities.knowledge_graph.source_resolver import KGSourceResolver
+        from agent_utilities.knowledge_graph.engine import IntelligenceGraphEngine
+
+        engine = IntelligenceGraphEngine.get_active()
+        if not engine:
+            print(json.dumps({"kg_warning": "No active KG engine — skipping KG resolution"}), file=sys.stderr)
+            return []
+
+        resolver = KGSourceResolver(engine=engine)
+        resolved = resolver.resolve_any(query=query, top_k=10)
+        return [r.model_dump() for r in resolved]
+    except ImportError:
+        print(json.dumps({"kg_warning": "agent_utilities not installed — KG resolution unavailable"}), file=sys.stderr)
+        return []
+    except Exception as e:
+        print(json.dumps({"kg_warning": f"KG resolution failed: {e}"}), file=sys.stderr)
+        return []
+
+
 if __name__ == "__main__":
     main()
+

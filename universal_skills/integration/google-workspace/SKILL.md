@@ -9,7 +9,7 @@ license: MIT
 tags: [google, workspace, gmail, calendar, chat, docs, drive, sheets, slides, api]
 metadata:
   author: Genius
-  version: '0.7.2'
+  version: '0.8.0'
 ---
 # Google Workspace
 

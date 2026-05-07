@@ -12,7 +12,7 @@ license: MIT
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
 metadata:
   author: Genius
-  version: '0.7.2'
+  version: '0.8.0'
 ---
 
 # Agent Package Builder

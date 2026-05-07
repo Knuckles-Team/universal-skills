@@ -13,7 +13,7 @@ license: MIT
 tags: [arxiv, research, papers, scholarx, mcp, discovery, relevance-scoring]
 metadata:
   author: Genius
-  version: '0.7.2'
+  version: '0.8.0'
 ---
 
 # Research Scanner

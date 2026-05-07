@@ -8,7 +8,7 @@ license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart]
 metadata:
   author: Genius
-  version: '0.7.2'
+  version: '0.8.0'
 ---
 
 # Comparative Analysis
@@ -30,6 +30,26 @@ This skill operates in **4 modes** depending on the inputs:
 | **Innovation Extraction** | Any source + target codebase | Hidden value-add discovery |
 
 ## Workflow
+
+### Phase -1: KG-Backed Discovery (Optional — CONCEPT:KG-2.12)
+
+When `agent-utilities` Knowledge Graph is available, sources can be resolved
+directly from the KG instead of requiring filesystem paths. This enables
+comparisons against previously ingested research papers, codebases, and
+knowledge bases without manual file management.
+
+```bash
+# Discover KG sources matching a query
+python scripts/discover_projects.py --kg-query "multi-agent orchestration"
+
+# Combine KG sources with filesystem paths
+python scripts/discover_projects.py --kg-query "knowledge graph" /path/to/project1
+
+# KG resolution is optional — if agent-utilities is not installed, it gracefully skips
+```
+
+KG sources are materialized to `~/.scholarx/analysis/` as markdown files with
+embedded metadata for downstream analysis scripts.
 
 ### Phase 0: Discovery & Classification
 
