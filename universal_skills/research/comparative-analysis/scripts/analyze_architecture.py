@@ -22,7 +22,16 @@ PROTOCOL_MARKERS = {
     "WebSocket": ["websocket", "ws://", "wss://"],
 }
 
-SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", ".tox", "dist", "build", ".mypy_cache"}
+SKIP_DIRS = {
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    ".tox",
+    "dist",
+    "build",
+    ".mypy_cache",
+}
 
 
 def detect_protocols(project_path: Path) -> dict:
@@ -30,7 +39,17 @@ def detect_protocols(project_path: Path) -> dict:
     found = {}
     code_content = ""
     for f in project_path.rglob("*"):
-        if f.is_file() and f.suffix in {".py", ".js", ".ts", ".go", ".rs", ".toml", ".json", ".yml", ".yaml"}:
+        if f.is_file() and f.suffix in {
+            ".py",
+            ".js",
+            ".ts",
+            ".go",
+            ".rs",
+            ".toml",
+            ".json",
+            ".yml",
+            ".yaml",
+        }:
             rel = f.relative_to(project_path)
             if any(p in str(rel) for p in SKIP_DIRS):
                 continue
@@ -62,12 +81,18 @@ def analyze_type_coverage(project_path: Path) -> dict:
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     total_funcs += 1
-                    if node.returns is not None or any(a.annotation for a in node.args.args):
+                    if node.returns is not None or any(
+                        a.annotation for a in node.args.args
+                    ):
                         typed_funcs += 1
         except (SyntaxError, UnicodeDecodeError):
             pass
     coverage = round(typed_funcs / max(total_funcs, 1) * 100, 1)
-    return {"total_functions": total_funcs, "typed_functions": typed_funcs, "coverage_pct": coverage}
+    return {
+        "total_functions": total_funcs,
+        "typed_functions": typed_funcs,
+        "coverage_pct": coverage,
+    }
 
 
 def analyze_module_structure(project_path: Path) -> dict:
@@ -118,16 +143,20 @@ def detect_config_patterns(project_path: Path) -> dict:
             pass
 
     signals["docker"] = any(
-        (project_path / f).exists() for f in ["Dockerfile", "docker-compose.yml", "compose.yml"]
+        (project_path / f).exists()
+        for f in ["Dockerfile", "docker-compose.yml", "compose.yml"]
     )
     signals["config_files"] = any(
-        (project_path / f).exists() for f in ["config.yml", "config.yaml", "config.json", ".env.example"]
+        (project_path / f).exists()
+        for f in ["config.yml", "config.yaml", "config.json", ".env.example"]
     )
 
     return signals
 
 
-def score_architecture(protocols: dict, types: dict, structure: dict, config: dict) -> dict:
+def score_architecture(
+    protocols: dict, types: dict, structure: dict, config: dict
+) -> dict:
     """Calculate 0-100 architecture score."""
     score = 0
     details = []
@@ -178,7 +207,23 @@ def score_architecture(protocols: dict, types: dict, structure: dict, config: di
     score += factor_score
     details.append(f"12-Factor signals ({factor_count}/6): +{factor_score}")
 
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
@@ -193,13 +238,21 @@ def main():
     config = detect_config_patterns(project_path)
     scoring = score_architecture(protocols, types, structure, config)
 
-    print(json.dumps({
-        "domain": "CA-003", "domain_name": "Architecture",
-        "project": str(project_path),
-        "protocols": protocols, "type_coverage": types,
-        "module_structure": structure, "config_patterns": config,
-        "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-003",
+                "domain_name": "Architecture",
+                "project": str(project_path),
+                "protocols": protocols,
+                "type_coverage": types,
+                "module_structure": structure,
+                "config_patterns": config,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

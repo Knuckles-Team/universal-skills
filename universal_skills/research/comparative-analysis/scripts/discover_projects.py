@@ -15,10 +15,17 @@ import json
 import re
 import sys
 import tomllib
+import uuid
 from pathlib import Path
 
 LANGUAGE_MARKERS = {
-    "python": ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile"],
+    "python": [
+        "pyproject.toml",
+        "setup.py",
+        "setup.cfg",
+        "requirements.txt",
+        "Pipfile",
+    ],
     "node": ["package.json", "tsconfig.json", "yarn.lock", "pnpm-lock.yaml"],
     "go": ["go.mod", "go.sum"],
     "rust": ["Cargo.toml", "Cargo.lock"],
@@ -41,7 +48,14 @@ def detect_language(project_path: Path) -> str:
             p in str(f) for p in [".git", "node_modules", "__pycache__", ".venv"]
         ):
             ext_counts[f.suffix] = ext_counts.get(f.suffix, 0) + 1
-    ext_to_lang = {".py": "python", ".js": "node", ".ts": "node", ".go": "go", ".rs": "rust", ".java": "java"}
+    ext_to_lang = {
+        ".py": "python",
+        ".js": "node",
+        ".ts": "node",
+        ".go": "go",
+        ".rs": "rust",
+        ".java": "java",
+    }
     best = max(ext_counts, key=ext_counts.get, default="")
     return ext_to_lang.get(best, "unknown")
 
@@ -64,7 +78,9 @@ def extract_python_metadata(project_path: Path) -> dict:
             "name": proj.get("name", ""),
             "version": proj.get("version", ""),
             "description": proj.get("description", ""),
-            "license": proj.get("license", {}).get("text", "") if isinstance(proj.get("license"), dict) else str(proj.get("license", "")),
+            "license": proj.get("license", {}).get("text", "")
+            if isinstance(proj.get("license"), dict)
+            else str(proj.get("license", "")),
             "dependencies": deps,
             "dep_count": len(deps),
             "python_requires": proj.get("requires-python", ""),
@@ -111,7 +127,17 @@ def count_structure(project_path: Path) -> dict:
         elif item.is_file():
             file_count += 1
             ext_counts[item.suffix] = ext_counts.get(item.suffix, 0) + 1
-            if item.suffix in {".py", ".js", ".ts", ".go", ".rs", ".java", ".c", ".cpp", ".h"}:
+            if item.suffix in {
+                ".py",
+                ".js",
+                ".ts",
+                ".go",
+                ".rs",
+                ".java",
+                ".c",
+                ".cpp",
+                ".h",
+            }:
                 try:
                     total_loc += sum(1 for _ in open(item, errors="ignore"))
                 except (OSError, UnicodeDecodeError):
@@ -120,7 +146,9 @@ def count_structure(project_path: Path) -> dict:
         "file_count": file_count,
         "dir_count": dir_count,
         "total_loc": total_loc,
-        "extension_distribution": dict(sorted(ext_counts.items(), key=lambda x: -x[1])[:10]),
+        "extension_distribution": dict(
+            sorted(ext_counts.items(), key=lambda x: -x[1])[:10]
+        ),
     }
 
 
@@ -130,9 +158,12 @@ def is_research_item(path: Path) -> bool:
         return path.suffix.lower() in RESEARCH_EXTENSIONS
     # Check if directory contains mostly docs
     if path.is_dir():
-        doc_count = sum(1 for f in path.rglob("*") if f.suffix.lower() in RESEARCH_EXTENSIONS)
+        doc_count = sum(
+            1 for f in path.rglob("*") if f.suffix.lower() in RESEARCH_EXTENSIONS
+        )
         code_count = sum(
-            1 for f in path.rglob("*")
+            1
+            for f in path.rglob("*")
             if f.suffix.lower() in {".py", ".js", ".ts", ".go", ".rs", ".java"}
         )
         return doc_count > code_count * 2
@@ -198,17 +229,37 @@ def discover_project(path: Path) -> dict:
 
     # Key file detection
     key_files = {
-        "readme": any((path / f).exists() for f in ["README.md", "README.rst", "README.txt", "README"]),
-        "changelog": any((path / f).exists() for f in ["CHANGELOG.md", "CHANGES.md", "HISTORY.md"]),
+        "readme": any(
+            (path / f).exists()
+            for f in ["README.md", "README.rst", "README.txt", "README"]
+        ),
+        "changelog": any(
+            (path / f).exists() for f in ["CHANGELOG.md", "CHANGES.md", "HISTORY.md"]
+        ),
         "contributing": (path / "CONTRIBUTING.md").exists(),
-        "code_of_conduct": any((path / f).exists() for f in ["CODE_OF_CONDUCT.md", ".github/CODE_OF_CONDUCT.md"]),
-        "security_policy": any((path / f).exists() for f in ["SECURITY.md", ".github/SECURITY.md"]),
+        "code_of_conduct": any(
+            (path / f).exists()
+            for f in ["CODE_OF_CONDUCT.md", ".github/CODE_OF_CONDUCT.md"]
+        ),
+        "security_policy": any(
+            (path / f).exists() for f in ["SECURITY.md", ".github/SECURITY.md"]
+        ),
         "ci_config": any(
             (path / f).exists()
-            for f in [".github/workflows", ".gitlab-ci.yml", "Jenkinsfile", ".circleci/config.yml"]
+            for f in [
+                ".github/workflows",
+                ".gitlab-ci.yml",
+                "Jenkinsfile",
+                ".circleci/config.yml",
+            ]
         ),
-        "docker": any((path / f).exists() for f in ["Dockerfile", "docker-compose.yml", "compose.yml"]),
-        "tests": any((path / f).exists() for f in ["tests", "test", "spec", "__tests__"]),
+        "docker": any(
+            (path / f).exists()
+            for f in ["Dockerfile", "docker-compose.yml", "compose.yml"]
+        ),
+        "tests": any(
+            (path / f).exists() for f in ["tests", "test", "spec", "__tests__"]
+        ),
         "docs": any((path / f).exists() for f in ["docs", "doc", "documentation"]),
         "agents_md": (path / "AGENTS.md").exists(),
     }
@@ -219,12 +270,22 @@ def discover_project(path: Path) -> dict:
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: discover_projects.py <path1> [path2] [--kg-query <query>] [--mode <mode>]"}))
+        print(
+            json.dumps(
+                {
+                    "error": "Usage: discover_projects.py <path1> [path2] [--kg-query <query>] [--mode <mode>]"
+                }
+            )
+        )
         sys.exit(1)
 
     # Check for --mode and --kg-query flags
     mode = "auto"
     kg_query = ""
+    session_id = uuid.uuid4().hex[:8]
+    temp_dir = Path.cwd() / ".specify" / "ca_repos" / session_id
+    cleanup_needed = False
+
     paths = []
     i = 1
     while i < len(sys.argv):
@@ -235,8 +296,32 @@ def main():
             kg_query = sys.argv[i + 1]
             i += 2
         else:
-            paths.append(sys.argv[i])
+            arg = sys.argv[i]
             i += 1
+            if arg.startswith(("http://", "https://", "git@")):
+                try:
+                    import repository_manager
+
+                    temp_dir.mkdir(parents=True, exist_ok=True)
+                    repo_name = arg.rstrip("/").split("/")[-1]
+                    if repo_name.endswith(".git"):
+                        repo_name = repo_name[:-4]
+                    target_path = temp_dir / repo_name
+                    print(f"Cloning {arg} into {target_path}...", file=sys.stderr)
+                    git = repository_manager.Git()
+                    res = git.clone_repository(arg, str(target_path))
+                    if res.status == "success":
+                        paths.append(str(target_path))
+                        cleanup_needed = True
+                    else:
+                        print(f"Failed to clone {arg}: {res.error}", file=sys.stderr)
+                except ImportError:
+                    print(
+                        f"repository-manager not installed, cannot clone {arg}",
+                        file=sys.stderr,
+                    )
+            else:
+                paths.append(arg)
 
     projects = []
 
@@ -244,15 +329,19 @@ def main():
     if kg_query:
         kg_sources = _resolve_kg_sources(kg_query)
         for src in kg_sources:
-            projects.append({
-                "path": src.get("file_path", ""),
-                "name": src.get("name", ""),
-                "type": src.get("source_type", "research"),
-                "exists": Path(src.get("file_path", "")).exists() if src.get("file_path") else False,
-                "source": "knowledge_graph",
-                "kg_metadata": src.get("kg_metadata", {}),
-                "relevance_score": src.get("relevance_score", 0.0),
-            })
+            projects.append(
+                {
+                    "path": src.get("file_path", ""),
+                    "name": src.get("name", ""),
+                    "type": src.get("source_type", "research"),
+                    "exists": Path(src.get("file_path", "")).exists()
+                    if src.get("file_path")
+                    else False,
+                    "source": "knowledge_graph",
+                    "kg_metadata": src.get("kg_metadata", {}),
+                    "relevance_score": src.get("relevance_score", 0.0),
+                }
+            )
 
     # Discover filesystem projects
     for p in paths:
@@ -278,6 +367,16 @@ def main():
         "kg_query": kg_query if kg_query else None,
         "projects": projects,
     }
+
+    if cleanup_needed:
+        output["cleanup_instruction"] = (
+            f"After analysis, delete the temporary directory: {temp_dir}"
+        )
+        print(
+            f"\\n[!] Note: Cloned remote repositories into {temp_dir}. Please clean up after analysis.",
+            file=sys.stderr,
+        )
+
     print(json.dumps(output, indent=2))
 
 
@@ -299,14 +398,26 @@ def _resolve_kg_sources(query: str) -> list[dict]:
 
         engine = IntelligenceGraphEngine.get_active()
         if not engine:
-            print(json.dumps({"kg_warning": "No active KG engine — skipping KG resolution"}), file=sys.stderr)
+            print(
+                json.dumps(
+                    {"kg_warning": "No active KG engine — skipping KG resolution"}
+                ),
+                file=sys.stderr,
+            )
             return []
 
         resolver = KGSourceResolver(engine=engine)
         resolved = resolver.resolve_any(query=query, top_k=10)
         return [r.model_dump() for r in resolved]
     except ImportError:
-        print(json.dumps({"kg_warning": "agent_utilities not installed — KG resolution unavailable"}), file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "kg_warning": "agent_utilities not installed — KG resolution unavailable"
+                }
+            ),
+            file=sys.stderr,
+        )
         return []
     except Exception as e:
         print(json.dumps({"kg_warning": f"KG resolution failed: {e}"}), file=sys.stderr)
@@ -315,4 +426,3 @@ def _resolve_kg_sources(query: str) -> list[dict]:
 
 if __name__ == "__main__":
     main()
-

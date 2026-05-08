@@ -13,25 +13,76 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-_SKIP_DIRS = frozenset({
-    ".venv", "venv", "__pycache__", "node_modules", ".git",
-    "build", "dist", ".tox", ".mypy_cache", ".ruff_cache",
-    ".pytest_cache", "target", ".gradle", ".idea", ".vscode",
-    "egg-info", ".eggs", ".cache",
-})
+_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        "venv",
+        "__pycache__",
+        "node_modules",
+        ".git",
+        "build",
+        "dist",
+        ".tox",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pytest_cache",
+        "target",
+        ".gradle",
+        ".idea",
+        ".vscode",
+        "egg-info",
+        ".eggs",
+        ".cache",
+    }
+)
 
 # Source file extensions to count (not configs, not binary)
-_SOURCE_EXTENSIONS = frozenset({
-    ".py", ".pyi", ".go", ".js", ".jsx", ".ts", ".tsx", ".rs",
-    ".java", ".kt", ".kts", ".rb", ".cs", ".cpp", ".c", ".h",
-    ".html", ".css", ".scss", ".vue", ".svelte", ".sh", ".sql",
-    ".yaml", ".yml", ".toml", ".json", ".md", ".rst",
-})
+_SOURCE_EXTENSIONS = frozenset(
+    {
+        ".py",
+        ".pyi",
+        ".go",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".java",
+        ".kt",
+        ".kts",
+        ".rb",
+        ".cs",
+        ".cpp",
+        ".c",
+        ".h",
+        ".html",
+        ".css",
+        ".scss",
+        ".vue",
+        ".svelte",
+        ".sh",
+        ".sql",
+        ".yaml",
+        ".yml",
+        ".toml",
+        ".json",
+        ".md",
+        ".rst",
+    }
+)
 
 # Rogue/throwaway script prefixes that should not be in the codebase
 _ROGUE_PREFIXES = (
-    "fix_", "validate_", "cleanup_", "patch_", "repair_",
-    "resolve_", "debug_", "tmp_", "temp_", "hack_",
+    "fix_",
+    "validate_",
+    "cleanup_",
+    "patch_",
+    "repair_",
+    "resolve_",
+    "debug_",
+    "tmp_",
+    "temp_",
+    "hack_",
 )
 
 
@@ -49,11 +100,13 @@ def _detect_rogue_scripts(root: Path) -> list[dict]:
         name = f.name.lower()
         for prefix in _ROGUE_PREFIXES:
             if name.startswith(prefix):
-                rogue_files.append({
-                    "file": str(f.relative_to(root)),
-                    "prefix": prefix.rstrip("_"),
-                    "recommendation": "Remove or integrate into project modules",
-                })
+                rogue_files.append(
+                    {
+                        "file": str(f.relative_to(root)),
+                        "prefix": prefix.rstrip("_"),
+                        "recommendation": "Remove or integrate into project modules",
+                    }
+                )
                 break
     return rogue_files
 
@@ -104,10 +157,14 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
     # Find empty directories (that aren't skip dirs)
     for d in root.rglob("*"):
         if d.is_dir() and not _should_skip(d):
-            children = [c for c in d.iterdir()
-                        if c.is_file() and c.suffix.lower() in _SOURCE_EXTENSIONS]
-            if not children and not any(c.is_dir() for c in d.iterdir()
-                                         if not _should_skip(c)):
+            children = [
+                c
+                for c in d.iterdir()
+                if c.is_file() and c.suffix.lower() in _SOURCE_EXTENSIONS
+            ]
+            if not children and not any(
+                c.is_dir() for c in d.iterdir() if not _should_skip(c)
+            ):
                 empty_dirs.append(str(d.relative_to(root)))
 
     if not all_files:
@@ -129,23 +186,31 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
     # Identify crowded directories
     crowded_dirs = []
     severely_crowded_dirs = []
-    for dir_path, files in sorted(dir_files.items(), key=lambda x: len(x[1]), reverse=True):
+    for dir_path, files in sorted(
+        dir_files.items(), key=lambda x: len(x[1]), reverse=True
+    ):
         count = len(files)
         if count > 40:
-            severely_crowded_dirs.append({"directory": dir_path, "file_count": count, "files": files[:10]})
+            severely_crowded_dirs.append(
+                {"directory": dir_path, "file_count": count, "files": files[:10]}
+            )
         elif count > 20:
-            crowded_dirs.append({"directory": dir_path, "file_count": count, "files": files[:10]})
+            crowded_dirs.append(
+                {"directory": dir_path, "file_count": count, "files": files[:10]}
+            )
 
     # Monolithic check: single dir holds > 50% of files
     monolithic_dirs = []
     for dir_path, files in dir_files.items():
         ratio = len(files) / total_files
         if ratio > 0.50 and len(files) > 15:
-            monolithic_dirs.append({
-                "directory": dir_path,
-                "file_count": len(files),
-                "percentage": round(ratio * 100, 1),
-            })
+            monolithic_dirs.append(
+                {
+                    "directory": dir_path,
+                    "file_count": len(files),
+                    "percentage": round(ratio * 100, 1),
+                }
+            )
 
     # Generate reorganization suggestions
     suggestions: list[dict] = []
@@ -158,21 +223,31 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
         prefix_groups: dict[str, int] = defaultdict(int)
         for fname in dir_files[dir_path]:
             # Extract common prefix (e.g., "test_" → "tests", "analyze_" → "analyzers")
-            parts = fname.replace(".py", "").replace(".ts", "").replace(".js", "").split("_")
+            parts = (
+                fname.replace(".py", "")
+                .replace(".ts", "")
+                .replace(".js", "")
+                .split("_")
+            )
             if len(parts) >= 2:
                 prefix_groups[parts[0]] += 1
 
         suggested_subdirs = [
-            prefix for prefix, c in prefix_groups.items()
+            prefix
+            for prefix, c in prefix_groups.items()
             if c >= 3 and prefix not in ("__init__", "test")
         ]
 
-        suggestions.append({
-            "directory": dir_path,
-            "current_count": count,
-            "action": f"Consider splitting {count} files into subdirectories",
-            "suggested_groups": suggested_subdirs[:5] if suggested_subdirs else ["by-feature", "by-domain"],
-        })
+        suggestions.append(
+            {
+                "directory": dir_path,
+                "current_count": count,
+                "action": f"Consider splitting {count} files into subdirectories",
+                "suggested_groups": suggested_subdirs[:5]
+                if suggested_subdirs
+                else ["by-feature", "by-domain"],
+            }
+        )
 
     # Scoring (start at 100, deduct)
     score = 100
@@ -199,7 +274,9 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
     # Depth penalties
     if max_depth < 2 and total_files > 20:
         score -= 10
-        findings.append(f"Flat project structure (max depth {max_depth}) with {total_files} files")
+        findings.append(
+            f"Flat project structure (max depth {max_depth}) with {total_files} files"
+        )
     elif max_depth > 8:
         score -= 10
         findings.append(f"Deeply nested project structure (max depth {max_depth})")
@@ -239,18 +316,20 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
         "rogue_scripts": len(rogue_scripts),
     }
 
-    justifications = [{
-        "criterion": "directory_organization",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (
-            f"{total_files} files across {len(dir_files)} directories. "
-            f"Max depth: {max_depth}, avg files/dir: {metrics['avg_files_per_dir']}. "
-            f"{len(crowded_dirs)} crowded, {len(severely_crowded_dirs)} severely crowded, "
-            f"{len(monolithic_dirs)} monolithic, "
-            f"{len(rogue_scripts)} rogue scripts."
-        ),
-    }]
+    justifications = [
+        {
+            "criterion": "directory_organization",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"{total_files} files across {len(dir_files)} directories. "
+                f"Max depth: {max_depth}, avg files/dir: {metrics['avg_files_per_dir']}. "
+                f"{len(crowded_dirs)} crowded, {len(severely_crowded_dirs)} severely crowded, "
+                f"{len(monolithic_dirs)} monolithic, "
+                f"{len(rogue_scripts)} rogue scripts."
+            ),
+        }
+    ]
 
     return {
         "domain": "Directory Organization",

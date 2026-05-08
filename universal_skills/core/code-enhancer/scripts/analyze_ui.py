@@ -15,10 +15,19 @@ import re
 import sys
 from pathlib import Path
 
-_SKIP_DIRS = frozenset({
-    ".venv", "venv", "__pycache__", "node_modules", ".git",
-    "build", "dist", ".next", ".nuxt",
-})
+_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        "venv",
+        "__pycache__",
+        "node_modules",
+        ".git",
+        "build",
+        "dist",
+        ".next",
+        ".nuxt",
+    }
+)
 
 # ── Nielsen's 10 Usability Heuristics ──
 # Each check returns (pass: bool, detail: str)
@@ -39,8 +48,10 @@ HEURISTICS = [
 def _scan_files(root: Path, extensions: set[str]) -> list[Path]:
     """Collect source files with given extensions, skipping vendored dirs."""
     return [
-        f for f in root.rglob("*")
-        if f.is_file() and f.suffix.lower() in extensions
+        f
+        for f in root.rglob("*")
+        if f.is_file()
+        and f.suffix.lower() in extensions
         and not any(skip in f.parts for skip in _SKIP_DIRS)
     ]
 
@@ -68,10 +79,20 @@ def _detect_ui_type(root: Path) -> str | None:
     if pkg_json.exists():
         try:
             content = pkg_json.read_text(encoding="utf-8", errors="ignore")
-            if any(fw in content for fw in (
-                "react", "vue", "angular", "@angular", "svelte", "next",
-                "nuxt", "vite", "webpack",
-            )):
+            if any(
+                fw in content
+                for fw in (
+                    "react",
+                    "vue",
+                    "angular",
+                    "@angular",
+                    "svelte",
+                    "next",
+                    "nuxt",
+                    "vite",
+                    "webpack",
+                )
+            ):
                 return "web"
         except Exception:
             pass
@@ -85,10 +106,18 @@ def _detect_ui_type(root: Path) -> str | None:
     if pyproject.exists():
         try:
             content = pyproject.read_text(encoding="utf-8", errors="ignore")
-            if any(lib in content for lib in (
-                "textual", "rich", "blessed", "urwid", "prompt-toolkit",
-                "curses", "npyscreen",
-            )):
+            if any(
+                lib in content
+                for lib in (
+                    "textual",
+                    "rich",
+                    "blessed",
+                    "urwid",
+                    "prompt-toolkit",
+                    "curses",
+                    "npyscreen",
+                )
+            ):
                 return "terminal"
         except Exception:
             pass
@@ -98,10 +127,17 @@ def _detect_ui_type(root: Path) -> str | None:
     for f in py_files[:50]:  # Sample first 50
         try:
             content = f.read_text(encoding="utf-8", errors="ignore")
-            if any(imp in content for imp in (
-                "import textual", "from textual", "import rich",
-                "from rich", "import curses", "import blessed",
-            )):
+            if any(
+                imp in content
+                for imp in (
+                    "import textual",
+                    "from textual",
+                    "import rich",
+                    "from rich",
+                    "import curses",
+                    "import blessed",
+                )
+            ):
                 return "terminal"
         except Exception:
             continue
@@ -110,6 +146,7 @@ def _detect_ui_type(root: Path) -> str | None:
 
 
 # ────────────────────── Web UI Heuristic Checks ──────────────────────
+
 
 def _web_visibility(content: str, files: list[Path]) -> tuple[bool, str]:
     """H1: Loading indicators, progress bars, spinners."""
@@ -127,7 +164,15 @@ def _web_real_world(content: str, files: list[Path]) -> tuple[bool, str]:
 
 def _web_user_control(content: str, files: list[Path]) -> tuple[bool, str]:
     """H3: Navigation, undo, back buttons, cancel actions."""
-    patterns = ["undo", "cancel", "back", "goBack", "navigate", "router.push", "history"]
+    patterns = [
+        "undo",
+        "cancel",
+        "back",
+        "goBack",
+        "navigate",
+        "router.push",
+        "history",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Control patterns: {', '.join(found) or 'none'}"
 
@@ -136,14 +181,25 @@ def _web_consistency(content: str, files: list[Path]) -> tuple[bool, str]:
     """H4: CSS variables, component reuse, design tokens."""
     css_files = [f for f in files if f.suffix in (".css", ".scss")]
     css_vars = content.count("var(--")
-    component_files = [f for f in files if f.suffix in (".jsx", ".tsx", ".vue", ".svelte")]
-    return (css_vars >= 5 or len(component_files) >= 5,
-            f"CSS vars: {css_vars}, components: {len(component_files)}")
+    component_files = [
+        f for f in files if f.suffix in (".jsx", ".tsx", ".vue", ".svelte")
+    ]
+    return (
+        css_vars >= 5 or len(component_files) >= 5,
+        f"CSS vars: {css_vars}, components: {len(component_files)}",
+    )
 
 
 def _web_error_prevention(content: str, files: list[Path]) -> tuple[bool, str]:
     """H5: Form validation, required fields, confirmations."""
-    patterns = ["required", "validate", "validation", "confirm", "pattern=", "type=\"email\""]
+    patterns = [
+        "required",
+        "validate",
+        "validation",
+        "confirm",
+        "pattern=",
+        'type="email"',
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Prevention patterns: {', '.join(found) or 'none'}"
 
@@ -157,8 +213,15 @@ def _web_recognition(content: str, files: list[Path]) -> tuple[bool, str]:
 
 def _web_flexibility(content: str, files: list[Path]) -> tuple[bool, str]:
     """H7: Responsive design, keyboard navigation, shortcuts."""
-    patterns = ["@media", "responsive", "useMediaQuery", "onKeyDown", "keyboard",
-                "shortcut", "hotkey"]
+    patterns = [
+        "@media",
+        "responsive",
+        "useMediaQuery",
+        "onKeyDown",
+        "keyboard",
+        "shortcut",
+        "hotkey",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Flexibility features: {', '.join(found) or 'none'}"
 
@@ -174,21 +237,39 @@ def _web_aesthetic(content: str, files: list[Path]) -> tuple[bool, str]:
                 pass
     has_spacing = any(p in css_content for p in ("gap:", "padding:", "margin:", "grid"))
     has_colors = css_content.count("var(--") >= 3 or css_content.count("#") >= 5
-    return has_spacing and has_colors, f"Spacing system: {has_spacing}, Color system: {has_colors}"
+    return (
+        has_spacing and has_colors,
+        f"Spacing system: {has_spacing}, Color system: {has_colors}",
+    )
 
 
 def _web_error_recovery(content: str, files: list[Path]) -> tuple[bool, str]:
     """H9: Error boundary, error messages, try-catch in UI."""
-    patterns = ["ErrorBoundary", "error-boundary", "catch", "fallback",
-                "error message", "toast", "notification"]
+    patterns = [
+        "ErrorBoundary",
+        "error-boundary",
+        "catch",
+        "fallback",
+        "error message",
+        "toast",
+        "notification",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Error recovery: {', '.join(found) or 'none'}"
 
 
 def _web_help(content: str, files: list[Path]) -> tuple[bool, str]:
     """H10: Help pages, tooltips, documentation links."""
-    patterns = ["tooltip", "help", "documentation", "docs", "guide", "tutorial",
-                "aria-describedby", "title="]
+    patterns = [
+        "tooltip",
+        "help",
+        "documentation",
+        "docs",
+        "guide",
+        "tutorial",
+        "aria-describedby",
+        "title=",
+    ]
     found = [p for p in patterns if p in content.lower()]
     return len(found) >= 2, f"Help features: {', '.join(found) or 'none'}"
 
@@ -201,13 +282,17 @@ def _web_accessibility(content: str, files: list[Path]) -> dict:
         "aria_labels": "aria-label" in content or "aria-labelledby" in content,
         "role_attributes": "role=" in content,
         "lang_attribute": 'lang="' in content or "lang='" in content,
-        "focus_management": "tabIndex" in content or "tabindex" in content or ":focus" in content,
-        "color_contrast": "contrast" in content.lower() or "prefers-color-scheme" in content,
+        "focus_management": "tabIndex" in content
+        or "tabindex" in content
+        or ":focus" in content,
+        "color_contrast": "contrast" in content.lower()
+        or "prefers-color-scheme" in content,
     }
     return checks
 
 
 # ────────────────────── Terminal UI Heuristic Checks ──────────────────────
+
 
 def _tui_visibility(content: str, files: list[Path]) -> tuple[bool, str]:
     """H1: Spinners, status bars, progress indicators."""
@@ -225,8 +310,15 @@ def _tui_real_world(content: str, files: list[Path]) -> tuple[bool, str]:
 
 def _tui_user_control(content: str, files: list[Path]) -> tuple[bool, str]:
     """H3: Ctrl+C handling, exit/quit, confirmation prompts."""
-    patterns = ["KeyboardInterrupt", "signal.SIGINT", "Ctrl+C", "quit", "exit",
-                "confirm", "Confirm"]
+    patterns = [
+        "KeyboardInterrupt",
+        "signal.SIGINT",
+        "Ctrl+C",
+        "quit",
+        "exit",
+        "confirm",
+        "Confirm",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Control patterns: {', '.join(found) or 'none'}"
 
@@ -261,16 +353,32 @@ def _tui_flexibility(content: str, files: list[Path]) -> tuple[bool, str]:
 
 def _tui_aesthetic(content: str, files: list[Path]) -> tuple[bool, str]:
     """H8: Aligned output, box drawing, colors, tables."""
-    patterns = ["Table", "Panel", "Box", "border", "Rich", "rich.table",
-                "rich.panel", "align", "center"]
+    patterns = [
+        "Table",
+        "Panel",
+        "Box",
+        "border",
+        "Rich",
+        "rich.table",
+        "rich.panel",
+        "align",
+        "center",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Aesthetic elements: {', '.join(found) or 'none'}"
 
 
 def _tui_error_recovery(content: str, files: list[Path]) -> tuple[bool, str]:
     """H9: Descriptive stderr, exit codes, error formatting."""
-    patterns = ["sys.exit", "exit(1)", "stderr", "console.print_exception",
-                "traceback", "error:", "Error:"]
+    patterns = [
+        "sys.exit",
+        "exit(1)",
+        "stderr",
+        "console.print_exception",
+        "traceback",
+        "error:",
+        "Error:",
+    ]
     found = [p for p in patterns if p in content]
     return len(found) >= 2, f"Error handling: {', '.join(found) or 'none'}"
 
@@ -295,15 +403,29 @@ def _score_to_grade(score: int) -> str:
 
 
 _WEB_CHECKS = [
-    _web_visibility, _web_real_world, _web_user_control, _web_consistency,
-    _web_error_prevention, _web_recognition, _web_flexibility, _web_aesthetic,
-    _web_error_recovery, _web_help,
+    _web_visibility,
+    _web_real_world,
+    _web_user_control,
+    _web_consistency,
+    _web_error_prevention,
+    _web_recognition,
+    _web_flexibility,
+    _web_aesthetic,
+    _web_error_recovery,
+    _web_help,
 ]
 
 _TUI_CHECKS = [
-    _tui_visibility, _tui_real_world, _tui_user_control, _tui_consistency,
-    _tui_error_prevention, _tui_recognition, _tui_flexibility, _tui_aesthetic,
-    _tui_error_recovery, _tui_help,
+    _tui_visibility,
+    _tui_real_world,
+    _tui_user_control,
+    _tui_consistency,
+    _tui_error_prevention,
+    _tui_recognition,
+    _tui_flexibility,
+    _tui_aesthetic,
+    _tui_error_recovery,
+    _tui_help,
 ]
 
 
@@ -324,20 +446,32 @@ def analyze_ui(root_dir: str = ".") -> dict:
             "grade": "N/A",
             "ui_type": None,
             "findings": ["No UI detected — domain not applicable"],
-            "justifications": [{
-                "criterion": "ui_detection",
-                "points": -1,
-                "evidence": str(root),
-                "reasoning": "No web or terminal UI framework detected. Domain skipped.",
-            }],
+            "justifications": [
+                {
+                    "criterion": "ui_detection",
+                    "points": -1,
+                    "evidence": str(root),
+                    "reasoning": "No web or terminal UI framework detected. Domain skipped.",
+                }
+            ],
             "heuristic_results": [],
             "accessibility": {},
         }
 
     # Collect relevant files
     if ui_type == "web":
-        extensions = {".html", ".htm", ".css", ".scss", ".js", ".jsx",
-                      ".ts", ".tsx", ".vue", ".svelte"}
+        extensions = {
+            ".html",
+            ".htm",
+            ".css",
+            ".scss",
+            ".js",
+            ".jsx",
+            ".ts",
+            ".tsx",
+            ".vue",
+            ".svelte",
+        }
         checks = _WEB_CHECKS
     else:  # terminal
         extensions = {".py"}
@@ -352,12 +486,14 @@ def analyze_ui(root_dir: str = ".") -> dict:
 
     for i, check_fn in enumerate(checks):
         passed, detail = check_fn(content, files)
-        heuristic_results.append({
-            "heuristic": HEURISTICS[i],
-            "passed": passed,
-            "detail": detail,
-            "points": 10 if passed else 0,
-        })
+        heuristic_results.append(
+            {
+                "heuristic": HEURISTICS[i],
+                "passed": passed,
+                "detail": detail,
+                "points": 10 if passed else 0,
+            }
+        )
         if passed:
             passed_count += 1
 
@@ -373,32 +509,32 @@ def analyze_ui(root_dir: str = ".") -> dict:
     failed_heuristics = [h for h in heuristic_results if not h["passed"]]
     if failed_heuristics:
         for h in failed_heuristics:
-            findings.append(
-                f"Failed heuristic '{h['heuristic']}': {h['detail']}"
-            )
+            findings.append(f"Failed heuristic '{h['heuristic']}': {h['detail']}")
 
     # Accessibility bonus/penalty for web
     if ui_type == "web" and accessibility:
         a11y_pass = sum(1 for v in accessibility.values() if v)
         a11y_total = len(accessibility)
         if a11y_pass < a11y_total // 2:
-            findings.append(
-                f"Accessibility: {a11y_pass}/{a11y_total} WCAG checks pass"
-            )
+            findings.append(f"Accessibility: {a11y_pass}/{a11y_total} WCAG checks pass")
 
-    justifications = [{
-        "criterion": f"ui_heuristics_{ui_type}",
-        "points": score,
-        "evidence": json.dumps({
-            "ui_type": ui_type,
-            "files_analyzed": len(files),
-            "heuristics_passed": passed_count,
-        }),
-        "reasoning": (
-            f"{ui_type.upper()} UI detected. {passed_count}/10 Nielsen heuristics pass. "
-            f"Analyzed {len(files)} {ui_type} files."
-        ),
-    }]
+    justifications = [
+        {
+            "criterion": f"ui_heuristics_{ui_type}",
+            "points": score,
+            "evidence": json.dumps(
+                {
+                    "ui_type": ui_type,
+                    "files_analyzed": len(files),
+                    "heuristics_passed": passed_count,
+                }
+            ),
+            "reasoning": (
+                f"{ui_type.upper()} UI detected. {passed_count}/10 Nielsen heuristics pass. "
+                f"Analyzed {len(files)} {ui_type} files."
+            ),
+        }
+    ]
 
     return {
         "domain": "UI/UX Quality",

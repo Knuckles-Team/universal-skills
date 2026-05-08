@@ -3,175 +3,163 @@ name: research-scanner
 description: >-
   Periodically scan academic paper sources (arXiv, PMC, bioRxiv, Semantic Scholar)
   for new research, score relevance against a target codebase or concept taxonomy,
-  filter out low-value papers, and download the valuable ones for comparative
-  analysis. Uses the ScholarX MCP server for paper search and download. Triggers
-  on "scan for papers", "find new research", "check arxiv", "research scan",
+  filter out low-value papers, and download the valuable ones for comparative analysis.
+  Uses the ScholarX library for paper discovery, scoring, and download.
+  Triggers on "scan for papers", "find new research", "check arxiv", "research scan",
   "paper discovery", "what's new in AI research", or when the agent needs to
-  proactively discover research that could enhance a codebase. Do NOT use for
-  general web search — use web-search instead.
+  proactively discover research that could enhance a codebase.
+  Do NOT use for general web search — use web-search instead.
 license: MIT
-tags: [arxiv, research, papers, scholarx, mcp, discovery, relevance-scoring]
+tags: [research, scanner, scholarx, automation]
 metadata:
   author: Genius
-  version: '0.8.0'
+  version: '0.9.0'
 ---
 
 # Research Scanner
 
-Automated research paper discovery, relevance scoring, and download pipeline powered
-by the ScholarX MCP server. Designed for periodic invocation to keep a local research
-library current with the latest publications relevant to a target domain.
+Automated research paper discovery, relevance scoring, and integration pipeline.
 
 ## Overview
 
-Research Scanner connects to the ScholarX MCP server to:
-1. **Fetch** recent papers from academic sources (arXiv, PMC, bioRxiv, etc.)
-2. **Score** each paper's abstract against a configurable relevance taxonomy
-3. **Filter** out irrelevant papers (junk) to save compute and storage
-4. **Download** PDFs for accepted papers with rate-limiting and retry
-5. **Report** relevance rankings and domain-matched concepts
+The Research Scanner provides two scanning modes:
 
-## Prerequisites
+1. **Daily RSS Scan** — Fetches today's papers from arXiv RSS feeds, scores relevance
+   against a configurable taxonomy, filters out irrelevant papers, downloads top-scored
+   PDFs, and generates a synergy report.
 
-The ScholarX MCP server must be accessible. Load it into the agent's MCP config:
+2. **Query-Based Search** — Searches for papers using the ScholarX API, scores and
+   filters results, and produces reports for targeted research discovery.
+
+Both modes use the `scholarx.scanner` library as their engine.
+
+## Quick Start
+
+### Daily Scan (RSS-powered)
+
+```bash
+python relevance_scanner.py --mode daily \
+    --categories cs.AI \
+    --output-dir scholarx_papers/daily_$(date +%Y-%m-%d)
+```
+
+### Query-Based Search
+
+```bash
+python relevance_scanner.py --mode search \
+    --query "multi-agent orchestration" \
+    --categories cs.AI,cs.MA,cs.LG \
+    --max-results 30 \
+    --output-dir scholarx_papers/query_results
+```
+
+### Python API (Direct Library Import)
+
+```python
+from scholarx.scanner import RelevanceScanner, DEFAULT_TAXONOMY
+
+# Daily scan
+scanner = RelevanceScanner()
+result = await scanner.scan_daily(
+    categories=["cs.AI"],
+    output_dir="scholarx_papers/daily",
+)
+print(f"Found {result.stats.relevant_count} relevant papers")
+
+# Score individual papers
+scored = scanner.score_papers(papers)
+for sp in scored:
+    if sp.score.verdict == "relevant":
+        print(f"[{sp.score.total_score:.1f}] {sp.paper['title']}")
+```
+
+### MCP Tools (Agent Access)
+
+The ScholarX MCP server exposes scanner tools:
+
+- `scan_daily` — Full daily RSS pipeline (fetch → score → filter → download)
+- `score_papers` — Search and score papers against the taxonomy
+
+## Taxonomy
+
+The scanner uses an 11-domain weighted keyword taxonomy:
+
+| Domain | Weight | Description |
+|--------|--------|-------------|
+| `orchestration` | 3.0 | Multi-agent coordination, workflows, agentic systems |
+| `knowledge_graph` | 3.0 | KG, ontology, semantic web, graph reasoning |
+| `planning_reasoning` | 2.5 | CoT, ToT, MCTS, deliberation, problem solving |
+| `memory_retrieval` | 2.5 | RAG, episodic memory, vector stores, long-context |
+| `terminal_ui` | 2.5 | CLI, TUI, session management, workspace |
+| `tool_use` | 2.0 | Function calling, MCP, code generation, plugins |
+| `evaluation_safety` | 2.0 | Benchmarks, alignment, guardrails, red-teaming |
+| `swarm_evolution` | 2.0 | Stigmergy, evolutionary algorithms, emergence |
+| `web_ui` | 2.0 | Dashboards, visualization, graph UI, streaming |
+| `llm_architecture` | 1.5 | Transformers, MoE, fine-tuning, quantization |
+| `human_ai` | 1.0 | HITL, collaborative AI, dialogue systems |
+
+### Custom Taxonomy
+
+Supply a JSON file with `--taxonomy`:
 
 ```json
 {
-  "mcpServers": {
-    "scholarx": {
-      "command": "scholarx-mcp",
-      "args": ["--transport", "stdio"],
-      "env": {
-        "SEARCHTOOL": "True",
-        "DISCOVERYTOOL": "True",
-        "STORAGETOOL": "True"
-      }
-    }
+  "my_domain": {
+    "weight": 3.0,
+    "keywords": ["keyword1", "keyword2", "partial_match"]
   }
 }
 ```
 
-Or use the mcp-client skill to connect:
-```bash
-python scripts/mcp_client.py \
-    --config scholarx/mcp_config.json \
-    --server scholarx \
-    --action call-mcp-tool \
-    --tool-name search_papers \
-    --tool-args '{"query": "multi-agent systems", "categories": "cs.AI", "max_results": 30}'
-```
-
-## Workflow
-
-### Phase 1: Fetch Papers
-
-Use the ScholarX MCP `search_papers` tool or `get_recent_papers` tool:
-
-```bash
-# Via mcp-client
-python -m universal_skills.skills.mcp-client.scripts.mcp_client \
-    --config <scholarx-mcp-config> --server scholarx \
-    --action call-mcp-tool \
-    --tool-name search_papers \
-    --tool-args '{"query": "artificial intelligence", "sources": "arxiv", "categories": "cs.AI,cs.MA,cs.LG", "max_results": 30, "sort_by": "date"}'
-```
-
-Or use the standalone script:
-```bash
-python scripts/relevance_scanner.py \
-    --query "artificial intelligence" \
-    --categories cs.AI,cs.MA,cs.LG \
-    --max-results 30 \
-    --target-project /path/to/codebase \
-    --output-dir /path/to/paper/library
-```
-
-### Phase 2: Score Relevance
-
-The `relevance_scanner.py` script scores each paper against a taxonomy of weighted
-keywords organized by domain. Domains and weights are configurable via the
-`references/relevance_taxonomy.json` file.
-
-Default domains (from agent-utilities ecosystem):
-
-| Domain | Weight | Example Keywords |
-|--------|--------|-----------------|
-| Orchestration | 3.0 | multi-agent, workflow, agentic, task decomposition |
-| Knowledge Graph | 3.0 | knowledge graph, ontology, OWL, entity relation |
-| Planning & Reasoning | 2.5 | chain of thought, MCTS, planning, deliberation |
-| Memory & Retrieval | 2.5 | RAG, episodic memory, continual learning |
-| Tool Use | 2.0 | function calling, MCP, code generation |
-| Evaluation & Safety | 2.0 | benchmark, red team, alignment, hallucination |
-| Swarm & Evolution | 2.0 | evolutionary, swarm, ant colony, stigmergy |
-| LLM Architecture | 1.5 | transformer, MoE, distillation, quantization |
-| Human-AI | 1.0 | human-in-the-loop, conversational, dialogue |
-
-### Phase 3: Filter & Accept
+## Scoring
 
 Papers are classified into three tiers:
 
-| Verdict | Score | Action |
-|---------|-------|--------|
-| ✅ Relevant | ≥ 3.0 | Accept — direct value for target domain |
-| 🟡 Marginal | 1.0–2.9 | Accept — small value could unlock bigger value later |
-| ❌ Irrelevant | < 1.0 | Reject — no domain overlap detected |
+- **✅ Relevant** (score ≥ 3.0) — High-value papers, PDFs downloaded automatically
+- **🟡 Marginal** (score 1.0–2.9) — Potentially useful, metadata saved
+- **❌ Irrelevant** (score < 1.0) — Filtered out
 
-### Phase 4: Download with Rate Limiting
+## Outputs
 
-Accepted papers are downloaded with:
-- **3.5s delay** between requests (arXiv's 1-req/3s policy + safety margin)
-- **3 retries** with exponential backoff (5s, 10s, 20s)
-- **Deduplication** — already-downloaded papers are skipped automatically
+Each scan produces:
 
-### Phase 5: Report
-
-Output files:
-- `relevance_scores.json` — Full scoring breakdown for all fetched papers
-- `paper_XX.md` — Markdown summaries with abstracts and relevance analysis
-- `papers_metadata.json` — Machine-readable metadata for accepted papers
-- `pdfs/` — Downloaded PDF files
-
-## Incremental Mode
-
-On subsequent runs, the scanner automatically skips already-downloaded papers.
-Use the ScholarX MCP `get_stored_papers` tool to check what's already in the library:
-
-```bash
-python -m universal_skills.skills.mcp-client.scripts.mcp_client \
-    --config <scholarx-mcp-config> --server scholarx \
-    --action call-mcp-tool \
-    --tool-name get_stored_papers --tool-args '{}'
+```
+output_dir/
+├── relevance_scores.json    # Full scoring breakdown
+├── synergy_report.md        # Domain integration roadmap
+├── papers_metadata.json     # Accepted paper metadata
+├── paper_01.md              # Individual paper summaries
+├── paper_02.md
+└── pdfs/                    # Downloaded PDFs (top-scored only)
+    ├── 2605.04050v1.pdf
+    └── 2605.04107v1.pdf
 ```
 
-## Customizing the Taxonomy
+## Deduplication
 
-Edit `references/relevance_taxonomy.json` to customize domains and keywords for
-your specific project. Each domain has:
-- `weight` (float) — Multiplier for domain relevance (higher = more important)
-- `keywords` (list) — Substring matches against title + abstract
+When `--library-dir` is specified, the scanner checks existing
+`papers_metadata.json` files and skips papers already in the library.
 
 ## Integration with Comparative Analysis
 
-After scanning, feed accepted papers into the `comparative-analysis` skill:
+The synergy report can be fed to the `comparative-analysis` skill:
+
 ```bash
-python scripts/extract_innovations.py \
-    --source /path/to/paper_library/paper_01.md \
-    --target /path/to/codebase
+# Step 1: Scan for papers
+python relevance_scanner.py --mode daily --output-dir papers/daily
+
+# Step 2: Run comparative analysis against your codebase
+# (Use the comparative-analysis skill with the downloaded papers)
 ```
 
-## Best Practices
+## Rate Limiting
 
-- **Run periodically** — Weekly or daily scans catch new publications quickly
-- **Tune the taxonomy** — Add project-specific keywords to reduce false negatives
-- **Start broad, refine later** — A marginal paper today may spark a breakthrough tomorrow
-- **Combine with comparative-analysis** — Use innovation extraction to find actionable synergies
-- **Monitor rate limits** — The scanner respects source rate limits, but very large batches
-  (>100 papers) may take several minutes for PDF downloads
+- arXiv RSS: No explicit rate limit (updated daily at midnight EST)
+- PDF downloads: 3.5s between requests (arXiv policy: 1 req/3s + margin)
+- Retry: 3 attempts with exponential backoff (5s, 10s, 20s)
 
-## Bundled Resources
+## Requirements
 
-### Scripts
-- `scripts/relevance_scanner.py` — Standalone relevance-scored paper pipeline
-
-### References
-- `references/relevance_taxonomy.json` — Configurable domain taxonomy with weights
+- `scholarx` package installed (`pip install -e agents/scholarx`)
+- `httpx` for HTTP requests
+- `pydantic` for data models

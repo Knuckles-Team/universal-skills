@@ -19,22 +19,31 @@ def analyze_git_activity(project_path: Path) -> dict:
     try:
         # Last commit date
         result = subprocess.run(
-            ["git", "log", "-1", "--format=%ci"], cwd=str(project_path),
-            capture_output=True, text=True, timeout=10,
+            ["git", "log", "-1", "--format=%ci"],
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         last_commit = result.stdout.strip() if result.returncode == 0 else None
 
         # Commit count last 90 days
         result = subprocess.run(
             ["git", "rev-list", "--count", "--since=90.days", "HEAD"],
-            cwd=str(project_path), capture_output=True, text=True, timeout=10,
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         commits_90d = int(result.stdout.strip()) if result.returncode == 0 else 0
 
         # Total commit count
         result = subprocess.run(
-            ["git", "rev-list", "--count", "HEAD"], cwd=str(project_path),
-            capture_output=True, text=True, timeout=10,
+            ["git", "rev-list", "--count", "HEAD"],
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         total_commits = int(result.stdout.strip()) if result.returncode == 0 else 0
 
@@ -42,7 +51,9 @@ def analyze_git_activity(project_path: Path) -> dict:
         days_since = None
         if last_commit:
             try:
-                dt = datetime.fromisoformat(last_commit.replace(" ", "T").rsplit("+", 1)[0].rsplit("-", 1)[0])
+                dt = datetime.fromisoformat(
+                    last_commit.replace(" ", "T").rsplit("+", 1)[0].rsplit("-", 1)[0]
+                )
                 days_since = (datetime.now() - dt).days
             except Exception:
                 pass
@@ -61,8 +72,11 @@ def analyze_releases(project_path: Path) -> dict:
     """Analyze release tags for SemVer adherence."""
     try:
         result = subprocess.run(
-            ["git", "tag", "--sort=-creatordate"], cwd=str(project_path),
-            capture_output=True, text=True, timeout=10,
+            ["git", "tag", "--sort=-creatordate"],
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode != 0:
             return {"count": 0}
@@ -92,7 +106,9 @@ def detect_ci(project_path: Path) -> dict:
     }
     workflow_count = 0
     if ci_systems["github_actions"]:
-        workflow_count = len(list((project_path / ".github" / "workflows").glob("*.yml")))
+        workflow_count = len(
+            list((project_path / ".github" / "workflows").glob("*.yml"))
+        )
     return {
         "ci_detected": any(ci_systems.values()),
         "systems": {k: v for k, v in ci_systems.items() if v},
@@ -109,6 +125,7 @@ def analyze_dependency_freshness(project_path: Path) -> dict:
     if pyproject.exists():
         try:
             import tomllib
+
             with open(pyproject, "rb") as f:
                 data = tomllib.load(f)
             deps = data.get("project", {}).get("dependencies", [])
@@ -136,7 +153,9 @@ def analyze_dependency_freshness(project_path: Path) -> dict:
         except Exception:
             pass
 
-    dep_info["pin_rate"] = round(dep_info["pinned"] / max(dep_info["total"], 1) * 100, 1)
+    dep_info["pin_rate"] = round(
+        dep_info["pinned"] / max(dep_info["total"], 1) * 100, 1
+    )
     return dep_info
 
 
@@ -193,7 +212,9 @@ def score_ecosystem(git: dict, releases: dict, ci: dict, deps: dict) -> dict:
     # CI (20 points)
     if ci.get("ci_detected"):
         score += 15
-        details.append(f"CI configured ({', '.join(ci.get('systems', {}).keys())}): +15")
+        details.append(
+            f"CI configured ({', '.join(ci.get('systems', {}).keys())}): +15"
+        )
         if ci.get("workflow_count", 0) >= 3:
             score += 5
             details.append(f"Multiple workflows ({ci['workflow_count']}): +5")
@@ -211,13 +232,31 @@ def score_ecosystem(git: dict, releases: dict, ci: dict, deps: dict) -> dict:
             score += 5
             details.append(f"Mostly unpinned ({pin_rate}%): +5")
 
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: analyze_ecosystem_health.py <project_path>"}))
+        print(
+            json.dumps({"error": "Usage: analyze_ecosystem_health.py <project_path>"})
+        )
         sys.exit(1)
     project_path = Path(sys.argv[1]).resolve()
     git = analyze_git_activity(project_path)
@@ -226,12 +265,21 @@ def main():
     deps = analyze_dependency_freshness(project_path)
     scoring = score_ecosystem(git, releases, ci, deps)
 
-    print(json.dumps({
-        "domain": "CA-002", "domain_name": "Ecosystem Health",
-        "project": str(project_path),
-        "git_activity": git, "releases": releases,
-        "ci": ci, "dependencies": deps, "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-002",
+                "domain_name": "Ecosystem Health",
+                "project": str(project_path),
+                "git_activity": git,
+                "releases": releases,
+                "ci": ci,
+                "dependencies": deps,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

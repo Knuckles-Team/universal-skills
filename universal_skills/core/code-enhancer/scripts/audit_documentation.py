@@ -15,10 +15,14 @@ from pathlib import Path
 
 
 DOC_TAXONOMY = {
-    "README.md": {"category": "project_overview", "required_sections": [
-        "overview", "installation", "usage|quick start"]},
-    "AGENTS.md": {"category": "agentic_metadata", "required_sections": [
-        "tech stack", "commands", "project structure"]},
+    "README.md": {
+        "category": "project_overview",
+        "required_sections": ["overview", "installation", "usage|quick start"],
+    },
+    "AGENTS.md": {
+        "category": "agentic_metadata",
+        "required_sections": ["tech stack", "commands", "project structure"],
+    },
     "STANDARDS.md": {"category": "standards", "required_sections": []},
     "CONTRIBUTING.md": {"category": "contributing", "required_sections": []},
     "CHANGELOG.md": {"category": "changelog", "required_sections": []},
@@ -29,31 +33,75 @@ DOC_TAXONOMY = {
 README_CRITERIA = {
     "has_title": {"weight": 1, "description": "Has an H1 project title"},
     "has_badges": {"weight": 1, "description": "Has CI/version/license badges"},
-    "has_description": {"weight": 2, "description": "Has a clear project description (>50 chars)"},
+    "has_description": {
+        "weight": 2,
+        "description": "Has a clear project description (>50 chars)",
+    },
     "has_toc": {"weight": 2, "description": "Has a Table of Contents"},
     "has_installation": {"weight": 2, "description": "Has installation instructions"},
     "has_usage": {"weight": 2, "description": "Has usage examples with code blocks"},
     "has_api_docs": {"weight": 1, "description": "References API/module documentation"},
-    "has_architecture": {"weight": 2, "description": "Has architecture overview or diagram"},
-    "has_contributing": {"weight": 1, "description": "Has contributing guidelines or link"},
+    "has_architecture": {
+        "weight": 2,
+        "description": "Has architecture overview or diagram",
+    },
+    "has_contributing": {
+        "weight": 1,
+        "description": "Has contributing guidelines or link",
+    },
     "has_license": {"weight": 1, "description": "Has license section or reference"},
-    "has_code_blocks": {"weight": 1, "description": "Has code examples (fenced blocks)"},
-    "has_docs_refs": {"weight": 2, "description": "References /docs directory material"},
-    "no_broken_links": {"weight": 1, "description": "No obviously broken markdown links"},
-    "reasonable_length": {"weight": 1, "description": "README is between 200-10000 lines"},
-    "has_cli_api_details": {"weight": 2, "description": "Has CLI parameters or API endpoints details"},
-    "has_mcp_configs": {"weight": 2, "description": "Has mcp_server.py deployment configurations"},
-    "has_agent_configs": {"weight": 2, "description": "Has agent_server.py deployment configurations"},
-    "has_env_var_docs": {"weight": 2, "description": "Documents all environment variables in a table or section"},
-    "has_mcp_tool_table": {"weight": 2, "description": "Has MCP tools mapping table with descriptions"},
-    "has_deployment_docs": {"weight": 2, "description": "Has bare-metal and container deployment instructions"},
+    "has_code_blocks": {
+        "weight": 1,
+        "description": "Has code examples (fenced blocks)",
+    },
+    "has_docs_refs": {
+        "weight": 2,
+        "description": "References /docs directory material",
+    },
+    "no_broken_links": {
+        "weight": 1,
+        "description": "No obviously broken markdown links",
+    },
+    "reasonable_length": {
+        "weight": 1,
+        "description": "README is between 200-10000 lines",
+    },
+    "has_cli_api_details": {
+        "weight": 2,
+        "description": "Has CLI parameters or API endpoints details",
+    },
+    "has_mcp_configs": {
+        "weight": 2,
+        "description": "Has mcp_server.py deployment configurations",
+    },
+    "has_agent_configs": {
+        "weight": 2,
+        "description": "Has agent_server.py deployment configurations",
+    },
+    "has_env_var_docs": {
+        "weight": 2,
+        "description": "Documents all environment variables in a table or section",
+    },
+    "has_mcp_tool_table": {
+        "weight": 2,
+        "description": "Has MCP tools mapping table with descriptions",
+    },
+    "has_deployment_docs": {
+        "weight": 2,
+        "description": "Has bare-metal and container deployment instructions",
+    },
 }
 
 
 def _check_doc_completeness(filepath: Path, required_sections: list[str]) -> dict:
     """Check if a doc has required sections."""
     if not filepath.exists():
-        return {"exists": False, "missing_sections": required_sections, "size": 0, "headings": []}
+        return {
+            "exists": False,
+            "missing_sections": required_sections,
+            "size": 0,
+            "headings": [],
+        }
 
     content = filepath.read_text(encoding="utf-8", errors="ignore")
     headings = re.findall(r"^#+\s+(.+)", content, re.MULTILINE)
@@ -82,7 +130,10 @@ def _check_staleness(filepath: Path, root: Path) -> dict:
     try:
         result = subprocess.run(
             ["git", "log", "-1", "--format=%ci", str(filepath)],
-            capture_output=True, text=True, cwd=str(root), timeout=10,
+            capture_output=True,
+            text=True,
+            cwd=str(root),
+            timeout=10,
         )
         if result.returncode == 0 and result.stdout.strip():
             return {"stale": False, "last_modified": result.stdout.strip()}
@@ -116,12 +167,14 @@ def _detect_code_doc_drift(root: Path) -> list[dict]:
             if not ref_path.exists() and not any(
                 p.name == Path(ref).name for p in root.rglob(Path(ref).name)
             ):
-                drift.append({
-                    "type": "broken_reference",
-                    "doc": "AGENTS.md",
-                    "reference": ref,
-                    "detail": f"Referenced file '{ref}' not found in project",
-                })
+                drift.append(
+                    {
+                        "type": "broken_reference",
+                        "doc": "AGENTS.md",
+                        "reference": ref,
+                        "detail": f"Referenced file '{ref}' not found in project",
+                    }
+                )
 
     # Check if README mentions packages/modules that don't exist
     readme = root / "README.md"
@@ -133,12 +186,14 @@ def _detect_code_doc_drift(root: Path) -> list[dict]:
         import_refs = re.findall(r"(?:from|import)\s+(\w+)", content)
         # These are informational, not scored
         if install_refs:
-            drift.append({
-                "type": "info",
-                "doc": "README.md",
-                "reference": ", ".join(install_refs[:5]),
-                "detail": f"README references {len(install_refs)} install commands",
-            })
+            drift.append(
+                {
+                    "type": "info",
+                    "doc": "README.md",
+                    "reference": ", ".join(install_refs[:5]),
+                    "detail": f"README references {len(install_refs)} install commands",
+                }
+            )
 
     return drift
 
@@ -151,7 +206,9 @@ def _grade_readme(root: Path) -> dict:
     readme_path = root / "README.md"
     if not readme_path.exists():
         return {
-            "score": 0, "grade": "F", "max_score": 20,
+            "score": 0,
+            "grade": "F",
+            "max_score": 20,
             "criteria": {k: False for k in README_CRITERIA},
             "findings": ["README.md is missing"],
         }
@@ -193,9 +250,11 @@ def _grade_readme(root: Path) -> dict:
     ) or bool(re.search(r"- \[.+\]\(#.+\)", content))
 
     # Installation
-    results["has_installation"] = any(
-        "install" in h for h in headings_lower
-    ) or "pip install" in content or "uv pip" in content
+    results["has_installation"] = (
+        any("install" in h for h in headings_lower)
+        or "pip install" in content
+        or "uv pip" in content
+    )
 
     # Usage with code
     results["has_usage"] = any(
@@ -204,38 +263,44 @@ def _grade_readme(root: Path) -> dict:
     )
 
     # API docs reference
-    results["has_api_docs"] = any(
-        "api" in h or "reference" in h or "module" in h for h in headings_lower
-    ) or "docs/" in content
+    results["has_api_docs"] = (
+        any("api" in h or "reference" in h or "module" in h for h in headings_lower)
+        or "docs/" in content
+    )
 
     # Architecture
-    results["has_architecture"] = any(
-        "architect" in h or "design" in h or "overview" in h for h in headings_lower
-    ) or "```mermaid" in content
+    results["has_architecture"] = (
+        any(
+            "architect" in h or "design" in h or "overview" in h for h in headings_lower
+        )
+        or "```mermaid" in content
+    )
 
     # Contributing
-    results["has_contributing"] = any(
-        "contribut" in h for h in headings_lower
-    ) or "CONTRIBUTING.md" in content
+    results["has_contributing"] = (
+        any("contribut" in h for h in headings_lower) or "CONTRIBUTING.md" in content
+    )
 
     # License
-    results["has_license"] = any(
-        "license" in h for h in headings_lower
-    ) or "LICENSE" in content
+    results["has_license"] = (
+        any("license" in h for h in headings_lower) or "LICENSE" in content
+    )
 
     # Code blocks
     results["has_code_blocks"] = len(code_blocks) >= 2
 
     # Docs references
-    results["has_docs_refs"] = bool(
-        re.search(r"docs/\w+\.md|\[.+\]\(docs/", content)
-    )
+    results["has_docs_refs"] = bool(re.search(r"docs/\w+\.md|\[.+\]\(docs/", content))
 
     # Broken links (markdown links to files that don't exist)
     md_links = re.findall(r"\[.+?\]\(([^)]+)\)", content)
     broken = 0
     for link in md_links:
-        if link.startswith("http") or link.startswith("#") or link.startswith("mailto:"):
+        if (
+            link.startswith("http")
+            or link.startswith("#")
+            or link.startswith("mailto:")
+        ):
             continue
         target = root / link.split("#")[0]
         if not target.exists():
@@ -249,30 +314,44 @@ def _grade_readme(root: Path) -> dict:
     if len(lines) < 200:
         findings.append(f"README.md is short ({len(lines)} lines) — consider expanding")
     elif len(lines) > 10000:
-        findings.append(f"README.md is very long ({len(lines)} lines) — consider splitting")
+        findings.append(
+            f"README.md is very long ({len(lines)} lines) — consider splitting"
+        )
 
     # Agent / Server Specific Fields
     has_mcp = list(root.rglob("mcp_server.py"))
     has_agent = list(root.rglob("agent_server.py"))
-    
+
     results["has_cli_api_details"] = True
     if has_mcp or has_agent:
-        results["has_cli_api_details"] = any(
-            "cli" in h or "api" in h or "parameter" in h or "endpoint" in h or "credential" in h 
-            for h in headings_lower
-        ) or "cli" in content.lower() or "api" in content.lower()
+        results["has_cli_api_details"] = (
+            any(
+                "cli" in h
+                or "api" in h
+                or "parameter" in h
+                or "endpoint" in h
+                or "credential" in h
+                for h in headings_lower
+            )
+            or "cli" in content.lower()
+            or "api" in content.lower()
+        )
 
     results["has_mcp_configs"] = True
     if has_mcp:
-        results["has_mcp_configs"] = any(
-            "mcp" in h for h in headings_lower
-        ) or "stdio" in content.lower() or "http" in content.lower()
+        results["has_mcp_configs"] = (
+            any("mcp" in h for h in headings_lower)
+            or "stdio" in content.lower()
+            or "http" in content.lower()
+        )
 
     results["has_agent_configs"] = True
     if has_agent:
-        results["has_agent_configs"] = any(
-            "agent server" in h or "deploy" in h for h in headings_lower
-        ) or "bare-metal" in content.lower() or "container" in content.lower()
+        results["has_agent_configs"] = (
+            any("agent server" in h or "deploy" in h for h in headings_lower)
+            or "bare-metal" in content.lower()
+            or "container" in content.lower()
+        )
 
     # Environment variable documentation
     results["has_env_var_docs"] = True
@@ -282,9 +361,11 @@ def _grade_readme(root: Path) -> dict:
             "environment" in h or "env var" in h or "configuration" in h
             for h in headings_lower
         )
-        has_env_table = bool(re.search(
-            r"\|\s*(?:Variable|Env|Name|Parameter)\s*\|", content, re.IGNORECASE
-        ))
+        has_env_table = bool(
+            re.search(
+                r"\|\s*(?:Variable|Env|Name|Parameter)\s*\|", content, re.IGNORECASE
+            )
+        )
         results["has_env_var_docs"] = has_env_section or has_env_table
         if not results["has_env_var_docs"]:
             findings.append("README missing: Environment variables documentation table")
@@ -296,10 +377,13 @@ def _grade_readme(root: Path) -> dict:
             "tool" in h and ("mcp" in h or "available" in h or "list" in h)
             for h in headings_lower
         )
-        has_tool_table = bool(re.search(
-            r"\|\s*(?:Tool|Function|Command)\s*\|.*\|.*(?:Description|Details)",
-            content, re.IGNORECASE,
-        ))
+        has_tool_table = bool(
+            re.search(
+                r"\|\s*(?:Tool|Function|Command)\s*\|.*\|.*(?:Description|Details)",
+                content,
+                re.IGNORECASE,
+            )
+        )
         results["has_mcp_tool_table"] = has_tool_section or has_tool_table
         if not results["has_mcp_tool_table"]:
             findings.append("README missing: MCP tools mapping table with descriptions")
@@ -308,10 +392,13 @@ def _grade_readme(root: Path) -> dict:
     results["has_deployment_docs"] = True
     if has_mcp or has_agent:
         has_docker = "docker" in content.lower() or "container" in content.lower()
-        has_bare = any(
-            "local" in h or "install" in h or "bare" in h or "pip" in h
-            for h in headings_lower
-        ) or "pip install" in content
+        has_bare = (
+            any(
+                "local" in h or "install" in h or "bare" in h or "pip" in h
+                for h in headings_lower
+            )
+            or "pip install" in content
+        )
         results["has_deployment_docs"] = has_docker and has_bare
         if not results["has_deployment_docs"]:
             findings.append(
@@ -319,9 +406,7 @@ def _grade_readme(root: Path) -> dict:
             )
 
     # Score
-    score = sum(
-        README_CRITERIA[k]["weight"] for k, v in results.items() if v
-    )
+    score = sum(README_CRITERIA[k]["weight"] for k, v in results.items() if v)
     max_score = sum(c["weight"] for c in README_CRITERIA.values())
     pct = (score / max_score) * 100 if max_score else 0
 
@@ -331,7 +416,8 @@ def _grade_readme(root: Path) -> dict:
             findings.append(f"README missing: {README_CRITERIA[k]['description']}")
 
     return {
-        "score": score, "max_score": max_score,
+        "score": score,
+        "max_score": max_score,
         "percentage": round(pct, 1),
         "grade": _score_to_grade(int(pct)),
         "criteria": results,
@@ -376,7 +462,11 @@ def audit_documentation(root_dir: str = ".") -> dict:
         doc_path = root / doc_name
         completeness = _check_doc_completeness(doc_path, meta["required_sections"])
         staleness = _check_staleness(doc_path, root)
-        doc_results[doc_name] = {**completeness, **staleness, "category": meta["category"]}
+        doc_results[doc_name] = {
+            **completeness,
+            **staleness,
+            "category": meta["category"],
+        }
 
     # Check /docs
     docs_dir_info = _check_docs_directory(root)
@@ -399,7 +489,9 @@ def audit_documentation(root_dir: str = ".") -> dict:
     else:
         if readme_info.get("missing_sections"):
             score -= len(readme_info["missing_sections"]) * 3
-            findings.append(f"README.md missing sections: {', '.join(readme_info['missing_sections'])}")
+            findings.append(
+                f"README.md missing sections: {', '.join(readme_info['missing_sections'])}"
+            )
         # Industry grade sub-score (up to 15 pts deduction)
         readme_pct = readme_grade.get("percentage", 0)
         if readme_pct < 40:
@@ -417,7 +509,9 @@ def audit_documentation(root_dir: str = ".") -> dict:
         findings.append("AGENTS.md is missing")
     elif agents_info.get("missing_sections"):
         score -= len(agents_info["missing_sections"]) * 5
-        findings.append(f"AGENTS.md missing sections: {', '.join(agents_info['missing_sections'])}")
+        findings.append(
+            f"AGENTS.md missing sections: {', '.join(agents_info['missing_sections'])}"
+        )
 
     # /docs directory (20 pts)
     if not docs_dir_info.get("exists"):
@@ -445,22 +539,37 @@ def audit_documentation(root_dir: str = ".") -> dict:
 
     score = max(0, score)
 
-    justifications = [{
-        "criterion": "documentation_quality",
-        "points": score,
-        "evidence": json.dumps({k: {"exists": v.get("exists", False),
-                                     "missing": v.get("missing_sections", [])}
-                                for k, v in doc_results.items() if isinstance(v, dict)}),
-        "reasoning": (f"Audited {len(DOC_TAXONOMY)} standard docs + docs/ directory. "
-                      f"{len(broken_refs)} broken references, "
-                      f"{sum(1 for d in doc_results.values() if isinstance(d, dict) and d.get('exists'))} docs present. "
-                      f"README industry grade: {readme_grade.get('grade', 'N/A')} ({readme_grade.get('percentage', 0)}%)."),
-    }]
+    justifications = [
+        {
+            "criterion": "documentation_quality",
+            "points": score,
+            "evidence": json.dumps(
+                {
+                    k: {
+                        "exists": v.get("exists", False),
+                        "missing": v.get("missing_sections", []),
+                    }
+                    for k, v in doc_results.items()
+                    if isinstance(v, dict)
+                }
+            ),
+            "reasoning": (
+                f"Audited {len(DOC_TAXONOMY)} standard docs + docs/ directory. "
+                f"{len(broken_refs)} broken references, "
+                f"{sum(1 for d in doc_results.values() if isinstance(d, dict) and d.get('exists'))} docs present. "
+                f"README industry grade: {readme_grade.get('grade', 'N/A')} ({readme_grade.get('percentage', 0)}%)."
+            ),
+        }
+    ]
 
     return {
-        "domain": "Documentation & Governance", "score": score, "grade": _score_to_grade(score),
-        "findings": findings, "justifications": justifications,
-        "doc_results": doc_results, "drift": drift,
+        "domain": "Documentation & Governance",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "doc_results": doc_results,
+        "drift": drift,
         "readme_grade": readme_grade,
     }
 

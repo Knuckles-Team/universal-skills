@@ -72,8 +72,11 @@ def _priority_from_domain_and_finding(domain: str, grade: str, finding: str) -> 
 
     # Default: map from grade but never P0-Critical from automated findings
     return {
-        "F": "P1-High", "D": "P2-Medium", "C": "P2-Medium",
-        "B": "P3-Low", "A": "P4-Enhancement",
+        "F": "P1-High",
+        "D": "P2-Medium",
+        "C": "P2-Medium",
+        "B": "P3-Low",
+        "A": "P4-Enhancement",
     }.get(grade, "P2-Medium")
 
 
@@ -85,12 +88,24 @@ def _effort_estimate(finding: str) -> str:
     """
     finding_lower = finding.lower()
     # Large effort: structural changes
-    if any(w in finding_lower for w in ["monolithic", "split", "refactor", "reorganiz",
-                                          ">1000", "god module", "package"]):
+    if any(
+        w in finding_lower
+        for w in [
+            "monolithic",
+            "split",
+            "refactor",
+            "reorganiz",
+            ">1000",
+            "god module",
+            "package",
+        ]
+    ):
         return "Large"
     # Small effort: config, install, update
-    if any(w in finding_lower for w in ["install", "update", "bump", "hook",
-                                          "not available", "missing"]):
+    if any(
+        w in finding_lower
+        for w in ["install", "update", "bump", "hook", "not available", "missing"]
+    ):
         return "Small"
     return "Medium"
 
@@ -105,17 +120,30 @@ def _is_informational(domain: str, finding: str) -> bool:
 
     # Project analysis ecosystem markers
     if "project analysis" in domain.lower():
-        if any(w in finding_lower for w in [
-            "detected ecosystem", "externalized prompts", "observability",
-            "protocol support", "detected marker",
-        ]):
+        if any(
+            w in finding_lower
+            for w in [
+                "detected ecosystem",
+                "externalized prompts",
+                "observability",
+                "protocol support",
+                "detected marker",
+            ]
+        ):
             return True
 
     # Positive findings (things that are working)
-    if any(w in finding_lower for w in [
-        "all version", "correctly", "up-to-date", "no issues",
-        "all checks passed", "tracked correctly",
-    ]):
+    if any(
+        w in finding_lower
+        for w in [
+            "all version",
+            "correctly",
+            "up-to-date",
+            "no issues",
+            "all checks passed",
+            "tracked correctly",
+        ]
+    ):
         return True
 
     # Pre-commit expected behavior
@@ -138,8 +166,9 @@ def _is_informational(domain: str, finding: str) -> bool:
     return False
 
 
-def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
-                         output_dir: str | None = None) -> dict:
+def generate_sdd_handoff(
+    results: list[dict], project_name: str = "Unknown", output_dir: str | None = None
+) -> dict:
     """Generate SDD-compatible handoff from enhancement results.
 
     IMPORTANT: output_dir should be the individual project root, NOT the
@@ -162,7 +191,7 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
         "title": f"Code Enhancement: {project_name}",
         "created": timestamp,
         "overview": f"Automated code enhancement review for {project_name}. "
-                    f"Covers {len(results)} analysis domains.",
+        f"Covers {len(results)} analysis domains.",
         "user_stories": [],
         "functional_requirements": [],
         "success_criteria": [],
@@ -180,11 +209,13 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
 
         # Add user story (only if grade < B — don't create stories for passing domains)
         if grade not in ("A", "B"):
-            spec["user_stories"].append({
-                "role": "developer",
-                "action": f"address {domain} findings (grade: {grade}, score: {score})",
-                "value": f"improve project {domain.lower()} from {grade} to at least B (80+)",
-            })
+            spec["user_stories"].append(
+                {
+                    "role": "developer",
+                    "action": f"address {domain} findings (grade: {grade}, score: {score})",
+                    "value": f"improve project {domain.lower()} from {grade} to at least B (80+)",
+                }
+            )
 
         for finding in r.get("findings", []):
             # ACCURACY FIX: Skip informational findings
@@ -209,21 +240,27 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
             }
             tasks.append(task)
 
-            spec["functional_requirements"].append({
-                "id": f"FR-{task_id:03d}",
-                "description": finding,
-                "testable": True,
-            })
+            spec["functional_requirements"].append(
+                {
+                    "id": f"FR-{task_id:03d}",
+                    "description": finding,
+                    "testable": True,
+                }
+            )
 
     # Success criteria
-    overall_gpa = sum({"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}.get(r.get("grade", "F"), 0)
-                       for r in results) / max(len(results), 1)
+    overall_gpa = sum(
+        {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}.get(r.get("grade", "F"), 0)
+        for r in results
+    ) / max(len(results), 1)
     spec["success_criteria"] = [
         {"metric": "Overall GPA", "current": round(overall_gpa, 2), "target": 3.0},
-        {"metric": "Domains at B or above", "current": sum(1 for r in results if r.get("grade") in ("A", "B")),
-         "target": len(results)},
-        {"metric": "Actionable findings", "current": len(tasks),
-         "target": 0},
+        {
+            "metric": "Domains at B or above",
+            "current": sum(1 for r in results if r.get("grade") in ("A", "B")),
+            "target": len(results),
+        },
+        {"metric": "Actionable findings", "current": len(tasks), "target": 0},
     ]
 
     handoff = {
@@ -247,7 +284,9 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
         spec_dir.mkdir(parents=True, exist_ok=True)
 
         # Write spec.json
-        (spec_dir / "spec.json").write_text(json.dumps(spec, indent=2), encoding="utf-8")
+        (spec_dir / "spec.json").write_text(
+            json.dumps(spec, indent=2), encoding="utf-8"
+        )
 
         # Write spec.md
         spec_md_lines = [
@@ -259,7 +298,9 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
             "",
         ]
         for us in spec["user_stories"]:
-            spec_md_lines.append(f"- As a **{us['role']}**, I want to **{us['action']}**, so that **{us['value']}**.")
+            spec_md_lines.append(
+                f"- As a **{us['role']}**, I want to **{us['action']}**, so that **{us['value']}**."
+            )
         spec_md_lines.extend(["", "## Functional Requirements", ""])
         for fr in spec["functional_requirements"]:
             spec_md_lines.append(f"- **{fr['id']}**: {fr['description']}")
@@ -270,16 +311,24 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
         (spec_dir / "spec.md").write_text("\n".join(spec_md_lines), encoding="utf-8")
 
         # Write tasks.json
-        (spec_dir / "tasks.json").write_text(json.dumps(tasks, indent=2), encoding="utf-8")
+        (spec_dir / "tasks.json").write_text(
+            json.dumps(tasks, indent=2), encoding="utf-8"
+        )
 
         # Write tasks.md
-        tasks_md_lines = [f"# Tasks: {spec['title']}", "",
-                          f"Generated: {timestamp}",
-                          f"Skipped informational: {skipped_informational}", ""]
+        tasks_md_lines = [
+            f"# Tasks: {spec['title']}",
+            "",
+            f"Generated: {timestamp}",
+            f"Skipped informational: {skipped_informational}",
+            "",
+        ]
         for t in tasks:
             parallel = "[P] " if not t["dependencies"] else ""
             tasks_md_lines.append(f"- [ ] {parallel}**{t['id']}** {t['title']}")
-            tasks_md_lines.append(f"  - Priority: {t['priority']} | Effort: {t['effort']}")
+            tasks_md_lines.append(
+                f"  - Priority: {t['priority']} | Effort: {t['effort']}"
+            )
         (spec_dir / "tasks.md").write_text("\n".join(tasks_md_lines), encoding="utf-8")
 
     return handoff
@@ -287,14 +336,21 @@ def generate_sdd_handoff(results: list[dict], project_name: str = "Unknown",
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Generate SDD handoff from enhancement results")
+
+    parser = argparse.ArgumentParser(
+        description="Generate SDD handoff from enhancement results"
+    )
     parser.add_argument("results_file", help="JSON file with domain results")
-    parser.add_argument("--output-dir", "-o", help="Project root for .specify/ output", default=None)
+    parser.add_argument(
+        "--output-dir", "-o", help="Project root for .specify/ output", default=None
+    )
     parser.add_argument("--name", "-n", help="Project name", default="Unknown")
     args = parser.parse_args()
 
     with open(args.results_file) as f:
         results = json.load(f)
 
-    handoff = generate_sdd_handoff(results, project_name=args.name, output_dir=args.output_dir)
+    handoff = generate_sdd_handoff(
+        results, project_name=args.name, output_dir=args.output_dir
+    )
     print(json.dumps(handoff, indent=2))

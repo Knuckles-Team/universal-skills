@@ -159,7 +159,9 @@ class ScheduleRunFlowHelperTests(unittest.TestCase):
             job_name="daily",
             deps=SimpleNamespace(
                 _should_use_codex_file_pointer=lambda _task: False,
-                write_scheduled_task_file=lambda *_args: Path(tempfile.mkdtemp(prefix="test-schedule-notused-")),
+                write_scheduled_task_file=lambda *_args: Path(
+                    tempfile.mkdtemp(prefix="test-schedule-notused-")
+                ),
             ),
         )
 
@@ -176,13 +178,16 @@ class ScheduleRunFlowHelperTests(unittest.TestCase):
                 job_name="daily",
                 deps=SimpleNamespace(
                     _should_use_codex_file_pointer=lambda _task: True,
-                    write_scheduled_task_file=lambda *_args: Path(tempfile.mkdtemp(prefix="test-schedule-generated-")),
+                    write_scheduled_task_file=lambda *_args: Path(
+                        tempfile.mkdtemp(prefix="test-schedule-generated-")
+                    ),
                 ),
             )
             self.assertIn("Run scheduled job 'daily'", task_message)
             self.assertIn(str(task_path), task_message)
         finally:
             import shutil
+
             shutil.rmtree(temp_root, ignore_errors=True)
 
 

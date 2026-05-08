@@ -16,7 +16,9 @@ from pathlib import Path
 def _run_tool(cmd: list[str], cwd: str) -> tuple[int, str, str]:
     """Run a CLI tool and return (returncode, stdout, stderr)."""
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=120)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=cwd, timeout=120
+        )
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
         return -1, "", f"Tool not found: {cmd[0]}"
@@ -34,13 +36,15 @@ def _parse_ruff_output(stdout: str) -> list[dict]:
         # Format: path/file.py:line:col: CODE message
         parts = line.split(":", 3)
         if len(parts) >= 4:
-            findings.append({
-                "file": parts[0].strip(),
-                "line": parts[1].strip(),
-                "col": parts[2].strip(),
-                "message": parts[3].strip(),
-                "tool": "ruff",
-            })
+            findings.append(
+                {
+                    "file": parts[0].strip(),
+                    "line": parts[1].strip(),
+                    "col": parts[2].strip(),
+                    "message": parts[3].strip(),
+                    "tool": "ruff",
+                }
+            )
     return findings
 
 
@@ -79,13 +83,15 @@ def _parse_mypy_output(stdout: str) -> list[dict]:
             parts = line.split(":", 3)
             if len(parts) >= 4:
                 severity = "error" if "error" in parts[2] else "warning"
-                findings.append({
-                    "file": parts[0].strip(),
-                    "line": parts[1].strip(),
-                    "message": parts[3].strip(),
-                    "severity": severity,
-                    "tool": "mypy",
-                })
+                findings.append(
+                    {
+                        "file": parts[0].strip(),
+                        "line": parts[1].strip(),
+                        "message": parts[3].strip(),
+                        "severity": severity,
+                        "tool": "mypy",
+                    }
+                )
     return findings
 
 
@@ -137,7 +143,8 @@ def run_linters(root_dir: str = ".") -> dict:
 
     # --- Mypy ---
     rc, stdout, stderr = _run_tool(
-        ["mypy", "--ignore-missing-imports", "--follow-imports=silent", str(root)], str(root)
+        ["mypy", "--ignore-missing-imports", "--follow-imports=silent", str(root)],
+        str(root),
     )
     mypy_findings = _parse_mypy_output(stdout + stderr) if rc != -1 else []
     tool_results["mypy"] = {
@@ -173,16 +180,18 @@ def run_linters(root_dir: str = ".") -> dict:
         if not info["available"]:
             findings_summary.append(f"{tool_name}: not available in PATH")
 
-    justifications = [{
-        "criterion": "lint_compliance",
-        "points": score,
-        "evidence": f"ruff={tool_results['ruff']['finding_count']}, "
-                    f"bandit={tool_results['bandit']['finding_count']}, "
-                    f"mypy={tool_results['mypy']['finding_count']}",
-        "reasoning": f"{len(all_findings)} total findings across 3 tools. "
-                     f"High/error: -{high_count * 5}pts, Med/warning: -{med_count * 2}pts, "
-                     f"Low: -{low_count}pt.",
-    }]
+    justifications = [
+        {
+            "criterion": "lint_compliance",
+            "points": score,
+            "evidence": f"ruff={tool_results['ruff']['finding_count']}, "
+            f"bandit={tool_results['bandit']['finding_count']}, "
+            f"mypy={tool_results['mypy']['finding_count']}",
+            "reasoning": f"{len(all_findings)} total findings across 3 tools. "
+            f"High/error: -{high_count * 5}pts, Med/warning: -{med_count * 2}pts, "
+            f"Low: -{low_count}pt.",
+        }
+    ]
 
     return {
         "domain": "Linting & Formatting",

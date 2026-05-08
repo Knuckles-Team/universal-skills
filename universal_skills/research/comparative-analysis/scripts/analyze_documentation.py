@@ -67,12 +67,18 @@ def grade_readme(project_path: Path) -> dict:
         details.append(f"Adequate length ({word_count} words): +2")
 
     normalized = round(total / max_score * 100) if max_score else 0
-    return {"score": normalized, "found": True, "word_count": word_count, "details": details}
+    return {
+        "score": normalized,
+        "found": True,
+        "word_count": word_count,
+        "details": details,
+    }
 
 
 def analyze_docstrings(project_path: Path) -> dict:
     """Analyze docstring coverage in Python files."""
     import ast
+
     total_defs = 0
     documented = 0
 
@@ -83,9 +89,15 @@ def analyze_docstrings(project_path: Path) -> dict:
         try:
             tree = ast.parse(f.read_text(errors="ignore"))
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if isinstance(
+                    node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                ):
                     total_defs += 1
-                    if (node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, (ast.Constant, ast.Str))):
+                    if (
+                        node.body
+                        and isinstance(node.body[0], ast.Expr)
+                        and isinstance(node.body[0].value, (ast.Constant, ast.Str))
+                    ):
                         documented += 1
         except (SyntaxError, UnicodeDecodeError):
             pass
@@ -101,12 +113,23 @@ def check_docs_presence(project_path: Path) -> dict:
     """Check for documentation artifacts."""
     return {
         "docs_directory": (project_path / "docs").is_dir(),
-        "changelog": any((project_path / f).exists() for f in ["CHANGELOG.md", "CHANGES.md", "HISTORY.md"]),
+        "changelog": any(
+            (project_path / f).exists()
+            for f in ["CHANGELOG.md", "CHANGES.md", "HISTORY.md"]
+        ),
         "contributing": (project_path / "CONTRIBUTING.md").exists(),
         "agents_md": (project_path / "AGENTS.md").exists(),
-        "adr_directory": (project_path / "docs" / "adr").is_dir() or (project_path / "doc" / "adr").is_dir(),
-        "examples_directory": any((project_path / d).is_dir() for d in ["examples", "example", "demos"]),
-        "api_docs": any((project_path / "docs" / f).exists() for f in ["api.md", "api-reference.md", "reference.md"]) if (project_path / "docs").is_dir() else False,
+        "adr_directory": (project_path / "docs" / "adr").is_dir()
+        or (project_path / "doc" / "adr").is_dir(),
+        "examples_directory": any(
+            (project_path / d).is_dir() for d in ["examples", "example", "demos"]
+        ),
+        "api_docs": any(
+            (project_path / "docs" / f).exists()
+            for f in ["api.md", "api-reference.md", "reference.md"]
+        )
+        if (project_path / "docs").is_dir()
+        else False,
     }
 
 
@@ -138,15 +161,36 @@ def score_documentation(readme: dict, docstrings: dict, presence: dict) -> dict:
 
     # Documentation artifacts (40 points)
     artifact_scoring = {
-        "docs_directory": 10, "changelog": 8, "contributing": 5,
-        "examples_directory": 8, "api_docs": 5, "agents_md": 2, "adr_directory": 2,
+        "docs_directory": 10,
+        "changelog": 8,
+        "contributing": 5,
+        "examples_directory": 8,
+        "api_docs": 5,
+        "agents_md": 2,
+        "adr_directory": 2,
     }
     for key, pts in artifact_scoring.items():
         if presence.get(key):
             score += pts
             details.append(f"{key}: +{pts}")
 
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
@@ -160,12 +204,20 @@ def main():
     presence = check_docs_presence(project_path)
     scoring = score_documentation(readme, docstrings, presence)
 
-    print(json.dumps({
-        "domain": "CA-007", "domain_name": "Documentation",
-        "project": str(project_path),
-        "readme": readme, "docstrings": docstrings,
-        "documentation_artifacts": presence, "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-007",
+                "domain_name": "Documentation",
+                "project": str(project_path),
+                "readme": readme,
+                "docstrings": docstrings,
+                "documentation_artifacts": presence,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,40 @@
+{
+  "domain": "CA-008",
+  "domain_name": "Performance",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "benchmarks": {
+    "benchmark_dir": false,
+    "pytest_benchmark": false,
+    "criterion": false,
+    "k6": false
+  },
+  "dependency_weight": {
+    "dependency_count": 6,
+    "heavy_dependencies": [],
+    "estimated_install_mb": 0
+  },
+  "async_patterns": {
+    "asyncio": false,
+    "threading": true,
+    "multiprocessing": false,
+    "concurrent_futures": false,
+    "async_def_count": 0,
+    "sync_def_count": 34,
+    "async_ratio": 0.0
+  },
+  "container": {
+    "dockerfile": false,
+    "compose": true,
+    "multi_stage": false,
+    "health_check": false
+  },
+  "scoring": {
+    "score": 40,
+    "grade": "F",
+    "details": [
+      "Lightweight deps (6): +25",
+      "No async patterns: +5",
+      "Compose config present: +10"
+    ]
+  }
+}

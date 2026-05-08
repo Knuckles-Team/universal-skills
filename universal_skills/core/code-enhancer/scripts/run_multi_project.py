@@ -90,6 +90,7 @@ def _run_single_project(project_dir: str) -> dict:
     for module_name, func_name in analyzers:
         try:
             import importlib.util
+
             spec = importlib.util.spec_from_file_location(
                 module_name, str(scripts_dir / f"{module_name}.py")
             )
@@ -108,20 +109,24 @@ def _run_single_project(project_dir: str) -> dict:
             if result.get("score", 0) != -1:
                 results.append(result)
         except Exception as e:
-            results.append({
-                "domain": module_name,
-                "score": 0,
-                "grade": "F",
-                "findings": [f"Analysis error: {str(e)[:200]}"],
-                "justifications": [],
-            })
+            results.append(
+                {
+                    "domain": module_name,
+                    "score": 0,
+                    "grade": "F",
+                    "findings": [f"Analysis error: {str(e)[:200]}"],
+                    "justifications": [],
+                }
+            )
 
     # Compute GPA
     scored = [r for r in results if r.get("score", -1) >= 0]
     grade_points = {"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0}
     gpa = 0.0
     if scored:
-        gpa = sum(grade_points.get(r.get("grade", "F"), 0.0) for r in scored) / len(scored)
+        gpa = sum(grade_points.get(r.get("grade", "F"), 0.0) for r in scored) / len(
+            scored
+        )
 
     return {
         "project": project_name,
@@ -133,8 +138,9 @@ def _run_single_project(project_dir: str) -> dict:
     }
 
 
-async def _run_project_async(project_dir: str, executor: ProcessPoolExecutor,
-                              semaphore: asyncio.Semaphore) -> dict:
+async def _run_project_async(
+    project_dir: str, executor: ProcessPoolExecutor, semaphore: asyncio.Semaphore
+) -> dict:
     """Run analysis on a project with concurrency control."""
     async with semaphore:
         loop = asyncio.get_event_loop()
@@ -160,10 +166,7 @@ async def run_multi_project(
     start_time = time.monotonic()
 
     with ProcessPoolExecutor(max_workers=concurrency) as executor:
-        tasks = [
-            _run_project_async(d, executor, semaphore)
-            for d in project_dirs
-        ]
+        tasks = [_run_project_async(d, executor, semaphore) for d in project_dirs]
         project_results = await asyncio.gather(*tasks, return_exceptions=True)
 
     elapsed = time.monotonic() - start_time
@@ -173,10 +176,12 @@ async def run_multi_project(
     errors: list[dict] = []
     for i, result in enumerate(project_results):
         if isinstance(result, Exception):
-            errors.append({
-                "project": project_dirs[i],
-                "error": str(result),
-            })
+            errors.append(
+                {
+                    "project": project_dirs[i],
+                    "error": str(result),
+                }
+            )
         else:
             successful.append(result)
 
@@ -197,14 +202,14 @@ async def run_multi_project(
     if len(successful) >= 2:
         try:
             from analyze_integration import analyze_integration
-            integration_result = analyze_integration(
-                [p["path"] for p in successful]
-            )
+
+            integration_result = analyze_integration([p["path"] for p in successful])
         except ImportError:
             # Try relative import
             try:
                 scripts_dir = Path(__file__).parent
                 import importlib.util
+
                 spec = importlib.util.spec_from_file_location(
                     "analyze_integration",
                     str(scripts_dir / "analyze_integration.py"),
@@ -234,6 +239,7 @@ async def run_multi_project(
                 try:
                     scripts_dir = Path(__file__).parent
                     import importlib.util
+
                     spec = importlib.util.spec_from_file_location(
                         "generate_sdd_handoff",
                         str(scripts_dir / "generate_sdd_handoff.py"),
@@ -251,16 +257,22 @@ async def run_multi_project(
 
         # Write unified summary
         summary_path = out_root / "summary.json"
-        summary_path.write_text(json.dumps({
-            "comparison": comparison,
-            "integration": integration_result,
-            "metadata": {
-                "projects_analyzed": len(successful),
-                "errors": len(errors),
-                "elapsed_seconds": round(elapsed, 1),
-                "concurrency": concurrency,
-            },
-        }, indent=2), encoding="utf-8")
+        summary_path.write_text(
+            json.dumps(
+                {
+                    "comparison": comparison,
+                    "integration": integration_result,
+                    "metadata": {
+                        "projects_analyzed": len(successful),
+                        "errors": len(errors),
+                        "elapsed_seconds": round(elapsed, 1),
+                        "concurrency": concurrency,
+                    },
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
     return {
         "project_results": successful,
@@ -298,12 +310,18 @@ def run_multi_project_sync(
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(
         description="Run code-enhancer across multiple projects"
     )
     parser.add_argument("pattern", help="Project glob pattern or comma-separated dirs")
-    parser.add_argument("-c", "--concurrency", type=int, default=4,
-                        help="Max parallel projects (default: 4)")
+    parser.add_argument(
+        "-c",
+        "--concurrency",
+        type=int,
+        default=4,
+        help="Max parallel projects (default: 4)",
+    )
     parser.add_argument("-o", "--output", help="Output directory for reports")
     args = parser.parse_args()
 

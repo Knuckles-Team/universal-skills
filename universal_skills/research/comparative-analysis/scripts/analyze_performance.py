@@ -17,10 +17,13 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", ".tox", "dist", "bu
 def detect_benchmarks(project_path: Path) -> dict:
     """Detect benchmark suite presence."""
     signals = {
-        "benchmark_dir": any((project_path / d).is_dir() for d in ["benchmarks", "bench", "perf"]),
+        "benchmark_dir": any(
+            (project_path / d).is_dir() for d in ["benchmarks", "bench", "perf"]
+        ),
         "pytest_benchmark": False,
         "criterion": False,
-        "k6": (project_path / "k6.js").exists() or (project_path / "loadtest.js").exists(),
+        "k6": (project_path / "k6.js").exists()
+        or (project_path / "loadtest.js").exists(),
     }
     for f in project_path.rglob("*.py"):
         rel = f.relative_to(project_path)
@@ -42,9 +45,15 @@ def analyze_dependency_weight(project_path: Path) -> dict:
     heavy_deps = []
 
     HEAVY_PACKAGES = {
-        "tensorflow": 500, "torch": 800, "pandas": 100, "numpy": 50,
-        "scipy": 100, "transformers": 300, "langchain": 200,
-        "opencv-python": 150, "scikit-learn": 80,
+        "tensorflow": 500,
+        "torch": 800,
+        "pandas": 100,
+        "numpy": 50,
+        "scipy": 100,
+        "transformers": 300,
+        "langchain": 200,
+        "opencv-python": 150,
+        "scikit-learn": 80,
     }
 
     for cfg in ["pyproject.toml", "requirements.txt", "package.json"]:
@@ -59,10 +68,16 @@ def analyze_dependency_weight(project_path: Path) -> dict:
                     lines = content.split("\n")
                     for line in lines:
                         name = re.split(r"[<>=~!\[;,]", line)[0].strip().lower()
-                        if name and not name.startswith("#") and not name.startswith("["):
+                        if (
+                            name
+                            and not name.startswith("#")
+                            and not name.startswith("[")
+                        ):
                             dep_count += 1
                             if name in HEAVY_PACKAGES:
-                                heavy_deps.append({"name": name, "est_size_mb": HEAVY_PACKAGES[name]})
+                                heavy_deps.append(
+                                    {"name": name, "est_size_mb": HEAVY_PACKAGES[name]}
+                                )
             except Exception:
                 pass
 
@@ -76,8 +91,12 @@ def analyze_dependency_weight(project_path: Path) -> dict:
 def detect_async_patterns(project_path: Path) -> dict:
     """Detect async/concurrency patterns."""
     patterns = {
-        "asyncio": False, "threading": False, "multiprocessing": False,
-        "concurrent_futures": False, "async_def_count": 0, "sync_def_count": 0,
+        "asyncio": False,
+        "threading": False,
+        "multiprocessing": False,
+        "concurrent_futures": False,
+        "async_def_count": 0,
+        "sync_def_count": 0,
     }
     for f in project_path.rglob("*.py"):
         rel = f.relative_to(project_path)
@@ -94,12 +113,16 @@ def detect_async_patterns(project_path: Path) -> dict:
             if "concurrent.futures" in content:
                 patterns["concurrent_futures"] = True
             patterns["async_def_count"] += len(re.findall(r"async\s+def\s+", content))
-            patterns["sync_def_count"] += len(re.findall(r"(?<!async\s)def\s+", content))
+            patterns["sync_def_count"] += len(
+                re.findall(r"(?<!async\s)def\s+", content)
+            )
         except (OSError, UnicodeDecodeError):
             pass
 
     total = patterns["async_def_count"] + patterns["sync_def_count"]
-    patterns["async_ratio"] = round(patterns["async_def_count"] / max(total, 1) * 100, 1)
+    patterns["async_ratio"] = round(
+        patterns["async_def_count"] / max(total, 1) * 100, 1
+    )
     return patterns
 
 
@@ -107,13 +130,17 @@ def check_container_config(project_path: Path) -> dict:
     """Check container/deployment configuration."""
     return {
         "dockerfile": (project_path / "Dockerfile").exists(),
-        "compose": any((project_path / f).exists() for f in ["docker-compose.yml", "compose.yml"]),
+        "compose": any(
+            (project_path / f).exists() for f in ["docker-compose.yml", "compose.yml"]
+        ),
         "multi_stage": False,
         "health_check": False,
     }
 
 
-def score_performance(benchmarks: dict, deps: dict, async_p: dict, container: dict) -> dict:
+def score_performance(
+    benchmarks: dict, deps: dict, async_p: dict, container: dict
+) -> dict:
     """Calculate 0-100 performance score."""
     score = 0
     details = []
@@ -165,7 +192,23 @@ def score_performance(benchmarks: dict, deps: dict, async_p: dict, container: di
         score += 10
         details.append("Compose config present: +10")
 
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
@@ -180,12 +223,21 @@ def main():
     container = check_container_config(project_path)
     scoring = score_performance(benchmarks, deps, async_p, container)
 
-    print(json.dumps({
-        "domain": "CA-008", "domain_name": "Performance",
-        "project": str(project_path),
-        "benchmarks": benchmarks, "dependency_weight": deps,
-        "async_patterns": async_p, "container": container, "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-008",
+                "domain_name": "Performance",
+                "project": str(project_path),
+                "benchmarks": benchmarks,
+                "dependency_weight": deps,
+                "async_patterns": async_p,
+                "container": container,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

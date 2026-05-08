@@ -81,15 +81,14 @@ def _validate_changelog_format(changelog_path: Path) -> dict:
     ):
         result["has_header"] = True
     else:
-        result["issues"].append(
-            "CHANGELOG.md should start with '# Changelog' header"
-        )
+        result["issues"].append("CHANGELOG.md should start with '# Changelog' header")
 
     # Check for Keep a Changelog reference
-    if "keepachangelog.com" not in content and "keep a changelog" not in content.lower():
-        result["issues"].append(
-            "Missing reference to Keep a Changelog format standard"
-        )
+    if (
+        "keepachangelog.com" not in content
+        and "keep a changelog" not in content.lower()
+    ):
+        result["issues"].append("Missing reference to Keep a Changelog format standard")
 
     # Try parsing with keepachangelog
     if HAS_KEEPACHANGELOG:
@@ -154,11 +153,13 @@ def _validate_changelog_format(changelog_path: Path) -> dict:
     return result
 
 
-def _check_version_drift(
-    changelog_path: Path, pyproject_version: str | None
-) -> dict:
+def _check_version_drift(changelog_path: Path, pyproject_version: str | None) -> dict:
     """Check if latest changelog version matches pyproject.toml version."""
-    drift = {"has_drift": False, "changelog_version": None, "pyproject_version": pyproject_version}
+    drift = {
+        "has_drift": False,
+        "changelog_version": None,
+        "pyproject_version": pyproject_version,
+    }
 
     if not pyproject_version or not HAS_KEEPACHANGELOG:
         return drift
@@ -181,7 +182,9 @@ def _check_version_drift(
     return drift
 
 
-def _get_dependency_changelog_url(package_name: str, insecure: bool = False) -> str | None:
+def _get_dependency_changelog_url(
+    package_name: str, insecure: bool = False
+) -> str | None:
     """Look up a package's changelog URL from PyPI metadata."""
     if not HAS_REQUESTS:
         return None
@@ -192,7 +195,13 @@ def _get_dependency_changelog_url(package_name: str, insecure: bool = False) -> 
             info = resp.json().get("info", {})
             project_urls = info.get("project_urls") or {}
             # Look for changelog-like URL keys
-            for key in ["Changelog", "Changes", "History", "Release Notes", "changelog"]:
+            for key in [
+                "Changelog",
+                "Changes",
+                "History",
+                "Release Notes",
+                "changelog",
+            ]:
                 if key in project_urls:
                     return project_urls[key]
             # Fallback: check project_url variants
@@ -253,8 +262,17 @@ def _get_changelog_delta(
     changelog_data: dict, from_version: str, to_version: str
 ) -> dict:
     """Extract changelog entries between two versions (exclusive of from_version)."""
-    delta = {"versions": [], "summary": {"added": [], "changed": [], "deprecated": [],
-             "removed": [], "fixed": [], "security": []}}
+    delta = {
+        "versions": [],
+        "summary": {
+            "added": [],
+            "changed": [],
+            "deprecated": [],
+            "removed": [],
+            "fixed": [],
+            "security": [],
+        },
+    }
 
     if not HAS_PACKAGING or not changelog_data:
         return delta
@@ -321,10 +339,14 @@ def audit_changelog(
 
     if not format_result["exists"]:
         score -= 25
-        findings.append("CHANGELOG.md is missing — create one following Keep a Changelog format")
+        findings.append(
+            "CHANGELOG.md is missing — create one following Keep a Changelog format"
+        )
     elif not format_result["parseable"]:
         score -= 20
-        findings.append("CHANGELOG.md exists but could not be parsed — check format compliance")
+        findings.append(
+            "CHANGELOG.md exists but could not be parsed — check format compliance"
+        )
     else:
         if not format_result["has_header"]:
             score -= 3
@@ -412,9 +434,7 @@ def audit_changelog(
                     "removed_count": len(delta["summary"]["removed"]),
                     "fixed_count": len(delta["summary"]["fixed"]),
                     "security_count": len(delta["summary"]["security"]),
-                    "highlights": {
-                        k: v[:5] for k, v in delta["summary"].items() if v
-                    },
+                    "highlights": {k: v[:5] for k, v in delta["summary"].items() if v},
                 }
 
                 # Summarize important changes

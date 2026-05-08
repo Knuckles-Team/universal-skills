@@ -177,7 +177,11 @@ def _scan_compose_files(root: Path) -> list[dict]:
                                 "context": stripped[:120],
                             }
                         )
-                elif not stripped.startswith("#") and stripped and not stripped.startswith("-"):
+                elif (
+                    not stripped.startswith("#")
+                    and stripped
+                    and not stripped.startswith("-")
+                ):
                     in_env_section = False
 
     return results
@@ -285,9 +289,7 @@ def scan_env_vars(root_dir: str = ".") -> dict:
                 "defaults": [],
                 "source_types": set(),
             }
-        var_details[name]["sources"].append(
-            f"{occ['source']}:{occ['line']}"
-        )
+        var_details[name]["sources"].append(f"{occ['source']}:{occ['line']}")
         var_details[name]["source_types"].add(occ["source_type"])
         if occ["default"]:
             var_details[name]["defaults"].append(occ["default"])
@@ -334,14 +336,10 @@ def scan_env_vars(root_dir: str = ".") -> dict:
     doc_coverage = readme_check["coverage"]
     if doc_coverage < 0.3:
         score -= 30
-        findings.append(
-            f"Only {doc_coverage:.0%} of env vars documented in README.md"
-        )
+        findings.append(f"Only {doc_coverage:.0%} of env vars documented in README.md")
     elif doc_coverage < 0.6:
         score -= 15
-        findings.append(
-            f"Partial env var documentation: {doc_coverage:.0%} coverage"
-        )
+        findings.append(f"Partial env var documentation: {doc_coverage:.0%} coverage")
     elif doc_coverage < 0.9:
         score -= 5
 
@@ -362,9 +360,7 @@ def scan_env_vars(root_dir: str = ".") -> dict:
             )
     elif python_var_names:
         score -= 10
-        findings.append(
-            "No .env.example file — create one for developer onboarding"
-        )
+        findings.append("No .env.example file — create one for developer onboarding")
 
     # Vars without defaults
     no_default = [
@@ -374,9 +370,7 @@ def scan_env_vars(root_dir: str = ".") -> dict:
     ]
     if len(no_default) > 5:
         score -= 5
-        findings.append(
-            f"{len(no_default)} env vars have no default value in code"
-        )
+        findings.append(f"{len(no_default)} env vars have no default value in code")
 
     score = max(0, score)
 

@@ -1,6 +1,7 @@
 import os
 import yaml
 
+
 def check_skills():
     skills_dir = "universal_skills"
     errors = 0
@@ -15,7 +16,7 @@ def check_skills():
                     yaml_content = content[3:end_idx]
                     try:
                         parsed = yaml.safe_load(yaml_content)
-                        if 'name' not in parsed or 'description' not in parsed:
+                        if "name" not in parsed or "description" not in parsed:
                             print(f"{path} missing 'name' or 'description'")
                             errors += 1
                     except Exception as e:
@@ -28,11 +29,11 @@ def check_skills():
                 print(f"{path} missing starting --- block")
                 errors += 1
 
-
     if errors == 0:
         print("All SKILL.md files parsed successfully.")
     else:
         print(f"Total errors: {errors}")
+
 
 if __name__ == "__main__":
     check_skills()

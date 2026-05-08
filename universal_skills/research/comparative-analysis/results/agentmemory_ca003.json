@@ -1,0 +1,39 @@
+{
+  "domain": "CA-003",
+  "domain_name": "Architecture",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "protocols": {
+    "gRPC": true,
+    "WebSocket": true
+  },
+  "type_coverage": {
+    "total_functions": 34,
+    "typed_functions": 34,
+    "coverage_pct": 100.0
+  },
+  "module_structure": {
+    "package_count": 1,
+    "max_nesting_depth": 2,
+    "packages": [
+      "integrations/hermes"
+    ]
+  },
+  "config_patterns": {
+    "env_vars": true,
+    "config_files": false,
+    "dotenv": false,
+    "docker": true,
+    "port_binding": false,
+    "graceful_shutdown": false
+  },
+  "scoring": {
+    "score": 63,
+    "grade": "D",
+    "details": [
+      "Multi-protocol (2): +20",
+      "Excellent type coverage (100.0%): +25",
+      "Appropriate nesting depth (2): +10",
+      "12-Factor signals (2/6): +8"
+    ]
+  }
+}

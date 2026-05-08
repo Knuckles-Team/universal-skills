@@ -1,0 +1,39 @@
+{
+  "domain": "CA-006",
+  "domain_name": "Testing",
+  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "test_discovery": {
+    "test_files": {
+      "unit": 158,
+      "integration": 43,
+      "e2e": 0,
+      "other": 3
+    },
+    "total_test_files": 204,
+    "total_test_functions": 2997,
+    "code_loc": 96221,
+    "test_loc": 46979,
+    "test_to_code_ratio": 0.49
+  },
+  "framework": "pytest",
+  "quality_indicators": {
+    "has_conftest": true,
+    "has_fixtures": true,
+    "has_parametrize": true,
+    "has_markers": true,
+    "has_mocks": true,
+    "timeout_configured": true
+  },
+  "scoring": {
+    "score": 90,
+    "grade": "A",
+    "details": [
+      "Comprehensive test suite (204 files): +20",
+      "Many tests (2997): +20",
+      "Low ratio (0.49:1): +10",
+      "Multi-layer testing (unit:158, integ:43, e2e:0): +15",
+      "Proper testing pyramid shape: +5",
+      "Quality indicators (20/20): +20"
+    ]
+  }
+}

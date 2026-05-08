@@ -1,0 +1,66 @@
+{
+  "domain": "CA-001",
+  "domain_name": "Governance",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "license": {
+    "file": "LICENSE",
+    "detected": "MIT",
+    "spdx": "MIT",
+    "osi": true,
+    "tier": "green"
+  },
+  "contributors": {
+    "total": 13,
+    "bus_factor": 1,
+    "top_contributors": [
+      {
+        "commits": 205,
+        "name": "Rohit Ghumare"
+      },
+      {
+        "commits": 8,
+        "name": "Tanmay-008"
+      },
+      {
+        "commits": 3,
+        "name": "JasonLandbridge"
+      },
+      {
+        "commits": 3,
+        "name": "Torsten Raudssus"
+      },
+      {
+        "commits": 2,
+        "name": "tanmaishi"
+      }
+    ],
+    "total_commits": 229
+  },
+  "governance_files": {
+    "GOVERNANCE.md": true,
+    "MAINTAINERS.md": true,
+    "CODEOWNERS": false,
+    ".github/CODEOWNERS": false,
+    "CODE_OF_CONDUCT.md": true,
+    ".github/CODE_OF_CONDUCT.md": false,
+    "SECURITY.md": true,
+    ".github/SECURITY.md": false,
+    "CONTRIBUTING.md": true,
+    ".github/CONTRIBUTING.md": false,
+    "CLA.md": false
+  },
+  "scoring": {
+    "score": 85,
+    "grade": "B+",
+    "details": [
+      "Green license (MIT): +30",
+      "LICENSE file present: +5",
+      "10+ contributors (13): +15",
+      "Bus factor 1 (1): +5",
+      "GOVERNANCE.md present: +5",
+      "CODE_OF_CONDUCT.md present: +10",
+      "SECURITY.md present: +5",
+      "CONTRIBUTING.md present: +10"
+    ]
+  }
+}

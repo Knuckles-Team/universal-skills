@@ -25,10 +25,16 @@ LICENSE_SPDX = {
 }
 
 GOVERNANCE_FILES = [
-    "GOVERNANCE.md", "MAINTAINERS.md", "CODEOWNERS", ".github/CODEOWNERS",
-    "CODE_OF_CONDUCT.md", ".github/CODE_OF_CONDUCT.md",
-    "SECURITY.md", ".github/SECURITY.md",
-    "CONTRIBUTING.md", ".github/CONTRIBUTING.md",
+    "GOVERNANCE.md",
+    "MAINTAINERS.md",
+    "CODEOWNERS",
+    ".github/CODEOWNERS",
+    "CODE_OF_CONDUCT.md",
+    ".github/CODE_OF_CONDUCT.md",
+    "SECURITY.md",
+    ".github/SECURITY.md",
+    "CONTRIBUTING.md",
+    ".github/CONTRIBUTING.md",
     "CLA.md",
 ]
 
@@ -43,10 +49,22 @@ def detect_license(project_path: Path) -> dict:
                 for key, info in LICENSE_SPDX.items():
                     if key.upper() in content:
                         return {"file": name, "detected": key, **info}
-                return {"file": name, "detected": "unknown", "spdx": "NOASSERTION", "osi": False, "tier": "black"}
+                return {
+                    "file": name,
+                    "detected": "unknown",
+                    "spdx": "NOASSERTION",
+                    "osi": False,
+                    "tier": "black",
+                }
             except Exception:
                 pass
-    return {"file": None, "detected": "none", "spdx": "NONE", "osi": False, "tier": "black"}
+    return {
+        "file": None,
+        "detected": "none",
+        "spdx": "NONE",
+        "osi": False,
+        "tier": "black",
+    }
 
 
 def analyze_contributors(project_path: Path) -> dict:
@@ -54,7 +72,10 @@ def analyze_contributors(project_path: Path) -> dict:
     try:
         result = subprocess.run(
             ["git", "shortlog", "-sn", "--all", "--no-merges"],
-            cwd=str(project_path), capture_output=True, text=True, timeout=30,
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             return {"total": 0, "bus_factor": 0, "error": "not a git repo"}
@@ -63,7 +84,9 @@ def analyze_contributors(project_path: Path) -> dict:
         for line in lines:
             match = re.match(r"(\d+)\s+(.+)", line)
             if match:
-                contributors.append({"commits": int(match.group(1)), "name": match.group(2)})
+                contributors.append(
+                    {"commits": int(match.group(1)), "name": match.group(2)}
+                )
         total_commits = sum(c["commits"] for c in contributors)
         # Bus factor: minimum contributors covering 50% of commits
         bus_factor = 0
@@ -139,10 +162,14 @@ def score_governance(license_info: dict, contributors: dict, gov_files: dict) ->
 
     # Governance files (35 points max)
     gov_scoring = {
-        "CODE_OF_CONDUCT.md": 10, ".github/CODE_OF_CONDUCT.md": 10,
-        "CONTRIBUTING.md": 10, ".github/CONTRIBUTING.md": 10,
-        "SECURITY.md": 5, ".github/SECURITY.md": 5,
-        "CODEOWNERS": 5, ".github/CODEOWNERS": 5,
+        "CODE_OF_CONDUCT.md": 10,
+        ".github/CODE_OF_CONDUCT.md": 10,
+        "CONTRIBUTING.md": 10,
+        ".github/CONTRIBUTING.md": 10,
+        "SECURITY.md": 5,
+        ".github/SECURITY.md": 5,
+        "CODEOWNERS": 5,
+        ".github/CODEOWNERS": 5,
         "GOVERNANCE.md": 5,
     }
     awarded = set()
@@ -158,13 +185,20 @@ def score_governance(license_info: dict, contributors: dict, gov_files: dict) ->
 
 
 def _grade(score: int) -> str:
-    if score >= 95: return "A+"
-    if score >= 90: return "A"
-    if score >= 85: return "B+"
-    if score >= 80: return "B"
-    if score >= 75: return "C+"
-    if score >= 70: return "C"
-    if score >= 60: return "D"
+    if score >= 95:
+        return "A+"
+    if score >= 90:
+        return "A"
+    if score >= 85:
+        return "B+"
+    if score >= 80:
+        return "B"
+    if score >= 75:
+        return "C+"
+    if score >= 70:
+        return "C"
+    if score >= 60:
+        return "D"
     return "F"
 
 

@@ -17,10 +17,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-_PYTEST_HOOK_IDS = frozenset({
-    "pytest", "pytest-check", "python-pytest", "tests",
-    "pytest-cov", "local-pytest", "system-pytest",
-})
+_PYTEST_HOOK_IDS = frozenset(
+    {
+        "pytest",
+        "pytest-check",
+        "python-pytest",
+        "tests",
+        "pytest-cov",
+        "local-pytest",
+        "system-pytest",
+    }
+)
 
 
 def _find_precommit_config(root: Path) -> Path | None:
@@ -36,9 +43,7 @@ def _parse_hook_results(stdout: str, stderr: str) -> list[dict]:
     """Parse pre-commit run output into per-hook results."""
     hooks: list[dict] = []
     # Output format: "hookid....................................Passed/Failed/Skipped"
-    pattern = re.compile(
-        r"^(.+?)\.{3,}\s*(Passed|Failed|Skipped)$", re.MULTILINE
-    )
+    pattern = re.compile(r"^(.+?)\.{3,}\s*(Passed|Failed|Skipped)$", re.MULTILINE)
     for match in pattern.finditer(stdout + "\n" + stderr):
         hook_name = match.group(1).strip()
         status = match.group(2).strip().lower()
@@ -50,13 +55,19 @@ def _parse_hook_results(stdout: str, stderr: str) -> list[dict]:
         # Fallback: parse line-by-line for common patterns
         for line in (stdout + "\n" + stderr).splitlines():
             line = line.strip()
-            if line.endswith("Passed") or line.endswith("Failed") or line.endswith("Skipped"):
+            if (
+                line.endswith("Passed")
+                or line.endswith("Failed")
+                or line.endswith("Skipped")
+            ):
                 parts = line.rsplit(None, 1)
                 if len(parts) == 2:
-                    hooks.append({
-                        "hook": parts[0].strip().rstrip("."),
-                        "status": parts[1].lower(),
-                    })
+                    hooks.append(
+                        {
+                            "hook": parts[0].strip().rstrip("."),
+                            "status": parts[1].lower(),
+                        }
+                    )
     return hooks
 
 
@@ -130,18 +141,22 @@ def _detect_outdated_hooks(config_path: Path) -> list[dict]:
             if current_repo and rev:
                 # Check for commit hash (40 char hex) — suggests pinned/outdated
                 if re.match(r"^[0-9a-f]{40}$", rev):
-                    outdated.append({
-                        "repo": current_repo,
-                        "current_rev": rev[:12] + "...",
-                        "issue": "Pinned to commit hash — may be outdated",
-                    })
+                    outdated.append(
+                        {
+                            "repo": current_repo,
+                            "current_rev": rev[:12] + "...",
+                            "issue": "Pinned to commit hash — may be outdated",
+                        }
+                    )
                 # Check for very old version patterns (v0.x, v1.x when v2+ common)
                 elif re.match(r"^v?0\.\d+", rev):
-                    outdated.append({
-                        "repo": current_repo,
-                        "current_rev": rev,
-                        "issue": "Pre-1.0 version — check for updates",
-                    })
+                    outdated.append(
+                        {
+                            "repo": current_repo,
+                            "current_rev": rev,
+                            "issue": "Pre-1.0 version — check for updates",
+                        }
+                    )
 
     return outdated
 
@@ -179,13 +194,15 @@ def run_precommit(root_dir: str = ".") -> dict:
                 "No .pre-commit-config.yaml found — "
                 "pre-commit hooks are not configured for this project"
             ],
-            "justifications": [{
-                "criterion": "precommit_config",
-                "points": 15,
-                "evidence": str(root),
-                "reasoning": "No pre-commit configuration file detected. "
-                             "Automated code quality checks on commit are absent.",
-            }],
+            "justifications": [
+                {
+                    "criterion": "precommit_config",
+                    "points": 15,
+                    "evidence": str(root),
+                    "reasoning": "No pre-commit configuration file detected. "
+                    "Automated code quality checks on commit are absent.",
+                }
+            ],
             "hook_results": [],
             "pytest_hooks_skipped": [],
             "outdated_hooks": [],
@@ -202,8 +219,11 @@ def run_precommit(root_dir: str = ".") -> dict:
     try:
         result = subprocess.run(
             ["pre-commit", "run", "--all-files"],
-            capture_output=True, text=True, cwd=str(root),
-            timeout=300, env=env,
+            capture_output=True,
+            text=True,
+            cwd=str(root),
+            timeout=300,
+            env=env,
         )
         rc = result.returncode
         stdout = result.stdout
@@ -214,12 +234,14 @@ def run_precommit(root_dir: str = ".") -> dict:
             "score": 30,
             "grade": "F",
             "findings": ["pre-commit is not installed or not in PATH"],
-            "justifications": [{
-                "criterion": "precommit_available",
-                "points": 30,
-                "evidence": "which pre-commit",
-                "reasoning": "pre-commit binary not found — cannot run checks.",
-            }],
+            "justifications": [
+                {
+                    "criterion": "precommit_available",
+                    "points": 30,
+                    "evidence": "which pre-commit",
+                    "reasoning": "pre-commit binary not found — cannot run checks.",
+                }
+            ],
             "hook_results": [],
             "pytest_hooks_skipped": pytest_hooks,
             "outdated_hooks": [],
@@ -230,12 +252,14 @@ def run_precommit(root_dir: str = ".") -> dict:
             "score": 40,
             "grade": "F",
             "findings": ["pre-commit run timed out after 300 seconds"],
-            "justifications": [{
-                "criterion": "precommit_timeout",
-                "points": 40,
-                "evidence": "timeout=300s",
-                "reasoning": "Pre-commit execution exceeded 300s timeout.",
-            }],
+            "justifications": [
+                {
+                    "criterion": "precommit_timeout",
+                    "points": 40,
+                    "evidence": "timeout=300s",
+                    "reasoning": "Pre-commit execution exceeded 300s timeout.",
+                }
+            ],
             "hook_results": [],
             "pytest_hooks_skipped": pytest_hooks,
             "outdated_hooks": [],
@@ -261,8 +285,7 @@ def run_precommit(root_dir: str = ".") -> dict:
         score -= penalty
         failed_names = [h["hook"] for h in hook_results if h["status"] == "failed"]
         findings.append(
-            f"{failed}/{total} pre-commit hooks failed: "
-            + ", ".join(failed_names[:10])
+            f"{failed}/{total} pre-commit hooks failed: " + ", ".join(failed_names[:10])
         )
 
     if outdated:
@@ -298,17 +321,19 @@ def run_precommit(root_dir: str = ".") -> dict:
         "exit_code": rc,
     }
 
-    justifications = [{
-        "criterion": "precommit_compliance",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (
-            f"Ran pre-commit with {total} hooks: "
-            f"{passed} passed, {failed} failed, {skipped} skipped. "
-            f"{len(outdated)} potentially outdated. "
-            f"{len(pytest_hooks)} pytest hooks deferred to CE-016."
-        ),
-    }]
+    justifications = [
+        {
+            "criterion": "precommit_compliance",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"Ran pre-commit with {total} hooks: "
+                f"{passed} passed, {failed} failed, {skipped} skipped. "
+                f"{len(outdated)} potentially outdated. "
+                f"{len(pytest_hooks)} pytest hooks deferred to CE-016."
+            ),
+        }
+    ]
 
     return {
         "domain": "Pre-Commit Compliance",

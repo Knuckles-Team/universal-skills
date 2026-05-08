@@ -1,0 +1,49 @@
+{
+  "domain": "CA-002",
+  "domain_name": "Ecosystem Health",
+  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "git_activity": {
+    "last_commit": "2026-05-07 07:10:44 -0500",
+    "days_since_last_commit": null,
+    "commits_last_90_days": 103,
+    "total_commits": 103
+  },
+  "releases": {
+    "total_tags": 62,
+    "semver_tags": 62,
+    "semver_compliance": 100.0,
+    "latest_tag": "v0.7.0",
+    "recent_tags": [
+      "v0.7.0",
+      "v0.6.2",
+      "v0.6.1",
+      "v0.6.0",
+      "v0.5.0"
+    ]
+  },
+  "ci": {
+    "ci_detected": true,
+    "systems": {
+      "github_actions": true
+    },
+    "workflow_count": 3
+  },
+  "dependencies": {
+    "total": 13,
+    "pinned": 0,
+    "unpinned": 13,
+    "pin_rate": 0.0
+  },
+  "scoring": {
+    "score": 65,
+    "grade": "D",
+    "details": [
+      "High velocity (103 commits/90d): +15",
+      "Multiple releases (62 tags): +10",
+      "Strong SemVer compliance (100.0%): +15",
+      "CI configured (github_actions): +15",
+      "Multiple workflows (3): +5",
+      "Mostly unpinned (0.0%): +5"
+    ]
+  }
+}

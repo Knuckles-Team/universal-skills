@@ -125,7 +125,7 @@ def generate_skill(
     if not skill_name.endswith("-docs"):
         skill_name = f"{skill_name}-docs"
         print(f"🏷️  Enforcing naming convention: Renamed skill to **{skill_name}**")
-        
+
     skill_name = sanitize_for_windows(skill_name)
 
     base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
@@ -260,7 +260,9 @@ def generate_skill(
 
                     os.unlink(tmp_path)
 
-                    filename = sanitize_for_windows(Path(doc_url.split("?")[0]).stem) + ".md"
+                    filename = (
+                        sanitize_for_windows(Path(doc_url.split("?")[0]).stem) + ".md"
+                    )
                     target_file = reference_dir / filename
                     target_file.write_text(md_text, encoding="utf-8")
                     source_urls.append(doc_url)

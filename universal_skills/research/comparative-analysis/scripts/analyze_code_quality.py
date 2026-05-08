@@ -13,7 +13,16 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", ".tox", "dist", "build", ".mypy_cache"}
+SKIP_DIRS = {
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    ".tox",
+    "dist",
+    "build",
+    ".mypy_cache",
+}
 STUB_PATTERNS = [
     re.compile(r"\bpass\b\s*$"),
     re.compile(r"raise\s+NotImplementedError"),
@@ -41,12 +50,14 @@ class ComplexityVisitor(ast.NodeVisitor):
         return c
 
     def visit_FunctionDef(self, node):
-        self.functions.append({
-            "name": node.name,
-            "line": node.lineno,
-            "complexity": self._complexity(node),
-            "length": (node.end_lineno or node.lineno) - node.lineno + 1,
-        })
+        self.functions.append(
+            {
+                "name": node.name,
+                "line": node.lineno,
+                "complexity": self._complexity(node),
+                "length": (node.end_lineno or node.lineno) - node.lineno + 1,
+            }
+        )
         self.generic_visit(node)
 
     visit_AsyncFunctionDef = visit_FunctionDef
@@ -194,7 +205,23 @@ def score_code_quality(quality: dict, duplication: dict) -> dict:
         details.append(f"Low duplication ({dup_pct}%): -5")
 
     score = max(score, 0)
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": score, "grade": grade, "details": details}
 
 
@@ -207,11 +234,19 @@ def main():
     duplication = detect_duplication(project_path)
     scoring = score_code_quality(quality, duplication)
 
-    print(json.dumps({
-        "domain": "CA-004", "domain_name": "Code Quality",
-        "project": str(project_path),
-        "quality_metrics": quality, "duplication": duplication, "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-004",
+                "domain_name": "Code Quality",
+                "project": str(project_path),
+                "quality_metrics": quality,
+                "duplication": duplication,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

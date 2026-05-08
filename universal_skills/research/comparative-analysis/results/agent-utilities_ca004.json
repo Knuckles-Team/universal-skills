@@ -1,0 +1,113 @@
+{
+  "domain": "CA-004",
+  "domain_name": "Code Quality",
+  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "quality_metrics": {
+    "file_count": 320,
+    "total_loc": 88121,
+    "function_count": 1975,
+    "complexity": {
+      "avg": 4.15,
+      "max": 103,
+      "high_complexity": 128
+    },
+    "function_length": {
+      "avg": 29.5,
+      "max": 603,
+      "long_functions": 297
+    },
+    "stubs": {
+      "stub_count": 111,
+      "todo_count": 0
+    },
+    "top_complex": [
+      {
+        "name": "_execute_dynamic_mcp_agent",
+        "line": 479,
+        "complexity": 103,
+        "length": 603,
+        "file": "agent_utilities/graph/executor.py"
+      },
+      {
+        "name": "build_agent_app",
+        "line": 61,
+        "complexity": 68,
+        "length": 539,
+        "file": "agent_utilities/server/app.py"
+      },
+      {
+        "name": "app_factory",
+        "line": 128,
+        "complexity": 64,
+        "length": 468,
+        "file": "agent_utilities/server/app.py"
+      },
+      {
+        "name": "create_agent",
+        "line": 240,
+        "complexity": 57,
+        "length": 359,
+        "file": "agent_utilities/agent/factory.py"
+      },
+      {
+        "name": "router_step",
+        "line": 56,
+        "complexity": 55,
+        "length": 497,
+        "file": "agent_utilities/graph/routing.py"
+      }
+    ],
+    "top_long": [
+      {
+        "name": "_execute_dynamic_mcp_agent",
+        "line": 479,
+        "complexity": 103,
+        "length": 603,
+        "file": "agent_utilities/graph/executor.py"
+      },
+      {
+        "name": "build_agent_app",
+        "line": 61,
+        "complexity": 68,
+        "length": 539,
+        "file": "agent_utilities/server/app.py"
+      },
+      {
+        "name": "router_step",
+        "line": 56,
+        "complexity": 55,
+        "length": 497,
+        "file": "agent_utilities/graph/routing.py"
+      },
+      {
+        "name": "__getattr__",
+        "line": 64,
+        "complexity": 45,
+        "length": 482,
+        "file": "agent_utilities/__init__.py"
+      },
+      {
+        "name": "app_factory",
+        "line": 128,
+        "complexity": 64,
+        "length": 468,
+        "file": "agent_utilities/server/app.py"
+      }
+    ]
+  },
+  "duplication": {
+    "total_significant_lines": 70590,
+    "duplicated_lines": 15553,
+    "duplication_pct": 22.0
+  },
+  "scoring": {
+    "score": 45,
+    "grade": "F",
+    "details": [
+      "Good complexity (4.15): no penalty",
+      "Many long functions (297): -15",
+      "Many stubs (111): -20",
+      "High duplication (22.0%): -20"
+    ]
+  }
+}

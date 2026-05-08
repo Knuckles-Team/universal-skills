@@ -14,10 +14,18 @@ import tomllib
 from collections import defaultdict
 from pathlib import Path
 
-_SKIP_DIRS = frozenset({
-    ".venv", "venv", "__pycache__", "node_modules", ".git",
-    "build", "dist", ".tox",
-})
+_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        "venv",
+        "__pycache__",
+        "node_modules",
+        ".git",
+        "build",
+        "dist",
+        ".tox",
+    }
+)
 
 
 def _parse_pyproject_deps(path: Path) -> dict:
@@ -86,7 +94,9 @@ def _scan_imports(root: Path, project_name: str) -> set[str]:
             content = f.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
-        for match in re.finditer(r"(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*)", content):
+        for match in re.finditer(
+            r"(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*)", content
+        ):
             pkg = match.group(1).lower().replace("-", "_")
             if pkg != project_name.lower().replace("-", "_"):
                 imports.add(pkg)
@@ -116,11 +126,13 @@ def _detect_version_conflicts(projects: list[dict]) -> list[dict]:
                 majors.add(major_match.group(1))
 
         if len(majors) > 1:
-            conflicts.append({
-                "package": pkg,
-                "consumers": [{"project": p, "version": v} for p, v in consumers],
-                "major_versions": sorted(majors),
-            })
+            conflicts.append(
+                {
+                    "package": pkg,
+                    "consumers": [{"project": p, "version": v} for p, v in consumers],
+                    "major_versions": sorted(majors),
+                }
+            )
 
     return conflicts
 
@@ -257,10 +269,12 @@ def analyze_integration(project_dirs: list[str]) -> dict:
                         found_in_extras = True
                         break
                 if not found_in_extras and dep_norm in project_names:
-                    unused_deps.append({
-                        "project": proj["name"],
-                        "declared_dep": dep_name,
-                    })
+                    unused_deps.append(
+                        {
+                            "project": proj["name"],
+                            "declared_dep": dep_name,
+                        }
+                    )
 
     # Scoring
     score = 100
@@ -292,7 +306,9 @@ def analyze_integration(project_dirs: list[str]) -> dict:
     # Integration health
     connected_projects = sum(1 for deps in dep_graph.values() if deps)
     if connected_projects == 0 and len(projects) > 1:
-        findings.append("No inter-project dependencies detected — projects may be siloed")
+        findings.append(
+            "No inter-project dependencies detected — projects may be siloed"
+        )
 
     score = max(0, score)
 
@@ -305,17 +321,19 @@ def analyze_integration(project_dirs: list[str]) -> dict:
         "connected_projects": connected_projects,
     }
 
-    justifications = [{
-        "criterion": "integration_cohesiveness",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (
-            f"Analyzed {len(projects)} projects. "
-            f"{metrics['internal_dependencies']} inter-project deps, "
-            f"{len(conflicts)} version conflicts, "
-            f"{len(circular)} circular deps."
-        ),
-    }]
+    justifications = [
+        {
+            "criterion": "integration_cohesiveness",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"Analyzed {len(projects)} projects. "
+                f"{metrics['internal_dependencies']} inter-project deps, "
+                f"{len(conflicts)} version conflicts, "
+                f"{len(circular)} circular deps."
+            ),
+        }
+    ]
 
     return {
         "domain": "Cross-Project Integration",

@@ -16,18 +16,36 @@ from pathlib import Path
 
 # CWE patterns detectable via AST
 CWE_PATTERNS = {
-    "CWE-78": {"name": "OS Command Injection", "ast_calls": ["os.system", "subprocess.call", "subprocess.Popen"],
-               "severity": "High"},
-    "CWE-94": {"name": "Code Injection", "ast_calls": ["eval", "exec", "compile"],
-               "severity": "High"},
-    "CWE-327": {"name": "Broken Crypto", "ast_imports": ["md5", "sha1"],
-                "severity": "Medium"},
-    "CWE-502": {"name": "Deserialization", "ast_calls": ["pickle.loads", "pickle.load", "yaml.load"],
-                "severity": "High"},
-    "CWE-676": {"name": "Dangerous Function", "ast_calls": ["__import__"],
-                "severity": "Medium"},
-    "CWE-798": {"name": "Hardcoded Credentials", "ast_patterns": ["password", "secret", "api_key", "token"],
-                "severity": "High"},
+    "CWE-78": {
+        "name": "OS Command Injection",
+        "ast_calls": ["os.system", "subprocess.call", "subprocess.Popen"],
+        "severity": "High",
+    },
+    "CWE-94": {
+        "name": "Code Injection",
+        "ast_calls": ["eval", "exec", "compile"],
+        "severity": "High",
+    },
+    "CWE-327": {
+        "name": "Broken Crypto",
+        "ast_imports": ["md5", "sha1"],
+        "severity": "Medium",
+    },
+    "CWE-502": {
+        "name": "Deserialization",
+        "ast_calls": ["pickle.loads", "pickle.load", "yaml.load"],
+        "severity": "High",
+    },
+    "CWE-676": {
+        "name": "Dangerous Function",
+        "ast_calls": ["__import__"],
+        "severity": "Medium",
+    },
+    "CWE-798": {
+        "name": "Hardcoded Credentials",
+        "ast_patterns": ["password", "secret", "api_key", "token"],
+        "severity": "High",
+    },
 }
 
 
@@ -52,27 +70,42 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
 
             for cwe_id, pattern in CWE_PATTERNS.items():
                 if call_name in pattern.get("ast_calls", []):
-                    findings.append({
-                        "cwe": cwe_id, "name": pattern["name"],
-                        "severity": pattern["severity"],
-                        "file": str(filepath), "line": node.lineno,
-                        "detail": f"Dangerous call: {call_name}()",
-                    })
+                    findings.append(
+                        {
+                            "cwe": cwe_id,
+                            "name": pattern["name"],
+                            "severity": pattern["severity"],
+                            "file": str(filepath),
+                            "line": node.lineno,
+                            "detail": f"Dangerous call: {call_name}()",
+                        }
+                    )
 
         # Check for hardcoded credential patterns in assignments
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     name_lower = target.id.lower()
-                    for keyword in CWE_PATTERNS.get("CWE-798", {}).get("ast_patterns", []):
-                        if keyword in name_lower and isinstance(node.value, ast.Constant):
-                            if isinstance(node.value.value, str) and len(node.value.value) > 3:
-                                findings.append({
-                                    "cwe": "CWE-798", "name": "Hardcoded Credentials",
-                                    "severity": "High",
-                                    "file": str(filepath), "line": node.lineno,
-                                    "detail": f"Possible hardcoded credential in '{target.id}'",
-                                })
+                    for keyword in CWE_PATTERNS.get("CWE-798", {}).get(
+                        "ast_patterns", []
+                    ):
+                        if keyword in name_lower and isinstance(
+                            node.value, ast.Constant
+                        ):
+                            if (
+                                isinstance(node.value.value, str)
+                                and len(node.value.value) > 3
+                            ):
+                                findings.append(
+                                    {
+                                        "cwe": "CWE-798",
+                                        "name": "Hardcoded Credentials",
+                                        "severity": "High",
+                                        "file": str(filepath),
+                                        "line": node.lineno,
+                                        "detail": f"Possible hardcoded credential in '{target.id}'",
+                                    }
+                                )
 
     return findings
 
@@ -80,8 +113,11 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
 def _count_attack_surface(root: Path, py_files: list[Path]) -> dict:
     """Count attack surface indicators."""
     surface = {
-        "subprocess_calls": 0, "file_io_calls": 0, "network_endpoints": 0,
-        "eval_exec_usage": 0, "sql_usage": 0,
+        "subprocess_calls": 0,
+        "file_io_calls": 0,
+        "network_endpoints": 0,
+        "eval_exec_usage": 0,
+        "sql_usage": 0,
     }
     for f in py_files:
         try:
@@ -92,8 +128,13 @@ def _count_attack_surface(root: Path, py_files: list[Path]) -> dict:
         surface["file_io_calls"] += source.count("open(") + source.count("Path(")
         surface["network_endpoints"] += source.count("@app.") + source.count("@router.")
         import re
-        surface["eval_exec_usage"] += len(re.findall(r"(?<!\.)\b(?:eval|exec)\s*\(", source))
-        surface["sql_usage"] += source.lower().count("execute(") + source.lower().count("cursor.")
+
+        surface["eval_exec_usage"] += len(
+            re.findall(r"(?<!\.)\b(?:eval|exec)\s*\(", source)
+        )
+        surface["sql_usage"] += source.lower().count("execute(") + source.lower().count(
+            "cursor."
+        )
     return surface
 
 
@@ -102,7 +143,10 @@ def _run_pip_audit(root_dir: str) -> list[dict]:
     try:
         result = subprocess.run(
             ["pip-audit", "--format", "json", "--desc"],
-            capture_output=True, text=True, cwd=root_dir, timeout=120,
+            capture_output=True,
+            text=True,
+            cwd=root_dir,
+            timeout=120,
         )
         if result.returncode in (0, 1) and result.stdout.strip():
             return json.loads(result.stdout)
@@ -126,14 +170,25 @@ def _score_to_grade(score: int) -> str:
 def analyze_security(root_dir: str = ".") -> dict:
     """Analyze security posture and produce scored results."""
     root = Path(root_dir).resolve()
-    py_files = [f for f in root.rglob("*.py")
-                if ".venv" not in f.parts and "__pycache__" not in f.parts
-                and "node_modules" not in f.parts and ".git" not in f.parts]
+    py_files = [
+        f
+        for f in root.rglob("*.py")
+        if ".venv" not in f.parts
+        and "__pycache__" not in f.parts
+        and "node_modules" not in f.parts
+        and ".git" not in f.parts
+    ]
 
     if not py_files:
-        return {"domain": "Security Analysis", "score": 0, "grade": "F",
-                "findings": ["No Python files found"], "justifications": [],
-                "vulnerabilities": [], "attack_surface": {}}
+        return {
+            "domain": "Security Analysis",
+            "score": 0,
+            "grade": "F",
+            "findings": ["No Python files found"],
+            "justifications": [],
+            "vulnerabilities": [],
+            "attack_surface": {},
+        }
 
     # AST-based CWE scanning
     all_vulns: list[dict] = []
@@ -147,14 +202,16 @@ def analyze_security(root_dir: str = ".") -> dict:
     pip_audit_results = _run_pip_audit(root_dir)
     for vuln in pip_audit_results:
         if isinstance(vuln, dict):
-            all_vulns.append({
-                "cwe": vuln.get("id", "CVE-Unknown"),
-                "name": vuln.get("name", "Unknown"),
-                "severity": "High",
-                "file": "dependency",
-                "line": 0,
-                "detail": vuln.get("description", ""),
-            })
+            all_vulns.append(
+                {
+                    "cwe": vuln.get("id", "CVE-Unknown"),
+                    "name": vuln.get("name", "Unknown"),
+                    "severity": "High",
+                    "file": "dependency",
+                    "line": 0,
+                    "detail": vuln.get("description", ""),
+                }
+            )
 
     # Scoring
     score = 100
@@ -178,21 +235,31 @@ def analyze_security(root_dir: str = ".") -> dict:
     if med_count:
         findings.append(f"{med_count} MEDIUM severity vulnerabilities found")
     if attack_surface["eval_exec_usage"] > 0:
-        findings.append(f"eval/exec usage detected: {attack_surface['eval_exec_usage']} instances")
+        findings.append(
+            f"eval/exec usage detected: {attack_surface['eval_exec_usage']} instances"
+        )
 
-    justifications = [{
-        "criterion": "security_posture",
-        "points": score,
-        "evidence": f"high={high_count} med={med_count} low={low_count} "
-                    f"attack_surface={json.dumps(attack_surface)}",
-        "reasoning": (f"Scanned {len(py_files)} files. Found {len(all_vulns)} security findings. "
-                      f"High: -{high_count * 15}pts, Med: -{med_count * 8}pts, Low: -{low_count * 3}pts."),
-    }]
+    justifications = [
+        {
+            "criterion": "security_posture",
+            "points": score,
+            "evidence": f"high={high_count} med={med_count} low={low_count} "
+            f"attack_surface={json.dumps(attack_surface)}",
+            "reasoning": (
+                f"Scanned {len(py_files)} files. Found {len(all_vulns)} security findings. "
+                f"High: -{high_count * 15}pts, Med: -{med_count * 8}pts, Low: -{low_count * 3}pts."
+            ),
+        }
+    ]
 
     return {
-        "domain": "Security Analysis", "score": score, "grade": _score_to_grade(score),
-        "findings": findings, "justifications": justifications,
-        "vulnerabilities": all_vulns[:50], "attack_surface": attack_surface,
+        "domain": "Security Analysis",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "vulnerabilities": all_vulns[:50],
+        "attack_surface": attack_surface,
     }
 
 

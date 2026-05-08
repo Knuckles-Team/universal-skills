@@ -100,7 +100,11 @@ def determine_winners(projects: dict[str, dict[str, dict]]) -> dict[str, dict]:
         if scores:
             winner = max(scores, key=scores.get)
             sorted_scores = sorted(scores.items(), key=lambda x: -x[1])
-            delta = sorted_scores[0][1] - sorted_scores[1][1] if len(sorted_scores) > 1 else 0
+            delta = (
+                sorted_scores[0][1] - sorted_scores[1][1]
+                if len(sorted_scores) > 1
+                else 0
+            )
             winners[domain] = {
                 "winner": winner,
                 "score": scores[winner],
@@ -130,7 +134,9 @@ def generate_radar_chart(projects: dict[str, dict[str, dict]]) -> str:
     return "\n".join(lines)
 
 
-def generate_report(projects: dict[str, dict[str, dict]], output_path: str | None) -> str:
+def generate_report(
+    projects: dict[str, dict[str, dict]], output_path: str | None
+) -> str:
     """Generate the full comparison report."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     project_names = list(projects.keys())
@@ -141,7 +147,9 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
         domain_scores = {}
         for domain_id in DOMAIN_NAMES:
             if domain_id in domains:
-                domain_scores[domain_id] = domains[domain_id].get("scoring", {}).get("score", 0)
+                domain_scores[domain_id] = (
+                    domains[domain_id].get("scoring", {}).get("score", 0)
+                )
         gpas[project] = compute_gpa(domain_scores)
 
     winners = determine_winners(projects)
@@ -156,13 +164,17 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
     # Executive Summary
     report.append("\n## Executive Summary\n")
     overall_winner = max(gpas, key=gpas.get) if gpas else "N/A"
-    report.append(f"**Overall Leader**: **{overall_winner}** (GPA: {gpas.get(overall_winner, 0)})")
+    report.append(
+        f"**Overall Leader**: **{overall_winner}** (GPA: {gpas.get(overall_winner, 0)})"
+    )
     for proj, gpa in sorted(gpas.items(), key=lambda x: -x[1]):
         report.append(f"- {proj}: **{gpa}**/100 weighted GPA")
 
     # Comparison Matrix
     report.append("\n## Comparison Matrix\n")
-    header = "| Domain |" + " | ".join(f"**{p}**" for p in project_names) + " | Winner |"
+    header = (
+        "| Domain |" + " | ".join(f"**{p}**" for p in project_names) + " | Winner |"
+    )
     sep = "|--------|" + " | ".join("---" for _ in project_names) + " | ------ |"
     report.append(header)
     report.append(sep)
@@ -178,7 +190,11 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
         row = f"| {domain_name} | " + " | ".join(scores) + f" | {winner_name} |"
         report.append(row)
 
-    gpa_row = "| **Weighted GPA** |" + " | ".join(f"**{gpas.get(p, 0)}**" for p in project_names) + f" | **{overall_winner}** |"
+    gpa_row = (
+        "| **Weighted GPA** |"
+        + " | ".join(f"**{gpas.get(p, 0)}**" for p in project_names)
+        + f" | **{overall_winner}** |"
+    )
     report.append(gpa_row)
 
     # Radar Chart
@@ -191,13 +207,17 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
         report.append(f"### {domain_id}: {domain_name}\n")
         winner_info = winners.get(domain_id, {})
         if winner_info:
-            report.append(f"**Winner**: {winner_info['winner']} ({winner_info['score']}/100, +{winner_info['delta']} delta)")
+            report.append(
+                f"**Winner**: {winner_info['winner']} ({winner_info['score']}/100, +{winner_info['delta']} delta)"
+            )
 
         for project in project_names:
             domain_data = projects[project].get(domain_id, {})
             scoring = domain_data.get("scoring", {})
             report.append(f"\n#### {project}")
-            report.append(f"- **Score**: {scoring.get('score', 'N/A')}/100 ({scoring.get('grade', 'N/A')})")
+            report.append(
+                f"- **Score**: {scoring.get('score', 'N/A')}/100 ({scoring.get('grade', 'N/A')})"
+            )
             for detail in scoring.get("details", []):
                 report.append(f"  - {detail}")
         report.append("")
@@ -208,17 +228,26 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
     report.append("|--------|--------|-------|-------|")
     for domain_id, domain_name in DOMAIN_NAMES.items():
         w = winners.get(domain_id, {})
-        report.append(f"| {domain_name} | {w.get('winner', '—')} | {w.get('score', '—')} | +{w.get('delta', 0)} |")
+        report.append(
+            f"| {domain_name} | {w.get('winner', '—')} | {w.get('score', '—')} | +{w.get('delta', 0)} |"
+        )
 
     # Recommendations
     report.append("\n## Recommendations\n")
-    report.append("Based on the analysis, the following integration opportunities exist:\n")
+    report.append(
+        "Based on the analysis, the following integration opportunities exist:\n"
+    )
 
     # Find weak areas per project
     for project in project_names:
         weak = []
         for domain_id, domain_name in DOMAIN_NAMES.items():
-            score = projects[project].get(domain_id, {}).get("scoring", {}).get("score", 100)
+            score = (
+                projects[project]
+                .get(domain_id, {})
+                .get("scoring", {})
+                .get("score", 100)
+            )
             if score < 70:
                 weak.append(f"{domain_name} ({score}/100)")
         if weak:
@@ -233,7 +262,15 @@ def generate_report(projects: dict[str, dict[str, dict]], output_path: str | Non
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(report_text)
-        print(json.dumps({"status": "success", "output": str(out), "projects": len(project_names)}))
+        print(
+            json.dumps(
+                {
+                    "status": "success",
+                    "output": str(out),
+                    "projects": len(project_names),
+                }
+            )
+        )
     else:
         print(report_text)
 
@@ -256,7 +293,13 @@ def main():
             i += 1
 
     if not result_paths:
-        print(json.dumps({"error": "Usage: generate_comparison_report.py [--output path] <result.json> ..."}))
+        print(
+            json.dumps(
+                {
+                    "error": "Usage: generate_comparison_report.py [--output path] <result.json> ..."
+                }
+            )
+        )
         sys.exit(1)
 
     projects = load_results(result_paths)

@@ -35,24 +35,31 @@ def _import_script(name: str):
     return mod
 
 
-def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
-                          with_precommit: bool = False,
-                          with_pyproject: bool = True,
-                          extra_files: dict | None = None) -> Path:
+def _make_python_project(
+    tmp_path: Path,
+    *,
+    with_tests: bool = True,
+    with_precommit: bool = False,
+    with_pyproject: bool = True,
+    extra_files: dict | None = None,
+) -> Path:
     """Create a minimal Python project scaffold."""
     root = tmp_path / "project"
     root.mkdir()
     if with_pyproject:
-        (root / "pyproject.toml").write_text(textwrap.dedent("""\
+        (root / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "test-project"
             version = "0.1.0"
             dependencies = ["pydantic-ai>=0.1", "pytest>=8.0"]
-        """))
+        """)
+        )
     if with_tests:
         tests = root / "tests"
         tests.mkdir()
-        (tests / "test_example.py").write_text(textwrap.dedent("""\
+        (tests / "test_example.py").write_text(
+            textwrap.dedent("""\
             import pytest
 
             @pytest.mark.concept("TP-001")
@@ -61,9 +68,11 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
 
             def test_no_concept():
                 assert 1 + 1 == 2
-        """))
+        """)
+        )
     if with_precommit:
-        (root / ".pre-commit-config.yaml").write_text(textwrap.dedent("""\
+        (root / ".pre-commit-config.yaml").write_text(
+            textwrap.dedent("""\
             repos:
               - repo: https://github.com/astral-sh/ruff-pre-commit
                 rev: v0.4.0
@@ -76,12 +85,14 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
                     entry: pytest
                     language: system
                     types: [python]
-        """))
+        """)
+        )
     # Source files
     src = root / "src"
     src.mkdir()
     (src / "__init__.py").write_text("")
-    (src / "main.py").write_text(textwrap.dedent("""\
+    (src / "main.py").write_text(
+        textwrap.dedent("""\
         \"\"\"Main module.
 
         CONCEPT:TP-001 — Test Project Core
@@ -109,9 +120,11 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
                 else:
                     result -= 1
             return result
-    """))
+    """)
+    )
     # Docs
-    (root / "README.md").write_text(textwrap.dedent("""\
+    (root / "README.md").write_text(
+        textwrap.dedent("""\
         # Test Project
 
         A test project for code-enhancer.
@@ -130,8 +143,10 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
         ```
 
         CONCEPT:TP-001 — documented in README
-    """))
-    (root / "AGENTS.md").write_text(textwrap.dedent("""\
+    """)
+    )
+    (root / "AGENTS.md").write_text(
+        textwrap.dedent("""\
         # AGENTS
 
         ## Tech Stack
@@ -146,7 +161,8 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
         <!-- CONCEPT:TP-001 -->
         <!-- CONCEPT:TP-002 -->
         <!-- CONCEPT:TP-003 -->
-    """))
+    """)
+    )
 
     if extra_files:
         for name, content in extra_files.items():
@@ -160,6 +176,7 @@ def _make_python_project(tmp_path: Path, *, with_tests: bool = True,
 # ═══════════════════════════════════════════════════════════════════════
 # CE-018: Language Detection
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-018")
 class TestDetectLanguage:
@@ -184,10 +201,15 @@ class TestDetectLanguage:
     def test_detect_node(self, tmp_path: Path):
         root = tmp_path / "nodeproject"
         root.mkdir()
-        (root / "package.json").write_text(json.dumps({
-            "name": "test", "scripts": {"test": "jest"},
-            "dependencies": {"react": "^18.0"}
-        }))
+        (root / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "test",
+                    "scripts": {"test": "jest"},
+                    "dependencies": {"react": "^18.0"},
+                }
+            )
+        )
         (root / "index.js").write_text("console.log('hello');\n")
         mod = _import_script("detect_language")
         result = mod.detect_language(str(root))
@@ -215,6 +237,7 @@ class TestDetectLanguage:
 # CE-015: Pre-Commit Compliance
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.concept("CE-015")
 class TestRunPrecommit:
     """Test pre-commit compliance analysis."""
@@ -237,17 +260,22 @@ class TestRunPrecommit:
     def test_outdated_hook_detection(self, tmp_path: Path):
         root = tmp_path / "outdated"
         root.mkdir()
-        (root / ".pre-commit-config.yaml").write_text(textwrap.dedent("""\
+        (root / ".pre-commit-config.yaml").write_text(
+            textwrap.dedent("""\
             repos:
               - repo: https://github.com/example/hook
                 rev: abc123def456abc123def456abc123def456abc1
                 hooks:
                   - id: example-hook
-        """))
+        """)
+        )
         mod = _import_script("run_precommit")
         outdated = mod._detect_outdated_hooks(root / ".pre-commit-config.yaml")
         assert len(outdated) == 1
-        assert "hash" in outdated[0]["issue"].lower() or "pinned" in outdated[0]["issue"].lower()
+        assert (
+            "hash" in outdated[0]["issue"].lower()
+            or "pinned" in outdated[0]["issue"].lower()
+        )
 
     def test_pre_commit_not_installed(self, tmp_path: Path):
         root = _make_python_project(tmp_path, with_precommit=True)
@@ -261,7 +289,11 @@ class TestRunPrecommit:
         root = _make_python_project(tmp_path, with_precommit=True)
         mod = _import_script("run_precommit")
         import subprocess
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="pre-commit", timeout=300)):
+
+        with patch(
+            "subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="pre-commit", timeout=300),
+        ):
             result = mod.run_precommit(str(root))
         assert result["score"] == 40
         assert "timed out" in result["findings"][0]
@@ -270,6 +302,7 @@ class TestRunPrecommit:
 # ═══════════════════════════════════════════════════════════════════════
 # CE-016: Test Execution
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-016")
 class TestRunTests:
@@ -301,18 +334,16 @@ class TestRunTests:
     def test_detect_node_framework(self, tmp_path: Path):
         root = tmp_path / "nodetest"
         root.mkdir()
-        (root / "package.json").write_text(json.dumps({
-            "name": "test", "scripts": {"test": "jest"}
-        }))
+        (root / "package.json").write_text(
+            json.dumps({"name": "test", "scripts": {"test": "jest"}})
+        )
         mod = _import_script("run_tests")
         frameworks = mod._detect_test_framework(root)
         assert any(f["framework"] == "jest" for f in frameworks)
 
     def test_parse_pytest_output_pass(self):
         mod = _import_script("run_tests")
-        result = mod._parse_pytest_output(
-            "10 passed in 1.23s", ""
-        )
+        result = mod._parse_pytest_output("10 passed in 1.23s", "")
         assert result["passed"] == 10
         assert result["failed"] == 0
 
@@ -330,6 +361,7 @@ class TestRunTests:
 # ═══════════════════════════════════════════════════════════════════════
 # CE-017: Directory Organization
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-017")
 class TestDirectoryDensity:
@@ -380,6 +412,7 @@ class TestDirectoryDensity:
 # CE-019: UI/UX Quality
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.mark.concept("CE-019")
 class TestAnalyzeUI:
     """Test UI/UX heuristic analysis."""
@@ -395,12 +428,13 @@ class TestAnalyzeUI:
     def test_web_ui_detection(self, tmp_path: Path):
         root = tmp_path / "webapp"
         root.mkdir()
-        (root / "package.json").write_text(json.dumps({
-            "dependencies": {"react": "^18.0"}
-        }))
+        (root / "package.json").write_text(
+            json.dumps({"dependencies": {"react": "^18.0"}})
+        )
         src = root / "src"
         src.mkdir()
-        (src / "App.tsx").write_text(textwrap.dedent("""\
+        (src / "App.tsx").write_text(
+            textwrap.dedent("""\
             import React from 'react';
             export default function App() {
                 return (
@@ -413,7 +447,8 @@ class TestAnalyzeUI:
                     </nav>
                 );
             }
-        """))
+        """)
+        )
         mod = _import_script("analyze_ui")
         result = mod.analyze_ui(str(root))
         assert result["ui_type"] == "web"
@@ -422,12 +457,15 @@ class TestAnalyzeUI:
     def test_terminal_ui_detection(self, tmp_path: Path):
         root = tmp_path / "tuiapp"
         root.mkdir()
-        (root / "pyproject.toml").write_text(textwrap.dedent("""\
+        (root / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "tui-app"
             dependencies = ["textual>=0.40"]
-        """))
-        (root / "app.py").write_text(textwrap.dedent("""\
+        """)
+        )
+        (root / "app.py").write_text(
+            textwrap.dedent("""\
             from textual.app import App
             from textual.widgets import Header, Footer
             import sys
@@ -445,7 +483,8 @@ class TestAnalyzeUI:
                     MyApp().run()
                 except KeyboardInterrupt:
                     sys.exit(0)
-        """))
+        """)
+        )
         mod = _import_script("analyze_ui")
         result = mod.analyze_ui(str(root))
         assert result["ui_type"] == "terminal"
@@ -458,14 +497,16 @@ class TestAnalyzeUI:
     def test_web_accessibility_checks(self, tmp_path: Path):
         root = tmp_path / "a11y"
         root.mkdir()
-        (root / "index.html").write_text(textwrap.dedent("""\
+        (root / "index.html").write_text(
+            textwrap.dedent("""\
             <html lang="en">
             <body>
                 <img src="test.jpg" alt="A test image">
                 <button aria-label="Submit" role="button" tabindex="0">Go</button>
             </body>
             </html>
-        """))
+        """)
+        )
         # Need enough HTML files to trigger web detection
         for i in range(6):
             (root / f"page{i}.html").write_text(f"<html><body>Page {i}</body></html>")
@@ -480,6 +521,7 @@ class TestAnalyzeUI:
 # ═══════════════════════════════════════════════════════════════════════
 # CE-021: Cross-Project Integration
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-021")
 class TestAnalyzeIntegration:
@@ -496,18 +538,22 @@ class TestAnalyzeIntegration:
         # Project A depends on Project B
         a = tmp_path / "proj_a"
         a.mkdir()
-        (a / "pyproject.toml").write_text(textwrap.dedent("""\
+        (a / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "proj-a"
             dependencies = ["proj-b>=1.0"]
-        """))
+        """)
+        )
         b = tmp_path / "proj_b"
         b.mkdir()
-        (b / "pyproject.toml").write_text(textwrap.dedent("""\
+        (b / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "proj-b"
             dependencies = ["requests>=2.0"]
-        """))
+        """)
+        )
         mod = _import_script("analyze_integration")
         result = mod.analyze_integration([str(a), str(b)])
         assert "proj_a" in result["dependency_graph"]
@@ -516,18 +562,22 @@ class TestAnalyzeIntegration:
     def test_version_conflicts(self, tmp_path: Path):
         a = tmp_path / "conflict_a"
         a.mkdir()
-        (a / "pyproject.toml").write_text(textwrap.dedent("""\
+        (a / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "conflict-a"
             dependencies = ["pydantic>=2.0"]
-        """))
+        """)
+        )
         b = tmp_path / "conflict_b"
         b.mkdir()
-        (b / "pyproject.toml").write_text(textwrap.dedent("""\
+        (b / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "conflict-b"
             dependencies = ["pydantic>=1.0,<2.0"]
-        """))
+        """)
+        )
         mod = _import_script("analyze_integration")
         result = mod.analyze_integration([str(a), str(b)])
         assert len(result["conflicts"]) >= 1
@@ -536,18 +586,22 @@ class TestAnalyzeIntegration:
     def test_circular_dependencies(self, tmp_path: Path):
         a = tmp_path / "circ_a"
         a.mkdir()
-        (a / "pyproject.toml").write_text(textwrap.dedent("""\
+        (a / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "circ-a"
             dependencies = ["circ-b>=1.0"]
-        """))
+        """)
+        )
         b = tmp_path / "circ_b"
         b.mkdir()
-        (b / "pyproject.toml").write_text(textwrap.dedent("""\
+        (b / "pyproject.toml").write_text(
+            textwrap.dedent("""\
             [project]
             name = "circ-b"
             dependencies = ["circ-a>=1.0"]
-        """))
+        """)
+        )
         mod = _import_script("analyze_integration")
         result = mod.analyze_integration([str(a), str(b)])
         assert len(result["circular_deps"]) >= 1
@@ -556,6 +610,7 @@ class TestAnalyzeIntegration:
 # ═══════════════════════════════════════════════════════════════════════
 # CE-020: Multi-Project Orchestration
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-020")
 class TestMultiProject:
@@ -592,6 +647,7 @@ class TestMultiProject:
 # ═══════════════════════════════════════════════════════════════════════
 # CE-008: Enhanced Concept Traceability
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.mark.concept("CE-008")
 class TestTraceConceptsEnhanced:

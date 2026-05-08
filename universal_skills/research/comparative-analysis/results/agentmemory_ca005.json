@@ -1,0 +1,25 @@
+{
+  "domain": "CA-005",
+  "domain_name": "Security",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "scan_results": {
+    "files_scanned": 1,
+    "findings": [],
+    "finding_count": 0,
+    "secrets_detected": 0
+  },
+  "security_posture": {
+    "security_md": true,
+    "input_validation": false,
+    "auth_framework": false,
+    "security_linter": false,
+    "dep_scanning": false
+  },
+  "scoring": {
+    "score": 100,
+    "grade": "A+",
+    "details": [
+      "SECURITY.md present: +5"
+    ]
+  }
+}

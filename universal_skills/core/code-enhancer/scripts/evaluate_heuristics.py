@@ -32,20 +32,30 @@ HEURISTIC_CATEGORIES = {
     },
     "H2": {
         "name": "Architecture Boundaries",
-        "sources": ["Clean Architecture (Martin)", "A Philosophy of Software Design (Ousterhout)"],
+        "sources": [
+            "Clean Architecture (Martin)",
+            "A Philosophy of Software Design (Ousterhout)",
+        ],
         "weight": 15,
         "always_active": False,
         "activation": "project has >5 modules or architecture directories",
     },
     "H3": {
         "name": "Refactoring Discipline",
-        "sources": ["Refactoring (Fowler)", "Working Effectively with Legacy Code (Feathers)"],
+        "sources": [
+            "Refactoring (Fowler)",
+            "Working Effectively with Legacy Code (Feathers)",
+        ],
         "weight": 10,
         "always_active": True,
     },
     "H4": {
         "name": "Domain Modeling",
-        "sources": ["DDD (Evans)", "DDD Distilled (Vernon)", "Implementing DDD (Vernon)"],
+        "sources": [
+            "DDD (Evans)",
+            "DDD Distilled (Vernon)",
+            "Implementing DDD (Vernon)",
+        ],
         "weight": 10,
         "always_active": False,
         "activation": "DDD patterns detected (domain/, entities/, aggregates/)",
@@ -77,13 +87,16 @@ HEURISTIC_CATEGORIES = {
 # Project context detection
 # ---------------------------------------------------------------------------
 
+
 def _detect_context(root: Path) -> dict[str, bool]:
     """Detect which heuristic categories should be activated."""
     context: dict[str, bool] = {}
 
     # Count Python modules
     py_files = list(root.rglob("*.py"))
-    py_files = [f for f in py_files if ".venv" not in str(f) and "node_modules" not in str(f)]
+    py_files = [
+        f for f in py_files if ".venv" not in str(f) and "node_modules" not in str(f)
+    ]
     pkg_dirs = set()
     for f in py_files:
         if f.parent != root:
@@ -92,29 +105,60 @@ def _detect_context(root: Path) -> dict[str, bool]:
     context["has_modules"] = len(pkg_dirs) > 5
 
     # Architecture directories
-    arch_dirs = {"domain", "ports", "adapters", "infrastructure", "entities",
-                 "use_cases", "interfaces", "core"}
-    found_arch = [d.name for d in root.rglob("*") if d.is_dir() and d.name in arch_dirs
-                  and ".venv" not in str(d)]
+    arch_dirs = {
+        "domain",
+        "ports",
+        "adapters",
+        "infrastructure",
+        "entities",
+        "use_cases",
+        "interfaces",
+        "core",
+    }
+    found_arch = [
+        d.name
+        for d in root.rglob("*")
+        if d.is_dir() and d.name in arch_dirs and ".venv" not in str(d)
+    ]
     context["has_architecture"] = len(found_arch) >= 2
 
     # DDD patterns
     ddd_dirs = {"domain", "entities", "aggregates", "value_objects", "bounded_contexts"}
-    found_ddd = [d.name for d in root.rglob("*") if d.is_dir() and d.name in ddd_dirs
-                 and ".venv" not in str(d)]
+    found_ddd = [
+        d.name
+        for d in root.rglob("*")
+        if d.is_dir() and d.name in ddd_dirs and ".venv" not in str(d)
+    ]
     context["has_ddd"] = len(found_ddd) >= 2
 
     # Service/API detection
-    service_indicators = {"fastapi", "flask", "django", "uvicorn", "gunicorn",
-                          "aiohttp", "starlette", "sanic"}
+    service_indicators = {
+        "fastapi",
+        "flask",
+        "django",
+        "uvicorn",
+        "gunicorn",
+        "aiohttp",
+        "starlette",
+        "sanic",
+    }
     deps = _read_deps(root)
     context["is_service"] = bool(service_indicators & set(deps))
 
     # Enterprise patterns
-    enterprise_dirs = {"repository", "repositories", "services", "handlers",
-                       "controllers", "gateways"}
-    found_enterprise = [d.name for d in root.rglob("*") if d.is_dir()
-                        and d.name in enterprise_dirs and ".venv" not in str(d)]
+    enterprise_dirs = {
+        "repository",
+        "repositories",
+        "services",
+        "handlers",
+        "controllers",
+        "gateways",
+    }
+    found_enterprise = [
+        d.name
+        for d in root.rglob("*")
+        if d.is_dir() and d.name in enterprise_dirs and ".venv" not in str(d)
+    ]
     context["has_enterprise"] = len(found_enterprise) >= 2
 
     return context
@@ -127,6 +171,7 @@ def _read_deps(root: Path) -> list[str]:
         return []
     try:
         import tomllib
+
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
         deps = []
@@ -145,7 +190,9 @@ def _activate_categories(context: dict[str, bool]) -> dict[str, dict]:
     for cat_id, cat in HEURISTIC_CATEGORIES.items():
         if cat["always_active"]:
             active[cat_id] = cat
-        elif cat_id == "H2" and (context.get("has_modules") or context.get("has_architecture")):
+        elif cat_id == "H2" and (
+            context.get("has_modules") or context.get("has_architecture")
+        ):
             active[cat_id] = cat
         elif cat_id == "H4" and context.get("has_ddd"):
             active[cat_id] = cat
@@ -167,12 +214,18 @@ def _activate_categories(context: dict[str, bool]) -> dict[str, dict]:
 # Heuristic checks — each returns (score 0-100, findings list)
 # ---------------------------------------------------------------------------
 
+
 def _scan_python_functions(root: Path) -> list[dict]:
     """Parse Python files and extract function metrics."""
     functions: list[dict] = []
     py_files = list(root.rglob("*.py"))
-    py_files = [f for f in py_files if ".venv" not in str(f)
-                and "node_modules" not in str(f) and "__pycache__" not in str(f)]
+    py_files = [
+        f
+        for f in py_files
+        if ".venv" not in str(f)
+        and "node_modules" not in str(f)
+        and "__pycache__" not in str(f)
+    ]
 
     for py_file in py_files[:200]:  # Cap to avoid slowdowns
         try:
@@ -185,16 +238,22 @@ def _scan_python_functions(root: Path) -> list[dict]:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 end_line = getattr(node, "end_lineno", node.lineno + 10)
                 length = end_line - node.lineno + 1
-                param_count = len(node.args.args) + len(node.args.posonlyargs) + len(node.args.kwonlyargs)
+                param_count = (
+                    len(node.args.args)
+                    + len(node.args.posonlyargs)
+                    + len(node.args.kwonlyargs)
+                )
                 # Approximate nesting depth
                 max_depth = _max_nesting(node)
-                functions.append({
-                    "name": node.name,
-                    "file": str(py_file.relative_to(root)),
-                    "length": length,
-                    "params": param_count,
-                    "nesting": max_depth,
-                })
+                functions.append(
+                    {
+                        "name": node.name,
+                        "file": str(py_file.relative_to(root)),
+                        "length": length,
+                        "params": param_count,
+                        "nesting": max_depth,
+                    }
+                )
 
     return functions
 
@@ -202,8 +261,15 @@ def _scan_python_functions(root: Path) -> list[dict]:
 def _max_nesting(node: ast.AST, depth: int = 0) -> int:
     """Calculate maximum nesting depth in an AST node."""
     max_d = depth
-    nesting_types = (ast.If, ast.For, ast.While, ast.With, ast.Try,
-                     ast.AsyncFor, ast.AsyncWith)
+    nesting_types = (
+        ast.If,
+        ast.For,
+        ast.While,
+        ast.With,
+        ast.Try,
+        ast.AsyncFor,
+        ast.AsyncWith,
+    )
     for child in ast.iter_child_nodes(node):
         if isinstance(child, nesting_types):
             max_d = max(max_d, _max_nesting(child, depth + 1))
@@ -225,7 +291,9 @@ def check_h1_construction(root: Path, functions: list[dict]) -> tuple[int, list[
     long_pct = len(long_fns) / len(functions) * 100 if functions else 0
     if long_pct > 20:
         score -= 20
-        findings.append(f"{len(long_fns)} functions ({long_pct:.0f}%) exceed 50 lines [Clean Code: keep functions small]")
+        findings.append(
+            f"{len(long_fns)} functions ({long_pct:.0f}%) exceed 50 lines [Clean Code: keep functions small]"
+        )
     elif long_pct > 10:
         score -= 10
         findings.append(f"{len(long_fns)} functions ({long_pct:.0f}%) exceed 50 lines")
@@ -238,14 +306,18 @@ def check_h1_construction(root: Path, functions: list[dict]) -> tuple[int, list[
         pct = len(many_params) / len(functions) * 100
         deduction = min(15, int(pct))
         score -= deduction
-        findings.append(f"{len(many_params)} functions have >5 parameters [Clean Code: few and meaningful params]")
+        findings.append(
+            f"{len(many_params)} functions have >5 parameters [Clean Code: few and meaningful params]"
+        )
 
     # Nesting depth
     deep_fns = [f for f in functions if f["nesting"] > 4]
     if deep_fns:
         deduction = min(15, len(deep_fns) * 3)
         score -= deduction
-        findings.append(f"{len(deep_fns)} functions have nesting depth >4 [Code Complete: straightforward control flow]")
+        findings.append(
+            f"{len(deep_fns)} functions have nesting depth >4 [Code Complete: straightforward control flow]"
+        )
 
     # Average function length
     avg_len = sum(f["length"] for f in functions) / len(functions)
@@ -282,14 +354,19 @@ def check_h2_architecture(root: Path) -> tuple[int, list[str]]:
             try:
                 content = py_file.read_text(encoding="utf-8", errors="replace")
                 for infra_name in infra_names:
-                    if f"from {infra_name}" in content or f"import {infra_name}" in content:
+                    if (
+                        f"from {infra_name}" in content
+                        or f"import {infra_name}" in content
+                    ):
                         violations += 1
             except Exception:
                 pass
 
     if violations > 10:
         score -= 25
-        findings.append(f"{violations} dependency rule violations: domain imports infrastructure [Clean Architecture: deps point toward policy]")
+        findings.append(
+            f"{violations} dependency rule violations: domain imports infrastructure [Clean Architecture: deps point toward policy]"
+        )
     elif violations > 5:
         score -= 15
         findings.append(f"{violations} dependency rule violations found")
@@ -298,11 +375,15 @@ def check_h2_architecture(root: Path) -> tuple[int, list[str]]:
         findings.append(f"{violations} minor dependency direction violation(s)")
 
     # Check for feature-oriented vs layer-oriented structure
-    top_dirs = [d.name for d in root.iterdir() if d.is_dir() and not d.name.startswith(".")]
+    top_dirs = [
+        d.name for d in root.iterdir() if d.is_dir() and not d.name.startswith(".")
+    ]
     layer_names = {"controllers", "services", "repositories", "models", "views"}
     if len(layer_names & set(top_dirs)) >= 3:
         score -= 10
-        findings.append("Layer-oriented structure detected [Clean Architecture: prefer feature-oriented]")
+        findings.append(
+            "Layer-oriented structure detected [Clean Architecture: prefer feature-oriented]"
+        )
 
     return max(0, score), findings
 
@@ -321,11 +402,15 @@ def check_h3_refactoring(root: Path) -> tuple[int, list[str]]:
     # Check for pre-commit (verification pipeline)
     if not (root / ".pre-commit-config.yaml").exists():
         score -= 10
-        findings.append("No pre-commit config [Pragmatic Programmer: automate verification]")
+        findings.append(
+            "No pre-commit config [Pragmatic Programmer: automate verification]"
+        )
 
     # Check for type hints usage (safety signal)
     py_files = list(root.rglob("*.py"))
-    py_files = [f for f in py_files if ".venv" not in str(f) and "__pycache__" not in str(f)]
+    py_files = [
+        f for f in py_files if ".venv" not in str(f) and "__pycache__" not in str(f)
+    ]
     typed_count = 0
     sample = py_files[:50]
     for pf in sample:
@@ -340,7 +425,9 @@ def check_h3_refactoring(root: Path) -> tuple[int, list[str]]:
         type_ratio = typed_count / len(sample)
         if type_ratio < 0.3:
             score -= 15
-            findings.append(f"Low type hint coverage ({type_ratio:.0%}) [Legacy Code: make assumptions explicit]")
+            findings.append(
+                f"Low type hint coverage ({type_ratio:.0%}) [Legacy Code: make assumptions explicit]"
+            )
         elif type_ratio < 0.6:
             score -= 5
 
@@ -359,7 +446,9 @@ def check_h4_domain_modeling(root: Path) -> tuple[int, list[str]]:
         files = list(agg_dir.rglob("*.py"))
         if len(files) > 10:
             score -= 10
-            findings.append(f"Large aggregate directory ({len(files)} files) [DDD: keep aggregates small]")
+            findings.append(
+                f"Large aggregate directory ({len(files)} files) [DDD: keep aggregates small]"
+            )
 
     # Check that domain logic is in domain layer, not services
     services_dir = root / "services"
@@ -368,10 +457,16 @@ def check_h4_domain_modeling(root: Path) -> tuple[int, list[str]]:
             try:
                 content = svc_file.read_text(encoding="utf-8", errors="replace")
                 # Look for business logic indicators in service files
-                biz_patterns = len(re.findall(r"if.*(?:validate|check|verify|calculate|compute)", content))
+                biz_patterns = len(
+                    re.findall(
+                        r"if.*(?:validate|check|verify|calculate|compute)", content
+                    )
+                )
                 if biz_patterns > 5:
                     score -= 10
-                    findings.append(f"Business logic in service layer: {svc_file.name} [DDD: domain rules in domain layer]")
+                    findings.append(
+                        f"Business logic in service layer: {svc_file.name} [DDD: domain rules in domain layer]"
+                    )
                     break
             except Exception:
                 pass
@@ -385,7 +480,9 @@ def check_h5_resilience(root: Path) -> tuple[int, list[str]]:
     findings: list[str] = []
 
     py_files = list(root.rglob("*.py"))
-    py_files = [f for f in py_files if ".venv" not in str(f) and "__pycache__" not in str(f)]
+    py_files = [
+        f for f in py_files if ".venv" not in str(f) and "__pycache__" not in str(f)
+    ]
 
     http_calls_total = 0
     http_calls_with_timeout = 0
@@ -399,7 +496,9 @@ def check_h5_resilience(root: Path) -> tuple[int, list[str]]:
             continue
 
         # Timeout coverage on HTTP calls
-        http_patterns = re.findall(r"(requests\.\w+|httpx\.\w+|aiohttp\.\w+)\(", content)
+        http_patterns = re.findall(
+            r"(requests\.\w+|httpx\.\w+|aiohttp\.\w+)\(", content
+        )
         http_calls_total += len(http_patterns)
         timeout_patterns = re.findall(r"timeout\s*=", content)
         http_calls_with_timeout += len(timeout_patterns)
@@ -416,14 +515,20 @@ def check_h5_resilience(root: Path) -> tuple[int, list[str]]:
         timeout_ratio = http_calls_with_timeout / http_calls_total
         if timeout_ratio < 0.5:
             score -= 20
-            findings.append(f"Low timeout coverage ({timeout_ratio:.0%}) on HTTP calls [Release It!: timeout all external calls]")
+            findings.append(
+                f"Low timeout coverage ({timeout_ratio:.0%}) on HTTP calls [Release It!: timeout all external calls]"
+            )
         elif timeout_ratio < 0.8:
             score -= 10
-            findings.append(f"Partial timeout coverage ({timeout_ratio:.0%}) on HTTP calls")
+            findings.append(
+                f"Partial timeout coverage ({timeout_ratio:.0%}) on HTTP calls"
+            )
 
     if not has_retry and http_calls_total > 3:
         score -= 15
-        findings.append("No retry/backoff patterns detected [Release It!: bounded retries with backoff]")
+        findings.append(
+            "No retry/backoff patterns detected [Release It!: bounded retries with backoff]"
+        )
 
     if not has_circuit_breaker and http_calls_total > 5:
         score -= 10
@@ -461,11 +566,15 @@ def check_h6_enterprise(root: Path) -> tuple[int, list[str]]:
 
     if not has_transaction:
         score -= 10
-        findings.append("No explicit transaction boundaries [PoEAA: make transaction boundaries explicit]")
+        findings.append(
+            "No explicit transaction boundaries [PoEAA: make transaction boundaries explicit]"
+        )
 
     if not has_thin_service:
         score -= 10
-        findings.append("Fat service detected (>300 lines) [PoEAA: service layer coordinates, doesn't compute]")
+        findings.append(
+            "Fat service detected (>300 lines) [PoEAA: service layer coordinates, doesn't compute]"
+        )
 
     return max(0, score), findings
 
@@ -476,22 +585,33 @@ def check_h7_practice(root: Path) -> tuple[int, list[str]]:
     findings: list[str] = []
 
     # CI/automation presence
-    has_ci = (root / ".github" / "workflows").is_dir() or (root / ".gitlab-ci.yml").exists()
+    has_ci = (root / ".github" / "workflows").is_dir() or (
+        root / ".gitlab-ci.yml"
+    ).exists()
     has_precommit = (root / ".pre-commit-config.yaml").exists()
     has_makefile = (root / "Makefile").exists() or (root / "justfile").exists()
     automation_count = sum([has_ci, has_precommit, has_makefile])
 
     if automation_count == 0:
         score -= 20
-        findings.append("No automation (CI/pre-commit/Makefile) [Pragmatic: automate repetitive work]")
+        findings.append(
+            "No automation (CI/pre-commit/Makefile) [Pragmatic: automate repetitive work]"
+        )
     elif automation_count == 1:
         score -= 10
-        findings.append(f"Partial automation ({automation_count}/3) [Pragmatic: shorten feedback loops]")
+        findings.append(
+            f"Partial automation ({automation_count}/3) [Pragmatic: shorten feedback loops]"
+        )
 
     # DRY check — look for near-duplicate files
     py_files = list(root.rglob("*.py"))
-    py_files = [f for f in py_files if ".venv" not in str(f) and "__pycache__" not in str(f)
-                and "test" not in str(f).lower()]
+    py_files = [
+        f
+        for f in py_files
+        if ".venv" not in str(f)
+        and "__pycache__" not in str(f)
+        and "test" not in str(f).lower()
+    ]
 
     # Simple duplicate detection: files with very similar sizes in same package
     # (Real dedup would use AST/hash comparison)
@@ -507,7 +627,9 @@ def check_h7_practice(root: Path) -> tuple[int, list[str]]:
     potential_dupes = sum(1 for cluster in size_clusters.values() if len(cluster) > 2)
     if potential_dupes > 5:
         score -= 10
-        findings.append(f"{potential_dupes} potential duplicate clusters [Pragmatic: DRY at knowledge level]")
+        findings.append(
+            f"{potential_dupes} potential duplicate clusters [Pragmatic: DRY at knowledge level]"
+        )
 
     # Broken windows — check for TODO/FIXME/HACK density
     issue_count = 0
@@ -520,7 +642,9 @@ def check_h7_practice(root: Path) -> tuple[int, list[str]]:
 
     if issue_count > 20:
         score -= 10
-        findings.append(f"{issue_count} TODO/FIXME/HACK markers [Pragmatic: fix broken windows]")
+        findings.append(
+            f"{issue_count} TODO/FIXME/HACK markers [Pragmatic: fix broken windows]"
+        )
     elif issue_count > 10:
         score -= 5
 
@@ -586,15 +710,17 @@ def evaluate_heuristics(root_dir: str = ".") -> dict:
         weighted_total += cat_score * norm_weight / 100
         weight_sum += norm_weight
 
-        category_results.append({
-            "id": cat_id,
-            "name": cat["name"],
-            "sources": cat["sources"],
-            "score": cat_score,
-            "grade": _score_to_grade(cat_score),
-            "weight": norm_weight,
-            "findings": cat_findings,
-        })
+        category_results.append(
+            {
+                "id": cat_id,
+                "name": cat["name"],
+                "sources": cat["sources"],
+                "score": cat_score,
+                "grade": _score_to_grade(cat_score),
+                "weight": norm_weight,
+                "findings": cat_findings,
+            }
+        )
 
         if cat_findings:
             all_findings.append(f"**{cat['name']}** ({cat_score}/100):")
@@ -606,13 +732,15 @@ def evaluate_heuristics(root_dir: str = ".") -> dict:
 
     justifications = []
     for cr in category_results:
-        justifications.append({
-            "criterion": cr["name"],
-            "points": cr["score"],
-            "evidence": f"Sources: {', '.join(cr['sources'])}",
-            "reasoning": f"Score {cr['score']}/100, weight {cr['weight']:.0f}%"
-                         + (f" — {cr['findings'][0]}" if cr["findings"] else ""),
-        })
+        justifications.append(
+            {
+                "criterion": cr["name"],
+                "points": cr["score"],
+                "evidence": f"Sources: {', '.join(cr['sources'])}",
+                "reasoning": f"Score {cr['score']}/100, weight {cr['weight']:.0f}%"
+                + (f" — {cr['findings'][0]}" if cr["findings"] else ""),
+            }
+        )
 
     return {
         "domain": "Engineering Heuristics",

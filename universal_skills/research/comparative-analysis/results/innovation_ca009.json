@@ -1,0 +1,187 @@
+{
+  "domain": "CA-010",
+  "domain_name": "Innovation Extraction",
+  "source_count": 1,
+  "target": "/home/apps/workspace/agent-packages/agent-utilities",
+  "results": [
+    {
+      "source": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+      "signals": {
+        "biomimicry_signals": [
+          {
+            "keyword": "mutation",
+            "count": 1,
+            "analogy": "parametric exploration",
+            "target_domain": "variant_pool"
+          }
+        ],
+        "tech_signals": [
+          {
+            "keyword": "plugin",
+            "count": 53,
+            "analogy": "hot-swappable capability extension",
+            "target_domain": "plugin_registry"
+          },
+          {
+            "keyword": "embedding",
+            "count": 36,
+            "analogy": "semantic vector representation",
+            "target_domain": "knowledge_graph"
+          },
+          {
+            "keyword": "owl",
+            "count": 17,
+            "analogy": "web ontology language for semantic reasoning",
+            "target_domain": "owl_bridge"
+          },
+          {
+            "keyword": "knowledge graph",
+            "count": 9,
+            "analogy": "structured relational memory",
+            "target_domain": "kg"
+          },
+          {
+            "keyword": "middleware",
+            "count": 3,
+            "analogy": "cross-cutting concern interception layer",
+            "target_domain": "middleware"
+          },
+          {
+            "keyword": "transformer",
+            "count": 2,
+            "analogy": "parallel sequence processing",
+            "target_domain": "batch_processing"
+          },
+          {
+            "keyword": "consensus",
+            "count": 2,
+            "analogy": "multi-agent agreement",
+            "target_domain": "bft"
+          },
+          {
+            "keyword": "reinforcement",
+            "count": 1,
+            "analogy": "reward-driven routing optimization",
+            "target_domain": "confidence_gating"
+          },
+          {
+            "keyword": "join",
+            "count": 1,
+            "analogy": "cross-entity relationship resolution",
+            "target_domain": "entity_linking"
+          },
+          {
+            "keyword": "vector index",
+            "count": 1,
+            "analogy": "approximate nearest-neighbor search structure",
+            "target_domain": "vector_retrieval"
+          }
+        ],
+        "innovation_claims": [
+          "- [ ] **First conference talk** \u2014 submit to KubeCon / LlamaCon / similar",
+          "- [ ] **Long-running deployment guide** \u2014 first-class Docker, systemd unit, and launchd plist",
+          "- Unwelcome behavior gets moderated first by reminder, then by time-out, then by removal",
+          "## Mission\n\nShip a persistent, local-first memory runtime for AI coding agents that:\n\n- Requires zero external databases",
+          "A Maintainer is expected to:\n\n- Respond to PRs they are review-owner for within a reasonable window (goal: 3 working days for first comment)",
+          "If no standing objection from an existing Maintainer, the PR merges and the new Maintainer is added",
+          "### Non-PR decisions\n\nAnything that is not a normal code change \u2014 charter changes, governance edits, maintainer additions/removals, project scope, breaking API changes, relicensing \u2014 happens in a GitHub Issue labeled `governance` with a proposal in the first comment",
+          "|\n|-|-|\n| Latest minor (currently `0.9.x`) | Yes |\n| Previous minor (currently `0.8.x`) | Critical / High severity only, for 90 days after a new minor is released |\n| Older | No |\n\nAt v1.0 this policy switches to a stated LTS window per the roadmap",
+          "- First-party integrations under `integrations/` (`hermes/`, `openclaw/`, `filesystem-watcher/`)",
+          "`plugin/.claude-plugin/plugin.json` \u2014 version field\n\n**When adding new KV scopes:**\n1"
+        ]
+      },
+      "synergies": [
+        {
+          "innovation": "parametric exploration",
+          "source_keyword": "mutation",
+          "target_domain": "variant_pool",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "hot-swappable capability extension",
+          "source_keyword": "plugin",
+          "target_domain": "plugin_registry",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "semantic vector representation",
+          "source_keyword": "embedding",
+          "target_domain": "knowledge_graph",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "web ontology language for semantic reasoning",
+          "source_keyword": "owl",
+          "target_domain": "owl_bridge",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "structured relational memory",
+          "source_keyword": "knowledge graph",
+          "target_domain": "kg",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-cutting concern interception layer",
+          "source_keyword": "middleware",
+          "target_domain": "middleware",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "parallel sequence processing",
+          "source_keyword": "transformer",
+          "target_domain": "batch_processing",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "multi-agent agreement",
+          "source_keyword": "consensus",
+          "target_domain": "bft",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "reward-driven routing optimization",
+          "source_keyword": "reinforcement",
+          "target_domain": "confidence_gating",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-entity relationship resolution",
+          "source_keyword": "join",
+          "target_domain": "entity_linking",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "approximate nearest-neighbor search structure",
+          "source_keyword": "vector index",
+          "target_domain": "vector_retrieval",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        }
+      ],
+      "new_capabilities": 0,
+      "enhancements": 11
+    }
+  ]
+}

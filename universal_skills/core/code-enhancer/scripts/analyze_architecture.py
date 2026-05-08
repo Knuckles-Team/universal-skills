@@ -34,27 +34,38 @@ def _check_solid_principles(root: Path, py_files: list[Path]) -> list[dict]:
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                methods = [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+                methods = [
+                    n
+                    for n in node.body
+                    if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                ]
                 if len(methods) > 15:
-                    large_classes.append({
-                        "class": node.name, "file": str(f),
-                        "method_count": len(methods),
-                    })
+                    large_classes.append(
+                        {
+                            "class": node.name,
+                            "file": str(f),
+                            "method_count": len(methods),
+                        }
+                    )
 
     if god_modules:
-        findings.append({
-            "principle": "SRP",
-            "status": "violation",
-            "detail": f"{len(god_modules)} modules exceed 500 lines (god modules)",
-            "items": god_modules[:5],
-        })
+        findings.append(
+            {
+                "principle": "SRP",
+                "status": "violation",
+                "detail": f"{len(god_modules)} modules exceed 500 lines (god modules)",
+                "items": god_modules[:5],
+            }
+        )
     if large_classes:
-        findings.append({
-            "principle": "SRP",
-            "status": "violation",
-            "detail": f"{len(large_classes)} classes have >15 methods",
-            "items": large_classes[:5],
-        })
+        findings.append(
+            {
+                "principle": "SRP",
+                "status": "violation",
+                "detail": f"{len(large_classes)} classes have >15 methods",
+                "items": large_classes[:5],
+            }
+        )
 
     return findings
 
@@ -80,8 +91,13 @@ def _check_layered_architecture(root: Path) -> dict:
 
     for indicator, patterns in layer_patterns.items():
         for p in patterns:
-            if any(d.name == p for d in root.rglob("*") if d.is_dir()
-                   and ".venv" not in d.parts and "__pycache__" not in d.parts):
+            if any(
+                d.name == p
+                for d in root.rglob("*")
+                if d.is_dir()
+                and ".venv" not in d.parts
+                and "__pycache__" not in d.parts
+            ):
                 indicators[indicator] = True
                 break
 
@@ -105,10 +121,14 @@ def _check_dependency_injection(py_files: list[Path]) -> dict:
                 total_classes += 1
                 # Check if __init__ accepts dependencies as parameters
                 for method in node.body:
-                    if isinstance(method, ast.FunctionDef) and method.name == "__init__":
+                    if (
+                        isinstance(method, ast.FunctionDef)
+                        and method.name == "__init__"
+                    ):
                         # More than just 'self' parameter with type annotations
                         annotated_params = [
-                            a for a in method.args.args[1:]  # skip self
+                            a
+                            for a in method.args.args[1:]  # skip self
                             if a.annotation is not None
                         ]
                         if len(annotated_params) >= 2:
@@ -137,10 +157,16 @@ def _check_event_driven(py_files: list[Path]) -> dict:
             continue
 
         source_lower = source.lower()
-        event_indicators["event_classes"] += len(re.findall(r"class\s+\w*Event\w*", source))
+        event_indicators["event_classes"] += len(
+            re.findall(r"class\s+\w*Event\w*", source)
+        )
         event_indicators["callback_patterns"] += source_lower.count("callback")
-        event_indicators["observer_patterns"] += source_lower.count("observer") + source_lower.count("listener")
-        event_indicators["signal_patterns"] += source_lower.count("signal") + source_lower.count("emit")
+        event_indicators["observer_patterns"] += source_lower.count(
+            "observer"
+        ) + source_lower.count("listener")
+        event_indicators["signal_patterns"] += source_lower.count(
+            "signal"
+        ) + source_lower.count("emit")
 
     return event_indicators
 
@@ -160,13 +186,24 @@ def _score_to_grade(score: int) -> str:
 def analyze_architecture(root_dir: str = ".") -> dict:
     """Analyze architecture patterns and produce scored results."""
     root = Path(root_dir).resolve()
-    py_files = [f for f in root.rglob("*.py")
-                if ".venv" not in f.parts and "__pycache__" not in f.parts
-                and "node_modules" not in f.parts and ".git" not in f.parts]
+    py_files = [
+        f
+        for f in root.rglob("*.py")
+        if ".venv" not in f.parts
+        and "__pycache__" not in f.parts
+        and "node_modules" not in f.parts
+        and ".git" not in f.parts
+    ]
 
     if not py_files:
-        return {"domain": "Architecture & Design Patterns", "score": 0, "grade": "F",
-                "findings": ["No Python files found"], "justifications": [], "analysis": {}}
+        return {
+            "domain": "Architecture & Design Patterns",
+            "score": 0,
+            "grade": "F",
+            "findings": ["No Python files found"],
+            "justifications": [],
+            "analysis": {},
+        }
 
     # Run analyses
     solid = _check_solid_principles(root, py_files)
@@ -196,7 +233,9 @@ def analyze_architecture(root_dir: str = ".") -> dict:
         score -= 10
     else:
         score -= 15
-        findings.append("No discernible layer architecture (no domain/service/adapter separation)")
+        findings.append(
+            "No discernible layer architecture (no domain/service/adapter separation)"
+        )
 
     # DI ratio
     if di["total_classes"] > 5 and di["di_ratio"] < 0.1:
@@ -211,7 +250,9 @@ def analyze_architecture(root_dir: str = ".") -> dict:
         top_level_py = [f for f in py_files if len(f.relative_to(root).parts) <= 2]
         if len(top_level_py) > 20:
             score -= 10
-            findings.append(f"{len(top_level_py)} Python files at top level — consider package organization")
+            findings.append(
+                f"{len(top_level_py)} Python files at top level — consider package organization"
+            )
 
     score = max(0, score)
 
@@ -223,20 +264,33 @@ def analyze_architecture(root_dir: str = ".") -> dict:
         "file_count": len(py_files),
     }
 
-    justifications = [{
-        "criterion": "architecture_quality",
-        "points": score,
-        "evidence": json.dumps({"layers": layer_count, "di_ratio": di["di_ratio"],
-                                "solid_violations": len(solid)}),
-        "reasoning": (f"Analyzed {len(py_files)} files. "
-                      f"{layer_count}/5 architecture layers present, "
-                      f"DI ratio: {di['di_ratio']:.0%}, "
-                      f"{len(solid)} SOLID violations."),
-    }]
+    justifications = [
+        {
+            "criterion": "architecture_quality",
+            "points": score,
+            "evidence": json.dumps(
+                {
+                    "layers": layer_count,
+                    "di_ratio": di["di_ratio"],
+                    "solid_violations": len(solid),
+                }
+            ),
+            "reasoning": (
+                f"Analyzed {len(py_files)} files. "
+                f"{layer_count}/5 architecture layers present, "
+                f"DI ratio: {di['di_ratio']:.0%}, "
+                f"{len(solid)} SOLID violations."
+            ),
+        }
+    ]
 
     return {
-        "domain": "Architecture & Design Patterns", "score": score, "grade": _score_to_grade(score),
-        "findings": findings, "justifications": justifications, "analysis": analysis,
+        "domain": "Architecture & Design Patterns",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "analysis": analysis,
     }
 
 

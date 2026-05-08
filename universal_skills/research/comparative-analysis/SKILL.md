@@ -8,7 +8,7 @@ license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart]
 metadata:
   author: Genius
-  version: '0.8.0'
+  version: '0.9.0'
 ---
 
 # Comparative Analysis
@@ -60,8 +60,11 @@ embedded metadata for downstream analysis scripts.
 
 ```bash
 python scripts/discover_projects.py /path/to/project1 /path/to/project2
+python scripts/discover_projects.py https://github.com/example/repo /local/project
 python scripts/discover_projects.py --mode research /path/to/paper1.md /path/to/paper2.md
 ```
+
+If Git URLs are provided, the script will automatically clone them into a temporary directory (`.specify/ca_repos/<session_id>`) using `repository-manager` and substitute the URL with the local cloned path in the output JSON.
 
 ### Phase 1: Governance Analysis (Codebase mode only)
 
@@ -178,6 +181,14 @@ python scripts/generate_comparison_report.py results/*.json --output report.md
 For codebase analysis, output to `.specify/reports/comparative_analysis.md`.
 For research-only analysis, ask the user where to save the report (default: current
 working directory). The user may specify paths like `~/Documents/`.
+
+### Phase 11: Cleanup (If Applicable)
+
+If Git URLs were provided in Phase 0, `discover_projects.py` will output a `cleanup_instruction` in the JSON and print a terminal warning.
+After successfully generating the comparison report in Phase 10, **you must delete the temporary directory** containing the cloned repositories to free up workspace space:
+```bash
+rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
+```
 
 ## Output Location Rules
 

@@ -39,10 +39,15 @@ def discover_tests(project_path: Path) -> dict:
 
         rel_str = str(rel).lower()
         is_test = (
-            f.name.startswith("test_") or f.name.endswith("_test.py") or
-            f.name.endswith(".test.js") or f.name.endswith(".test.ts") or
-            f.name.endswith("_test.go") or "tests/" in rel_str or "test/" in rel_str or
-            "__tests__/" in rel_str or "spec/" in rel_str
+            f.name.startswith("test_")
+            or f.name.endswith("_test.py")
+            or f.name.endswith(".test.js")
+            or f.name.endswith(".test.ts")
+            or f.name.endswith("_test.go")
+            or "tests/" in rel_str
+            or "test/" in rel_str
+            or "__tests__/" in rel_str
+            or "spec/" in rel_str
         )
 
         if f.suffix in {".py", ".js", ".ts", ".go", ".rs", ".java"}:
@@ -56,7 +61,11 @@ def discover_tests(project_path: Path) -> dict:
                 # Classify
                 if "integration" in rel_str or "integ" in rel_str:
                     test_files["integration"].append(str(rel))
-                elif "e2e" in rel_str or "end_to_end" in rel_str or "acceptance" in rel_str:
+                elif (
+                    "e2e" in rel_str
+                    or "end_to_end" in rel_str
+                    or "acceptance" in rel_str
+                ):
                     test_files["e2e"].append(str(rel))
                 elif "unit" in rel_str or f.name.startswith("test_"):
                     test_files["unit"].append(str(rel))
@@ -99,7 +108,9 @@ def detect_framework(project_path: Path) -> str:
                     return "pytest"
             except Exception:
                 pass
-    if (project_path / "jest.config.js").exists() or (project_path / "jest.config.ts").exists():
+    if (project_path / "jest.config.js").exists() or (
+        project_path / "jest.config.ts"
+    ).exists():
         return "jest"
     if list(project_path.rglob("*_test.go")):
         return "go_test"
@@ -111,7 +122,8 @@ def detect_framework(project_path: Path) -> str:
 def check_test_quality(project_path: Path) -> dict:
     """Check test quality indicators."""
     quality = {
-        "has_conftest": (project_path / "tests" / "conftest.py").exists() or (project_path / "conftest.py").exists(),
+        "has_conftest": (project_path / "tests" / "conftest.py").exists()
+        or (project_path / "conftest.py").exists(),
         "has_fixtures": False,
         "has_parametrize": False,
         "has_markers": False,
@@ -190,7 +202,9 @@ def score_testing(tests: dict, framework: str, quality: dict) -> dict:
     e2e = tests["test_files"].get("e2e", 0)
     if unit > 0 and integ > 0:
         score += 15
-        details.append(f"Multi-layer testing (unit:{unit}, integ:{integ}, e2e:{e2e}): +15")
+        details.append(
+            f"Multi-layer testing (unit:{unit}, integ:{integ}, e2e:{e2e}): +15"
+        )
         if unit > integ >= e2e:
             score += 5
             details.append("Proper testing pyramid shape: +5")
@@ -200,13 +214,35 @@ def score_testing(tests: dict, framework: str, quality: dict) -> dict:
 
     # Quality indicators (20 points)
     q_score = 0
-    for key in ["has_conftest", "has_fixtures", "has_parametrize", "has_markers", "timeout_configured"]:
+    for key in [
+        "has_conftest",
+        "has_fixtures",
+        "has_parametrize",
+        "has_markers",
+        "timeout_configured",
+    ]:
         if quality.get(key):
             q_score += 4
     score += q_score
     details.append(f"Quality indicators ({q_score}/20): +{q_score}")
 
-    grade = "A+" if score >= 95 else "A" if score >= 90 else "B+" if score >= 85 else "B" if score >= 80 else "C+" if score >= 75 else "C" if score >= 70 else "D" if score >= 60 else "F"
+    grade = (
+        "A+"
+        if score >= 95
+        else "A"
+        if score >= 90
+        else "B+"
+        if score >= 85
+        else "B"
+        if score >= 80
+        else "C+"
+        if score >= 75
+        else "C"
+        if score >= 70
+        else "D"
+        if score >= 60
+        else "F"
+    )
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
@@ -220,12 +256,20 @@ def main():
     quality = check_test_quality(project_path)
     scoring = score_testing(tests, framework, quality)
 
-    print(json.dumps({
-        "domain": "CA-006", "domain_name": "Testing",
-        "project": str(project_path),
-        "test_discovery": tests, "framework": framework,
-        "quality_indicators": quality, "scoring": scoring,
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-006",
+                "domain_name": "Testing",
+                "project": str(project_path),
+                "test_discovery": tests,
+                "framework": framework,
+                "quality_indicators": quality,
+                "scoring": scoring,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -59,13 +59,15 @@ def _analyze_file(filepath: Path) -> dict:
             length = end_line - node.lineno + 1
             cc = _cyclomatic_complexity(node)
             depth = _max_nesting_depth(node)
-            functions.append({
-                "name": node.name,
-                "line": node.lineno,
-                "length": length,
-                "complexity": cc,
-                "nesting_depth": depth,
-            })
+            functions.append(
+                {
+                    "name": node.name,
+                    "line": node.lineno,
+                    "length": length,
+                    "complexity": cc,
+                    "nesting_depth": depth,
+                }
+            )
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 imports.append(alias.name.split(".")[0])
@@ -113,15 +115,27 @@ def _score_to_grade(score: int) -> str:
 def analyze_codebase(root_dir: str = ".") -> dict:
     """Analyze codebase quality and produce scored results."""
     root = Path(root_dir).resolve()
-    py_files = [f for f in root.rglob("*.py")
-                if ".venv" not in f.parts and "__pycache__" not in f.parts
-                and "node_modules" not in f.parts and ".git" not in f.parts
-                and "build" not in f.parts and "dist" not in f.parts
-                and ".egg-info" not in str(f)]
+    py_files = [
+        f
+        for f in root.rglob("*.py")
+        if ".venv" not in f.parts
+        and "__pycache__" not in f.parts
+        and "node_modules" not in f.parts
+        and ".git" not in f.parts
+        and "build" not in f.parts
+        and "dist" not in f.parts
+        and ".egg-info" not in str(f)
+    ]
 
     if not py_files:
-        return {"domain": "Codebase Optimization", "score": 0, "grade": "F",
-                "findings": ["No Python files found"], "justifications": [], "metrics": {}}
+        return {
+            "domain": "Codebase Optimization",
+            "score": 0,
+            "grade": "F",
+            "findings": ["No Python files found"],
+            "justifications": [],
+            "metrics": {},
+        }
 
     all_functions: list[dict] = []
     all_hashes: list[str] = []
@@ -181,7 +195,9 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     file_sizes: dict[str, int] = {}
     for f in py_files:
         try:
-            line_count = len(f.read_text(encoding="utf-8", errors="ignore").splitlines())
+            line_count = len(
+                f.read_text(encoding="utf-8", errors="ignore").splitlines()
+            )
             file_sizes[str(f)] = line_count
         except Exception:
             pass
@@ -201,11 +217,19 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         except (SyntaxError, UnicodeDecodeError):
             continue
 
-        top_classes = [n for n in ast.iter_child_nodes(tree) if isinstance(n, ast.ClassDef)]
-        top_functions = [n for n in ast.iter_child_nodes(tree)
-                         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
-        top_assigns = [n for n in ast.iter_child_nodes(tree)
-                       if isinstance(n, (ast.Assign, ast.AnnAssign))]
+        top_classes = [
+            n for n in ast.iter_child_nodes(tree) if isinstance(n, ast.ClassDef)
+        ]
+        top_functions = [
+            n
+            for n in ast.iter_child_nodes(tree)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        top_assigns = [
+            n
+            for n in ast.iter_child_nodes(tree)
+            if isinstance(n, (ast.Assign, ast.AnnAssign))
+        ]
 
         # --- Classification 1: Data file ---
         # Files that are essentially one large dict/list literal, or pure
@@ -231,7 +255,9 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             concept_words.update(w.lower() for w in words if len(w) > 3)
         for fn in top_functions:
             parts = fn.name.split("_")
-            concept_words.update(p for p in parts if len(p) > 3 and not p.startswith("_"))
+            concept_words.update(
+                p for p in parts if len(p) > 3 and not p.startswith("_")
+            )
 
         # --- Classification 3: Function-level complexity ---
         # The REAL issue is individual functions that are too long or too complex,
@@ -247,12 +273,14 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             #   - Function nesting > 4: cognitive overload
             fn_depth = _max_nesting_depth(fn)
             if fn_len > 200 or fn_cc > 15 or fn_depth > 5:
-                func_issues.append({
-                    "name": fn.name,
-                    "lines": fn_len,
-                    "complexity": fn_cc,
-                    "nesting": fn_depth,
-                })
+                func_issues.append(
+                    {
+                        "name": fn.name,
+                        "lines": fn_len,
+                        "complexity": fn_cc,
+                        "nesting": fn_depth,
+                    }
+                )
 
         # Also check methods inside classes
         for cls in top_classes:
@@ -263,12 +291,14 @@ def analyze_codebase(root_dir: str = ".") -> dict:
                     m_cc = _cyclomatic_complexity(method)
                     m_depth = _max_nesting_depth(method)
                     if m_len > 200 or m_cc > 15 or m_depth > 5:
-                        func_issues.append({
-                            "name": f"{cls.name}.{method.name}",
-                            "lines": m_len,
-                            "complexity": m_cc,
-                            "nesting": m_depth,
-                        })
+                        func_issues.append(
+                            {
+                                "name": f"{cls.name}.{method.name}",
+                                "lines": m_len,
+                                "complexity": m_cc,
+                                "nesting": m_depth,
+                            }
+                        )
 
         # --- Composite scoring: is this file genuinely problematic? ---
         # Criteria for "needs refactoring" (must meet 2+ of these):
@@ -278,33 +308,55 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         #   4. Single class with >20 methods (god class)
         issues = []
         public_functions = [f for f in top_functions if not f.name.startswith("_")]
-        god_classes = [(c.name, len([m for m in ast.iter_child_nodes(c)
-                        if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]))
-                       for c in top_classes]
+        god_classes = [
+            (
+                c.name,
+                len(
+                    [
+                        m
+                        for m in ast.iter_child_nodes(c)
+                        if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    ]
+                ),
+            )
+            for c in top_classes
+        ]
         god_classes = [(name, count) for name, count in god_classes if count > 20]
 
         if func_issues:
             top_offender = max(func_issues, key=lambda x: x["lines"])
-            issues.append(f"{len(func_issues)} functions with high complexity "
-                          f"(worst: {top_offender['name']} at {top_offender['lines']}L, "
-                          f"CC={top_offender['complexity']})")
+            issues.append(
+                f"{len(func_issues)} functions with high complexity "
+                f"(worst: {top_offender['name']} at {top_offender['lines']}L, "
+                f"CC={top_offender['complexity']})"
+            )
         if len(concept_words) > 8:
-            issues.append(f"Low cohesion: {len(concept_words)} distinct concepts in one file")
+            issues.append(
+                f"Low cohesion: {len(concept_words)} distinct concepts in one file"
+            )
         if len(public_functions) > 15:
-            issues.append(f"{len(public_functions)} public functions — consider grouping into modules")
+            issues.append(
+                f"{len(public_functions)} public functions — consider grouping into modules"
+            )
         if god_classes:
             for name, count in god_classes:
-                issues.append(f"God class: {name} ({count} methods) — consider mixins/composition")
+                issues.append(
+                    f"God class: {name} ({count} methods) — consider mixins/composition"
+                )
 
         if len(issues) >= 1:  # At least one real structural problem
-            structural_issues.append({
-                "file": filepath.name,
-                "path": filepath_str,
-                "lines": line_count,
-                "issues": issues,
-                "func_issues": func_issues[:5],
-                "classification": "monolithic" if len(issues) >= 2 else "needs_attention",
-            })
+            structural_issues.append(
+                {
+                    "file": filepath.name,
+                    "path": filepath_str,
+                    "lines": line_count,
+                    "issues": issues,
+                    "func_issues": func_issues[:5],
+                    "classification": "monolithic"
+                    if len(issues) >= 2
+                    else "needs_attention",
+                }
+            )
 
     structural_issues.sort(key=lambda x: len(x["issues"]), reverse=True)
 
@@ -328,8 +380,10 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         score -= min(15, len(very_long_functions) * 3)
         findings.append(
             f"{len(very_long_functions)} functions exceed 200 lines (actionable refactoring targets): "
-            + ", ".join(f"{f['name']} ({f['length']}L)" for f in
-                        sorted(very_long_functions, key=lambda x: -x["length"])[:5])
+            + ", ".join(
+                f"{f['name']} ({f['length']}L)"
+                for f in sorted(very_long_functions, key=lambda x: -x["length"])[:5]
+            )
         )
     elif len(long_functions) > 20:
         score -= 8
@@ -338,8 +392,12 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         score -= 3
 
     # Structural issues penalty (replaces raw monolithic file count)
-    truly_monolithic = [si for si in structural_issues if si["classification"] == "monolithic"]
-    needs_attention = [si for si in structural_issues if si["classification"] == "needs_attention"]
+    truly_monolithic = [
+        si for si in structural_issues if si["classification"] == "monolithic"
+    ]
+    needs_attention = [
+        si for si in structural_issues if si["classification"] == "needs_attention"
+    ]
 
     if truly_monolithic:
         score -= min(15, len(truly_monolithic) * 5)
@@ -352,8 +410,7 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         score -= min(8, len(needs_attention) * 2)
         for si in needs_attention[:3]:
             findings.append(
-                f"Needs attention: {si['file']} ({si['lines']}L) — "
-                + si["issues"][0]
+                f"Needs attention: {si['file']} ({si['lines']}L) — " + si["issues"][0]
             )
 
     # Duplication penalty
@@ -381,14 +438,23 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     score = max(0, score)
 
     metrics = {
-        "file_count": file_count, "total_lines": total_lines, "function_count": len(all_functions),
-        "avg_complexity": round(avg_complexity, 2), "max_complexity": max_complexity,
-        "avg_function_length": round(avg_length, 1), "max_function_length": max_length,
-        "max_nesting_depth": max_depth, "duplication_ratio": round(duplication_ratio, 3),
-        "long_functions": len(long_functions), "complex_functions": len(complex_functions),
-        "deep_nesting_functions": len(deep_functions), "parse_errors": parse_errors,
+        "file_count": file_count,
+        "total_lines": total_lines,
+        "function_count": len(all_functions),
+        "avg_complexity": round(avg_complexity, 2),
+        "max_complexity": max_complexity,
+        "avg_function_length": round(avg_length, 1),
+        "max_function_length": max_length,
+        "max_nesting_depth": max_depth,
+        "duplication_ratio": round(duplication_ratio, 3),
+        "long_functions": len(long_functions),
+        "complex_functions": len(complex_functions),
+        "deep_nesting_functions": len(deep_functions),
+        "parse_errors": parse_errors,
         "structural_issues": len(structural_issues),
-        "truly_monolithic": len([si for si in structural_issues if si["classification"] == "monolithic"]),
+        "truly_monolithic": len(
+            [si for si in structural_issues if si["classification"] == "monolithic"]
+        ),
     }
 
     # Top offenders
@@ -404,15 +470,18 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             continue
         checked_dirs.add(parent)
         sibling_py = [
-            s for s in f.parent.glob("*.py")
+            s
+            for s in f.parent.glob("*.py")
             if s.name != "__init__.py" and not s.name.startswith("test_")
         ]
         if len(sibling_py) > 15:
-            flat_dirs.append({
-                "directory": str(f.parent.relative_to(root)),
-                "python_files": len(sibling_py),
-                "suggestion": "Consider organizing into subdirectories by domain/feature",
-            })
+            flat_dirs.append(
+                {
+                    "directory": str(f.parent.relative_to(root)),
+                    "python_files": len(sibling_py),
+                    "suggestion": "Consider organizing into subdirectories by domain/feature",
+                }
+            )
 
     if flat_dirs:
         findings.append(
@@ -420,21 +489,30 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             + ", ".join(d["directory"] for d in flat_dirs[:3])
         )
 
-    justifications = [{
-        "criterion": "code_quality",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (f"Analyzed {file_count} files, {len(all_functions)} functions. "
-                      f"Avg CC={avg_complexity:.1f}, max length={max_length}, "
-                      f"duplication={duplication_ratio:.1%}, "
-                      f"{len(structural_issues)} structural issues "
-                      f"({len([s for s in structural_issues if s['classification']=='monolithic'])} monolithic)."),
-    }]
+    justifications = [
+        {
+            "criterion": "code_quality",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"Analyzed {file_count} files, {len(all_functions)} functions. "
+                f"Avg CC={avg_complexity:.1f}, max length={max_length}, "
+                f"duplication={duplication_ratio:.1%}, "
+                f"{len(structural_issues)} structural issues "
+                f"({len([s for s in structural_issues if s['classification'] == 'monolithic'])} monolithic)."
+            ),
+        }
+    ]
 
     return {
-        "domain": "Codebase Optimization", "score": score, "grade": _score_to_grade(score),
-        "findings": findings, "justifications": justifications,
-        "metrics": metrics, "top_complex": top_complex, "top_long": top_long,
+        "domain": "Codebase Optimization",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "metrics": metrics,
+        "top_complex": top_complex,
+        "top_long": top_long,
         "structural_issues": structural_issues[:10],
         "flat_directories": flat_dirs,
     }

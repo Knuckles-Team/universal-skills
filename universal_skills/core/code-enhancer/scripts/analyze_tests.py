@@ -45,13 +45,15 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name.startswith("test_"):
                 end_line = getattr(node, "end_lineno", node.lineno + 1)
-                body_lines = source.splitlines()[node.lineno - 1:end_line]
+                body_lines = source.splitlines()[node.lineno - 1 : end_line]
                 body_source = "\n".join(body_lines)
 
                 # Extract markers
                 markers: list[str] = []
                 for dec in node.decorator_list:
-                    if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute):
+                    if isinstance(dec, ast.Call) and isinstance(
+                        dec.func, ast.Attribute
+                    ):
                         if dec.func.attr == "mark":
                             markers.append("mark")
                         elif isinstance(dec.func.value, ast.Attribute):
@@ -61,7 +63,9 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
 
                 # Check for concept markers
                 concept_id = ""
-                concept_match = re.search(r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)", body_source)
+                concept_match = re.search(
+                    r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)", body_source
+                )
                 if concept_match:
                     concept_id = concept_match.group(1)
 
@@ -78,21 +82,25 @@ def _extract_tests_from_file(filepath: Path) -> list[dict]:
                         break
                 # Also check for pytest.raises and mock assertions
                 if not has_assertions:
-                    if ("pytest.raises" in body_source
-                            or ".assert_called" in body_source
-                            or ".assert_any_call" in body_source):
+                    if (
+                        "pytest.raises" in body_source
+                        or ".assert_called" in body_source
+                        or ".assert_any_call" in body_source
+                    ):
                         has_assertions = True
 
-                tests.append({
-                    "name": node.name,
-                    "file": str(filepath),
-                    "line": node.lineno,
-                    "length": end_line - node.lineno + 1,
-                    "intent": intent,
-                    "markers": markers,
-                    "concept_id": concept_id,
-                    "has_assertions": has_assertions,
-                })
+                tests.append(
+                    {
+                        "name": node.name,
+                        "file": str(filepath),
+                        "line": node.lineno,
+                        "length": end_line - node.lineno + 1,
+                        "intent": intent,
+                        "markers": markers,
+                        "concept_id": concept_id,
+                        "has_assertions": has_assertions,
+                    }
+                )
     return tests
 
 
@@ -111,12 +119,14 @@ def _detect_doc_test_drift(root: Path, tests: list[dict]) -> list[dict]:
             feature_words = set(feature.strip().split())
             # Check if any test name references this feature
             if not any(w in test_names_lower for w in feature_words if len(w) > 4):
-                drift.append({
-                    "type": "untested_feature",
-                    "source": "README.md",
-                    "feature": feature.strip(),
-                    "detail": "Feature heading in README has no corresponding test",
-                })
+                drift.append(
+                    {
+                        "type": "untested_feature",
+                        "source": "README.md",
+                        "feature": feature.strip(),
+                        "detail": "Feature heading in README has no corresponding test",
+                    }
+                )
     return drift
 
 
@@ -148,11 +158,22 @@ def analyze_tests(root_dir: str = ".") -> dict:
     test_files = list(set(test_files))
 
     if not test_files:
-        return {"domain": "Test Coverage", "score": 20, "grade": "F",
-                "findings": ["No test files found"],
-                "justifications": [{"criterion": "test_existence", "points": 0,
-                    "evidence": str(root), "reasoning": "No test files found in tests/ or test/ directories"}],
-                "metrics": {}, "tests": []}
+        return {
+            "domain": "Test Coverage",
+            "score": 20,
+            "grade": "F",
+            "findings": ["No test files found"],
+            "justifications": [
+                {
+                    "criterion": "test_existence",
+                    "points": 0,
+                    "evidence": str(root),
+                    "reasoning": "No test files found in tests/ or test/ directories",
+                }
+            ],
+            "metrics": {},
+            "tests": [],
+        }
 
     # Extract all tests
     all_tests: list[dict] = []
@@ -169,9 +190,14 @@ def analyze_tests(root_dir: str = ".") -> dict:
     concept_tests = [t for t in all_tests if t["concept_id"]]
 
     # Count source files for ratio
-    src_files = [f for f in root.rglob("*.py")
-                 if "test" not in f.parts and ".venv" not in f.parts
-                 and "__pycache__" not in f.parts and ".git" not in f.parts]
+    src_files = [
+        f
+        for f in root.rglob("*.py")
+        if "test" not in f.parts
+        and ".venv" not in f.parts
+        and "__pycache__" not in f.parts
+        and ".git" not in f.parts
+    ]
 
     test_to_src_ratio = len(all_tests) / max(len(src_files), 1)
 
@@ -223,20 +249,29 @@ def analyze_tests(root_dir: str = ".") -> dict:
         "drift_items": len(drift_items),
     }
 
-    justifications = [{
-        "criterion": "test_coverage_quality",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (f"{len(all_tests)} tests across {len(test_files)} files. "
-                      f"Ratio: {test_to_src_ratio:.2f}. "
-                      f"Intent: {intent_counts}. "
-                      f"{len(no_assert)} without assertions, {len(drift_items)} drift items."),
-    }]
+    justifications = [
+        {
+            "criterion": "test_coverage_quality",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"{len(all_tests)} tests across {len(test_files)} files. "
+                f"Ratio: {test_to_src_ratio:.2f}. "
+                f"Intent: {intent_counts}. "
+                f"{len(no_assert)} without assertions, {len(drift_items)} drift items."
+            ),
+        }
+    ]
 
     return {
-        "domain": "Test Coverage", "score": score, "grade": _score_to_grade(score),
-        "findings": findings, "justifications": justifications,
-        "metrics": metrics, "tests": all_tests[:30], "drift": drift_items[:10],
+        "domain": "Test Coverage",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "metrics": metrics,
+        "tests": all_tests[:30],
+        "drift": drift_items[:10],
     }
 
 

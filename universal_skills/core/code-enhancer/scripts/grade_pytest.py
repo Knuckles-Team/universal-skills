@@ -78,28 +78,18 @@ def _analyze_test_file(filepath: Path) -> dict:
         )
 
         # Check for parametrize decorator
-        has_parametrize = any(
-            "parametrize" in ast.dump(d) for d in node.decorator_list
-        )
+        has_parametrize = any("parametrize" in ast.dump(d) for d in node.decorator_list)
 
         # Check for fixture usage (arguments beyond self/cls)
-        fixture_args = [
-            a.arg
-            for a in node.args.args
-            if a.arg not in ("self", "cls")
-        ]
+        fixture_args = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
 
         # Name quality
         name_len = len(node.name)
-        is_generic = any(
-            re.match(p, node.name) for p in GENERIC_NAME_PATTERNS
-        )
+        is_generic = any(re.match(p, node.name) for p in GENERIC_NAME_PATTERNS)
         is_descriptive = name_len > 15 and "_" in node.name[5:]
 
         # Weak assertions
-        weak_assert_count = sum(
-            1 for wa in WEAK_ASSERTIONS if wa in body_source
-        )
+        weak_assert_count = sum(1 for wa in WEAK_ASSERTIONS if wa in body_source)
 
         # Body hash for duplication detection
         # Normalize: strip whitespace, remove function name line
@@ -252,9 +242,7 @@ def grade_pytest(root_dir: str = ".") -> dict:
         all_tests.extend(result["tests"])
 
         if result["total_lines"] > 500:
-            large_files.append(
-                {"file": str(tf.name), "lines": result["total_lines"]}
-            )
+            large_files.append({"file": str(tf.name), "lines": result["total_lines"]})
         if result["test_count"] > 30:
             dense_files.append(
                 {"file": str(tf.name), "test_count": result["test_count"]}
@@ -309,17 +297,13 @@ def grade_pytest(root_dir: str = ".") -> dict:
         )
     if dense_files:
         structure_score -= min(5, len(dense_files) * 2)
-        findings.append(
-            f"{len(dense_files)} test files have >30 tests — too dense"
-        )
+        findings.append(f"{len(dense_files)} test files have >30 tests — too dense")
 
     # Check for subdirectory organization
     test_dir = root / "tests"
     if test_dir.is_dir():
         subdirs = [
-            d
-            for d in test_dir.iterdir()
-            if d.is_dir() and d.name != "__pycache__"
+            d for d in test_dir.iterdir() if d.is_dir() and d.name != "__pycache__"
         ]
         if not subdirs and len(test_files) > 5:
             structure_score -= 3
@@ -406,8 +390,7 @@ def grade_pytest(root_dir: str = ".") -> dict:
     if very_long > 0:
         slop_score -= min(5, very_long * 2)
         findings.append(
-            f"{very_long} tests exceed 100 lines — "
-            f"likely doing too much per test"
+            f"{very_long} tests exceed 100 lines — likely doing too much per test"
         )
 
     # Total score

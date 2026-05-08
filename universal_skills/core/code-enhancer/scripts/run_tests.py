@@ -21,11 +21,17 @@ from pathlib import Path
 DEFAULT_TIMEOUT = 300  # seconds — global default
 
 
-def _run_tool(cmd: list[str], cwd: str, timeout: int = DEFAULT_TIMEOUT) -> tuple[int, str, str]:
+def _run_tool(
+    cmd: list[str], cwd: str, timeout: int = DEFAULT_TIMEOUT
+) -> tuple[int, str, str]:
     """Run a CLI tool and return (returncode, stdout, stderr)."""
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout,
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=cwd,
+            timeout=timeout,
         )
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
@@ -43,25 +49,46 @@ def _detect_test_framework(root: Path) -> list[dict]:
     has_tests_dir = (root / "tests").is_dir() or (root / "test").is_dir()
     if pyproject.exists() or has_tests_dir:
         try:
-            content = pyproject.read_text(encoding="utf-8", errors="ignore") if pyproject.exists() else ""
+            content = (
+                pyproject.read_text(encoding="utf-8", errors="ignore")
+                if pyproject.exists()
+                else ""
+            )
         except Exception:
             content = ""
         if "pytest" in content or has_tests_dir:
-            frameworks.append({
-                "language": "python",
-                "framework": "pytest",
-                "command": ["python", "-m", "pytest", "--tb=line", "-q",
-                            f"--timeout={DEFAULT_TIMEOUT}", "--no-header"],
-            })
+            frameworks.append(
+                {
+                    "language": "python",
+                    "framework": "pytest",
+                    "command": [
+                        "python",
+                        "-m",
+                        "pytest",
+                        "--tb=line",
+                        "-q",
+                        f"--timeout={DEFAULT_TIMEOUT}",
+                        "--no-header",
+                    ],
+                }
+            )
 
     # Go
     if (root / "go.mod").exists():
-        frameworks.append({
-            "language": "go",
-            "framework": "go test",
-            "command": ["go", "test", "./...", f"-timeout={DEFAULT_TIMEOUT}s",
-                        "-count=1", "-short"],
-        })
+        frameworks.append(
+            {
+                "language": "go",
+                "framework": "go test",
+                "command": [
+                    "go",
+                    "test",
+                    "./...",
+                    f"-timeout={DEFAULT_TIMEOUT}s",
+                    "-count=1",
+                    "-short",
+                ],
+            }
+        )
 
     # Node
     pkg_json = root / "package.json"
@@ -78,36 +105,44 @@ def _detect_test_framework(root: Path) -> list[dict]:
                     framework = "jest"
                 elif "mocha" in test_script:
                     framework = "mocha"
-                frameworks.append({
-                    "language": "node",
-                    "framework": framework,
-                    "command": ["npm", "test", "--", "--watchAll=false"],
-                })
+                frameworks.append(
+                    {
+                        "language": "node",
+                        "framework": framework,
+                        "command": ["npm", "test", "--", "--watchAll=false"],
+                    }
+                )
         except (json.JSONDecodeError, Exception):
             pass
 
     # Rust
     if (root / "Cargo.toml").exists():
-        frameworks.append({
-            "language": "rust",
-            "framework": "cargo test",
-            "command": ["cargo", "test", "--no-fail-fast"],
-        })
+        frameworks.append(
+            {
+                "language": "rust",
+                "framework": "cargo test",
+                "command": ["cargo", "test", "--no-fail-fast"],
+            }
+        )
 
     # Java — Maven
     if (root / "pom.xml").exists():
-        frameworks.append({
-            "language": "java",
-            "framework": "maven",
-            "command": ["mvn", "test", "-q", "--batch-mode"],
-        })
+        frameworks.append(
+            {
+                "language": "java",
+                "framework": "maven",
+                "command": ["mvn", "test", "-q", "--batch-mode"],
+            }
+        )
     # Java — Gradle
     elif (root / "build.gradle").exists() or (root / "build.gradle.kts").exists():
-        frameworks.append({
-            "language": "java",
-            "framework": "gradle",
-            "command": ["./gradlew", "test", "--no-daemon"],
-        })
+        frameworks.append(
+            {
+                "language": "java",
+                "framework": "gradle",
+                "command": ["./gradlew", "test", "--no-daemon"],
+            }
+        )
 
     return frameworks
 
@@ -115,13 +150,17 @@ def _detect_test_framework(root: Path) -> list[dict]:
 def _parse_pytest_output(stdout: str, stderr: str) -> dict:
     """Parse pytest -q output for pass/fail/error counts."""
     combined = stdout + "\n" + stderr
-    result = {"passed": 0, "failed": 0, "errors": 0, "warnings": 0,
-              "skipped": 0, "failures": []}
+    result = {
+        "passed": 0,
+        "failed": 0,
+        "errors": 0,
+        "warnings": 0,
+        "skipped": 0,
+        "failures": [],
+    }
 
     # Match summary line: "X passed, Y failed, Z error in Ns"
-    summary = re.search(
-        r"(\d+)\s+passed", combined
-    )
+    summary = re.search(r"(\d+)\s+passed", combined)
     if summary:
         result["passed"] = int(summary.group(1))
 
@@ -204,13 +243,15 @@ def run_tests(root_dir: str = ".", timeout: int = DEFAULT_TIMEOUT) -> dict:
             "score": 20,
             "grade": "F",
             "findings": ["No test framework detected — no tests to execute"],
-            "justifications": [{
-                "criterion": "test_execution",
-                "points": 20,
-                "evidence": str(root),
-                "reasoning": "No recognized test framework (pytest, go test, npm test, "
-                             "cargo test, maven, gradle) detected.",
-            }],
+            "justifications": [
+                {
+                    "criterion": "test_execution",
+                    "points": 20,
+                    "evidence": str(root),
+                    "reasoning": "No recognized test framework (pytest, go test, npm test, "
+                    "cargo test, maven, gradle) detected.",
+                }
+            ],
             "framework_results": [],
             "metrics": {"frameworks_detected": 0},
         }
@@ -225,21 +266,29 @@ def run_tests(root_dir: str = ".", timeout: int = DEFAULT_TIMEOUT) -> dict:
         rc, stdout, stderr = _run_tool(fw["command"], str(root), timeout=timeout)
 
         if rc == -1:
-            framework_results.append({
-                **fw,
-                "status": "tool_not_found",
-                "parsed": {"passed": 0, "failed": 0, "errors": 1, "failures": []},
-            })
+            framework_results.append(
+                {
+                    **fw,
+                    "status": "tool_not_found",
+                    "parsed": {"passed": 0, "failed": 0, "errors": 1, "failures": []},
+                }
+            )
             total_errors += 1
             continue
 
         if rc == -2:
-            framework_results.append({
-                **fw,
-                "status": "timeout",
-                "parsed": {"passed": 0, "failed": 0, "errors": 1,
-                           "failures": [f"Timed out after {timeout}s"]},
-            })
+            framework_results.append(
+                {
+                    **fw,
+                    "status": "timeout",
+                    "parsed": {
+                        "passed": 0,
+                        "failed": 0,
+                        "errors": 1,
+                        "failures": [f"Timed out after {timeout}s"],
+                    },
+                }
+            )
             total_errors += 1
             all_failures.append(f"{fw['framework']}: timed out after {timeout}s")
             continue
@@ -252,12 +301,14 @@ def run_tests(root_dir: str = ".", timeout: int = DEFAULT_TIMEOUT) -> dict:
         else:
             parsed = _parse_generic_output(stdout, stderr, rc)
 
-        framework_results.append({
-            **fw,
-            "status": "passed" if rc == 0 else "failed",
-            "exit_code": rc,
-            "parsed": parsed,
-        })
+        framework_results.append(
+            {
+                **fw,
+                "status": "passed" if rc == 0 else "failed",
+                "exit_code": rc,
+                "parsed": parsed,
+            }
+        )
 
         total_passed += parsed.get("passed", 0)
         total_failed += parsed.get("failed", 0)
@@ -271,18 +322,26 @@ def run_tests(root_dir: str = ".", timeout: int = DEFAULT_TIMEOUT) -> dict:
 
     if total_tests == 0:
         score = 25
-        findings.append("No tests were executed (test framework detected but no tests found)")
+        findings.append(
+            "No tests were executed (test framework detected but no tests found)"
+        )
     else:
         pass_rate = total_passed / total_tests
         if pass_rate < 0.50:
             score -= 40
-            findings.append(f"Critical: only {pass_rate:.0%} of tests pass ({total_passed}/{total_tests})")
+            findings.append(
+                f"Critical: only {pass_rate:.0%} of tests pass ({total_passed}/{total_tests})"
+            )
         elif pass_rate < 0.70:
             score -= 25
-            findings.append(f"Low pass rate: {pass_rate:.0%} ({total_passed}/{total_tests})")
+            findings.append(
+                f"Low pass rate: {pass_rate:.0%} ({total_passed}/{total_tests})"
+            )
         elif pass_rate < 0.90:
             score -= 10
-            findings.append(f"Moderate pass rate: {pass_rate:.0%} ({total_passed}/{total_tests})")
+            findings.append(
+                f"Moderate pass rate: {pass_rate:.0%} ({total_passed}/{total_tests})"
+            )
         elif pass_rate < 0.95:
             score -= 5
 
@@ -305,16 +364,18 @@ def run_tests(root_dir: str = ".", timeout: int = DEFAULT_TIMEOUT) -> dict:
         "timeout": timeout,
     }
 
-    justifications = [{
-        "criterion": "test_execution",
-        "points": score,
-        "evidence": json.dumps(metrics),
-        "reasoning": (
-            f"Executed {len(frameworks)} framework(s). "
-            f"{total_passed} passed, {total_failed} failed, {total_errors} errors. "
-            f"Pass rate: {metrics['pass_rate']:.0%}."
-        ),
-    }]
+    justifications = [
+        {
+            "criterion": "test_execution",
+            "points": score,
+            "evidence": json.dumps(metrics),
+            "reasoning": (
+                f"Executed {len(frameworks)} framework(s). "
+                f"{total_passed} passed, {total_failed} failed, {total_errors} errors. "
+                f"Pass rate: {metrics['pass_rate']:.0%}."
+            ),
+        }
+    ]
 
     return {
         "domain": "Test Execution",

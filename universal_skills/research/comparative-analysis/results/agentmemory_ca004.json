@@ -1,0 +1,112 @@
+{
+  "domain": "CA-004",
+  "domain_name": "Code Quality",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "quality_metrics": {
+    "file_count": 1,
+    "total_loc": 294,
+    "function_count": 34,
+    "complexity": {
+      "avg": 1.71,
+      "max": 9,
+      "high_complexity": 0
+    },
+    "function_length": {
+      "avg": 6.8,
+      "max": 45,
+      "long_functions": 0
+    },
+    "stubs": {
+      "stub_count": 13,
+      "todo_count": 0
+    },
+    "top_complex": [
+      {
+        "name": "handle_tool_call",
+        "line": 205,
+        "complexity": 9,
+        "length": 45,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "_api",
+        "line": 60,
+        "complexity": 5,
+        "length": 16,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "prefetch",
+        "line": 141,
+        "complexity": 5,
+        "length": 16,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "is_available",
+        "line": 89,
+        "complexity": 3,
+        "length": 10,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "system_prompt_block",
+        "line": 132,
+        "complexity": 3,
+        "length": 8,
+        "file": "integrations/hermes/__init__.py"
+      }
+    ],
+    "top_long": [
+      {
+        "name": "handle_tool_call",
+        "line": 205,
+        "complexity": 9,
+        "length": 45,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "get_tool_schemas",
+        "line": 161,
+        "complexity": 1,
+        "length": 43,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "_api",
+        "line": 60,
+        "complexity": 5,
+        "length": 16,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "get_config_schema",
+        "line": 111,
+        "complexity": 1,
+        "length": 16,
+        "file": "integrations/hermes/__init__.py"
+      },
+      {
+        "name": "prefetch",
+        "line": 141,
+        "complexity": 5,
+        "length": 16,
+        "file": "integrations/hermes/__init__.py"
+      }
+    ]
+  },
+  "duplication": {
+    "total_significant_lines": 158,
+    "duplicated_lines": 19,
+    "duplication_pct": 12.0
+  },
+  "scoring": {
+    "score": 80,
+    "grade": "B",
+    "details": [
+      "Good complexity (1.71): no penalty",
+      "Some stubs (13): -10",
+      "Moderate duplication (12.0%): -10"
+    ]
+  }
+}

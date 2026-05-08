@@ -46,15 +46,25 @@ ECOSYSTEM_INDICATORS: dict[str, dict] = {
 
 # File extension → language mapping for file-count weighting
 EXTENSION_MAP: dict[str, str] = {
-    ".py": "python", ".pyi": "python",
+    ".py": "python",
+    ".pyi": "python",
     ".go": "go",
-    ".js": "node", ".jsx": "node", ".ts": "typescript", ".tsx": "typescript",
-    ".mjs": "node", ".cjs": "node",
+    ".js": "node",
+    ".jsx": "node",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".mjs": "node",
+    ".cjs": "node",
     ".rs": "rust",
-    ".java": "java", ".kt": "kotlin", ".kts": "kotlin",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
     ".rb": "ruby",
     ".cs": "csharp",
-    ".html": "web", ".css": "web", ".scss": "web", ".vue": "web",
+    ".html": "web",
+    ".css": "web",
+    ".scss": "web",
+    ".vue": "web",
     ".svelte": "web",
 }
 
@@ -80,9 +90,21 @@ LINTER_TOOLS: dict[str, list[str]] = {
     "ruby": ["rubocop", "reek"],
 }
 
-_SKIP_DIRS = {".venv", "venv", "__pycache__", "node_modules", ".git",
-              "build", "dist", ".tox", ".mypy_cache", ".ruff_cache",
-              "target", ".gradle", ".idea"}
+_SKIP_DIRS = {
+    ".venv",
+    "venv",
+    "__pycache__",
+    "node_modules",
+    ".git",
+    "build",
+    "dist",
+    ".tox",
+    ".mypy_cache",
+    ".ruff_cache",
+    "target",
+    ".gradle",
+    ".idea",
+}
 
 
 def _count_files_by_extension(root: Path) -> dict[str, int]:
@@ -108,7 +130,10 @@ def _detect_ui_type(root: Path, file_counts: dict[str, int]) -> str | None:
         if pkg_json.exists():
             try:
                 content = pkg_json.read_text(encoding="utf-8", errors="ignore")
-                if any(fw in content for fw in ("react", "vue", "angular", "@angular", "svelte", "next")):
+                if any(
+                    fw in content
+                    for fw in ("react", "vue", "angular", "@angular", "svelte", "next")
+                ):
                     return "web"
             except Exception:
                 pass
@@ -122,7 +147,17 @@ def _detect_ui_type(root: Path, file_counts: dict[str, int]) -> str | None:
         if pyproject.exists():
             try:
                 content = pyproject.read_text(encoding="utf-8", errors="ignore")
-                if any(lib in content for lib in ("textual", "rich", "curses", "blessed", "urwid", "prompt-toolkit")):
+                if any(
+                    lib in content
+                    for lib in (
+                        "textual",
+                        "rich",
+                        "curses",
+                        "blessed",
+                        "urwid",
+                        "prompt-toolkit",
+                    )
+                ):
                     return "terminal"
             except Exception:
                 pass

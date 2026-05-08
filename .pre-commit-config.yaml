@@ -1,4 +1,5 @@
-exclude: ^(.*\/scripts\/|.*skill_graphs\/|.*pnpm-lock\.yaml|.*uv\.lock|.*\.db$|.*\.bak$|.*\.sqlite$)
+exclude:
+  ^(.*\/scripts\/|.*skill_graphs\/|.*pnpm-lock\.yaml|.*uv\.lock|.*\.db$|.*\.bak$|.*\.sqlite$)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -9,6 +10,7 @@ repos:
       - id: check-ast
         exclude: (^|/)(tests/|test/|scripts/|script/)
       - id: check-yaml
+        args: ["--unsafe"]
       - id: check-toml
       - id: check-json
       - id: fix-byte-order-marker
@@ -32,15 +34,17 @@ repos:
     rev: v1.20.2
     hooks:
       - id: mypy
-        args: ["--ignore-missing-imports", "--follow-imports=silent", "--show-column-numbers", "--no-error-summary", "--no-pretty"]
+        args: ["--ignore-missing-imports", "--follow-imports=silent", "--show-column-numbers",
+          "--no-error-summary", "--no-pretty"]
         exclude: (^|/)(tests/|test/|scripts/|script/)
-        additional_dependencies: ["types-PyYAML", "types-requests", "types-setuptools", "types-toml"]
+        additional_dependencies: ["types-PyYAML", "types-requests", "types-setuptools",
+          "types-toml"]
   - repo: https://github.com/jendrikseipp/vulture
     rev: v2.16
     hooks:
       - id: vulture
         pass_filenames: false
-        args: [ ".", "--min-confidence", "95", "--exclude", "node_modules,dotnet,.venv" ]
+        args: [".", "--min-confidence", "95", "--exclude", "node_modules,dotnet,.venv"]
         require_serial: true
         exclude: (^|/)(tests/|test/|scripts/|script/)
   - repo: https://github.com/codespell-project/codespell
@@ -66,9 +70,19 @@ repos:
       - id: uv-lock
   - repo: local
     hooks:
+      - id: mermaid-validate
+        name: mermaid-validate
+        entry: mermaid-validate
+        language: node
+        additional_dependencies: ['@zabaca/mermaid-validate@1.0.1']
+        types: [markdown]
+        pass_filenames: true
+  - repo: local
+    hooks:
       - id: pytest
         name: pytest
-        entry: bash -c 'if [ -f uv.lock ]; then uv run --extra test pytest -v -s; else pytest -v -s; fi'
+        entry: bash -c 'if [ -f uv.lock ]; then uv run --extra test pytest -v
+          -s; else pytest -v -s; fi'
         language: system
         types: [python]
         pass_filenames: false

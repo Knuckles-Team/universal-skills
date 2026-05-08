@@ -14,12 +14,14 @@ from pathlib import Path
 
 try:
     from packaging.version import Version, InvalidVersion
+
     HAS_PACKAGING = True
 except ImportError:
     HAS_PACKAGING = False
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -33,7 +35,10 @@ def _get_latest_version(package_name: str, insecure: bool = False) -> dict | Non
         resp = requests.get(url, timeout=10, verify=not insecure)
         if resp.status_code == 200:
             info = resp.json().get("info", {})
-            return {"latest": info.get("version", "unknown"), "summary": info.get("summary", "")}
+            return {
+                "latest": info.get("version", "unknown"),
+                "summary": info.get("summary", ""),
+            }
         if resp.status_code == 404:
             return {"latest": "NOT_FOUND", "summary": ""}
     except requests.exceptions.RequestException:
@@ -57,7 +62,15 @@ def _parse_pyproject(path: Path) -> dict[str, str]:
     deps: dict[str, str] = {}
 
     def _extract(dep_str: str) -> tuple[str, str]:
-        name = dep_str.split("[")[0].split("<")[0].split(">")[0].split("=")[0].split("~")[0].split("!")[0].strip()
+        name = (
+            dep_str.split("[")[0]
+            .split("<")[0]
+            .split(">")[0]
+            .split("=")[0]
+            .split("~")[0]
+            .split("!")[0]
+            .strip()
+        )
         return name, _parse_version_spec(dep_str)
 
     for d in data.get("project", {}).get("dependencies", []):
@@ -78,7 +91,14 @@ def _parse_requirements(path: Path) -> dict[str, str]:
         for line in path.read_text().splitlines():
             line = line.strip()
             if line and not line.startswith("#") and not line.startswith("-"):
-                name = line.split("[")[0].split("<")[0].split(">")[0].split("=")[0].split("~")[0].strip()
+                name = (
+                    line.split("[")[0]
+                    .split("<")[0]
+                    .split(">")[0]
+                    .split("=")[0]
+                    .split("~")[0]
+                    .strip()
+                )
                 deps[name] = _parse_version_spec(line)
     except Exception:
         pass
@@ -127,11 +147,13 @@ def _get_installed_version(package_name: str) -> str | None:
     """
     try:
         import importlib.metadata as meta
+
         return meta.version(package_name)
     except Exception:
         # Try common name normalization (underscores ↔ hyphens)
         try:
             import importlib.metadata as meta
+
             alt_name = package_name.replace("-", "_")
             return meta.version(alt_name)
         except Exception:
@@ -150,18 +172,32 @@ def audit_dependencies(root_dir: str = ".", insecure: bool = False) -> dict:
         deps = _parse_requirements(requirements)
         source = str(requirements)
     else:
-        return {"domain": "Dependency Audit", "score": 0, "grade": "F",
-                "findings": ["No pyproject.toml or requirements.txt found"],
-                "justifications": [], "packages": {}}
+        return {
+            "domain": "Dependency Audit",
+            "score": 0,
+            "grade": "F",
+            "findings": ["No pyproject.toml or requirements.txt found"],
+            "justifications": [],
+            "packages": {},
+        }
 
     if not HAS_REQUESTS:
-        return {"domain": "Dependency Audit", "score": 0, "grade": "F",
-                "findings": ["requests not available — pip install 'universal-skills[code-enhancer]'"],
-                "justifications": [], "packages": {}}
+        return {
+            "domain": "Dependency Audit",
+            "score": 0,
+            "grade": "F",
+            "findings": [
+                "requests not available — pip install 'universal-skills[code-enhancer]'"
+            ],
+            "justifications": [],
+            "packages": {},
+        }
 
     packages: dict[str, dict] = {}
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(_get_latest_version, pkg, insecure): pkg for pkg in deps}
+        futures = {
+            executor.submit(_get_latest_version, pkg, insecure): pkg for pkg in deps
+        }
         for future in as_completed(futures):
             pkg = futures[future]
             info = future.result()
@@ -190,13 +226,25 @@ def audit_dependencies(root_dir: str = ".", insecure: bool = False) -> dict:
         if info["status"] == "major":
             score -= 10
             major_count += 1
-            src_label = " (installed)" if info["version_source"] == "installed" else " (constraint — not installed)"
-            findings.append(f"MAJOR update: {pkg} {info['current']}{src_label} -> {info['latest']}")
+            src_label = (
+                " (installed)"
+                if info["version_source"] == "installed"
+                else " (constraint — not installed)"
+            )
+            findings.append(
+                f"MAJOR update: {pkg} {info['current']}{src_label} -> {info['latest']}"
+            )
         elif info["status"] == "minor":
             score -= 3
             minor_count += 1
-            src_label = " (installed)" if info["version_source"] == "installed" else " (constraint — not installed)"
-            findings.append(f"Minor update: {pkg} {info['current']}{src_label} -> {info['latest']}")
+            src_label = (
+                " (installed)"
+                if info["version_source"] == "installed"
+                else " (constraint — not installed)"
+            )
+            findings.append(
+                f"Minor update: {pkg} {info['current']}{src_label} -> {info['latest']}"
+            )
         elif info["status"] == "patch":
             score -= 1
             patch_count += 1
@@ -211,19 +259,33 @@ def audit_dependencies(root_dir: str = ".", insecure: bool = False) -> dict:
     # deprecated `imp` module and is broken on Python 3.12+.
 
     score = max(0, score)
-    justifications = [{"criterion": "dependency_freshness", "points": score,
-        "evidence": f"source={source} total={len(deps)} major={major_count} minor={minor_count} patch={patch_count} not_installed={not_installed_count}",
-        "reasoning": f"Audited {len(deps)} deps ({len(deps) - not_installed_count} installed, {not_installed_count} constraint-only). "
-                     f"{major_count} major, {minor_count} minor, {patch_count} patch updates."}]
+    justifications = [
+        {
+            "criterion": "dependency_freshness",
+            "points": score,
+            "evidence": f"source={source} total={len(deps)} major={major_count} minor={minor_count} patch={patch_count} not_installed={not_installed_count}",
+            "reasoning": f"Audited {len(deps)} deps ({len(deps) - not_installed_count} installed, {not_installed_count} constraint-only). "
+            f"{major_count} major, {minor_count} minor, {patch_count} patch updates.",
+        }
+    ]
 
-    return {"domain": "Dependency Audit", "score": score, "grade": _score_to_grade(score),
-            "findings": findings, "justifications": justifications, "packages": packages}
+    return {
+        "domain": "Dependency Audit",
+        "score": score,
+        "grade": _score_to_grade(score),
+        "findings": findings,
+        "justifications": justifications,
+        "packages": packages,
+    }
 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Audit dependencies against PyPI")
     parser.add_argument("target", nargs="?", default=".", help="Project root")
-    parser.add_argument("--insecure", action="store_true", help="Disable SSL verification")
+    parser.add_argument(
+        "--insecure", action="store_true", help="Disable SSL verification"
+    )
     args = parser.parse_args()
     print(json.dumps(audit_dependencies(args.target, insecure=args.insecure), indent=2))

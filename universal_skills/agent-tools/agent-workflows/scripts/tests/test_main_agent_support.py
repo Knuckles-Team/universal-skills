@@ -20,7 +20,9 @@ from commands.lifecycle import cmd_assign, cmd_monitor, cmd_send  # noqa: E402
 
 class MainAgentConfigTests(unittest.TestCase):
     def test_resolve_agent_main_returns_reserved_config(self):
-        config = agent_config.resolve_agent("main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager")))
+        config = agent_config.resolve_agent(
+            "main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager"))
+        )
 
         self.assertIsNotNone(config)
         self.assertEqual(config.get("name"), "main")
@@ -39,7 +41,9 @@ class MainAgentConfigTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"AGENT_MANAGER_MAIN_LAUNCHER": "custom-launcher"})
     def test_main_launcher_env_override(self):
-        config = agent_config.resolve_agent("main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager")))
+        config = agent_config.resolve_agent(
+            "main", agents_dir=Path(tempfile.mkdtemp(prefix="test-agent-manager"))
+        )
         self.assertEqual(config.get("launcher"), "custom-launcher")
 
 

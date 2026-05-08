@@ -1,0 +1,37 @@
+{
+  "domain": "CA-006",
+  "domain_name": "Testing",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "test_discovery": {
+    "test_files": {
+      "unit": 0,
+      "integration": 1,
+      "e2e": 0,
+      "other": 76
+    },
+    "total_test_files": 77,
+    "total_test_functions": 860,
+    "code_loc": 31373,
+    "test_loc": 18449,
+    "test_to_code_ratio": 0.59
+  },
+  "framework": "jest",
+  "quality_indicators": {
+    "has_conftest": false,
+    "has_fixtures": false,
+    "has_parametrize": false,
+    "has_markers": false,
+    "has_mocks": false,
+    "timeout_configured": true
+  },
+  "scoring": {
+    "score": 59,
+    "grade": "F",
+    "details": [
+      "Comprehensive test suite (77 files): +20",
+      "Many tests (860): +20",
+      "Good ratio (0.59:1): +15",
+      "Quality indicators (4/20): +4"
+    ]
+  }
+}

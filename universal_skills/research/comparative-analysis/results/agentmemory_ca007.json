@@ -1,0 +1,53 @@
+{
+  "domain": "CA-007",
+  "domain_name": "Documentation",
+  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "readme": {
+    "score": 90,
+    "found": true,
+    "word_count": 4827,
+    "details": [
+      "\u2705 title: +8",
+      "\u274c badges: +0",
+      "\u2705 description: +8",
+      "\u274c table_of_contents: +0",
+      "\u2705 installation: +10",
+      "\u2705 usage: +10",
+      "\u2705 api_docs: +8",
+      "\u2705 architecture: +8",
+      "\u274c contributing: +0",
+      "\u2705 license: +5",
+      "\u2705 code_blocks: +8",
+      "\u2705 links: +5",
+      "\u2705 configuration: +5",
+      "\u2705 testing: +5",
+      "\u2705 changelog_ref: +5",
+      "Comprehensive length (4827 words): +5"
+    ]
+  },
+  "docstrings": {
+    "total_definitions": 36,
+    "documented": 5,
+    "coverage_pct": 13.9
+  },
+  "documentation_artifacts": {
+    "docs_directory": false,
+    "changelog": true,
+    "contributing": true,
+    "agents_md": true,
+    "adr_directory": false,
+    "examples_directory": false,
+    "api_docs": false
+  },
+  "scoring": {
+    "score": 51,
+    "grade": "F",
+    "details": [
+      "README quality (90/100 \u2192 31pts)",
+      "Minimal docstrings (13.9%): +5",
+      "changelog: +8",
+      "contributing: +5",
+      "agents_md: +2"
+    ]
+  }
+}

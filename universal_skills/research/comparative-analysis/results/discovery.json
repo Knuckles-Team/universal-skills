@@ -1,0 +1,131 @@
+{
+  "analysis_mode": "codebase",
+  "project_count": 2,
+  "kg_query": null,
+  "projects": [
+    {
+      "path": "/home/apps/workspace/agent-packages/agent-utilities",
+      "name": "agent-utilities",
+      "exists": true,
+      "type": "codebase",
+      "language": "python",
+      "structure": {
+        "file_count": 3764,
+        "dir_count": 197,
+        "total_loc": 145460,
+        "extension_distribution": {
+          "": 1949,
+          ".json": 1061,
+          ".py": 537,
+          ".md": 73,
+          ".js": 36,
+          ".html": 32,
+          ".db": 20,
+          ".png": 17,
+          ".txt": 9,
+          ".yml": 5
+        }
+      },
+      "license_file": "LICENSE",
+      "license_detected": "MIT",
+      "metadata": {
+        "name": "agent-utilities",
+        "version": "0.7.0",
+        "description": "Agent Utilities for Pydantic AI Agents",
+        "license": "MIT",
+        "dependencies": [
+          "tree-sitter",
+          "requests",
+          "urllib3",
+          "pydantic",
+          "pydantic-settings",
+          "pyyaml",
+          "python-dotenv",
+          "networkx",
+          "ladybug",
+          "numpy",
+          "scipy",
+          "cryptography",
+          "pathspec"
+        ],
+        "dep_count": 13,
+        "python_requires": ">=3.11,<3.14"
+      },
+      "key_files": {
+        "readme": true,
+        "changelog": true,
+        "contributing": true,
+        "code_of_conduct": true,
+        "security_policy": true,
+        "ci_config": true,
+        "docker": true,
+        "tests": true,
+        "docs": true,
+        "agents_md": true
+      },
+      "source": "filesystem"
+    },
+    {
+      "path": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+      "name": "agentmemory",
+      "exists": true,
+      "type": "codebase",
+      "language": "node",
+      "structure": {
+        "file_count": 418,
+        "dir_count": 51,
+        "total_loc": 49822,
+        "extension_distribution": {
+          ".ts": 227,
+          ".svg": 64,
+          ".md": 31,
+          ".tsx": 19,
+          ".mjs": 18,
+          ".json": 17,
+          ".css": 15,
+          ".png": 7,
+          "": 5,
+          ".yaml": 4
+        }
+      },
+      "license_file": "LICENSE",
+      "license_detected": "Apache-2.0",
+      "metadata": {
+        "name": "@agentmemory/agentmemory",
+        "version": "0.9.4",
+        "description": "Persistent memory for AI coding agents, powered by iii-engine's three primitives",
+        "license": "Apache-2.0",
+        "dependencies": [
+          "@anthropic-ai/claude-agent-sdk",
+          "@anthropic-ai/sdk",
+          "@clack/prompts",
+          "dotenv",
+          "iii-sdk",
+          "zod"
+        ],
+        "dev_dependencies": [
+          "@types/node",
+          "tsdown",
+          "tsx",
+          "typescript",
+          "vitest"
+        ],
+        "dep_count": 6
+      },
+      "key_files": {
+        "readme": true,
+        "changelog": true,
+        "contributing": true,
+        "code_of_conduct": true,
+        "security_policy": true,
+        "ci_config": true,
+        "docker": true,
+        "tests": true,
+        "docs": false,
+        "agents_md": true
+      },
+      "source": "filesystem"
+    }
+  ],
+  "cleanup_instruction": "After analysis, delete the temporary directory: /home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9"
+}
