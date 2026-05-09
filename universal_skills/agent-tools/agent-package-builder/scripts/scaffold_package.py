@@ -1843,10 +1843,22 @@ def scaffold(
 
     # ── Write all files ──────────────────────────────────────────────────
     for path, template in files.items():
+        if path.name == "requirements.txt":
+            continue
         path.parent.mkdir(parents=True, exist_ok=True)
         content = template.format(**ctx)
         path.write_text(content, encoding="utf-8")
         print(f"  ✅ {path.relative_to(root.parent)}")
+
+    import tomllib
+    pyproject_content = (root / "pyproject.toml").read_text(encoding="utf-8")
+    parsed_toml = tomllib.loads(pyproject_content)
+    deps = parsed_toml.get("project", {}).get("dependencies", [])
+    
+    req_path = root / "requirements.txt"
+    req_path.write_text("\n".join(deps) + "\n", encoding="utf-8")
+    print(f"  ✅ {req_path.relative_to(root.parent)}")
+
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")

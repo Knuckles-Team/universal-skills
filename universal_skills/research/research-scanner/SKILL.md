@@ -6,14 +6,15 @@ description: >-
   filter out low-value papers, and download the valuable ones for comparative analysis.
   Uses the ScholarX library for paper discovery, scoring, and download.
   Triggers on "scan for papers", "find new research", "check arxiv", "research scan",
-  "paper discovery", "what's new in AI research", or when the agent needs to
   proactively discover research that could enhance a codebase.
+  Triggers also include: "download this paper", "fetch paper id", "get paper",
+  "download arXiv paper", or fetching specific arXiv IDs (e.g. 2605.05242).
   Do NOT use for general web search — use web-search instead.
 license: MIT
 tags: [research, scanner, scholarx, automation]
 metadata:
   author: Genius
-  version: '0.9.0'
+  version: '0.10.0'
 ---
 
 # Research Scanner
@@ -30,6 +31,9 @@ The Research Scanner provides two scanning modes:
 
 2. **Query-Based Search** — Searches for papers using the ScholarX API, scores and
    filters results, and produces reports for targeted research discovery.
+
+3. **ID-Based Fetch** — Directly fetches and downloads specific papers using their
+   arXiv IDs without filtering them by score.
 
 Both modes use the `scholarx.scanner` library as their engine.
 
@@ -51,6 +55,14 @@ python relevance_scanner.py --mode search \
     --categories cs.AI,cs.MA,cs.LG \
     --max-results 30 \
     --output-dir scholarx_papers/query_results
+```
+
+### Fetch Specific Papers by ID
+
+```bash
+python relevance_scanner.py --mode fetch \
+    --paper-ids "2605.05242,2605.06177" \
+    --output-dir scholarx_papers/fetched_papers
 ```
 
 ### Python API (Direct Library Import)

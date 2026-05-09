@@ -10,15 +10,20 @@ All heavy lifting is delegated to ``scholarx.scanner.RelevanceScanner``.
 
 Usage:
     # Daily RSS scan
-    python relevance_scanner.py --mode daily \\
-        --categories cs.AI \\
+    python relevance_scanner.py --mode daily \
+        --categories cs.AI \
         --output-dir scholarx_papers/daily_2026-05-08
 
+    # Fetch by specific IDs
+    python relevance_scanner.py --mode fetch \
+        --paper-ids "2605.05242,2605.06177" \
+        --output-dir scholarx_papers/fetch_results
+
     # Query-based search
-    python relevance_scanner.py --mode search \\
-        --query "multi-agent orchestration" \\
-        --categories cs.AI,cs.MA,cs.LG \\
-        --max-results 30 \\
+    python relevance_scanner.py --mode search \
+        --query "multi-agent orchestration" \
+        --categories cs.AI,cs.MA,cs.LG \
+        --max-results 30 \
         --output-dir scholarx_papers/query_results
 
     # With custom taxonomy
@@ -117,6 +122,37 @@ async def run_search(args: argparse.Namespace) -> dict:
     return result.model_dump(exclude={"scored_papers"})
 
 
+async def run_fetch(args: argparse.Namespace) -> dict:
+    """Execute the ID-based fetch pipeline."""
+    from scholarx.scanner import RelevanceScanner
+
+    if not getattr(args, 'paper_ids', None):
+        print("❌ --paper-ids is required for fetch mode", file=sys.stderr)
+        return {"status": "error", "message": "Missing --paper-ids"}
+
+    taxonomy = _load_taxonomy(args.taxonomy)
+    paper_ids = [pid.strip() for pid in args.paper_ids.split(",")]
+
+    scanner = RelevanceScanner(
+        taxonomy=taxonomy,
+    )
+
+    print("=" * 70)
+    print("Research Scanner — Paper ID Fetch Pipeline")
+    print("=" * 70)
+    print(f"\n🔍 Paper IDs: {', '.join(paper_ids)}")
+    print(f"   Output:    {args.output_dir}")
+
+    result = await scanner.scan_ids(
+        paper_ids=paper_ids,
+        output_dir=args.output_dir,
+        download_pdfs=not args.no_download,
+    )
+
+    _print_results(result)
+    return result.model_dump(exclude={"scored_papers"})
+
+
 def _print_results(result) -> None:
     """Print scan results in a human-readable format."""
     s = result.stats
@@ -156,14 +192,19 @@ def main():
     )
     parser.add_argument(
         "--mode",
-        choices=["daily", "search"],
+        choices=["daily", "search", "fetch"],
         default="daily",
-        help="Scanning mode: 'daily' for RSS feed, 'search' for query-based (default: daily)",
+        help="Scanning mode: 'daily' for RSS feed, 'search' for query-based, 'fetch' for specific IDs (default: daily)",
     )
     parser.add_argument(
         "--query",
         default="",
         help="Search query string (required for search mode)",
+    )
+    parser.add_argument(
+        "--paper-ids",
+        default="",
+        help="Comma-separated paper IDs to fetch (required for fetch mode)",
     )
     parser.add_argument(
         "--categories",
@@ -207,8 +248,10 @@ def main():
 
     if args.mode == "daily":
         result = asyncio.run(run_daily(args))
-    else:
+    elif args.mode == "search":
         result = asyncio.run(run_search(args))
+    else:
+        result = asyncio.run(run_fetch(args))
 
     print("\n" + json.dumps(result, indent=2, default=str))
 
