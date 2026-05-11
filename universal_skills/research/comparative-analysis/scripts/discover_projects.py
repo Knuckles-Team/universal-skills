@@ -325,7 +325,7 @@ def main():
 
     projects = []
 
-    # Resolve KG sources if --kg-query is provided (CONCEPT:KG-2.12)
+    # Resolve KG sources if --kg-query is provided (CONCEPT:KG-2.7)
     if kg_query:
         kg_sources = _resolve_kg_sources(kg_query)
         for src in kg_sources:
@@ -381,7 +381,7 @@ def main():
 
 
 def _resolve_kg_sources(query: str) -> list[dict]:
-    """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.12).
+    """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.7).
 
     This is optional — if agent_utilities is not installed or no KG
     engine is available, returns an empty list gracefully.

@@ -5,7 +5,7 @@ license: MIT
 tags: [sdd implementer]
 metadata:
   author: Genius
-  version: '0.10.0'
+  version: '0.11.0'
 ---
 
 # SDD Implementer
@@ -40,6 +40,7 @@ This skill integrates directly with the `agent_utilities.models.Tasks` and `Task
 - **Git Integration**: If in a git repository, associate task completion with specific commit hashes in the `Task` metadata.
 
 ## Operating Principles
+- **Concept Traceability**: Mandate that all modified code, Docstrings, and Pytest suites carry the appropriate `CONCEPT:[ID]` tags referencing the Knowledge Graph. Use `kg_concept_search` (via `agent-utilities-kg` MCP) to verify correct IDs are being applied. For example, `"""Handles dynamic subgraphs. CONCEPT:ORCH-1.4"""`.
 - **Respect TDD**: Never mark an implementation task as complete unless its corresponding test task is also passed.
 - **Fail Fast**: If a task fails and cannot be resolved automatically, stop, report the error, and wait for human intervention.
 - **Atomic Commits**: Encourage atomic updates for each task.

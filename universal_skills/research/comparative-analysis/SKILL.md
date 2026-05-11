@@ -8,7 +8,7 @@ license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart]
 metadata:
   author: Genius
-  version: '0.10.0'
+  version: '0.11.0'
 ---
 
 # Comparative Analysis
@@ -31,7 +31,7 @@ This skill operates in **4 modes** depending on the inputs:
 
 ## Workflow
 
-### Phase -1: KG-Backed Discovery (Optional — CONCEPT:KG-2.12)
+### Phase -1: KG-Backed Discovery (Optional — CONCEPT:KG-2.7)
 
 When `agent-utilities` Knowledge Graph is available, sources can be resolved
 directly from the KG instead of requiring filesystem paths. This enables

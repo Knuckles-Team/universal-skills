@@ -7,7 +7,7 @@ license: MIT
 tags: [spec generator]
 metadata:
   author: Genius
-  version: '0.10.0'
+  version: '0.11.0'
 ---
 
 # SDD Spec Generator
@@ -20,7 +20,8 @@ You are a Senior Product Engineer specialized in Spec-Driven Development (SDD). 
 
 ## Logic Flow (Specify + Clarify)
 1. **Analyze**: Take the user's initial prompt and current project context (including the constitution).
-2. **Clarify**: Identify the TOP 5 ambiguities that could block implementation or testing.
+2. **"Extend-Before-Invent" Pre-Flight Check**: ALWAYS query the Knowledge Graph using `kg_search` or `kg_analogy_search` via the `agent-utilities-kg` MCP server with the user's requested feature. If a concept representing the feature already exists (e.g., `CONCEPT:CACHE-1.0`), pivot the design to *extend* the existing concept rather than inventing a duplicate.
+3. **Clarify**: Identify the TOP 5 ambiguities that could block implementation or testing.
    - Present these to the user in a targeted interactive loop.
    - Make informed "recommended" guesses for each question to speed up the process.
 3. **Draft**: Once ambiguities are resolved (or user skips), generate `spec.md`.

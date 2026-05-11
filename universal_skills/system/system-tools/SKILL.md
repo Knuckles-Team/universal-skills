@@ -7,7 +7,7 @@ license: MIT
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
 metadata:
   author: Genius
-  version: '0.10.0'
+  version: '0.11.0'
 ---
 # System Tools
 
