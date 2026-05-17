@@ -76,13 +76,12 @@ repos:
         additional_dependencies: ['@zabaca/mermaid-validate@1.0.1']
         types: [markdown]
         pass_filenames: true
-#  - repo: local
-#    hooks:
-#      - id: pytest
-#        name: pytest
-#        entry: bash -c 'if [ -f uv.lock ]; then uv run --extra test pytest -v
-#          -s; else pytest -v -s; fi'
-#        language: system
-#        types: [python]
-#        pass_filenames: false
-#        always_run: true
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: bash -c 'if [ -f uv.lock ]; then uv run --extra test pytest -v -s; else pytest -v -s; fi'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
