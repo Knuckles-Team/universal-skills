@@ -16,8 +16,8 @@
 
 ## Minimal Clarification
 
-- If network is missing, use `bsc`.
-- If asset is missing for a payment, use `USD1` on `bsc`.
+- If network is missing, use `xrpl`.
+- If asset is missing for a payment, use `XRP` on `xrpl`.
 - Only ask for the remaining critical fields:
   - amount
   - recipient
@@ -35,7 +35,7 @@
 
 - Native transfer: check native balance first.
 - ERC-20 transfer or approve: check token balance and native gas balance.
-- For default `USD1 on bsc`, explain that `USD1` is the payment asset and `BNB` is the gas asset.
+- For default `XRP on xrpl`, explain that `XRP` is both the payment asset and the gas asset.
 - If funding is missing, stop and ask the user to top up before sending.
 
 ## Policy Logic

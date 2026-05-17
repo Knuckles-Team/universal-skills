@@ -1,0 +1,150 @@
+{
+  "domain": "CA-010",
+  "domain_name": "Innovation Extraction",
+  "source_count": 1,
+  "target": "/home/apps/workspace/agent-packages/agent-utilities",
+  "concept_id": "",
+  "kg_source_query": null,
+  "results": [
+    {
+      "source": "/home/apps/workspace/open-source-libraries/openagi",
+      "source_type": "filesystem",
+      "concept_id": "",
+      "signals": {
+        "biomimicry_signals": [
+          {
+            "keyword": "neural",
+            "count": 2,
+            "analogy": "adaptive model routing",
+            "target_domain": "model_selection"
+          },
+          {
+            "keyword": "evolution",
+            "count": 2,
+            "analogy": "genetic algorithm optimization",
+            "target_domain": "prompt_evolution"
+          }
+        ],
+        "tech_signals": [
+          {
+            "keyword": "join",
+            "count": 23,
+            "analogy": "cross-entity relationship resolution",
+            "target_domain": "entity_linking"
+          },
+          {
+            "keyword": "owl",
+            "count": 14,
+            "analogy": "web ontology language for semantic reasoning",
+            "target_domain": "owl_bridge"
+          },
+          {
+            "keyword": "attention",
+            "count": 7,
+            "analogy": "context-aware retrieval weighting",
+            "target_domain": "hybrid_retriever"
+          },
+          {
+            "keyword": "inference",
+            "count": 3,
+            "analogy": "derived knowledge from explicit assertions",
+            "target_domain": "owl_reasoning"
+          },
+          {
+            "keyword": "reinforcement",
+            "count": 1,
+            "analogy": "reward-driven routing optimization",
+            "target_domain": "confidence_gating"
+          },
+          {
+            "keyword": "knowledge graph",
+            "count": 1,
+            "analogy": "structured relational memory",
+            "target_domain": "kg"
+          }
+        ],
+        "innovation_claims": [
+          "Click the Pull Requests tab, then click New Pull Request",
+          "- Improve their accuracy and efficiency with each successive interaction",
+          "On the other hand, agents demonstrate more autonomy; they engage in planning, reasoning, decision-making, and executing actions autonomously",
+          "The agents are just like humans, which will learn, improve, and become autonomous over time",
+          "This helps them improve and work more independently over time",
+          "For example, we're thinking about tuning the platform in such a way that would enable developers to making agents that are really good at specific tasks over a period of time",
+          "| Continual learning from new experiences and adapting over time without explicit retraining",
+          "* **Streamlined Integration and Configuration**: OpenAGI introduces simplified integration and configuration processes, eliminating the infinite loops commonly encountered in other tools",
+          "Use DuckDuckGoNewsSearch for latest news and WebBaseContextTool for deep dives",
+          "Assess impact, prioritize findings, and compile a concise report on top 3-5 trends with actionable insights.\"\"\",\n        actions=[DuckDuckGoNewsSearch, WebBaseContextTool],\n    )\n\n    writer = Worker(\n        role=\"Tech Content Strategist\",\n        instructions=\"\"\"Craft a compelling article on tech advancements based on the research brief"
+        ],
+        "concept_id": ""
+      },
+      "synergies": [
+        {
+          "innovation": "adaptive model routing",
+          "source_keyword": "neural",
+          "target_domain": "model_selection",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "genetic algorithm optimization",
+          "source_keyword": "evolution",
+          "target_domain": "prompt_evolution",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-entity relationship resolution",
+          "source_keyword": "join",
+          "target_domain": "entity_linking",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "web ontology language for semantic reasoning",
+          "source_keyword": "owl",
+          "target_domain": "owl_bridge",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "context-aware retrieval weighting",
+          "source_keyword": "attention",
+          "target_domain": "hybrid_retriever",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "derived knowledge from explicit assertions",
+          "source_keyword": "inference",
+          "target_domain": "owl_reasoning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "reward-driven routing optimization",
+          "source_keyword": "reinforcement",
+          "target_domain": "confidence_gating",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "structured relational memory",
+          "source_keyword": "knowledge graph",
+          "target_domain": "kg",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        }
+      ],
+      "new_capabilities": 0,
+      "enhancements": 8
+    }
+  ]
+}

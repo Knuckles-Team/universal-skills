@@ -11,9 +11,9 @@ function usage() {
       'Options:',
       '  --address <0x...>        Wallet address that should receive funds',
       '  --chain-id <id>          Numeric EVM chain id',
-      '  --network-name <name>    Optional display name such as bsc or sepolia',
+      '  --network-name <name>    Optional display name such as xrpl or sepolia',
       '  --amount-wei <wei>       Optional suggested native top-up amount in wei',
-      '  --token-symbol <symbol>  Optional symbol such as BNB or ETH',
+      '  --token-symbol <symbol>  Optional symbol such as XRP or ETH',
       '  --json                   Print JSON instead of text',
     ].join('\n'),
   );

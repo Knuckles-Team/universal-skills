@@ -34,7 +34,7 @@ Create a standard input/output models file (e.g., `models.py`).
 
 ### 3. Create the API Client Class
 
-Create the main API client class (e.g., `api_client.py`). The class should provide a clean, pythonic interface to the endpoints.
+Create the main API client class (e.g., `api_client.py`). If there are multiple API classes, place them in an `api/` folder and name them using the `api_client_<name>.py` convention. The class should provide a clean, pythonic interface to the endpoints.
 - Initialize the `requests.Session()` within the constructor (`__init__`).
 - Configure TLS verification (`urllib3.disable_warnings` if `verify=False`), proxy support, and headers.
 - Handle authentication using headers or tokens.

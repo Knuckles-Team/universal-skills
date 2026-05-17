@@ -98,9 +98,8 @@ Managed wallet bootstrap commands such as `agentpay admin setup`, `agentpay admi
 
 If the user asks to send money and does not name a network or asset, use these defaults:
 
-- network: `bsc`
-- asset: `USD1`
-- token address: `0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d`
+- network: `xrpl`
+- asset: `XRP`
 
 This default removes two unnecessary clarification steps. The agent should still ask for the amount and recipient if those are missing.
 
@@ -196,11 +195,10 @@ For outbound actions, always decide the network first.
 
 Built-in practical examples in the current SDK:
 
-- `bsc` -> chain id `56`, default RPC `https://bsc.drpc.org`
+- `xrpl` -> chain id `1440000`, default RPC `https://rpc.xrplevm.org`
 - `eth` -> chain id `1`
-- `usd1` has built-in token mappings on `eth` and `bsc`
-- `bnb` is the built-in native asset for `bsc`
-- default settlement path for unspecified payments: `USD1` on `bsc`
+- `xrp` is the built-in native asset for `xrpl`
+- default settlement path for unspecified payments: `XRP` on `xrpl`
 
 Native balance check:
 
@@ -223,13 +221,10 @@ agentpay rpc balance \
 
 If native balance is zero or obviously too low for the requested action, stop and ask the user to fund the wallet first.
 
-For the default `USD1 on bsc` flow:
+For the default `XRP on xrpl` flow:
 
-- check `USD1` balance for the transfer value
-- check `BNB` balance for gas
-- if both are missing, tell the user to send the requested amount of `USD1` to the wallet on BSC and add a small amount of `BNB` for gas
-- if only gas is missing, ask for `BNB` only
-- if only token balance is missing, ask for `USD1` only
+- check `XRP` balance for both the transfer value and gas
+- if missing, tell the user to send the requested amount of `XRP` to the wallet on XRPL EVM Sidechain (plus a small amount for gas)
 
 Generate a funding request payload:
 
@@ -291,23 +286,11 @@ Only use the raw commands below if the user explicitly asks for exact CLI comman
 
 Use this when the user gives concrete spending ceilings.
 
-Example for BNB on BSC:
+Example for XRP on XRPL:
 
 ```bash
-agentpay admin token set-chain bnb bsc \
+agentpay admin token set-chain xrp xrpl \
   --native \
-  --decimals 18 \
-  --per-tx 0.01 \
-  --daily 0.2 \
-  --weekly 1.4 \
-  --json
-```
-
-Example for USD1 on BSC:
-
-```bash
-agentpay admin token set-chain usd1 bsc \
-  --address 0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d \
   --decimals 18 \
   --per-tx 10 \
   --daily 100 \
@@ -323,7 +306,7 @@ Native example:
 
 ```bash
 agentpay admin add-manual-approval-policy \
-  --network 56 \
+  --network 1440000 \
   --allow-native-eth \
   --recipient 0x1111111111111111111111111111111111111111 \
   --min-amount-wei 1000000000000000 \
@@ -334,8 +317,8 @@ ERC-20 example:
 
 ```bash
 agentpay admin add-manual-approval-policy \
-  --network 56 \
-  --token 0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d \
+  --network 1440000 \
+  --token 0xERC20_ADDRESS_HERE \
   --recipient 0x2222222222222222222222222222222222222222 \
   --min-amount-wei 1000000000000000000 \
   --max-amount-wei 10000000000000000000
@@ -373,7 +356,7 @@ Native asset request:
 
 ```bash
 agentpay transfer-native \
-  --network bsc \
+  --network xrpl \
   --to 0x1111111111111111111111111111111111111111 \
   --amount 0.001 \
   --json
@@ -383,8 +366,8 @@ ERC-20 request:
 
 ```bash
 agentpay transfer \
-  --network bsc \
-  --token 0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d \
+  --network xrpl \
+  --token 0xERC20_ADDRESS_HERE \
   --to 0x2222222222222222222222222222222222222222 \
   --amount 1 \
   --json
@@ -394,8 +377,8 @@ Approve allowance:
 
 ```bash
 agentpay approve \
-  --network bsc \
-  --token 0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d \
+  --network xrpl \
+  --token 0xERC20_ADDRESS_HERE \
   --spender 0x3333333333333333333333333333333333333333 \
   --amount 1 \
   --json

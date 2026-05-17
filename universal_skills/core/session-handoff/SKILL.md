@@ -89,17 +89,26 @@ Report to user:
 - Summary of captured context
 - First action item for the next session
 
+### Step 5: KG Integration (Dual-Write)
+
+After the Markdown file is created and validated, you MUST persist this handoff to the Knowledge Graph to enable true cross-session episodic memory.
+- Invoke the `kg_memory_store` MCP tool from `agent-utilities-kg`.
+- Set `memory_type` to `episodic`.
+- Pass the full content of the handoff document, and include tags like `handoff`, `session`, and the `[slug]`.
+- This ensures the dual-write strategy: the Markdown file acts as a local fallback, while the KG serves as the global memory store.
+
 ---
 
 ## RESUME Workflow
 
 ### Step 1: Find Available Handoffs
 
-```bash
-python scripts/list_handoffs.py
-```
-
-Lists all handoffs in the current project with dates, titles, and completion status.
+You can search for available handoffs in two ways:
+1. **Local Filesystem**:
+   ```bash
+   python scripts/list_handoffs.py
+   ```
+2. **Knowledge Graph (Recommended)**: Use the `kg_memory_recall` MCP tool with `memory_type` set to `episodic` to semantically search for previous handoff states related to your current task. This is particularly useful if the local `.agent/handoffs/` directory was lost or if you need to find a handoff by context rather than filename.
 
 ### Step 2: Check Staleness
 

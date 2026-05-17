@@ -58,6 +58,10 @@ Before asking anything, check:
 - Recent commits related to the area of change
 - Any established patterns or conventions
 
+### Step 1.5: Pre-Ideation Analogy Scan
+
+Before proposing any new designs, you MUST use the `kg_analogy_search` MCP tool from `agent-utilities-kg` to scan the Knowledge Graph for structurally similar concepts, past designs, or existing solutions within the ecosystem. This ensures we "Extend-Before-Invent".
+
 ### Step 2: Ask Clarifying Questions
 
 - Ask **one question at a time**
@@ -74,7 +78,7 @@ When triggered or when the plan is highly complex/ambiguous, activate **Scrutiny
 
 ### Step 3: Propose Approaches
 
-Once the problem is understood:
+Once the problem is understood (and informed by the `kg_analogy_search` results):
 - Present 2–3 distinct approaches with clear trade-offs
 - Lead with the recommended option and explain why
 - Keep proposals conversational, not exhaustive
@@ -87,11 +91,12 @@ After approaches are agreed on:
 - Ask for confirmation after each section before proceeding
 - Be ready to revise and revisit
 
-### Step 5: Write Design Doc
+### Step 5: Write Design Doc & Save to Semantic Memory
 
 After design approval:
 - Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
 - Commit the design document to git
+- **KG Dual-Write**: Use the `kg_memory_store` MCP tool to save the core design decisions back into the Knowledge Graph as `semantic` memory, ensuring future agents can discover this architectural decision during their own analogy scans.
 
 ### Step 6: Transition to Implementation
 

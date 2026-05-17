@@ -1,0 +1,206 @@
+{
+  "domain": "CA-010",
+  "domain_name": "Innovation Extraction",
+  "source_count": 1,
+  "target": "/home/apps/workspace/agent-packages/agent-utilities",
+  "concept_id": "",
+  "kg_source_query": null,
+  "results": [
+    {
+      "source": "/home/apps/workspace/open-source-libraries/fastmcp",
+      "source_type": "filesystem",
+      "concept_id": "",
+      "signals": {
+        "biomimicry_signals": [
+          {
+            "keyword": "mutation",
+            "count": 1,
+            "analogy": "parametric exploration",
+            "target_domain": "variant_pool"
+          }
+        ],
+        "tech_signals": [
+          {
+            "keyword": "middleware",
+            "count": 1294,
+            "analogy": "cross-cutting concern interception layer",
+            "target_domain": "middleware"
+          },
+          {
+            "keyword": "join",
+            "count": 87,
+            "analogy": "cross-entity relationship resolution",
+            "target_domain": "entity_linking"
+          },
+          {
+            "keyword": "owl",
+            "count": 42,
+            "analogy": "web ontology language for semantic reasoning",
+            "target_domain": "owl_bridge"
+          },
+          {
+            "keyword": "embedding",
+            "count": 35,
+            "analogy": "semantic vector representation",
+            "target_domain": "knowledge_graph"
+          },
+          {
+            "keyword": "transitive",
+            "count": 16,
+            "analogy": "inferred multi-hop relationship chains",
+            "target_domain": "owl_transitivity"
+          },
+          {
+            "keyword": "rdf",
+            "count": 12,
+            "analogy": "resource description framework triple encoding",
+            "target_domain": "triple_store"
+          },
+          {
+            "keyword": "inference",
+            "count": 11,
+            "analogy": "derived knowledge from explicit assertions",
+            "target_domain": "owl_reasoning"
+          },
+          {
+            "keyword": "reinforcement",
+            "count": 2,
+            "analogy": "reward-driven routing optimization",
+            "target_domain": "confidence_gating"
+          },
+          {
+            "keyword": "partitioning",
+            "count": 2,
+            "analogy": "graph decomposition into coherent substructures",
+            "target_domain": "topological_partitioning"
+          },
+          {
+            "keyword": "attention",
+            "count": 1,
+            "analogy": "context-aware retrieval weighting",
+            "target_domain": "hybrid_retriever"
+          },
+          {
+            "keyword": "hierarchical",
+            "count": 1,
+            "analogy": "multi-level abstraction layering",
+            "target_domain": "hierarchical_planning"
+          }
+        ],
+        "innovation_claims": [
+          "Unlike proposed solutions from issue reporters, review-bot feedback should be evaluated on its merits, not discounted",
+          "Does the fix introduce more complexity than the problem",
+          "Propose multiple options and let the maintainer choose \u2014 never pick one yourself",
+          "Work with the maintainer to draft the notes \u2014 propose a draft, get feedback, iterate",
+          "Proposed solutions are only worth considering if they clearly reflect genuine, non-obvious investigation of the codebase",
+          "Unlike proposed solutions from issue reporters, review-bot feedback should be evaluated on its merits, not discounted",
+          "Does the fix introduce more complexity than the problem",
+          "Propose multiple options and let the maintainer choose \u2014 never pick one yourself",
+          "Work with the maintainer to draft the notes \u2014 propose a draft, get feedback, iterate",
+          "Proposed solutions are only worth considering if they clearly reflect genuine, non-obvious investigation of the codebase"
+        ],
+        "concept_id": ""
+      },
+      "synergies": [
+        {
+          "innovation": "parametric exploration",
+          "source_keyword": "mutation",
+          "target_domain": "variant_pool",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-cutting concern interception layer",
+          "source_keyword": "middleware",
+          "target_domain": "middleware",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-entity relationship resolution",
+          "source_keyword": "join",
+          "target_domain": "entity_linking",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "web ontology language for semantic reasoning",
+          "source_keyword": "owl",
+          "target_domain": "owl_bridge",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "semantic vector representation",
+          "source_keyword": "embedding",
+          "target_domain": "knowledge_graph",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "inferred multi-hop relationship chains",
+          "source_keyword": "transitive",
+          "target_domain": "owl_transitivity",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "resource description framework triple encoding",
+          "source_keyword": "rdf",
+          "target_domain": "triple_store",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "derived knowledge from explicit assertions",
+          "source_keyword": "inference",
+          "target_domain": "owl_reasoning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "reward-driven routing optimization",
+          "source_keyword": "reinforcement",
+          "target_domain": "confidence_gating",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "graph decomposition into coherent substructures",
+          "source_keyword": "partitioning",
+          "target_domain": "topological_partitioning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "context-aware retrieval weighting",
+          "source_keyword": "attention",
+          "target_domain": "hybrid_retriever",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "multi-level abstraction layering",
+          "source_keyword": "hierarchical",
+          "target_domain": "hierarchical_planning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        }
+      ],
+      "new_capabilities": 0,
+      "enhancements": 12
+    }
+  ]
+}

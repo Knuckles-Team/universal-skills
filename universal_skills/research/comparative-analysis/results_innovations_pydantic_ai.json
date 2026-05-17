@@ -1,0 +1,254 @@
+{
+  "domain": "CA-010",
+  "domain_name": "Innovation Extraction",
+  "source_count": 1,
+  "target": "/home/apps/workspace/agent-packages/agent-utilities",
+  "concept_id": "",
+  "kg_source_query": null,
+  "results": [
+    {
+      "source": "/home/apps/workspace/open-source-libraries/pydantic-ai",
+      "source_type": "filesystem",
+      "concept_id": "",
+      "signals": {
+        "biomimicry_signals": [
+          {
+            "keyword": "neural",
+            "count": 8,
+            "analogy": "adaptive model routing",
+            "target_domain": "model_selection"
+          },
+          {
+            "keyword": "evolution",
+            "count": 3,
+            "analogy": "genetic algorithm optimization",
+            "target_domain": "prompt_evolution"
+          },
+          {
+            "keyword": "mutation",
+            "count": 3,
+            "analogy": "parametric exploration",
+            "target_domain": "variant_pool"
+          }
+        ],
+        "tech_signals": [
+          {
+            "keyword": "embedding",
+            "count": 769,
+            "analogy": "semantic vector representation",
+            "target_domain": "knowledge_graph"
+          },
+          {
+            "keyword": "transformer",
+            "count": 661,
+            "analogy": "parallel sequence processing",
+            "target_domain": "batch_processing"
+          },
+          {
+            "keyword": "join",
+            "count": 495,
+            "analogy": "cross-entity relationship resolution",
+            "target_domain": "entity_linking"
+          },
+          {
+            "keyword": "inference",
+            "count": 138,
+            "analogy": "derived knowledge from explicit assertions",
+            "target_domain": "owl_reasoning"
+          },
+          {
+            "keyword": "plugin",
+            "count": 52,
+            "analogy": "hot-swappable capability extension",
+            "target_domain": "plugin_registry"
+          },
+          {
+            "keyword": "middleware",
+            "count": 25,
+            "analogy": "cross-cutting concern interception layer",
+            "target_domain": "middleware"
+          },
+          {
+            "keyword": "topological",
+            "count": 14,
+            "analogy": "connectivity-preserving structural analysis",
+            "target_domain": "topological_partitioning"
+          },
+          {
+            "keyword": "owl",
+            "count": 12,
+            "analogy": "web ontology language for semantic reasoning",
+            "target_domain": "owl_bridge"
+          },
+          {
+            "keyword": "attention",
+            "count": 7,
+            "analogy": "context-aware retrieval weighting",
+            "target_domain": "hybrid_retriever"
+          },
+          {
+            "keyword": "hierarchical",
+            "count": 2,
+            "analogy": "multi-level abstraction layering",
+            "target_domain": "hierarchical_planning"
+          },
+          {
+            "keyword": "consensus",
+            "count": 1,
+            "analogy": "multi-agent agreement",
+            "target_domain": "bft"
+          },
+          {
+            "keyword": "data pipeline",
+            "count": 1,
+            "analogy": "ETL transformation chain",
+            "target_domain": "data_connector"
+          },
+          {
+            "keyword": "vectorized",
+            "count": 1,
+            "analogy": "batch-parallel numerical computation",
+            "target_domain": "vector_ops"
+          }
+        ],
+        "innovation_claims": [
+          "It's not meant to be everything to everyone, but it should enable people to build just about anything",
+          "It's not meant to be everything to everyone, but it should enable people to build just about anything",
+          "### Trivial fixes\n\nTypos, broken links, small doc improvements, obvious one-line fixes: just open a PR",
+          "### Bug fixes\n\nIf the fix could reasonably go more than one way, or you're unsure it's actually a bug: open an issue first",
+          "Most new agent behaviors belong in [**Pydantic AI Harness**](https://github.com/pydantic/pydantic-ai-harness), the official capability library \u2014 not in this repo",
+          "**Search first.** If an existing issue covers your need, comment there",
+          "If the closest match is only related, open a new issue and link it",
+          "**Propose a plan before building.** Post the shape of the solution on the issue, or open a draft PR with just a `PLAN.md`",
+          "## What to expect during review\n\n### We review PRs in our priority order, not submission order\n\nWe do not automatically triage every new PR",
+          "**Powerful Evals**:\nEnables you to systematically test and [evaluate](https://ai.pydantic.dev/evals) the performance and accuracy of the agentic systems you build, and monitor the performance over time in Pydantic Logfire"
+        ],
+        "concept_id": ""
+      },
+      "synergies": [
+        {
+          "innovation": "adaptive model routing",
+          "source_keyword": "neural",
+          "target_domain": "model_selection",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "genetic algorithm optimization",
+          "source_keyword": "evolution",
+          "target_domain": "prompt_evolution",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "parametric exploration",
+          "source_keyword": "mutation",
+          "target_domain": "variant_pool",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "semantic vector representation",
+          "source_keyword": "embedding",
+          "target_domain": "knowledge_graph",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "parallel sequence processing",
+          "source_keyword": "transformer",
+          "target_domain": "batch_processing",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-entity relationship resolution",
+          "source_keyword": "join",
+          "target_domain": "entity_linking",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "derived knowledge from explicit assertions",
+          "source_keyword": "inference",
+          "target_domain": "owl_reasoning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "hot-swappable capability extension",
+          "source_keyword": "plugin",
+          "target_domain": "plugin_registry",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "cross-cutting concern interception layer",
+          "source_keyword": "middleware",
+          "target_domain": "middleware",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "connectivity-preserving structural analysis",
+          "source_keyword": "topological",
+          "target_domain": "topological_partitioning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "web ontology language for semantic reasoning",
+          "source_keyword": "owl",
+          "target_domain": "owl_bridge",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "context-aware retrieval weighting",
+          "source_keyword": "attention",
+          "target_domain": "hybrid_retriever",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "multi-level abstraction layering",
+          "source_keyword": "hierarchical",
+          "target_domain": "hierarchical_planning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "multi-agent agreement",
+          "source_keyword": "consensus",
+          "target_domain": "bft",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "ETL transformation chain",
+          "source_keyword": "data pipeline",
+          "target_domain": "data_connector",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        }
+      ],
+      "new_capabilities": 0,
+      "enhancements": 16
+    }
+  ]
+}

@@ -41,8 +41,9 @@ def _discover_projects(pattern: str) -> list[str]:
                     ):
                         projects.append(str(child.resolve()))
         else:
-            # Glob pattern
-            for match in sorted(Path(".").glob(p)):
+            import glob
+            for match_str in sorted(glob.glob(p)):
+                match = Path(match_str)
                 if match.is_dir() and (
                     (match / "pyproject.toml").exists()
                     or (match / "package.json").exists()
@@ -85,6 +86,7 @@ def _run_single_project(project_dir: str) -> dict:
         ("audit_changelog", "audit_changelog"),
         ("grade_pytest", "grade_pytest"),
         ("scan_env_vars", "scan_env_vars"),
+        ("analyze_xdg_kg", "check_xdg_compliance"),
     ]
 
     for module_name, func_name in analyzers:

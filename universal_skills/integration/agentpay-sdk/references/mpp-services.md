@@ -85,7 +85,7 @@ agentpay mpp https://parallelmpp.dev/api/search \
 agentpay mpp https://exa.mpp.tempo.xyz/search \
   --method POST \
   --header 'Content-Type: application/json' \
-  --json-body '{"query":"USD1 stablecoin policy controls","numResults":5}' \
+  --json-body '{"query":"RLUSD stablecoin policy controls","numResults":5}' \
   --json
 ```
 

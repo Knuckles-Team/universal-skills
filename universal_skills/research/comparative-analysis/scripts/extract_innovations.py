@@ -9,6 +9,12 @@ Usage:
     python extract_innovations.py --source /path/to/paper.md --target /path/to/codebase
     python extract_innovations.py --sources /path/to/paper1.md /path/to/paper2.md
 
+    # Concept-ID-aware mode:
+    python extract_innovations.py --source /path/to/paper.md --concept-id KG-2.4
+
+    # KG-backed source (pulls Article content from Knowledge Graph):
+    python extract_innovations.py --kg-source "hypergraph inductive reasoning" --target /path/to/codebase
+
 CONCEPT:CA-010 — Innovation Extraction Engine
 """
 
@@ -283,7 +289,7 @@ TECH_INNOVATION_KEYWORDS = {
 }
 
 
-def extract_from_text(content: str) -> dict:
+def extract_from_text(content: str, concept_id: str = "") -> dict:
     """Extract innovation signals from text content."""
     content_lower = content.lower()
     biomimicry_hits = []
@@ -338,7 +344,43 @@ def extract_from_text(content: str) -> dict:
         "biomimicry_signals": sorted(biomimicry_hits, key=lambda x: -x["count"]),
         "tech_signals": sorted(tech_hits, key=lambda x: -x["count"]),
         "innovation_claims": claims,
+        "concept_id": concept_id,
     }
+
+
+def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
+    """Resolve Article content from the Knowledge Graph via semantic search.
+
+    Args:
+        query: Natural language search query.
+        top_k: Maximum number of results.
+
+    Returns:
+        List of dicts with 'content', 'target_path', 'score'.
+    """
+    try:
+        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+        from agent_utilities.core.paths import kg_db_path
+
+        engine = IntelligenceGraphEngine(db_path=str(kg_db_path()))
+        results = engine.search_hybrid(query, top_k=top_k)
+        sources = []
+        for r in results:
+            content = r.get("content", r.get("description", ""))
+            if content:
+                sources.append({
+                    "content": content,
+                    "target_path": r.get("target_path", r.get("file_path", "kg_source")),
+                    "score": r.get("score", 0.0),
+                    "node_id": r.get("id", r.get("node_id", "")),
+                })
+        return sources
+    except ImportError:
+        print("agent_utilities not available for KG resolution.", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"KG resolution failed: {e}", file=sys.stderr)
+        return []
 
 
 def find_synergies(source_signals: dict, target_path: Path | None) -> list[dict]:
@@ -395,6 +437,9 @@ def find_synergies(source_signals: dict, target_path: Path | None) -> list[dict]
 def main():
     sources = []
     target = None
+    concept_id = ""
+    kg_source_query = ""
+
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "--source" and i + 1 < len(sys.argv):
@@ -408,21 +453,59 @@ def main():
         elif sys.argv[i] == "--target" and i + 1 < len(sys.argv):
             target = sys.argv[i + 1]
             i += 2
+        elif sys.argv[i] == "--concept-id" and i + 1 < len(sys.argv):
+            concept_id = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--kg-source" and i + 1 < len(sys.argv):
+            kg_source_query = sys.argv[i + 1]
+            i += 2
         else:
             sources.append(sys.argv[i])
             i += 1
 
-    if not sources:
+    # Resolve KG sources if --kg-source is provided
+    kg_articles = []
+    if kg_source_query:
+        kg_articles = resolve_kg_sources(kg_source_query)
+        if not kg_articles:
+            print(json.dumps({"error": f"No KG articles found for: {kg_source_query}"}),
+                  file=sys.stderr)
+
+    if not sources and not kg_articles:
         print(
             json.dumps(
                 {
-                    "error": "Usage: extract_innovations.py [--source <path>]... [--target <codebase>]"
+                    "error": "Usage: extract_innovations.py [--source <path>]... [--target <codebase>] [--concept-id <ID>] [--kg-source <query>]"
                 }
             )
         )
         sys.exit(1)
 
     results = []
+
+    # Process KG-sourced articles
+    for article in kg_articles:
+        signals = extract_from_text(article["content"], concept_id=concept_id)
+        synergies = find_synergies(signals, Path(target) if target else None)
+        results.append(
+            {
+                "source": article["target_path"],
+                "source_type": "knowledge_graph",
+                "node_id": article.get("node_id", ""),
+                "relevance_score": article.get("score", 0.0),
+                "concept_id": concept_id,
+                "signals": signals,
+                "synergies": synergies[:15],
+                "new_capabilities": len(
+                    [s for s in synergies if s.get("integration_type") == "new_capability"]
+                ),
+                "enhancements": len(
+                    [s for s in synergies if s.get("integration_type") == "enhancement"]
+                ),
+            }
+        )
+
+    # Process filesystem sources
     for src in sources:
         path = Path(src).resolve()
         if not path.exists():
@@ -436,7 +519,6 @@ def main():
                 results.append({"source": str(path), "error": str(e)})
                 continue
         elif path.is_dir():
-            # Concatenate all text files
             content = ""
             for f in path.rglob("*"):
                 if f.is_file() and f.suffix in {".md", ".txt", ".rst", ".py"}:
@@ -445,12 +527,14 @@ def main():
                     except Exception:
                         pass
 
-        signals = extract_from_text(content)
+        signals = extract_from_text(content, concept_id=concept_id)
         synergies = find_synergies(signals, Path(target) if target else None)
 
         results.append(
             {
                 "source": str(path),
+                "source_type": "filesystem",
+                "concept_id": concept_id,
                 "signals": signals,
                 "synergies": synergies[:15],
                 "new_capabilities": len(
@@ -473,6 +557,8 @@ def main():
                 "domain_name": "Innovation Extraction",
                 "source_count": len(results),
                 "target": target,
+                "concept_id": concept_id,
+                "kg_source_query": kg_source_query if kg_source_query else None,
                 "results": results,
             },
             indent=2,

@@ -89,7 +89,7 @@ replace = version = "{{new_version}}"
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
 
-[bumpversion:file:Dockerfile]
+[bumpversion:file:docker/Dockerfile]
 search = {package_name}[all]>={{current_version}}
 replace = {package_name}[all]>={{new_version}}
 
@@ -296,8 +296,8 @@ services:
   {agent_service_name}:
     # image: docker.io/knucklessg1/{package_name}:latest
     build:
-      context: . # Debug
-      dockerfile: debug.Dockerfile
+      context: .. # Debug
+      dockerfile: docker/debug.Dockerfile
     container_name: {agent_service_name}
     hostname: {agent_service_name}
     command: [ "{agent_cmd}" ]
@@ -310,7 +310,7 @@ services:
         max-file: "3"
     restart: always
     env_file:
-      - .env
+      - ../.env
     environment:
       - "HOST=0.0.0.0"
       - "PORT=9001"
@@ -328,6 +328,83 @@ services:
       - "9001:9001"
     healthcheck:
       test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9001/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+"""
+
+MCP_COMPOSE_YML = """\
+---
+services:
+  {mcp_cmd}:
+    build:
+      context: .. # Production
+      dockerfile: docker/debug.Dockerfile # Using debug for local dev usually
+    container_name: {mcp_cmd}
+    hostname: {mcp_cmd}
+    command: [ "{mcp_cmd}" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+    volumes:
+      - ../mcp:/app
+    env_file:
+      - ../.env
+    environment:
+      - "PYTHONUNBUFFERED=1"
+      - "HOST=0.0.0.0"
+      - "PORT=8004"
+      - "TRANSPORT=streamable-http"
+    ports:
+      - "8004:8004"
+    healthcheck:
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  {agent_service_name}:
+    build:
+      context: .. # Production
+      dockerfile: docker/debug.Dockerfile
+    container_name: {agent_service_name}
+    hostname: {agent_service_name}
+    command: [ "{agent_cmd}" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - {mcp_cmd}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      - "PYTHONUNBUFFERED=1"
+      - "HOST=0.0.0.0"
+      - "PORT=9004"
+      - "MCP_URL=http://{mcp_cmd}:8004/mcp"
+      - "PROVIDER=openai"
+      - "LLM_BASE_URL=${{LLM_BASE_URL:-http://host.docker.internal:1234/v1}}"
+      - "LLM_API_KEY=${{LLM_API_KEY:-llama}}"
+      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3.5-9b}}"
+      - "DEBUG=False"
+      - "ENABLE_WEB_UI=True"
+      - "ENABLE_OTEL=True"
+    ports:
+      - "9004:9004"
+    healthcheck:
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9004/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -425,9 +502,10 @@ build/
 pytest.ini
 ./tests/
 
-Dockerfile
-debug.Dockerfile
-compose.yml
+docker/Dockerfile
+docker/debug.Dockerfile
+docker/compose.yml
+docker/mcp.compose.yml
 """
 
 ENV_TEMPLATE = """\
@@ -1802,9 +1880,10 @@ def scaffold(
         root / ".env": ENV_TEMPLATE,
         root / ".gitignore": GITIGNORE,
         root / ".gitattributes": GITATTRIBUTES,
-        root / "Dockerfile": DOCKERFILE,
-        root / "debug.Dockerfile": DEBUG_DOCKERFILE,
-        root / "compose.yml": COMPOSE_YML,
+        root / "docker/Dockerfile": DOCKERFILE,
+        root / "docker/debug.Dockerfile": DEBUG_DOCKERFILE,
+        root / "docker/compose.yml": COMPOSE_YML,
+        root / "docker/mcp.compose.yml": MCP_COMPOSE_YML,
         root / "AGENTS.md": ROOT_AGENTS_MD,
         root / "LICENSE": LICENSE_MIT,
         root / "MANIFEST.in": MANIFEST_IN,

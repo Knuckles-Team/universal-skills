@@ -40,7 +40,12 @@ This skill integrates directly with the `agent_utilities.models.Tasks` and `Task
 - **Git Integration**: If in a git repository, associate task completion with specific commit hashes in the `Task` metadata.
 
 ## Operating Principles
+- **Constitution & Policy Adherence**: Before executing tasks, actively query `kg_get_constitution` via the `agent-utilities-kg` MCP server. Ensure that the implementation you are about to write complies strictly with the architectural policies retrieved from the Knowledge Graph.
+- **Pre-Flight Analogy Check**: Always use `kg_analogy_search` before implementing new logic to verify if an analogous concept or implementation already exists within the Knowledge Graph. If one exists, extend it rather than duplicating work (Extend-Before-Invent).
 - **Concept Traceability**: Mandate that all modified code, Docstrings, and Pytest suites carry the appropriate `CONCEPT:[ID]` tags referencing the Knowledge Graph. Use `kg_concept_search` (via `agent-utilities-kg` MCP) to verify correct IDs are being applied. For example, `"""Handles dynamic subgraphs. CONCEPT:ORCH-1.4"""`.
+- **Holistic Documentation**: When finalizing an implementation, you MUST verify that `CHANGELOG.md`, `AGENTS.md`, `README.md`, docstrings, `/docs` (including related pages and architecture diagrams), and `pytests` have been appropriately updated.
+- **Hot-Path Validation**: Before marking an implementation as complete, you MUST verify that any newly implemented component is fully wired into the system architecture's run path (the "hot path"). Do not leave code as an isolated stub.
 - **Respect TDD**: Never mark an implementation task as complete unless its corresponding test task is also passed.
 - **Fail Fast**: If a task fails and cannot be resolved automatically, stop, report the error, and wait for human intervention.
 - **Atomic Commits**: Encourage atomic updates for each task.
+- **KG Persistence & .specify Sync (Dual-Write)**: The repository's `.specify/` folder MUST be treated as the **Single Source of Truth** for all specs, task lists, and domain designs. Every time you generate or update a specification, plan, or task list, you must write it to the `.specify/` directory. Immediately after writing to `.specify/` or modifying codebase files, you MUST use the `kg_ingest` MCP tool against the `.specify/` directory and any changed files to write the changes back to the Knowledge Graph, ensuring the graph is always perfectly synchronized with the codebase state.

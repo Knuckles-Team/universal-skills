@@ -227,16 +227,339 @@ def score_architecture(
     return {"score": min(score, 100), "grade": grade, "details": details}
 
 
+# ── C4 Architecture Discovery ──────────────────────────────────────────────
+
+C4_MARKERS = {
+    "C4Context": "system_context",
+    "C4Container": "container",
+    "C4Component": "component",
+    "C4Deployment": "deployment",
+}
+
+C4_ELEMENT_RE = re.compile(
+    r"(Person|System|System_Ext|Container|ContainerDb|Component|Container_Boundary)"
+    r'\(\s*(\w+)\s*,\s*"([^"]*)"',
+)
+C4_REL_RE = re.compile(r'Rel\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]*)"')
+
+
+def discover_c4_architecture(project_path: Path) -> dict:
+    """Discover existing C4 architecture diagrams from the filesystem."""
+    diagrams = []
+    check_dirs = ["docs", ".specify", "."]
+    md_files = []
+    for d in check_dirs:
+        target = project_path / d
+        if target.is_dir():
+            md_files.extend(target.rglob("*.md"))
+
+    for md_file in md_files:
+        rel = md_file.relative_to(project_path)
+        if any(p in str(rel) for p in SKIP_DIRS):
+            continue
+        try:
+            content = md_file.read_text(errors="ignore")
+        except OSError:
+            continue
+
+        for marker, level in C4_MARKERS.items():
+            if marker not in content:
+                continue
+            elements = C4_ELEMENT_RE.findall(content)
+            relationships = C4_REL_RE.findall(content)
+            diagrams.append({
+                "file": str(rel),
+                "level": level,
+                "components": [
+                    {"kind": e[0], "id": e[1], "name": e[2]} for e in elements
+                ],
+                "relationships": [
+                    {"from": r[0], "to": r[1], "label": r[2]} for r in relationships
+                ],
+            })
+
+    return {"diagrams": diagrams, "has_c4": len(diagrams) > 0, "diagram_count": len(diagrams)}
+
+
+# ── Hot Path Identification ────────────────────────────────────────────────
+
+ENTRY_POINT_PATTERNS = {
+    "mcp_tool": re.compile(r"@mcp\.tool\(\)"),
+    "fastapi_route": re.compile(r"@(?:app|router)\.\w+\("),
+    "click_command": re.compile(r"@click\.(command|group)"),
+    "a2a_skill": re.compile(r"async\s+def\s+run\(self.*messages"),
+}
+
+
+def identify_hot_paths(project_path: Path) -> dict:
+    """Identify entry points and trace reachability via import graph."""
+    entry_points = []
+    all_modules = set()
+    import_graph: dict[str, set[str]] = {}
+
+    for pyfile in project_path.rglob("*.py"):
+        rel = pyfile.relative_to(project_path)
+        if any(p in str(rel) for p in SKIP_DIRS):
+            continue
+        mod_name = str(rel).replace("/", ".").removesuffix(".py").removesuffix(".__init__")
+        all_modules.add(mod_name)
+
+        try:
+            content = pyfile.read_text(errors="ignore")
+            tree = ast.parse(content)
+        except (SyntaxError, OSError):
+            continue
+
+        # Check for entry point patterns
+        for ep_type, pattern in ENTRY_POINT_PATTERNS.items():
+            if pattern.search(content):
+                entry_points.append({"type": ep_type, "module": mod_name, "file": str(rel)})
+                break
+
+        # Check for if __name__ == "__main__"
+        for node in ast.walk(tree):
+            if isinstance(node, ast.If):
+                test_str = ast.dump(node.test)
+                if "__name__" in test_str and "__main__" in test_str:
+                    entry_points.append({"type": "cli_main", "module": mod_name, "file": str(rel)})
+
+        # Build import graph
+        imports = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imports.add(alias.name.split(".")[0])
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imports.add(node.module.split(".")[0])
+        import_graph[mod_name] = imports
+
+    # BFS reachability from entry points
+    reachable = set()
+    frontier = {ep["module"] for ep in entry_points}
+    visited = set()
+    while frontier:
+        current = frontier.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        reachable.add(current)
+        for dep in import_graph.get(current, set()):
+            # Match dependencies against known modules
+            for mod in all_modules:
+                if mod.startswith(dep) or dep in mod:
+                    frontier.add(mod)
+
+    cold_modules = all_modules - reachable
+    coverage = round(len(reachable) / max(len(all_modules), 1) * 100, 1)
+
+    return {
+        "entry_points": entry_points[:20],
+        "entry_point_count": len(entry_points),
+        "total_modules": len(all_modules),
+        "hot_path_modules": len(reachable),
+        "cold_modules": sorted(cold_modules)[:15],
+        "cold_module_count": len(cold_modules),
+        "hot_path_coverage_pct": coverage,
+    }
+
+
+# ── Design Pattern Detection ──────────────────────────────────────────────
+
+
+def analyze_design_patterns(project_path: Path) -> dict:
+    """Detect architectural design patterns via AST analysis."""
+    patterns = {
+        "mixin": 0, "dependency_injection": 0, "lazy_init": 0,
+        "plugin_registry": 0, "event_driven": 0, "protocol_oriented": 0,
+        "factory": 0, "strategy": 0,
+    }
+    examples: dict[str, list[str]] = {k: [] for k in patterns}
+
+    for pyfile in project_path.rglob("*.py"):
+        rel = pyfile.relative_to(project_path)
+        if any(p in str(rel) for p in SKIP_DIRS):
+            continue
+        try:
+            content = pyfile.read_text(errors="ignore")
+            tree = ast.parse(content)
+        except (SyntaxError, OSError):
+            continue
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                # Mixin: multiple base classes
+                if len(node.bases) >= 2:
+                    patterns["mixin"] += 1
+                    if len(examples["mixin"]) < 3:
+                        examples["mixin"].append(f"{rel}:{node.name}")
+
+                # Protocol/ABC oriented
+                for base in node.bases:
+                    base_name = getattr(base, "id", getattr(base, "attr", ""))
+                    if base_name in ("Protocol", "ABC", "ABCMeta"):
+                        patterns["protocol_oriented"] += 1
+                        if len(examples["protocol_oriented"]) < 3:
+                            examples["protocol_oriented"].append(f"{rel}:{node.name}")
+
+                # Lazy init: @property with _field guard
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef) and any(
+                        isinstance(d, ast.Name) and d.id == "property"
+                        for d in item.decorator_list
+                    ):
+                        body_str = ast.dump(item)
+                        if "None" in body_str and "_" in item.name:
+                            patterns["lazy_init"] += 1
+
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Factory pattern
+                if node.name.startswith(("create_", "build_", "make_")):
+                    patterns["factory"] += 1
+                    if len(examples["factory"]) < 3:
+                        examples["factory"].append(f"{rel}:{node.name}")
+
+                # DI: constructor with typed params
+                if node.name == "__init__":
+                    typed_params = sum(1 for a in node.args.args if a.annotation)
+                    if typed_params >= 2:
+                        patterns["dependency_injection"] += 1
+
+        # Text-based pattern detection
+        if re.search(r"\b(register|subscribe|on_event|emit|publish)\s*\(", content):
+            if "register" in content or "subscribe" in content:
+                patterns["plugin_registry"] += 1
+            if "emit" in content or "publish" in content:
+                patterns["event_driven"] += 1
+
+    return {"counts": patterns, "examples": examples}
+
+
+# ── C4 Auto-Generation ────────────────────────────────────────────────────
+
+
+def auto_generate_c4(project_path: Path, structure: dict, protocols: dict,
+                     entry_info: dict) -> str:
+    """Generate a C4 Component diagram from AST-parsed project structure."""
+    packages = structure.get("packages", [])
+    if not packages:
+        return ""
+
+    # Determine project name
+    proj_name = project_path.name
+    pyproject = project_path / "pyproject.toml"
+    if pyproject.exists():
+        try:
+            for line in pyproject.read_text().splitlines():
+                if line.strip().startswith("name"):
+                    proj_name = line.split("=")[1].strip().strip('"').strip("'")
+                    break
+        except OSError:
+            pass
+
+    lines = [
+        f"# {proj_name} — Auto-Generated C4 Architecture",
+        "",
+        "> Auto-generated by `analyze_architecture.py` from AST analysis.",
+        "> Update this file manually to add descriptions and refine boundaries.",
+        "",
+        "## Component Diagram",
+        "",
+        "```mermaid",
+        "C4Component",
+        f'    title {proj_name} — Component Diagram (Auto-Generated)',
+        "",
+        f'    Container_Boundary(proj, "{proj_name}") {{',
+    ]
+
+    # Group packages into boundaries
+    top_level: dict[str, list[str]] = {}
+    for pkg in packages:
+        parts = pkg.split("/")
+        top = parts[1] if len(parts) > 1 else parts[0]
+        top_level.setdefault(top, []).append(pkg)
+
+    comp_ids = []
+    for top_pkg, sub_pkgs in sorted(top_level.items()):
+        comp_id = re.sub(r"[^a-zA-Z0-9]", "_", top_pkg)
+        comp_ids.append(comp_id)
+        desc = f"{len(sub_pkgs)} sub-packages"
+        lines.append(f'        Component({comp_id}, "{top_pkg}", "Python", "{desc}")')
+
+    lines.append("    }")
+
+    # Add protocol-based external systems
+    for proto in protocols:
+        pid = f"ext_{proto.lower()}"
+        lines.append(f'    System_Ext({pid}, "{proto} Clients", "External {proto} consumers")')
+        if comp_ids:
+            lines.append(f'    Rel({pid}, {comp_ids[0]}, "{proto} requests")')
+
+    # Add entry point relationships
+    for ep in entry_info.get("entry_points", [])[:5]:
+        ep_mod = ep.get("module", "").split(".")
+        if len(ep_mod) > 1:
+            target = re.sub(r"[^a-zA-Z0-9]", "_", ep_mod[1] if len(ep_mod) > 1 else ep_mod[0])
+            if target in comp_ids:
+                lines.append(f'    Rel(user, {target}, "{ep["type"]} entry")')
+
+    lines.append("```")
+
+    return "\n".join(lines)
+
+
+def save_generated_c4(project_path: Path, c4_content: str) -> str:
+    """Save auto-generated C4 to .specify/reports/generated_c4.md."""
+    if not c4_content:
+        return ""
+    output_dir = project_path / ".specify" / "reports"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_file = output_dir / "generated_c4.md"
+    output_file.write_text(c4_content)
+    return str(output_file)
+
+
+# ── Updated Main ───────────────────────────────────────────────────────────
+
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: analyze_architecture.py <project_path>"}))
         sys.exit(1)
     project_path = Path(sys.argv[1]).resolve()
+
+    # Original analyses
     protocols = detect_protocols(project_path)
     types = analyze_type_coverage(project_path)
     structure = analyze_module_structure(project_path)
     config = detect_config_patterns(project_path)
     scoring = score_architecture(protocols, types, structure, config)
+
+    # New: Architecture discovery (always runs)
+    c4_discovery = discover_c4_architecture(project_path)
+    hot_paths = identify_hot_paths(project_path)
+    design_patterns = analyze_design_patterns(project_path)
+
+    # Auto-generate C4 if none exists
+    generated_c4_path = ""
+    if not c4_discovery["has_c4"]:
+        c4_content = auto_generate_c4(project_path, structure, protocols, hot_paths)
+        if c4_content:
+            generated_c4_path = save_generated_c4(project_path, c4_content)
+            c4_discovery["auto_generated"] = True
+            c4_discovery["generated_path"] = generated_c4_path
+
+    # Boost/penalize score based on architecture quality
+    arch_bonus = 0
+    if c4_discovery["has_c4"]:
+        arch_bonus += 5  # Has documented architecture
+    if hot_paths["hot_path_coverage_pct"] >= 80:
+        arch_bonus += 5  # Good hot path coverage
+    elif hot_paths["cold_module_count"] > hot_paths["hot_path_modules"]:
+        arch_bonus -= 5  # More cold code than hot
+    scoring["score"] = min(scoring["score"] + arch_bonus, 100)
+    if arch_bonus != 0:
+        scoring["details"].append(f"Architecture depth bonus: {arch_bonus:+d}")
 
     print(
         json.dumps(
@@ -248,6 +571,10 @@ def main():
                 "type_coverage": types,
                 "module_structure": structure,
                 "config_patterns": config,
+                "c4_architecture": c4_discovery,
+                "hot_paths": hot_paths,
+                "design_patterns": design_patterns,
+                "generated_c4_path": generated_c4_path,
                 "scoring": scoring,
             },
             indent=2,
@@ -257,3 +584,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

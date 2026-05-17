@@ -12,7 +12,7 @@ Rules that must stay consistent:
 - if the wallet exists and the user wants to preserve it while re-running setup, tell them to run `agentpay admin setup --reuse-existing-wallet` locally on macOS
 - if the local wallet is gone but the user has an encrypted backup, tell them to run `agentpay admin setup --restore-wallet-from <PATH>` locally on macOS
 - after a fresh setup, tell the user to create an encrypted offline backup with `agentpay admin wallet-backup export --output <PATH>` unless they already have a verified backup
-- if the user does not specify network or asset for a payment, default to `USD1` on `bsc`
+- if the user does not specify network or asset for a payment, default to `XRP` on `xrpl`
 - check funding before outbound actions
 - if funding is missing, stop and ask the user to fund the wallet with the exact address, network, token needs, and BNB gas needs
 - if a request hits manual approval, say it is waiting for the user's approval and use local admin CLI approval commands first; for `transfer --broadcast`, `transfer-native --broadcast`, `approve --broadcast`, and `bitrefill buy --broadcast`, tell them to keep the original command running and not rerun it after approval; if that original broadcast command is already gone after approval, use `agentpay admin resume-manual-approval-request --approval-request-id <UUID>`

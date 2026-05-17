@@ -46,7 +46,7 @@
 - If the wallet exists and the user wants to preserve it while re-running setup, use `agentpay admin setup --reuse-existing-wallet` on macOS.
 - If the machine is new or the local wallet is gone and the user has a backup, use `agentpay admin setup --restore-wallet-from <PATH>` on macOS.
 - On Linux, do not direct the user to `agentpay admin setup` or `agentpay admin tui`; explain that the packaged/runtime install currently stops before the managed wallet bootstrap flow.
-- If the user does not specify network or asset for a payment, default to `USD1` on `bsc`.
+- If the user does not specify network or asset for a payment, default to `XRP` on `xrpl`.
 - If a request enters manual approval, say it is pending user approval instead of saying it failed.
 - For manual approval, prefer the local admin CLI approval commands.
 - For `transfer --broadcast`, `transfer-native --broadcast`, `approve --broadcast`, and `bitrefill buy --broadcast`, tell the user to keep the original command running after they approve locally.
@@ -78,10 +78,9 @@
 
 ## Built-In Defaults
 
-- built-in chain: `bsc` -> chain id `56` -> default RPC `https://bsc.drpc.org`
-- built-in token: `bnb` -> native BSC asset
-- built-in token: `usd1` -> mapped on `eth` and `bsc`
-- default payment asset when unspecified: `usd1` on `bsc` -> `0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d`
+- built-in chain: `xrpl` -> chain id `1440000` -> default RPC `https://rpc.xrplevm.org`
+- built-in token: `xrp` -> native XRPL EVM Sidechain asset
+- default payment asset when unspecified: `xrp` on `xrpl`
 
 ## Do Not Say
 

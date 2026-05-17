@@ -17,7 +17,7 @@ metadata:
 
 # Agent Package Builder
 
-Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`Dockerfile`, `debug.Dockerfile`, `compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`prompts/main_agent.md`). Flat-file logging, memory, and local data storage (`MEMORY.md`, `USER.md`, `HEARTBEAT.md`, `CRON.md`, `agent_data/`) have been deprecated; all state, logs, memory, and chat history are handled natively via the **Knowledge Graph**. It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
+Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`docker/Dockerfile`, `docker/debug.Dockerfile`, `docker/compose.yml`, `docker/mcp.compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`prompts/main_agent.md`). Flat-file logging, memory, and local data storage (`MEMORY.md`, `USER.md`, `HEARTBEAT.md`, `CRON.md`, `agent_data/`) have been deprecated; all state, logs, memory, and chat history are handled natively via the **Knowledge Graph**. It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
 
 ---
 
@@ -65,7 +65,7 @@ After scaffolding, implement the domain-specific code by delegating to the appro
 #### 3a. API Client (if type includes `api_client`)
 
 Read the `api-client-builder` skill and follow its instructions to:
-1. Create `{pkg_dir}/api_client.py` — The API client class.
+1. Create `{pkg_dir}/api_client.py` — The API client class. If there are multiple API classes, place them in `{pkg_dir}/api/` and name them using the `api_client_<name>.py` convention.
 2. Create `{pkg_dir}/models.py` — Pydantic input/output models.
 3. Update `{pkg_dir}/auth.py` — Configure authentication for the target service. Ensure you follow the standardized pattern: wrap API instantiation in a `try...except (AuthError, UnauthorizedError)` block and raise a descriptive `RuntimeError` with troubleshooting advice.
 
@@ -76,17 +76,17 @@ Read the `mcp-builder` skill and follow its instructions to:
 2. Wire tools to the API wrapper methods created in 3a.
 3. Register tools by tag with env-var-based enable/disable pattern.
 4. **IMPORTANT**: All MCP tool tags MUST be strictly lowercase and use hyphens to separate words (e.g. `tag="user-management"`, env var=`USER_MANAGEMENTTOOL`). No camelCase or underscores are allowed in tags.
-5. **Scale Pattern (Option 3)**: For agents with >50 API calls (e.g. `arr-mcp`, `leanix-agent`), use **Dynamic Runtime Generation**.
-   - **Tag Prefixing**: For Option 3, prefix tool tags with the API/Service name (e.g. `leanix-pathfinder`).
+5. **Universal Architecture Pattern (Action-Routed Dynamic Generation)**: ALL new agents must use dynamic runtime generation. We do NOT write massive `mcp_server.py` files with static `@mcp.tool` decorators anymore. This avoids IDE tool-count limitations.
+   - **Tag Prefixing**: Prefix tool tags with the API/Service name (e.g. `leanix-pathfinder`).
    - **No Duplicates**: Ensure tool tags are unique across the entire registration.
-   - Do not write massive `mcp_server.py` files with hundreds of static `@mcp.tool` decorators.
-   - Use metaprogramming (e.g. `exec()` mapping python method signatures to FastMCP Pydantic schemas) similar to the `arr-mcp` pattern.
-   - Feed the router a `tool_tags.json` mapping of `{"service": {"method_name": "lowercasetag"}}`.
-   - **CRITICAL**: Even when dynamically generating tools, you MUST explicitly define static environment variables for *each* tag block in `mcp_server.py` so the users can clearly see and disable them:
+   - **Tool Grouping**: Group multiple API methods into a single tool definition mapped by an `action` enum string.
+   - Use metaprogramming (e.g. `exec()` mapping python method signatures to FastMCP Pydantic schemas) similar to the action-routed pattern.
+   - Feed the router a `tool_tags.json` mapping of `{"service": {"tag": ["method_1", "method_2"]}}`.
+   - **CRITICAL**: Even when dynamically generating tools, you MUST explicitly define static environment variables for *each* tag block (or suite) in `mcp_server.py` so the users can clearly see and disable them:
      ```python
      DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
      if DEFAULT_MISCTOOL:
-         register_misc_tools(mcp)
+         enabled_tags.append("misc")
      ```
      For a purely dynamic loading loop, you should still hardcode the env variables checking before enabling specific categories inside the dynamic router or at the server root.
 
@@ -290,7 +290,8 @@ The row must be inserted alphabetically by MCP Server name in the existing table
 1. **Validate syntax**:
    ```bash
    python -c "import tomllib; tomllib.load(open('{project_dir}/pyproject.toml', 'rb'))"
-   python -c "import yaml; yaml.safe_load(open('{project_dir}/compose.yml'))"
+   python -c "import yaml; yaml.safe_load(open('{project_dir}/docker/compose.yml'))"
+   python -c "import yaml; yaml.safe_load(open('{project_dir}/docker/mcp.compose.yml'))"
    ```
 
 2. **Test entry points** (if stubs are complete enough):

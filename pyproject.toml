@@ -14,7 +14,7 @@ dependencies = [ ]
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-asyncio",
+    "pytest-asyncio", "pytest-cov",
     "PyYAML",
     "httpx"
 ]
@@ -129,3 +129,7 @@ universal_skills = [ "skills/**" ]
 
 [tool.setuptools.packages.find]
 where = [ ".",]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"

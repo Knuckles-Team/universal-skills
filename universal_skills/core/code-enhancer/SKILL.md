@@ -104,6 +104,11 @@ Every grade includes a justification with specific file paths and evidence citat
 - **Run `grade_skills.py`**: Discover and grade agent skills (if detected in Phase 1). Uses skill-check rule engine.
 - **Run `evaluate_heuristics.py`**: Assess codebase against engineering book heuristics with contextual activation.
 
+### Phase 2.8: Knowledge Graph Discovery (Innovation Extraction)
+- **Ingest Target Codebase**: Use the `kg_ingest` MCP tool to ingest the local repository into the unified Knowledge Graph.
+- **Analogy Search**: Use the `kg_analogy_search` MCP tool to find structural analogues or overlapping architectural patterns from previously ingested research papers and external codebases.
+- **Query & Discover**: Use `kg_query` to look up cross-repository architectural integrations and propose new features based on the knowledge graph's existing taxonomy.
+
 ### Phase 3: Traceability & Governance
 - **Run `trace_concepts.py`**: Scan for `CONCEPT:CE-XXX` markers in code docstrings, docs, pytest markers and decorators. Detect orphans, drift, and missing markers. Cross-reference against AGENTS.md concept registry.
 
@@ -123,19 +128,20 @@ Every grade includes a justification with specific file paths and evidence citat
 
 ### Phase 6: Multi-Project (Optional)
 - **Run `run_multi_project.py`**: Execute all phases across multiple projects in parallel.
-- **Run `analyze_integration.py`**: Build inter-project dependency graph, detect version conflicts and circular deps.
-- **Generate Unified Summary**: Cross-project comparison table ranked by GPA.
-
-## Best Practices
-
+- **Run `analyze_integration.py`**: Build inter-project dependency graph, detect version conflicts and circular ## Best Practices
 - **Read-Only First**: Always provide the report and wait for user approval before applying destructive changes or major refactors.
+- **Evidence-Backed Findings**: Every recommendation, finding, or proposed change MUST be backed by hard evidence retrieved from the Knowledge Graph using the `agent-utilities-kg` MCP server (e.g., `kg_query`, `kg_search`). You must cite specific file paths, exact line numbers, and existing graph topologies. Never hallucinate recommendations; the KG is your source of truth.
+- **Extend-Before-Invent**: When suggesting new features or modules, first use `kg_analogy_search` or `kg_search` to verify if a relevant concept already exists. Always prefer extending an existing conceptual module over inventing a duplicate.
+- **Hot-Path Wiring**: When recommending architectural changes or creating implementation handoffs, ensure that the proposed code is fully wired into the system architecture's run path (the "hot path") and does not remain a disconnected stub.
+- **Holistic Documentation & Testing**: All SDD handoffs and generated TODOs MUST explicitly require updates to `CHANGELOG.md`, `AGENTS.md`, `README.md`, codebase docstrings, `/docs` (including overview pages and architectural diagrams), and `pytests`. Architecture diagrams are critical for building agent context.
 - **Ecosystem Focus**: Prioritize standards defined in `agent-utilities` (e.g., loading prompts from `prompts/*.md`).
 - **Context Awareness**: Scale recommendations to project size. Do not suggest complex graph architectures for small projects.
 - **Assumption Validation**: Validate all assumptions before taking them at face value. Check actual file contents, run commands, verify paths.
-- **SDD Integration**: Output reports to `.specify/` directory structure for compatibility with the SDD toolset (spec-kit standard). Each project gets its own `.specify/` folder — do NOT use the monorepo root.
+- **SDD Dual-Write Integration**: Output reports, TDD specs, and domain designs to the `.specify/` directory structure for compatibility with the SDD toolset. The repository's `.specify/` folder MUST be treated as the **Single Source of Truth**. After generating or modifying any files in the `.specify/` folder, you MUST immediately invoke the `kg_ingest` MCP tool against the `.specify/` directory to sync these changes into the unified Knowledge Graph. This dual-write ensures complete ecosystem parity.
+- **XDG Standard Compliance**: For any repository that writes files (logs, configuration, data), automatically verify that it stores these files in the XDG recommended standard locations (`~/.local/share/<app>`, `~/.config/<app>`, `~/.cache/<app>`). Report any violations (e.g. `~/.appname/`) as codebase optimization action items and patch them when permitted.
 - **Smart Deduplication**: Pytest hooks in pre-commit are automatically skipped — CE-016 provides richer test analysis.
 - **Language Awareness**: Always run `detect_language.py` first to adapt analysis to the project's ecosystem.
-- **Per-Project .specify**: When running multi-project analysis, SDD handoffs go to each individual project's `.specify/` folder (e.g., `agents/github-agent/.specify/`), NOT the parent directory.
+- **Per-Project .specify**: When running multi-project analysis, SDD handoffs go to each individual project's `.specify/` folder (e.g., `agents/github-agent/.specify/`), NOT the parent directory. Remember to `kg_ingest` each project's `.specify/` folder after updates.
 
 ## Bundled Resources
 

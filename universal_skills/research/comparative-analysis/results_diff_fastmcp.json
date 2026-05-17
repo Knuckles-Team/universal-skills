@@ -1,0 +1,863 @@
+{
+  "domain": "CA-003b",
+  "domain_name": "Architecture Differential",
+  "source": "/home/apps/workspace/agent-packages/agent-utilities",
+  "target": "/home/apps/workspace/open-source-libraries/fastmcp",
+  "component_topology_diff": {
+    "source_only": [
+      ".specify/",
+      "17-Phase Pipeline",
+      "A2A Network",
+      "AHE-3.0\\nAgentic Harness",
+      "AHE: Agentic Harness",
+      "Agent Ecosystem",
+      "Agent Gateway (FastAPI)",
+      "Agent OS Kernel",
+      "Agent Orchestrator",
+      "Agent Terminal UI",
+      "Agent WebUI",
+      "Agentic Harness",
+      "Agentic Planner",
+      "Antigravity IDE",
+      "Assimilation Tracker",
+      "AutoRefine + Scoring",
+      "Autonomous Agent",
+      "Capability Wiring Engine",
+      "Claude Code",
+      "Cognitive Scheduler",
+      "Consolidation Loop",
+      "ConsolidationEngine",
+      "Continuous Evaluation Engine",
+      "DSTDD Manager",
+      "Developer",
+      "Developer / Agent",
+      "Devin",
+      "Domain Sub-Agents",
+      "ECO-4.0\\nEcosystem",
+      "ECO: Ecosystem Peripherals",
+      "Ecosystem Bridge",
+      "Ecosystem Peripherals",
+      "Evolution Engine",
+      "Graph Backends",
+      "Graph Dispatcher",
+      "Graph Orchestrator",
+      "Guardrail Engine",
+      "Hybrid Retriever",
+      "IntelligenceGraphEngine",
+      "KG MCP Server",
+      "KG Router",
+      "KG-2.0\\nKnowledge Graph",
+      "KG-2.1 Tiered Memory",
+      "KG-2.3 Graph Integrity",
+      "KG-2.7 Research Intelligence",
+      "KG: Knowledge Graph",
+      "Knowledge Graph",
+      "Knowledge Graph DB",
+      "LadybugDB HNSW",
+      "MCP Server Factory",
+      "MCP Servers",
+      "Memory Tiers",
+      "ORCH-1.0\\nGraph Orchestration",
+      "ORCH: Orchestration Engine",
+      "OS-5.0\\nAgent OS Kernel",
+      "OS: Agent OS Kernel",
+      "OWL Bridge + SPARQL",
+      "Ontology Loader",
+      "Ontology Publisher",
+      "OpenCode",
+      "OpenTelemetry Collector",
+      "Orchestration Engine",
+      "Periodic Consolidation",
+      "SDD Ontology",
+      "SDDFeature Nodes",
+      "SHACL Validator",
+      "Security Policy Middleware",
+      "Self-Model",
+      "Skill Manager",
+      "TeamConfig Composer",
+      "Telemetry Pipeline",
+      "Threat Defense Engine",
+      "User",
+      "XDG Paths Module",
+      "[Extended Concept]",
+      "[Feature Name]",
+      "agent-terminal-ui",
+      "agent-utilities",
+      "agent-webui",
+      "kg_memory",
+      "kg_search discover",
+      "kg_trace submit_sdd",
+      "kg_write assimilate",
+      "universal-skills",
+      "\ud83d\udd2c Context Budget Optimizer",
+      "\ud83d\udd2c Coordinated A2A Skill",
+      "\ud83d\udd2c Coordination Layer",
+      "\ud83d\udd2c DCI Retriever",
+      "\ud83d\udd2c Inference Budget Controller"
+    ],
+    "target_only": [],
+    "shared": [],
+    "source_count": 89,
+    "target_count": 0,
+    "gap_count": 89
+  },
+  "hot_path_diff": {
+    "source_entry_types": [
+      "a2a_skill",
+      "cli_main",
+      "fastapi_route",
+      "mcp_tool"
+    ],
+    "target_entry_types": [
+      "cli_main",
+      "fastapi_route",
+      "mcp_tool"
+    ],
+    "missing_entry_types": [
+      "a2a_skill"
+    ],
+    "source_coverage_pct": 96.8,
+    "target_coverage_pct": 99.9,
+    "coverage_delta": -3.1,
+    "target_cold_modules": [
+      "logo"
+    ]
+  },
+  "design_pattern_diff": {
+    "pattern_diffs": {
+      "dependency_injection": {
+        "source": 110,
+        "target": 97,
+        "delta": 13,
+        "recommendation": "Target could adopt dependency_injection pattern (source uses 110x)"
+      },
+      "event_driven": {
+        "source": 7,
+        "target": 0,
+        "delta": 7,
+        "recommendation": "Target could adopt event_driven pattern (source uses 7x)"
+      },
+      "factory": {
+        "source": 67,
+        "target": 94,
+        "delta": -27,
+        "recommendation": "Target already uses factory more than source"
+      },
+      "lazy_init": {
+        "source": 5,
+        "target": 12,
+        "delta": -7,
+        "recommendation": "Target already uses lazy_init more than source"
+      },
+      "mixin": {
+        "source": 6,
+        "target": 14,
+        "delta": -8,
+        "recommendation": "Target already uses mixin more than source"
+      },
+      "plugin_registry": {
+        "source": 22,
+        "target": 10,
+        "delta": 12,
+        "recommendation": "Target could adopt plugin_registry pattern (source uses 22x)"
+      },
+      "protocol_oriented": {
+        "source": 20,
+        "target": 15,
+        "delta": 5,
+        "recommendation": "Target could adopt protocol_oriented pattern (source uses 20x)"
+      }
+    },
+    "divergence_count": 7
+  },
+  "protocol_diff": {
+    "source_only": [
+      "A2A",
+      "ACP",
+      "mcp_config.json"
+    ],
+    "target_only": [],
+    "shared": [
+      "MCP",
+      "REST",
+      "WebSocket",
+      "gRPC"
+    ],
+    "gap_count": 3
+  },
+  "wiring_opportunities": [
+    {
+      "type": "component_gap",
+      "component": ".specify/",
+      "action": "Add '.specify/' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "17-Phase Pipeline",
+      "action": "Add '17-Phase Pipeline' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "A2A Network",
+      "action": "Add 'A2A Network' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "AHE-3.0\\nAgentic Harness",
+      "action": "Add 'AHE-3.0\\nAgentic Harness' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "AHE: Agentic Harness",
+      "action": "Add 'AHE: Agentic Harness' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent Ecosystem",
+      "action": "Add 'Agent Ecosystem' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent Gateway (FastAPI)",
+      "action": "Add 'Agent Gateway (FastAPI)' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent OS Kernel",
+      "action": "Add 'Agent OS Kernel' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent Orchestrator",
+      "action": "Add 'Agent Orchestrator' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent Terminal UI",
+      "action": "Add 'Agent Terminal UI' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agent WebUI",
+      "action": "Add 'Agent WebUI' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agentic Harness",
+      "action": "Add 'Agentic Harness' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Agentic Planner",
+      "action": "Add 'Agentic Planner' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Antigravity IDE",
+      "action": "Add 'Antigravity IDE' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Assimilation Tracker",
+      "action": "Add 'Assimilation Tracker' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "AutoRefine + Scoring",
+      "action": "Add 'AutoRefine + Scoring' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Autonomous Agent",
+      "action": "Add 'Autonomous Agent' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Capability Wiring Engine",
+      "action": "Add 'Capability Wiring Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Claude Code",
+      "action": "Add 'Claude Code' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Cognitive Scheduler",
+      "action": "Add 'Cognitive Scheduler' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Consolidation Loop",
+      "action": "Add 'Consolidation Loop' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "ConsolidationEngine",
+      "action": "Add 'ConsolidationEngine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Continuous Evaluation Engine",
+      "action": "Add 'Continuous Evaluation Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "DSTDD Manager",
+      "action": "Add 'DSTDD Manager' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Developer",
+      "action": "Add 'Developer' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Developer / Agent",
+      "action": "Add 'Developer / Agent' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Devin",
+      "action": "Add 'Devin' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Domain Sub-Agents",
+      "action": "Add 'Domain Sub-Agents' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "ECO-4.0\\nEcosystem",
+      "action": "Add 'ECO-4.0\\nEcosystem' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "ECO: Ecosystem Peripherals",
+      "action": "Add 'ECO: Ecosystem Peripherals' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Ecosystem Bridge",
+      "action": "Add 'Ecosystem Bridge' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Ecosystem Peripherals",
+      "action": "Add 'Ecosystem Peripherals' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Evolution Engine",
+      "action": "Add 'Evolution Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Graph Backends",
+      "action": "Add 'Graph Backends' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Graph Dispatcher",
+      "action": "Add 'Graph Dispatcher' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Graph Orchestrator",
+      "action": "Add 'Graph Orchestrator' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Guardrail Engine",
+      "action": "Add 'Guardrail Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Hybrid Retriever",
+      "action": "Add 'Hybrid Retriever' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "IntelligenceGraphEngine",
+      "action": "Add 'IntelligenceGraphEngine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG MCP Server",
+      "action": "Add 'KG MCP Server' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG Router",
+      "action": "Add 'KG Router' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG-2.0\\nKnowledge Graph",
+      "action": "Add 'KG-2.0\\nKnowledge Graph' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG-2.1 Tiered Memory",
+      "action": "Add 'KG-2.1 Tiered Memory' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG-2.3 Graph Integrity",
+      "action": "Add 'KG-2.3 Graph Integrity' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG-2.7 Research Intelligence",
+      "action": "Add 'KG-2.7 Research Intelligence' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "KG: Knowledge Graph",
+      "action": "Add 'KG: Knowledge Graph' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Knowledge Graph",
+      "action": "Add 'Knowledge Graph' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Knowledge Graph DB",
+      "action": "Add 'Knowledge Graph DB' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "LadybugDB HNSW",
+      "action": "Add 'LadybugDB HNSW' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "MCP Server Factory",
+      "action": "Add 'MCP Server Factory' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "MCP Servers",
+      "action": "Add 'MCP Servers' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Memory Tiers",
+      "action": "Add 'Memory Tiers' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "ORCH-1.0\\nGraph Orchestration",
+      "action": "Add 'ORCH-1.0\\nGraph Orchestration' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "ORCH: Orchestration Engine",
+      "action": "Add 'ORCH: Orchestration Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "OS-5.0\\nAgent OS Kernel",
+      "action": "Add 'OS-5.0\\nAgent OS Kernel' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "OS: Agent OS Kernel",
+      "action": "Add 'OS: Agent OS Kernel' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "OWL Bridge + SPARQL",
+      "action": "Add 'OWL Bridge + SPARQL' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Ontology Loader",
+      "action": "Add 'Ontology Loader' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Ontology Publisher",
+      "action": "Add 'Ontology Publisher' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "OpenCode",
+      "action": "Add 'OpenCode' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "OpenTelemetry Collector",
+      "action": "Add 'OpenTelemetry Collector' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Orchestration Engine",
+      "action": "Add 'Orchestration Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Periodic Consolidation",
+      "action": "Add 'Periodic Consolidation' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "SDD Ontology",
+      "action": "Add 'SDD Ontology' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "SDDFeature Nodes",
+      "action": "Add 'SDDFeature Nodes' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "SHACL Validator",
+      "action": "Add 'SHACL Validator' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Security Policy Middleware",
+      "action": "Add 'Security Policy Middleware' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Self-Model",
+      "action": "Add 'Self-Model' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Skill Manager",
+      "action": "Add 'Skill Manager' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "TeamConfig Composer",
+      "action": "Add 'TeamConfig Composer' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Telemetry Pipeline",
+      "action": "Add 'Telemetry Pipeline' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "Threat Defense Engine",
+      "action": "Add 'Threat Defense Engine' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "User",
+      "action": "Add 'User' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "XDG Paths Module",
+      "action": "Add 'XDG Paths Module' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "[Extended Concept]",
+      "action": "Add '[Extended Concept]' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "[Feature Name]",
+      "action": "Add '[Feature Name]' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "agent-terminal-ui",
+      "action": "Add 'agent-terminal-ui' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "agent-utilities",
+      "action": "Add 'agent-utilities' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "agent-webui",
+      "action": "Add 'agent-webui' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "kg_memory",
+      "action": "Add 'kg_memory' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "kg_search discover",
+      "action": "Add 'kg_search discover' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "kg_trace submit_sdd",
+      "action": "Add 'kg_trace submit_sdd' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "kg_write assimilate",
+      "action": "Add 'kg_write assimilate' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "universal-skills",
+      "action": "Add 'universal-skills' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "\ud83d\udd2c Context Budget Optimizer",
+      "action": "Add '\ud83d\udd2c Context Budget Optimizer' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "\ud83d\udd2c Coordinated A2A Skill",
+      "action": "Add '\ud83d\udd2c Coordinated A2A Skill' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "\ud83d\udd2c Coordination Layer",
+      "action": "Add '\ud83d\udd2c Coordination Layer' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "\ud83d\udd2c DCI Retriever",
+      "action": "Add '\ud83d\udd2c DCI Retriever' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "component_gap",
+      "component": "\ud83d\udd2c Inference Budget Controller",
+      "action": "Add '\ud83d\udd2c Inference Budget Controller' component to target architecture",
+      "priority": "high",
+      "wiring_hint": "Wire into existing hot path via the nearest entry point"
+    },
+    {
+      "type": "entry_point_gap",
+      "entry_type": "a2a_skill",
+      "action": "Add a2a_skill entry point to target",
+      "priority": "medium",
+      "wiring_hint": "Create handler that delegates to existing engine methods"
+    },
+    {
+      "type": "design_pattern",
+      "pattern": "dependency_injection",
+      "action": "Consider adopting dependency_injection pattern (110x in source)",
+      "priority": "medium",
+      "wiring_hint": "Source examples: see analyze_design_patterns output"
+    },
+    {
+      "type": "design_pattern",
+      "pattern": "event_driven",
+      "action": "Consider adopting event_driven pattern (7x in source)",
+      "priority": "medium",
+      "wiring_hint": "Source examples: see analyze_design_patterns output"
+    },
+    {
+      "type": "design_pattern",
+      "pattern": "plugin_registry",
+      "action": "Consider adopting plugin_registry pattern (22x in source)",
+      "priority": "medium",
+      "wiring_hint": "Source examples: see analyze_design_patterns output"
+    },
+    {
+      "type": "design_pattern",
+      "pattern": "protocol_oriented",
+      "action": "Consider adopting protocol_oriented pattern (20x in source)",
+      "priority": "medium",
+      "wiring_hint": "Source examples: see analyze_design_patterns output"
+    },
+    {
+      "type": "cold_code",
+      "module": "logo",
+      "action": "Wire 'logo' into hot path or remove if dead code",
+      "priority": "low",
+      "wiring_hint": "Import from nearest hot-path module or add entry point"
+    }
+  ],
+  "wiring_opportunity_count": 95,
+  "summary": {
+    "component_gaps": 89,
+    "missing_entry_types": 1,
+    "pattern_divergences": 7,
+    "protocol_gaps": 3,
+    "total_opportunities": 95
+  }
+}

@@ -71,6 +71,13 @@ Confirm:
 
 Do not proceed until you reproduce the bug.
 
+## Phase 2.5 — KG Context & Blast Radius
+
+Before formulating hypotheses, leverage the Knowledge Graph to understand the blast radius and historical context:
+
+1. **Impact Analysis (`kg_blast_radius`)**: Use the `kg_blast_radius` MCP tool on the specific component/file where the bug occurs to map out all transitive dependencies. This helps identify hidden downstream impacts or upstream triggers.
+2. **Historical Context (`kg_memory_recall`)**: Use the `kg_memory_recall` MCP tool (searching Episodic Memory) to check if similar bugs have been triaged or diagnosed in the past.
+
 ## Phase 3 — Hypothesise
 
 Generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.

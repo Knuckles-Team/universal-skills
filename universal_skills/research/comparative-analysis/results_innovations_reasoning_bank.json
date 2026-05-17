@@ -1,0 +1,135 @@
+{
+  "domain": "CA-010",
+  "domain_name": "Innovation Extraction",
+  "source_count": 1,
+  "target": "/home/apps/workspace/agent-packages/agent-utilities",
+  "concept_id": "",
+  "kg_source_query": null,
+  "results": [
+    {
+      "source": "/home/apps/workspace/open-source-libraries/reasoning-bank",
+      "source_type": "filesystem",
+      "concept_id": "",
+      "signals": {
+        "biomimicry_signals": [],
+        "tech_signals": [
+          {
+            "keyword": "join",
+            "count": 80,
+            "analogy": "cross-entity relationship resolution",
+            "target_domain": "entity_linking"
+          },
+          {
+            "keyword": "embedding",
+            "count": 65,
+            "analogy": "semantic vector representation",
+            "target_domain": "knowledge_graph"
+          },
+          {
+            "keyword": "attention",
+            "count": 11,
+            "analogy": "context-aware retrieval weighting",
+            "target_domain": "hybrid_retriever"
+          },
+          {
+            "keyword": "transformer",
+            "count": 10,
+            "analogy": "parallel sequence processing",
+            "target_domain": "batch_processing"
+          },
+          {
+            "keyword": "inference",
+            "count": 4,
+            "analogy": "derived knowledge from explicit assertions",
+            "target_domain": "owl_reasoning"
+          },
+          {
+            "keyword": "owl",
+            "count": 2,
+            "analogy": "web ontology language for semantic reasoning",
+            "target_domain": "owl_bridge"
+          },
+          {
+            "keyword": "chain-of-thought",
+            "count": 1,
+            "analogy": "rationale persistence",
+            "target_domain": "quiet_star"
+          }
+        ],
+        "innovation_claims": [
+          "Visit <https://cla.developers.google.com/> to see your current agreements or to\nsign a new one",
+          "# ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory\n\n## \ud83d\udcdc Overview\n\n<p align=\"center\">\n    <img src=\"assets/reasoningbank.png\" width=\"80%\" alt=\"intro_case\">\n</p>\n\nWe introduce ReasoningBank, a memory mechanism for agents that learns from both \nsuccessful and failed trajectories, with reasoning stored as memory content",
+          "<p align=\"center\">\n    <img src=\"assets/method.png\" width=\"100%\" alt=\"intro_case\">\n</p>\n\nBuilding upon this memory formulation, we propose memory-aware test-time scaling,\nwhich leverages the bidirectional synergy between memory and test-time scaling,\nestablishing experience-driven memory as another scaling dimension for agent\nsystems",
+          "First, install it from source by `pip install -e .` under the directory of `./third_party` This will install the dependencies as specified in `pyproject.toml`",
+          "## Important notes\n  - You must first think why the trajectory is successful, and then summarize the insights",
+          "## Important notes\n  - You must first reflect and think why the trajectory failed, and then summarize what lessons you have learned or strategies to prevent the failure in the future",
+          "## Important notes\n  - Think first: Why did some trajectories succeed while others failed",
+          "## Important notes\n  - Think first: Why did some trajectories succeed while others failed",
+          "## Output Format\nYour output must strictly follow the following example format:\n\n```\nWorkflow i: Find all orders\n<think>\nTo find the date of the first purchase, I need to navigate to the order history section of the user's account",
+          "</think>\n<action>\nclick('227')\n</action>\n\n<think>\nTo find the date of the first purchase, I need to navigate to the \"My Orders\" section where the order history is listed"
+        ],
+        "concept_id": ""
+      },
+      "synergies": [
+        {
+          "innovation": "cross-entity relationship resolution",
+          "source_keyword": "join",
+          "target_domain": "entity_linking",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "semantic vector representation",
+          "source_keyword": "embedding",
+          "target_domain": "knowledge_graph",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "context-aware retrieval weighting",
+          "source_keyword": "attention",
+          "target_domain": "hybrid_retriever",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "parallel sequence processing",
+          "source_keyword": "transformer",
+          "target_domain": "batch_processing",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "derived knowledge from explicit assertions",
+          "source_keyword": "inference",
+          "target_domain": "owl_reasoning",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "web ontology language for semantic reasoning",
+          "source_keyword": "owl",
+          "target_domain": "owl_bridge",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        },
+        {
+          "innovation": "rationale persistence",
+          "source_keyword": "chain-of-thought",
+          "target_domain": "quiet_star",
+          "already_in_target": true,
+          "integration_type": "enhancement",
+          "estimated_value": "low"
+        }
+      ],
+      "new_capabilities": 0,
+      "enhancements": 7
+    }
+  ]
+}

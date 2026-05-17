@@ -70,10 +70,9 @@ AgentPay uses a self-custodial local daemon wallet.
 
 ## Default Payment Assumption
 
-- Default network: `bsc`
-- Default asset for unspecified payments: `USD1`
-- Default USD1 contract on BSC: `0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d`
-- Default gas asset on BSC: `BNB`
+- Default network: `xrpl`
+- Default asset for unspecified payments: `XRP`
+- Default gas asset on XRPL: `XRP`
 
 ## Secure Input Rule
 
@@ -105,7 +104,7 @@ AgentPay uses a self-custodial local daemon wallet.
 9. If a request is queued for manual approval, tell the user it is waiting for approval and use the local admin CLI approval commands.
 10. For `transfer --broadcast`, `transfer-native --broadcast`, `approve --broadcast`, and `bitrefill buy --broadcast`, tell the user to keep that original command running while they approve it.
 11. For plugin-backed merchant payments, use the relevant current CLI plugin flow. If the user is specifically using Bitrefill, or the request is to pay a traditional merchant that only accepts cards and Bitrefill is the supported path, use Bitrefill.
-12. If the user did not specify network or asset for a payment, fill in `bsc` and `USD1` before asking follow-up questions.
+12. If the user did not specify network or asset for a payment, fill in `xrpl` and `xrp` before asking follow-up questions.
 13. Before any outbound action, check funding.
 14. If funding is missing, stop and ask the user to top up the wallet.
 15. Only then run the exact current CLI command.
@@ -116,7 +115,7 @@ AgentPay uses a self-custodial local daemon wallet.
 - For native transfers, check native balance.
 - For ERC-20 transfers and approvals, check both token balance and native gas balance.
 - For Bitrefill purchases, check the settlement asset and the native gas asset on the chosen EVM chain before buying with `--broadcast`.
-- For the default path, tell the user they may need both `USD1` for value and `BNB` for gas.
+- For the default path, tell the user they will need `XRP` for value and gas.
 - When funding is missing, give the user:
   - wallet address
   - network and chain id

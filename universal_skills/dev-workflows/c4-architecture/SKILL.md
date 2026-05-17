@@ -20,6 +20,15 @@ Generate software architecture documentation using the C4 model. C4 describes ar
 
 ---
 
+## KG-Backed Extraction (Source of Truth)
+
+To ensure 100% accuracy, you MUST build your C4 diagrams using real data from the Knowledge Graph rather than relying solely on static analysis.
+
+1. **Query the Graph**: Use the `kg_query` or `kg_pillar_view` tools from the `agent-utilities-kg` MCP server to extract the actual component nodes, container boundaries, and `DEPENDS_ON` relationships.
+2. **Translate to Mermaid**: Map the returned graph topology directly into the C4 Mermaid syntax. This guarantees the diagram perfectly reflects the real, running system architecture.
+
+---
+
 ## C4 Diagram Levels
 
 Select the appropriate level based on the audience and documentation need:

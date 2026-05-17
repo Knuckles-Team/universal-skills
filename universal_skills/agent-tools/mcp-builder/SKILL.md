@@ -131,30 +131,28 @@ For each tool:
 - `idempotentHint`: true/false
 - `openWorldHint`: true/false
 
-#### 2.4 Tool Grouping and Registration
+#### 2.4 Tool Grouping and Registration (Dynamic Action-Routing)
 
-Organize your `@mcp.tool` endpoints by common `tags` (e.g., `tags={"action"}`) and wrap related tools in a dedicated registration function named `register_<tag>_tools(mcp: FastMCP)`.
+Do NOT write massive `mcp_server.py` files with individual static `@mcp.tool` decorators anymore, as this breaches IDE tool limits. Instead, use the **Action-Routed Dynamic Generation** pattern.
+Group related endpoints by a conceptual `tag` (e.g., `user-management`) and dynamically compile a single unified tool per tag using a generator like `_generate_dynamic_tool`. This tool exposes an `action` enum corresponding to the underlying methods.
 
 **CRITICAL: Tag Casing Constraint**
-Tags **MUST** be strictly lowercase string names without special characters or spaces. (e.g. `tag="usermanagement"`, env var=`USERMANAGEMENTTOOL`). Do NOT use CamelCase or uppercase letters in tags, as it breaks downward integrations.
+Tags **MUST** be strictly lowercase string names with hyphens to separate words (e.g. `user-management`). Do NOT use CamelCase or underscores in tags, as it breaks downward integrations.
 
-To provide a standard mechanism for configuring which tools are exposed by the MCP server depending on the environment, consider the following:
-- **Consolidated Boilerplate**: Use the `create_mcp_server` high-level helper from `agent_utilities.mcp_utilities` to handle argument parsing, auth setup, and middleware assembly in a single call.
-- **FastMCP**: Use the custom `FastMCP` available in `Workspace/fastmcp-python` which supports OIDC, JWT, and middleware out of the box.
-- **Modularity**: Break down tool registration into logical groups (e.g., `register-admin-tools`).
-  - **Naming**: Tags MUST be strictly lowercase. Use hyphens to split words (e.g., `user-auth` instead of `userauth`).
-  - **Prefixing**: For dynamic agents, prefix tags with the service name (e.g., `leanix-pathfinder`).
-  - **Toggles**: Every group MUST be triggered by explicit, human-readable static environment variables.
-Use environment variables and `.env` files via `python-dotenv`:
-1. Use `load_dotenv(find_dotenv())` at the start of your `mcp_server()` function.
-2. For each registration function (even dynamically generated ones), define a default environment variable constant explicitly in `mcp_server.py` to allow administrators an easy visual reference of what can be toggled:
+To provide a standard mechanism for configuring which tools are exposed by the MCP server depending on the environment, use `tool_tags.json`:
+1. **Define tool mappings** in `tool_tags.json`: `{"service": {"tag": ["method_1", "method_2"]}}`.
+2. **Consolidated Boilerplate**: Use the `create_mcp_server` helper from `agent_utilities.mcp_utilities`.
+3. **Dynamic Loading**: Implement a dynamic loading loop (`register_dynamic_tools`) that iterates through `tool_tags.json` and invokes `_generate_dynamic_tool(mcp, tag, ...)` to register the compressed Action-Routed tools.
+4. **Static Toggles**: Even though tools are dynamically loaded from JSON, you MUST explicitly check static environment variables for *each* suite in `mcp_server.py` before enabling them, so administrators have a visual reference of what can be disabled:
    ```python
-   DEFAULT_ACTIONTOOL = to_boolean(os.getenv("ACTIONTOOL", "True"))
-   if DEFAULT_ACTIONTOOL:
-       register_action_tools(mcp)
+   DEFAULT_USER_MANAGEMENTTOOL = to_boolean(os.getenv("USER_MANAGEMENTTOOL", "True"))
+   if DEFAULT_USER_MANAGEMENTTOOL:
+       enabled_tags.append("user-management")
+   # ...
+   register_dynamic_tools(mcp, enabled_tags)
    ```
 
-This static layout is mandatory for ALL MCP servers, including massive ones combining metaprogramming routing (like `arr-mcp`), so administrators can secure environments efficiently without needing to read JSON files or code introspections to know what can be disabled.
+This layout is mandatory for ALL MCP servers so administrators can secure environments efficiently without needing to read JSON files or code introspections to know what can be disabled.
 
 ---
 
