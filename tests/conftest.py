@@ -9,10 +9,11 @@ def pytest_configure(config):
     )
 
 import os
-import tempfile
-import atexit
-import shutil
+import pytest
 
-_test_db_dir = tempfile.mkdtemp(prefix="universal_skills_test_db_")
-os.environ["GRAPH_DB_PATH"] = os.path.join(_test_db_dir, "test_knowledge_graph.db")
 os.environ["AGENT_UTILITIES_TESTING"] = "true"
+
+@pytest.fixture(autouse=True)
+def isolate_graph_db(monkeypatch, tmp_path):
+    monkeypatch.setenv("GRAPH_DB_PATH", str(tmp_path / "test_knowledge_graph.db"))
+    yield
