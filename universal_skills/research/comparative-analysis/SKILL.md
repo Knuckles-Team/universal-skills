@@ -11,7 +11,7 @@ license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
   author: Genius
-  version: '0.11.0'
+  version: '0.12.0'
 ---
 
 # Comparative Analysis
@@ -523,6 +523,7 @@ research paper scoring dimensions and innovation extraction scoring.
 - **Architecture results drive gap analysis**: When producing the gap analysis report,
   the architecture differential (Phase 9.7) MUST inform which features to recommend.
   Never recommend a feature without identifying its wiring path into the target's hot path.
+- **Wire or Discard**: Implementations must adhere to the Wire-First heuristic (≤3 hops from an entry point). If a feature cannot be wired directly into a hot path or duplicates an existing concept (Similarity ≥ 0.7), it must be extended or discarded. Dead code is prohibited.
 - **Wiring opportunities in implementation plans**: When the analysis feeds into an
   implementation plan (SDD or otherwise), every recommended feature MUST include:
   1. Which existing hot-path module it wires into

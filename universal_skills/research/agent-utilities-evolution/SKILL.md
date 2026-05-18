@@ -9,21 +9,27 @@ description: >-
   daemon (every 60 minutes) via the KG engine's evolution cycle.
   Triggers on "evolve agent-utilities", "run evolution pipeline", "find and implement
   research", "research-driven development", "auto-evolve", "evolution scan".
+  Also includes AST-based wiring sweep for concept traceability, dead code detection,
+  and import graph analysis. Triggers on "wiring sweep", "concept audit",
+  "dead code analysis", "traceability check", "code health".
 license: MIT
-tags: [evolution, research, pipeline, automation, agent-workflow, sdd]
+tags: [evolution, research, pipeline, automation, agent-workflow, sdd, wiring, audit]
 metadata:
   author: Genius
-  version: '0.1.0'
+  version: '0.2.0'
 ---
 
 # Agent Utilities Evolution Skill
 
-Autonomous research-driven development pipeline for evolving the `agent-utilities` codebase.
+Autonomous research-driven development and code health pipeline for evolving
+the `agent-utilities` codebase. Combines research discovery with code-enhancer
+analysis domains tailored for the 5-pillar KG-driven architecture.
 
 ## Overview
 
-This skill orchestrates 4 existing capabilities into a unified evolution pipeline:
+This skill orchestrates **7 capabilities** into a unified evolution pipeline:
 
+### Research Pipeline
 1. **Topic Detection** — Query the KG for hot topics, unresolved concepts, and high-scoring
    unimplemented research findings
 2. **Research Scanner** — Find new papers matching those topics via `scholarx` MCP
@@ -31,6 +37,27 @@ This skill orchestrates 4 existing capabilities into a unified evolution pipelin
 4. **Comparative Analysis** — Analyze ingested items against `agent-utilities` for gaps
    and feature extraction
 5. **SDD Plan Generation** — Create implementation plans with constitution-mandated artifacts
+
+### Code Health Pipeline (adapted from code-enhancer)
+6. **Wiring Sweep** — AST-based import graph, dead code, concept traceability analysis
+   (see `scripts/wiring_sweep.py`)
+7. **Architecture Review** — C4 compliance, pillar concept coverage, hot-path integration
+   audit tailored to the 5-pillar architecture (ORCH, KG, AHE, ECO, OS)
+
+### Code-Enhancer Domains (agent-utilities-specific)
+
+The following analysis domains from the `code-enhancer` skill are natively integrated,
+tailored for the agent-utilities 5-pillar architecture:
+
+| Domain | What It Checks | agent-utilities Specialization |
+|--------|---------------|-------------------------------|
+| **Concept Traceability** | 1:1:1 Code→Tests→Docs coverage for all `CONCEPT:X-Y.Z` tags | Validates against `docs/concept_map.md` registry; checks pillar doc pages |
+| **Architecture Review** | C4 component compliance, SOLID principles, deep modules | Validates all 5 pillars have matching C4 diagrams in `architecture_c4.md`; checks mixin MRO integrity |
+| **Dependency Audit** | `pyproject.toml` deps, version currency | Checks `pydantic-ai`, `pydantic-graph`, `kuzu`, `mcp` version alignment |
+| **Test Coverage** | Concept-tagged pytest coverage, FIRST rubric | Validates every concept has at least 1 tagged test; checks async test patterns |
+| **Engineering Heuristics** | Deep module analysis, duplication, naming | Checks for mixin anti-patterns, proper `properties=dict(...)` API usage, consistent logging |
+| **Security Analysis** | Secret exposure, guardrail coverage | Validates `OS-5.1` security concepts, checks env var exposure in MCP configs |
+| **Documentation Governance** | README, AGENTS.md, /docs completeness | Validates pillar summaries reference all registered concepts |
 
 ## Architecture
 
@@ -216,6 +243,85 @@ properties: {
     "pillar": "<ORCH|KG|AHE|ECO|OS>"
 }
 ```
+
+## Wiring Sweep — AST-Based Codebase Analysis
+
+The evolution skill includes a standalone AST-based analysis tool for detecting
+dead code, concept traceability gaps, and import graph anomalies.
+
+### Usage
+
+```bash
+# Full sweep with markdown report
+python scripts/wiring_sweep.py /path/to/agent-utilities
+
+# JSON output for CI integration
+python scripts/wiring_sweep.py /path/to/agent-utilities --json
+
+# Write report to file
+python scripts/wiring_sweep.py /path/to/agent-utilities --output report.md
+```
+
+The script path is:
+```
+universal_skills/research/agent-utilities-evolution/scripts/wiring_sweep.py
+```
+
+### What It Analyzes
+
+| Analysis | Description |
+|----------|-------------|
+| **Import Graph** | Builds module-to-module dependency edges from all `import` / `from ... import` statements |
+| **Orphan Modules** | Finds `.py` files never imported by any non-test, non-init module |
+| **Concept Traceability** | Cross-references `CONCEPT:X-Y.Z` tags across code → tests → docs |
+| **Dead Definitions** | Functions/classes defined but never referenced in any other file |
+| **Health Score** | 0-100 composite score (40pt concept coverage + 25pt orphans + 25pt dead code + 10pt syntax) |
+
+### Health Score Grading
+
+| Score | Grade | Meaning |
+|-------|-------|---------|
+| 80-100 | 🟢 | Healthy — all concepts wired, minimal dead code |
+| 60-79 | 🟡 | Needs attention — some gaps in traceability or orphaned modules |
+| 0-59 | 🔴 | Critical — significant wiring gaps or dead code |
+
+### CI Integration
+
+The script exits with code 1 if the health score is below 60, making it suitable
+for use as a pre-commit check or CI gate:
+
+```yaml
+# .pre-commit-config.yaml
+- repo: local
+  hooks:
+    - id: wiring-sweep
+      name: Wiring Sweep
+      entry: python scripts/wiring_sweep.py . --json
+      language: system
+      pass_filenames: false
+```
+
+### Triggers
+
+When the user says any of:
+- "wiring sweep", "run wiring sweep"
+- "concept audit", "concept traceability check"
+- "dead code analysis", "find dead code"
+- "traceability check"
+- "code health", "check code health"
+
+Execute the sweep:
+
+```bash
+python /path/to/universal_skills/research/agent-utilities-evolution/scripts/wiring_sweep.py \
+    /home/apps/workspace/agent-packages/agent-utilities \
+    --output /tmp/wiring_sweep_report.md
+```
+
+Then present the markdown report to the user and highlight:
+1. Any concepts with `missing_tests` or `missing_docs`
+2. Orphan modules with high line counts (likely unmigrated code)
+3. Dead definitions that may need cleanup
 
 ## References
 

@@ -17,7 +17,7 @@ license: MIT
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
 metadata:
   author: Genius
-  version: '0.11.0'
+  version: '0.12.0'
 ---
 
 # Code Enhancer
@@ -132,7 +132,7 @@ Every grade includes a justification with specific file paths and evidence citat
 - **Read-Only First**: Always provide the report and wait for user approval before applying destructive changes or major refactors.
 - **Evidence-Backed Findings**: Every recommendation, finding, or proposed change MUST be backed by hard evidence retrieved from the Knowledge Graph using the `agent-utilities-kg` MCP server (e.g., `kg_query`, `kg_search`). You must cite specific file paths, exact line numbers, and existing graph topologies. Never hallucinate recommendations; the KG is your source of truth.
 - **Extend-Before-Invent**: When suggesting new features or modules, first use `kg_analogy_search` or `kg_search` to verify if a relevant concept already exists. Always prefer extending an existing conceptual module over inventing a duplicate.
-- **Hot-Path Wiring**: When recommending architectural changes or creating implementation handoffs, ensure that the proposed code is fully wired into the system architecture's run path (the "hot path") and does not remain a disconnected stub.
+- **Wire or Discard**: Implementations must adhere to the Wire-First heuristic (≤3 hops from an entry point). If a feature cannot be wired directly into a hot path or duplicates an existing concept (Similarity ≥ 0.7), it must be extended or discarded. Dead code is prohibited. When recommending architectural changes or creating implementation handoffs, ensure that the proposed code is fully wired into the system architecture's run path (the "hot path") and does not remain a disconnected stub.
 - **Holistic Documentation & Testing**: All SDD handoffs and generated TODOs MUST explicitly require updates to `CHANGELOG.md`, `AGENTS.md`, `README.md`, codebase docstrings, `/docs` (including overview pages and architectural diagrams), and `pytests`. Architecture diagrams are critical for building agent context.
 - **Ecosystem Focus**: Prioritize standards defined in `agent-utilities` (e.g., loading prompts from `prompts/*.md`).
 - **Context Awareness**: Scale recommendations to project size. Do not suggest complex graph architectures for small projects.

@@ -12,7 +12,7 @@ license: MIT
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
 metadata:
   author: Genius
-  version: '0.11.0'
+  version: '0.12.0'
 ---
 
 # Agent Package Builder
@@ -89,6 +89,7 @@ Read the `mcp-builder` skill and follow its instructions to:
          enabled_tags.append("misc")
      ```
      For a purely dynamic loading loop, you should still hardcode the env variables checking before enabling specific categories inside the dynamic router or at the server root.
+6. **CRITICAL (Field Optimization)**: Ensure all generated tool parameters explicitly use `pydantic.Field` with all parameter variables specified in an optimized fashion (e.g., `Field(default=..., description=...)`). Do not rely on implicit positional defaults or standard Python type hints without `Field` bindings. This guarantees lossless JSON schema hydration for the LLMs.
 
 #### 3c. Agent (if type includes `agent`)
 

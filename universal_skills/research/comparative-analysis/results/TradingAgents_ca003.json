@@ -1,0 +1,236 @@
+{
+  "domain": "CA-003",
+  "domain_name": "Architecture",
+  "project": "/home/apps/workspace/open-source-libraries/TradingAgents",
+  "protocols": {},
+  "type_coverage": {
+    "total_functions": 487,
+    "typed_functions": 192,
+    "coverage_pct": 39.4
+  },
+  "module_structure": {
+    "package_count": 7,
+    "max_nesting_depth": 2,
+    "packages": [
+      "cli",
+      "tests",
+      "tradingagents",
+      "tradingagents/agents",
+      "tradingagents/dataflows",
+      "tradingagents/graph",
+      "tradingagents/llm_clients"
+    ]
+  },
+  "config_patterns": {
+    "env_vars": true,
+    "config_files": true,
+    "dotenv": true,
+    "docker": true,
+    "port_binding": true,
+    "graceful_shutdown": false
+  },
+  "c4_architecture": {
+    "diagrams": [
+      {
+        "file": ".specify/reports/generated_c4.md",
+        "level": "component",
+        "components": [
+          {
+            "kind": "Container_Boundary",
+            "id": "proj",
+            "name": "tradingagents"
+          },
+          {
+            "kind": "Component",
+            "id": "agents",
+            "name": "agents"
+          },
+          {
+            "kind": "Component",
+            "id": "cli",
+            "name": "cli"
+          },
+          {
+            "kind": "Component",
+            "id": "dataflows",
+            "name": "dataflows"
+          },
+          {
+            "kind": "Component",
+            "id": "graph",
+            "name": "graph"
+          },
+          {
+            "kind": "Component",
+            "id": "llm_clients",
+            "name": "llm_clients"
+          },
+          {
+            "kind": "Component",
+            "id": "tests",
+            "name": "tests"
+          },
+          {
+            "kind": "Component",
+            "id": "tradingagents",
+            "name": "tradingagents"
+          }
+        ],
+        "relationships": []
+      },
+      {
+        "file": ".specify/reports/generated_c4.md",
+        "level": "component",
+        "components": [
+          {
+            "kind": "Container_Boundary",
+            "id": "proj",
+            "name": "tradingagents"
+          },
+          {
+            "kind": "Component",
+            "id": "agents",
+            "name": "agents"
+          },
+          {
+            "kind": "Component",
+            "id": "cli",
+            "name": "cli"
+          },
+          {
+            "kind": "Component",
+            "id": "dataflows",
+            "name": "dataflows"
+          },
+          {
+            "kind": "Component",
+            "id": "graph",
+            "name": "graph"
+          },
+          {
+            "kind": "Component",
+            "id": "llm_clients",
+            "name": "llm_clients"
+          },
+          {
+            "kind": "Component",
+            "id": "tests",
+            "name": "tests"
+          },
+          {
+            "kind": "Component",
+            "id": "tradingagents",
+            "name": "tradingagents"
+          }
+        ],
+        "relationships": []
+      }
+    ],
+    "has_c4": true,
+    "diagram_count": 2
+  },
+  "hot_paths": {
+    "entry_points": [
+      {
+        "type": "cli_main",
+        "module": "scripts.smoke_structured_output",
+        "file": "scripts/smoke_structured_output.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "tests.test_ticker_symbol_handling",
+        "file": "tests/test_ticker_symbol_handling.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "tests.test_crypto_asset_mode",
+        "file": "tests/test_crypto_asset_mode.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "tests.test_safe_ticker_component",
+        "file": "tests/test_safe_ticker_component.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "tests.test_google_api_key",
+        "file": "tests/test_google_api_key.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "tests.test_checkpoint_resume",
+        "file": "tests/test_checkpoint_resume.py"
+      },
+      {
+        "type": "fastapi_route",
+        "module": "cli.main",
+        "file": "cli/main.py"
+      },
+      {
+        "type": "cli_main",
+        "module": "cli.main",
+        "file": "cli/main.py"
+      }
+    ],
+    "entry_point_count": 8,
+    "total_modules": 91,
+    "hot_path_modules": 82,
+    "cold_modules": [
+      "main",
+      "test",
+      "tests",
+      "tests.conftest",
+      "tests.test_anthropic_effort",
+      "tests.test_env_overrides",
+      "tests.test_memory_log",
+      "tests.test_minimax",
+      "tests.test_ollama_base_url"
+    ],
+    "cold_module_count": 9,
+    "hot_path_coverage_pct": 90.1
+  },
+  "design_patterns": {
+    "counts": {
+      "mixin": 4,
+      "dependency_injection": 8,
+      "lazy_init": 0,
+      "plugin_registry": 0,
+      "event_driven": 0,
+      "protocol_oriented": 1,
+      "factory": 21,
+      "strategy": 0
+    },
+    "examples": {
+      "mixin": [
+        "cli/models.py:AnalystType",
+        "cli/models.py:AssetType",
+        "tradingagents/agents/schemas.py:PortfolioRating"
+      ],
+      "dependency_injection": [],
+      "lazy_init": [],
+      "plugin_registry": [],
+      "event_driven": [],
+      "protocol_oriented": [
+        "tradingagents/llm_clients/base_client.py:BaseLLMClient"
+      ],
+      "factory": [
+        "tests/test_memory_log.py:make_log",
+        "cli/main.py:create_layout",
+        "cli/main.py:create_question_box"
+      ],
+      "strategy": []
+    }
+  },
+  "generated_c4_path": "",
+  "scoring": {
+    "score": 65,
+    "grade": "F",
+    "details": [
+      "Partial type coverage (39.4%): +10",
+      "Well-structured (7 packages): +15",
+      "Appropriate nesting depth (2): +10",
+      "12-Factor signals (5/6): +20",
+      "Architecture depth bonus: +10"
+    ]
+  }
+}

@@ -9,7 +9,7 @@ license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
   author: Genius
-  version: '0.11.0'
+  version: '0.12.0'
 ---
 # MCP Server Development Guide
 
@@ -109,6 +109,7 @@ For each tool:
 - Include constraints and clear descriptions
 - Add examples in field descriptions
 - Avoid manual validation inside the tool; let Pydantic handle it
+- **CRITICAL (Field Optimization)**: All parameters must explicitly use `pydantic.Field` with all parameter variables specified in an optimized fashion (e.g., `Field(default=..., description=...)`) rather than relying on standard Python defaults or positional arguments (e.g., do NOT use `Field(..., description="x")` or `Field(None, description="x")`, use `Field(description="x")` or `Field(default=None, description="x")`). This guarantees lossless JSON Schema hydration for the LLMs.
 
 **Output Schema:**
 - Determine if the output should be a straightforward string/markdown or a structured dictionary format based on the context.
