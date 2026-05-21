@@ -267,18 +267,24 @@ def discover_c4_architecture(project_path: Path) -> dict:
                 continue
             elements = C4_ELEMENT_RE.findall(content)
             relationships = C4_REL_RE.findall(content)
-            diagrams.append({
-                "file": str(rel),
-                "level": level,
-                "components": [
-                    {"kind": e[0], "id": e[1], "name": e[2]} for e in elements
-                ],
-                "relationships": [
-                    {"from": r[0], "to": r[1], "label": r[2]} for r in relationships
-                ],
-            })
+            diagrams.append(
+                {
+                    "file": str(rel),
+                    "level": level,
+                    "components": [
+                        {"kind": e[0], "id": e[1], "name": e[2]} for e in elements
+                    ],
+                    "relationships": [
+                        {"from": r[0], "to": r[1], "label": r[2]} for r in relationships
+                    ],
+                }
+            )
 
-    return {"diagrams": diagrams, "has_c4": len(diagrams) > 0, "diagram_count": len(diagrams)}
+    return {
+        "diagrams": diagrams,
+        "has_c4": len(diagrams) > 0,
+        "diagram_count": len(diagrams),
+    }
 
 
 # ── Hot Path Identification ────────────────────────────────────────────────
@@ -301,7 +307,9 @@ def identify_hot_paths(project_path: Path) -> dict:
         rel = pyfile.relative_to(project_path)
         if any(p in str(rel) for p in SKIP_DIRS):
             continue
-        mod_name = str(rel).replace("/", ".").removesuffix(".py").removesuffix(".__init__")
+        mod_name = (
+            str(rel).replace("/", ".").removesuffix(".py").removesuffix(".__init__")
+        )
         all_modules.add(mod_name)
 
         try:
@@ -313,7 +321,9 @@ def identify_hot_paths(project_path: Path) -> dict:
         # Check for entry point patterns
         for ep_type, pattern in ENTRY_POINT_PATTERNS.items():
             if pattern.search(content):
-                entry_points.append({"type": ep_type, "module": mod_name, "file": str(rel)})
+                entry_points.append(
+                    {"type": ep_type, "module": mod_name, "file": str(rel)}
+                )
                 break
 
         # Check for if __name__ == "__main__"
@@ -321,7 +331,9 @@ def identify_hot_paths(project_path: Path) -> dict:
             if isinstance(node, ast.If):
                 test_str = ast.dump(node.test)
                 if "__name__" in test_str and "__main__" in test_str:
-                    entry_points.append({"type": "cli_main", "module": mod_name, "file": str(rel)})
+                    entry_points.append(
+                        {"type": "cli_main", "module": mod_name, "file": str(rel)}
+                    )
 
         # Build import graph
         imports = set()
@@ -370,9 +382,14 @@ def identify_hot_paths(project_path: Path) -> dict:
 def analyze_design_patterns(project_path: Path) -> dict:
     """Detect architectural design patterns via AST analysis."""
     patterns = {
-        "mixin": 0, "dependency_injection": 0, "lazy_init": 0,
-        "plugin_registry": 0, "event_driven": 0, "protocol_oriented": 0,
-        "factory": 0, "strategy": 0,
+        "mixin": 0,
+        "dependency_injection": 0,
+        "lazy_init": 0,
+        "plugin_registry": 0,
+        "event_driven": 0,
+        "protocol_oriented": 0,
+        "factory": 0,
+        "strategy": 0,
     }
     examples: dict[str, list[str]] = {k: [] for k in patterns}
 
@@ -438,8 +455,9 @@ def analyze_design_patterns(project_path: Path) -> dict:
 # ── C4 Auto-Generation ────────────────────────────────────────────────────
 
 
-def auto_generate_c4(project_path: Path, structure: dict, protocols: dict,
-                     entry_info: dict) -> str:
+def auto_generate_c4(
+    project_path: Path, structure: dict, protocols: dict, entry_info: dict
+) -> str:
     """Generate a C4 Component diagram from AST-parsed project structure."""
     packages = structure.get("packages", [])
     if not packages:
@@ -467,7 +485,7 @@ def auto_generate_c4(project_path: Path, structure: dict, protocols: dict,
         "",
         "```mermaid",
         "C4Component",
-        f'    title {proj_name} — Component Diagram (Auto-Generated)',
+        f"    title {proj_name} — Component Diagram (Auto-Generated)",
         "",
         f'    Container_Boundary(proj, "{proj_name}") {{',
     ]
@@ -491,7 +509,9 @@ def auto_generate_c4(project_path: Path, structure: dict, protocols: dict,
     # Add protocol-based external systems
     for proto in protocols:
         pid = f"ext_{proto.lower()}"
-        lines.append(f'    System_Ext({pid}, "{proto} Clients", "External {proto} consumers")')
+        lines.append(
+            f'    System_Ext({pid}, "{proto} Clients", "External {proto} consumers")'
+        )
         if comp_ids:
             lines.append(f'    Rel({pid}, {comp_ids[0]}, "{proto} requests")')
 
@@ -499,7 +519,9 @@ def auto_generate_c4(project_path: Path, structure: dict, protocols: dict,
     for ep in entry_info.get("entry_points", [])[:5]:
         ep_mod = ep.get("module", "").split(".")
         if len(ep_mod) > 1:
-            target = re.sub(r"[^a-zA-Z0-9]", "_", ep_mod[1] if len(ep_mod) > 1 else ep_mod[0])
+            target = re.sub(
+                r"[^a-zA-Z0-9]", "_", ep_mod[1] if len(ep_mod) > 1 else ep_mod[0]
+            )
             if target in comp_ids:
                 lines.append(f'    Rel(user, {target}, "{ep["type"]} entry")')
 
@@ -584,4 +606,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

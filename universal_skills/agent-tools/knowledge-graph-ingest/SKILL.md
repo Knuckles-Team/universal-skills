@@ -25,6 +25,8 @@ When the user asks to ingest the workspace (without specifying explicit targets)
 2. Append the default ScholarX document directory to the list: `~/.local/share/scholarx/papers`
 3. Convert the combined list of paths into a JSON-formatted array.
 4. Execute the `mcp_agent-utilities-kg_kg_ingest` tool, passing the JSON array to the `target_path` parameter.
+5. **Prompt for Chat Ingestion**: Explicitly prompt the user to confirm whether they would like to ingest all conversation/chat logs from active IDE platforms (e.g. Antigravity or Claude Code) to capture development history and context.
+6. **Tool/Skill Configuration Hydration**: Incorporate the IDE's/global active `mcp_config.json` (e.g., at `~/.config/agent-utilities/mcp_config.json`) and the agent skills directories (defaulting to `/home/apps/workspace/agent-packages/skills/universal-skills` and `/home/apps/workspace/agent-packages/skills/skill-graphs`) as ingestion targets to ensure the Knowledge Graph is fully hydrated with active tool, schema, and capability definitions.
 
 ### 2. Parallel Git URL Cloning
 If the user specifies explicit comma-separated Git URLs to ingest:
@@ -41,7 +43,7 @@ Ingest conversation logs from supported IDE/agent platforms:
 - **Claude Code**: `~/.claude/projects/` or `~/.config/claude/`
 - **Codex**: `~/.codex/sessions/`
 
-To ingest conversations, call `mcp_agent-utilities-kg_kg_ingest` with the conversation log directories as targets.
+When the user consents to or requests conversation ingestion, you MUST identify all existing logs from these directories, compile them into a target list, and call `mcp_agent-utilities-kg_kg_ingest` with the log directories/files.
 Conversation logs are ingested as `Conversation` nodes with `DISCUSSED_IN` edges linking to relevant Concept nodes.
 
 ### 4. DB Backup & Wipe

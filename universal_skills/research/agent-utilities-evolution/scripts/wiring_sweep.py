@@ -66,6 +66,16 @@ class WiringSweep:
         self.all_definitions: dict[str, list[str]] = defaultdict(list)
         self.all_references: set[str] = set()
 
+        # Valid concepts from concept_map.md
+        self.valid_concepts: set[str] = set()
+        self.mermaid_total_nodes = 0
+        self.mermaid_mapped_nodes = 0
+        self.mermaid_missing_nodes: list[dict[str, str]] = []
+        self.mermaid_invalid_nodes: list[dict[str, str]] = []
+
+        # Load concepts
+        self._load_canonical_concepts()
+
         # Results
         self.results: dict[str, Any] = {}
 
@@ -220,12 +230,170 @@ class WiringSweep:
                 continue
 
             # Match both "CONCEPT:X-Y.Z" and bare "X-Y.Z" in docs
-            concepts = re.findall(
-                r"(?:CONCEPT:)?([A-Z]+-\d+\.\d+)", text
-            )
+            concepts = re.findall(r"(?:CONCEPT:)?([A-Z]+-\d+\.\d+)", text)
             rel = str(md_file.relative_to(self.root))
             for c in set(concepts):
                 self.concept_to_docs[c].append(rel)
+
+            # Parse Mermaid nodes for Concept IDs and validate
+            nodes = self._parse_mermaid_nodes(text)
+            for concept_id, line in nodes:
+                self.mermaid_total_nodes += 1
+                if concept_id is None:
+                    self.mermaid_missing_nodes.append({"file": rel, "line": line})
+                elif self.valid_concepts and concept_id not in self.valid_concepts:
+                    self.mermaid_invalid_nodes.append(
+                        {"file": rel, "concept": concept_id, "line": line}
+                    )
+                else:
+                    self.mermaid_mapped_nodes += 1
+
+    def _load_canonical_concepts(self) -> None:
+        """Extract all valid CONCEPT IDs from concept_map.md."""
+        concept_map = self.docs_dir / "concept_map.md"
+        if not concept_map.exists():
+            return
+        try:
+            content = concept_map.read_text(encoding="utf-8", errors="ignore")
+            matches = re.findall(r"`([A-Z]+-\d+\.\d+)`", content)
+            for m in matches:
+                self.valid_concepts.add(m)
+        except Exception:
+            pass
+
+    def _parse_mermaid_nodes(self, content: str) -> list[tuple[str | None, str]]:
+        """Extract nodes with Concept IDs from Mermaid blocks, handles multi-node lines robustly."""
+        nodes = []
+        in_mermaid = False
+
+        for line in content.split("\n"):
+            if line.strip().startswith("```mermaid"):
+                in_mermaid = True
+                continue
+            if in_mermaid and line.strip() == "```":
+                in_mermaid = False
+                continue
+
+            if in_mermaid:
+                line_str = line.strip()
+                # Skip empty lines, comments, and structure definitions like 'subgraph' or 'direction'
+                if (
+                    not line_str
+                    or line_str.startswith("%%")
+                    or line_str.startswith("subgraph")
+                    or line_str.startswith("direction")
+                    or line_str.startswith("style")
+                    or line_str.startswith("end")
+                    or line_str.startswith("graph")
+                    or line_str.startswith("flowchart")
+                    or line_str.startswith("C4Context")
+                    or line_str.startswith("C4Container")
+                    or line_str.startswith("C4Component")
+                    or line_str.startswith("title")
+                ):
+                    continue
+
+                # Exclude C4 diagram nodes which do not map to canonical concepts
+                if any(
+                    line_str.startswith(x)
+                    for x in [
+                        "Person",
+                        "System",
+                        "System_Ext",
+                        "Container",
+                        "Component",
+                        "Rel",
+                    ]
+                ):
+                    continue
+
+                # Split line by arrow connections or transitions to process multi-node lines
+                parts = re.split(
+                    r"\s*(?:--+|-\.-+|==+)(?:>|<|>)?(?:\|[^|]+\|)?\s*", line_str
+                )
+                for part in parts:
+                    part = part.strip()
+                    if not part:
+                        continue
+
+                    # Match node definitions like A[Label], A("Label"), etc.
+                    match = re.match(
+                        r'^([A-Za-z0-9_]+)\s*([\[\(\{>]+.*[\]\)\}"]+)$', part
+                    )
+                    if match:
+                        brackets_label = match.group(2)
+                        # Extract text inside the outermost brackets/quotes
+                        label_match = re.search(
+                            r'[\[\(\{">]+(.*)[\]\)\}"]+', brackets_label
+                        )
+                        label = label_match.group(1) if label_match else brackets_label
+                        label = label.replace('"', "").strip()
+                        # Clean up any trailing brackets/quotes
+                        label = re.sub(r'^[\[\(\{">]+|[\]\)\}"]+$', "", label).strip()
+
+                        # Exclude non-architectural process nodes
+                        if any(
+                            x in label.lower()
+                            for x in [
+                                "phase ",
+                                "stage ",
+                                "step ",
+                                "background research",
+                                "synthesis",
+                                "feature recommendations",
+                                "wiring audit",
+                            ]
+                        ):
+                            continue
+                        # Exclude basic shapes and boundaries that represent generic groupings
+                        if any(
+                            y in label.lower()
+                            for y in [
+                                "<b>",
+                                "<br",
+                                "pydantic",
+                                "scripts/",
+                                "git:",
+                                "fastapi",
+                                "vite",
+                                "react",
+                                "textual",
+                                "rich",
+                                "httpx",
+                                "neo4j",
+                                "networkx",
+                                "database",
+                                "sqlite",
+                                "postgresql",
+                            ]
+                        ):
+                            continue
+                        if any(
+                            y == label.lower()
+                            for y in [
+                                "nx",
+                                "val",
+                                "exp",
+                                "evo",
+                                "db",
+                                "ui",
+                                "api",
+                                "cli",
+                                "auth",
+                                "mcp",
+                                "htn",
+                                "c4",
+                            ]
+                        ):
+                            continue
+
+                        concept_match = re.search(r"([A-Z]+-\d+\.\d+)", part)
+                        if concept_match:
+                            nodes.append((concept_match.group(1), part))
+                        else:
+                            nodes.append((None, part))
+
+        return nodes
 
     # -- Phase 4: Import Graph ---
 
@@ -381,15 +549,13 @@ class WiringSweep:
 
             # Only report if defined in exactly 1 file (avoid shared names)
             if len(files) == 1:
-                potentially_dead.append(
-                    {"name": name, "file": files[0]}
-                )
+                potentially_dead.append({"name": name, "file": files[0]})
 
         self.results["potentially_dead"] = {
             "count": len(potentially_dead),
-            "definitions": sorted(
-                potentially_dead, key=lambda x: x["file"]
-            )[:50],  # Cap at 50
+            "definitions": sorted(potentially_dead, key=lambda x: x["file"])[
+                :50
+            ],  # Cap at 50
         }
 
     # -- Phase 8: Health Score ---
@@ -402,27 +568,49 @@ class WiringSweep:
         gaps = self.results.get("concept_gaps", {}).get("gaps", [])
         orphans = self.results.get("orphans", {}).get("count", 0)
         dead = self.results.get("potentially_dead", {}).get("count", 0)
-        syntax_errors = len(
-            self.results.get("source", {}).get("syntax_errors", [])
-        )
+        syntax_errors = len(self.results.get("source", {}).get("syntax_errors", []))
+
+        # Build results for mermaid diagrams
+        self.results["mermaid_diagrams"] = {
+            "total_nodes": self.mermaid_total_nodes,
+            "mapped_nodes": self.mermaid_mapped_nodes,
+            "coverage_pct": round(
+                (self.mermaid_mapped_nodes / max(1, self.mermaid_total_nodes)) * 100, 1
+            ),
+            "invalid_usages": self.mermaid_invalid_nodes,
+            "missing_ids": self.mermaid_missing_nodes,
+        }
 
         # Scoring:
-        # - Concept coverage: 40 points (full coverage = 40)
+        # - Concept coverage: 30 points (decoupled for 10 points mermaid)
+        # - Mermaid Diagram mapping: 10 points
         # - No orphans: 25 points
         # - No dead code: 25 points
         # - No syntax errors: 10 points
 
-        concept_score = max(
-            0, 40 * (1 - len(gaps) / max(total_concepts, 1))
-        )
+        concept_score = max(0, 30 * (1 - len(gaps) / max(total_concepts, 1)))
+
+        # Mermaid score calculation with invalid concept penalty
+        if self.mermaid_total_nodes > 0:
+            mermaid_coverage = self.mermaid_mapped_nodes / self.mermaid_total_nodes
+            mermaid_score = round(10 * mermaid_coverage, 1)
+        else:
+            mermaid_score = 10.0
+
+        invalid_mermaid_penalty = min(5.0, len(self.mermaid_invalid_nodes) * 2.0)
+        mermaid_score = max(0.0, mermaid_score - invalid_mermaid_penalty)
+
         orphan_score = max(0, 25 - orphans * 2)
         dead_score = max(0, 25 - dead)
         syntax_score = 10 if syntax_errors == 0 else 0
 
-        total = round(concept_score + orphan_score + dead_score + syntax_score)
+        total = round(
+            concept_score + mermaid_score + orphan_score + dead_score + syntax_score
+        )
         self.results["health_score"] = {
             "total": min(100, total),
             "concept_coverage": round(concept_score, 1),
+            "mermaid_coverage": round(mermaid_score, 1),
             "orphan_penalty": round(25 - orphan_score, 1),
             "dead_code_penalty": round(25 - dead_score, 1),
             "syntax_errors": syntax_errors,
@@ -450,15 +638,12 @@ class WiringSweep:
         lines.append(f"\n## {emoji} Health Score: {score}/100\n")
         lines.append("| Component | Score |")
         lines.append("|-----------|-------|")
+        lines.append(f"| Concept Coverage | {hs.get('concept_coverage', 0)}/30 |")
         lines.append(
-            f"| Concept Coverage | {hs.get('concept_coverage', 0)}/40 |"
+            f"| Mermaid Diagram Coverage | {hs.get('mermaid_coverage', 0)}/10 |"
         )
-        lines.append(
-            f"| Orphan Penalty | -{hs.get('orphan_penalty', 0)} of 25 |"
-        )
-        lines.append(
-            f"| Dead Code Penalty | -{hs.get('dead_code_penalty', 0)} of 25 |"
-        )
+        lines.append(f"| Orphan Penalty | -{hs.get('orphan_penalty', 0)} of 25 |")
+        lines.append(f"| Dead Code Penalty | -{hs.get('dead_code_penalty', 0)} of 25 |")
         lines.append(
             f"| Syntax Errors | {hs.get('syntax_errors', 0)} (10pt bonus if 0) |"
         )
@@ -470,29 +655,44 @@ class WiringSweep:
         lines.append(f"- **Functions**: {src.get('total_functions', 0)}")
         lines.append(f"- **Classes**: {src.get('total_classes', 0)}")
         lines.append(f"- **Lines**: {src.get('total_lines', 0):,}")
-        lines.append(
-            f"- **Syntax Errors**: {len(src.get('syntax_errors', []))}"
-        )
+        lines.append(f"- **Syntax Errors**: {len(src.get('syntax_errors', []))}")
 
         # Concept Gaps
         cg = self.results.get("concept_gaps", {})
         lines.append("\n## Concept Traceability\n")
-        lines.append(
-            f"- **In Code**: {cg.get('total_concepts_in_code', 0)} concepts"
-        )
-        lines.append(
-            f"- **In Tests**: {cg.get('total_concepts_in_tests', 0)} concepts"
-        )
-        lines.append(
-            f"- **In Docs**: {cg.get('total_concepts_in_docs', 0)} concepts"
-        )
+        lines.append(f"- **In Code**: {cg.get('total_concepts_in_code', 0)} concepts")
+        lines.append(f"- **In Tests**: {cg.get('total_concepts_in_tests', 0)} concepts")
+        lines.append(f"- **In Docs**: {cg.get('total_concepts_in_docs', 0)} concepts")
+
+        # Mermaid Diagrams
+        md = self.results.get("mermaid_diagrams", {})
+        lines.append("\n## Mermaid Diagram Concept Mapping\n")
+        lines.append(f"- **Total Diagram Nodes**: {md.get('total_nodes', 0)}")
+        lines.append(f"- **Mapped Concept Nodes**: {md.get('mapped_nodes', 0)}")
+        lines.append(f"- **Diagram Coverage**: {md.get('coverage_pct', 0)}%")
+
+        invalid_usages = md.get("invalid_usages", [])
+        if invalid_usages:
+            lines.append("\n### ❌ Invalid Concept Usages in Diagrams\n")
+            lines.append("| File | Invalid Concept | Line |")
+            lines.append("|------|-----------------|------|")
+            for iu in invalid_usages:
+                lines.append(f"| `{iu['file']}` | `{iu['concept']}` | `{iu['line']}` |")
+
+        missing_ids = md.get("missing_ids", [])
+        if missing_ids:
+            lines.append("\n### ⚠️ Nodes Missing Concept IDs\n")
+            lines.append("| File | Line |")
+            lines.append("|------|------|")
+            for mi in missing_ids[:20]:
+                lines.append(f"| `{mi['file']}` | `{mi['line']}` |")
+            if len(missing_ids) > 20:
+                lines.append(f"| ... | and {len(missing_ids) - 20} more |")
 
         gaps = cg.get("gaps", [])
         if gaps:
             lines.append("\n### Gaps\n")
-            lines.append(
-                "| Concept | Code | Tests | Docs | Missing |"
-            )
+            lines.append("| Concept | Code | Tests | Docs | Missing |")
             lines.append("|---------|:----:|:-----:|:----:|---------|")
             for g in gaps:
                 missing = []
@@ -510,12 +710,8 @@ class WiringSweep:
         orph = self.results.get("orphans", {})
         lines.append(f"\n## Orphan Modules: {orph.get('count', 0)}\n")
         if orph.get("modules"):
-            lines.append(
-                "| Module | Lines | Functions | Classes | Concepts |"
-            )
-            lines.append(
-                "|--------|------:|----------:|--------:|----------|"
-            )
+            lines.append("| Module | Lines | Functions | Classes | Concepts |")
+            lines.append("|--------|------:|----------:|--------:|----------|")
             for m in orph["modules"][:20]:
                 concepts = ", ".join(m.get("concepts", [])) or "—"
                 lines.append(
@@ -525,25 +721,18 @@ class WiringSweep:
 
         # Dead definitions
         dead = self.results.get("potentially_dead", {})
-        lines.append(
-            f"\n## Potentially Dead Definitions: {dead.get('count', 0)}\n"
-        )
+        lines.append(f"\n## Potentially Dead Definitions: {dead.get('count', 0)}\n")
         if dead.get("definitions"):
             lines.append("> [!NOTE]")
-            lines.append(
-                "> These may be false positives for MRO mixins, decorators,"
-            )
-            lines.append(
-                "> dynamically dispatched methods, or `__all__` exports.\n"
-            )
+            lines.append("> These may be false positives for MRO mixins, decorators,")
+            lines.append("> dynamically dispatched methods, or `__all__` exports.\n")
             lines.append("| Name | File |")
             lines.append("|------|------|")
             for d in dead["definitions"][:30]:
                 lines.append(f"| `{d['name']}` | `{d['file']}` |")
 
         lines.append(
-            f"\n---\n*Sweep completed in "
-            f"{self.results.get('duration_seconds', 0)}s*\n"
+            f"\n---\n*Sweep completed in {self.results.get('duration_seconds', 0)}s*\n"
         )
 
         return "\n".join(lines)

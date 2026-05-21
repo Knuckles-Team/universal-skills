@@ -28,7 +28,9 @@ def score_paper(title: str, abstract: str, taxonomy: dict) -> float:
                 hits.append({"keyword": kw, "count": count})
         if hits:
             unique_count = len(hits)
-            domain_score = config.get("weight", 1.0) * (unique_count + sum(min(h["count"], 3) * 0.2 for h in hits))
+            domain_score = config.get("weight", 1.0) * (
+                unique_count + sum(min(h["count"], 3) * 0.2 for h in hits)
+            )
             total_score += domain_score
 
     return round(total_score, 2)
@@ -38,16 +40,24 @@ def build_taxonomy_from_kg() -> dict:
     """Query the Knowledge Graph to build a dynamic taxonomy."""
     try:
         from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+
         engine = IntelligenceGraphEngine()
     except ImportError:
-        print("❌ Failed to import IntelligenceGraphEngine. Is agent-utilities installed?", file=sys.stderr)
+        print(
+            "❌ Failed to import IntelligenceGraphEngine. Is agent-utilities installed?",
+            file=sys.stderr,
+        )
         sys.exit(1)
-        
+
     print("🔍 Querying Knowledge Graph for active concepts and codebases...")
-    nodes = engine.query("MATCH (n) WHERE n:ConceptNode OR n:CodeNode OR n:ArchitectureNode RETURN n.name as name, labels(n)[0] as type")
-    
+    nodes = engine.query(
+        "MATCH (n) WHERE n:ConceptNode OR n:CodeNode OR n:ArchitectureNode RETURN n.name as name, labels(n)[0] as type"
+    )
+
     if not nodes:
-        print("⚠️ Knowledge Graph is empty or returned no target nodes. Using empty taxonomy.")
+        print(
+            "⚠️ Knowledge Graph is empty or returned no target nodes. Using empty taxonomy."
+        )
         return {}
 
     taxonomy = {}
@@ -56,38 +66,53 @@ def build_taxonomy_from_kg() -> dict:
         node_type = node.get("type", "ConceptNode")
         if not name:
             continue
-            
+
         # Create a domain key
         domain_key = name.lower().replace(" ", "_").replace("-", "_")
-        
+
         # Determine weight based on node type
         weight = 3.0 if node_type == "CodeNode" else 2.0
-        
+
         # Use the name itself as the primary keyword
         keywords = [name.lower()]
-        
+
         # Split into individual words if it's a phrase
-        words = [w for w in re.split(r'[^a-zA-Z0-9]', name.lower()) if len(w) > 3]
+        words = [w for w in re.split(r"[^a-zA-Z0-9]", name.lower()) if len(w) > 3]
         keywords.extend(words)
-        
+
         # Remove duplicates
         keywords = list(set(keywords))
-        
-        taxonomy[domain_key] = {
-            "weight": weight,
-            "keywords": keywords
-        }
-        
+
+        taxonomy[domain_key] = {"weight": weight, "keywords": keywords}
+
     print(f"✅ Extracted {len(taxonomy)} dynamic focus areas from the KG.")
     return taxonomy
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Dynamically score papers against a taxonomy")
-    parser.add_argument("--papers", required=True, help="Path to papers.json (output from get_recent_papers)")
-    parser.add_argument("--taxonomy", help="Path to taxonomy.json (if omitted, will auto-detect from agent-utilities KG)")
-    parser.add_argument("--min-score", type=float, default=3.0, help="Minimum score to consider relevant")
-    parser.add_argument("--output", default="top_papers.json", help="Output JSON path for selected paper IDs")
+    parser = argparse.ArgumentParser(
+        description="Dynamically score papers against a taxonomy"
+    )
+    parser.add_argument(
+        "--papers",
+        required=True,
+        help="Path to papers.json (output from get_recent_papers)",
+    )
+    parser.add_argument(
+        "--taxonomy",
+        help="Path to taxonomy.json (if omitted, will auto-detect from agent-utilities KG)",
+    )
+    parser.add_argument(
+        "--min-score",
+        type=float,
+        default=3.0,
+        help="Minimum score to consider relevant",
+    )
+    parser.add_argument(
+        "--output",
+        default="top_papers.json",
+        help="Output JSON path for selected paper IDs",
+    )
     args = parser.parse_args()
 
     papers_path = Path(args.papers)
@@ -112,10 +137,14 @@ def main():
         # Auto-detect from KG if taxonomy not provided
         try:
             import agent_utilities.knowledge_graph.core.engine
+
             print("ℹ️ Auto-detecting taxonomy from Knowledge Graph...")
             taxonomy = build_taxonomy_from_kg()
         except ImportError:
-            print("❌ No --taxonomy provided and agent-utilities is not installed.", file=sys.stderr)
+            print(
+                "❌ No --taxonomy provided and agent-utilities is not installed.",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     try:
@@ -125,21 +154,21 @@ def main():
         sys.exit(1)
 
     # Handle standard MCP output format from get_recent_papers
-    papers = papers_data.get("papers", papers_data) if isinstance(papers_data, dict) else papers_data
+    papers = (
+        papers_data.get("papers", papers_data)
+        if isinstance(papers_data, dict)
+        else papers_data
+    )
 
     scored_papers = []
     for p in papers:
         title = p.get("title", "")
         abstract = p.get("abstract", "")
         score = score_paper(title, abstract, taxonomy)
-        scored_papers.append({
-            "id": p.get("id", ""),
-            "title": title,
-            "score": score
-        })
+        scored_papers.append({"id": p.get("id", ""), "title": title, "score": score})
 
     scored_papers.sort(key=lambda x: x["score"], reverse=True)
-    
+
     top_papers = [p for p in scored_papers if p["score"] >= args.min_score]
 
     print(f"✅ Scored {len(papers)} papers. {len(top_papers)} met the threshold.")

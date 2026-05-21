@@ -1391,7 +1391,7 @@ from pathlib import Path
 from agent_utilities import (
     build_system_prompt_from_workspace,
     create_agent_parser,
-    create_graph_agent_server,
+    create_agent_server,
     initialize_workspace,
     load_identity,
     get_workspace_path,
@@ -1433,7 +1433,7 @@ def agent_server():
         logger.debug("Debug mode enabled")
 
     # Start server using the auto-discovery pattern (from mcp_config.json)
-    create_graph_agent_server(
+    create_agent_server(
         mcp_url=args.mcp_url,
         mcp_config=args.mcp_config or "mcp_config.json",
         host=args.host,
@@ -1930,14 +1930,14 @@ def scaffold(
         print(f"  ✅ {path.relative_to(root.parent)}")
 
     import tomllib
+
     pyproject_content = (root / "pyproject.toml").read_text(encoding="utf-8")
     parsed_toml = tomllib.loads(pyproject_content)
     deps = parsed_toml.get("project", {}).get("dependencies", [])
-    
+
     req_path = root / "requirements.txt"
     req_path.write_text("\n".join(deps) + "\n", encoding="utf-8")
     print(f"  ✅ {req_path.relative_to(root.parent)}")
-
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")

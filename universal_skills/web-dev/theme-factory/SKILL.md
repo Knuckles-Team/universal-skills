@@ -9,7 +9,7 @@ license: MIT
 tags: [theming, design-tokens, design-system, css-variables, color-schemes, dark-mode]
 metadata:
   author: Genius
-  version: '0.12.0'
+  version: '0.12.1'
 ---
 # Theme Factory
 

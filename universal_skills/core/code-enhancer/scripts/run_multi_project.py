@@ -42,6 +42,7 @@ def _discover_projects(pattern: str) -> list[str]:
                         projects.append(str(child.resolve()))
         else:
             import glob
+
             for match_str in sorted(glob.glob(p)):
                 match = Path(match_str)
                 if match.is_dir() and (

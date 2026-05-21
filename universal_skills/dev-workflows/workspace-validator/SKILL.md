@@ -34,16 +34,16 @@ This skill defines the autonomous workflow for systematically validating all pro
 ### Phase 2: Initial Validation (Async Job Queue)
 3. For the **first run**, submit validation using the `rm_projects` MCP tool with `action="validate"` and `type="all"`. You MUST pass `output_dir="/home/apps/workspace/reports"` to store the validation reports. DO NOT write to `/tmp` or any path outside the workspace. Do NOT pass the `repositories` parameter on the first run — validate all projects. Do NOT pass `coverage=true` unless the user explicitly requests code coverage.
 4. The tool will return immediately with a `job_id`. **Do NOT wait idle.** While validation runs in the background, you can begin examining the codebase, reviewing recent changes, or preparing for remediation.
-5. **Poll for results** by calling `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. The response includes `status`, `current_phase`, and `progress`. Keep polling (with reasonable intervals) until `status` is `"completed"`.
-6. Once complete, the `result` field contains the `ValidationReport`. Review the failures and catalog all issues.
+5. **Poll for results** by calling `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. Keep polling (with reasonable intervals) until `status` is `"completed"`.
+6. Once complete, the `result` field will point you to the path of the highly compressed `summary.md`. **Read this `summary.md` file instead of `index.md`** to review the failures and catalog all issues efficiently.
 
 ### Phase 3: Remediation Loop (Command-Driven)
 
-You will enter a continuous loop of fixing issues, then running the exact command specified in the report's `index.md` file.
+You will enter a continuous loop of fixing issues, then running the exact command specified in the report's `summary.md` or `index.md` file.
 
-7. For any issues found, you MUST ALWAYS first come to understand the root cause by understanding how the variable, implementation, or code should have functioned, closing that knowledge gap. Follow the **Error Resolution Policy** above strictly.
-8. Work on fixing the identified issues. You should work on resolving multiple issues concurrently across different projects. Don't wait idly for commands to finish if you can be working on other issues.
-9. When running pre-commit commands, unit tests (pytest), or any other long-running verification commands, always use a timeout or `-k` flag to ensure they will terminate if a timeout is exceeded.
+7. **Automated Remediation:** For systemic validation failures (such as `check-bumpversion` mismatches or simple `end-of-file-fixer` issues), you should use the native automated fix logic. Call the `rm_workspace` tool with `action="remediate"` and optionally pass the `repositories` parameter.
+8. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), you MUST ALWAYS first come to understand the root cause by understanding how the variable, implementation, or code should have functioned, closing that knowledge gap. Follow the **Error Resolution Policy** above strictly. Note: Never automatically inject `# nosec` or `# noqa` for static analysis—evaluate manually and fix properly or suppress carefully.
+9. Work on fixing the identified issues concurrently across different projects.
 10. **Execute the Next Command from the Report:** After applying fixes, open the latest `index.md` report file. At the top of the report, there is a **"🔄 Next Validation Command"** section that contains the exact `rm_projects` MCP tool parameters to use for the next iteration. **Execute that command exactly as specified** — do NOT manually construct the parameters. The report auto-generates the correct `repositories` filter targeting only the previously failed projects.
 11. Each subsequent validation call also returns a `job_id`. Poll with `validate_status` as in Phase 2. Use the time while validation runs to continue working on other fixes.
 12. Review the new report. If there are still failures, repeat from step 7. Continue this loop until the report shows 0 failures.

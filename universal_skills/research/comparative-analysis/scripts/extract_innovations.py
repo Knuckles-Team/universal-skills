@@ -368,12 +368,16 @@ def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
         for r in results:
             content = r.get("content", r.get("description", ""))
             if content:
-                sources.append({
-                    "content": content,
-                    "target_path": r.get("target_path", r.get("file_path", "kg_source")),
-                    "score": r.get("score", 0.0),
-                    "node_id": r.get("id", r.get("node_id", "")),
-                })
+                sources.append(
+                    {
+                        "content": content,
+                        "target_path": r.get(
+                            "target_path", r.get("file_path", "kg_source")
+                        ),
+                        "score": r.get("score", 0.0),
+                        "node_id": r.get("id", r.get("node_id", "")),
+                    }
+                )
         return sources
     except ImportError:
         print("agent_utilities not available for KG resolution.", file=sys.stderr)
@@ -468,8 +472,10 @@ def main():
     if kg_source_query:
         kg_articles = resolve_kg_sources(kg_source_query)
         if not kg_articles:
-            print(json.dumps({"error": f"No KG articles found for: {kg_source_query}"}),
-                  file=sys.stderr)
+            print(
+                json.dumps({"error": f"No KG articles found for: {kg_source_query}"}),
+                file=sys.stderr,
+            )
 
     if not sources and not kg_articles:
         print(
@@ -497,7 +503,11 @@ def main():
                 "signals": signals,
                 "synergies": synergies[:15],
                 "new_capabilities": len(
-                    [s for s in synergies if s.get("integration_type") == "new_capability"]
+                    [
+                        s
+                        for s in synergies
+                        if s.get("integration_type") == "new_capability"
+                    ]
                 ),
                 "enhancements": len(
                     [s for s in synergies if s.get("integration_type") == "enhancement"]

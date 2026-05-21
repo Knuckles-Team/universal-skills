@@ -10,7 +10,7 @@ license: MIT
 tags: [marp, presentations, slides, markdown, design]
 metadata:
   author: Genius
-  version: '0.12.0'
+  version: '0.12.1'
 ---
 # Marp Presentation Creator
 

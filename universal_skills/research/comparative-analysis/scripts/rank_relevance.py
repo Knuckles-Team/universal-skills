@@ -61,11 +61,19 @@ def _extract_codebase_profile(codebase_path: str) -> dict:
                     name_lower = node.name.lower()
                     # MCP tools
                     for deco in node.decorator_list:
-                        if isinstance(deco, ast.Attribute) and deco.attr in ("tool", "command"):
+                        if isinstance(deco, ast.Attribute) and deco.attr in (
+                            "tool",
+                            "command",
+                        ):
                             profile["entry_points"].append(f"mcp:{node.name}")
                     # FastAPI
                     for deco in node.decorator_list:
-                        if isinstance(deco, ast.Attribute) and deco.attr in ("get", "post", "put", "delete"):
+                        if isinstance(deco, ast.Attribute) and deco.attr in (
+                            "get",
+                            "post",
+                            "put",
+                            "delete",
+                        ):
                             profile["entry_points"].append(f"api:{node.name}")
                     # CLI
                     if name_lower == "main" or name_lower.startswith("cli_"):
@@ -73,9 +81,15 @@ def _extract_codebase_profile(codebase_path: str) -> dict:
 
                 # Detect patterns
                 if isinstance(node, ast.ClassDef):
-                    if any("Mixin" in b.id if isinstance(b, ast.Name) else False for b in node.bases):
+                    if any(
+                        "Mixin" in b.id if isinstance(b, ast.Name) else False
+                        for b in node.bases
+                    ):
                         profile["patterns"].add("mixin")
-                    if any("Protocol" in b.id if isinstance(b, ast.Name) else False for b in node.bases):
+                    if any(
+                        "Protocol" in b.id if isinstance(b, ast.Name) else False
+                        for b in node.bases
+                    ):
                         profile["patterns"].add("protocol")
 
             # Extract keywords from docstrings and comments
@@ -128,7 +142,7 @@ def _extract_paper_profile(paper_path: str) -> dict:
         content_lower = content.lower()
 
         # Extract keywords
-        words = re.findall(r'\b[a-z]{4,}\b', content_lower)
+        words = re.findall(r"\b[a-z]{4,}\b", content_lower)
         word_freq: dict[str, int] = {}
         for w in words:
             word_freq[w] = word_freq.get(w, 0) + 1
@@ -162,11 +176,11 @@ def score_item(target_profile: dict, item_profile: dict) -> dict:
     Returns dict with individual dimension scores and composite.
     """
     scores = {
-        "semantic": 0.0,      # 0-30: Keyword/concept overlap
+        "semantic": 0.0,  # 0-30: Keyword/concept overlap
         "concept_overlap": 0.0,  # 0-20: Shared technical concepts
-        "arch_compat": 0.0,   # 0-20: Architecture pattern alignment
-        "innovation": 0.0,    # 0-20: Novel capabilities
-        "feasibility": 0.0,   # 0-10: Implementation feasibility
+        "arch_compat": 0.0,  # 0-20: Architecture pattern alignment
+        "innovation": 0.0,  # 0-20: Novel capabilities
+        "feasibility": 0.0,  # 0-10: Implementation feasibility
     }
 
     target_kw = set(target_profile.get("keywords", []))
@@ -182,9 +196,21 @@ def score_item(target_profile: dict, item_profile: dict) -> dict:
 
     # ── Concept Overlap (0-20) ──
     high_value_concepts = {
-        "agent", "orchestration", "knowledge", "graph", "protocol",
-        "embedding", "memory", "reasoning", "planning", "coordination",
-        "inference", "context", "tool", "model", "pydantic",
+        "agent",
+        "orchestration",
+        "knowledge",
+        "graph",
+        "protocol",
+        "embedding",
+        "memory",
+        "reasoning",
+        "planning",
+        "coordination",
+        "inference",
+        "context",
+        "tool",
+        "model",
+        "pydantic",
     }
     target_concepts = target_kw & high_value_concepts
     item_concepts = item_kw & high_value_concepts
@@ -202,9 +228,18 @@ def score_item(target_profile: dict, item_profile: dict) -> dict:
     # Papers get architecture score from content keywords
     if item_profile.get("type") == "paper":
         content = item_profile.get("content_sample", "").lower()
-        arch_terms = ["plugin", "mixin", "factory", "protocol", "registry", "dependency injection"]
+        arch_terms = [
+            "plugin",
+            "mixin",
+            "factory",
+            "protocol",
+            "registry",
+            "dependency injection",
+        ]
         arch_hits = sum(1 for t in arch_terms if t in content)
-        scores["arch_compat"] = max(scores["arch_compat"], round(min(20.0, arch_hits * 5.0), 2))
+        scores["arch_compat"] = max(
+            scores["arch_compat"], round(min(20.0, arch_hits * 5.0), 2)
+        )
 
     # ── Innovation Potential (0-20) ──
     # Items with keywords NOT in target are innovative
@@ -216,7 +251,14 @@ def score_item(target_profile: dict, item_profile: dict) -> dict:
     # Papers get boosted innovation for research markers
     if item_profile.get("is_research"):
         content = item_profile.get("content_sample", "").lower()
-        research_markers = ["novel", "propose", "introduce", "benchmark", "state-of-the-art", "outperform"]
+        research_markers = [
+            "novel",
+            "propose",
+            "introduce",
+            "benchmark",
+            "state-of-the-art",
+            "outperform",
+        ]
         marker_hits = sum(1 for m in research_markers if m in content)
         scores["innovation"] = min(20.0, scores["innovation"] + marker_hits * 2.0)
 
@@ -235,13 +277,24 @@ def score_item(target_profile: dict, item_profile: dict) -> dict:
     else:
         # Papers are less directly feasible
         content = item_profile.get("content_sample", "").lower()
-        feas_markers = ["python", "pip", "api", "library", "open-source", "github", "implementation"]
+        feas_markers = [
+            "python",
+            "pip",
+            "api",
+            "library",
+            "open-source",
+            "github",
+            "implementation",
+        ]
         feas_hits = sum(1 for m in feas_markers if m in content)
         scores["feasibility"] = round(min(10.0, feas_hits * 2.0), 2)
 
     scores["composite"] = round(
-        scores["semantic"] + scores["concept_overlap"] +
-        scores["arch_compat"] + scores["innovation"] + scores["feasibility"],
+        scores["semantic"]
+        + scores["concept_overlap"]
+        + scores["arch_compat"]
+        + scores["innovation"]
+        + scores["feasibility"],
         2,
     )
     scores["composite"] = min(100.0, scores["composite"])
@@ -257,16 +310,15 @@ def main():
     )
     parser.add_argument("target", help="Path to the target codebase")
     parser.add_argument(
-        "items", nargs="*",
-        help="Paths to papers/codebases to score (filesystem mode)"
+        "items", nargs="*", help="Paths to papers/codebases to score (filesystem mode)"
     )
     parser.add_argument(
-        "--kg-enabled", action="store_true",
-        help="Query KG for all ingested items instead of filesystem paths"
+        "--kg-enabled",
+        action="store_true",
+        help="Query KG for all ingested items instead of filesystem paths",
     )
     parser.add_argument(
-        "--top", type=int, default=0,
-        help="Show only top N results (0 = all)"
+        "--top", type=int, default=0, help="Show only top N results (0 = all)"
     )
     args = parser.parse_args()
 
@@ -280,10 +332,14 @@ def main():
 
     if args.kg_enabled:
         # TODO: Query KG for all ingested items when integrated with engine
-        print(json.dumps({
-            "error": "KG mode requires running via MCP (kg_analyze action='relevance_sweep'). "
-                     "Use filesystem mode with explicit paths instead.",
-        }))
+        print(
+            json.dumps(
+                {
+                    "error": "KG mode requires running via MCP (kg_analyze action='relevance_sweep'). "
+                    "Use filesystem mode with explicit paths instead.",
+                }
+            )
+        )
         sys.exit(1)
     else:
         for item_path in args.items:
@@ -298,18 +354,20 @@ def main():
                 continue
 
             scores = score_item(target_profile, item_profile)
-            results.append({
-                "id": item_profile.get("name", p.stem),
-                "type": item_profile.get("type", "codebase"),
-                "path": item_path,
-                **scores,
-            })
+            results.append(
+                {
+                    "id": item_profile.get("name", p.stem),
+                    "type": item_profile.get("type", "codebase"),
+                    "path": item_path,
+                    **scores,
+                }
+            )
 
     # Sort by composite score
     results.sort(key=lambda x: x.get("composite", 0), reverse=True)
 
     if args.top > 0:
-        results = results[:args.top]
+        results = results[: args.top]
 
     output = {
         "target": target_profile["name"],

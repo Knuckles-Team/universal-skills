@@ -40,6 +40,7 @@ from pathlib import Path
 
 try:
     from dotenv import load_dotenv
+
     # Attempt to load from the primary workspace if present
     load_dotenv("/home/apps/workspace/agent-packages/agent-utilities/.env")
 except ImportError:
@@ -53,7 +54,10 @@ if not os.environ.get("LLM_BASE_URL"):
 
 
 if not os.environ.get("OPENAI_API_KEY") and not os.environ.get("LLM_API_KEY"):
-    print("Warning: OPENAI_API_KEY / LLM_API_KEY environment variable is missing.", file=sys.stderr)
+    print(
+        "Warning: OPENAI_API_KEY / LLM_API_KEY environment variable is missing.",
+        file=sys.stderr,
+    )
     val = input("Enter API Key (default: Test-1234): ").strip()
     os.environ["LLM_API_KEY"] = os.environ["OPENAI_API_KEY"]
 
@@ -91,12 +95,14 @@ def parse_concept_map_file(path: Path) -> list[dict]:
         concept_id = match.group(1)
         concept_name = match.group(2).strip()
         prefix = concept_id.split("-")[0]
-        concepts.append({
-            "concept_id": concept_id,
-            "name": concept_name,
-            "pillar": prefix,
-            "pillar_name": PILLAR_NAMES.get(prefix, prefix),
-        })
+        concepts.append(
+            {
+                "concept_id": concept_id,
+                "name": concept_name,
+                "pillar": prefix,
+                "pillar_name": PILLAR_NAMES.get(prefix, prefix),
+            }
+        )
     return concepts
 
 
@@ -107,12 +113,14 @@ def parse_concepts_from_kg(kg_results: list[dict]) -> list[dict]:
         cid = row.get("concept_id", row.get("id", ""))
         name = row.get("name", row.get("title", cid))
         prefix = cid.split("-")[0] if "-" in cid else "UNKNOWN"
-        concepts.append({
-            "concept_id": cid,
-            "name": name,
-            "pillar": prefix,
-            "pillar_name": PILLAR_NAMES.get(prefix, prefix),
-        })
+        concepts.append(
+            {
+                "concept_id": cid,
+                "name": name,
+                "pillar": prefix,
+                "pillar_name": PILLAR_NAMES.get(prefix, prefix),
+            }
+        )
     return concepts
 
 
@@ -123,81 +131,212 @@ def parse_concepts_from_kg(kg_results: list[dict]) -> list[dict]:
 BIOMIMICRY_KEYWORDS = {
     "swarm": {"analogy": "multi-agent coordination", "domain": "orchestration"},
     "colony": {"analogy": "distributed task allocation", "domain": "scheduling"},
-    "pheromone": {"analogy": "stigmergic communication channels", "domain": "signal_boards"},
+    "pheromone": {
+        "analogy": "stigmergic communication channels",
+        "domain": "signal_boards",
+    },
     "neural": {"analogy": "adaptive model routing", "domain": "model_selection"},
-    "immune": {"analogy": "anomaly detection and self-healing", "domain": "circuit_breakers"},
-    "evolution": {"analogy": "genetic algorithm optimization", "domain": "prompt_evolution"},
+    "immune": {
+        "analogy": "anomaly detection and self-healing",
+        "domain": "circuit_breakers",
+    },
+    "evolution": {
+        "analogy": "genetic algorithm optimization",
+        "domain": "prompt_evolution",
+    },
     "mutation": {"analogy": "parametric exploration", "domain": "variant_pool"},
-    "symbiosis": {"analogy": "plugin ecosystem composition", "domain": "mcp_composition"},
-    "metamorphosis": {"analogy": "schema evolution and migration", "domain": "schema_packs"},
+    "symbiosis": {
+        "analogy": "plugin ecosystem composition",
+        "domain": "mcp_composition",
+    },
+    "metamorphosis": {
+        "analogy": "schema evolution and migration",
+        "domain": "schema_packs",
+    },
     "quorum": {"analogy": "distributed consensus thresholds", "domain": "bft_voting"},
     "mycelium": {"analogy": "knowledge graph topology", "domain": "kg_routing"},
     "plasticity": {"analogy": "continual learning without forgetting", "domain": "ewc"},
-    "homeostasis": {"analogy": "resource equilibrium maintenance", "domain": "cost_governors"},
-    "emergent": {"analogy": "complex behavior from simple rules", "domain": "swarm_presets"},
-    "stigmergy": {"analogy": "indirect coordination via environment", "domain": "signal_boards"},
+    "homeostasis": {
+        "analogy": "resource equilibrium maintenance",
+        "domain": "cost_governors",
+    },
+    "emergent": {
+        "analogy": "complex behavior from simple rules",
+        "domain": "swarm_presets",
+    },
+    "stigmergy": {
+        "analogy": "indirect coordination via environment",
+        "domain": "signal_boards",
+    },
 }
 
 TECH_INNOVATION_KEYWORDS = {
-    "attention": {"analogy": "context-aware retrieval weighting", "domain": "hybrid_retriever"},
-    "transformer": {"analogy": "parallel sequence processing", "domain": "batch_processing"},
-    "embedding": {"analogy": "semantic vector representation", "domain": "knowledge_graph"},
-    "reinforcement": {"analogy": "reward-driven routing optimization", "domain": "confidence_gating"},
+    "attention": {
+        "analogy": "context-aware retrieval weighting",
+        "domain": "hybrid_retriever",
+    },
+    "transformer": {
+        "analogy": "parallel sequence processing",
+        "domain": "batch_processing",
+    },
+    "embedding": {
+        "analogy": "semantic vector representation",
+        "domain": "knowledge_graph",
+    },
+    "reinforcement": {
+        "analogy": "reward-driven routing optimization",
+        "domain": "confidence_gating",
+    },
     "chain-of-thought": {"analogy": "rationale persistence", "domain": "quiet_star"},
     "tree search": {"analogy": "MCTS planning fallback", "domain": "lats"},
-    "distillation": {"analogy": "knowledge compression", "domain": "trace_distillation"},
+    "distillation": {
+        "analogy": "knowledge compression",
+        "domain": "trace_distillation",
+    },
     "consensus": {"analogy": "multi-agent agreement", "domain": "bft"},
     "zero-shot": {"analogy": "inductive generalization", "domain": "encpi"},
     "few-shot": {"analogy": "rapid domain adaptation", "domain": "experience_nodes"},
-    "curriculum": {"analogy": "progressive complexity scheduling", "domain": "horizon_curriculum"},
-    "credit assignment": {"analogy": "multi-step reward attribution", "domain": "reward_decomposition"},
-    "reward shaping": {"analogy": "step-level outcome signals", "domain": "reward_decomposition"},
-    "horizon reduction": {"analogy": "macro-action composition", "domain": "horizon_curriculum"},
-    "macro action": {"analogy": "composite multi-step primitives", "domain": "horizon_curriculum"},
-    "subgoal": {"analogy": "intermediate milestone decomposition", "domain": "task_decomposition"},
+    "curriculum": {
+        "analogy": "progressive complexity scheduling",
+        "domain": "horizon_curriculum",
+    },
+    "credit assignment": {
+        "analogy": "multi-step reward attribution",
+        "domain": "reward_decomposition",
+    },
+    "reward shaping": {
+        "analogy": "step-level outcome signals",
+        "domain": "reward_decomposition",
+    },
+    "horizon reduction": {
+        "analogy": "macro-action composition",
+        "domain": "horizon_curriculum",
+    },
+    "macro action": {
+        "analogy": "composite multi-step primitives",
+        "domain": "horizon_curriculum",
+    },
+    "subgoal": {
+        "analogy": "intermediate milestone decomposition",
+        "domain": "task_decomposition",
+    },
     "knowledge graph": {"analogy": "structured relational memory", "domain": "kg"},
     "ontology": {"analogy": "formal domain modeling", "domain": "owl_reasoning"},
-    "owl": {"analogy": "web ontology language for semantic reasoning", "domain": "owl_bridge"},
+    "owl": {
+        "analogy": "web ontology language for semantic reasoning",
+        "domain": "owl_bridge",
+    },
     "sparql": {"analogy": "structured graph query language", "domain": "kg_query"},
     "hypergraph": {"analogy": "n-ary relationship modeling", "domain": "hyperedges"},
     "topology": {"analogy": "structural graph analysis", "domain": "partitioning"},
     "vector index": {"analogy": "ANN search structure", "domain": "vector_retrieval"},
     "graph embedding": {"analogy": "structural position encoding", "domain": "encpi"},
-    "community detection": {"analogy": "cluster discovery in graphs", "domain": "graph_clustering"},
+    "community detection": {
+        "analogy": "cluster discovery in graphs",
+        "domain": "graph_clustering",
+    },
     "centrality": {"analogy": "node importance ranking", "domain": "graph_analysis"},
-    "hierarchical": {"analogy": "multi-level abstraction layering", "domain": "hierarchical_planning"},
-    "composability": {"analogy": "modular building-block assembly", "domain": "mcp_composition"},
-    "plugin": {"analogy": "hot-swappable capability extension", "domain": "plugin_registry"},
-    "middleware": {"analogy": "cross-cutting concern interception", "domain": "middleware"},
-    "transitive": {"analogy": "inferred multi-hop relationships", "domain": "owl_transitivity"},
-    "inference": {"analogy": "derived knowledge from assertions", "domain": "owl_reasoning"},
-    "retrieval": {"analogy": "context-aware document fetching", "domain": "hybrid_retriever"},
+    "hierarchical": {
+        "analogy": "multi-level abstraction layering",
+        "domain": "hierarchical_planning",
+    },
+    "composability": {
+        "analogy": "modular building-block assembly",
+        "domain": "mcp_composition",
+    },
+    "plugin": {
+        "analogy": "hot-swappable capability extension",
+        "domain": "plugin_registry",
+    },
+    "middleware": {
+        "analogy": "cross-cutting concern interception",
+        "domain": "middleware",
+    },
+    "transitive": {
+        "analogy": "inferred multi-hop relationships",
+        "domain": "owl_transitivity",
+    },
+    "inference": {
+        "analogy": "derived knowledge from assertions",
+        "domain": "owl_reasoning",
+    },
+    "retrieval": {
+        "analogy": "context-aware document fetching",
+        "domain": "hybrid_retriever",
+    },
     "rag": {"analogy": "retrieval-augmented generation", "domain": "hybrid_retriever"},
-    "multi-agent": {"analogy": "coordinated specialist teams", "domain": "orchestration"},
-    "orchestration": {"analogy": "workflow coordination engine", "domain": "orchestration"},
-    "planning": {"analogy": "task decomposition and scheduling", "domain": "htn_planning"},
-    "tool use": {"analogy": "dynamic capability invocation", "domain": "tool_interface"},
+    "multi-agent": {
+        "analogy": "coordinated specialist teams",
+        "domain": "orchestration",
+    },
+    "orchestration": {
+        "analogy": "workflow coordination engine",
+        "domain": "orchestration",
+    },
+    "planning": {
+        "analogy": "task decomposition and scheduling",
+        "domain": "htn_planning",
+    },
+    "tool use": {
+        "analogy": "dynamic capability invocation",
+        "domain": "tool_interface",
+    },
     "mcp": {"analogy": "model context protocol integration", "domain": "mcp_factory"},
-    "safety": {"analogy": "guardrails and constraint enforcement", "domain": "guardrails"},
+    "safety": {
+        "analogy": "guardrails and constraint enforcement",
+        "domain": "guardrails",
+    },
     "guardrail": {"analogy": "safety boundary enforcement", "domain": "guardrails"},
-    "evaluation": {"analogy": "quality assessment framework", "domain": "evaluation_engine"},
-    "benchmark": {"analogy": "standardized performance testing", "domain": "evaluation_engine"},
+    "evaluation": {
+        "analogy": "quality assessment framework",
+        "domain": "evaluation_engine",
+    },
+    "benchmark": {
+        "analogy": "standardized performance testing",
+        "domain": "evaluation_engine",
+    },
     "telemetry": {"analogy": "runtime observability signals", "domain": "telemetry"},
     "observability": {"analogy": "system state transparency", "domain": "telemetry"},
     "security": {"analogy": "threat defense mechanisms", "domain": "security"},
     "authentication": {"analogy": "identity verification", "domain": "security"},
-    "scheduling": {"analogy": "resource allocation optimization", "domain": "cognitive_scheduler"},
+    "scheduling": {
+        "analogy": "resource allocation optimization",
+        "domain": "cognitive_scheduler",
+    },
     "memory": {"analogy": "persistent experience storage", "domain": "tiered_memory"},
-    "consolidation": {"analogy": "memory compression and retention", "domain": "memory_consolidation"},
-    "context window": {"analogy": "adaptive context management", "domain": "context_management"},
-    "red team": {"analogy": "adversarial testing framework", "domain": "evaluation_engine"},
-    "federated": {"analogy": "distributed graph querying", "domain": "external_federation"},
+    "consolidation": {
+        "analogy": "memory compression and retention",
+        "domain": "memory_consolidation",
+    },
+    "context window": {
+        "analogy": "adaptive context management",
+        "domain": "context_management",
+    },
+    "red team": {
+        "analogy": "adversarial testing framework",
+        "domain": "evaluation_engine",
+    },
+    "federated": {
+        "analogy": "distributed graph querying",
+        "domain": "external_federation",
+    },
 }
 
 _INNOVATION_SIGNALS = [
-    "novel", "new", "propose", "introduce", "demonstrate",
-    "improve", "outperform", "achieve", "enable", "first",
-    "state-of-the-art", "sota", "surpass", "advance",
+    "novel",
+    "new",
+    "propose",
+    "introduce",
+    "demonstrate",
+    "improve",
+    "outperform",
+    "achieve",
+    "enable",
+    "first",
+    "state-of-the-art",
+    "sota",
+    "surpass",
+    "advance",
 ]
 
 
@@ -210,22 +349,26 @@ def extract_innovations_from_text(content: str, concept_id: str = "") -> dict:
     for keyword, info in BIOMIMICRY_KEYWORDS.items():
         count = content_lower.count(keyword)
         if count > 0:
-            biomimicry_hits.append({
-                "keyword": keyword,
-                "count": count,
-                "analogy": info["analogy"],
-                "target_domain": info["domain"],
-            })
+            biomimicry_hits.append(
+                {
+                    "keyword": keyword,
+                    "count": count,
+                    "analogy": info["analogy"],
+                    "target_domain": info["domain"],
+                }
+            )
 
     for keyword, info in TECH_INNOVATION_KEYWORDS.items():
         count = content_lower.count(keyword)
         if count > 0:
-            tech_hits.append({
-                "keyword": keyword,
-                "count": count,
-                "analogy": info["analogy"],
-                "target_domain": info["domain"],
-            })
+            tech_hits.append(
+                {
+                    "keyword": keyword,
+                    "count": count,
+                    "analogy": info["analogy"],
+                    "target_domain": info["domain"],
+                }
+            )
 
     # Extract key claims
     claims = []
@@ -251,6 +394,7 @@ def extract_innovations_from_text(content: str, concept_id: str = "") -> dict:
 # Concept × Paper Cross-Reference
 # ---------------------------------------------------------------------------
 
+
 def cross_reference_concept(
     concept: dict,
     article_chunks: list[dict],
@@ -267,7 +411,9 @@ def cross_reference_concept(
     Returns:
         Dict with concept info, matched papers, extracted innovations.
     """
-    relevant_chunks = [c for c in article_chunks if (c.get("score") or 0.0) >= threshold]
+    relevant_chunks = [
+        c for c in article_chunks if (c.get("score") or 0.0) >= threshold
+    ]
 
     if not relevant_chunks:
         return {
@@ -284,7 +430,7 @@ def cross_reference_concept(
         metadata = chunk.get("metadata") or {}
         if not isinstance(metadata, dict):
             metadata = {}
-            
+
         paper_path = chunk.get("target_path") or metadata.get("file_path", "unknown")
         if paper_path not in paper_groups:
             paper_groups[paper_path] = []
@@ -299,12 +445,18 @@ def cross_reference_concept(
         avg_score = sum((c.get("score") or 0.0) for c in chunks) / len(chunks)
         max_score = max((c.get("score") or 0.0) for c in chunks)
 
-        innovations = extract_innovations_from_text(combined_content, concept["concept_id"])
-        signal_count = len(innovations["biomimicry_signals"]) + len(innovations["tech_signals"])
+        innovations = extract_innovations_from_text(
+            combined_content, concept["concept_id"]
+        )
+        signal_count = len(innovations["biomimicry_signals"]) + len(
+            innovations["tech_signals"]
+        )
 
         paper_match = {
             "paper_path": paper_path,
-            "paper_name": Path(paper_path).stem if paper_path != "unknown" else "unknown",
+            "paper_name": Path(paper_path).stem
+            if paper_path != "unknown"
+            else "unknown",
             "chunk_count": len(chunks),
             "avg_similarity": round(avg_score, 4),
             "max_similarity": round(max_score, 4),
@@ -323,8 +475,7 @@ def cross_reference_concept(
     )
 
     total_signals = sum(
-        len(i["biomimicry_signals"]) + len(i["tech_signals"])
-        for i in all_innovations
+        len(i["biomimicry_signals"]) + len(i["tech_signals"]) for i in all_innovations
     )
 
     return {
@@ -362,20 +513,26 @@ def build_enhancement_recommendations(cross_ref_results: list[dict]) -> list[dic
                 cost_estimate = 0.3  # Base integration cost
                 ev_score = round((capability * novelty) / cost_estimate, 2)
 
-                recommendations.append({
-                    "concept_id": concept_result["concept_id"],
-                    "concept_name": concept_result["name"],
-                    "pillar": concept_result["pillar"],
-                    "source_paper": paper["paper_name"],
-                    "innovation": signal["analogy"],
-                    "target_domain": domain,
-                    "source_keyword": signal["keyword"],
-                    "keyword_count": signal["count"],
-                    "similarity": paper["max_similarity"],
-                    "emergent_value_score": ev_score,
-                    "priority": "high" if ev_score > 2.0 else "medium" if ev_score > 1.0 else "low",
-                    "top_claims": paper.get("top_claims", [])[:2],
-                })
+                recommendations.append(
+                    {
+                        "concept_id": concept_result["concept_id"],
+                        "concept_name": concept_result["name"],
+                        "pillar": concept_result["pillar"],
+                        "source_paper": paper["paper_name"],
+                        "innovation": signal["analogy"],
+                        "target_domain": domain,
+                        "source_keyword": signal["keyword"],
+                        "keyword_count": signal["count"],
+                        "similarity": paper["max_similarity"],
+                        "emergent_value_score": ev_score,
+                        "priority": "high"
+                        if ev_score > 2.0
+                        else "medium"
+                        if ev_score > 1.0
+                        else "low",
+                        "top_claims": paper.get("top_claims", [])[:2],
+                    }
+                )
 
             for signal in paper.get("top_biomimicry_signals", []):
                 domain = signal["target_domain"]
@@ -388,21 +545,27 @@ def build_enhancement_recommendations(cross_ref_results: list[dict]) -> list[dic
                 capability = paper["max_similarity"]
                 ev_score = round((capability * novelty) / 0.4, 2)
 
-                recommendations.append({
-                    "concept_id": concept_result["concept_id"],
-                    "concept_name": concept_result["name"],
-                    "pillar": concept_result["pillar"],
-                    "source_paper": paper["paper_name"],
-                    "innovation": signal["analogy"],
-                    "target_domain": domain,
-                    "source_keyword": signal["keyword"],
-                    "keyword_count": signal["count"],
-                    "similarity": paper["max_similarity"],
-                    "emergent_value_score": ev_score,
-                    "priority": "high" if ev_score > 2.0 else "medium" if ev_score > 1.0 else "low",
-                    "methodology": "biomimicry",
-                    "top_claims": paper.get("top_claims", [])[:2],
-                })
+                recommendations.append(
+                    {
+                        "concept_id": concept_result["concept_id"],
+                        "concept_name": concept_result["name"],
+                        "pillar": concept_result["pillar"],
+                        "source_paper": paper["paper_name"],
+                        "innovation": signal["analogy"],
+                        "target_domain": domain,
+                        "source_keyword": signal["keyword"],
+                        "keyword_count": signal["count"],
+                        "similarity": paper["max_similarity"],
+                        "emergent_value_score": ev_score,
+                        "priority": "high"
+                        if ev_score > 2.0
+                        else "medium"
+                        if ev_score > 1.0
+                        else "low",
+                        "methodology": "biomimicry",
+                        "top_claims": paper.get("top_claims", [])[:2],
+                    }
+                )
 
     # Sort by emergent value score
     recommendations.sort(key=lambda x: -x["emergent_value_score"])
@@ -413,6 +576,7 @@ def build_enhancement_recommendations(cross_ref_results: list[dict]) -> list[dic
 # Main CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     import argparse
 
@@ -420,44 +584,63 @@ def main():
         description="CA-011: Concept-seeded cross-reference engine"
     )
     parser.add_argument(
-        "--kg", action="store_true",
-        help="Query concept IDs and Article nodes from the Knowledge Graph."
+        "--kg",
+        action="store_true",
+        help="Query concept IDs and Article nodes from the Knowledge Graph.",
     )
     parser.add_argument(
-        "--concept-map", type=str, default="",
-        help="Path to a concept_map.md file to parse concept IDs from."
+        "--concept-map",
+        type=str,
+        default="",
+        help="Path to a concept_map.md file to parse concept IDs from.",
     )
     parser.add_argument(
-        "--pillars", nargs="*", default=None,
-        help="Filter to specific pillar prefixes (e.g., ORCH KG AHE ECO OS)."
+        "--pillars",
+        nargs="*",
+        default=None,
+        help="Filter to specific pillar prefixes (e.g., ORCH KG AHE ECO OS).",
     )
     parser.add_argument(
-        "--threshold", type=float, default=0.2,
-        help="Minimum similarity score for paper-concept matches (default: 0.2)."
+        "--threshold",
+        type=float,
+        default=0.2,
+        help="Minimum similarity score for paper-concept matches (default: 0.2).",
     )
     parser.add_argument(
-        "--top-k", type=int, default=15,
-        help="Max Article chunks to retrieve per concept query (default: 15)."
+        "--top-k",
+        type=int,
+        default=15,
+        help="Max Article chunks to retrieve per concept query (default: 15).",
     )
     parser.add_argument(
-        "--output", type=str, default="",
-        help="Output file path for JSON results. Prints to stdout if not set."
+        "--output",
+        type=str,
+        default="",
+        help="Output file path for JSON results. Prints to stdout if not set.",
     )
     parser.add_argument(
-        "--batch-size", type=int, default=0,
-        help="Process concepts in batches of N (writes intermediate results). 0 = no batching."
+        "--batch-size",
+        type=int,
+        default=0,
+        help="Process concepts in batches of N (writes intermediate results). 0 = no batching.",
     )
     parser.add_argument(
-        "--resume", type=str, default="",
-        help="Resume from a partial output JSON. Skips already-processed concepts."
+        "--resume",
+        type=str,
+        default="",
+        help="Resume from a partial output JSON. Skips already-processed concepts.",
     )
 
     args = parser.parse_args()
 
     # ── Step 1: Load Concepts ─────────────────────────────────────────
-    target_files_input = input("Enter specific target paths/files to filter by (comma separated), or leave blank for all: ").strip()
-    user_target_paths = [p.strip() for p in target_files_input.split(",")] if target_files_input else []
-    
+    target_files_input = input(
+        "Enter specific target paths/files to filter by (comma separated), or leave blank for all: "
+    ).strip()
+    user_target_paths = (
+        [p.strip() for p in target_files_input.split(",")] if target_files_input else []
+    )
+
     concepts: list[dict] = []
 
     if args.concept_map:
@@ -471,10 +654,14 @@ def main():
     elif args.kg:
         # Query concept nodes from KG
         try:
-            from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+            from agent_utilities.knowledge_graph.core.engine import (
+                IntelligenceGraphEngine,
+            )
             from agent_utilities.core.paths import kg_db_path
 
-            engine = IntelligenceGraphEngine(graph=nx.MultiDiGraph(), db_path=str(kg_db_path()))
+            engine = IntelligenceGraphEngine(
+                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
+            )
             results = engine.query_cypher(
                 "MATCH (n) WHERE n.concept_id IS NOT NULL "
                 "RETURN n.concept_id AS concept_id, n.name AS name "
@@ -483,22 +670,36 @@ def main():
             if results:
                 concepts = parse_concepts_from_kg(results)
             else:
-                print("No concept nodes found in KG. Falling back to concept_map.md search...",
-                      file=sys.stderr)
+                print(
+                    "No concept nodes found in KG. Falling back to concept_map.md search...",
+                    file=sys.stderr,
+                )
         except Exception as e:
-            print(f"KG query failed ({e}), falling back to concept_map.md search...",
-                  file=sys.stderr)
+            print(
+                f"KG query failed ({e}), falling back to concept_map.md search...",
+                file=sys.stderr,
+            )
 
         # Fallback: find concept_map.md in common locations
         if not concepts:
             for candidate in [
                 Path.cwd() / "docs" / "concept_map.md",
-                Path.home() / "workspace" / "agent-packages" / "agent-utilities" / "docs" / "concept_map.md",
-                Path("/home/apps/workspace/agent-packages/agent-utilities/docs/concept_map.md"),
+                Path.home()
+                / "workspace"
+                / "agent-packages"
+                / "agent-utilities"
+                / "docs"
+                / "concept_map.md",
+                Path(
+                    "/home/apps/workspace/agent-packages/agent-utilities/docs/concept_map.md"
+                ),
             ]:
                 if candidate.exists():
                     concepts = parse_concept_map_file(candidate)
-                    print(f"Loaded {len(concepts)} concepts from {candidate}", file=sys.stderr)
+                    print(
+                        f"Loaded {len(concepts)} concepts from {candidate}",
+                        file=sys.stderr,
+                    )
                     break
 
     if not concepts:
@@ -510,8 +711,10 @@ def main():
         pillars_upper = {p.upper() for p in args.pillars}
         concepts = [c for c in concepts if c["pillar"] in pillars_upper]
 
-    print(f"Cross-referencing {len(concepts)} concepts (threshold={args.threshold}, top_k={args.top_k})...",
-          file=sys.stderr)
+    print(
+        f"Cross-referencing {len(concepts)} concepts (threshold={args.threshold}, top_k={args.top_k})...",
+        file=sys.stderr,
+    )
 
     # ── Step 2: Load resume state if provided ─────────────────────────
     cross_ref_results: list[dict] = []
@@ -524,8 +727,10 @@ def main():
                 resume_data = json.loads(resume_path.read_text())
                 cross_ref_results = resume_data.get("cross_reference", [])
                 completed_ids = {r["concept_id"] for r in cross_ref_results}
-                print(f"Resuming: {len(completed_ids)} concepts already processed.",
-                      file=sys.stderr)
+                print(
+                    f"Resuming: {len(completed_ids)} concepts already processed.",
+                    file=sys.stderr,
+                )
             except Exception as e:
                 print(f"Failed to load resume file: {e}", file=sys.stderr)
 
@@ -543,34 +748,49 @@ def main():
         from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
         from agent_utilities.core.paths import kg_db_path
 
-        engine = IntelligenceGraphEngine(graph=nx.MultiDiGraph(), db_path=str(kg_db_path()))
+        engine = IntelligenceGraphEngine(
+            graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
+        )
 
         start_time = time.time()
 
         for i, concept in enumerate(remaining):
             query = f"{concept['name']} {concept['pillar_name']}"
-            print(f"  [{i+1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
-                  file=sys.stderr)
+            print(
+                f"  [{i + 1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
+                file=sys.stderr,
+            )
 
             try:
                 results = engine.search_hybrid(
-                    query, 
-                    top_k=args.top_k, 
+                    query,
+                    top_k=args.top_k,
                     skip_quality_gate=True,
                     relevance_threshold=args.threshold,
-                    target_paths=user_target_paths
+                    target_paths=user_target_paths,
                 )
                 # Filter to Article nodes only
                 article_results = [
-                    r for r in results
+                    r
+                    for r in results
                     if (r.get("type") or "").lower() in ("article", "document")
                 ]
 
-                result = cross_reference_concept(concept, article_results, args.threshold)
+                result = cross_reference_concept(
+                    concept, article_results, args.threshold
+                )
             except Exception as e:
-                print(f"    ⚠ Search failed for {concept['concept_id']}: {e}", file=sys.stderr)
+                print(
+                    f"    ⚠ Search failed for {concept['concept_id']}: {e}",
+                    file=sys.stderr,
+                )
                 traceback.print_exc(file=sys.stderr)
-                result = {**concept, "match_count": 0, "paper_matches": [], "error": str(e)}
+                result = {
+                    **concept,
+                    "match_count": 0,
+                    "paper_matches": [],
+                    "error": str(e),
+                }
 
             cross_ref_results.append(result)
 
@@ -579,16 +799,20 @@ def main():
                 elapsed = time.time() - start_time
                 rate = (i + 1) / elapsed if elapsed > 0 else 0
                 eta = (len(remaining) - i - 1) / rate if rate > 0 else 0
-                print(f"    ✔ Batch checkpoint ({i+1}/{len(remaining)}) — "
-                      f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
-                      file=sys.stderr)
+                print(
+                    f"    ✔ Batch checkpoint ({i + 1}/{len(remaining)}) — "
+                    f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
+                    file=sys.stderr,
+                )
                 _write_intermediate(args.output, concepts, cross_ref_results)
 
         elapsed = time.time() - start_time
-        print(f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
-              f"({len(remaining)/elapsed:.1f} concepts/sec)",
-              file=sys.stderr)
-        
+        print(
+            f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
+            f"({len(remaining) / elapsed:.1f} concepts/sec)",
+            file=sys.stderr,
+        )
+
         # Prevent DuckDB core dump on exit by explicitly disconnecting
         try:
             engine.disconnect()
@@ -596,9 +820,16 @@ def main():
             pass
 
     except ImportError:
-        print("agent_utilities not available — cannot query KG directly.", file=sys.stderr)
-        print("Run this script in an environment with agent-utilities installed,", file=sys.stderr)
-        print("or use the MCP tools (kg_search) from an agent session.", file=sys.stderr)
+        print(
+            "agent_utilities not available — cannot query KG directly.", file=sys.stderr
+        )
+        print(
+            "Run this script in an environment with agent-utilities installed,",
+            file=sys.stderr,
+        )
+        print(
+            "or use the MCP tools (kg_search) from an agent session.", file=sys.stderr
+        )
         sys.exit(1)
 
     # ── Step 4: Build Recommendations ─────────────────────────────
@@ -608,8 +839,11 @@ def main():
     _write_final(args.output, concepts, cross_ref_results, recommendations)
 
 
-def _build_output(concepts: list[dict], cross_ref_results: list[dict],
-                  recommendations: list[dict] | None = None) -> dict:
+def _build_output(
+    concepts: list[dict],
+    cross_ref_results: list[dict],
+    recommendations: list[dict] | None = None,
+) -> dict:
     """Build the output dictionary."""
     matched_concepts = [r for r in cross_ref_results if r.get("match_count", 0) > 0]
     pillar_summary: dict[str, dict] = {}
@@ -640,8 +874,9 @@ def _build_output(concepts: list[dict], cross_ref_results: list[dict],
     }
 
 
-def _write_intermediate(output_path: str, concepts: list[dict],
-                        cross_ref_results: list[dict]) -> None:
+def _write_intermediate(
+    output_path: str, concepts: list[dict], cross_ref_results: list[dict]
+) -> None:
     """Write intermediate checkpoint (no recommendations yet)."""
     output = _build_output(concepts, cross_ref_results)
     out_path = Path(output_path)
@@ -649,9 +884,12 @@ def _write_intermediate(output_path: str, concepts: list[dict],
     out_path.write_text(json.dumps(output, indent=2))
 
 
-def _write_final(output_path: str, concepts: list[dict],
-                 cross_ref_results: list[dict],
-                 recommendations: list[dict]) -> None:
+def _write_final(
+    output_path: str,
+    concepts: list[dict],
+    cross_ref_results: list[dict],
+    recommendations: list[dict],
+) -> None:
     """Write final output with recommendations."""
     output = _build_output(concepts, cross_ref_results, recommendations)
     result_json = json.dumps(output, indent=2)

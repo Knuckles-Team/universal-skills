@@ -122,53 +122,67 @@ def identify_wiring_opportunities(
 
     # Components in source but not target
     for comp in component_diff.get("source_only", []):
-        opportunities.append({
-            "type": "component_gap",
-            "component": comp,
-            "action": f"Add '{comp}' component to target architecture",
-            "priority": "high",
-            "wiring_hint": "Wire into existing hot path via the nearest entry point",
-        })
+        opportunities.append(
+            {
+                "type": "component_gap",
+                "component": comp,
+                "action": f"Add '{comp}' component to target architecture",
+                "priority": "high",
+                "wiring_hint": "Wire into existing hot path via the nearest entry point",
+            }
+        )
 
     # Missing entry point types
     for ep_type in hot_path_diff.get("missing_entry_types", []):
-        opportunities.append({
-            "type": "entry_point_gap",
-            "entry_type": ep_type,
-            "action": f"Add {ep_type} entry point to target",
-            "priority": "medium",
-            "wiring_hint": "Create handler that delegates to existing engine methods",
-        })
+        opportunities.append(
+            {
+                "type": "entry_point_gap",
+                "entry_type": ep_type,
+                "action": f"Add {ep_type} entry point to target",
+                "priority": "medium",
+                "wiring_hint": "Create handler that delegates to existing engine methods",
+            }
+        )
 
     # Cold modules that could be wired in
     for cold_mod in target_hp.get("cold_modules", [])[:5]:
-        opportunities.append({
-            "type": "cold_code",
-            "module": cold_mod,
-            "action": f"Wire '{cold_mod}' into hot path or remove if dead code",
-            "priority": "low",
-            "wiring_hint": "Import from nearest hot-path module or add entry point",
-        })
+        opportunities.append(
+            {
+                "type": "cold_code",
+                "module": cold_mod,
+                "action": f"Wire '{cold_mod}' into hot path or remove if dead code",
+                "priority": "low",
+                "wiring_hint": "Import from nearest hot-path module or add entry point",
+            }
+        )
 
     # Design patterns to adopt
     for pattern, diff in pattern_diff.get("pattern_diffs", {}).items():
         if diff["delta"] > 0:
-            opportunities.append({
-                "type": "design_pattern",
-                "pattern": pattern,
-                "action": f"Consider adopting {pattern} pattern ({diff['source']}x in source)",
-                "priority": "medium",
-                "wiring_hint": f"Source examples: see analyze_design_patterns output",
-            })
+            opportunities.append(
+                {
+                    "type": "design_pattern",
+                    "pattern": pattern,
+                    "action": f"Consider adopting {pattern} pattern ({diff['source']}x in source)",
+                    "priority": "medium",
+                    "wiring_hint": f"Source examples: see analyze_design_patterns output",
+                }
+            )
 
-    return sorted(opportunities, key=lambda x: {"high": 0, "medium": 1, "low": 2}[x["priority"]])
+    return sorted(
+        opportunities, key=lambda x: {"high": 0, "medium": 1, "low": 2}[x["priority"]]
+    )
 
 
 def main():
     if len(sys.argv) < 3:
-        print(json.dumps({
-            "error": "Usage: analyze_architecture_diff.py <source_path> <target_path>"
-        }))
+        print(
+            json.dumps(
+                {
+                    "error": "Usage: analyze_architecture_diff.py <source_path> <target_path>"
+                }
+            )
+        )
         sys.exit(1)
 
     source_path = Path(sys.argv[1]).resolve()
@@ -195,25 +209,32 @@ def main():
         component_diff, hot_path_diff, pattern_diff, target_hp
     )
 
-    print(json.dumps({
-        "domain": "CA-003b",
-        "domain_name": "Architecture Differential",
-        "source": str(source_path),
-        "target": str(target_path),
-        "component_topology_diff": component_diff,
-        "hot_path_diff": hot_path_diff,
-        "design_pattern_diff": pattern_diff,
-        "protocol_diff": protocol_diff,
-        "wiring_opportunities": wiring,
-        "wiring_opportunity_count": len(wiring),
-        "summary": {
-            "component_gaps": component_diff["gap_count"],
-            "missing_entry_types": len(hot_path_diff.get("missing_entry_types", [])),
-            "pattern_divergences": pattern_diff["divergence_count"],
-            "protocol_gaps": protocol_diff["gap_count"],
-            "total_opportunities": len(wiring),
-        },
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "domain": "CA-003b",
+                "domain_name": "Architecture Differential",
+                "source": str(source_path),
+                "target": str(target_path),
+                "component_topology_diff": component_diff,
+                "hot_path_diff": hot_path_diff,
+                "design_pattern_diff": pattern_diff,
+                "protocol_diff": protocol_diff,
+                "wiring_opportunities": wiring,
+                "wiring_opportunity_count": len(wiring),
+                "summary": {
+                    "component_gaps": component_diff["gap_count"],
+                    "missing_entry_types": len(
+                        hot_path_diff.get("missing_entry_types", [])
+                    ),
+                    "pattern_divergences": pattern_diff["divergence_count"],
+                    "protocol_gaps": protocol_diff["gap_count"],
+                    "total_opportunities": len(wiring),
+                },
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

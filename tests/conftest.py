@@ -8,10 +8,12 @@ def pytest_configure(config):
         "concept(id): mark test with a concept ID for traceability",
     )
 
+
 import os
 import pytest
 
 os.environ["AGENT_UTILITIES_TESTING"] = "true"
+
 
 @pytest.fixture(autouse=True)
 def isolate_graph_db(monkeypatch, tmp_path):

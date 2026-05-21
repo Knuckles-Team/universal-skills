@@ -69,7 +69,7 @@ def load_results(paths: list[str]) -> dict[str, dict[str, dict]]:
                 project = Path(data.get("project", data.get("target", "global"))).name
                 domain = data.get("domain", "unknown")
                 domain_name = data.get("domain_name", domain)
-                
+
                 if domain not in DOMAIN_NAMES and domain != "unknown":
                     DOMAIN_NAMES[domain] = domain_name
                     DOMAIN_SHORT[domain] = domain_name[:6]
@@ -241,31 +241,39 @@ def generate_report(
     # Recommendations
     # Innovation Extraction & Recommendations
     report.append("\\n## Innovations & Recommendations\\n")
-    
+
     # Render Concept Cross-Reference (CA-011) or generalized recommendations
     has_global_recs = False
     for project, domains in projects.items():
         for domain_id, data in domains.items():
             if "recommendations" in data:
                 has_global_recs = True
-                report.append(f"### {data.get('domain_name', domain_id)} ({project})\\n")
+                report.append(
+                    f"### {data.get('domain_name', domain_id)} ({project})\\n"
+                )
                 if "summary" in data:
                     s = data["summary"]
-                    report.append(f"Analyzed {s.get('total_concepts', 0)} concepts, found {s.get('total_recommendations', 0)} recommendations.\\n")
-                
-                report.append("| Priority | EV Score | Pillar | Concept | Source Paper | Innovation Domain | Methodology |")
+                    report.append(
+                        f"Analyzed {s.get('total_concepts', 0)} concepts, found {s.get('total_recommendations', 0)} recommendations.\\n"
+                    )
+
+                report.append(
+                    "| Priority | EV Score | Pillar | Concept | Source Paper | Innovation Domain | Methodology |"
+                )
                 report.append("|---|---|---|---|---|---|---|")
                 for rec in data.get("recommendations", [])[:30]:  # Top 30
-                    score = rec.get('emergent_value_score', '-')
-                    pri = rec.get('priority', '-')
-                    pillar = rec.get('pillar', '-')
-                    cid = rec.get('concept_id', '-')
-                    paper = rec.get('source_paper', '-')
-                    domain = rec.get('target_domain', '-')
-                    meth = rec.get('methodology', 'Tech')
-                    report.append(f"| {pri} | {score} | {pillar} | {cid} | {paper} | {domain} | {meth} |")
+                    score = rec.get("emergent_value_score", "-")
+                    pri = rec.get("priority", "-")
+                    pillar = rec.get("pillar", "-")
+                    cid = rec.get("concept_id", "-")
+                    paper = rec.get("source_paper", "-")
+                    domain = rec.get("target_domain", "-")
+                    meth = rec.get("methodology", "Tech")
+                    report.append(
+                        f"| {pri} | {score} | {pillar} | {cid} | {paper} | {domain} | {meth} |"
+                    )
                 report.append("\\n")
-                
+
             if "results" in data and domain_id == "CA-010":
                 has_global_recs = True
                 report.append(f"### Cross-Domain Synergies ({project})\\n")
@@ -273,19 +281,30 @@ def generate_report(
                     source = Path(res.get("source", "unknown")).name
                     syns = res.get("synergies", [])
                     if syns:
-                        report.append(f"**From {source}** (Concept: {res.get('concept_id', 'N/A')}):")
+                        report.append(
+                            f"**From {source}** (Concept: {res.get('concept_id', 'N/A')}):"
+                        )
                         for s in syns:
-                            report.append(f"- **{s.get('target_domain', '')}**: {s.get('innovation', '')} (Value: {s.get('estimated_value', '')})")
+                            report.append(
+                                f"- **{s.get('target_domain', '')}**: {s.get('innovation', '')} (Value: {s.get('estimated_value', '')})"
+                            )
                         report.append("")
 
     if not has_global_recs:
-        report.append("Based on the analysis, the following integration opportunities exist:\\n")
+        report.append(
+            "Based on the analysis, the following integration opportunities exist:\\n"
+        )
 
     # Find weak areas per project
     for project in project_names:
         weak = []
         for domain_id, domain_name in DOMAIN_NAMES.items():
-            score = projects[project].get(domain_id, {}).get("scoring", {}).get("score", 100)
+            score = (
+                projects[project]
+                .get(domain_id, {})
+                .get("scoring", {})
+                .get("score", 100)
+            )
             if score < 70:
                 weak.append(f"{domain_name} ({score}/100)")
         if weak:
