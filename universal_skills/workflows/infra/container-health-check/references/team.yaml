@@ -1,0 +1,5 @@
+name: container_health_check_team
+task_pattern: infrastructure health assessment
+execution_mode: sequential
+specialist_ids:
+  - container-manager-mcp

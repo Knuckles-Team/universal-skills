@@ -39,3 +39,4 @@ When asked to track inventory or SSH into a machine:
 1. Look up the machine in `~/.config/agent-utilities/inventory.yaml` to find its IP address.
 2. Formulate connections using `tunnel-manager-mcp`.
 3. Understand that `graph-os` natively indexes these as `HardwareNode` and `PlatformService` entities for architectural reasoning.
+4. If passwordless SSH access or full-mesh connectivity needs to be established across the inventory, **always use the native `mcp_tm_inventory` tool with the `mesh_bootstrap` action** (with `parallel=true` for concurrent, cross-platform execution). Do not write manual SSH key generation or distribution scripts.

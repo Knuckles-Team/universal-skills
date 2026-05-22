@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "universal-skills"
-version = "0.12.1"
+version = "0.12.2"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -13,6 +13,7 @@ dependencies = [ ]
 
 [project.optional-dependencies]
 test = [
+    "pytest-xdist>=3.6.0",
     "pytest",
     "pytest-asyncio", "pytest-cov",
     "PyYAML",

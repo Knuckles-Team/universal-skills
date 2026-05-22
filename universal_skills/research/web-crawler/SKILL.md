@@ -9,7 +9,7 @@ license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
 metadata:
   author: Genius
-  version: '0.12.1'
+  version: '0.12.2'
 ---
 # Web Crawler Skill
 
@@ -49,3 +49,11 @@ python scripts/crawl.py --urls <url> --strategy <strategy> [options]
 * `--ignore-prefix-restriction`: Disables the automatic path-prefix filter in recursive mode.
 * `--wait-for`: Custom CSS selector or JS expression to wait for (e.g., `"css:.my-content"`).
 * `--insecure`: Disable SSL verification (use with caution).
+
+### Knowledge Graph Ingestion (Native)
+
+If the user requests that the crawled content be ingested into the Knowledge Graph (or if you are fetching documentation meant for persistent agent memory), you MUST ingest the resulting output directory natively into `graph-os`.
+
+To do this, after the crawler finishes saving the markdown files to the `--output-dir`:
+1. Use the `mcp_graph-os_graph_ingest` tool with `action='ingest'` and `target_path` set to the absolute path of your `--output-dir`.
+2. Alternatively, if the user explicitly asks to "trigger knowledge-graph-ingest", you can invoke the `knowledge-graph-ingest` skill which will handle the orchestration.

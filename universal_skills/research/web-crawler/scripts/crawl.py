@@ -717,51 +717,87 @@ async def main():
         max_session_permit=args.max_concurrent,
     )
 
-    async with AsyncWebCrawler(config=browser_config) as crawler:
-        if args.strategy == "single":
-            for url in args.urls:
-                await crawl_single(crawler, url, crawl_config, args.output_dir)
-        elif args.strategy == "chunked":
-            for url in args.urls:
-                await crawl_chunked(crawler, url, crawl_config, args.output_dir)
-        elif args.strategy == "sitemap-sequential":
-            for url in args.urls:
-                await crawl_sitemap_sequential(
+    try:
+        async with AsyncWebCrawler(config=browser_config) as crawler:
+            if args.strategy == "single":
+                for url in args.urls:
+                    await crawl_single(crawler, url, crawl_config, args.output_dir)
+            elif args.strategy == "chunked":
+                for url in args.urls:
+                    await crawl_chunked(crawler, url, crawl_config, args.output_dir)
+            elif args.strategy == "sitemap-sequential":
+                for url in args.urls:
+                    await crawl_sitemap_sequential(
+                        crawler,
+                        url,
+                        crawl_config,
+                        args.output_dir,
+                        ssl_verify=ssl_verify,
+                        allowed_prefixes=allowed_prefixes
+                        if discovered_sitemap
+                        else None,
+                    )
+            elif args.strategy == "sitemap-parallel":
+                for url in args.urls:
+                    await crawl_sitemap_parallel(
+                        crawler,
+                        url,
+                        crawl_config,
+                        dispatcher,
+                        args.output_dir,
+                        process,
+                        peak_memory,
+                        ssl_verify=ssl_verify,
+                        allowed_prefixes=allowed_prefixes
+                        if discovered_sitemap
+                        else None,
+                    )
+            elif args.strategy == "recursive":
+                await crawl_recursive_high_speed(
                     crawler,
-                    url,
-                    crawl_config,
-                    args.output_dir,
-                    ssl_verify=ssl_verify,
-                    allowed_prefixes=allowed_prefixes if discovered_sitemap else None,
-                )
-        elif args.strategy == "sitemap-parallel":
-            for url in args.urls:
-                await crawl_sitemap_parallel(
-                    crawler,
-                    url,
+                    args.urls,
+                    args.max_depth,
                     crawl_config,
                     dispatcher,
                     args.output_dir,
-                    process,
-                    peak_memory,
+                    max_pages=args.max_pages,
+                    ignore_prefix_restriction=args.ignore_prefix_restriction,
                     ssl_verify=ssl_verify,
-                    allowed_prefixes=allowed_prefixes if discovered_sitemap else None,
                 )
-        elif args.strategy == "recursive":
-            await crawl_recursive_high_speed(
-                crawler,
-                args.urls,
-                args.max_depth,
-                crawl_config,
-                dispatcher,
-                args.output_dir,
-                max_pages=args.max_pages,
-                ignore_prefix_restriction=args.ignore_prefix_restriction,
-                ssl_verify=ssl_verify,
+    except Exception as e:
+        logger.warning(f"crawl4ai/Playwright execution failed: {e}")
+        logger.warning("Attempting graceful fallback using standard HTTP requests...")
+        import requests
+
+        # Fallback is currently best-effort for single/chunked URLs.
+        # Complex recursion/sitemap logic requires the full headless browser engine.
+        if args.strategy in ("single", "chunked"):
+            for url in args.urls:
+                try:
+                    logger.info(f"Fallback fetching: {url}")
+                    resp = requests.get(url, verify=ssl_verify, timeout=15)
+                    resp.raise_for_status()
+
+                    content = resp.text
+                    # Try to strip HTML if BeautifulSoup is available
+                    try:
+                        from bs4 import BeautifulSoup
+
+                        soup = BeautifulSoup(content, "html.parser")
+                        content = soup.get_text(separator="\n", strip=True)
+                    except ImportError:
+                        pass
+
+                    save_markdown(content, url, args.output_dir)
+                except Exception as ex:
+                    logger.error(f"Fallback fetch failed for {url}: {ex}")
+        else:
+            logger.error(
+                f"Fallback extraction is not supported for strategy '{args.strategy}'. Please run 'playwright install' to fix the browser dependencies."
             )
 
-        if args.output_dir:
-            cleanup_filenames(args.output_dir)
+    if args.output_dir:
+        cleanup_filenames(args.output_dir)
 
 
 if __name__ == "__main__":

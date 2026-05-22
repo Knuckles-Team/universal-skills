@@ -5,7 +5,7 @@ license: MIT
 tags: []
 metadata:
   author: Genius
-  version: '0.12.1'
+  version: '0.12.2'
 ---
 
 # Interactive Explain

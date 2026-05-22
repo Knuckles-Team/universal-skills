@@ -1,0 +1,8 @@
+name: paper_scan_team
+task_pattern: research scan workflow
+execution_mode: sequential
+specialist_ids:
+  - topic-extractor
+  - scholarx-fetcher
+  - paper-scorer
+  - paper-downloader

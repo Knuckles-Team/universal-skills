@@ -60,3 +60,61 @@ When the user asks to download or ingest a research paper using the ScholarX MCP
 1. You MUST explicitly prompt the user to confirm the paper's source (e.g., "Is this from arXiv, PMC, bioRxiv, etc.?").
 2. Once the user confirms the source, you MUST prepend the source prefix to the ID (e.g., `arxiv:2605.12975`) before executing the `sx_search` or `sx_storage` tools.
 3. After the paper is downloaded, you can ingest it by executing `mcp_agent-utilities-kg_kg_ingest` with the local downloaded file path as the `target_path`.
+
+### 7. Infrastructure Topology Ingestion (CONCEPT:OS-5.3)
+When ingesting the workspace, you MUST also ingest infrastructure state to fully
+hydrate the Knowledge Graph with the physical and virtual topology:
+
+#### 7a. Inventory File
+Ingest `~/.config/agent-utilities/inventory.yaml` as the canonical hardware inventory.
+For each host entry, create or update a `HardwareNode` KG node with:
+- `hostname`, `ip_address` (from `ansible_host`), `group`, `status`
+- `ssh_user` (from `ansible_user`), `ssh_key` (from `ansible_ssh_private_key_file`)
+- Any extended metadata (`hardware.*`, `os.*`, `roles`, `containers.*`, `networking.*`)
+
+Create `HAS_INTERFACE` edges from `HardwareNode` → `NetworkInterface` nodes for each
+network interface defined, and `CONNECTS_VIA` edges for any VPN tunnel entries.
+
+#### 7b. Ontology Files
+Include all OWL ontology files as ingestion targets:
+- `agent_utilities/knowledge_graph/ontology.ttl` — base ontology
+- `agent_utilities/knowledge_graph/ontology_infrastructure.ttl` — infrastructure module
+
+These provide the formal BFO-aligned class hierarchy for all infrastructure nodes.
+
+#### 7c. Workflow Catalog
+Ingest `agent_utilities/workflows/catalog.yaml` to create `WorkflowDefinition` nodes
+for each workflow, with `HAS_STEP` edges to individual `WorkflowStep` nodes and
+`REQUIRES_TOOL` edges to the MCP server `CallableResource` nodes they reference.
+
+#### 7d. Topology Snapshots
+If topology maps exist at `~/.local/share/agent-utilities/topology/`, ingest them:
+- `topology.json` — full infrastructure graph snapshot
+- `service_map.json` — service dependency chains
+- `network_map.json` — network topology
+
+These create/update `Container`, `ContainerStack`, `NetworkSubnet`, `DNSRewrite`,
+`ReverseProxy`, and `ObservabilityStack` nodes with their respective edges
+(`RUNS_ON`, `BELONGS_TO_STACK`, `DEPLOYED_ON`, `ROUTES_TO`, `RESOLVES_DNS_FOR`, etc.).
+
+#### 7e. DNS Rewrites
+Query `adguard-home-mcp` → `list_rewrites` and ingest each rewrite as a `DNSRewrite`
+node with `RESOLVES_DNS_FOR` edges linking to the corresponding `PlatformService` node.
+
+#### 7f. Container State (Live)
+If `container-manager-mcp` or `portainer-mcp` are available, query live container
+and stack state and ingest as `Container` and `ContainerStack` nodes with `RUNS_ON`
+and `BELONGS_TO_STACK` edges to the appropriate `HardwareNode` nodes.
+
+#### Default Ingestion Target List
+When performing a full workspace ingestion, the following infrastructure paths
+MUST be appended to the ingestion target list:
+```
+~/.config/agent-utilities/inventory.yaml
+~/.config/agent-utilities/mcp_config.json
+~/.config/agent-utilities/config.json
+~/.local/share/agent-utilities/topology/
+agent_utilities/knowledge_graph/ontology.ttl
+agent_utilities/knowledge_graph/ontology_infrastructure.ttl
+agent_utilities/workflows/catalog.yaml
+```

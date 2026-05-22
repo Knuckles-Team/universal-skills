@@ -56,5 +56,6 @@ You will enter a continuous loop of fixing issues, then running the exact comman
 
 ### Phase 5: Bump and Push (Optional)
 16. If the user confirmed in Phase 1 that they want to bump and push:
-    a. Run the `rm_workspace` tool with `action="maintain"` and `part="minor"` to perform a phased bump to the next minor version.
-    b. If the bump is successful, run the `rm_git` tool with `action="phased_push"` or `push` to push all projects back to github.
+    a. **CRITICAL:** Before running any bumpversion logic, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before bumping. Do NOT commit bumps to the wrong branches.
+    b. Run the `rm_workspace` tool with `action="maintain"` and `part="minor"` to perform a phased bump to the next minor version.
+    c. If the bump is successful, run the `rm_git` tool with `action="phased_push"` or `push` to push all projects back to github.
