@@ -8,7 +8,7 @@ license: MIT
 tags: [github, issues, triage, bug tracking]
 metadata:
   author: Genius
-  version: '0.12.2'
+  version: '0.13.0'
 ---
 
 # Triage

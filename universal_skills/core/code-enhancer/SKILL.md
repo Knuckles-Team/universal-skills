@@ -17,7 +17,7 @@ license: MIT
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
 metadata:
   author: Genius
-  version: '0.12.2'
+  version: '0.13.0'
 ---
 
 # Code Enhancer
