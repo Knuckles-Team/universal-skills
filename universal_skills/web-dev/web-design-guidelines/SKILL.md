@@ -8,7 +8,7 @@ license: MIT
 tags: [ui, design, guidelines, accessibility, audit]
 metadata:
   author: Genius
-  version: '0.13.0'
+  version: '0.14.0'
 ---
 # Web Interface Guidelines
 

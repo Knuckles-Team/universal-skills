@@ -5,7 +5,7 @@ license: MIT
 tags: []
 metadata:
   author: Genius
-  version: '0.13.0'
+  version: '0.14.0'
 ---
 
 # Manual Testing Enhanced
