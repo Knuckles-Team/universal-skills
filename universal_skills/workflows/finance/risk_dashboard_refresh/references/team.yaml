@@ -1,0 +1,16 @@
+name: Risk Dashboard Swarm
+task_pattern: compute portfolio Value-at-Risk and rolling risk metrics
+specialist_ids:
+- portfolio-returns-fetcher
+- var-calculator
+- drawdown-tracker
+- dashboard-synthesis
+capability_overrides:
+  portfolio-returns-fetcher:
+  - stuck_loop_detection
+  - checkpointing
+  var-calculator:
+  - stuck_loop_detection
+  dashboard-synthesis:
+  - stuck_loop_detection
+  - adversarial_verification

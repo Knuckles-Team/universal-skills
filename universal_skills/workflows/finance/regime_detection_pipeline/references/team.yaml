@@ -1,0 +1,16 @@
+name: Regime Detection Swarm
+task_pattern: classify market regimes and adapt active parameters
+specialist_ids:
+- data-collector
+- feature-extractor
+- hmm-regime-fitter
+- regime-adapter
+capability_overrides:
+  feature-extractor:
+  - stuck_loop_detection
+  - checkpointing
+  hmm-regime-fitter:
+  - stuck_loop_detection
+  regime-adapter:
+  - stuck_loop_detection
+  - adversarial_verification

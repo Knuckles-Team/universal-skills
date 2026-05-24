@@ -1,0 +1,16 @@
+name: Strategy Tournament Swarm
+task_pattern: rank and select optimal trading strategies from backtests
+specialist_ids:
+- backtest-batch-runner
+- metric-evaluator
+- ranker-selector
+- synthesis-compiler
+capability_overrides:
+  backtest-batch-runner:
+  - stuck_loop_detection
+  - checkpointing
+  metric-evaluator:
+  - stuck_loop_detection
+  synthesis-compiler:
+  - stuck_loop_detection
+  - adversarial_verification

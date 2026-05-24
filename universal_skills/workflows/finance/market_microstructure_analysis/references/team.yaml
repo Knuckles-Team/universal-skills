@@ -1,0 +1,16 @@
+name: Market Microstructure Swarm
+task_pattern: analyze order book flows and adverse selection metrics
+specialist_ids:
+- book-snapshot-crawlers
+- flow-toxicity-calculator
+- spread-decomposition
+- impact-report
+capability_overrides:
+  book-snapshot-crawlers:
+  - stuck_loop_detection
+  - checkpointing
+  flow-toxicity-calculator:
+  - stuck_loop_detection
+  impact-report:
+  - stuck_loop_detection
+  - adversarial_verification

@@ -1,0 +1,16 @@
+name: Strategy Review Swarm
+task_pattern: review and audit algorithmic trading strategy code files
+specialist_ids:
+- strategy-parser
+- static-logic-reviewer
+- leak-detector
+- quality-report-compiler
+capability_overrides:
+  strategy-parser:
+  - stuck_loop_detection
+  - checkpointing
+  static-logic-reviewer:
+  - stuck_loop_detection
+  quality-report-compiler:
+  - stuck_loop_detection
+  - adversarial_verification

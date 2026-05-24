@@ -1,0 +1,16 @@
+name: Portfolio Rebalancing Swarm
+task_pattern: optimize allocations and execute rebalance order lots
+specialist_ids:
+- position-auditor
+- mean-variance-optimizer
+- order-sizer-generator
+- rebalance-executor
+capability_overrides:
+  position-auditor:
+  - stuck_loop_detection
+  - checkpointing
+  mean-variance-optimizer:
+  - stuck_loop_detection
+  rebalance-executor:
+  - stuck_loop_detection
+  - adversarial_verification

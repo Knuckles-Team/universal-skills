@@ -1,0 +1,15 @@
+name: Sentiment Alpha Swarm
+task_pattern: harvest news and social feeds for sentiment alpha signals
+specialist_ids:
+- web-news-scraper
+- social-sentiment-analyzer
+- signal-score-fuser
+- backtest-verifier
+capability_overrides:
+  web-news-scraper:
+  - stuck_loop_detection
+  social-sentiment-analyzer:
+  - stuck_loop_detection
+  signal-score-fuser:
+  - stuck_loop_detection
+  - adversarial_verification

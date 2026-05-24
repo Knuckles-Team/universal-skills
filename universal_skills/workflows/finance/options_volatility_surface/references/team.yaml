@@ -1,0 +1,16 @@
+name: Options Volatility Swarm
+task_pattern: fit options volatility surfaces and identify skew arbitrage
+specialist_ids:
+- options-feed-collector
+- iv-surface-fitter
+- anomaly-detector
+- arbitrage-executor
+capability_overrides:
+  options-feed-collector:
+  - stuck_loop_detection
+  - checkpointing
+  iv-surface-fitter:
+  - stuck_loop_detection
+  arbitrage-executor:
+  - stuck_loop_detection
+  - adversarial_verification

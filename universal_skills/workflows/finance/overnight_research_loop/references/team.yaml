@@ -1,0 +1,16 @@
+name: Overnight Research Swarm
+task_pattern: conduct overnight trading factor research and backtests
+specialist_ids:
+- hypothesis-crawlers
+- parallel-backtester
+- factor-debater
+- report-compiler
+capability_overrides:
+  hypothesis-crawlers:
+  - stuck_loop_detection
+  parallel-backtester:
+  - stuck_loop_detection
+  - checkpointing
+  report-compiler:
+  - stuck_loop_detection
+  - adversarial_verification

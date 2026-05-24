@@ -1,0 +1,16 @@
+name: Dividend Reinvestment Swarm
+task_pattern: audit cash dividends and allocate reinvestment trade lots
+specialist_ids:
+- dividend-payment-auditor
+- target-allocation-solver
+- order-lot-sizing
+- reinvest-order-runner
+capability_overrides:
+  dividend-payment-auditor:
+  - stuck_loop_detection
+  - checkpointing
+  target-allocation-solver:
+  - stuck_loop_detection
+  reinvest-order-runner:
+  - stuck_loop_detection
+  - adversarial_verification

@@ -1,0 +1,16 @@
+name: Cross-Asset Correlation Swarm
+task_pattern: monitor rolling correlations and eigenvalue anomalies
+specialist_ids:
+- multi-ticker-collector
+- correlation-matrix-fitter
+- eigen-anomaly-detector
+- risk-exposure-adjuster
+capability_overrides:
+  multi-ticker-collector:
+  - stuck_loop_detection
+  - checkpointing
+  correlation-matrix-fitter:
+  - stuck_loop_detection
+  risk-exposure-adjuster:
+  - stuck_loop_detection
+  - adversarial_verification

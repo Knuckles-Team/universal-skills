@@ -1,0 +1,16 @@
+name: Multi-Exchange Arbitrage Swarm
+task_pattern: execute high-throughput cross-exchange arbitrage orders
+specialist_ids:
+- ticker-scanner
+- spread-analyzer
+- order-executor
+- pnl-settler
+capability_overrides:
+  ticker-scanner:
+  - stuck_loop_detection
+  spread-analyzer:
+  - stuck_loop_detection
+  - checkpointing
+  pnl-settler:
+  - stuck_loop_detection
+  - adversarial_verification

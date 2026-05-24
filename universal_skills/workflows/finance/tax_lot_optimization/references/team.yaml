@@ -1,0 +1,16 @@
+name: Tax Lot Swarm
+task_pattern: optimize lot matching for tax-loss harvesting
+specialist_ids:
+- lot-ledger-parser
+- unrealized-gain-calculator
+- harvest-candidate-selector
+- order-proposal-synthesis
+capability_overrides:
+  lot-ledger-parser:
+  - stuck_loop_detection
+  - checkpointing
+  unrealized-gain-calculator:
+  - stuck_loop_detection
+  order-proposal-synthesis:
+  - stuck_loop_detection
+  - adversarial_verification

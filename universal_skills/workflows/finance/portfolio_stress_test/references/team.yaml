@@ -1,0 +1,16 @@
+name: Stress Testing Swarm
+task_pattern: run simulated historical crash stress tests on portfolios
+specialist_ids:
+- returns-data-crawlers
+- scenario-crash-simulator
+- interest-rate-shock
+- stress-aggregation
+capability_overrides:
+  returns-data-crawlers:
+  - stuck_loop_detection
+  - checkpointing
+  scenario-crash-simulator:
+  - stuck_loop_detection
+  stress-aggregation:
+  - stuck_loop_detection
+  - adversarial_verification

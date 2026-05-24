@@ -1,0 +1,16 @@
+name: Walk-Forward Validation Swarm
+task_pattern: validate trading strategies via walk-forward analysis
+specialist_ids:
+- window-generator
+- model-train-batch
+- out-of-sample-test
+- aggregate-validator
+capability_overrides:
+  model-train-batch:
+  - stuck_loop_detection
+  - checkpointing
+  out-of-sample-test:
+  - stuck_loop_detection
+  aggregate-validator:
+  - stuck_loop_detection
+  - adversarial_verification

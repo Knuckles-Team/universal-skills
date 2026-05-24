@@ -1,0 +1,17 @@
+name: Strategy Lifecycle Swarm
+task_pattern: vet, backtest, and deploy algorithmic trading strategies
+specialist_ids:
+- hypothesis-generator
+- swarm-debate
+- backtest-evaluator
+- paper-trade-run
+- live-deploy-gate
+capability_overrides:
+  hypothesis-generator:
+  - stuck_loop_detection
+  backtest-evaluator:
+  - stuck_loop_detection
+  - checkpointing
+  live-deploy-gate:
+  - stuck_loop_detection
+  - adversarial_verification

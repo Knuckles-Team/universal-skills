@@ -1,0 +1,16 @@
+name: Freqtrade Deployment Swarm
+task_pattern: build, optimize, and deploy Freqtrade strategies
+specialist_ids:
+- strategy-coder
+- hyperparameter-tuner
+- dry-run-verify
+- live-enable-trigger
+capability_overrides:
+  hyperparameter-tuner:
+  - stuck_loop_detection
+  dry-run-verify:
+  - stuck_loop_detection
+  - checkpointing
+  live-enable-trigger:
+  - stuck_loop_detection
+  - adversarial_verification

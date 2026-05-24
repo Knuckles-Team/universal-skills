@@ -1,0 +1,16 @@
+name: Parameter Sweep Swarm
+task_pattern: optimize strategy hyperparameters via high-throughput sweep
+specialist_ids:
+- grid-search-sweeper
+- metric-extractor
+- surface-plotter
+- config-selector
+capability_overrides:
+  grid-search-sweeper:
+  - stuck_loop_detection
+  - checkpointing
+  metric-extractor:
+  - stuck_loop_detection
+  config-selector:
+  - stuck_loop_detection
+  - adversarial_verification

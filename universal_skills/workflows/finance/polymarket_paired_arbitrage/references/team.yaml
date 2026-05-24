@@ -1,0 +1,15 @@
+name: Polymarket Arbitrage Swarm
+task_pattern: identify and execute event contract arbitrage
+specialist_ids:
+- paired-market-scanner
+- order-book-simulator
+- risk-margin-calculator
+- trade-execution-engine
+capability_overrides:
+  paired-market-scanner:
+  - stuck_loop_detection
+  order-book-simulator:
+  - stuck_loop_detection
+  trade-execution-engine:
+  - stuck_loop_detection
+  - adversarial_verification

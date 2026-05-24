@@ -1,0 +1,16 @@
+name: Benchmark Tracking Swarm
+task_pattern: measure tracking error and style factor drift
+specialist_ids:
+- benchmark-returns-collector
+- tracking-error-calculator
+- return-attribution-engine
+- drift-alert-dispatch
+capability_overrides:
+  benchmark-returns-collector:
+  - stuck_loop_detection
+  - checkpointing
+  tracking-error-calculator:
+  - stuck_loop_detection
+  drift-alert-dispatch:
+  - stuck_loop_detection
+  - adversarial_verification
