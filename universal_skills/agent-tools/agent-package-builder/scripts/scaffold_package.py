@@ -4,8 +4,8 @@
 Agent Package Builder — Scaffolds a complete agent-package project.
 
 Generates the full project structure following the jellyfin-mcp gold standard,
-including all hidden config files, Docker infrastructure, Python package stubs,
-and agent workspace files.
+including modular split folders for api/ and mcp/, modern Material theme mkdocs,
+Keep a Changelog CHANGELOG.md, and unified pytest layout.
 """
 
 import argparse
@@ -798,153 +798,10 @@ NEWS              text
 readme            text
 *README*          text
 TODO              text
-
-# Templates
-*.dot             text
-*.ejs             text
-*.erb             text
-*.haml            text
-*.handlebars      text
-*.hbs             text
-*.hbt             text
-*.jade            text
-*.latte           text
-*.mustache        text
-*.njk             text
-*.phtml           text
-*.svelte          text
-*.tmpl            text
-*.tpl             text
-*.twig            text
-*.vue             text
-
-# Configs
-*.cnf             text
-*.conf            text
-*.config          text
-.editorconfig     text
-.env              text
-.gitattributes    text
-.gitconfig        text
-.htaccess         text
-*.lock            text -diff
-package.json      text eol=lf
-package-lock.json text eol=lf -diff
-pnpm-lock.yaml    text eol=lf -diff
-.prettierrc       text
-yarn.lock         text -diff
-*.toml            text
-*.yaml            text
-*.yml             text
-browserslist      text
-Makefile          text
-makefile          text
-
-# Heroku
-Procfile          text
-
-# Graphics
-*.ai              binary
-*.bmp             binary
-*.eps             binary
-*.gif             binary
-*.gifv            binary
-*.ico             binary
-*.jng             binary
-*.jp2             binary
-*.jpg             binary
-*.jpeg            binary
-*.jpx             binary
-*.jxr             binary
-*.pdf             binary
-*.png             binary
-*.psb             binary
-*.psd             binary
-*.svg             text
-*.svgz            binary
-*.tif             binary
-*.tiff            binary
-*.wbmp            binary
-*.webp            binary
-
-# Audio
-*.kar             binary
-*.m4a             binary
-*.mid             binary
-*.midi            binary
-*.mp3             binary
-*.ogg             binary
-*.ra              binary
-
-# Video
-*.3gpp            binary
-*.3gp             binary
-*.as              binary
-*.asf             binary
-*.asx             binary
-*.avi             binary
-*.fla             binary
-*.flv             binary
-*.m4v             binary
-*.mng             binary
-*.mov             binary
-*.mp4             binary
-*.mpeg            binary
-*.mpg             binary
-*.ogv             binary
-*.swc             binary
-*.swf             binary
-*.webm            binary
-
-# Archives
-*.7z              binary
-*.gz              binary
-*.jar             binary
-*.rar             binary
-*.tar             binary
-*.zip             binary
-
-# Fonts
-*.ttf             binary
-*.eot             binary
-*.otf             binary
-*.woff            binary
-*.woff2           binary
-
-# Executables
-*.exe             binary
-*.pyc             binary
-
-# RC files
-*.*rc             text
-
-# Ignore files
-*.*ignore         text
 """
 
 README_MD = """\
 # {display_name} - A2A | AG-UI | MCP
-
-![PyPI - Version](https://img.shields.io/pypi/v/{package_name})
-![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
-![PyPI - Downloads](https://img.shields.io/pypi/dd/{package_name})
-![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/{package_name})
-![GitHub forks](https://img.shields.io/github/forks/Knuckles-Team/{package_name})
-![GitHub contributors](https://img.shields.io/github/contributors/Knuckles-Team/{package_name})
-![PyPI - License](https://img.shields.io/pypi/l/{package_name})
-![GitHub](https://img.shields.io/github/license/Knuckles-Team/{package_name})
-
-![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/{package_name})
-![GitHub pull requests](https://img.shields.io/github/issues-pr/Knuckles-Team/{package_name})
-![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Knuckles-Team/{package_name})
-![GitHub issues](https://img.shields.io/github/issues/Knuckles-Team/{package_name})
-
-![GitHub top language](https://img.shields.io/github/languages/top/Knuckles-Team/{package_name})
-![GitHub language count](https://img.shields.io/github/languages/count/Knuckles-Team/{package_name})
-![GitHub repo size](https://img.shields.io/github/repo-size/Knuckles-Team/{package_name})
-![GitHub repo file count (file type)](https://img.shields.io/github/directory-file-count/Knuckles-Team/{package_name})
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/{package_name})
-![PyPI - Implementation](https://img.shields.io/pypi/implementation/{package_name})
 
 *Version: 0.1.0*
 
@@ -974,95 +831,11 @@ export {auth_env}="your_token"
 {mcp_cmd} --transport "stdio"
 ```
 
-#### Run in HTTP mode:
-```bash
-export {service_url_env}="http://localhost:8080"
-export {auth_env}="your_token"
-{mcp_cmd} --transport "http" --host "0.0.0.0" --port "8000"
-```
-
-## A2A Agent
-
-### Run A2A Server
-```bash
-export {service_url_env}="http://localhost:8080"
-export {auth_env}="your_token"
-{agent_cmd} --provider openai --model-id gpt-4o --api-key sk-...
-```
-
-## Docker
-
-### Build
-
-```bash
-docker build -t {package_name} .
-```
-
-### Run MCP Server
-
-```bash
-docker run -d \\
-  --name {package_name} \\
-  -p 8000:8000 \\
-  -e TRANSPORT=http \\
-  -e {service_url_env}="http://your-service:8080" \\
-  -e {auth_env}="your_token" \\
-  knucklessg1/{package_name}:latest
-```
-
-### Deploy with Docker Compose
-
-```yaml
-services:
-  {package_name}:
-    image: knucklessg1/{package_name}:latest
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-      - TRANSPORT=http
-      - {service_url_env}=http://your-service:8080
-      - {auth_env}=your_token
-    ports:
-      - 8000:8000
-```
-
-#### Configure `mcp.json` for AI Integration (e.g. Claude Desktop)
-
-```json
-{{
-  "mcpServers": {{
-    "{mcp_short_name}": {{
-      "command": "uv",
-      "args": [
-        "run",
-        "--with",
-        "{package_name}",
-        "{mcp_cmd}"
-      ],
-      "env": {{
-        "{service_url_env}": "http://your-service:8080",
-        "{auth_env}": "your_token"
-      }}
-    }}
-  }}
-}}
-```
-
 ## Install Python Package
 
 ```bash
 python -m pip install {package_name}
 ```
-```bash
-uv pip install {package_name}
-```
-
-## Repository Owners
-
-<img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=Knucklessg1&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
-
-![GitHub followers](https://img.shields.io/github/followers/Knucklessg1)
-![GitHub User's stars](https://img.shields.io/github/stars/Knucklessg1)
 """
 
 INIT_PY = """\
@@ -1074,14 +847,12 @@ import inspect
 import warnings
 from typing import List
 
-# Suppress RequestsDependencyWarning due to chardet 6.x / requests 2.32.x mismatch
-# Centralized here to ensure it runs before any sub-package imports
 warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
 
 __all__: List[str] = []
 
 CORE_MODULES = [
-    "{pkg_dir}.{api_module_name}",
+    "{pkg_dir}.api",
 ]
 
 OPTIONAL_MODULES = {{
@@ -1129,13 +900,6 @@ _MCP_AVAILABLE = OPTIONAL_MODULES.get("{pkg_dir}.mcp_server") in [
 _AGENT_AVAILABLE = "{pkg_dir}.agent_server" in globals()
 
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
-
-
-\"\"\"
-{package_name}
-
-{description}
-\"\"\"
 """
 
 AUTH_PY = """\
@@ -1143,20 +907,13 @@ AUTH_PY = """\
 # coding: utf-8
 
 import os
-import requests
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
-
-# TODO: Import your API wrapper class here
-# from {pkg_dir}.{api_module_name} import {api_class_name}
+from .api import ApiClientSystem
 
 _client = None
 
 
-def get_client():
+def get_client() -> ApiClientSystem:
     \"\"\"Get or create a singleton API client instance.\"\"\"
     global _client
     if _client is None:
@@ -1165,93 +922,73 @@ def get_client():
         verify = os.getenv("{verify_env}", "True").lower() in ("true", "1", "yes")
 
         try:
-            # TODO: Uncomment and configure once the API wrapper class is created
-            # _client = {api_class_name}(
-            #     base_url=base_url,
-            #     token=token,
-            #     verify=verify,
-            # )
-
-            # Placeholder until API wrapper is implemented
-            if _client is None:
-                session = requests.Session()
-                session.headers.update({{"Authorization": f"Bearer {{token}}"}})
-                session.verify = verify
-                _client = type("Client", (), {{"session": session, "base_url": base_url}})()
+            _client = ApiClientSystem(
+                base_url=base_url,
+                token=token,
+                verify=verify,
+            )
         except (AuthError, UnauthorizedError) as e:
             raise RuntimeError(
                 f"AUTHENTICATION ERROR: The credentials provided are not valid for '{{base_url}}'. "
                 f"Please check your {auth_env} and {service_url_env} environment variables. "
                 f"Error details: {{str(e)}}"
             ) from e
+        except Exception as e:
+            raise RuntimeError(
+                f"AUTHENTICATION ERROR: Failed to instantiate client. "
+                f"Error details: {{str(e)}}"
+            ) from e
 
     return _client
 """
 
-MCP_PY = """\
+MCP_SERVER_PY = """\
 #!/usr/bin/python
 # coding: utf-8
 
 import os
 import sys
 import logging
-from typing import Optional, List, Dict, Union, Any
-
+from typing import Any
 from dotenv import load_dotenv, find_dotenv
 from fastmcp import FastMCP
-from pydantic import Field
 from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server, config
+from agent_utilities.mcp_utilities import create_mcp_server
 from agent_utilities.utilities import get_logger
-from {pkg_dir}.auth import get_client
+from .mcp import register_system_tools
 
 __version__ = "0.1.0"
 
-# Redirect logging to stderr to prevent MCP stdout corruption
 logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
 
 
-def register_prompts(mcp: FastMCP):
-    @mcp.prompt(
-        name="example_prompt", description="Example prompt for {display_name}."
-    )
-    def example_prompt(query: str) -> str:
-        \"\"\"Example prompt.\"\"\"
-        return f"Please help with '{{query}}' using {display_name}"
-
-
-def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
+def get_mcp_instance() -> tuple[Any, Any, Any]:
     \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.\"\"\"
     load_dotenv(find_dotenv())
 
     args, mcp, middlewares = create_mcp_server(
         name="{display_name} MCP",
         version=__version__,
-        instructions="{display_name} MCP Server",
+        instructions="{display_name} MCP Server — Condensed Action-Routed Tools.",
     )
 
-    # TODO: Register tool groups here with env-var toggles.
-    # Pattern: if to_boolean(os.getenv("TOOL_TAG_NAME", "True")): register_tools(mcp)
-
-    register_prompts(mcp)
+    DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
+    if DEFAULT_SYSTEMTOOL:
+        register_system_tools(mcp)
 
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    registered_tags = []
-    return mcp, args, middlewares, registered_tags
+    return mcp, args, middlewares
 
 
 def mcp_server():
-    mcp, args, middlewares, registered_tags = get_mcp_instance()
+    mcp, args, _ = get_mcp_instance()
 
-    # Clean version announcement (stderr or logger preferred)
     print(f"{display_name} MCP v{{__version__}}", file=sys.stderr)
     print("\\nStarting MCP Server", file=sys.stderr)
     print(f"  Transport: {{args.transport.upper()}}", file=sys.stderr)
-    print(f"  Auth: {{args.auth_type}}", file=sys.stderr)
-    print(f"  Dynamic Tags Loaded: {{len(registered_tags)}}", file=sys.stderr)
 
     if args.transport == "stdio":
         mcp.run(transport="stdio")
@@ -1268,116 +1005,231 @@ if __name__ == "__main__":
     mcp_server()
 """
 
-GQL_PY = """\
-#!/usr/bin/python
-# coding: utf-8
-\"\"\"GraphQL API Wrapper for {display_name}.
+# ── Split directories layout ───────────────────────────────────────────
 
-Provides a GraphQL interface using the `gql` library that mirrors
-REST API methods with GraphQL queries and mutations.
+API_CLIENT_BASE = """\
+import os
+import requests
+from typing import Dict, Any
 
-Requires: pip install gql[requests]
-\"\"\"
-
-import logging
-from typing import Dict, Any, Optional, Union, List
-from gql import gql, Client
-from gql.transport.requests import RequestsHTTPTransport
-from agent_utilities.core.decorators import require_auth
-from agent_utilities.core.exceptions import (
-    MissingParameterError,
-    ParameterError,
-)
-
-
-class GraphQL:
-    \"\"\"A class to interact with {display_name}'s GraphQL API.\"\"\"
-
-    def __init__(
-        self,
-        url: str = None,
-        token: str = None,
-        proxies: Dict = None,
-        verify: bool = True,
-        debug: bool = False,
-    ):
-        if not url:
-            raise MissingParameterError("URL is required")
-        if not token:
-            raise MissingParameterError("Token is required")
-
-        # Adjust the GraphQL endpoint path as needed
-        self.url = f"{{url.rstrip('/')}}/api/graphql"
+class ApiClientBase:
+    \"\"\"Base HTTP API client wrapper.\"\"\"
+    def __init__(self, base_url: str, token: str, verify: bool = True):
+        self.base_url = base_url.rstrip("/")
         self.token = token
-        self.proxies = proxies
         self.verify = verify
-        self.debug = debug
+        self.session = requests.Session()
+        self.session.headers.update({{"Authorization": f"Bearer {{token}}"}})
 
-        logging.basicConfig(
-            level=logging.DEBUG if debug else logging.ERROR,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-        )
-
-        headers = {{"Authorization": f"Bearer {{token}}"}}
-        self.transport = RequestsHTTPTransport(
-            url=self.url,
-            headers=headers,
-            verify=verify,
-            proxies=proxies,
-        )
-        self.client = Client(
-            transport=self.transport, fetch_schema_from_transport=True
-        )
-
-    @require_auth
-    def execute_gql(
-        self,
-        query_str: str,
-        variables: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        \"\"\"Execute a GraphQL query or mutation.
-
-        Args:
-            query_str: The GraphQL query or mutation string.
-            variables: Optional dictionary of variables for the query.
-            operation_name: Optional name of the operation.
-
-        Returns:
-            Dict[str, Any]: The raw GraphQL response dictionary.
-        \"\"\"
+    def request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
+        url = f"{{self.base_url}}/{{path.lstrip('/')}}"
+        response = self.session.request(method, url, verify=self.verify, **kwargs)
+        response.raise_for_status()
         try:
-            query = gql(query_str)
-            result = self.client.execute(
-                query, variable_values=variables, operation_name=operation_name
-            )
-            if "errors" in result:
-                raise ParameterError(f"GraphQL errors: {{result['errors']}}")
-            return result
-        except Exception as e:
-            logging.error(f"GraphQL execution failed: {{str(e)}}")
-            raise ParameterError(f"Query execution failed: {{str(e)}}")
-
-    # TODO: Add domain-specific query/mutation methods below.
-    # Mirror your REST API methods using GraphQL queries and mutations.
-    # Use cursor-based pagination (first/after) for list queries.
-    # Example:
-    #
-    # @require_auth
-    # def get_items(self, first: int = 20, after: str = None) -> Dict[str, Any]:
-    #     query_str = \"\"\"
-    #     query GetItems($first: Int, $after: String) {{
-    #         items(first: $first, after: $after) {{
-    #             nodes {{ id name }}
-    #             pageInfo {{ endCursor hasNextPage }}
-    #         }}
-    #     }}
-    #     \"\"\"
-    #     variables = {{"first": first}}
-    #     if after:
-    #         variables["after"] = after
-    #     return self.execute_gql(query_str, variables=variables)
+            return response.json()
+        except ValueError:
+            return {{"status": response.status_code, "text": response.text}}
 """
+
+API_CLIENT_SYSTEM = """\
+from .api_client_base import ApiClientBase
+from typing import Dict, Any
+
+class ApiClientSystem(ApiClientBase):
+    \"\"\"System status and monitoring API operations.\"\"\"
+    def get_system_status(self) -> Dict[str, Any]:
+        \"\"\"Retrieve the status of the target system.\"\"\"
+        return self.request("GET", "/health")
+"""
+
+API_INIT_PY = """\
+from .api_client_base import ApiClientBase
+from .api_client_system import ApiClientSystem
+
+__all__ = ["ApiClientBase", "ApiClientSystem"]
+"""
+
+MCP_SYSTEM_PY = """\
+from fastmcp import FastMCP, Context
+from fastmcp.dependencies import Depends
+from pydantic import Field
+from ..auth import get_client
+
+def register_system_tools(mcp: FastMCP):
+    \"\"\"Register system tag dynamic tools.\"\"\"
+    @mcp.tool(tags={{"system"}})
+    async def system_operations(
+        action: str = Field(
+            description="Action to perform. Must be 'status' or 'info'."
+        ),
+        params_json: str = Field(
+            default="{{}}", description="JSON string of parameters to pass to the action."
+        ),
+        client=Depends(get_client),
+        ctx: Context | None = Field(
+            default=None, description="MCP context for progress reporting"
+        ),
+    ) -> dict:
+        \"\"\"Manage system tag operations.\"\"\"
+        if ctx:
+            ctx.info("Executing system tool...")
+        import json
+        try:
+            kwargs = json.loads(params_json)
+        except Exception as e:
+            return {{"error": f"Invalid params_json: {{e}}"}}
+
+        if action == "status":
+            try:
+                return client.get_system_status()
+            except Exception as e:
+                return {{"error": str(e)}}
+        else:
+            return {{"info": "System operations dynamic placeholder."}}
+"""
+
+MCP_INIT_PY = """\
+from .mcp_system import register_system_tools
+
+__all__ = ["register_system_tools"]
+"""
+
+# ── Docs ───────────────────────────────────────────────────────────────
+
+MKDOCS_YML = """\
+site_name: "{package_name}"
+repo_name: "Knuckles-Team/{package_name}"
+repo_url: "https://github.com/Knuckles-Team/{package_name}"
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+plugins:
+  - search
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Overview: overview.md
+"""
+
+DOCS_INDEX_MD = """\
+# {display_name} Documentation
+
+Welcome to the documentation for **{display_name}**!
+
+This project provides a unified Model Context Protocol (MCP) server and A2A Agent designed to integrate with standard tools and clients seamlessly.
+
+## Getting Started
+
+Refer to the [Overview](overview.md) or the [README](../README.md) for quick start instructions.
+"""
+
+DOCS_OVERVIEW_MD = """\
+# {display_name} Overview
+
+This agent package provides premium tools and workflows for interacting with the target service.
+
+## Key Features
+- **Modular Design**: Broken up into `api/` and `mcp/` directories for cleaner organization.
+- **Dynamic Tool Registration**: Exposes action-routed dynamic tool tags strictly complying with lowercase tags constraint.
+- **Test Automation**: Shipped with flat-file `tests/` directory covering auth error cases and API verification.
+"""
+
+CHANGELOG_MD = """\
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - {date}
+
+### Added
+- Initial release.
+- Modular subfolders for API wrappers (`api/`) and MCP servers (`mcp/`).
+- Modernized material theme mkdocs setup.
+- Flat `tests/` structure for comprehensive endpoint verification.
+"""
+
+# ── Tests ──────────────────────────────────────────────────────────────
+
+TESTS_CONFTEST = """\
+import pytest
+from unittest.mock import MagicMock
+
+@pytest.fixture
+def mock_api_client():
+    client = MagicMock()
+    client.get_system_status.return_value = {{"status": "OK"}}
+    return client
+"""
+
+TESTS_API_AUTH = """\
+import pytest
+from unittest.mock import patch
+from {pkg_dir}.auth import get_client
+
+def test_get_client_auth_error():
+    # Test instantiating the api client base setup
+    with patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls:
+        mock_client_cls.side_effect = Exception("Auth Failure")
+        with pytest.raises(RuntimeError) as exc_info:
+            get_client()
+        assert "AUTHENTICATION ERROR" in str(exc_info.value)
+"""
+
+TESTS_MCP_SERVER = """\
+import pytest
+from {pkg_dir}.mcp_server import get_mcp_instance
+
+def test_mcp_instance_registration():
+    mcp, args, middlewares = get_mcp_instance()
+    assert mcp is not None
+    # Verify that the system tool was registered correctly
+    tools = [t.name for t in mcp.tools]
+    assert any("system_operations" in t for t in tools)
+"""
+
+
+# ── Rest of agent templates ───────────────────────────────────────────
 
 AGENT_PY = """\
 #!/usr/bin/python
@@ -1589,8 +1441,6 @@ jobs:
       DOCKER_REPOSITORY: ${{{{ secrets.DOCKER_REPOSITORY }}}}
 """
 
-# ── AGENTS.md (Root for coding agents) ────────────────────────────────
-
 ROOT_AGENTS_MD = """# AGENTS.md
 
 ## Tech Stack & Architecture
@@ -1598,10 +1448,11 @@ ROOT_AGENTS_MD = """# AGENTS.md
 - Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
 - Architecture:
-    - `mcp_server.py`: Main MCP server entry point and tool registration.
+    - `api/`: Modular folder for target service client wrappers.
+    - `mcp/`: Modular folder for Model Context Protocol action-routed dynamic tool tags.
+    - `mcp_server.py`: Main MCP server entry point and tool registration loading.
     - `agent_server.py`: Pydantic AI agent definition and logic.
     - `skills/`: Directory containing modular agent skills (if applicable).
-    - `agent/`: Internal agent logic and prompt templates.
 
 ### Architecture Diagram
 ```mermaid
@@ -1645,89 +1496,6 @@ pre-commit run --all-files
 {mcp_cmd}
 # Run Agent
 {agent_cmd}
-
-## Project Structure Quick Reference
-- MCP Entry Point → `mcp_server.py`
-- Agent Entry Point → `agent_server.py`
-- Source Code → {pkg_dir}/
-- Skills → `skills/` (if exists)
-
-### File Tree
-```text
-├── .bumpversion.cfg
-├── .dockerignore
-├── .env
-├── .gitattributes
-├── .gitignore
-├── .pre-commit-config.yaml
-├── AGENTS.md
-├── Dockerfile
-├── LICENSE
-├── MANIFEST.in
-├── README.md
-├── compose.yml
-├── debug.Dockerfile
-├── {pkg_dir}
-│   ├── __init__.py
-│   ├── agent_server.py
-│   ├── auth.py
-│   ├── mcp_server.py
-│   └── agent/
-│       ├── IDENTITY.md
-│       ├── USER.md
-│       ├── MCP_AGENTS.md
-│       └── ...
-├── pyproject.toml
-└── requirements.txt
-```
-
-## Code Style & Conventions
-**Always:**
-- Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent`).
-- Define input/output models using Pydantic.
-- Include descriptive docstrings for all tools (they are used as tool descriptions for LLMs).
-- Check for optional dependencies using `try/except ImportError`.
-
-**Good example:**
-```python
-from agent_utilities import create_mcp_server
-from mcp.server.fastmcp import FastMCP
-
-mcp = create_mcp_server("my-agent")
-
-@mcp.tool()
-async def my_tool(param: str) -> str:
-    \"\"\"Description for LLM.\"\"\"
-    return f"Result: {{param}}"
-```
-
-## Dos and Don'ts
-**Do:**
-- Run `pre-commit` before pushing changes.
-- Use existing patterns from `agent-utilities`.
-- Keep tools focused and idempotent where possible.
-
-**Don't:**
-- Use `cd` commands in scripts; use absolute paths or relative to project root.
-- Add new dependencies to `dependencies` in `pyproject.toml` without checking `optional-dependencies` first.
-- Hardcode secrets; use environment variables or `.env` files.
-
-## Safety & Boundaries
-**Always do:**
-- Run lint/test via `pre-commit`.
-- Use `agent-utilities` base classes.
-
-**Ask first:**
-- Major refactors of `mcp_server.py` or `agent_server.py`.
-- Deleting or renaming public tool functions.
-
-**Never do:**
-- Commit `.env` files or secrets.
-- Modify `agent-utilities` or `universal-skills` files from within this package.
-
-## When Stuck
-- Propose a plan first before making large changes.
-- Check `agent-utilities` documentation for existing helpers.
 """
 
 AGENTS_MD_PEER = """# AGENTS.md - Known A2A Peer Agents
@@ -1754,7 +1522,88 @@ USER_MD = """\
 * **Style:** Technical, concise, no fluff
 """
 
-# ── Main scaffolding logic ───────────────────────────────────────────────────
+GQL_PY = """\
+#!/usr/bin/python
+# coding: utf-8
+\"\"\"GraphQL API Wrapper for {display_name}.
+
+Provides a GraphQL interface using the `gql` library that mirrors
+REST API methods with GraphQL queries and mutations.
+
+Requires: pip install gql[requests]
+\"\"\"
+
+import logging
+from typing import Dict, Any, Optional, Union, List
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+from agent_utilities.core.decorators import require_auth
+from agent_utilities.core.exceptions import (
+    MissingParameterError,
+    ParameterError,
+)
+
+
+class GraphQL:
+    \"\"\"A class to interact with {display_name}'s GraphQL API.\"\"\"
+
+    def __init__(
+        self,
+        url: str = None,
+        token: str = None,
+        proxies: Dict = None,
+        verify: bool = True,
+        debug: bool = False,
+    ):
+        if not url:
+            raise MissingParameterError("URL is required")
+        if not token:
+            raise MissingParameterError("Token is required")
+
+        self.url = f"{{url.rstrip('/')}}/api/graphql"
+        self.token = token
+        self.proxies = proxies
+        self.verify = verify
+        self.debug = debug
+
+        logging.basicConfig(
+            level=logging.DEBUG if debug else logging.ERROR,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+
+        headers = {{"Authorization": f"Bearer {{token}}"}}
+        self.transport = RequestsHTTPTransport(
+            url=self.url,
+            headers=headers,
+            verify=verify,
+            proxies=proxies,
+        )
+        self.client = Client(
+            transport=self.transport, fetch_schema_from_transport=True
+        )
+
+    @require_auth
+    def execute_gql(
+        self,
+        query_str: str,
+        variables: Optional[Dict[str, Any]] = None,
+        operation_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        \"\"\"Execute a GraphQL query or mutation.\"\"\"
+        try:
+            query = gql(query_str)
+            result = self.client.execute(
+                query, variable_values=variables, operation_name=operation_name
+            )
+            if "errors" in result:
+                raise ParameterError(f"GraphQL errors: {{result['errors']}}")
+            return result
+        except Exception as e:
+            logging.error(f"GraphQL execution failed: {{str(e)}}")
+            raise ParameterError(f"Query execution failed: {{str(e)}}")
+"""
+
+# ── Main Scaffolding Logic ───────────────────────────────────────────────────
 
 
 def scaffold(
@@ -1784,12 +1633,6 @@ def scaffold(
         auth_env = f"{upper_name}_TOKEN"
 
     # Derived names
-    mcp_cmd = (
-        f"{package_name.split('-')[0]}-mcp"
-        if "-" in package_name
-        else f"{package_name}-mcp"
-    )
-    # Try to derive a short name: use the first word if it has a suffix like -mcp/-agent
     parts = package_name.rsplit("-", 1)
     if len(parts) == 2 and parts[1] in ("mcp", "agent", "api"):
         mcp_cmd = f"{parts[0]}-mcp"
@@ -1802,21 +1645,10 @@ def scaffold(
 
     agent_service_name = agent_cmd
     verify_env = f"{upper_name}_VERIFY"
-    api_module_name = "api_client"
-    api_class_name = (
-        "".join(
-            w.capitalize()
-            for w in package_name.replace("-mcp", "")
-            .replace("-agent", "")
-            .replace("-api", "")
-            .split("-")
-        )
-        + "ApiClient"
-    )
+    api_module_name = "api"
     year = datetime.datetime.now().year
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    # Entry point lines
     mcp_entry = f'{mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"'
     agent_entry = (
         f'\n{agent_cmd} = "{pkg_dir}.agent_server:agent_server"'
@@ -1824,7 +1656,6 @@ def scaffold(
         else ""
     )
 
-    # GraphQL-conditional template placeholders
     gql_module_name = "gql_client"
     has_graphql = "graphql" in types
     gql_dep = '\ngql = [\n    "gql>=4.0.0"]\n' if has_graphql else "\n"
@@ -1853,7 +1684,6 @@ def scaffold(
         "agent_service_name": agent_service_name,
         "mcp_short_name": mcp_short_name,
         "api_module_name": api_module_name,
-        "api_class_name": api_class_name,
         "gql_module_name": gql_module_name,
         "gql_dep": gql_dep,
         "all_dep_line": all_dep_line,
@@ -1891,14 +1721,27 @@ def scaffold(
         root / "requirements.txt": REQUIREMENTS_TXT,
         root / "starship.toml": STARSHIP_TOML,
         root / ".github/workflows/pipeline.yml": PIPELINE_YML,
+        root / "CHANGELOG.md": CHANGELOG_MD,
+        root / "mkdocs.yml": MKDOCS_YML,
+        root / "docs/index.md": DOCS_INDEX_MD,
+        root / "docs/overview.md": DOCS_OVERVIEW_MD,
     }
 
     # ── Package files ────────────────────────────────────────────────────
     files[pkg / "__init__.py"] = INIT_PY
     files[pkg / "auth.py"] = AUTH_PY
 
+    # API modular directory scaffolding
+    files[pkg / "api" / "__init__.py"] = API_INIT_PY
+    files[pkg / "api" / "api_client_base.py"] = API_CLIENT_BASE
+    files[pkg / "api" / "api_client_system.py"] = API_CLIENT_SYSTEM
+
+    # MCP modular directory scaffolding
+    files[pkg / "mcp" / "__init__.py"] = MCP_INIT_PY
+    files[pkg / "mcp" / "mcp_system.py"] = MCP_SYSTEM_PY
+
     if "mcp" in types:
-        files[pkg / "mcp_server.py"] = MCP_PY
+        files[pkg / "mcp_server.py"] = MCP_SERVER_PY
 
     if "agent" in types:
         files[pkg / "agent_server.py"] = AGENT_PY
@@ -1919,6 +1762,11 @@ def scaffold(
 
     if "graphql" in types:
         files[pkg / f"{gql_module_name}.py"] = GQL_PY
+
+    # Scaffolding flat tests directory
+    files[root / "tests" / "conftest.py"] = TESTS_CONFTEST
+    files[root / "tests" / "test_api_auth_errors.py"] = TESTS_API_AUTH
+    files[root / "tests" / "test_mcp_server_coverage.py"] = TESTS_MCP_SERVER
 
     # ── Write all files ──────────────────────────────────────────────────
     for path, template in files.items():

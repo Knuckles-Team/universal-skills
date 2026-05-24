@@ -17,7 +17,7 @@ metadata:
 
 # Agent Package Builder
 
-Scaffolds a complete, production-ready agent-package project matching the `jellyfin-mcp` gold standard. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`docker/Dockerfile`, `docker/debug.Dockerfile`, `docker/compose.yml`, `docker/mcp.compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), and agent workspace files (`prompts/main_agent.md`). Flat-file logging, memory, and local data storage (`MEMORY.md`, `USER.md`, `HEARTBEAT.md`, `CRON.md`, `agent_data/`) have been deprecated; all state, logs, memory, and chat history are handled natively via the **Knowledge Graph**. It also includes a best-in-class `AGENTS.md` in the project root to optimize for AI coding tools.
+Scaffolds a complete, production-ready agent-package project following the standardized ecosystem conventions. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`docker/Dockerfile`, `docker/debug.Dockerfile`, `docker/compose.yml`, `docker/mcp.compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), documentation (`README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`), and agent workspace files (`prompts/main_agent.md`). All state, logs, memory, and chat history are handled natively via the **Knowledge Graph**.
 
 ---
 
@@ -38,25 +38,66 @@ Collect the following from the user. Ask only for what is missing — do not re-
 | `--email` | ❌ | `"knucklessg1@gmail.com"` | Author email |
 | `--service-url-env` | ❌ | `"{UPPER_NAME}_URL"` | Env var for the service URL |
 | `--auth-env` | ❌ | `"{UPPER_NAME}_TOKEN"` | Env var for the auth token |
+| `--concept-prefix` | ❌ | Derived from name | Unique CONCEPT ID prefix (e.g., `PORT` for portainer) |
 | `--doc-urls` | ❌ | — | Comma-separated documentation URLs for skill-graph |
 
 ### Phase 2: Scaffold the Project
 
-Run the scaffolding script to generate the full project:
+Generate the complete directory tree. The standard project structure is:
 
-```bash
-python scripts/scaffold_package.py <package-name> \
-  --output-dir <path> \
-  --type <types> \
-  --display-name "<name>" \
-  --description "<desc>" \
-  --author "<author>" \
-  --email "<email>" \
-  --service-url-env "<env>" \
-  --auth-env "<env>"
 ```
-
-This generates the complete directory tree with all config files, Docker files, Python package stubs, and agent workspace files.
+{project_dir}/
+├── .bumpversion.cfg
+├── .dockerignore
+├── .env
+├── .gitattributes
+├── .gitignore
+├── .pre-commit-config.yaml
+├── AGENTS.md
+├── CHANGELOG.md
+├── README.md
+├── pyproject.toml
+├── requirements.txt
+├── docker/
+│   ├── Dockerfile
+│   ├── debug.Dockerfile
+│   ├── compose.yml
+│   └── mcp.compose.yml
+├── docs/
+│   ├── index.md              # Navigation hub
+│   ├── overview.md            # Full technical overview
+│   └── concepts.md            # CONCEPT ID registry
+├── prompts/
+│   └── main_agent.md
+├── tests/
+│   ├── conftest.py
+│   ├── test_init_dynamics.py
+│   ├── test_auth.py
+│   ├── test_mcp_handlers.py
+│   ├── test_mcp_registration.py
+│   ├── test_api_client.py
+│   ├── test_agent_integration.py
+│   ├── test_concept_parity.py
+│   └── test_startup.py
+└── {pkg_dir}/
+    ├── __init__.py
+    ├── __main__.py
+    ├── agent_server.py
+    ├── auth.py
+    ├── mcp_server.py           # Entrypoint (imports from mcp/)
+    ├── api_client.py            # Facade re-export from api/
+    ├── models.py
+    ├── mcp_config.json
+    ├── api/
+    │   ├── __init__.py
+    │   ├── api_client_base.py
+    │   └── api_client_{domain}.py
+    ├── mcp/
+    │   ├── __init__.py
+    │   └── mcp_{domain}.py
+    └── agent_data/
+        └── IDENTITY.md
+```
 
 ### Phase 3: Build Domain Logic
 
@@ -65,246 +106,166 @@ After scaffolding, implement the domain-specific code by delegating to the appro
 #### 3a. API Client (if type includes `api_client`)
 
 Read the `api-client-builder` skill and follow its instructions to:
-1. Create `{pkg_dir}/api_client.py` — The API client class. If there are multiple API classes, place them in `{pkg_dir}/api/` and name them using the `api_client_<name>.py` convention.
-2. Create `{pkg_dir}/models.py` — Pydantic input/output models.
-3. Update `{pkg_dir}/auth.py` — Configure authentication for the target service. Ensure you follow the standardized pattern: wrap API instantiation in a `try...except (AuthError, UnauthorizedError)` block and raise a descriptive `RuntimeError` with troubleshooting advice.
+1. Populate `{pkg_dir}/api/` sub-package:
+   - `{pkg_dir}/api/api_client_base.py` — The HTTP/REST client base wrapper.
+   - `{pkg_dir}/api/api_client_{domain}.py` — Domain-specific subclasses with API endpoint methods.
+   - `{pkg_dir}/api/__init__.py` — Expose base and domain clients.
+2. Create `{pkg_dir}/api_client.py` — **Facade file** that re-exports from `api/` for backward compatibility.
+3. Create `{pkg_dir}/models.py` — Pydantic input/output models for standard API schemas.
+4. Update `{pkg_dir}/auth.py` — Configure authentication using **standard env var names**:
+   - `{SERVICE}_URL` — Service endpoint (NOT `_BASE_URL` or `_INSTANCE`)
+   - `{SERVICE}_TOKEN` — API token (NOT `_API_KEY`)
+   - `{SERVICE}_SSL_VERIFY` — TLS verification (NOT `_VERIFY` or `_AGENT_VERIFY`)
+   - `{SERVICE}_USERNAME` / `{SERVICE}_PASSWORD` — For basic auth
 
 #### 3b. MCP Server (if type includes `mcp`)
 
 Read the `mcp-builder` skill and follow its instructions to:
-1. Implement tool registrations in `{pkg_dir}/mcp_server.py`.
-2. Wire tools to the API wrapper methods created in 3a.
-3. Register tools by tag with env-var-based enable/disable pattern.
-4. **IMPORTANT**: All MCP tool tags MUST be strictly lowercase and use hyphens to separate words (e.g. `tag="user-management"`, env var=`USER_MANAGEMENTTOOL`). No camelCase or underscores are allowed in tags.
-5. **Universal Architecture Pattern (Action-Routed Dynamic Generation)**: ALL new agents must use dynamic runtime generation. We do NOT write massive `mcp_server.py` files with static `@mcp.tool` decorators anymore. This avoids IDE tool-count limitations.
-   - **Tag Prefixing**: Prefix tool tags with the API/Service name (e.g. `leanix-pathfinder`).
-   - **No Duplicates**: Ensure tool tags are unique across the entire registration.
-   - **Tool Grouping**: Group multiple API methods into a single tool definition mapped by an `action` enum string.
-   - Use metaprogramming (e.g. `exec()` mapping python method signatures to FastMCP Pydantic schemas) similar to the action-routed pattern.
-   - Feed the router a `tool_tags.json` mapping of `{"service": {"tag": ["method_1", "method_2"]}}`.
-   - **CRITICAL**: Even when dynamically generating tools, you MUST explicitly define static environment variables for *each* tag block (or suite) in `mcp_server.py` so the users can clearly see and disable them:
-     ```python
-     DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
-     if DEFAULT_MISCTOOL:
-         enabled_tags.append("misc")
-     ```
-     For a purely dynamic loading loop, you should still hardcode the env variables checking before enabling specific categories inside the dynamic router or at the server root.
-6. **CRITICAL (Field Optimization)**: Ensure all generated tool parameters explicitly use `pydantic.Field` with all parameter variables specified in an optimized fashion (e.g., `Field(default=..., description=...)`). Do not rely on implicit positional defaults or standard Python type hints without `Field` bindings. This guarantees lossless JSON schema hydration for the LLMs.
+1. Implement modular tool registrations inside `{pkg_dir}/mcp/` sub-package:
+   - `{pkg_dir}/mcp/mcp_{domain}.py` — Houses dynamic action-routed tools per domain tag.
+   - `{pkg_dir}/mcp/__init__.py` — Expose `register_{domain}_tools` functions.
+2. Implement `{pkg_dir}/mcp_server.py` as the entrypoint:
+   - Import `register_*_tools` from `{pkg_dir}/mcp/`
+   - Gate each domain with env var toggles: `DEFAULT_{DOMAIN}TOOL`
+   - Add CONCEPT ID to tool descriptions (e.g., `CONCEPT:{PREFIX}-001`)
+3. **Tag Rules**: All MCP tool tags MUST be strictly lowercase with hyphens (e.g. `tag="user-management"`). No camelCase or underscores.
+4. **Action-Routed Dynamic Generation**: ALL new agents use dynamic runtime generation. No monolithic static `@mcp.tool` files.
+5. **Field Optimization**: All parameters use `pydantic.Field(default=..., description=...)`. No positional args in Field().
 
 #### 3c. Agent (if type includes `agent`)
 
 Read the `agent-builder` skill and follow its instructions to:
 1. Configure `{pkg_dir}/agent_server.py` with proper identity loading.
-2. Update `{pkg_dir}/prompts/main_agent.md` with the new standard frontmatter:
-   - The agent's `name`, `type`, `skills`, and `description` in the YAML frontmatter.
-   - Instructions to run `list_skills` first in the markdown body.
-   - Instructions to use the `mcp-client` skill and check `{package_name}.md` reference.
-3. Configure the graph execution tools to log telemetry and cron tasks directly to the **Knowledge Graph** (no `CRON.md` or `HEARTBEAT.md`).
-4. Ensure the root directory contains `icon.png` (moved from agent_data). Long-term memory is managed via the **Knowledge Graph** tool suite (`search_knowledge_graph`, `add_knowledge_memory`, etc.). A standardized `{pkg_dir}/__main__.py` will also be created to invoke the agent server.
+2. Update `{pkg_dir}/agent_data/IDENTITY.md` with standard YAML frontmatter.
+3. Suppress known fastmcp/urllib3 warnings, print startup telemetry to `sys.stderr`.
+4. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
 
 #### 3d. GraphQL Wrapper (if type includes `graphql`)
 
-Read the `api-client-builder` skill (Step 5 — GraphQL) and follow its instructions to:
-1. Customize `{pkg_dir}/gql_client.py` — The GraphQL client class (stub generated by scaffold).
-2. Adjust the GraphQL endpoint path in `__init__` (e.g., `/api/graphql`, `/graphql`).
-3. Implement domain-specific query and mutation methods mirroring the REST API wrapper.
-4. Use cursor-based pagination (`first`/`after`) for list queries.
+Read the `api-client-builder` skill (Step 5 — GraphQL) and follow its instructions.
 
 #### 3e. Graph Agent (for agents with ≥3 tool tags)
 
-Agents with many tool tags benefit from **graph orchestration** — a pydantic-graph based router that classifies queries and executes them with only the relevant domain tools loaded, saving LLM context.
+Agents with many tool tags benefit from **graph orchestration**. See the `agent-builder` skill for `create_graph_agent_server()` pattern.
 
-**Upgrade Criteria:**
-| Tag Count | Action |
-|-----------|--------|
-| ≥10 tags | Strongly recommended |
-| 5–9 tags | Recommended |
-| 3–4 tags | Optional |
-| ≤2 tags | Do not upgrade |
+### Phase 4: Documentation
 
-**Implementation requires only 2 files:**
+Generate all required documentation:
 
-1. **Create `{pkg_dir}/graph_config.py`** — Maps each tag to a domain prompt and env var:
-   ```python
-   TAG_PROMPTS: dict[str, str] = {
-       "incidents": "You are a ServiceNow Incident Management specialist...",
-       "cmdb": "You are a ServiceNow CMDB specialist...",
-       # One entry per register_*_tools tag from mcp_server.py
-   }
-   TAG_ENV_VARS: dict[str, str] = {
-       "incidents": "INCIDENTSTOOL",
-       "cmdb": "CMDBTOOL",
-       # Maps tag → the env var that toggles it in mcp_server.py
-   }
-   ```
+#### 4a. docs/concepts.md (REQUIRED)
 
-    2. **Modify `{pkg_dir}/agent_server.py`** — Replace `create_agent_server()` with `create_graph_agent_server()`. The standardized `agent_server()` entry point must include warning suppression and version printing to `sys.stderr`:
-        ```python
-        import warnings
-        import sys
-        from agent_utilities import (
-            build_system_prompt_from_workspace,
-            create_agent_parser,
-            create_graph_agent_server,
-            initialize_workspace,
-            load_identity,
-        )
-
-        initialize_workspace()
-        meta = load_identity()
-
-        DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "MyAgent"))
-
-        def agent_server():
-            # Suppress known warnings
-            warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
-            warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
-
-            print(f"{DEFAULT_AGENT_NAME} v{__version__}", file=sys.stderr)
-
-            parser = create_agent_parser()
-            args = parser.parse_args()
-
-            create_graph_agent_server(
-                mcp_url=args.mcp_url,
-                mcp_config=args.mcp_config or "mcp_config.json",
-                host=args.host,
-                port=args.port,
-                provider=args.provider,
-                model_id=args.model_id,
-                base_url=args.base_url,
-                api_key=args.api_key,
-                enable_web_ui=args.web,
-                debug=args.debug,
-            )
-        ```
-
-    `create_graph_agent_server()` handles everything internally: graph construction, mermaid diagram logging, system prompt enhancement with domain list, and agent lifecycle. No manual graph setup needed.
-
-No changes to `mcp_server.py` are required — the existing env-var gating handles per-domain tool filtering.
-
-### Phase 4: Build Skill-Graph (Optional)
-
-If documentation URLs or PDF files were provided via `--doc-urls`:
-
-1. Read the `skill-graph-builder` skill.
-2. Run `generate_skill.py` with `--output-dir` pointing to the agent package's `skills/` directory:
-   ```bash
-   python <skill-graph-builder>/scripts/generate_skill.py "<urls>" {package-name}-docs \
-     --description "Documentation for {display_name}" \
-     --output-dir {project_dir}/{pkg_dir}/skills
-   ```
-   This creates `{pkg_dir}/skills/{package-name}-docs/` directly inside the agent package.
-   The generated `pyproject.toml` already includes `skills/**` in `package-data`, so the skill-graph ships with the distribution.
-3. Update `prompts/main_agent.md` to reference the generated documentation skill.
-
-### Phase 5: Register in MCP-Client References
-
-Every new agent package **must** be registered in the `mcp-client` skill so that agents can discover and use it. This involves creating two reference files and updating the SKILL.md table.
-
-Locate the `mcp-client` skill directory:
-```
-universal-skills/universal_skills/skills/mcp-client/
-├── SKILL.md              ← Update the References table
-├── references/
-│   ├── {package-name}.md   ← NEW: Full reference doc
-│   └── {package-name}.json ← NEW: mcp_config.json
-└── scripts/
-```
-
-#### 5a. Create `references/{package-name}.md`
-
-Create the reference markdown file following the established pattern (see existing files like `jellyfin-mcp.md` or `servicenow-api.md` for reference). The file must contain these sections:
-
+Every project must have a CONCEPT ID registry:
 ```markdown
-# {Display Name} MCP Reference
+# Concept Registry — {package-name}
 
-**Project:** `{package-name}`
-**Entrypoint:** `{mcp-cmd}`
+> **Prefix**: `CONCEPT:{PREFIX}-*`
+> **Bridge**: `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion)
 
-## Required Environment Variables
+## Project-Specific Concepts
 
-| Variable | Description |
-|----------|-------------|
-| `{SERVICE_URL_ENV}` | Required for authentication |
-| `{AUTH_ENV}` | Required for authentication |
+| Concept ID | Name | Description |
+|------------|------|-------------|
+| `CONCEPT:{PREFIX}-001` | {Domain 1} | MCP tool domain `{tag}` |
+| `CONCEPT:{PREFIX}-002` | {Domain 2} | MCP tool domain `{tag}` |
 
-## Available Tool Tags ({count})
+## Cross-Project References (from agent-utilities)
 
-| Env Variable | Default |
-|-------------|----------|
-| `{TAG}TOOL` | `True` |
-...
-
-## Stdio Connection (Default)
-
-{mcp_config.json with all tags enabled}
-
-## HTTP Connection
-
-{HTTP connection example}
-
-## Single-Tag Config Example
-
-{mcp_config.json with only one tag enabled, others False}
-
-## CLI Usage
-
-{Example mcp_client.py commands}
+| Concept ID | Name | Origin |
+|------------|------|--------|
+| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |
+| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |
+| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |
 ```
 
-Once MCP tools are implemented (Phase 3b), populate the "Available Tool Tags" with the actual `register_*_tools` env var names from `mcp_server.py`, and add a "Tailored Skills Reference" section documenting each tool tag group and its tools with parameters.
+#### 4b. docs/overview.md
 
-#### 5b. Create `references/{package-name}.json`
+Standard technical overview with architecture, tool descriptions, and concept references.
 
-Create the `mcp_config.json` file for stdio connection with all tool tags enabled:
+#### 4c. docs/index.md
 
-```json
-{
-  "mcpServers": {
-    "{package-name}": {
-      "command": "{mcp-cmd}",
-      "args": ["--transport", "stdio"],
-      "env": {
-        "{SERVICE_URL_ENV}": "${SERVICE_URL_ENV}",
-        "{AUTH_ENV}": "${AUTH_ENV}",
-        "{TAG1}TOOL": "True",
-        "{TAG2}TOOL": "True"
-      }
-    }
-  }
-}
+Navigation hub linking to all other docs.
+
+#### 4d. CHANGELOG.md
+
+### Phase 7: Verify & Finalize
+
+1. **Validate syntax**: `python -c "import tomllib; ..."`
+2. **Test entry points**: `pip install -e . && python -m {pkg_dir}.mcp --help`
+3. **Run pre-commit**: `pre-commit run --all-files`
+4. **Verify docs**: Confirm `concepts.md`, `overview.md`, `index.md` exist
+5. **Verify mcp-client references**: `.md` and `.json` in `mcp-client/references/`
+6. **CONCEPT ID collision check**: Verify prefix doesn't collide with existing projects
+
+### Phase 8: Ecosystem Drift Check (MANDATORY)
+
+Run a drift audit against the ecosystem standard to confirm 100% compliance before marking the package as complete. This ensures no files were missed and all conventions are met.
+
+```bash
+cd {project_dir} && echo "=== Drift Audit ===" \
+  && for f in README.md CHANGELOG.md AGENTS.md pyproject.toml requirements.txt \
+    .pre-commit-config.yaml .bumpversion.cfg .gitignore .gitattributes \
+    .dockerignore .env mcp_config.json; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in docs/index.md docs/overview.md docs/concepts.md; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in docker/Dockerfile docker/compose.yml; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in {pkg_dir}/__init__.py {pkg_dir}/__main__.py {pkg_dir}/mcp_server.py; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && [ -d "{pkg_dir}/mcp" ] && echo "✅ mcp/ subdir" || echo "❌ mcp/ MISSING" \
+  && for f in tests/conftest.py tests/test_concept_parity.py \
+    tests/test_init_dynamics.py tests/test_startup.py; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && grep -q "ECO-4.0" docs/concepts.md && echo "✅ ECO-4.0 bridge" \
+    || echo "❌ ECO-4.0 bridge MISSING"
 ```
 
-#### 5c. Update `mcp-client/SKILL.md` References Table
+If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring:
 
-Add a new row to the `## References` table in the `mcp-client/SKILL.md`:
-
-```markdown
-| {Display Name} | [{package-name}.md](references/{package-name}.md) | [{package-name}.json](references/{package-name}.json) | {tool_tag_count} |
+```
+Trigger: "run ecosystem standardizer" with scope={package-name}
 ```
 
-The row must be inserted alphabetically by MCP Server name in the existing table.
+> [!IMPORTANT]
+> A new package is not complete until it passes the drift check with 0 missing items. This is a hard gate.
 
-### Phase 6: Verify & Finalize
+## Environment Variable Standard
 
-1. **Validate syntax**:
-   ```bash
-   python -c "import tomllib; tomllib.load(open('{project_dir}/pyproject.toml', 'rb'))"
-   python -c "import yaml; yaml.safe_load(open('{project_dir}/docker/compose.yml'))"
-   python -c "import yaml; yaml.safe_load(open('{project_dir}/docker/mcp.compose.yml'))"
-   ```
+All new agent packages MUST use these naming patterns:
 
-2. **Test entry points** (if stubs are complete enough):
-   ```bash
-   cd {project_dir} && pip install -e . && python -m {pkg_dir}.mcp --help
-   ```
+| Pattern | Example | Notes |
+|---------|---------|-------|
+| `{SERVICE}_URL` | `PORTAINER_URL` | NOT `_BASE_URL` or `_INSTANCE` |
+| `{SERVICE}_TOKEN` | `PORTAINER_TOKEN` | Prefer over `_API_KEY` |
+| `{SERVICE}_SSL_VERIFY` | `PORTAINER_SSL_VERIFY` | NOT `_VERIFY` or `_AGENT_VERIFY` |
+| `{SERVICE}_USERNAME` | `PORTAINER_USERNAME` | For basic auth |
+| `{SERVICE}_PASSWORD` | `PORTAINER_PASSWORD` | For basic auth |
 
-3. **Run pre-commit** (if installed):
-   ```bash
-   cd {project_dir} && pre-commit run --all-files
-   ```
+Preserve first-party env var names when they exist (e.g., `GITHUB_TOKEN`, `LANGFUSE_PUBLIC_KEY`).
 
-4. **Review README.md** for accuracy and completeness.
+## CONCEPT ID Prefix Registry
 
-5. **Verify mcp-client references** — Confirm the new `.md` and `.json` files exist in `mcp-client/references/` and the SKILL.md table has been updated.
+When assigning a prefix, check this registry to avoid collisions:
+
+| Prefix | Project | | Prefix | Project |
+|--------|---------|---|--------|---------|
+| `AH` | adguard-home-agent | | `ANSIBLE` | ansible-tower-mcp |
+| `ABOX` | archivebox-api | | `ARR` | arr-mcp |
+| `ATL` | atlassian-agent | | `AU` | agent-utilities |
+| `AUDIO` | audio-transcriber | | `CMGR` | container-manager-mcp |
+| `DSCI` | data-science-mcp | | `DOCDB` | documentdb-mcp |
+| `EE` | emerald-exchange | | `GENIUS` | genius-agent |
+| `GH` | github-agent | | `GL` | gitlab-api |
+| `HASS` | home-assistant-agent | | `JELLYFIN` | jellyfin-mcp |
+| `LF` | langfuse-agent | | `LIX` | leanix-agent |
+| `LM` | listmonk-api | | `MEAL` | mealie-mcp |
+| `MDLD` | media-downloader | | `MSFT` | microsoft-agent |
+| `NC` | nextcloud-agent | | `OC` | owncast-agent |
+| `PA` | postiz-agent | | `PLANE` | plane-agent |
+| `PORT` | portainer-agent | | `QBT` | qbittorrent-agent |
+| `RM` | repository-manager | | `SNOW` | servicenow-api |
+| `SRX` | searxng-mcp | | `SX` | scholarx |
+| `SYS` | systems-manager | | `STIRLINGPDF` | stirlingpdf-agent |
+| `TUI` | agent-terminal-ui | | `TUN` | tunnel-manager |
+| `UKA` | uptime-kuma-agent | | `VEC` | vector-mcp |
+| `WEBUI` | agent-webui | | `WGER` | wger-agent |

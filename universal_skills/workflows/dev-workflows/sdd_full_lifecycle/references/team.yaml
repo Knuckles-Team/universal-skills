@@ -1,0 +1,21 @@
+name: Software Engineering Swarm
+task_pattern: execute full spec-driven product development cycle from requirement to verified code
+specialist_ids:
+  - spec-generator
+  - python-backend-engineer
+  - typescript-frontend-developer
+  - qa-test-engineer
+  - verification-gate
+capability_overrides:
+  spec-generator:
+    - stuck_loop_detection
+  python-backend-engineer:
+    - stuck_loop_detection
+    - checkpointing
+  typescript-frontend-developer:
+    - stuck_loop_detection
+  qa-test-engineer:
+    - stuck_loop_detection
+  verification-gate:
+    - stuck_loop_detection
+    - adversarial_verification

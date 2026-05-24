@@ -134,26 +134,53 @@ For each tool:
 
 #### 2.4 Tool Grouping and Registration (Dynamic Action-Routing)
 
-Do NOT write massive `mcp_server.py` files with individual static `@mcp.tool` decorators anymore, as this breaches IDE tool limits. Instead, use the **Action-Routed Dynamic Generation** pattern.
-Group related endpoints by a conceptual `tag` (e.g., `user-management`) and dynamically compile a single unified tool per tag using a generator like `_generate_dynamic_tool`. This tool exposes an `action` enum corresponding to the underlying methods.
+Do NOT write massive monolithic `mcp_server.py` files with individual static `@mcp.tool` decorators. Instead, use the modular **Action-Routed Dynamic Generation** pattern inside a **mandatory** `mcp/` subdirectory.
+
+**Standard Folder Structure** (REQUIRED for all agents):
+```
+{pkg_dir}/
+├── auth.py
+├── mcp_server.py          ← Entrypoint importing registration hooks from mcp/
+└── mcp/
+    ├── __init__.py        ← Exposes register_*_tools functions
+    ├── mcp_system.py      ← Dynamic action-routed tools for the "system" tag
+    └── mcp_{domain}.py    ← One file per domain tag
+```
+
+> **Migration from `tools/` pattern**: Some older agents used a `tools/` subdirectory (e.g., documentdb-mcp, langfuse-agent). These MUST be migrated to `mcp/` for consistency. Rename `tools/` → `mcp/`, rename files from `{domain}.py` → `mcp_{domain}.py`, and update all imports.
+
+**Dynamic Action-Routing Design**:
+Group related endpoints by a conceptual `tag` (e.g., `system`) and dynamically compile a single unified tool per tag inside its own module (e.g., `{pkg_dir}/mcp/mcp_system.py`). This tool exposes an `action` enum corresponding to the underlying methods.
 
 **CRITICAL: Tag Casing Constraint**
-Tags **MUST** be strictly lowercase string names with hyphens to separate words (e.g. `user-management`). Do NOT use CamelCase or underscores in tags, as it breaks downward integrations.
+Tags **MUST** be strictly lowercase string names with hyphens to separate words (e.g. `user-management`). Do NOT use CamelCase or underscores in tags.
 
-To provide a standard mechanism for configuring which tools are exposed by the MCP server depending on the environment, use `tool_tags.json`:
-1. **Define tool mappings** in `tool_tags.json`: `{"service": {"tag": ["method_1", "method_2"]}}`.
-2. **Consolidated Boilerplate**: Use the `create_mcp_server` helper from `agent_utilities.mcp_utilities`.
-3. **Dynamic Loading**: Implement a dynamic loading loop (`register_dynamic_tools`) that iterates through `tool_tags.json` and invokes `_generate_dynamic_tool(mcp, tag, ...)` to register the compressed Action-Routed tools.
-4. **Static Toggles**: Even though tools are dynamically loaded from JSON, you MUST explicitly check static environment variables for *each* suite in `mcp_server.py` before enabling them, so administrators have a visual reference of what can be disabled:
+**CONCEPT ID Annotations**: Each tool domain SHOULD include its CONCEPT ID in the tool description string:
+```python
+def register_system_tools(mcp):
+    """Register system management tools.
+
+    CONCEPT:{PREFIX}-001
+    """
+```
+
+**Environment Variable Gating**:
+1. **Dynamic Loading**: `register_{domain}_tools` functions in sub-modules register action-routed tools on the main FastMCP instance.
+2. **Static Toggles**: Inside `mcp_server.py`, check env vars for each suite:
    ```python
-   DEFAULT_USER_MANAGEMENTTOOL = to_boolean(os.getenv("USER_MANAGEMENTTOOL", "True"))
-   if DEFAULT_USER_MANAGEMENTTOOL:
-       enabled_tags.append("user-management")
-   # ...
-   register_dynamic_tools(mcp, enabled_tags)
+   DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
+   if DEFAULT_SYSTEMTOOL:
+       register_system_tools(mcp)
    ```
 
-This layout is mandatory for ALL MCP servers so administrators can secure environments efficiently without needing to read JSON files or code introspections to know what can be disabled.
+**Environment Variable Standard for auth.py**:
+| Pattern | Example | Notes |
+|---------|---------|-------|
+| `{SERVICE}_URL` | `PORTAINER_URL` | NOT `_BASE_URL` or `_INSTANCE` |
+| `{SERVICE}_TOKEN` | `PORTAINER_TOKEN` | Prefer over `_API_KEY` |
+| `{SERVICE}_SSL_VERIFY` | `PORTAINER_SSL_VERIFY` | NOT `_VERIFY` or `_AGENT_VERIFY` |
+
+This layout is mandatory for ALL MCP servers so administrators can secure environments efficiently.
 
 ---
 
@@ -203,6 +230,37 @@ Create an XML file for evaluation:
   </qa_pair>
 </evaluation>
 ```
+
+---
+
+### Phase 5: Ecosystem Drift Check (MANDATORY)
+
+After completing the MCP server, run a drift audit to confirm the project meets all ecosystem standards. This is a hard gate — the MCP server is not complete until it passes with 0 missing items.
+
+```bash
+cd {project_dir} && echo "=== Drift Audit ===" \
+  && for f in README.md CHANGELOG.md AGENTS.md pyproject.toml requirements.txt \
+    .pre-commit-config.yaml .bumpversion.cfg .gitignore .gitattributes \
+    .dockerignore .env mcp_config.json; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in docs/index.md docs/overview.md docs/concepts.md; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in docker/Dockerfile docker/compose.yml; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in {pkg_dir}/__init__.py {pkg_dir}/__main__.py {pkg_dir}/mcp_server.py; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && [ -d "{pkg_dir}/mcp" ] && echo "✅ mcp/ subdir" || echo "❌ mcp/ MISSING" \
+  && for f in tests/conftest.py tests/test_concept_parity.py \
+    tests/test_init_dynamics.py tests/test_startup.py; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && grep -q "ECO-4.0" docs/concepts.md && echo "✅ ECO-4.0 bridge" \
+    || echo "❌ ECO-4.0 bridge MISSING"
+```
+
+If ANY item shows ❌, fix it before marking the build as complete. For a deeper audit with scoring, use the `ecosystem_standardizer` workflow.
+
+> [!IMPORTANT]
+> A new package is not complete until it passes the drift check with 0 missing items.
 
 ---
 

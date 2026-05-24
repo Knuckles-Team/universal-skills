@@ -1,0 +1,18 @@
+name: Quant Research Swarm
+task_pattern: perform multi-source quantitative alpha factor discovery and portfolio fusion
+specialist_ids:
+  - technical-alpha
+  - fundamental-alpha
+  - sentiment-alpha
+  - factor-fusion
+capability_overrides:
+  technical-alpha:
+    - stuck_loop_detection
+    - checkpointing
+  fundamental-alpha:
+    - stuck_loop_detection
+  sentiment-alpha:
+    - stuck_loop_detection
+  factor-fusion:
+    - stuck_loop_detection
+    - adversarial_verification

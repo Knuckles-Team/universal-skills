@@ -1,0 +1,18 @@
+name: Observability Engineering Swarm
+task_pattern: deploy and configure multi-container prometheus, grafana, and loki stacks
+specialist_ids:
+  - prometheus-setup
+  - grafana-setup
+  - loki-setup
+  - observability-synth
+capability_overrides:
+  prometheus-setup:
+    - stuck_loop_detection
+    - checkpointing
+  grafana-setup:
+    - stuck_loop_detection
+  loki-setup:
+    - stuck_loop_detection
+  observability-synth:
+    - stuck_loop_detection
+    - adversarial_verification

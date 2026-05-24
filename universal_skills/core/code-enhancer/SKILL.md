@@ -1,7 +1,7 @@
 ---
 name: code-enhancer
 description: >-
-  Comprehensive code analysis and enhancement skill that performs 23-domain deep-
+  Comprehensive code analysis and enhancement skill that performs 28-domain deep-
   dive reviews of any codebase. Covers project analysis, dependency audit,
   changelog audit, codebase optimization, security analysis, test coverage, pytest
   quality grading, test execution, pre-commit compliance, documentation
@@ -24,7 +24,7 @@ metadata:
 
 This skill enables the agent to perform a comprehensive, multi-domain "Code Enhancement Review"
 of any codebase. It produces a prettified, graded report with standardized 0–100 scoring across
-23 analysis domains, actionable TODOs prioritized by impact and risk, and structured SDD handoff
+28 analysis domains, actionable TODOs prioritized by impact and risk, and structured SDD handoff
 for implementation.
 
 Supports **language-agnostic** analysis for Python, Go, Node/TypeScript, Rust, and Java projects.
@@ -57,6 +57,9 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 23. **Environment Variable Scanning** — Scan Python source, Dockerfiles, compose.yml, .env/.env.example for all env var usage. Cross-reference against README documentation to identify undocumented variables.
 24. **Agent Skill Quality** — Auto-detect SKILL.md files in any repository and grade them using a rule engine ported from skill-check: frontmatter validation, description quality, body structure, link resolution, and duplicate detection. Contextual — only activates when skills are present.
 25. **Engineering Heuristics** — Evaluate codebase against battle-tested principles synthesized from 13 industry-standard software engineering books (Clean Code, Clean Architecture, Refactoring, The Pragmatic Programmer, Release It!, DDIA, DDD, and more). Uses contextual activation — domain modeling rules only fire when DDD patterns are detected; production resilience rules only fire for service/API projects.
+26. **Circular Dependency Detection** — Scan `pyproject.toml` dependency graphs across workspace projects for circular or transitive resolution cycles. Detect workspace member conflicts and optional-dependency self-references.
+27. **CONCEPT ID Parity** — Verify that every project has a `docs/concepts.md` with a unique prefix, cross-reference CONCEPT IDs in docs against code annotations, detect orphaned or undocumented concepts, and verify no prefix collisions across the ecosystem.
+28. **Environment Variable Standardization Audit** — Check `auth.py` files across all agents for non-standard env var naming patterns (e.g., `_VERIFY` vs `_SSL_VERIFY`, `_BASE_URL` vs `_URL`, `_INSTANCE` vs `_URL`). Flag duplicates within the same project and deviations from the ecosystem standard.
 
 ## Grading System
 
@@ -170,6 +173,9 @@ Every grade includes a justification with specific file paths and evidence citat
 - `scripts/scan_env_vars.py` — Environment variable scanning and documentation check (CE-025)
 - `scripts/grade_skills.py` — Agent skill quality grading with skill-check rule engine (CE-026)
 - `scripts/evaluate_heuristics.py` — Engineering heuristics evaluation from 13 books (CE-027)
+- `scripts/detect_circular_deps.py` — Circular dependency detection in pyproject.toml graphs (CE-028)
+- `scripts/audit_concept_ids.py` — CONCEPT ID parity and collision detection across projects (CE-029)
+- `scripts/audit_env_var_standard.py` — Env var naming standardization audit (CE-030)
 
 ### References
 - `references/grading_rubric.md` — Standardized scoring criteria and justification templates

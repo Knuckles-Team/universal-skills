@@ -16,7 +16,7 @@ license: MIT
 tags: [evolution, research, pipeline, automation, agent-workflow, sdd, wiring, audit]
 metadata:
   author: Genius
-  version: '0.2.0'
+  version: '0.3.0'
 ---
 
 # Agent Utilities Evolution Skill
@@ -322,6 +322,67 @@ Then present the markdown report to the user and highlight:
 1. Any concepts with `missing_tests` or `missing_docs`
 2. Orphan modules with high line counts (likely unmigrated code)
 3. Dead definitions that may need cleanup
+
+## Ecosystem Standardization
+
+The evolution pipeline also governs cross-project standardization across the
+agent-packages ecosystem. This ensures all 36+ agents maintain consistent
+structure, documentation, and concept traceability.
+
+### CONCEPT ID Bridge Strategy
+
+All agent-packages projects connect to agent-utilities via `CONCEPT:ECO-4.0`
+(Unified Toolkit Ingestion). Each project has:
+
+- A unique CONCEPT prefix (e.g., `PORT-` for portainer-agent, `SNOW-` for servicenow-api)
+- A `docs/concepts.md` registry mapping local concepts to cross-project references
+- Tool descriptions annotated with CONCEPT IDs for KG ingestion
+
+**Prefix Registry** (39 unique prefixes, zero collisions):
+
+| Prefix | Project | | Prefix | Project |
+|--------|---------|---|--------|--------|
+| `AH` | adguard-home-agent | | `AU` | agent-utilities |
+| `ABOX` | archivebox-api | | `ARR` | arr-mcp |
+| `ATL` | atlassian-agent | | `AUDIO` | audio-transcriber |
+| `CMGR` | container-manager-mcp | | `DSCI` | data-science-mcp |
+| `DOCDB` | documentdb-mcp | | `GENIUS` | genius-agent |
+| `GH` | github-agent | | `GL` | gitlab-api |
+| `HASS` | home-assistant-agent | | `JELLYFIN` | jellyfin-mcp |
+| `LF` | langfuse-agent | | `LIX` | leanix-agent |
+| `LM` | listmonk-api | | `MEAL` | mealie-mcp |
+| `MDLD` | media-downloader | | `MSFT` | microsoft-agent |
+| `NC` | nextcloud-agent | | `OC` | owncast-agent |
+| `PA` | postiz-agent | | `PLANE` | plane-agent |
+| `PORT` | portainer-agent | | `QBT` | qbittorrent-agent |
+| `RM` | repository-manager | | `SNOW` | servicenow-api |
+| `SRX` | searxng-mcp | | `SX` | scholarx |
+| `SYS` | systems-manager | | `STIRLINGPDF` | stirlingpdf-agent |
+| `TUI` | agent-terminal-ui | | `TUN` | tunnel-manager |
+| `UKA` | uptime-kuma-agent | | `VEC` | vector-mcp |
+| `WEBUI` | agent-webui | | `WGER` | wger-agent |
+| `ANSIBLE` | ansible-tower-mcp | | | |
+
+### Cross-Project Synergy Mapping
+
+When ingesting any agent-package codebase via the KG, the following synergies
+are automatically detected and mapped:
+
+1. **ECO-4.0 → All agents**: Every agent's MCP tools are discoverable via unified ingestion
+2. **ORCH-1.2 → All agents**: Confidence-gated routing applies to all MCP tool domains
+3. **OS-5.* → All agents**: Security, scheduling, guardrails are inherited from agent-utilities
+4. **KG-2.* → All agents**: Knowledge graph concepts bridge all codebase ingestion
+
+### Standardization Audit Checklist
+
+As part of each evolution cycle, verify:
+
+- [ ] Every agent has `docs/concepts.md` with unique prefix
+- [ ] No CONCEPT prefix collisions across ecosystem
+- [ ] All `auth.py` use standard env var patterns (`_URL`, `_TOKEN`, `_SSL_VERIFY`)
+- [ ] All agents have `CHANGELOG.md`
+- [ ] No `legacy_readme.md` files remain in docs/
+- [ ] `mcp/` subdirectory standard is documented (existing agents migrated over time)
 
 ## References
 

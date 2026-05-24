@@ -34,7 +34,7 @@ def _parse_pyproject_deps(path: Path) -> dict:
         with open(path, "rb") as f:
             data = tomllib.load(f)
     except Exception:
-        return {"name": path.parent.name, "deps": {}, "extras": {}}
+        return {"name": path.parent.name, "deps": {}, "extras": {}, "dep_groups": {}}
 
     project = data.get("project", {})
     name = project.get("name", path.parent.name)
@@ -53,7 +53,15 @@ def _parse_pyproject_deps(path: Path) -> dict:
             if pkg:
                 extras[group][pkg] = version
 
-    return {"name": name, "deps": deps, "extras": extras}
+    dep_groups: dict[str, dict[str, str]] = {}
+    for group, group_deps in data.get("dependency-groups", {}).items():
+        dep_groups[group] = {}
+        for d in group_deps:
+            pkg, version = _split_dep(d)
+            if pkg:
+                dep_groups[group][pkg] = version
+
+    return {"name": name, "deps": deps, "extras": extras, "dep_groups": dep_groups}
 
 
 def _split_dep(dep_str: str) -> tuple[str, str]:
@@ -239,10 +247,27 @@ def analyze_integration(project_dirs: list[str]) -> dict:
     for proj in projects:
         proj_key = proj["name"].lower().replace("-", "_")
         internal_deps: set[str] = set()
-        for dep_name in proj["deps"]:
+
+        # Check standard dependencies
+        for dep_name in proj.get("deps", {}):
             dep_normalized = dep_name.lower().replace("-", "_")
             if dep_normalized in project_names and dep_normalized != proj_key:
                 internal_deps.add(dep_normalized)
+
+        # Check optional dependencies (extras)
+        for extra_group, extra_deps in proj.get("extras", {}).items():
+            for dep_name in extra_deps:
+                dep_normalized = dep_name.lower().replace("-", "_")
+                if dep_normalized in project_names and dep_normalized != proj_key:
+                    internal_deps.add(dep_normalized)
+
+        # Check dependency-groups
+        for group_name, group_deps in proj.get("dep_groups", {}).items():
+            for dep_name in group_deps:
+                dep_normalized = dep_name.lower().replace("-", "_")
+                if dep_normalized in project_names and dep_normalized != proj_key:
+                    internal_deps.add(dep_normalized)
+
         dep_graph[proj_key] = internal_deps
 
     # Detect version conflicts
