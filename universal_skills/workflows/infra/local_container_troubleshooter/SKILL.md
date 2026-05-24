@@ -19,6 +19,16 @@ Filter and present any stopped or unhealthy containers from local_containers_lis
 Expected: selected_containers
 
 ### Step 2: container-manager-mcp
-Retrieve log outputs for selected failed containers using cm_container_operations get_container_logs tool with tail parameter, and check local compose environments using cm_compose_operations ps tool.
-Expected: container_logs, compose_states
+Retrieve log outputs for selected failed containers using cm_container_operations get_container_logs tool with tail parameter.
+Expected: container_logs
 Depends On: Step 1
+
+### Step 3: container-manager-mcp
+Check local compose environments using cm_compose_operations ps tool.
+Expected: compose_states
+Depends On: Step 1
+
+### Step 4: user-interaction
+Fuse container logs and compose states to diagnose root failures and formulate automated remediation steps.
+Expected: remediation_plan
+Depends On: Step 2, Step 3
