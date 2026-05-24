@@ -1,0 +1,11 @@
+name: Dns Query Analytics Swarm
+task_pattern: Perform Dns Query Analytics operations concurrently across all target layers
+specialist_ids:
+  - dns-specialist
+  - quant-research-analyst
+capability_overrides:
+  dns-specialist:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

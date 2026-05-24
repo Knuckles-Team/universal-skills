@@ -1,0 +1,10 @@
+name: Weekly Research Digest Swarm
+task_pattern: Perform Weekly Research Digest operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - media-coordinator
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  media-coordinator:
+    - stuck_loop_detection

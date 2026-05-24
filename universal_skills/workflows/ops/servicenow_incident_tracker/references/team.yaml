@@ -1,0 +1,10 @@
+name: Servicenow Incident Tracker Swarm
+task_pattern: Perform Servicenow Incident Tracker operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - project-manager
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

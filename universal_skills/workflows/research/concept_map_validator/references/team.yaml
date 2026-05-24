@@ -1,0 +1,10 @@
+name: Concept Map Validator Swarm
+task_pattern: Perform Concept Map Validator operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph
+  - python-programmer
+capability_overrides:
+  knowledge-graph:
+    - stuck_loop_detection
+  python-programmer:
+    - stuck_loop_detection

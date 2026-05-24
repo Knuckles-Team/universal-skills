@@ -1,0 +1,12 @@
+name: Helm Chart Release Swarm
+task_pattern: Perform Helm Chart Release operations concurrently across all target layers
+specialist_ids:
+  - portainer-specialist
+  - agent-engineer
+capability_overrides:
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing

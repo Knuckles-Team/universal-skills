@@ -1,0 +1,7 @@
+name: Backup Verification Swarm
+task_pattern: Perform Backup Verification operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection

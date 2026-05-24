@@ -1,0 +1,11 @@
+name: Infrastructure As Code Sync Swarm
+task_pattern: Perform Infrastructure As Code Sync operations concurrently across all target layers
+specialist_ids:
+  - python-programmer
+  - portainer-specialist
+capability_overrides:
+  python-programmer:
+    - stuck_loop_detection
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing

@@ -1,0 +1,8 @@
+name: Trading Signal Fusion Swarm
+task_pattern: Perform Trading Signal Fusion operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

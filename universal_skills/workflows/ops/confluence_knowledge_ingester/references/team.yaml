@@ -1,0 +1,10 @@
+name: Confluence Knowledge Ingester Swarm
+task_pattern: Perform Confluence Knowledge Ingester operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - project-manager
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

@@ -1,0 +1,7 @@
+name: Conversation Knowledge Extract Swarm
+task_pattern: Perform Conversation Knowledge Extract operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph
+capability_overrides:
+  knowledge-graph:
+    - stuck_loop_detection

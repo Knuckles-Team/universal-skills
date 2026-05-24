@@ -1,0 +1,7 @@
+name: Adguard Filter Optimization Swarm
+task_pattern: Perform Adguard Filter Optimization operations concurrently across all target layers
+specialist_ids:
+  - dns-specialist
+capability_overrides:
+  dns-specialist:
+    - stuck_loop_detection

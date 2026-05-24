@@ -1,0 +1,7 @@
+name: Social Media Campaign Swarm
+task_pattern: Perform Social Media Campaign operations concurrently across all target layers
+specialist_ids:
+  - media-coordinator
+capability_overrides:
+  media-coordinator:
+    - stuck_loop_detection

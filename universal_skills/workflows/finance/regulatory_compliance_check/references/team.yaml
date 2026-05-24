@@ -1,0 +1,8 @@
+name: Regulatory Compliance Check Swarm
+task_pattern: Perform Regulatory Compliance Check operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

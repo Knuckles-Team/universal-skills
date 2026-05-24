@@ -1,0 +1,10 @@
+name: Second Brain Sync Swarm
+task_pattern: Perform Second Brain Sync operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - knowledge-graph
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

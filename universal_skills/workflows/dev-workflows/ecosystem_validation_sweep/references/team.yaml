@@ -1,0 +1,7 @@
+name: Ecosystem Validation Sweep Swarm
+task_pattern: Perform Ecosystem Validation Sweep operations concurrently across all target layers
+specialist_ids:
+  - python-programmer
+capability_overrides:
+  python-programmer:
+    - stuck_loop_detection

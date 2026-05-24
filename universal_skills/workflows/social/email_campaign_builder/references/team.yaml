@@ -1,0 +1,7 @@
+name: Email Campaign Builder Swarm
+task_pattern: Perform Email Campaign Builder operations concurrently across all target layers
+specialist_ids:
+  - media-coordinator
+capability_overrides:
+  media-coordinator:
+    - stuck_loop_detection

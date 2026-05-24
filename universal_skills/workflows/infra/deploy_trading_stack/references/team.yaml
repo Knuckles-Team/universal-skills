@@ -1,0 +1,16 @@
+name: Deploy Trading Stack Swarm
+task_pattern: Perform Deploy Trading Stack operations concurrently across all target layers
+specialist_ids:
+  - portainer-specialist
+  - quant-research-analyst
+  - chief-trading-officer
+capability_overrides:
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing
+  chief-trading-officer:
+    - stuck_loop_detection
+    - checkpointing

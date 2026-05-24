@@ -1,0 +1,7 @@
+name: Dns Rewrite Bulk Setup Swarm
+task_pattern: Perform Dns Rewrite Bulk Setup operations concurrently across all target layers
+specialist_ids:
+  - dns-specialist
+capability_overrides:
+  dns-specialist:
+    - stuck_loop_detection

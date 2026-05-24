@@ -1,0 +1,11 @@
+name: Overnight Code Improvement Swarm
+task_pattern: Perform Overnight Code Improvement operations concurrently across all target layers
+specialist_ids:
+  - agent-engineer
+  - python-programmer
+capability_overrides:
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing
+  python-programmer:
+    - stuck_loop_detection

@@ -1,0 +1,15 @@
+name: Uptime Incident Response Swarm
+task_pattern: Perform Uptime Incident Response operations concurrently across all target layers
+specialist_ids:
+  - uptime-specialist
+  - devops-engineer
+  - portainer-specialist
+capability_overrides:
+  uptime-specialist:
+    - stuck_loop_detection
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing

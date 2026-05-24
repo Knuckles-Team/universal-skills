@@ -1,0 +1,11 @@
+name: Local Container Troubleshooter Swarm
+task_pattern: Perform Local Container Troubleshooter operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - devops-engineer
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing

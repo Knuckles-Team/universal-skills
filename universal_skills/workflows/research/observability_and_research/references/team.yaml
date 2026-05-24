@@ -1,0 +1,10 @@
+name: Observability And Research Swarm
+task_pattern: Perform Observability And Research operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

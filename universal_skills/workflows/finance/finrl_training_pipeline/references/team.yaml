@@ -1,0 +1,8 @@
+name: Finrl Training Pipeline Swarm
+task_pattern: Perform Finrl Training Pipeline operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

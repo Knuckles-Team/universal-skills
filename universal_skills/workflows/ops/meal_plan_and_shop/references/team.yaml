@@ -1,0 +1,7 @@
+name: Meal Plan And Shop Swarm
+task_pattern: Perform Meal Plan And Shop operations concurrently across all target layers
+specialist_ids:
+  - dietician-chef
+capability_overrides:
+  dietician-chef:
+    - stuck_loop_detection

@@ -1,0 +1,8 @@
+name: Qlib Factor Backtest Swarm
+task_pattern: Perform Qlib Factor Backtest operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

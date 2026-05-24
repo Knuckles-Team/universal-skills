@@ -1,0 +1,11 @@
+name: Research Gap Finder Swarm
+task_pattern: Perform Research Gap Finder operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - quant-research-analyst
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

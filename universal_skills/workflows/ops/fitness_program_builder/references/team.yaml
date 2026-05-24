@@ -1,0 +1,7 @@
+name: Fitness Program Builder Swarm
+task_pattern: Perform Fitness Program Builder operations concurrently across all target layers
+specialist_ids:
+  - fitness-trainer
+capability_overrides:
+  fitness-trainer:
+    - stuck_loop_detection

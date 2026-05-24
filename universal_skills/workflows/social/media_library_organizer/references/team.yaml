@@ -1,0 +1,10 @@
+name: Media Library Organizer Swarm
+task_pattern: Perform Media Library Organizer operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

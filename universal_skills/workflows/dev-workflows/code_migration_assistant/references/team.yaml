@@ -1,0 +1,8 @@
+name: Code Migration Assistant Swarm
+task_pattern: Perform Code Migration Assistant operations concurrently across all target layers
+specialist_ids:
+  - agent-engineer
+capability_overrides:
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing

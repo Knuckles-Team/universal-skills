@@ -1,0 +1,7 @@
+name: Multi Domain Survey Swarm
+task_pattern: Perform Multi Domain Survey operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

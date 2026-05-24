@@ -1,0 +1,10 @@
+name: Daily Health Dashboard Swarm
+task_pattern: Perform Daily Health Dashboard operations concurrently across all target layers
+specialist_ids:
+  - fitness-trainer
+  - dietician-chef
+capability_overrides:
+  fitness-trainer:
+    - stuck_loop_detection
+  dietician-chef:
+    - stuck_loop_detection

@@ -1,0 +1,12 @@
+name: Max Drawdown Recovery Swarm
+task_pattern: Perform Max Drawdown Recovery operations concurrently across all target layers
+specialist_ids:
+  - chief-trading-officer
+  - quant-research-analyst
+capability_overrides:
+  chief-trading-officer:
+    - stuck_loop_detection
+    - checkpointing
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

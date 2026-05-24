@@ -1,0 +1,10 @@
+name: Ai Research Survey Swarm
+task_pattern: Perform Ai Research Survey operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

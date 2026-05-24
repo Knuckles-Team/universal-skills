@@ -1,0 +1,11 @@
+name: Capability Discovery Swarm
+task_pattern: Perform Capability Discovery operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - devops-engineer
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing

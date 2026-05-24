@@ -1,0 +1,11 @@
+name: Exchange Health Monitor Swarm
+task_pattern: Perform Exchange Health Monitor operations concurrently across all target layers
+specialist_ids:
+  - chief-trading-officer
+  - uptime-specialist
+capability_overrides:
+  chief-trading-officer:
+    - stuck_loop_detection
+    - checkpointing
+  uptime-specialist:
+    - stuck_loop_detection

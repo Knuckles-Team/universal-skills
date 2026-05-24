@@ -1,0 +1,10 @@
+name: Dns Consistency Audit Swarm
+task_pattern: Perform Dns Consistency Audit operations concurrently across all target layers
+specialist_ids:
+  - dns-specialist
+  - tunnel-specialist
+capability_overrides:
+  dns-specialist:
+    - stuck_loop_detection
+  tunnel-specialist:
+    - stuck_loop_detection

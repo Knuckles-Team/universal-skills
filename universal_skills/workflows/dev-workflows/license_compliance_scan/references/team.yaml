@@ -1,0 +1,7 @@
+name: License Compliance Scan Swarm
+task_pattern: Perform License Compliance Scan operations concurrently across all target layers
+specialist_ids:
+  - python-programmer
+capability_overrides:
+  python-programmer:
+    - stuck_loop_detection

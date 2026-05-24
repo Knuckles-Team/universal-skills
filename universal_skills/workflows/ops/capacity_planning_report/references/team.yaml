@@ -1,0 +1,11 @@
+name: Capacity Planning Report Swarm
+task_pattern: Perform Capacity Planning Report operations concurrently across all target layers
+specialist_ids:
+  - project-manager
+  - quant-research-analyst
+capability_overrides:
+  project-manager:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

@@ -1,0 +1,10 @@
+name: Knowledge Base Builder Swarm
+task_pattern: Perform Knowledge Base Builder operations concurrently across all target layers
+specialist_ids:
+  - legal-compliance
+  - project-manager
+capability_overrides:
+  legal-compliance:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

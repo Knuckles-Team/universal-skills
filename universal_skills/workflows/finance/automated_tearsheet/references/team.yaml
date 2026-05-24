@@ -1,0 +1,11 @@
+name: Automated Tearsheet Swarm
+task_pattern: Perform Automated Tearsheet operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+  - media-coordinator
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing
+  media-coordinator:
+    - stuck_loop_detection

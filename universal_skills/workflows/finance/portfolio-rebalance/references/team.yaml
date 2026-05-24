@@ -1,0 +1,15 @@
+name: Portfolio Rebalance Swarm
+task_pattern: Perform Portfolio Rebalance operations concurrently across all target layers
+specialist_ids:
+  - chief-trading-officer
+  - quant-research-analyst
+  - risk-compliance-officer
+capability_overrides:
+  chief-trading-officer:
+    - stuck_loop_detection
+    - checkpointing
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing
+  risk-compliance-officer:
+    - stuck_loop_detection

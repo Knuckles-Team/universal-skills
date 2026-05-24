@@ -1,0 +1,7 @@
+name: Annual Technology Review Swarm
+task_pattern: Perform Annual Technology Review operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

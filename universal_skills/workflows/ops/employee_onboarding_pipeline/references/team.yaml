@@ -1,0 +1,13 @@
+name: Employee Onboarding Pipeline Swarm
+task_pattern: Perform Employee Onboarding Pipeline operations concurrently across all target layers
+specialist_ids:
+  - hr-coordinator
+  - legal-compliance
+  - project-manager
+capability_overrides:
+  hr-coordinator:
+    - stuck_loop_detection
+  legal-compliance:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

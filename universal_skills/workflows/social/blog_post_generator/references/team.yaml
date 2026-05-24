@@ -1,0 +1,7 @@
+name: Blog Post Generator Swarm
+task_pattern: Perform Blog Post Generator operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

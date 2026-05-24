@@ -1,0 +1,7 @@
+name: Payroll Processing Swarm
+task_pattern: Perform Payroll Processing operations concurrently across all target layers
+specialist_ids:
+  - hr-coordinator
+capability_overrides:
+  hr-coordinator:
+    - stuck_loop_detection

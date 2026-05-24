@@ -1,0 +1,7 @@
+name: Newsletter Automation Swarm
+task_pattern: Perform Newsletter Automation operations concurrently across all target layers
+specialist_ids:
+  - media-coordinator
+capability_overrides:
+  media-coordinator:
+    - stuck_loop_detection

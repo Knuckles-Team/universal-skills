@@ -1,0 +1,11 @@
+name: Org Restructure Simulation Swarm
+task_pattern: Perform Org Restructure Simulation operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph
+  - quant-research-analyst
+capability_overrides:
+  knowledge-graph:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

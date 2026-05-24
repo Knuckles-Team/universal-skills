@@ -1,0 +1,7 @@
+name: Change Request Pipeline Swarm
+task_pattern: Perform Change Request Pipeline operations concurrently across all target layers
+specialist_ids:
+  - legal-compliance
+capability_overrides:
+  legal-compliance:
+    - stuck_loop_detection

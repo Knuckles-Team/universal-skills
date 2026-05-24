@@ -1,0 +1,7 @@
+name: Cross Reference Builder Swarm
+task_pattern: Perform Cross Reference Builder operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph
+capability_overrides:
+  knowledge-graph:
+    - stuck_loop_detection

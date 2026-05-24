@@ -1,0 +1,11 @@
+name: Release Notes Aggregation Swarm
+task_pattern: Perform Release Notes Aggregation operations concurrently across all target layers
+specialist_ids:
+  - project-manager
+  - agent-engineer
+capability_overrides:
+  project-manager:
+    - stuck_loop_detection
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing

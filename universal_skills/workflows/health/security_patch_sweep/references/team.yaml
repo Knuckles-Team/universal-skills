@@ -1,0 +1,10 @@
+name: Security Patch Sweep Swarm
+task_pattern: Perform Security Patch Sweep operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - tunnel-specialist
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  tunnel-specialist:
+    - stuck_loop_detection

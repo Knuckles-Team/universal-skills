@@ -1,0 +1,7 @@
+name: Ansible Playbook Runner Swarm
+task_pattern: Perform Ansible Playbook Runner operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection

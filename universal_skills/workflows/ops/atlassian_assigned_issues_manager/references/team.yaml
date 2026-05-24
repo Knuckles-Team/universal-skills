@@ -1,0 +1,10 @@
+name: Atlassian Assigned Issues Manager Swarm
+task_pattern: Perform Atlassian Assigned Issues Manager operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - project-manager
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

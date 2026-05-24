@@ -1,0 +1,7 @@
+name: Patent Landscape Analysis Swarm
+task_pattern: Perform Patent Landscape Analysis operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

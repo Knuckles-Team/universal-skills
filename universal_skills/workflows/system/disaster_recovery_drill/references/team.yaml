@@ -1,0 +1,15 @@
+name: Disaster Recovery Drill Swarm
+task_pattern: Perform Disaster Recovery Drill operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - portainer-specialist
+  - devops-engineer
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing

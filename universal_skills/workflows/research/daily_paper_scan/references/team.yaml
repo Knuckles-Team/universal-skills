@@ -1,0 +1,7 @@
+name: Daily Paper Scan Swarm
+task_pattern: Perform Daily Paper Scan operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

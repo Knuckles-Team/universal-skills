@@ -1,0 +1,10 @@
+name: Incident Management Lifecycle Swarm
+task_pattern: Perform Incident Management Lifecycle operations concurrently across all target layers
+specialist_ids:
+  - legal-compliance
+  - uptime-specialist
+capability_overrides:
+  legal-compliance:
+    - stuck_loop_detection
+  uptime-specialist:
+    - stuck_loop_detection

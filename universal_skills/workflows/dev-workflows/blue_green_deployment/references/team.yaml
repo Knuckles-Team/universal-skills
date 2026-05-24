@@ -1,0 +1,12 @@
+name: Blue Green Deployment Swarm
+task_pattern: Perform Blue Green Deployment operations concurrently across all target layers
+specialist_ids:
+  - portainer-specialist
+  - devops-engineer
+capability_overrides:
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing

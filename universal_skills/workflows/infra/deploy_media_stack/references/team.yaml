@@ -1,0 +1,8 @@
+name: Deploy Media Stack Swarm
+task_pattern: Perform Deploy Media Stack operations concurrently across all target layers
+specialist_ids:
+  - portainer-specialist
+capability_overrides:
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing

@@ -1,0 +1,7 @@
+name: Video Content Pipeline Swarm
+task_pattern: Perform Video Content Pipeline operations concurrently across all target layers
+specialist_ids:
+  - media-coordinator
+capability_overrides:
+  media-coordinator:
+    - stuck_loop_detection

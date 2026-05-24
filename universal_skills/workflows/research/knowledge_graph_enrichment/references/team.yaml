@@ -1,0 +1,10 @@
+name: Knowledge Graph Enrichment Swarm
+task_pattern: Perform Knowledge Graph Enrichment operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

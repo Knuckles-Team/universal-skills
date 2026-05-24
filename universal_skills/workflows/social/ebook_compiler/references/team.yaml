@@ -1,0 +1,10 @@
+name: Ebook Compiler Swarm
+task_pattern: Perform Ebook Compiler operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

@@ -1,0 +1,7 @@
+name: Competitive Intelligence Research Swarm
+task_pattern: Perform Competitive Intelligence Research operations concurrently across all target layers
+specialist_ids:
+  - researcher
+capability_overrides:
+  researcher:
+    - stuck_loop_detection

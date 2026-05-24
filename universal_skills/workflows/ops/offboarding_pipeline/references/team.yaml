@@ -1,0 +1,10 @@
+name: Offboarding Pipeline Swarm
+task_pattern: Perform Offboarding Pipeline operations concurrently across all target layers
+specialist_ids:
+  - hr-coordinator
+  - legal-compliance
+capability_overrides:
+  hr-coordinator:
+    - stuck_loop_detection
+  legal-compliance:
+    - stuck_loop_detection

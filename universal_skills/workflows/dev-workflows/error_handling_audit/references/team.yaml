@@ -1,0 +1,7 @@
+name: Error Handling Audit Swarm
+task_pattern: Perform Error Handling Audit operations concurrently across all target layers
+specialist_ids:
+  - python-programmer
+capability_overrides:
+  python-programmer:
+    - stuck_loop_detection

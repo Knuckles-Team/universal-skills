@@ -1,0 +1,7 @@
+name: Compliance Framework Deploy Swarm
+task_pattern: Perform Compliance Framework Deploy operations concurrently across all target layers
+specialist_ids:
+  - legal-compliance
+capability_overrides:
+  legal-compliance:
+    - stuck_loop_detection

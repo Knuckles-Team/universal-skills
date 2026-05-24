@@ -1,0 +1,10 @@
+name: Social Media Influencer Swarm
+task_pattern: Perform Social Media Influencer operations concurrently across all target layers
+specialist_ids:
+  - content-generator
+  - media-coordinator
+capability_overrides:
+  content-generator:
+    - stuck_loop_detection
+  media-coordinator:
+    - stuck_loop_detection

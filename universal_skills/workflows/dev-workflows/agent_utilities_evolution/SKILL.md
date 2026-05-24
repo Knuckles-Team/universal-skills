@@ -1,36 +1,31 @@
 ---
 name: agent_utilities_evolution
-description: Execute structural codebase-wide evolution of agent-utilities and downstream dependencies
+description: Parallel execution workflow for agent utilities evolution using the Unified Parallel Engine
+domain: dev-workflows
 tags:
+  - parallel-workflow
   - dev-workflows
-  - evolution
-  - codebase-maintenance
-requires:
-  - graph-os
-  - data-science-mcp
-  - repository-manager-mcp
+  - mcp-scholarx
 ---
 
-# Agent Utilities Evolution Workflow
+# Parallel Workflow: Agent Utilities Evolution
 
-Systematically analyze, plan, and execute architectural improvements and evolutionary upgrades across agent-utilities and all its 30+ downstream dependent packages.
+This workflow defines the topological parallel execution steps for agent utilities evolution.
 
 ## Steps
 
-### Step 0: user-interaction
-Retrieve the target evolution scope (e.g., AST Concept ID audits, dead code elimination, dependency synchronization) and current focus repositories.
-
-### Step 1: graph-os
-Query the unified Knowledge Graph to locate concept mapping registers, active nodes, or unresolved architectural gaps across the ecosystem using Cypher queries via `mcp_graph-os_graph_query`.
-
-### Step 2: data-science-mcp
-Conduct code audits, comparative gap analysis, and AST wiring audits between core `agent-utilities` abstractions and downstream projects using `graph_analyze`.
-
-### Step 3: repository-manager-mcp
-Generate an implementation draft (Software Design Document / SDD) detailing the precise edits required for matching packages and version bounds.
-
-### Step 4: user-interaction
-Present the proposed SDD evolutionary spec to the user for approval and collect any custom overrides.
-
-### Step 5: repository-manager-mcp
-Execute bulk project code edits and run automated validation tests across the workspaces using the `rm_projects` tool with `action='validate'` until all drift errors are resolved.
+### Step 1: scan_papers
+Execute the scan papers phase for the agent_utilities_evolution workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
+Expected: scan_papers_artifacts
+### Step 2: comparative_analysis [depends_on: scan_papers]
+Execute the comparative analysis phase for the agent_utilities_evolution workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
+Expected: comparative_analysis_artifacts
+### Step 3: sdd_spec [depends_on: comparative_analysis]
+Execute the SDD spec phase for the agent_utilities_evolution workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
+Expected: sdd_spec_artifacts
+### Step 4: implement [depends_on: sdd_spec]
+Execute the implement phase for the agent_utilities_evolution workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
+Expected: implement_artifacts
+### Step 5: test [depends_on: implement]
+Execute the test phase for the agent_utilities_evolution workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
+Expected: test_artifacts

@@ -1,0 +1,13 @@
+name: Deploy Networking Layer Swarm
+task_pattern: Perform Deploy Networking Layer operations concurrently across all target layers
+specialist_ids:
+  - tunnel-specialist
+  - dns-specialist
+  - systems-manager
+capability_overrides:
+  tunnel-specialist:
+    - stuck_loop_detection
+  dns-specialist:
+    - stuck_loop_detection
+  systems-manager:
+    - stuck_loop_detection

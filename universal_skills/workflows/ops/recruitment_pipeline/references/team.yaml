@@ -1,0 +1,10 @@
+name: Recruitment Pipeline Swarm
+task_pattern: Perform Recruitment Pipeline operations concurrently across all target layers
+specialist_ids:
+  - hr-coordinator
+  - media-coordinator
+capability_overrides:
+  hr-coordinator:
+    - stuck_loop_detection
+  media-coordinator:
+    - stuck_loop_detection

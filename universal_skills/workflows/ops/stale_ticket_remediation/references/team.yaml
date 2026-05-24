@@ -1,0 +1,7 @@
+name: Stale Ticket Remediation Swarm
+task_pattern: Perform Stale Ticket Remediation operations concurrently across all target layers
+specialist_ids:
+  - project-manager
+capability_overrides:
+  project-manager:
+    - stuck_loop_detection

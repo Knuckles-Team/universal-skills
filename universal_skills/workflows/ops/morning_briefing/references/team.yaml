@@ -1,0 +1,10 @@
+name: Morning Briefing Swarm
+task_pattern: Perform Morning Briefing operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - hr-coordinator
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  hr-coordinator:
+    - stuck_loop_detection

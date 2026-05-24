@@ -1,0 +1,10 @@
+name: Competitive Content Analysis Swarm
+task_pattern: Perform Competitive Content Analysis operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

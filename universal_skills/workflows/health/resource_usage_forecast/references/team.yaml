@@ -1,0 +1,11 @@
+name: Resource Usage Forecast Swarm
+task_pattern: Perform Resource Usage Forecast operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - quant-research-analyst
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

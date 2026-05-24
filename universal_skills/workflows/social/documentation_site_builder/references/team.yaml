@@ -1,0 +1,11 @@
+name: Documentation Site Builder Swarm
+task_pattern: Perform Documentation Site Builder operations concurrently across all target layers
+specialist_ids:
+  - python-programmer
+  - agent-engineer
+capability_overrides:
+  python-programmer:
+    - stuck_loop_detection
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing

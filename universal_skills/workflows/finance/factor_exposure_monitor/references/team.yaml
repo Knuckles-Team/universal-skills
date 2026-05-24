@@ -1,0 +1,8 @@
+name: Factor Exposure Monitor Swarm
+task_pattern: Perform Factor Exposure Monitor operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

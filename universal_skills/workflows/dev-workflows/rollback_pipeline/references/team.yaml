@@ -1,0 +1,12 @@
+name: Rollback Pipeline Swarm
+task_pattern: Perform Rollback Pipeline operations concurrently across all target layers
+specialist_ids:
+  - portainer-specialist
+  - agent-engineer
+capability_overrides:
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  agent-engineer:
+    - stuck_loop_detection
+    - checkpointing

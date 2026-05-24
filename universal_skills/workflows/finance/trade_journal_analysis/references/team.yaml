@@ -1,0 +1,8 @@
+name: Trade Journal Analysis Swarm
+task_pattern: Perform Trade Journal Analysis operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

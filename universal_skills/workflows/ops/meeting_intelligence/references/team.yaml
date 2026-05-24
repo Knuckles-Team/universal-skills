@@ -1,0 +1,7 @@
+name: Meeting Intelligence Swarm
+task_pattern: Perform Meeting Intelligence operations concurrently across all target layers
+specialist_ids:
+  - project-manager
+capability_overrides:
+  project-manager:
+    - stuck_loop_detection

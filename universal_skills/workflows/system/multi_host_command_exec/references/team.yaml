@@ -1,0 +1,10 @@
+name: Multi Host Command Exec Swarm
+task_pattern: Perform Multi Host Command Exec operations concurrently across all target layers
+specialist_ids:
+  - tunnel-specialist
+  - systems-manager
+capability_overrides:
+  tunnel-specialist:
+    - stuck_loop_detection
+  systems-manager:
+    - stuck_loop_detection

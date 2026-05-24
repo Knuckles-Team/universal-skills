@@ -1,0 +1,10 @@
+name: Podcast Show Notes Swarm
+task_pattern: Perform Podcast Show Notes operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

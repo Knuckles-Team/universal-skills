@@ -1,0 +1,10 @@
+name: Contract Review Swarm
+task_pattern: Perform Contract Review operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - project-manager
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

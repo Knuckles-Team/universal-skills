@@ -1,0 +1,10 @@
+name: Citation Graph Explorer Swarm
+task_pattern: Perform Citation Graph Explorer operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - knowledge-graph
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  knowledge-graph:
+    - stuck_loop_detection

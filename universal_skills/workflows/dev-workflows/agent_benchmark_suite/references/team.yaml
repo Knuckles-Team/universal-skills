@@ -1,0 +1,8 @@
+name: Agent Benchmark Suite Swarm
+task_pattern: Perform Agent Benchmark Suite operations concurrently across all target layers
+specialist_ids:
+  - quant-research-analyst
+capability_overrides:
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

@@ -1,0 +1,7 @@
+name: Cross Team Dependency Tracker Swarm
+task_pattern: Perform Cross Team Dependency Tracker operations concurrently across all target layers
+specialist_ids:
+  - project-manager
+capability_overrides:
+  project-manager:
+    - stuck_loop_detection

@@ -1,0 +1,11 @@
+name: Esg Screening Pipeline Swarm
+task_pattern: Perform Esg Screening Pipeline operations concurrently across all target layers
+specialist_ids:
+  - researcher
+  - quant-research-analyst
+capability_overrides:
+  researcher:
+    - stuck_loop_detection
+  quant-research-analyst:
+    - stuck_loop_detection
+    - checkpointing

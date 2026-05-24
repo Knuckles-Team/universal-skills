@@ -1,0 +1,10 @@
+name: Cross Department Project Swarm
+task_pattern: Perform Cross Department Project operations concurrently across all target layers
+specialist_ids:
+  - coordinator
+  - project-manager
+capability_overrides:
+  coordinator:
+    - stuck_loop_detection
+  project-manager:
+    - stuck_loop_detection

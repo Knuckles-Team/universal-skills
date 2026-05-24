@@ -1,0 +1,10 @@
+name: Dietician And Chef Swarm
+task_pattern: Perform Dietician And Chef operations concurrently across all target layers
+specialist_ids:
+  - systems-manager
+  - uptime-specialist
+capability_overrides:
+  systems-manager:
+    - stuck_loop_detection
+  uptime-specialist:
+    - stuck_loop_detection

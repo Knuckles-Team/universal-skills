@@ -1,0 +1,15 @@
+name: Service Dependency Graph Swarm
+task_pattern: Perform Service Dependency Graph operations concurrently across all target layers
+specialist_ids:
+  - devops-engineer
+  - portainer-specialist
+  - knowledge-graph
+capability_overrides:
+  devops-engineer:
+    - stuck_loop_detection
+    - checkpointing
+  portainer-specialist:
+    - stuck_loop_detection
+    - checkpointing
+  knowledge-graph:
+    - stuck_loop_detection
