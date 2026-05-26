@@ -1,0 +1,19 @@
+name: Comparative Analysis Swarm
+task_pattern: Perform deep multi-modal comparative analysis and innovation extraction concurrently
+specialist_ids:
+  - classification-agent
+  - audit-agent
+  - security-agent
+  - innovation-agent
+  - synthesis-agent
+capability_overrides:
+  classification-agent:
+    - stuck_loop_detection
+  audit-agent:
+    - stuck_loop_detection
+  security-agent:
+    - stuck_loop_detection
+  innovation-agent:
+    - stuck_loop_detection
+  synthesis-agent:
+    - stuck_loop_detection

@@ -145,342 +145,101 @@ python scripts/discover_projects.py --kg-query "knowledge graph" /path/to/projec
 KG sources are materialized to `~/.scholarx/analysis/` as markdown files with
 embedded metadata for downstream analysis scripts.
 
-### Pre-Flight Configuration (MANDATORY — before any analysis)
+## Steps
 
-Before starting any comparative analysis, you MUST gather the following configuration
-from the user. If the user's prompt does not explicitly state these, ASK before proceeding:
+### Step 1: pre_flight_config
+Before starting any comparative analysis, gather the following configuration from the user. Ask if not explicitly stated:
+1. **Primary Project**: Which codebase is the primary target for enhancement?
+2. **Knowledge Graph Available?**: Is the `agent-utilities-kg` MCP server running?
+3. **Concept Registry?**: Does the project have a concept map (e.g., `docs/concept_map.md` with `CONCEPT:ID` tags)?
+4. **Architecture Docs?**: Does the project have C4 architecture diagrams?
+5. **Analysis Depth**: Full analysis or focused analysis?
 
-#### Required Questions
-
-1. **Primary Project**: "Which codebase is the primary target for enhancement?"
-   - This determines which project receives the gap recommendations
-   - All gaps, wiring opportunities, and innovations are framed relative to this project
-
-2. **Knowledge Graph Available?**: "Do you have the `agent-utilities-kg` MCP server running?"
-   - If **YES** → Use KG-native discovery (Phase -1) for all analysis. Enables:
-     - `kg_search(mode='discover')` for research cross-referencing
-     - `kg_query` for import graph tracing and blast radius analysis
-     - `kg_analyze` for LLM-powered feature extraction
-     - Concept-ID-seeded cross-referencing from ingested concept maps
-   - If **NO** → Fall back to filesystem-only scripts (Phases 1-8)
-
-3. **Concept Registry?**: "Does your project have a concept map (e.g., `docs/concept_map.md` with `CONCEPT:ID` tags)?"
-   - If **YES** → Enable Phase 9.5 concept cross-reference for pillar-aware enhancement mapping
-   - If **NO** → Skip concept cross-reference, use general feature extraction only
-
-4. **Architecture Docs?**: "Does your project have C4 architecture diagrams (e.g., `docs/pillars/architecture_c4.md`)?"
-   - If **YES** → Phase 3.5 will discover and parse them for topology-aware gap analysis
-   - If **NO** → Phase 3.5 will auto-generate a C4 diagram from AST and save to `.specify/reports/generated_c4.md`
-
-5. **Analysis Depth**: "Do you want a full analysis (all 8 domains + architecture + innovation) or focused analysis (specific domains only)?"
-   - **Full** → Run Phases 1-10.5
-   - **Focused** → Ask which domains to include (e.g., "architecture + security only")
-
-#### Optional Questions (ask if context suggests relevance)
-
-6. **Research Papers?**: "Should I cross-reference against research papers in the KG or specific papers?"
-7. **Comparison Codebases?**: "Are there specific codebases to compare against, or should I use KG-ingested sources?"
-8. **Output Location**: "Where should the report be saved?" (default: `.specify/reports/comparative_analysis.md`)
-
-> [!IMPORTANT]
-> Do NOT skip Pre-Flight. Gathering these answers up front avoids wasted analysis
-> and ensures the maximum-capability configuration is used every time.
-
-### Phase 0: Discovery & Classification
-
-1. Run `scripts/discover_projects.py` with all target paths to classify each input as
-   `codebase` or `research` and detect language ecosystems.
-2. The script auto-determines the analysis mode based on input types.
-3. If mode is ambiguous, ask the user to clarify intent.
-
+### Step 2: discovery_classification [depends_on: pre_flight_config]
+Classify inputs (codebase vs research), detect language ecosystems, clone Git URLs if provided into a temporary folder, and rank all comparison items by their potential value to the primary target codebase (0-100 composite ranking):
+- Requires: `scripts/discover_projects.py` and `scripts/rank_relevance.py` (or KG actions `relevance_rankings` / `relevance_sweep`)
 ```bash
 python scripts/discover_projects.py /path/to/project1 /path/to/project2
-python scripts/discover_projects.py https://github.com/example/repo /local/project
-python scripts/discover_projects.py --mode research /path/to/paper1.md /path/to/paper2.md
-```
-
-If Git URLs are provided, the script will automatically clone them into a temporary directory (`.specify/ca_repos/<session_id>`) using `repository-manager` and substitute the URL with the local cloned path in the output JSON.
-
-### Phase 0.5: Relevance Pre-Ranking (MANDATORY)
-
-Before running full analysis, rank all comparison items by their potential value to the
-primary target codebase. This ensures the most relevant items are analyzed first.
-
-#### With KG Available
-
-1. Check for pre-computed rankings:
-```
-kg_analyze(action='relevance_rankings', query='<target-codebase-name>', top_k=20)
-```
-
-2. If rankings exist and are recent (< 60 min old), present the top items to the user:
-   - Show ranked list with per-dimension scores (semantic, concept overlap, architecture compatibility, innovation, feasibility)
-   - Ask user which items to analyze in depth or confirm "analyze all"
-
-3. If no rankings exist, trigger a background sweep:
-```
-kg_analyze(action='relevance_sweep', query='<target-codebase-name>')
-```
-Then proceed with analysis while the sweep runs — results will be available for future runs.
-
-#### Without KG (Filesystem Fallback)
-
-Run the standalone ranking script:
-```bash
 python scripts/rank_relevance.py /path/to/target /path/to/paper1.md /path/to/codebase2
 ```
 
-This uses AST analysis and keyword matching to produce a ranked list without embeddings.
-
-#### Ranking Dimensions (0-100 composite)
-
-| Dimension | Weight | Description |
-|-----------|--------|-------------|
-| Semantic Relevance | 0-30 | Embedding cosine similarity or keyword overlap |
-| Concept Overlap | 0-20 | Shared technical concepts (KG, agent, protocol, etc.) |
-| Architecture Compatibility | 0-20 | Design pattern alignment |
-| Innovation Potential | 0-20 | Novel features not in target |
-| Feasibility | 0-10 | Integration ease (Python, same patterns, etc.) |
-
-Rankings are persisted in the KG as `RELEVANCE_SCORED` edges and auto-refreshed
-every 60 minutes by the background daemon. Use rankings to prioritize which items
-get full analysis and to inform gap recommendations.
-
-### Phase 1: Governance Analysis (Codebase mode only)
-
-Run for each codebase project:
+### Step 3: codebase_audit [depends_on: discovery_classification]
+For codebase projects, analyze project governance, contributor diversity, bus factor, ecosystem health, SemVer adherence, dependency freshness, and code quality cyclomatic complexity:
+- Requires: `scripts/analyze_governance.py`, `scripts/analyze_ecosystem_health.py`, and `scripts/analyze_code_quality.py`
 ```bash
 python scripts/analyze_governance.py /path/to/project > results/project_ca001.json
-```
-
-Evaluates: License type and OSI compliance, contributor diversity and bus factor,
-governance files (CODE_OF_CONDUCT, CONTRIBUTING, SECURITY, CODEOWNERS).
-
-Read `references/license_compatibility.md` for license tier classification if the
-user asks about license compatibility between projects.
-
-### Phase 2: Ecosystem Health (Codebase mode only)
-
-Run for each codebase project:
-```bash
 python scripts/analyze_ecosystem_health.py /path/to/project > results/project_ca002.json
+python scripts/analyze_code_quality.py /path/to/project > results/project_ca004.json
 ```
 
-Evaluates: Git commit frequency and recency, release cadence and SemVer adherence,
-CI/CD pipeline presence, dependency freshness and pinning rates.
-
-### Phase 3: Architecture & Design (Codebase mode only)
-
-Run for each codebase project:
+### Step 4: architecture_discovery [depends_on: discovery_classification]
+Discover existing C4 architecture diagrams. If none exist, auto-generate one from AST-parsed package structures, entry points, and protocols. Trace hot paths via import graph tracing and identify design patterns (DI, mixins, lazy init, etc.):
+- Requires: `scripts/analyze_architecture.py`
 ```bash
 python scripts/analyze_architecture.py /path/to/project > results/project_ca003.json
 ```
-
-Evaluates: Protocol support (MCP, A2A, ACP, REST, gRPC, GraphQL), type annotation
-coverage, module structure and nesting depth, 12-Factor compliance signals.
-
-**New in v0.12**: Also discovers existing C4 architecture diagrams, identifies hot paths
-via import graph tracing, detects design patterns (mixin, DI, lazy init, factory, etc.),
-and **auto-generates a C4 diagram** to `.specify/reports/generated_c4.md` if none exists.
-
-Read `references/architecture_patterns.md` for pattern detection criteria.
-Read `references/architecture_discovery.md` for C4 detection and hot path methodology.
-
-### Phase 3.5: Architecture Discovery (Always runs — all modes)
-
-This phase runs automatically during Phase 3 and provides:
-
-1. **C4 Diagram Discovery**: Scans `docs/`, `.specify/`, and root for existing C4
-   mermaid diagrams (`C4Context`, `C4Container`, `C4Component`, `C4Deployment`).
-2. **C4 Auto-Generation**: If no C4 exists, generates one from AST-parsed package
-   structure + detected protocols + entry points. Saved to `.specify/reports/generated_c4.md`.
-3. **Hot Path Identification**: Traces from entry points (MCP tools, A2A skills, CLI,
-   FastAPI routes) through import graph to classify modules as hot/warm/cold.
-4. **Design Pattern Detection**: Identifies architectural patterns via AST: mixin,
-   dependency injection, lazy init, plugin registry, event-driven, protocol-oriented,
-   factory, strategy.
-
-For KG-integrated workflows, hot path tracing uses the KG's `IMPORTS` edges:
+For KG-integrated tracing:
 ```
 kg_query(cypher="MATCH (m:Module)-[:IMPORTS*1..5]->(d:Module) WHERE m.source_path CONTAINS $path RETURN d.name")
 ```
 
-The output feeds directly into Phase 9.7 (Architecture Gap Analysis) and Phase 10.5
-(Architecture Adherence Verification).
-
-### Phase 4: Code Quality (Codebase mode only)
-
-Run for each codebase project:
-```bash
-python scripts/analyze_code_quality.py /path/to/project > results/project_ca004.json
-```
-
-Evaluates: Cyclomatic complexity (McCabe), code duplication percentage, stub/TODO/FIXME
-density, function length distribution, dead code indicators.
-
-### Phase 5: Security & Compliance (Codebase mode only)
-
-Run for each codebase project:
+### Step 5: security_reliability_check [depends_on: discovery_classification]
+Scan for OWASP Top 10 pattern exposures, CWE anti-pattern density, hardcoded secrets, input validation coverage, and evaluate test suites (pyramid shape, frameworks, and intent):
+- Requires: `scripts/analyze_security.py` and `scripts/analyze_testing.py`
 ```bash
 python scripts/analyze_security.py /path/to/project > results/project_ca005.json
-```
-
-Evaluates: OWASP Top 10 pattern exposure, CWE anti-pattern density, hardcoded secret
-detection, input validation coverage, auth framework presence.
-
-Read `references/security_standards.md` for OWASP/CWE detection pattern reference.
-
-### Phase 6: Testing & Reliability (Codebase mode only)
-
-Run for each codebase project:
-```bash
 python scripts/analyze_testing.py /path/to/project > results/project_ca006.json
 ```
 
-Evaluates: Test suite presence and framework, test count and test-to-code ratio,
-testing pyramid shape (unit > integration > e2e), quality indicators (fixtures,
-parametrize, markers, timeouts).
-
-### Phase 7: Documentation & DX (Codebase mode only)
-
-Run for each codebase project:
+### Step 6: documentation_dx_review [depends_on: discovery_classification]
+Grade README/AGENTS.md completeness, docstring coverage, and developer guides. Evaluate benchmarks, concurrency adoption, and container weight:
+- Requires: `scripts/analyze_documentation.py` and `scripts/analyze_performance.py`
 ```bash
 python scripts/analyze_documentation.py /path/to/project > results/project_ca007.json
-```
-
-Evaluates: README completeness (15 criteria), docstring coverage percentage,
-documentation artifacts (docs/, CHANGELOG, CONTRIBUTING, examples/).
-
-### Phase 8: Performance & Cost (Codebase mode only)
-
-Run for each codebase project:
-```bash
 python scripts/analyze_performance.py /path/to/project > results/project_ca008.json
 ```
 
-Evaluates: Benchmark suite presence, dependency count and weight, async/concurrency
-adoption ratio, container configuration.
-
-### Phase 9: Innovation Extraction (All modes)
-
-Run when comparing research papers to codebases or discovering cross-domain innovations:
+### Step 7: innovation_extraction [depends_on: discovery_classification]
+Extract innovation signals and map findings using biomimicry patterns, structure mapping, TRIZ principles, and emergent value discovery:
+- Requires: `scripts/extract_innovations.py`
 ```bash
 python scripts/extract_innovations.py --source /path/to/paper.md --target /path/to/codebase
-python scripts/extract_innovations.py --sources /path/to/paper1.md /path/to/paper2.md
 ```
 
-Applies 5 methodologies:
-1. **Biomimicry Pattern Matching** — Maps nature-inspired concepts to software patterns
-2. **Analogical Reasoning (Structure Mapping)** — Transfers relational structures across domains
-3. **TRIZ Inventive Principles** — Systematic contradiction resolution
-4. **Emergent Value Discovery** — Identifies "free" capabilities from integration
-5. **First Principles Decomposition** — Reconstructs novel combinations from primitives
-
-Read `references/innovation_extraction.md` for full methodology details.
-
-### Phase 9.5: Concept Cross-Reference (Concept-ID mode)
-
-Run when mapping research findings directly to a project's concept registry:
+### Step 8: concept_cross_reference [depends_on: discovery_classification]
+Perform comprehensive concept-ID seeded cross-referencing against project concept registries, mapping paper findings to unique concept IDs:
+- Requires: `scripts/concept_cross_reference.py`
 ```bash
-# Full exhaustive cross-reference (all concepts × all papers)
 python scripts/concept_cross_reference.py --kg --output results/concept_xref.json
-
-# Filter to specific pillars
-python scripts/concept_cross_reference.py --kg --pillars KG AHE --output results/concept_xref.json
-
-# From a filesystem concept map
-python scripts/concept_cross_reference.py --concept-map /path/to/concept_map.md --output results/concept_xref.json
-
-# With custom thresholds
-python scripts/concept_cross_reference.py --kg --threshold 0.70 --top-k 20
 ```
 
-This phase:
-1. Parses all concept IDs from the KG or concept_map.md
-2. For each concept, runs `kg_search` to find relevant Article (paper) chunks
-3. Extracts innovation signals (biomimicry, tech keywords, claims) per match
-4. Builds prioritized enhancement recommendations with Emergent Value scores
-5. Groups recommendations by pillar for architectural traceability
-
-The output JSON contains:
-- `summary`: Concept counts, match counts, priority breakdown by pillar
-- `cross_reference`: Per-concept results with matched papers and similarity scores
-- `recommendations`: Ranked list of enhancement opportunities with EV scores
-
-Also supports concept-tagged innovation extraction:
-```bash
-# Tag innovations for a specific concept
-python scripts/extract_innovations.py --source /path/to/paper.md --concept-id KG-2.4
-
-# Pull innovations from KG Article nodes
-python scripts/extract_innovations.py --kg-source "hypergraph reasoning" --target /path/to/codebase
-```
-
-### Phase 9.7: Architecture Gap Analysis (Codebase comparisons)
-
-Run when comparing two or more codebases to identify architectural gaps:
+### Step 9: architecture_gap_analysis [depends_on: codebase_audit, architecture_discovery, innovation_extraction]
+Run codebase comparisons to identify architectural topology gaps, hot path divergence, divergent design patterns, and protocol gaps to synthesize actionable wiring opportunities:
+- Requires: `scripts/analyze_architecture_diff.py`
 ```bash
 python scripts/analyze_architecture_diff.py /path/to/source /path/to/target > results/arch_diff.json
 ```
 
-Performs 4 differential analyses:
-1. **Component Topology Diff**: C4 components in source but not target
-2. **Hot Path Diff**: Entry point type coverage and reachability divergence
-3. **Design Pattern Diff**: Divergent implementation strategies with adoption recommendations
-4. **Protocol Diff**: Protocol support gaps
-
-Synthesizes **wiring opportunities** — actionable recommendations for where target should
-integrate source innovations, including:
-- Which existing hot-path modules to wire new features into
-- Which cold modules need to be connected or removed
-- Which design patterns to adopt from the source
-
-> [!IMPORTANT]
-> When creating an implementation plan from this analysis, every new feature MUST
-> have a documented wiring path to an existing hot-path entry point. Features that
-> are "bolted on" without hot-path integration are architectural debt.
-
-### Phase 10: Report Generation & KG Persistence
-
-Generate the unified comparison report:
+### Step 10: generate_comparison_report [depends_on: security_reliability_check, documentation_dx_review, concept_cross_reference, architecture_gap_analysis]
+Compile intermediate JSON results across all domains and modes into a single, cohesive comparative markdown report:
+- Requires: `scripts/generate_comparison_report.py`
 ```bash
 python scripts/generate_comparison_report.py results/*.json --output report.md
 ```
 
-For codebase analysis, output to `.specify/reports/comparative_analysis.md`.
-For research-only analysis, ask the user where to save the report (default: current working directory). The user may specify paths like `~/Documents/`.
-
-The report now includes these architecture sections:
-- **Architecture Topology**: C4 component map for each project (discovered or auto-generated)
-- **Architecture Differential**: Side-by-side component/pattern comparison
-- **Wiring Opportunities**: Prioritized list of where new features should integrate
-- **Design Decisions Required**: Conflicts that need human judgment
-
-**KG Persistence**: Once the markdown report artifact is successfully written to the filesystem, you MUST save the outcome back to the Knowledge Graph by using the `kg_ingest` MCP tool on the generated report file. This validates the findings and ensures the knowledge is accessible for future agentic interactions.
-
-### Phase 10.5: Architecture Adherence Verification
-
-After generating the report and before creating any implementation plan, verify that
-each recommended feature passes the **Wiring Audit Checklist**:
-
-- [ ] **Entry Point Exists**: Is there an MCP tool, A2A skill, or API route that exposes this?
-- [ ] **Engine Integration**: Is the feature callable from the core engine or a mixin?
-- [ ] **Hot Path Reachable**: Can you trace from an entry point to this code in ≤3 hops?
-- [ ] **C4 Diagram Updated**: Is the component shown in the architecture diagram?
-- [ ] **Concept Map Updated**: Is the CONCEPT:ID present and accurate?
-- [ ] **Design Consistent**: Does the implementation follow the same patterns as sibling modules?
-- [ ] **Tests Exist**: Is there at least one test that exercises the hot path through this feature?
-
-This checklist should be included in the implementation plan artifact. Features that
-cannot satisfy items 1-3 need architectural redesign before implementation.
-
-Read `references/architecture_discovery.md` for detailed methodology.
-
-### Phase 11: Cleanup (If Applicable)
-
-If Git URLs were provided in Phase 0, `discover_projects.py` will output a `cleanup_instruction` in the JSON and print a terminal warning.
-After successfully generating the comparison report in Phase 10, **you must delete the temporary directory** containing the cloned repositories to free up workspace space:
+### Step 11: kg_persistence_cleanup [depends_on: generate_comparison_report]
+Persist generated comparative reports to the Graph-OS Knowledge Graph, verify that each recommended feature passes the Wiring Audit Checklist, and clean up temporary cloned repository directories:
+- Requires: `kg_ingest` MCP tool and standard cleanup commands.
 ```bash
+# Verify Wiring Audit Checklist:
+# - [ ] Entry Point Exists: Is there an MCP tool, A2A skill, or API route that exposes this?
+# - [ ] Engine Integration: Is the feature callable from the core engine or a mixin?
+# - [ ] Hot Path Reachable: Can you trace from an entry point to this code in <= 3 hops?
+# - [ ] C4 Diagram Updated: Is the component shown in the architecture diagram?
+# - [ ] Concept Map Updated: Is the CONCEPT:ID present and accurate?
+# - [ ] Design Consistent: Does the implementation follow the same patterns as sibling modules?
+# - [ ] Tests Exist: Is there at least one test that exercises the hot path through this feature?
+
 rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
 ```
 

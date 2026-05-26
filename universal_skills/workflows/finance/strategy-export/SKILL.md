@@ -1,31 +1,71 @@
 ---
 name: strategy-export
 description: >-
-  Cross-platform strategy deployment: Convert → Validate → Deploy.
+  >-
+domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [finance, strategy, export, deployment]
-team_config: trading_department
-agent: chief_trading_officer
-metadata:
-  author: agent-utilities
-  version: '1.0.0'
-  concept: 'CONCEPT:KG-2.6'
+concept: CONCEPT:EE-011
 ---
+
 # Strategy Export Workflow
 
-## Workflow Execution Steps
+**CONCEPT:EE-011**
 
-### Step 1: select-strategy
+>-
+
+## Steps
+
+### Step 1: Select Strategy
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Pick a validated strategy from the Knowledge Graph.
 Tool: `emerald_strategy(action="list")`
 
-### Step 2: export
+### Step 2: Export
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Convert to target format (PineScript/MQL5/TDX).
 Tool: `emerald_strategy(action="export", strategy_id=..., format="pinescript")`
 
-### Step 3: deploy-freqtrade
+### Step 3: Deploy Freqtrade
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Deploy to freqtrade in paper mode for validation.
 Tool: Route to freqtrade backend for dry-run.
 
-### Step 4: share
+### Step 4: Share
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Publish to community strategy registry.
 Tool: Route to agent-utilities `strategy_sharing.py`.
+
+### Step 5: KG Persistence [depends_on: share]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Strategy Export results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

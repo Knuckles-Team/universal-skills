@@ -1,28 +1,71 @@
 ---
 name: cron_job_audit
-description: Parallel execution workflow for cron job audit using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+description: >-
+  Parallel execution workflow for cron job audit using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, cron-job-audit]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Cron Job Audit
+# Cron Job Audit Workflow
 
-This workflow defines the topological parallel execution steps for cron job audit.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for cron job audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_host_list_crontabs
-Execute the Fan-out per host: list crontabs phase for the cron_job_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_host_list_crontabs_artifacts
-### Step 2: classify [depends_on: fan_out_per_host_list_crontabs]
-Execute the classify phase for the cron_job_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: classify_artifacts
-### Step 3: find_overlaps [depends_on: classify]
-Execute the find overlaps phase for the cron_job_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: find_overlaps_artifacts
-### Step 4: optimize [depends_on: find_overlaps]
-Execute the optimize phase for the cron_job_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: optimize_artifacts
+### Step 1: Fan Out Per Host List Crontabs
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute fan out per host list crontabs operations for the Cron Job Audit workflow.
+Expected: `fan_out_per_host_list_crontabs_artifacts`
+
+### Step 2: Classify [depends_on: fan_out_per_host_list_crontabs]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute classify operations for the Cron Job Audit workflow.
+Expected: `classify_artifacts`
+
+### Step 3: Find Overlaps [depends_on: classify]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute find overlaps operations for the Cron Job Audit workflow.
+Expected: `find_overlaps_artifacts`
+
+### Step 4: Optimize [depends_on: find_overlaps]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute optimize operations for the Cron Job Audit workflow.
+Expected: `optimize_artifacts`
+
+### Step 5: KG Persistence [depends_on: optimize]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Cron Job Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

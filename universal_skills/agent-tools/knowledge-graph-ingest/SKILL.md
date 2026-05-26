@@ -98,7 +98,7 @@ These create/update `Container`, `ContainerStack`, `NetworkSubnet`, `DNSRewrite`
 (`RUNS_ON`, `BELONGS_TO_STACK`, `DEPLOYED_ON`, `ROUTES_TO`, `RESOLVES_DNS_FOR`, etc.).
 
 #### 7e. DNS Rewrites
-Query `adguard-home-mcp` → `list_rewrites` and ingest each rewrite as a `DNSRewrite`
+Query `technitium-dns-mcp` → `list_records` and ingest each record as a `DNSRecord`
 node with `RESOLVES_DNS_FOR` edges linking to the corresponding `PlatformService` node.
 
 #### 7f. Container State (Live)

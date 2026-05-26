@@ -1,0 +1,4 @@
+name: Polymarket Btc 15M Scheduler Swarm
+task_pattern: Perform Polymarket Btc 15M Scheduler operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph

@@ -3,7 +3,7 @@ name: full_infrastructure_discovery
 description: Full homelab/enterprise discovery pipeline. Scans inventory via tunnel-manager, discovers containers via container-manager and portainer, maps networking and DNS, and ingests everything into the Knowledge Graph as a topology snapshot.
 domain: infrastructure
 tags: ['discovery', 'topology', 'inventory', 'homelab', 'enterprise']
-requires: ['tunnel-manager-mcp', 'container-manager-mcp', 'portainer-mcp', 'adguard-home-mcp']
+requires: ['tunnel-manager-mcp', 'container-manager-mcp', 'portainer-mcp', 'technitium-dns-mcp']
 ---
 
 # full_infrastructure_discovery Workflow
@@ -28,11 +28,11 @@ Run network interface scan across all hosts to discover subnets, VLANs, and VPN 
 Expected: network, interface, subnet
 Depends On: Step 0
 
-### Step 4: adguard-home-mcp
-List all DNS rewrites to map domain-to-service routing
-Expected: rewrite, domain
+### Step 4: technitium-dns-mcp
+List all DNS records to map domain-to-service routing
+Expected: record, domain
 
 ### Step 5: graph-os
-Ingest discovered topology into the Knowledge Graph as HardwareNode, Container, ContainerStack, NetworkSubnet, DNSRewrite nodes with RUNS_ON, BELONGS_TO_STACK, RESOLVES_DNS_FOR relationships
+Ingest discovered topology into the Knowledge Graph as HardwareNode, Container, ContainerStack, NetworkSubnet, DNSRecord nodes with RUNS_ON, BELONGS_TO_STACK, RESOLVES_DNS_FOR relationships
 Expected: ingest, node, relationship
 Depends On: Step 1, Step 2, Step 3, Step 4

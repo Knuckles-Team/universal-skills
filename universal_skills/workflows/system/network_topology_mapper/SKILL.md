@@ -1,31 +1,71 @@
 ---
 name: network_topology_mapper
-description: Parallel execution workflow for network topology mapper using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+description: >-
+  Parallel execution workflow for network topology mapper using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, network-topology-mapper]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Network Topology Mapper
+# Network Topology Mapper Workflow
 
-This workflow defines the topological parallel execution steps for network topology mapper.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for network topology mapper using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: scan_hosts
-Execute the scan hosts phase for the network_topology_mapper workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scan_hosts_artifacts
-### Step 2: trace_routes [depends_on: scan_hosts]
-Execute the trace routes phase for the network_topology_mapper workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: trace_routes_artifacts
-### Step 3: build_graph [depends_on: trace_routes]
-Execute the build graph phase for the network_topology_mapper workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: build_graph_artifacts
-### Step 4: kg_ingest [depends_on: build_graph]
-Execute the KG ingest phase for the network_topology_mapper workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: kg_ingest_artifacts
-### Step 5: visualize [depends_on: kg_ingest]
-Execute the visualize phase for the network_topology_mapper workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: visualize_artifacts
+### Step 1: Scan Hosts
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute scan hosts operations for the Network Topology Mapper workflow.
+Expected: `scan_hosts_artifacts`
+
+### Step 2: Trace Routes [depends_on: scan_hosts]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute trace routes operations for the Network Topology Mapper workflow.
+Expected: `trace_routes_artifacts`
+
+### Step 3: Build Graph [depends_on: trace_routes]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute build graph operations for the Network Topology Mapper workflow.
+Expected: `build_graph_artifacts`
+
+### Step 4: Kg Ingest [depends_on: build_graph]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute kg ingest operations for the Network Topology Mapper workflow.
+Expected: `kg_ingest_artifacts`
+
+### Step 5: Visualize [depends_on: kg_ingest]
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute visualize operations for the Network Topology Mapper workflow.
+Expected: `visualize_artifacts`
+
+## Output
+- Network Topology Mapper results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

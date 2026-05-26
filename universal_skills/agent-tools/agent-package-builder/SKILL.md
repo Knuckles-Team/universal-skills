@@ -23,7 +23,7 @@ Scaffolds a complete, production-ready agent-package project following the stand
 
 ## Workflow
 
-### Phase 1: Gather Requirements
+### Step 1: gather-requirements
 
 Collect the following from the user. Ask only for what is missing — do not re-ask for values already provided.
 
@@ -41,7 +41,7 @@ Collect the following from the user. Ask only for what is missing — do not re-
 | `--concept-prefix` | ❌ | Derived from name | Unique CONCEPT ID prefix (e.g., `PORT` for portainer) |
 | `--doc-urls` | ❌ | — | Comma-separated documentation URLs for skill-graph |
 
-### Phase 2: Scaffold the Project
+### Step 2: scaffold-tree [depends_on: gather-requirements]
 
 Generate the complete directory tree. The standard project structure is:
 
@@ -99,11 +99,7 @@ Generate the complete directory tree. The standard project structure is:
         └── IDENTITY.md
 ```
 
-### Phase 3: Build Domain Logic
-
-After scaffolding, implement the domain-specific code by delegating to the appropriate existing skills. Follow the skills in order:
-
-#### 3a. API Client (if type includes `api_client`)
+### Step 3: api-client [depends_on: scaffold-tree]
 
 Read the `api-client-builder` skill and follow its instructions to:
 1. Populate `{pkg_dir}/api/` sub-package:
@@ -118,7 +114,7 @@ Read the `api-client-builder` skill and follow its instructions to:
    - `{SERVICE}_SSL_VERIFY` — TLS verification (NOT `_VERIFY` or `_AGENT_VERIFY`)
    - `{SERVICE}_USERNAME` / `{SERVICE}_PASSWORD` — For basic auth
 
-#### 3b. MCP Server (if type includes `mcp`)
+### Step 4: mcp-server [depends_on: scaffold-tree]
 
 Read the `mcp-builder` skill and follow its instructions to:
 1. Implement modular tool registrations inside `{pkg_dir}/mcp/` sub-package:
@@ -132,7 +128,7 @@ Read the `mcp-builder` skill and follow its instructions to:
 4. **Action-Routed Dynamic Generation**: ALL new agents use dynamic runtime generation. No monolithic static `@mcp.tool` files.
 5. **Field Optimization**: All parameters use `pydantic.Field(default=..., description=...)`. No positional args in Field().
 
-#### 3c. Agent (if type includes `agent`)
+### Step 5: agent-server [depends_on: scaffold-tree]
 
 Read the `agent-builder` skill and follow its instructions to:
 1. Configure `{pkg_dir}/agent_server.py` with proper identity loading.
@@ -140,20 +136,11 @@ Read the `agent-builder` skill and follow its instructions to:
 3. Suppress known fastmcp/urllib3 warnings, print startup telemetry to `sys.stderr`.
 4. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
 
-#### 3d. GraphQL Wrapper (if type includes `graphql`)
-
-Read the `api-client-builder` skill (Step 5 — GraphQL) and follow its instructions.
-
-#### 3e. Graph Agent (for agents with ≥3 tool tags)
-
-Agents with many tool tags benefit from **graph orchestration**. See the `agent-builder` skill for `create_graph_agent_server()` pattern.
-
-### Phase 4: Documentation
+### Step 6: docs-generation [depends_on: api-client, mcp-server, agent-server]
 
 Generate all required documentation:
 
-#### 4a. docs/concepts.md (REQUIRED)
-
+#### 6a. docs/concepts.md (REQUIRED)
 Every project must have a CONCEPT ID registry:
 ```markdown
 # Concept Registry — {package-name}
@@ -177,26 +164,26 @@ Every project must have a CONCEPT ID registry:
 | `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |
 ```
 
-#### 4b. docs/overview.md
-
+#### 6b. docs/overview.md
 Standard technical overview with architecture, tool descriptions, and concept references.
 
-#### 4c. docs/index.md
-
+#### 6c. docs/index.md
 Navigation hub linking to all other docs.
 
-#### 4d. CHANGELOG.md
+#### 6d. CHANGELOG.md
 
-### Phase 7: Verify & Finalize
+### Step 7: verify-build [depends_on: docs-generation]
 
-1. **Validate syntax**: `python -c "import tomllib; ..."`
-2. **Test entry points**: `pip install -e . && python -m {pkg_dir}.mcp --help`
-3. **Run pre-commit**: `pre-commit run --all-files`
-4. **Verify docs**: Confirm `concepts.md`, `overview.md`, `index.md` exist
-5. **Verify mcp-client references**: `.md` and `.json` in `mcp-client/references/`
-6. **CONCEPT ID collision check**: Verify prefix doesn't collide with existing projects
+Validate build syntax and entry points:
+- **Validate syntax**: Run syntax checking `python -c "import tomllib; ..."`
+- **Test entry points**: Run dynamic verification helper `pip install -e . && python -m {pkg_dir}.mcp --help`
 
-### Phase 8: Ecosystem Drift Check (MANDATORY)
+### Step 8: run-pre-commit [depends_on: verify-build]
+
+Run all formatting and style hooks across the scaffold:
+- **Run pre-commit**: `pre-commit run --all-files`
+
+### Step 9: drift-check [depends_on: run-pre-commit]
 
 Run a drift audit against the ecosystem standard to confirm 100% compliance before marking the package as complete. This ensures no files were missed and all conventions are met.
 
@@ -220,8 +207,7 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     || echo "❌ ECO-4.0 bridge MISSING"
 ```
 
-If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring:
-
+If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring.
 ```
 Trigger: "run ecosystem standardizer" with scope={package-name}
 ```
@@ -249,11 +235,10 @@ When assigning a prefix, check this registry to avoid collisions:
 
 | Prefix | Project | | Prefix | Project |
 |--------|---------|---|--------|---------|
-| `AH` | adguard-home-agent | | `ANSIBLE` | ansible-tower-mcp |
 | `ABOX` | archivebox-api | | `ARR` | arr-mcp |
 | `ATL` | atlassian-agent | | `AU` | agent-utilities |
-| `AUDIO` | audio-transcriber | | `CMGR` | container-manager-mcp |
-| `DSCI` | data-science-mcp | | `DOCDB` | documentdb-mcp |
+| `ANSIBLE` | ansible-tower-mcp | | `AUDIO` | audio-transcriber |
+| `CMGR` | container-manager-mcp | | `DSCI` | data-science-mcp |
 | `EE` | emerald-exchange | | `GENIUS` | genius-agent |
 | `GH` | github-agent | | `GL` | gitlab-api |
 | `HASS` | home-assistant-agent | | `JELLYFIN` | jellyfin-mcp |

@@ -1,28 +1,71 @@
 ---
 name: research_gap_finder
-description: Parallel execution workflow for research gap finder using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for research gap finder using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-scholarx
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, research-gap-finder]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Research Gap Finder
+# Research Gap Finder Workflow
 
-This workflow defines the topological parallel execution steps for research gap finder.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for research gap finder using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: survey_literature
-Execute the survey literature phase for the research_gap_finder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: survey_literature_artifacts
-### Step 2: identify_gaps [depends_on: survey_literature]
-Execute the identify gaps phase for the research_gap_finder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: identify_gaps_artifacts
-### Step 3: rank_by_impact [depends_on: identify_gaps]
-Execute the rank by impact phase for the research_gap_finder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: rank_by_impact_artifacts
-### Step 4: report [depends_on: rank_by_impact]
-Execute the report phase for the research_gap_finder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Survey Literature
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute survey literature operations for the Research Gap Finder workflow.
+Expected: `survey_literature_artifacts`
+
+### Step 2: Identify Gaps [depends_on: survey_literature]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute identify gaps operations for the Research Gap Finder workflow.
+Expected: `identify_gaps_artifacts`
+
+### Step 3: Rank By Impact [depends_on: identify_gaps]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute rank by impact operations for the Research Gap Finder workflow.
+Expected: `rank_by_impact_artifacts`
+
+### Step 4: Report [depends_on: rank_by_impact]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute report operations for the Research Gap Finder workflow.
+Expected: `report_artifacts`
+
+### Step 5: KG Persistence [depends_on: report]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Research Gap Finder results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

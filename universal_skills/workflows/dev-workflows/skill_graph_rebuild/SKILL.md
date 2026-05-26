@@ -1,28 +1,64 @@
 ---
 name: skill_graph_rebuild
-description: Parallel execution workflow for skill graph rebuild using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for skill graph rebuild using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-graph-os
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, skill-graph-rebuild]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Skill Graph Rebuild
+# Skill Graph Rebuild Workflow
 
-This workflow defines the topological parallel execution steps for skill graph rebuild.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for skill graph rebuild using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: parse_skill_md
-Execute the parse SKILL.md phase for the skill_graph_rebuild workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parse_skill_md_artifacts
-### Step 2: extract_deps [depends_on: parse_skill_md]
-Execute the extract deps phase for the skill_graph_rebuild workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: extract_deps_artifacts
-### Step 3: build_graph [depends_on: extract_deps]
-Execute the build graph phase for the skill_graph_rebuild workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: build_graph_artifacts
-### Step 4: kg_sync [depends_on: build_graph]
-Execute the KG sync phase for the skill_graph_rebuild workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: kg_sync_artifacts
+### Step 1: Parse Skill Md
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute parse skill md operations for the Skill Graph Rebuild workflow.
+Expected: `parse_skill_md_artifacts`
+
+### Step 2: Extract Deps [depends_on: parse_skill_md]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute extract deps operations for the Skill Graph Rebuild workflow.
+Expected: `extract_deps_artifacts`
+
+### Step 3: Build Graph [depends_on: extract_deps]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute build graph operations for the Skill Graph Rebuild workflow.
+Expected: `build_graph_artifacts`
+
+### Step 4: Kg Sync [depends_on: build_graph]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute kg sync operations for the Skill Graph Rebuild workflow.
+Expected: `kg_sync_artifacts`
+
+## Output
+- Skill Graph Rebuild results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -60,6 +60,7 @@ SKILL_DEFAULTS = {
     "google-workspace": False,
     "jupyter-notebook": False,
     "skill-graph-builder": True,
+    "skill-workflow-builder": True,
     "web-crawler": True,
     "web-search": True,
     "tdd-methodology": True,

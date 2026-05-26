@@ -1,31 +1,78 @@
 ---
 name: technical_debt_sprint
-description: Parallel execution workflow for technical debt sprint using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for technical debt sprint using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, technical-debt-sprint]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Technical Debt Sprint
+# Technical Debt Sprint Workflow
 
-This workflow defines the topological parallel execution steps for technical debt sprint.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for technical debt sprint using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: lint_fixes
-Execute the lint fixes phase for the technical_debt_sprint workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: lint_fixes_artifacts
-### Step 2: dead_code
-Execute the dead code phase for the technical_debt_sprint workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dead_code_artifacts
-### Step 3: type_coverage
-Execute the type coverage phase for the technical_debt_sprint workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: type_coverage_artifacts
-### Step 4: doc_gaps
-Execute the doc gaps phase for the technical_debt_sprint workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: doc_gaps_artifacts
-### Step 5: parallel_prs [depends_on: lint_fixes, dead_code, type_coverage, doc_gaps]
-Execute the parallel PRs phase for the technical_debt_sprint workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_prs_artifacts
+### Step 1: Lint Fixes
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute lint fixes operations for the Technical Debt Sprint workflow.
+Expected: `lint_fixes_artifacts`
+
+### Step 2: Dead Code
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute dead code operations for the Technical Debt Sprint workflow.
+Expected: `dead_code_artifacts`
+
+### Step 3: Type Coverage
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute type coverage operations for the Technical Debt Sprint workflow.
+Expected: `type_coverage_artifacts`
+
+### Step 4: Doc Gaps
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute doc gaps operations for the Technical Debt Sprint workflow.
+Expected: `doc_gaps_artifacts`
+
+### Step 5: Parallel Prs [depends_on: lint_fixes, dead_code, type_coverage, doc_gaps]
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute parallel prs operations for the Technical Debt Sprint workflow.
+Expected: `parallel_prs_artifacts`
+
+### Step 6: KG Persistence [depends_on: parallel_prs]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Technical Debt Sprint results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

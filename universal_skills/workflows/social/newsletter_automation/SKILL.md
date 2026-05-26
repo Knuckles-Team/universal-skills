@@ -1,31 +1,78 @@
 ---
 name: newsletter_automation
-description: Parallel execution workflow for newsletter automation using the Unified Parallel Engine
-domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-listmonk
+description: >-
+  Parallel execution workflow for newsletter automation using the Unified Parallel Engine
+domain: social
+agent: content_strategist
+team_config:
+  name: content_creation_team
+  task_pattern: content creation and social media management
+  execution_mode: sequential
+  specialist_ids:
+    - content-creator
+    - media-processor
+    - publisher-agent
+    - analytics-agent
+  tool_assignments:
+    content-creator: [graph_query, document_tools]
+    media-processor: [graph_analyze]
+    publisher-agent: [graph_write]
+    analytics-agent: [graph_query, graph_analyze]
+tags: [social, newsletter-automation]
+concept: CONCEPT:SOCIAL-001
 ---
 
-# Parallel Workflow: Newsletter Automation
+# Newsletter Automation Workflow
 
-This workflow defines the topological parallel execution steps for newsletter automation.
+**CONCEPT:SOCIAL-001**
+
+Parallel execution workflow for newsletter automation using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: curate_content
-Execute the curate content phase for the newsletter_automation workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: curate_content_artifacts
-### Step 2: write_digest [depends_on: curate_content]
-Execute the write digest phase for the newsletter_automation workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: write_digest_artifacts
-### Step 3: design_template [depends_on: write_digest]
-Execute the design template phase for the newsletter_automation workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: design_template_artifacts
-### Step 4: send [depends_on: design_template]
-Execute the send phase for the newsletter_automation workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: send_artifacts
-### Step 5: analytics [depends_on: send]
-Execute the analytics phase for the newsletter_automation workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: analytics_artifacts
+### Step 1: Curate Content
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute curate content operations for the Newsletter Automation workflow.
+Expected: `curate_content_artifacts`
+
+### Step 2: Write Digest [depends_on: curate_content]
+**Agent**: `media-processor`
+**Tools**: `graph_analyze`
+
+Execute write digest operations for the Newsletter Automation workflow.
+Expected: `write_digest_artifacts`
+
+### Step 3: Design Template [depends_on: write_digest]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Execute design template operations for the Newsletter Automation workflow.
+Expected: `design_template_artifacts`
+
+### Step 4: Send [depends_on: design_template]
+**Agent**: `analytics-agent`
+**Tools**: `graph_query, graph_analyze`
+
+Execute send operations for the Newsletter Automation workflow.
+Expected: `send_artifacts`
+
+### Step 5: Analytics [depends_on: send]
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute analytics operations for the Newsletter Automation workflow.
+Expected: `analytics_artifacts`
+
+### Step 6: KG Persistence [depends_on: analytics]
+**Agent**: `analytics-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Newsletter Automation results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

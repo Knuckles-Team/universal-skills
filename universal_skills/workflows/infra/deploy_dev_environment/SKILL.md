@@ -1,28 +1,71 @@
 ---
 name: deploy_dev_environment
-description: Parallel execution workflow for deploy dev environment using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy dev environment using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-portainer
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-dev-environment]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Dev Environment
+# Deploy Dev Environment Workflow
 
-This workflow defines the topological parallel execution steps for deploy dev environment.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy dev environment using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: gitea_gitlab
-Execute the gitea/gitlab phase for the deploy_dev_environment workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gitea_gitlab_artifacts
-### Step 2: registry
-Execute the registry phase for the deploy_dev_environment workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: registry_artifacts
-### Step 3: runner
-Execute the runner phase for the deploy_dev_environment workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: runner_artifacts
-### Step 4: ci_pipeline [depends_on: gitea_gitlab, registry, runner]
-Execute the CI pipeline phase for the deploy_dev_environment workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: ci_pipeline_artifacts
+### Step 1: Gitea Gitlab
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute gitea gitlab operations for the Deploy Dev Environment workflow.
+Expected: `gitea_gitlab_artifacts`
+
+### Step 2: Registry
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute registry operations for the Deploy Dev Environment workflow.
+Expected: `registry_artifacts`
+
+### Step 3: Runner
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute runner operations for the Deploy Dev Environment workflow.
+Expected: `runner_artifacts`
+
+### Step 4: Ci Pipeline [depends_on: gitea_gitlab, registry, runner]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute ci pipeline operations for the Deploy Dev Environment workflow.
+Expected: `ci_pipeline_artifacts`
+
+### Step 5: KG Persistence [depends_on: ci_pipeline]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Dev Environment results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

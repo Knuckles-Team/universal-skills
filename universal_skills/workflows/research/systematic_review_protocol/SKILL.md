@@ -1,31 +1,78 @@
 ---
 name: systematic_review_protocol
-description: Parallel execution workflow for systematic review protocol using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for systematic review protocol using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-scholarx
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, systematic-review-protocol]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Systematic Review Protocol
+# Systematic Review Protocol Workflow
 
-This workflow defines the topological parallel execution steps for systematic review protocol.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for systematic review protocol using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: define_pico
-Execute the define PICO phase for the systematic_review_protocol workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: define_pico_artifacts
-### Step 2: search [depends_on: define_pico]
-Execute the search phase for the systematic_review_protocol workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: search_artifacts
-### Step 3: screen [depends_on: search]
-Execute the screen phase for the systematic_review_protocol workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: screen_artifacts
-### Step 4: extract [depends_on: screen]
-Execute the extract phase for the systematic_review_protocol workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: extract_artifacts
-### Step 5: meta_analyze [depends_on: extract]
-Execute the meta-analyze phase for the systematic_review_protocol workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: meta_analyze_artifacts
+### Step 1: Define Pico
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute define pico operations for the Systematic Review Protocol workflow.
+Expected: `define_pico_artifacts`
+
+### Step 2: Search [depends_on: define_pico]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute search operations for the Systematic Review Protocol workflow.
+Expected: `search_artifacts`
+
+### Step 3: Screen [depends_on: search]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute screen operations for the Systematic Review Protocol workflow.
+Expected: `screen_artifacts`
+
+### Step 4: Extract [depends_on: screen]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute extract operations for the Systematic Review Protocol workflow.
+Expected: `extract_artifacts`
+
+### Step 5: Meta Analyze [depends_on: extract]
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute meta analyze operations for the Systematic Review Protocol workflow.
+Expected: `meta_analyze_artifacts`
+
+### Step 6: KG Persistence [depends_on: meta_analyze]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Systematic Review Protocol results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

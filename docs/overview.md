@@ -74,3 +74,47 @@ universal-skills/
 ```bash
 universal-mcp --transport streamable-http --port 8001
 ```
+
+## Day 0 Bootstrap & Multi-Service Wiring Orchestrator
+
+The package includes a comprehensive, graph-driven **Day 0 Bootstrap & Multi-Service Wiring Orchestrator** workflow. It maps the automated top-down provisioning and configuration of all **19 homelab services** starting from a single bare-metal server:
+
+```mermaid
+graph TD
+    subgraph "Layer 0: Host Discovery & Pre-flight"
+        A[SSH key Full-Mesh Bootstrap] --> B[Host OS & HW Discovery]
+        B --> C[Overlay Networks Provisioning]
+    end
+
+    subgraph "Layer 1: Edge Router & Authoritative DNS"
+        C --> D[Technitium DNS Server macvlan/static IP 10.0.0.199]
+        D --> E[Caddy Dynamic Ingress Router HTTP/HTTPS]
+    end
+
+    subgraph "Layer 2: Identity & Security Foundations"
+        E --> F[Keycloak SSO OIDC/SAML]
+        F --> G[OpenBao Secure Vault KV2 Engine]
+    end
+
+    subgraph "Layer 3: DevOps & GitOps Automation"
+        G --> H[GitLab Project & Repo Provisioning]
+        H --> I[Portainer GitOps Syncing with GitLab PATs]
+    end
+
+    subgraph "Layer 4: Automated Services Provisioning"
+        I --> J[Launch 19 Services in Dependency Tiers]
+    end
+
+    subgraph "Layer 5: Unified Cross-Service Wiring"
+        J --> K1[DNS: Technitium Authoritative Records Mapping]
+        J --> K2[Proxy: Caddy Dynamic Overlay Routing]
+        J --> K3[SSO: Keycloak Clients Auto-Registration]
+        J --> K4[Observability: Loki/Prometheus Scraping & Langfuse OTEL Traces]
+        J --> K5[Backups: BorgBackup Database Dumps & Repository Sync]
+    end
+
+    subgraph "Layer 6: Knowledge Graph Materialization"
+        K1 & K2 & K3 & K4 & K5 --> L[Ingest Full Topology Snapshot into Graph-OS]
+    end
+```
+

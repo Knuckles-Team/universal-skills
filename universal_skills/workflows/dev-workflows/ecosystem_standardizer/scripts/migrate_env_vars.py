@@ -44,9 +44,6 @@ MIGRATIONS = {
         ("WGER_ACCESS_TOKEN", "WGER_TOKEN"),
     ],
     # _BASE_URL -> _URL (where there's a duplicate, keep only _URL)
-    "adguard-home-agent": [
-        ("ADGUARD_BASE_URL", "ADGUARD_URL"),
-    ],
     "archivebox-api": [
         ("ARCHIVEBOX_BASE_URL", "ARCHIVEBOX_URL"),
         ("ARCHIVEBOX_API_KEY", "ARCHIVEBOX_TOKEN"),

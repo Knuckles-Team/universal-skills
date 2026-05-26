@@ -1,25 +1,62 @@
 ---
 name: multi_host_command_exec
-description: Parallel execution workflow for multi host command exec using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+description: >-
+  Parallel execution workflow for multi host command exec using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+tags: [system, multi-host-command-exec]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Multi Host Command Exec
+# Multi Host Command Exec Workflow
 
-This workflow defines the topological parallel execution steps for multi host command exec.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for multi host command exec using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_host_ssh_execute
-Execute the Fan-out per host: SSH execute phase for the multi_host_command_exec workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_host_ssh_execute_artifacts
-### Step 2: collect_output [depends_on: fan_out_per_host_ssh_execute]
-Execute the collect output phase for the multi_host_command_exec workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: collect_output_artifacts
-### Step 3: aggregate [depends_on: collect_output]
-Execute the aggregate phase for the multi_host_command_exec workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: aggregate_artifacts
+### Step 1: Fan Out Per Host Ssh Execute
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute fan out per host ssh execute operations for the Multi Host Command Exec workflow.
+Expected: `fan_out_per_host_ssh_execute_artifacts`
+
+### Step 2: Collect Output [depends_on: fan_out_per_host_ssh_execute]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute collect output operations for the Multi Host Command Exec workflow.
+Expected: `collect_output_artifacts`
+
+### Step 3: Aggregate [depends_on: collect_output]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute aggregate operations for the Multi Host Command Exec workflow.
+Expected: `aggregate_artifacts`
+
+### Step 4: KG Persistence [depends_on: aggregate]
+**Agent**: `remediator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Multi Host Command Exec results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

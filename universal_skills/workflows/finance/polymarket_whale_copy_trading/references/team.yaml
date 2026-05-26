@@ -1,0 +1,4 @@
+name: Polymarket Whale Copy Trading Swarm
+task_pattern: Perform Polymarket Whale Copy Trading operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph

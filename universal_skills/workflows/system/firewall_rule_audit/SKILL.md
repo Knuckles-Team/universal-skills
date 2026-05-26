@@ -1,25 +1,62 @@
 ---
 name: firewall_rule_audit
-description: Parallel execution workflow for firewall rule audit using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+description: >-
+  Parallel execution workflow for firewall rule audit using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+tags: [system, firewall-rule-audit]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Firewall Rule Audit
+# Firewall Rule Audit Workflow
 
-This workflow defines the topological parallel execution steps for firewall rule audit.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for firewall rule audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_host_dump_iptables
-Execute the Fan-out per host: dump iptables phase for the firewall_rule_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_host_dump_iptables_artifacts
-### Step 2: compare_policy [depends_on: fan_out_per_host_dump_iptables]
-Execute the compare policy phase for the firewall_rule_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: compare_policy_artifacts
-### Step 3: report [depends_on: compare_policy]
-Execute the report phase for the firewall_rule_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Fan Out Per Host Dump Iptables
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute fan out per host dump iptables operations for the Firewall Rule Audit workflow.
+Expected: `fan_out_per_host_dump_iptables_artifacts`
+
+### Step 2: Compare Policy [depends_on: fan_out_per_host_dump_iptables]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute compare policy operations for the Firewall Rule Audit workflow.
+Expected: `compare_policy_artifacts`
+
+### Step 3: Report [depends_on: compare_policy]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute report operations for the Firewall Rule Audit workflow.
+Expected: `report_artifacts`
+
+### Step 4: KG Persistence [depends_on: report]
+**Agent**: `remediator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Firewall Rule Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

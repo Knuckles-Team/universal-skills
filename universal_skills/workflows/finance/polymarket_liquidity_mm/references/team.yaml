@@ -1,0 +1,4 @@
+name: Polymarket Liquidity Mm Swarm
+task_pattern: Perform Polymarket Liquidity Mm operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph

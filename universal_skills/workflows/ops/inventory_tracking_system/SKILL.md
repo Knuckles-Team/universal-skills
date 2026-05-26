@@ -1,28 +1,74 @@
 ---
 name: inventory_tracking_system
-description: Parallel execution workflow for inventory tracking system using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for inventory tracking system using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-servicenow
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, inventory-tracking-system]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Inventory Tracking System
+# Inventory Tracking System Workflow
 
-This workflow defines the topological parallel execution steps for inventory tracking system.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for inventory tracking system using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: count
-Execute the count phase for the inventory_tracking_system workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: count_artifacts
-### Step 2: compare_expected [depends_on: count]
-Execute the compare expected phase for the inventory_tracking_system workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: compare_expected_artifacts
-### Step 3: flag_discrepancies [depends_on: compare_expected]
-Execute the flag discrepancies phase for the inventory_tracking_system workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: flag_discrepancies_artifacts
-### Step 4: reorder [depends_on: flag_discrepancies]
-Execute the reorder phase for the inventory_tracking_system workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: reorder_artifacts
+### Step 1: Count
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute count operations for the Inventory Tracking System workflow.
+Expected: `count_artifacts`
+
+### Step 2: Compare Expected [depends_on: count]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute compare expected operations for the Inventory Tracking System workflow.
+Expected: `compare_expected_artifacts`
+
+### Step 3: Flag Discrepancies [depends_on: compare_expected]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute flag discrepancies operations for the Inventory Tracking System workflow.
+Expected: `flag_discrepancies_artifacts`
+
+### Step 4: Reorder [depends_on: flag_discrepancies]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute reorder operations for the Inventory Tracking System workflow.
+Expected: `reorder_artifacts`
+
+### Step 5: KG Persistence [depends_on: reorder]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Inventory Tracking System results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

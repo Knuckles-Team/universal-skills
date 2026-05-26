@@ -18,7 +18,6 @@ WEBUI_DIR = Path("agent-packages/agent-webui")
 # Unique prefix assignments for each project
 PREFIX_MAP = {
     # Already assigned in existing docs
-    "adguard-home-agent": "AH",
     "ansible-tower-mcp": "ANSIBLE",
     "jellyfin-mcp": "JELLYFIN",
     "postiz-agent": "PA",

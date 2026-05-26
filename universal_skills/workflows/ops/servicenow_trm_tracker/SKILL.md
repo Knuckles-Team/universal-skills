@@ -1,28 +1,70 @@
 ---
 name: servicenow_trm_tracker
-description: Fetch active ServiceNow TRM (Technology Reference Model) Requests
-tags:
-  - ops
-  - servicenow
-  - trm-requests
-requires:
-  - servicenow-api
+description: >-
+  Fetch active ServiceNow TRM (Technology Reference Model) Requests
+domain: ops
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, servicenow-trm-tracker]
+concept: CONCEPT:KG-2.12
 ---
 
-# ServiceNow TRM Requests Tracker Workflow
+# Servicenow Trm Tracker Workflow
 
-Retrieve and track active Technology Reference Model (TRM) evaluation requests using the ServiceNow Table API or portfolio systems.
+**CONCEPT:KG-2.12**
+
+Fetch active ServiceNow TRM (Technology Reference Model) Requests
 
 ## Steps
 
-### Step 0: servicenow-api
+### Step 0: Servicenow Api
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
 Query the ServiceNow TRM requests table (typically `u_trm_request` or relevant `dmn_demand` table) using the `servicenow_table_api` action with `action='get_table'`. Order by creation date descending via `params_json` containing a query like `{"sysparm_query": "active=true^ORDERBYdescsys_created_on", "sysparm_limit": 20}`.
 
-### Step 1: user-interaction
+### Step 1: User Interaction
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
 Present the latest TRM compliance evaluation queue to the user. Prompt them to select a request for deep tech stack compliance analysis.
 
-### Step 2: servicenow-api
+### Step 2: Servicenow Api
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
 Fetch full fields and developer requirements for the selected TRM record using `servicenow_table_api` with `action='get_table_record'`.
 
-### Step 3: user-interaction
+### Step 3: User Interaction
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
 Display the architecture evaluation logs, software categories status, and next assessment workflow steps to the user.
+
+### Step 4: KG Persistence [depends_on: user-interaction]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Servicenow Trm Tracker results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

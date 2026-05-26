@@ -1,31 +1,71 @@
 ---
 name: second_brain_sync
-description: Parallel execution workflow for second brain sync using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for second brain sync using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-nextcloud
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, second-brain-sync]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Second Brain Sync
+# Second Brain Sync Workflow
 
-This workflow defines the topological parallel execution steps for second brain sync.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for second brain sync using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: obsidian
-Execute the obsidian phase for the second_brain_sync workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: obsidian_artifacts
-### Step 2: nextcloud
-Execute the nextcloud phase for the second_brain_sync workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: nextcloud_artifacts
-### Step 3: kg
-Execute the KG phase for the second_brain_sync workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: kg_artifacts
-### Step 4: bidirectional_sync [depends_on: obsidian, nextcloud, kg]
-Execute the bidirectional sync phase for the second_brain_sync workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: bidirectional_sync_artifacts
-### Step 5: dedup [depends_on: bidirectional_sync]
-Execute the dedup phase for the second_brain_sync workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dedup_artifacts
+### Step 1: Obsidian
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute obsidian operations for the Second Brain Sync workflow.
+Expected: `obsidian_artifacts`
+
+### Step 2: Nextcloud
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute nextcloud operations for the Second Brain Sync workflow.
+Expected: `nextcloud_artifacts`
+
+### Step 3: Kg
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute kg operations for the Second Brain Sync workflow.
+Expected: `kg_artifacts`
+
+### Step 4: Bidirectional Sync [depends_on: obsidian, nextcloud, kg]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute bidirectional sync operations for the Second Brain Sync workflow.
+Expected: `bidirectional_sync_artifacts`
+
+### Step 5: Dedup [depends_on: bidirectional_sync]
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute dedup operations for the Second Brain Sync workflow.
+Expected: `dedup_artifacts`
+
+## Output
+- Second Brain Sync results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

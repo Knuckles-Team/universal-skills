@@ -1,31 +1,78 @@
 ---
 name: deploy_full_homelab
-description: Parallel execution workflow for deploy full homelab using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy full homelab using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-full-homelab]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Full Homelab
+# Deploy Full Homelab Workflow
 
-This workflow defines the topological parallel execution steps for deploy full homelab.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy full homelab using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: prereqs
-Execute the prereqs phase for the deploy_full_homelab workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: prereqs_artifacts
-### Step 2: core_infra [depends_on: prereqs]
-Execute the core infra phase for the deploy_full_homelab workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: core_infra_artifacts
-### Step 3: services [depends_on: core_infra]
-Execute the services phase for the deploy_full_homelab workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: services_artifacts
-### Step 4: observability [depends_on: services]
-Execute the observability phase for the deploy_full_homelab workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: observability_artifacts
-### Step 5: dns [depends_on: observability]
-Execute the DNS phase for the deploy_full_homelab workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dns_artifacts
+### Step 1: Prereqs
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute prereqs operations for the Deploy Full Homelab workflow.
+Expected: `prereqs_artifacts`
+
+### Step 2: Core Infra [depends_on: prereqs]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute core infra operations for the Deploy Full Homelab workflow.
+Expected: `core_infra_artifacts`
+
+### Step 3: Services [depends_on: core_infra]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute services operations for the Deploy Full Homelab workflow.
+Expected: `services_artifacts`
+
+### Step 4: Observability [depends_on: services]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute observability operations for the Deploy Full Homelab workflow.
+Expected: `observability_artifacts`
+
+### Step 5: Dns [depends_on: observability]
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute dns operations for the Deploy Full Homelab workflow.
+Expected: `dns_artifacts`
+
+### Step 6: KG Persistence [depends_on: dns]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Full Homelab results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

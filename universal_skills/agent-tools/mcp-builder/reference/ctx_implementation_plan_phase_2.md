@@ -170,7 +170,6 @@ Top candidates by existing logger call count:
 | audio-transcriber | 11 | 🟢 Medium |
 | searxng-mcp | 11 | ⬛ Already has ctx |
 | media-downloader | 9 | ⬛ Already has ctx |
-| adguard-home-agent | 8 | 🟢 Medium |
 | gitlab-api | 8 | 🟢 Medium |
 | github-agent | 6 | 🟢 Medium |
 | documentdb-mcp | 5 | 🟢 Medium |
@@ -208,9 +207,6 @@ Tool: `logout` — clear cached state
 
 ##### atlassian-agent
 Tool: If auth tools exist — cache connection state
-
-##### adguard-home-agent
-Tool: Auth-related tools if present
 
 ---
 

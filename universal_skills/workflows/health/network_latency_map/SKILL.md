@@ -1,28 +1,74 @@
 ---
 name: network_latency_map
-description: Parallel execution workflow for network latency map using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+description: >-
+  Parallel execution workflow for network latency map using the Unified Parallel Engine
+domain: health
+agent: health_wellness_coordinator
+team_config:
+  name: health_wellness_team
+  task_pattern: health monitoring and wellness optimization
+  execution_mode: sequential
+  specialist_ids:
+    - data-collector
+    - analyzer-agent
+    - planner-agent
+    - tracker-agent
+  tool_assignments:
+    data-collector: [graph_query]
+    analyzer-agent: [graph_analyze]
+    planner-agent: [graph_write]
+    tracker-agent: [nc_calendar, graph_write]
+tags: [health, network-latency-map]
+concept: CONCEPT:HEALTH-001
 ---
 
-# Parallel Workflow: Network Latency Map
+# Network Latency Map Workflow
 
-This workflow defines the topological parallel execution steps for network latency map.
+**CONCEPT:HEALTH-001**
+
+Parallel execution workflow for network latency map using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: prerequisites_setup
-Execute the prerequisites setup phase for the network_latency_map workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: prerequisites_setup_artifacts
-### Step 2: parallel_execution [depends_on: prerequisites_setup]
-Execute the parallel execution phase for the network_latency_map workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_execution_artifacts
-### Step 3: verification_and_testing [depends_on: parallel_execution]
-Execute the verification and testing phase for the network_latency_map workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verification_and_testing_artifacts
-### Step 4: synthesis_and_reporting [depends_on: verification_and_testing]
-Execute the synthesis and reporting phase for the network_latency_map workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: synthesis_and_reporting_artifacts
+### Step 1: Prerequisites Setup
+**Agent**: `data-collector`
+**Tools**: `graph_query`
+
+Execute prerequisites setup operations for the Network Latency Map workflow.
+Expected: `prerequisites_setup_artifacts`
+
+### Step 2: Parallel Execution [depends_on: prerequisites_setup]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze`
+
+Execute parallel execution operations for the Network Latency Map workflow.
+Expected: `parallel_execution_artifacts`
+
+### Step 3: Verification And Testing [depends_on: parallel_execution]
+**Agent**: `planner-agent`
+**Tools**: `graph_write`
+
+Execute verification and testing operations for the Network Latency Map workflow.
+Expected: `verification_and_testing_artifacts`
+
+### Step 4: Synthesis And Reporting [depends_on: verification_and_testing]
+**Agent**: `tracker-agent`
+**Tools**: `nc_calendar, graph_write`
+
+Execute synthesis and reporting operations for the Network Latency Map workflow.
+Expected: `synthesis_and_reporting_artifacts`
+
+### Step 5: KG Persistence [depends_on: synthesis_and_reporting]
+**Agent**: `tracker-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Network Latency Map results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

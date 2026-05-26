@@ -1,34 +1,88 @@
 ---
 name: smart_home_scene_orchestrator
-description: Parallel execution workflow for smart home scene orchestrator using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for smart home scene orchestrator using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-home-assistant
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, smart-home-scene-orchestrator]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Smart Home Scene Orchestrator
+# Smart Home Scene Orchestrator Workflow
 
-This workflow defines the topological parallel execution steps for smart home scene orchestrator.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for smart home scene orchestrator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: lights
-Execute the lights phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: lights_artifacts
-### Step 2: thermostat
-Execute the thermostat phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: thermostat_artifacts
-### Step 3: blinds
-Execute the blinds phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: blinds_artifacts
-### Step 4: music
-Execute the music phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: music_artifacts
-### Step 5: security
-Execute the security phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: security_artifacts
-### Step 6: scene [depends_on: lights, thermostat, blinds, music, security]
-Execute the scene phase for the smart_home_scene_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scene_artifacts
+### Step 1: Lights
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute lights operations for the Smart Home Scene Orchestrator workflow.
+Expected: `lights_artifacts`
+
+### Step 2: Thermostat
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute thermostat operations for the Smart Home Scene Orchestrator workflow.
+Expected: `thermostat_artifacts`
+
+### Step 3: Blinds
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute blinds operations for the Smart Home Scene Orchestrator workflow.
+Expected: `blinds_artifacts`
+
+### Step 4: Music
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute music operations for the Smart Home Scene Orchestrator workflow.
+Expected: `music_artifacts`
+
+### Step 5: Security
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute security operations for the Smart Home Scene Orchestrator workflow.
+Expected: `security_artifacts`
+
+### Step 6: Scene [depends_on: lights, thermostat, blinds, music, security]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute scene operations for the Smart Home Scene Orchestrator workflow.
+Expected: `scene_artifacts`
+
+### Step 7: KG Persistence [depends_on: scene]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Smart Home Scene Orchestrator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

@@ -1,25 +1,71 @@
 ---
 name: deploy_observability_stack
-description: Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard integrations.
-domain: infrastructure
+description: >-
+  Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard integrations.
+domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
 tags: [prometheus, grafana, loki, docker, portainer, observability]
+concept: CONCEPT:INFRA-001
 ---
-# Observability Stack Deployment
 
-This workflow automates the deployment of Prometheus, Grafana, and Loki in parallel execution waves.
+# Deploy Observability Stack Workflow
 
-### Step 1: Prometheus Setup [depends_on: none]
+**CONCEPT:INFRA-001**
+
+Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard integrations.
+
+## Steps
+
+### Step 1: Prometheus Setup
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 Deploy the Prometheus container to scrape system metrics and container stats.
-Expected: prometheus-running
+Expected: `prometheus-running`
 
-### Step 2: Grafana Setup [depends_on: none]
+### Step 2: Grafana Setup
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Deploy the Grafana container and auto-register Prometheus and Loki data sources.
-Expected: grafana-running
+Expected: `grafana-running`
 
-### Step 3: Loki Setup [depends_on: none]
+### Step 3: Loki Setup
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 Deploy the Loki logs aggregation server and configure sidecars.
-Expected: loki-running
+Expected: `loki-running`
 
 ### Step 4: Observability Synth [depends_on: prometheus-setup, grafana-setup, loki-setup]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
 Configure default system health dashboards, alert rules, and verify final telemetry integration across all services.
-Expected: system-integrated
+Expected: `system-integrated`
+
+### Step 5: KG Persistence [depends_on: Observability Synth]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Observability Stack results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

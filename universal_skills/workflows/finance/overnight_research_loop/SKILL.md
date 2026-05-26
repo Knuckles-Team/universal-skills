@@ -1,26 +1,71 @@
 ---
 name: overnight_research_loop
-description: Runs overnight crawling of news/publications to generate factor hypotheses, runs backtests in parallel, debates findings, and generates a morning briefing.
+description: >-
+  Runs overnight crawling of news/publications to generate factor hypotheses, runs backtests in parallel, debates findings, and generates a morning briefing.
 domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [overnight, research, backtest, factor]
+concept: CONCEPT:EE-011
 ---
+
 # Overnight Research Loop Workflow
 
-This workflow coordinates multi-agent parallel executions of Runs overnight crawling of news/publications to generate factor hypotheses, runs backtests in parallel, debates findings, and generates a morning briefing.
+**CONCEPT:EE-011**
 
-### Step 1: hypothesis-crawlers [depends_on: none]
+Runs overnight crawling of news/publications to generate factor hypotheses, runs backtests in parallel, debates findings, and generates a morning briefing.
+
+## Steps
+
+### Step 1: Hypothesis Crawlers
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Scans academic publications, social feeds, and market tickers overnight to find potential factor ideas.
-Expected: factor-hypothesis-list
+Expected: `factor-hypothesis-list`
 
-### Step 2: parallel-backtester [depends_on: hypothesis-crawlers]
+### Step 2: Parallel Backtester [depends_on: hypothesis-crawlers]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Runs backtests concurrently across 50 parameter configurations.
-Expected: multi-config-backtest-results
+Expected: `multi-config-backtest-results`
 
-### Step 3: factor-debater [depends_on: parallel-backtester]
+### Step 3: Factor Debater [depends_on: parallel-backtester]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Analyzes return profile, drawdown, and transaction cost impact in a swarm debate.
-Expected: approved-factor-signals
+Expected: `approved-factor-signals`
 
-### Step 4: report-compiler [depends_on: factor-debater]
+### Step 4: Report Compiler [depends_on: factor-debater]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Compiles findings into a formatted dashboard report for the morning review.
-Expected: morning-research-tearsheet
+Expected: `morning-research-tearsheet`
 
+### Step 5: KG Persistence [depends_on: report-compiler]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Overnight Research Loop results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

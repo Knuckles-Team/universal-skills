@@ -1,31 +1,81 @@
 ---
 name: meal_plan_and_shop
-description: Parallel execution workflow for meal plan and shop using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for meal plan and shop using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-mealie
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, meal-plan-and-shop]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Meal Plan And Shop
+# Meal Plan And Shop Workflow
 
-This workflow defines the topological parallel execution steps for meal plan and shop.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for meal plan and shop using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: preferences
-Execute the preferences phase for the meal_plan_and_shop workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: preferences_artifacts
-### Step 2: generate_plan [depends_on: preferences]
-Execute the generate plan phase for the meal_plan_and_shop workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_plan_artifacts
-### Step 3: scale_recipes [depends_on: generate_plan]
-Execute the scale recipes phase for the meal_plan_and_shop workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scale_recipes_artifacts
-### Step 4: shopping_list [depends_on: scale_recipes]
-Execute the shopping list phase for the meal_plan_and_shop workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: shopping_list_artifacts
-### Step 5: add_to_mealie [depends_on: shopping_list]
-Execute the add to Mealie phase for the meal_plan_and_shop workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: add_to_mealie_artifacts
+### Step 1: Preferences
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute preferences operations for the Meal Plan And Shop workflow.
+Expected: `preferences_artifacts`
+
+### Step 2: Generate Plan [depends_on: preferences]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute generate plan operations for the Meal Plan And Shop workflow.
+Expected: `generate_plan_artifacts`
+
+### Step 3: Scale Recipes [depends_on: generate_plan]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute scale recipes operations for the Meal Plan And Shop workflow.
+Expected: `scale_recipes_artifacts`
+
+### Step 4: Shopping List [depends_on: scale_recipes]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute shopping list operations for the Meal Plan And Shop workflow.
+Expected: `shopping_list_artifacts`
+
+### Step 5: Add To Mealie [depends_on: shopping_list]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute add to mealie operations for the Meal Plan And Shop workflow.
+Expected: `add_to_mealie_artifacts`
+
+### Step 6: KG Persistence [depends_on: add_to_mealie]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Meal Plan And Shop results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

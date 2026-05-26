@@ -1,28 +1,74 @@
 ---
 name: compliance_framework_deploy
-description: Parallel execution workflow for compliance framework deploy using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for compliance framework deploy using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-servicenow
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, compliance-framework-deploy]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Compliance Framework Deploy
+# Compliance Framework Deploy Workflow
 
-This workflow defines the topological parallel execution steps for compliance framework deploy.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for compliance framework deploy using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: select_framework
-Execute the select framework phase for the compliance_framework_deploy workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: select_framework_artifacts
-### Step 2: gap_analysis [depends_on: select_framework]
-Execute the gap analysis phase for the compliance_framework_deploy workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gap_analysis_artifacts
-### Step 3: parallel_impl_per_control [depends_on: gap_analysis]
-Execute the parallel impl per control phase for the compliance_framework_deploy workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_impl_per_control_artifacts
-### Step 4: audit [depends_on: parallel_impl_per_control]
-Execute the audit phase for the compliance_framework_deploy workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: audit_artifacts
+### Step 1: Select Framework
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute select framework operations for the Compliance Framework Deploy workflow.
+Expected: `select_framework_artifacts`
+
+### Step 2: Gap Analysis [depends_on: select_framework]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute gap analysis operations for the Compliance Framework Deploy workflow.
+Expected: `gap_analysis_artifacts`
+
+### Step 3: Parallel Impl Per Control [depends_on: gap_analysis]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute parallel impl per control operations for the Compliance Framework Deploy workflow.
+Expected: `parallel_impl_per_control_artifacts`
+
+### Step 4: Audit [depends_on: parallel_impl_per_control]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute audit operations for the Compliance Framework Deploy workflow.
+Expected: `audit_artifacts`
+
+### Step 5: KG Persistence [depends_on: audit]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Compliance Framework Deploy results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

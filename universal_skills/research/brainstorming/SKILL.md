@@ -50,7 +50,7 @@ Work through these steps in order:
 
 ## Process
 
-### Step 1: Explore Project Context
+### Step 1: explore-context
 
 Before asking anything, check:
 - Relevant source files and modules
@@ -58,11 +58,11 @@ Before asking anything, check:
 - Recent commits related to the area of change
 - Any established patterns or conventions
 
-### Step 1.5: Pre-Ideation Analogy Scan
+### Step 2: analogy-scan [depends_on: explore-context]
 
 Before proposing any new designs, you MUST use the `kg_analogy_search` MCP tool from `agent-utilities-kg` to scan the Knowledge Graph for structurally similar concepts, past designs, or existing solutions within the ecosystem. This ensures we "Extend-Before-Invent".
 
-### Step 2: Ask Clarifying Questions
+### Step 3: clarify-requirements [depends_on: analogy-scan]
 
 - Ask **one question at a time**
 - Prefer multiple-choice questions when possible; open-ended when needed
@@ -76,14 +76,14 @@ When triggered or when the plan is highly complex/ambiguous, activate **Scrutiny
 - For each question, provide your recommended answer.
 - Do not let vague answers pass. Push for clarity.
 
-### Step 3: Propose Approaches
+### Step 4: propose-approaches [depends_on: clarify-requirements]
 
 Once the problem is understood (and informed by the `kg_analogy_search` results):
 - Present 2–3 distinct approaches with clear trade-offs
 - Lead with the recommended option and explain why
 - Keep proposals conversational, not exhaustive
 
-### Step 4: Present Design
+### Step 5: present-design [depends_on: propose-approaches]
 
 After approaches are agreed on:
 - Present design section by section (architecture → components → data flow → error handling → testing)
@@ -91,14 +91,17 @@ After approaches are agreed on:
 - Ask for confirmation after each section before proceeding
 - Be ready to revise and revisit
 
-### Step 5: Write Design Doc & Save to Semantic Memory
+### Step 6: write-design-doc [depends_on: present-design]
 
 After design approval:
 - Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
 - Commit the design document to git
-- **KG Dual-Write**: Use the `kg_memory_store` MCP tool to save the core design decisions back into the Knowledge Graph as `semantic` memory, ensuring future agents can discover this architectural decision during their own analogy scans.
 
-### Step 6: Transition to Implementation
+### Step 7: kg-dual-write [depends_on: write-design-doc]
+
+**KG Dual-Write**: Use the `kg_memory_store` MCP tool to save the core design decisions back into the Knowledge Graph as `semantic` memory, ensuring future agents can discover this architectural decision during their own analogy scans.
+
+### Step 8: transition-implementation [depends_on: kg-dual-write]
 
 - Create a stepwise implementation plan before writing production code
 - Do NOT begin implementation until the plan is approved

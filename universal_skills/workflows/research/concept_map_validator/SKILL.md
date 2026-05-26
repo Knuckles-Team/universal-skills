@@ -1,28 +1,71 @@
 ---
 name: concept_map_validator
-description: Parallel execution workflow for concept map validator using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for concept map validator using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-graph-os
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, concept-map-validator]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Concept Map Validator
+# Concept Map Validator Workflow
 
-This workflow defines the topological parallel execution steps for concept map validator.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for concept map validator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_concept_verify_code_exists
-Execute the Fan-out per concept: verify code exists phase for the concept_map_validator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_concept_verify_code_exists_artifacts
-### Step 2: check_docs [depends_on: fan_out_per_concept_verify_code_exists]
-Execute the check docs phase for the concept_map_validator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: check_docs_artifacts
-### Step 3: check_tests [depends_on: check_docs]
-Execute the check tests phase for the concept_map_validator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: check_tests_artifacts
-### Step 4: report_drift [depends_on: check_tests]
-Execute the report drift phase for the concept_map_validator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_drift_artifacts
+### Step 1: Fan Out Per Concept Verify Code Exists
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute fan out per concept verify code exists operations for the Concept Map Validator workflow.
+Expected: `fan_out_per_concept_verify_code_exists_artifacts`
+
+### Step 2: Check Docs [depends_on: fan_out_per_concept_verify_code_exists]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute check docs operations for the Concept Map Validator workflow.
+Expected: `check_docs_artifacts`
+
+### Step 3: Check Tests [depends_on: check_docs]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute check tests operations for the Concept Map Validator workflow.
+Expected: `check_tests_artifacts`
+
+### Step 4: Report Drift [depends_on: check_tests]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute report drift operations for the Concept Map Validator workflow.
+Expected: `report_drift_artifacts`
+
+### Step 5: KG Persistence [depends_on: report_drift]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Concept Map Validator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

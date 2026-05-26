@@ -1,34 +1,85 @@
 ---
 name: macro_indicator_tracker
-description: Parallel execution workflow for macro indicator tracker using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for macro indicator tracker using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-data-science
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, macro-indicator-tracker]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Macro Indicator Tracker
+# Macro Indicator Tracker Workflow
 
-This workflow defines the topological parallel execution steps for macro indicator tracker.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for macro indicator tracker using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: gdp
-Execute the GDP phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gdp_artifacts
-### Step 2: cpi
-Execute the CPI phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: cpi_artifacts
-### Step 3: pmi
-Execute the PMI phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pmi_artifacts
-### Step 4: yields
-Execute the yields phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: yields_artifacts
-### Step 5: employment
-Execute the employment phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: employment_artifacts
-### Step 6: dashboard [depends_on: gdp, cpi, pmi, yields, employment]
-Execute the dashboard phase for the macro_indicator_tracker workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dashboard_artifacts
+### Step 1: Gdp
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute gdp operations for the Macro Indicator Tracker workflow.
+Expected: `gdp_artifacts`
+
+### Step 2: Cpi
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute cpi operations for the Macro Indicator Tracker workflow.
+Expected: `cpi_artifacts`
+
+### Step 3: Pmi
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute pmi operations for the Macro Indicator Tracker workflow.
+Expected: `pmi_artifacts`
+
+### Step 4: Yields
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute yields operations for the Macro Indicator Tracker workflow.
+Expected: `yields_artifacts`
+
+### Step 5: Employment
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute employment operations for the Macro Indicator Tracker workflow.
+Expected: `employment_artifacts`
+
+### Step 6: Dashboard [depends_on: gdp, cpi, pmi, yields, employment]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute dashboard operations for the Macro Indicator Tracker workflow.
+Expected: `dashboard_artifacts`
+
+### Step 7: KG Persistence [depends_on: dashboard]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Macro Indicator Tracker results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

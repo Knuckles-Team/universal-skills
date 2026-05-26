@@ -75,63 +75,53 @@ All domains are scored 0–100 using standardized criteria:
 
 Every grade includes a justification with specific file paths and evidence citations.
 
-## Agentic Workflow
+## Steps
 
-### Phase 1: Discovery & Baseline
-- **Detect Language**: Run `detect_language.py` to identify project ecosystem (Python/Go/Node/Rust/Java).
-- **Assess Structure**: Identify if the project is an MCP server, Pydantic-AI agent, library, or web application.
-- **Run `analyze_project.py`**: Detect architectural patterns and score against ecosystem standards.
-- **Run `audit_dependencies.py`**: Compare current dependency versions against latest stable PyPI releases.
-- **Run `run_linters.py`**: Execute language-appropriate linters against the target codebase.
+### Step 1: detect_language
+Language ecosystem detection. Auto-detect primary/secondary languages, build system, available linters, and test frameworks to adapt downstream analysis:
+- Requires: primary script `scripts/detect_language.py`
 
-### Phase 1.5: Tooling Execution
-- **Run `run_precommit.py`**: Execute pre-commit hooks, detect outdated revs. Pytest hooks automatically skipped.
-- **Run `run_tests.py`**: Execute detected test framework with 300s timeout. Grade pass/fail ratio.
+### Step 2: project_analysis [depends_on: detect_language]
+Project structure and pattern analysis. Identify if the project is an MCP server, Pydantic-AI agent, library, or web application. Scan for architectural patterns, externalized prompts, and dependencies:
+- Requires: primary script `scripts/analyze_project.py` and `scripts/audit_dependencies.py`
 
-### Phase 2: Deep Analysis
-- **Run `analyze_codebase.py`**: Measure cyclomatic complexity, function length, nesting depth, duplication, monolithic files, and module coupling.
-- **Run `analyze_security.py`**: Discover attack surface, scan for CWE patterns, parse vulnerability reports.
-- **Run `analyze_tests.py`**: Inventory tests, map to use-cases, classify intent, detect doc-test drift, find missing concept markers.
-- **Run `audit_documentation.py`**: Validate docs completeness, README industry grading, detect staleness, check drift against code.
-- **Run `analyze_architecture.py`**: Evaluate against SOLID, hexagonal, clean architecture patterns.
+### Step 3: run_linters [depends_on: detect_language]
+Language-aware linter orchestration. Execute language-appropriate linters (ruff, mypy, bandit for Python, go vet for Go, eslint for Node) and parse/categorize findings:
+- Requires: primary script `scripts/run_linters.py` and `scripts/run_precommit.py`
 
-### Phase 2.5: Structure Analysis
-- **Run `analyze_directory_density.py`**: Measure files-per-directory, detect crowded/flat/deep structures, rogue scripts, suggest reorganizations.
+### Step 4: run_tests [depends_on: detect_language]
+Multi-framework test execution and grading. Execute detected test framework with a 300s timeout and grade based on the pass/fail ratio:
+- Requires: primary script `scripts/run_tests.py`
 
-### Phase 2.6: Changelog & Environment
-- **Run `audit_changelog.py`**: Validate CHANGELOG.md format, check version drift, analyze dependency changelogs for version deltas.
-- **Run `scan_env_vars.py`**: Scan all sources for env var usage, cross-reference against README documentation.
-- **Run `grade_pytest.py`**: Grade pytest suite against F.I.R.S.T. rubric with AI slop detection.
+### Step 5: deep_code_analysis [depends_on: project_analysis]
+Code quality, complexity, and duplication analysis. Measure cyclomatic complexity, function length, nesting depth, duplicate blocks, monolithic files, and module coupling:
+- Requires: primary script `scripts/analyze_codebase.py` and `scripts/analyze_directory_density.py`
 
-### Phase 2.7: Skill Quality & Engineering Heuristics
-- **Run `grade_skills.py`**: Discover and grade agent skills (if detected in Phase 1). Uses skill-check rule engine.
-- **Run `evaluate_heuristics.py`**: Assess codebase against engineering book heuristics with contextual activation.
+### Step 6: security_analysis [depends_on: project_analysis]
+Security and vulnerability scanning. Discover attack surface, scan for CWE patterns, scan environment variables/credentials, and parse vulnerability reports:
+- Requires: primary script `scripts/analyze_security.py` and `scripts/scan_env_vars.py`
 
-### Phase 2.8: Knowledge Graph Discovery (Innovation Extraction)
-- **Ingest Target Codebase**: Use the `kg_ingest` MCP tool to ingest the local repository into the unified Knowledge Graph.
-- **Analogy Search**: Use the `kg_analogy_search` MCP tool to find structural analogues or overlapping architectural patterns from previously ingested research papers and external codebases.
-- **Query & Discover**: Use `kg_query` to look up cross-repository architectural integrations and propose new features based on the knowledge graph's existing taxonomy.
+### Step 7: documentation_audit [depends_on: project_analysis]
+Documentation governance and drift detection. Validate README/AGENTS.md, check for documentation staleness, verify KEEP_A_CHANGELOG standards, and detect drift against code:
+- Requires: primary script `scripts/audit_documentation.py` and `scripts/audit_changelog.py`
 
-### Phase 3: Traceability & Governance
-- **Run `trace_concepts.py`**: Scan for `CONCEPT:CE-XXX` markers in code docstrings, docs, pytest markers and decorators. Detect orphans, drift, and missing markers. Cross-reference against AGENTS.md concept registry.
+### Step 8: concept_traceability_audit [depends_on: project_analysis]
+Concept traceability with drift detection. Scan for CONCEPT ID markers in code docstrings, docs, and pytest markers to cross-reference against AGENTS.md concepts:
+- Requires: primary script `scripts/trace_concepts.py` and `scripts/audit_concept_ids.py`
 
-### Phase 3.5: UI Analysis
-- **Run `analyze_ui.py`**: Detect web/terminal UI, run Nielsen's 10 heuristic checks, WCAG accessibility audit for web.
+### Step 9: user_interface_analysis [depends_on: project_analysis]
+UI/UX heuristic evaluation. Detect web/terminal UI, run Nielsen's 10 usability heuristic checks, and execute WCAG AA accessibility checks:
+- Requires: primary script `scripts/analyze_ui.py`
 
-### Phase 4: Brainstorming & Ideation
-- **Reference Guidelines**: Read `references/` documents to identify gaps in performance, security, and DX.
-- **Brainstorm Design**: Evaluate interfaces against contemporary design aesthetics.
-- **Evaluate Architecture**: Suggest improvements based on industry patterns.
+### Step 10: generate_report [depends_on: run_linters, run_tests, deep_code_analysis, security_analysis, documentation_audit, concept_traceability_audit, user_interface_analysis]
+Consolidated graded report generation and SDD handoff. Compile findings, calculate 0-100 scores across 28 domains, and produce the final prettified code enhancement report and SDD-compatible TODOs:
+- Requires: primary script `scripts/generate_report.py`, `scripts/generate_sdd_handoff.py`, `scripts/grade_pytest.py`, `scripts/grade_skills.py`, `scripts/evaluate_heuristics.py`, `scripts/detect_circular_deps.py`, `scripts/audit_env_var_standard.py`
 
-### Phase 5: Reporting & Handoff
-- **Run `generate_report.py`**: Create prettified `code_enhancement_report.md` in `.specify/reports/`.
-- **Run `generate_sdd_handoff.py`**: Produce structured TODO items compatible with `spec-generator` → `task-planner` → `sdd-implementer` pipeline. Output to `.specify/specs/`.
-- **Categorize Findings**: Group by domain with graded scorecards.
-- **Prioritize**: Sort action items by impact × risk composite score.
+### Step 11: kg_persistence [depends_on: generate_report]
+Knowledge Graph double-write seeding and multi-project analysis. Ingest the report and spec files back into Graph-OS, and execute multi-project parallel cross-repository integration checks:
+- Requires: primary script `scripts/run_multi_project.py` and `scripts/analyze_integration.py`
 
-### Phase 6: Multi-Project (Optional)
-- **Run `run_multi_project.py`**: Execute all phases across multiple projects in parallel.
-- **Run `analyze_integration.py`**: Build inter-project dependency graph, detect version conflicts and circular ## Best Practices
+## Best Practices
 - **Read-Only First**: Always provide the report and wait for user approval before applying destructive changes or major refactors.
 - **Evidence-Backed Findings**: Every recommendation, finding, or proposed change MUST be backed by hard evidence retrieved from the Knowledge Graph using the `agent-utilities-kg` MCP server (e.g., `kg_query`, `kg_search`). You must cite specific file paths, exact line numbers, and existing graph topologies. Never hallucinate recommendations; the KG is your source of truth.
 - **Extend-Before-Invent**: When suggesting new features or modules, first use `kg_analogy_search` or `kg_search` to verify if a relevant concept already exists. Always prefer extending an existing conceptual module over inventing a duplicate.

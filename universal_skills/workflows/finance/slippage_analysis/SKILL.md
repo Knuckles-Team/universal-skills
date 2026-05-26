@@ -1,28 +1,71 @@
 ---
 name: slippage_analysis
-description: Parallel execution workflow for slippage analysis using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for slippage analysis using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-data-science
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, slippage-analysis]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Slippage Analysis
+# Slippage Analysis Workflow
 
-This workflow defines the topological parallel execution steps for slippage analysis.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for slippage analysis using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: pull_fills
-Execute the pull fills phase for the slippage_analysis workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pull_fills_artifacts
-### Step 2: compare_to_signal_price [depends_on: pull_fills]
-Execute the compare to signal price phase for the slippage_analysis workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: compare_to_signal_price_artifacts
-### Step 3: calc_slippage_stats [depends_on: compare_to_signal_price]
-Execute the calc slippage stats phase for the slippage_analysis workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: calc_slippage_stats_artifacts
-### Step 4: optimize [depends_on: calc_slippage_stats]
-Execute the optimize phase for the slippage_analysis workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: optimize_artifacts
+### Step 1: Pull Fills
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute pull fills operations for the Slippage Analysis workflow.
+Expected: `pull_fills_artifacts`
+
+### Step 2: Compare To Signal Price [depends_on: pull_fills]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute compare to signal price operations for the Slippage Analysis workflow.
+Expected: `compare_to_signal_price_artifacts`
+
+### Step 3: Calc Slippage Stats [depends_on: compare_to_signal_price]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute calc slippage stats operations for the Slippage Analysis workflow.
+Expected: `calc_slippage_stats_artifacts`
+
+### Step 4: Optimize [depends_on: calc_slippage_stats]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute optimize operations for the Slippage Analysis workflow.
+Expected: `optimize_artifacts`
+
+### Step 5: KG Persistence [depends_on: optimize]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Slippage Analysis results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

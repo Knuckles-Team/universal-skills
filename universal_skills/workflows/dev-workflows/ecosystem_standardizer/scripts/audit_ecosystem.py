@@ -59,7 +59,7 @@ FIRST_PARTY_EXCEPTIONS = {
 
 # Known CONCEPT prefixes (for collision detection)
 KNOWN_PREFIXES = {
-    "AH": "adguard-home-agent", "ANSIBLE": "ansible-tower-mcp",
+    "ANSIBLE": "ansible-tower-mcp",
     "ABOX": "archivebox-api", "ARR": "arr-mcp",
     "ATL": "atlassian-agent", "AU": "agent-utilities",
     "AUDIO": "audio-transcriber", "CMGR": "container-manager-mcp",

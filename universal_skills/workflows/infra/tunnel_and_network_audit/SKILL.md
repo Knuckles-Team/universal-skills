@@ -1,24 +1,62 @@
 ---
 name: tunnel_and_network_audit
-description: Audit active SSH tunnels and network connectivity alongside system network interface status.
-domain: infrastructure
+description: >-
+  Audit active SSH tunnels and network connectivity alongside system network interface status.
+domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['tunnels', 'network', 'security', 'audit']
-requires: ['tunnel-manager', 'systems-manager']
+concept: CONCEPT:INFRA-001
 ---
 
-# tunnel_and_network_audit Workflow
+# Tunnel And Network Audit Workflow
+
+**CONCEPT:INFRA-001**
 
 Audit active SSH tunnels and network connectivity alongside system network interface status.
 
-### Step 0: tunnel-manager
+## Steps
+
+### Step 0: Tunnel Manager
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 List all active tunnels from the inventory
-Expected: tunnel
+Expected: `tunnel`
 
-### Step 1: systems-manager
+### Step 1: Systems Manager
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Show network interface stats and active connections
-Expected: network, interface
+Expected: `network, interface`
 
-### Step 2: systems-manager
+### Step 2: Systems Manager
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 Get the system's firewall rules summary
-Expected: firewall, rule
-Depends On: Step 0, Step 1
+Expected: `firewall, rule`
+
+### Step 3: KG Persistence [depends_on: systems-manager]
+**Agent**: `verifier-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Tunnel And Network Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

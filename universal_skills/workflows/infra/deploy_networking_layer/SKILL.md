@@ -1,28 +1,71 @@
 ---
 name: deploy_networking_layer
-description: Parallel execution workflow for deploy networking layer using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy networking layer using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-networking-layer]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Networking Layer
+# Deploy Networking Layer Workflow
 
-This workflow defines the topological parallel execution steps for deploy networking layer.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy networking layer using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: wireguard
-Execute the wireguard phase for the deploy_networking_layer workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: wireguard_artifacts
-### Step 2: traefik [depends_on: wireguard]
-Execute the traefik phase for the deploy_networking_layer workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: traefik_artifacts
-### Step 3: adguard [depends_on: traefik]
-Execute the adguard phase for the deploy_networking_layer workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: adguard_artifacts
-### Step 4: cloudflare_tunnel [depends_on: adguard]
-Execute the cloudflare tunnel phase for the deploy_networking_layer workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: cloudflare_tunnel_artifacts
+### Step 1: Wireguard
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute wireguard operations for the Deploy Networking Layer workflow.
+Expected: `wireguard_artifacts`
+
+### Step 2: Caddy [depends_on: wireguard]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute caddy operations for the Deploy Networking Layer workflow.
+Expected: `caddy_artifacts`
+
+### Step 3: Technitium [depends_on: caddy]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute technitium operations for the Deploy Networking Layer workflow.
+Expected: `technitium_artifacts`
+
+### Step 4: Cloudflare Tunnel [depends_on: technitium]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute cloudflare tunnel operations for the Deploy Networking Layer workflow.
+Expected: `cloudflare_tunnel_artifacts`
+
+### Step 5: KG Persistence [depends_on: cloudflare_tunnel]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Networking Layer results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

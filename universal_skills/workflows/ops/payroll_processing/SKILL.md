@@ -1,31 +1,81 @@
 ---
 name: payroll_processing
-description: Parallel execution workflow for payroll processing using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for payroll processing using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-microsoft
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, payroll-processing]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Payroll Processing
+# Payroll Processing Workflow
 
-This workflow defines the topological parallel execution steps for payroll processing.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for payroll processing using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: collect_timesheets
-Execute the collect timesheets phase for the payroll_processing workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: collect_timesheets_artifacts
-### Step 2: calculate [depends_on: collect_timesheets]
-Execute the calculate phase for the payroll_processing workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: calculate_artifacts
-### Step 3: deductions [depends_on: calculate]
-Execute the deductions phase for the payroll_processing workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: deductions_artifacts
-### Step 4: approve [depends_on: deductions]
-Execute the approve phase for the payroll_processing workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: approve_artifacts
-### Step 5: distribute [depends_on: approve]
-Execute the distribute phase for the payroll_processing workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: distribute_artifacts
+### Step 1: Collect Timesheets
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute collect timesheets operations for the Payroll Processing workflow.
+Expected: `collect_timesheets_artifacts`
+
+### Step 2: Calculate [depends_on: collect_timesheets]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute calculate operations for the Payroll Processing workflow.
+Expected: `calculate_artifacts`
+
+### Step 3: Deductions [depends_on: calculate]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute deductions operations for the Payroll Processing workflow.
+Expected: `deductions_artifacts`
+
+### Step 4: Approve [depends_on: deductions]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute approve operations for the Payroll Processing workflow.
+Expected: `approve_artifacts`
+
+### Step 5: Distribute [depends_on: approve]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute distribute operations for the Payroll Processing workflow.
+Expected: `distribute_artifacts`
+
+### Step 6: KG Persistence [depends_on: distribute]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Payroll Processing results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

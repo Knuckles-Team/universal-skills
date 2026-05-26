@@ -1,28 +1,71 @@
 ---
 name: counterparty_risk_audit
-description: Parallel execution workflow for counterparty risk audit using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for counterparty risk audit using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-emerald-exchange
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, counterparty-risk-audit]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Counterparty Risk Audit
+# Counterparty Risk Audit Workflow
 
-This workflow defines the topological parallel execution steps for counterparty risk audit.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for counterparty risk audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: volume
-Execute the volume phase for the counterparty_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: volume_artifacts
-### Step 2: insurance_fund
-Execute the insurance fund phase for the counterparty_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: insurance_fund_artifacts
-### Step 3: withdrawal_test
-Execute the withdrawal test phase for the counterparty_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: withdrawal_test_artifacts
-### Step 4: score [depends_on: volume, insurance_fund, withdrawal_test]
-Execute the score phase for the counterparty_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: score_artifacts
+### Step 1: Volume
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute volume operations for the Counterparty Risk Audit workflow.
+Expected: `volume_artifacts`
+
+### Step 2: Insurance Fund
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute insurance fund operations for the Counterparty Risk Audit workflow.
+Expected: `insurance_fund_artifacts`
+
+### Step 3: Withdrawal Test
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute withdrawal test operations for the Counterparty Risk Audit workflow.
+Expected: `withdrawal_test_artifacts`
+
+### Step 4: Score [depends_on: volume, insurance_fund, withdrawal_test]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute score operations for the Counterparty Risk Audit workflow.
+Expected: `score_artifacts`
+
+### Step 5: KG Persistence [depends_on: score]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Counterparty Risk Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -43,53 +43,56 @@ Five **state** roles:
 
 Every triaged issue should carry exactly one category role and one state role. If state roles conflict, flag it and ask the maintainer before doing anything else.
 
-These are canonical role names — the actual label strings used in the issue tracker may differ. The mapping should have been provided to you - run `/setup-matt-pocock-skills` if not.
+These are canonical role names — the actual label strings used in the issue tracker may differ. The mapping should have been provided to you.
 
-State transitions: an unlabeled issue normally goes to `needs-triage` first; from there it moves to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer can override at any time — flag transitions that look unusual and ask before proceeding.
+State transitions: an unlabeled issue normally goes to `needs-triage` first; from there it moves to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer can override at any time.
 
-## Invocation
+## Workflow
 
-The maintainer invokes `/triage` and describes what they want in natural language. Interpret the request and act. Examples:
+### Step 1: show-attention
 
-- "Show me anything that needs my attention"
-- "Let's look at #42"
-- "Move #42 to ready-for-agent"
-- "What's ready for agents to pick up?"
-
-## Show what needs attention
-
-Query the issue tracker and present three buckets, oldest first:
-
+Interpret the user's invocation and fetch pending issues that need immediate action from the issue tracker. Present three buckets sorted oldest first:
 1. **Unlabeled** — never triaged.
 2. **`needs-triage`** — evaluation in progress.
 3. **`needs-info` with reporter activity since the last triage notes** — needs re-evaluation.
 
-Show counts and a one-line summary per issue. Let the maintainer pick.
+Show counts and a one-line summary per issue, then let the maintainer select which one to proceed with.
 
-## Triage a specific issue
+### Step 2: gather-context [depends_on: show-attention]
 
-1. **Gather context & KG History.** Read the full issue (body, comments, labels, reporter, dates). Parse any prior triage notes so you don't re-ask resolved questions. Use the `kg_memory_recall` MCP tool (searching Episodic Memory) to check if similar issues have been triaged in the past. Explore the codebase using the project's domain glossary, respecting ADRs in the area. Read `.out-of-scope/*.md` and surface any prior rejection that resembles this issue.
+For triaging a specific selected issue, gather full system context:
+- **Read Tracker:** Load the full issue body, comments, labels, reporter, and dates. Parse prior triage notes to prevent re-asking resolved questions.
+- **Search Episodic Memory:** Invoke the `kg_memory_recall` MCP tool (searching Episodic Memory) to find similar triaged issues from past runs.
+- **Read Out-of-Scope Files:** Check local `.out-of-scope/*.md` files and surface any prior rejections resembling this issue.
+- **Glossary Check:** Explore the codebase using the project's domain glossary, respecting any active ADRs.
 
-2. **Recommend.** Tell the maintainer your category and state recommendation with reasoning, plus a brief codebase summary relevant to the issue. Wait for direction.
+### Step 3: blast-radius-repro [depends_on: gather-context]
 
-3. **Reproduce & Assess Blast Radius (bugs only).** Before any grilling, attempt reproduction: read the reporter's steps, trace the relevant code, run tests or commands. Report what happened. If you localize the bug to a specific component, you MUST run the `kg_blast_radius` MCP tool to map out all transitive dependencies and proactively identify downstream regressions. A confirmed repro with blast radius analysis makes a much stronger agent brief.
+Attempt reproduction and analyze systemic dependencies (bugs only):
+- **Reproduction:** Read the reporter's steps, trace the relevant files, and run tests or reproduction scripts.
+- **Transitive Analysis:** Localize the bug to a component, then run the `kg_blast_radius` MCP tool to map all transitive dependencies and proactively flag potential downstream regressions.
 
-4. **Grill (if needed).** If the issue needs fleshing out, run a `/grill-with-docs` session.
+### Step 4: recommend [depends_on: blast-radius-repro]
 
-5. **Apply the outcome:**
-   - `ready-for-agent` — post an agent brief comment ([AGENT-BRIEF.md](AGENT-BRIEF.md)).
-   - `ready-for-human` — same structure as an agent brief, but note why it can't be delegated (judgment calls, external access, design decisions, manual testing).
-   - `needs-info` — post triage notes (template below).
-   - `wontfix` (bug) — polite explanation, then close.
-   - `wontfix` (enhancement) — write to `.out-of-scope/`, link to it from a comment, then close ([OUT-OF-SCOPE.md](OUT-OF-SCOPE.md)).
-   - `needs-triage` — apply the role. Optional comment if there's partial progress.
+Formulate initial recommendations for the maintainer:
+- **Recommend:** Tell the maintainer your category (`bug` or `enhancement`) and state recommendation with clear reasoning.
+- **Diagnostic Summary:** Provide a brief codebase summary explaining the context of the issue.
 
-## Quick state override
+### Step 5: grill-details [depends_on: recommend]
 
-If the maintainer says "move #42 to ready-for-agent", trust them and apply the role directly. Confirm what you're about to do (role changes, comment, close), then act. Skip grilling. If moving to `ready-for-agent` without a grilling session, ask whether they want to write an agent brief.
+Grill the reporter or maintainer if the issue lacks definition:
+- **Interactive Grilling:** If the issue needs fleshing out, run an interactive `/grill-with-docs` session using docs to get exact requirements.
 
-## Needs-info template
+### Step 6: apply-outcome [depends_on: grill-details]
 
+Apply the outcome and update the issue tracker:
+- **`ready-for-agent`:** Post a comprehensive agent brief comment (see [AGENT-BRIEF.md](AGENT-BRIEF.md)).
+- **`ready-for-human`:** Post a similar agent brief structure, noting why it cannot be delegated.
+- **`needs-info`:** Post triage notes using the template below.
+- **`wontfix` (bug):** Write a polite explanation and close the issue.
+- **`wontfix` (enhancement):** Write to `.out-of-scope/`, link to it in a comment, and close.
+
+#### Needs-info template
 ```markdown
 ## Triage Notes
 
@@ -104,8 +107,7 @@ If the maintainer says "move #42 to ready-for-agent", trust them and apply the r
 - question 2
 ```
 
-Capture everything resolved during grilling under "established so far" so the work isn't lost. Questions must be specific and actionable, not "please provide more info".
+### Step 7: quick-override [depends_on: none]
 
-## Resuming a previous session
-
-If prior triage notes exist on the issue, read them, check whether the reporter has answered any outstanding questions, and present an updated picture before continuing. Don't re-ask resolved questions.
+Provide a quick override bypass path:
+- **Quick State Override:** If the maintainer invokes with a direct command like "move #42 to ready-for-agent", trust them, confirm what you are about to do, and apply the role directly without running the full triage loop.

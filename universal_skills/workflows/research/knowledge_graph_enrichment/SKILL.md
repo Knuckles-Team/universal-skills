@@ -1,31 +1,71 @@
 ---
 name: knowledge_graph_enrichment
-description: Parallel execution workflow for knowledge graph enrichment using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for knowledge graph enrichment using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-scholarx
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, knowledge-graph-enrichment]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Knowledge Graph Enrichment
+# Knowledge Graph Enrichment Workflow
 
-This workflow defines the topological parallel execution steps for knowledge graph enrichment.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for knowledge graph enrichment using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: papers
-Execute the papers phase for the knowledge_graph_enrichment workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: papers_artifacts
-### Step 2: code
-Execute the code phase for the knowledge_graph_enrichment workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: code_artifacts
-### Step 3: docs
-Execute the docs phase for the knowledge_graph_enrichment workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: docs_artifacts
-### Step 4: extract_entities [depends_on: papers, code, docs]
-Execute the extract entities phase for the knowledge_graph_enrichment workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: extract_entities_artifacts
-### Step 5: kg_ingest [depends_on: extract_entities]
-Execute the KG ingest phase for the knowledge_graph_enrichment workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: kg_ingest_artifacts
+### Step 1: Papers
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute papers operations for the Knowledge Graph Enrichment workflow.
+Expected: `papers_artifacts`
+
+### Step 2: Code
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute code operations for the Knowledge Graph Enrichment workflow.
+Expected: `code_artifacts`
+
+### Step 3: Docs
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute docs operations for the Knowledge Graph Enrichment workflow.
+Expected: `docs_artifacts`
+
+### Step 4: Extract Entities [depends_on: papers, code, docs]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute extract entities operations for the Knowledge Graph Enrichment workflow.
+Expected: `extract_entities_artifacts`
+
+### Step 5: Kg Ingest [depends_on: extract_entities]
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute kg ingest operations for the Knowledge Graph Enrichment workflow.
+Expected: `kg_ingest_artifacts`
+
+## Output
+- Knowledge Graph Enrichment results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

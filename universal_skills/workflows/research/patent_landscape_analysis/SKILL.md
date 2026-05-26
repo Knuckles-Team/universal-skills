@@ -1,28 +1,71 @@
 ---
 name: patent_landscape_analysis
-description: Parallel execution workflow for patent landscape analysis using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for patent landscape analysis using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-searxng
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, patent-landscape-analysis]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Patent Landscape Analysis
+# Patent Landscape Analysis Workflow
 
-This workflow defines the topological parallel execution steps for patent landscape analysis.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for patent landscape analysis using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: search_patents
-Execute the search patents phase for the patent_landscape_analysis workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: search_patents_artifacts
-### Step 2: classify [depends_on: search_patents]
-Execute the classify phase for the patent_landscape_analysis workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: classify_artifacts
-### Step 3: competitor_mapping [depends_on: classify]
-Execute the competitor mapping phase for the patent_landscape_analysis workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: competitor_mapping_artifacts
-### Step 4: report [depends_on: competitor_mapping]
-Execute the report phase for the patent_landscape_analysis workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Search Patents
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute search patents operations for the Patent Landscape Analysis workflow.
+Expected: `search_patents_artifacts`
+
+### Step 2: Classify [depends_on: search_patents]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute classify operations for the Patent Landscape Analysis workflow.
+Expected: `classify_artifacts`
+
+### Step 3: Competitor Mapping [depends_on: classify]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute competitor mapping operations for the Patent Landscape Analysis workflow.
+Expected: `competitor_mapping_artifacts`
+
+### Step 4: Report [depends_on: competitor_mapping]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute report operations for the Patent Landscape Analysis workflow.
+Expected: `report_artifacts`
+
+### Step 5: KG Persistence [depends_on: report]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Patent Landscape Analysis results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

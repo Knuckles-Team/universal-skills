@@ -1,31 +1,78 @@
 ---
 name: brand_identity_generator
-description: Parallel execution workflow for brand identity generator using the Unified Parallel Engine
-domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-stirlingpdf
+description: >-
+  Parallel execution workflow for brand identity generator using the Unified Parallel Engine
+domain: social
+agent: content_strategist
+team_config:
+  name: content_creation_team
+  task_pattern: content creation and social media management
+  execution_mode: sequential
+  specialist_ids:
+    - content-creator
+    - media-processor
+    - publisher-agent
+    - analytics-agent
+  tool_assignments:
+    content-creator: [graph_query, document_tools]
+    media-processor: [graph_analyze]
+    publisher-agent: [graph_write]
+    analytics-agent: [graph_query, graph_analyze]
+tags: [social, brand-identity-generator]
+concept: CONCEPT:SOCIAL-001
 ---
 
-# Parallel Workflow: Brand Identity Generator
+# Brand Identity Generator Workflow
 
-This workflow defines the topological parallel execution steps for brand identity generator.
+**CONCEPT:SOCIAL-001**
+
+Parallel execution workflow for brand identity generator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: logo_concepts
-Execute the logo concepts phase for the brand_identity_generator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: logo_concepts_artifacts
-### Step 2: color_palette
-Execute the color palette phase for the brand_identity_generator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: color_palette_artifacts
-### Step 3: typography
-Execute the typography phase for the brand_identity_generator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: typography_artifacts
-### Step 4: voice_tone
-Execute the voice/tone phase for the brand_identity_generator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: voice_tone_artifacts
-### Step 5: brand_book [depends_on: logo_concepts, color_palette, typography, voice_tone]
-Execute the brand book phase for the brand_identity_generator workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: brand_book_artifacts
+### Step 1: Logo Concepts
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute logo concepts operations for the Brand Identity Generator workflow.
+Expected: `logo_concepts_artifacts`
+
+### Step 2: Color Palette
+**Agent**: `media-processor`
+**Tools**: `graph_analyze`
+
+Execute color palette operations for the Brand Identity Generator workflow.
+Expected: `color_palette_artifacts`
+
+### Step 3: Typography
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Execute typography operations for the Brand Identity Generator workflow.
+Expected: `typography_artifacts`
+
+### Step 4: Voice Tone
+**Agent**: `analytics-agent`
+**Tools**: `graph_query, graph_analyze`
+
+Execute voice tone operations for the Brand Identity Generator workflow.
+Expected: `voice_tone_artifacts`
+
+### Step 5: Brand Book [depends_on: logo_concepts, color_palette, typography, voice_tone]
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute brand book operations for the Brand Identity Generator workflow.
+Expected: `brand_book_artifacts`
+
+### Step 6: KG Persistence [depends_on: brand_book]
+**Agent**: `analytics-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Brand Identity Generator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

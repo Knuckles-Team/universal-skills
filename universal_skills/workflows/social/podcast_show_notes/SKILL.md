@@ -1,31 +1,78 @@
 ---
 name: podcast_show_notes
-description: Parallel execution workflow for podcast show notes using the Unified Parallel Engine
-domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-audio-transcriber
+description: >-
+  Parallel execution workflow for podcast show notes using the Unified Parallel Engine
+domain: social
+agent: content_strategist
+team_config:
+  name: content_creation_team
+  task_pattern: content creation and social media management
+  execution_mode: sequential
+  specialist_ids:
+    - content-creator
+    - media-processor
+    - publisher-agent
+    - analytics-agent
+  tool_assignments:
+    content-creator: [graph_query, document_tools]
+    media-processor: [graph_analyze]
+    publisher-agent: [graph_write]
+    analytics-agent: [graph_query, graph_analyze]
+tags: [social, podcast-show-notes]
+concept: CONCEPT:SOCIAL-001
 ---
 
-# Parallel Workflow: Podcast Show Notes
+# Podcast Show Notes Workflow
 
-This workflow defines the topological parallel execution steps for podcast show notes.
+**CONCEPT:SOCIAL-001**
+
+Parallel execution workflow for podcast show notes using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: transcribe
-Execute the transcribe phase for the podcast_show_notes workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: transcribe_artifacts
-### Step 2: summarize [depends_on: transcribe]
-Execute the summarize phase for the podcast_show_notes workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: summarize_artifacts
-### Step 3: extract_topics [depends_on: summarize]
-Execute the extract topics phase for the podcast_show_notes workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: extract_topics_artifacts
-### Step 4: generate_notes [depends_on: extract_topics]
-Execute the generate notes phase for the podcast_show_notes workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_notes_artifacts
-### Step 5: publish [depends_on: generate_notes]
-Execute the publish phase for the podcast_show_notes workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: publish_artifacts
+### Step 1: Transcribe
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute transcribe operations for the Podcast Show Notes workflow.
+Expected: `transcribe_artifacts`
+
+### Step 2: Summarize [depends_on: transcribe]
+**Agent**: `media-processor`
+**Tools**: `graph_analyze`
+
+Execute summarize operations for the Podcast Show Notes workflow.
+Expected: `summarize_artifacts`
+
+### Step 3: Extract Topics [depends_on: summarize]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Execute extract topics operations for the Podcast Show Notes workflow.
+Expected: `extract_topics_artifacts`
+
+### Step 4: Generate Notes [depends_on: extract_topics]
+**Agent**: `analytics-agent`
+**Tools**: `graph_query, graph_analyze`
+
+Execute generate notes operations for the Podcast Show Notes workflow.
+Expected: `generate_notes_artifacts`
+
+### Step 5: Publish [depends_on: generate_notes]
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute publish operations for the Podcast Show Notes workflow.
+Expected: `publish_artifacts`
+
+### Step 6: KG Persistence [depends_on: publish]
+**Agent**: `analytics-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Podcast Show Notes results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

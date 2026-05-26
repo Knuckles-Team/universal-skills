@@ -1,31 +1,81 @@
 ---
 name: compliance_audit_sweep
-description: Parallel execution workflow for compliance audit sweep using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for compliance audit sweep using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-servicenow
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, compliance-audit-sweep]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Compliance Audit Sweep
+# Compliance Audit Sweep Workflow
 
-This workflow defines the topological parallel execution steps for compliance audit sweep.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for compliance audit sweep using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: gdpr
-Execute the GDPR phase for the compliance_audit_sweep workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gdpr_artifacts
-### Step 2: soc2
-Execute the SOC2 phase for the compliance_audit_sweep workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: soc2_artifacts
-### Step 3: hipaa
-Execute the HIPAA phase for the compliance_audit_sweep workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: hipaa_artifacts
-### Step 4: check_controls [depends_on: gdpr, soc2, hipaa]
-Execute the check controls phase for the compliance_audit_sweep workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: check_controls_artifacts
-### Step 5: gap_report [depends_on: check_controls]
-Execute the gap report phase for the compliance_audit_sweep workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gap_report_artifacts
+### Step 1: Gdpr
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute gdpr operations for the Compliance Audit Sweep workflow.
+Expected: `gdpr_artifacts`
+
+### Step 2: Soc2
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute soc2 operations for the Compliance Audit Sweep workflow.
+Expected: `soc2_artifacts`
+
+### Step 3: Hipaa
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute hipaa operations for the Compliance Audit Sweep workflow.
+Expected: `hipaa_artifacts`
+
+### Step 4: Check Controls [depends_on: gdpr, soc2, hipaa]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute check controls operations for the Compliance Audit Sweep workflow.
+Expected: `check_controls_artifacts`
+
+### Step 5: Gap Report [depends_on: check_controls]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute gap report operations for the Compliance Audit Sweep workflow.
+Expected: `gap_report_artifacts`
+
+### Step 6: KG Persistence [depends_on: gap_report]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Compliance Audit Sweep results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

@@ -1,26 +1,71 @@
 ---
 name: options_volatility_surface
-description: Fetches multi-expiry options chain price metrics, fits implied volatility surface curves, and identifies skew arbitrage.
+description: >-
+  Fetches multi-expiry options chain price metrics, fits implied volatility surface curves, and identifies skew arbitrage.
 domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [options, volatility, iv, skew]
+concept: CONCEPT:EE-011
 ---
+
 # Options Volatility Surface Workflow
 
-This workflow coordinates multi-agent parallel executions of Fetches multi-expiry options chain price metrics, fits implied volatility surface curves, and identifies skew arbitrage.
+**CONCEPT:EE-011**
 
-### Step 1: options-feed-collector [depends_on: none]
+Fetches multi-expiry options chain price metrics, fits implied volatility surface curves, and identifies skew arbitrage.
+
+## Steps
+
+### Step 1: Options Feed Collector
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Fetches option chain price logs and strike parameters across multiple expiries.
-Expected: raw-options-chain-feeds
+Expected: `raw-options-chain-feeds`
 
-### Step 2: iv-surface-fitter [depends_on: options-feed-collector]
+### Step 2: Iv Surface Fitter [depends_on: options-feed-collector]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Fits an implied volatility surface and calculates volatility smiles.
-Expected: implied-volatility-surface
+Expected: `implied-volatility-surface`
 
-### Step 3: anomaly-detector [depends_on: iv-surface-fitter]
+### Step 3: Anomaly Detector [depends_on: iv-surface-fitter]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Identifies mispriced options contracts and volatility skew anomalies.
-Expected: volatility-skew-anomalies
+Expected: `volatility-skew-anomalies`
 
-### Step 4: arbitrage-executor [depends_on: anomaly-detector]
+### Step 4: Arbitrage Executor [depends_on: anomaly-detector]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Proposes volatility trade executions to profit from the spreads.
-Expected: options-arbitrage-orders
+Expected: `options-arbitrage-orders`
 
+### Step 5: KG Persistence [depends_on: arbitrage-executor]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Options Volatility Surface results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

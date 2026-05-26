@@ -34,7 +34,7 @@ Tool: `systems_manager` resource checks.
 
 ### Step 4: dns-check
 Verify DNS resolution for all trading services.
-Tool: `adguard_home_rewrites(action="list_rewrites")`
+Tool: `technitium_zones(action="get_records")`
 
 ### Step 5: kg-persist
 Store HealthSnapshot node in KG.

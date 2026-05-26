@@ -1,25 +1,62 @@
 ---
 name: cross_reference_builder
-description: Parallel execution workflow for cross reference builder using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for cross reference builder using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-graph-os
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+tags: [research, cross-reference-builder]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Cross Reference Builder
+# Cross Reference Builder Workflow
 
-This workflow defines the topological parallel execution steps for cross reference builder.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for cross reference builder using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_concept_find_related_across_pillars
-Execute the Fan-out per concept: find related across pillars phase for the cross_reference_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_concept_find_related_across_pillars_artifacts
-### Step 2: add_edges [depends_on: fan_out_per_concept_find_related_across_pillars]
-Execute the add edges phase for the cross_reference_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: add_edges_artifacts
-### Step 3: report [depends_on: add_edges]
-Execute the report phase for the cross_reference_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Fan Out Per Concept Find Related Across Pillars
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute fan out per concept find related across pillars operations for the Cross Reference Builder workflow.
+Expected: `fan_out_per_concept_find_related_across_pillars_artifacts`
+
+### Step 2: Add Edges [depends_on: fan_out_per_concept_find_related_across_pillars]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute add edges operations for the Cross Reference Builder workflow.
+Expected: `add_edges_artifacts`
+
+### Step 3: Report [depends_on: add_edges]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute report operations for the Cross Reference Builder workflow.
+Expected: `report_artifacts`
+
+### Step 4: KG Persistence [depends_on: report]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Cross Reference Builder results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

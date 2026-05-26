@@ -1,28 +1,71 @@
 ---
 name: tunnel_health_monitor
-description: Parallel execution workflow for tunnel health monitor using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+description: >-
+  Parallel execution workflow for tunnel health monitor using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, tunnel-health-monitor]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Tunnel Health Monitor
+# Tunnel Health Monitor Workflow
 
-This workflow defines the topological parallel execution steps for tunnel health monitor.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for tunnel health monitor using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_tunnel_test_connectivity
-Execute the Fan-out per tunnel: test connectivity phase for the tunnel_health_monitor workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_tunnel_test_connectivity_artifacts
-### Step 2: latency [depends_on: fan_out_per_tunnel_test_connectivity]
-Execute the latency phase for the tunnel_health_monitor workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: latency_artifacts
-### Step 3: bandwidth [depends_on: latency]
-Execute the bandwidth phase for the tunnel_health_monitor workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: bandwidth_artifacts
-### Step 4: report [depends_on: bandwidth]
-Execute the report phase for the tunnel_health_monitor workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Fan Out Per Tunnel Test Connectivity
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute fan out per tunnel test connectivity operations for the Tunnel Health Monitor workflow.
+Expected: `fan_out_per_tunnel_test_connectivity_artifacts`
+
+### Step 2: Latency [depends_on: fan_out_per_tunnel_test_connectivity]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute latency operations for the Tunnel Health Monitor workflow.
+Expected: `latency_artifacts`
+
+### Step 3: Bandwidth [depends_on: latency]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute bandwidth operations for the Tunnel Health Monitor workflow.
+Expected: `bandwidth_artifacts`
+
+### Step 4: Report [depends_on: bandwidth]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute report operations for the Tunnel Health Monitor workflow.
+Expected: `report_artifacts`
+
+### Step 5: KG Persistence [depends_on: report]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Tunnel Health Monitor results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,28 +1,74 @@
 ---
 name: personal_finance_tracker
-description: Parallel execution workflow for personal finance tracker using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for personal finance tracker using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-data-science
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, personal-finance-tracker]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Personal Finance Tracker
+# Personal Finance Tracker Workflow
 
-This workflow defines the topological parallel execution steps for personal finance tracker.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for personal finance tracker using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: collect_transactions
-Execute the collect transactions phase for the personal_finance_tracker workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: collect_transactions_artifacts
-### Step 2: categorize [depends_on: collect_transactions]
-Execute the categorize phase for the personal_finance_tracker workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: categorize_artifacts
-### Step 3: budget_comparison [depends_on: categorize]
-Execute the budget comparison phase for the personal_finance_tracker workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: budget_comparison_artifacts
-### Step 4: report [depends_on: budget_comparison]
-Execute the report phase for the personal_finance_tracker workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Collect Transactions
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute collect transactions operations for the Personal Finance Tracker workflow.
+Expected: `collect_transactions_artifacts`
+
+### Step 2: Categorize [depends_on: collect_transactions]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute categorize operations for the Personal Finance Tracker workflow.
+Expected: `categorize_artifacts`
+
+### Step 3: Budget Comparison [depends_on: categorize]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute budget comparison operations for the Personal Finance Tracker workflow.
+Expected: `budget_comparison_artifacts`
+
+### Step 4: Report [depends_on: budget_comparison]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute report operations for the Personal Finance Tracker workflow.
+Expected: `report_artifacts`
+
+### Step 5: KG Persistence [depends_on: report]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Personal Finance Tracker results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

@@ -39,7 +39,7 @@ This means:
 ## Inventory Scope
 
 Only **real hardware** hosts belong in `inventory.yaml`. Do NOT include:
-- **Macvlan containers** (e.g., `adguard-home` at `10.0.0.199`, `home-assistant`)
+- **Macvlan containers** (e.g., `technitium-dns` at `10.0.0.199`, `home-assistant`)
   — these have dedicated IPs but no SSH daemon. They are tracked as `Container`
   nodes in the KG with `RUNS_ON` edges to their physical host.
 - **Regular containers** — tracked via portainer/container-manager MCP tools.

@@ -1,28 +1,71 @@
 ---
 name: api_documentation_gen
-description: Parallel execution workflow for api documentation gen using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for api documentation gen using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-github-mcp
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, api-documentation-gen]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Api Documentation Gen
+# Api Documentation Gen Workflow
 
-This workflow defines the topological parallel execution steps for api documentation gen.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for api documentation gen using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_endpoint_extract_schema
-Execute the Fan-out per endpoint: extract schema phase for the api_documentation_gen workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_endpoint_extract_schema_artifacts
-### Step 2: generate_docs [depends_on: fan_out_per_endpoint_extract_schema]
-Execute the generate docs phase for the api_documentation_gen workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_docs_artifacts
-### Step 3: examples [depends_on: generate_docs]
-Execute the examples phase for the api_documentation_gen workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: examples_artifacts
-### Step 4: publish [depends_on: examples]
-Execute the publish phase for the api_documentation_gen workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: publish_artifacts
+### Step 1: Fan Out Per Endpoint Extract Schema
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute fan out per endpoint extract schema operations for the Api Documentation Gen workflow.
+Expected: `fan_out_per_endpoint_extract_schema_artifacts`
+
+### Step 2: Generate Docs [depends_on: fan_out_per_endpoint_extract_schema]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute generate docs operations for the Api Documentation Gen workflow.
+Expected: `generate_docs_artifacts`
+
+### Step 3: Examples [depends_on: generate_docs]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute examples operations for the Api Documentation Gen workflow.
+Expected: `examples_artifacts`
+
+### Step 4: Publish [depends_on: examples]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute publish operations for the Api Documentation Gen workflow.
+Expected: `publish_artifacts`
+
+### Step 5: KG Persistence [depends_on: publish]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Api Documentation Gen results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

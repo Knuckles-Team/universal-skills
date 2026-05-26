@@ -1,31 +1,78 @@
 ---
 name: media_library_organizer
-description: Parallel execution workflow for media library organizer using the Unified Parallel Engine
-domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-jellyfin
+description: >-
+  Parallel execution workflow for media library organizer using the Unified Parallel Engine
+domain: social
+agent: content_strategist
+team_config:
+  name: content_creation_team
+  task_pattern: content creation and social media management
+  execution_mode: sequential
+  specialist_ids:
+    - content-creator
+    - media-processor
+    - publisher-agent
+    - analytics-agent
+  tool_assignments:
+    content-creator: [graph_query, document_tools]
+    media-processor: [graph_analyze]
+    publisher-agent: [graph_write]
+    analytics-agent: [graph_query, graph_analyze]
+tags: [social, media-library-organizer]
+concept: CONCEPT:SOCIAL-001
 ---
 
-# Parallel Workflow: Media Library Organizer
+# Media Library Organizer Workflow
 
-This workflow defines the topological parallel execution steps for media library organizer.
+**CONCEPT:SOCIAL-001**
+
+Parallel execution workflow for media library organizer using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: scan_library
-Execute the scan library phase for the media_library_organizer workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scan_library_artifacts
-### Step 2: metadata_extraction [depends_on: scan_library]
-Execute the metadata extraction phase for the media_library_organizer workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: metadata_extraction_artifacts
-### Step 3: categorize [depends_on: metadata_extraction]
-Execute the categorize phase for the media_library_organizer workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: categorize_artifacts
-### Step 4: dedupe [depends_on: categorize]
-Execute the dedupe phase for the media_library_organizer workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dedupe_artifacts
-### Step 5: report [depends_on: dedupe]
-Execute the report phase for the media_library_organizer workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Scan Library
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute scan library operations for the Media Library Organizer workflow.
+Expected: `scan_library_artifacts`
+
+### Step 2: Metadata Extraction [depends_on: scan_library]
+**Agent**: `media-processor`
+**Tools**: `graph_analyze`
+
+Execute metadata extraction operations for the Media Library Organizer workflow.
+Expected: `metadata_extraction_artifacts`
+
+### Step 3: Categorize [depends_on: metadata_extraction]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Execute categorize operations for the Media Library Organizer workflow.
+Expected: `categorize_artifacts`
+
+### Step 4: Dedupe [depends_on: categorize]
+**Agent**: `analytics-agent`
+**Tools**: `graph_query, graph_analyze`
+
+Execute dedupe operations for the Media Library Organizer workflow.
+Expected: `dedupe_artifacts`
+
+### Step 5: Report [depends_on: dedupe]
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute report operations for the Media Library Organizer workflow.
+Expected: `report_artifacts`
+
+### Step 6: KG Persistence [depends_on: report]
+**Agent**: `analytics-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Media Library Organizer results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

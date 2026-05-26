@@ -4,7 +4,7 @@ description: >
   Self-deploying bootstrap workflow that unfolds the complete agent-utilities
   ecosystem on a fresh machine. Queries the user for deployment profile
   (homelab/enterprise/minimal), installs system dependencies via
-  systems-manager-mcp, deploys core infrastructure (Docker, Portainer, AdGuard),
+  systems-manager-mcp, deploys core infrastructure (Docker, Portainer, Technitium DNS),
   service containers (wger, mealie, Jellyfin, etc.), and all MCP server
   containers as streamable-http Docker deployments. Transitions from
   container-manager-mcp to Portainer once deployed. Registers the full
@@ -25,7 +25,7 @@ requires:
   - systems-manager-mcp
   - container-manager-mcp
   - portainer-mcp
-  - adguard-home-mcp
+  - technitium-dns-mcp
   - tunnel-manager-mcp
   - graph-os
 ---
@@ -63,10 +63,10 @@ Depends On: Step 0
 ### Step 2: container-manager-mcp
 Deploy **Tier 0: Core Infrastructure** containers directly via container-manager-mcp (Portainer isn't available yet):
 - **Portainer CE** — container orchestration UI (port 9443)
-- **AdGuard Home** — DNS server and ad blocking (port 3000/53)
+- **Technitium DNS** — authoritative DNS server (port 5380/53)
 - **Traefik** (optional) — reverse proxy for service routing
 Use `container_manager_docker` with `action='docker_create_container'` for each. Create the shared Docker network `agent-net` first via `action='docker_create_network'`.
-Expected: portainer_container_id, adguard_container_id, agent_network_id
+Expected: portainer_container_id, dns_container_id, agent_network_id
 Depends On: Step 1
 
 ### Step 3: portainer-mcp
@@ -74,13 +74,13 @@ Verify Portainer is accessible and complete initial setup. Use `portainer_auth` 
 Expected: portainer_auth_token, endpoint_id
 Depends On: Step 2
 
-### Step 4: adguard-home-mcp
-Configure AdGuard Home with DNS rewrites for all services that will be deployed. Use `adguard_home_rewrites` with `action='add_rewrite'` to create entries like:
+### Step 4: technitium-dns-mcp
+Configure Technitium DNS with DNS records for all services that will be deployed. Use `add_record` with `zone='arpa'` to create entries like:
 - `portainer.{dns_domain}` → container IP
 - `mealie.{dns_domain}` → container IP
 - `wger.{dns_domain}` → container IP
-- (one rewrite per service in the selected deployment profile)
-Expected: dns_rewrites, rewrite_count
+- (one record per service in the selected deployment profile)
+Expected: dns_records, record_count
 Depends On: Step 2
 
 ### Step 5: portainer-mcp
@@ -97,7 +97,7 @@ Depends On: Step 3, Step 4
 
 ### Step 6: portainer-mcp
 Deploy **Tier 2: MCP Server Containers** as streamable-http Docker deployments. Each MCP server runs in its own container with health checks:
-- `adguard-home-mcp`, `container-manager-mcp`, `systems-manager-mcp`, `tunnel-manager-mcp`
+- `technitium-dns-mcp`, `container-manager-mcp`, `systems-manager-mcp`, `tunnel-manager-mcp`
 - `portainer-mcp`, `uptime-kuma-mcp`, `mealie-mcp`, `wger-mcp`
 - `qbittorrent-mcp`, `jellyfin-mcp`, `owncast-mcp`, `postiz-mcp`
 - `langfuse-mcp`, `repository-manager-mcp`, `github-mcp`, `gitlab-mcp`
@@ -110,9 +110,9 @@ Use `portainer_stack` with a docker-compose referencing each agent's `docker/Doc
 Expected: mcp_containers, mcp_endpoints, health_status
 Depends On: Step 5
 
-### Step 7: adguard-home-mcp
-Update DNS rewrites with the actual container IPs for all deployed services and MCP servers. Use `adguard_home_rewrites` with `action='add_rewrite'` for each MCP server endpoint.
-Expected: mcp_dns_rewrites, total_rewrites
+### Step 7: technitium-dns-mcp
+Update DNS records with the actual container IPs for all deployed services and MCP servers. Use `add_record` for each MCP server endpoint.
+Expected: mcp_dns_records, total_records
 Depends On: Step 6
 
 ### Step 8: graph-os

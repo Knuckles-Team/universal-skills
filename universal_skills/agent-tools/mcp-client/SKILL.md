@@ -184,7 +184,6 @@ The `references/` directory contains ready-to-use documentation and `mcp_config.
 | MCP Server | Reference | Config | Tool Tags |
 |-----------|-----------|--------|-----------|
 | ServiceNow | [servicenow-api.md](references/servicenow-api.md) | [servicenow-api.json](references/servicenow-api.json) | 30 |
-| AdGuard Home | [adguard-home-agent.md](references/adguard-home-agent.md) | [adguard-home-agent.json](references/adguard-home-agent.json) | 15 |
 | Arr Stack | [arr-mcp.md](references/arr-mcp.md) | [arr-mcp.json](references/arr-mcp.json) | 7 |
 | GitHub | [github-mcp.md](references/github-mcp.md) | [github-mcp.json](references/github-mcp.json) | 19 |
 | GitLab | [gitlab-api.md](references/gitlab-api.md) | [gitlab-api.json](references/gitlab-api.json) | 19 |

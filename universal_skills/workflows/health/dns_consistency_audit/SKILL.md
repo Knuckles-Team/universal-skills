@@ -1,28 +1,74 @@
 ---
 name: dns_consistency_audit
-description: Parallel execution workflow for dns consistency audit using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-adguard-home
+description: >-
+  Parallel execution workflow for dns consistency audit using the Unified Parallel Engine
+domain: health
+agent: health_wellness_coordinator
+team_config:
+  name: health_wellness_team
+  task_pattern: health monitoring and wellness optimization
+  execution_mode: sequential
+  specialist_ids:
+    - data-collector
+    - analyzer-agent
+    - planner-agent
+    - tracker-agent
+  tool_assignments:
+    data-collector: [graph_query]
+    analyzer-agent: [graph_analyze]
+    planner-agent: [graph_write]
+    tracker-agent: [nc_calendar, graph_write]
+tags: [health, dns-consistency-audit]
+concept: CONCEPT:HEALTH-001
 ---
 
-# Parallel Workflow: Dns Consistency Audit
+# Dns Consistency Audit Workflow
 
-This workflow defines the topological parallel execution steps for dns consistency audit.
+**CONCEPT:HEALTH-001**
+
+Parallel execution workflow for dns consistency audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: list_rewrites
-Execute the list rewrites phase for the dns_consistency_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: list_rewrites_artifacts
-### Step 2: resolve_each
-Execute the resolve each phase for the dns_consistency_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: resolve_each_artifacts
-### Step 3: compare
-Execute the compare phase for the dns_consistency_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: compare_artifacts
-### Step 4: drift_report [depends_on: list_rewrites, resolve_each, compare]
-Execute the drift report phase for the dns_consistency_audit workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: drift_report_artifacts
+### Step 1: List Records
+**Agent**: `data-collector`
+**Tools**: `graph_query`
+
+Execute list records operations for the Dns Consistency Audit workflow.
+Expected: `list_records_artifacts`
+
+### Step 2: Resolve Each
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze`
+
+Execute resolve each operations for the Dns Consistency Audit workflow.
+Expected: `resolve_each_artifacts`
+
+### Step 3: Compare
+**Agent**: `planner-agent`
+**Tools**: `graph_write`
+
+Execute compare operations for the Dns Consistency Audit workflow.
+Expected: `compare_artifacts`
+
+### Step 4: Drift Report [depends_on: list_records, resolve_each, compare]
+**Agent**: `tracker-agent`
+**Tools**: `nc_calendar, graph_write`
+
+Execute drift report operations for the Dns Consistency Audit workflow.
+Expected: `drift_report_artifacts`
+
+### Step 5: KG Persistence [depends_on: drift_report]
+**Agent**: `tracker-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Dns Consistency Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

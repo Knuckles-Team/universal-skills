@@ -1,28 +1,71 @@
 ---
 name: api_breaking_change_migration
-description: Parallel execution workflow for api breaking change migration using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for api breaking change migration using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, api-breaking-change-migration]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Api Breaking Change Migration
+# Api Breaking Change Migration Workflow
 
-This workflow defines the topological parallel execution steps for api breaking change migration.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for api breaking change migration using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: detect_breaking_changes
-Execute the detect breaking changes phase for the api_breaking_change_migration workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: detect_breaking_changes_artifacts
-### Step 2: find_all_consumers [depends_on: detect_breaking_changes]
-Execute the find all consumers phase for the api_breaking_change_migration workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: find_all_consumers_artifacts
-### Step 3: parallel_update [depends_on: find_all_consumers]
-Execute the parallel update phase for the api_breaking_change_migration workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_update_artifacts
-### Step 4: test [depends_on: parallel_update]
-Execute the test phase for the api_breaking_change_migration workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: test_artifacts
+### Step 1: Detect Breaking Changes
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute detect breaking changes operations for the Api Breaking Change Migration workflow.
+Expected: `detect_breaking_changes_artifacts`
+
+### Step 2: Find All Consumers [depends_on: detect_breaking_changes]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute find all consumers operations for the Api Breaking Change Migration workflow.
+Expected: `find_all_consumers_artifacts`
+
+### Step 3: Parallel Update [depends_on: find_all_consumers]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute parallel update operations for the Api Breaking Change Migration workflow.
+Expected: `parallel_update_artifacts`
+
+### Step 4: Test [depends_on: parallel_update]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute test operations for the Api Breaking Change Migration workflow.
+Expected: `test_artifacts`
+
+### Step 5: KG Persistence [depends_on: test]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Api Breaking Change Migration results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

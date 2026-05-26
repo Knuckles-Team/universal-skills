@@ -1,25 +1,62 @@
 ---
 name: deploy_identity_provider
-description: Parallel execution workflow for deploy identity provider using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy identity provider using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-portainer
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+tags: [infra, deploy-identity-provider]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Identity Provider
+# Deploy Identity Provider Workflow
 
-This workflow defines the topological parallel execution steps for deploy identity provider.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy identity provider using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: keycloak_authelia
-Execute the keycloak/authelia phase for the deploy_identity_provider workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: keycloak_authelia_artifacts
-### Step 2: oidc_config [depends_on: keycloak_authelia]
-Execute the OIDC config phase for the deploy_identity_provider workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: oidc_config_artifacts
-### Step 3: app_integration [depends_on: oidc_config]
-Execute the app integration phase for the deploy_identity_provider workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: app_integration_artifacts
+### Step 1: Keycloak Authelia
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute keycloak authelia operations for the Deploy Identity Provider workflow.
+Expected: `keycloak_authelia_artifacts`
+
+### Step 2: Oidc Config [depends_on: keycloak_authelia]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute oidc config operations for the Deploy Identity Provider workflow.
+Expected: `oidc_config_artifacts`
+
+### Step 3: App Integration [depends_on: oidc_config]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute app integration operations for the Deploy Identity Provider workflow.
+Expected: `app_integration_artifacts`
+
+### Step 4: KG Persistence [depends_on: app_integration]
+**Agent**: `verifier-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Identity Provider results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

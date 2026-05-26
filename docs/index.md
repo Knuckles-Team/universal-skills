@@ -45,6 +45,7 @@ The following universal skills are available. You can disable specific skills by
 | `dev-workflows/c4-architecture`| Software architecture documentation using the C4 model in Mermaid.   | `C4_ARCHITECTURE_ENABLE=False`        | `universal-skills[c4-architecture]`     |
 | `creative/canvas-design`| Programmatic graphic design using HTML Canvas or SVG APIs.            | `CANVAS_DESIGN_ENABLE=False`          | `universal-skills[canvas-design]`       |
 | `infra/cloudflare-deploy`| Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
+| `workflows/infra/day0_bootstrap_orchestrator`| Day 0 Bootstrap & Multi-Service Wiring Orchestrator workflow skill.   | `DAY0_BOOTSTRAP_ORCHESTRATOR_ENABLE=True` | `universal-skills[day0-bootstrap-orchestrator]` |
 | `core/code-enhancer`| 12-domain code analysis with 0-100 grading, security/arch/dep audit. | `CODE_ENHANCER_ENABLE=False`          | `universal-skills[code-enhancer]`       |
 | `creative/creative-media`| Creative media processing (animations, GIFs, image conversion).       | `CREATIVE_MEDIA_ENABLE=False`         | `universal-skills[creative-media]`     |
 | `integration/database-tools`| Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |

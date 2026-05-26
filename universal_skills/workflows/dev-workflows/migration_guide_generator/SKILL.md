@@ -1,28 +1,71 @@
 ---
 name: migration_guide_generator
-description: Parallel execution workflow for migration guide generator using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for migration guide generator using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-github-mcp
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, migration-guide-generator]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Migration Guide Generator
+# Migration Guide Generator Workflow
 
-This workflow defines the topological parallel execution steps for migration guide generator.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for migration guide generator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: diff_versions
-Execute the diff versions phase for the migration_guide_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: diff_versions_artifacts
-### Step 2: identify_breaking_changes [depends_on: diff_versions]
-Execute the identify breaking changes phase for the migration_guide_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: identify_breaking_changes_artifacts
-### Step 3: generate_guide [depends_on: identify_breaking_changes]
-Execute the generate guide phase for the migration_guide_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_guide_artifacts
-### Step 4: publish [depends_on: generate_guide]
-Execute the publish phase for the migration_guide_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: publish_artifacts
+### Step 1: Diff Versions
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute diff versions operations for the Migration Guide Generator workflow.
+Expected: `diff_versions_artifacts`
+
+### Step 2: Identify Breaking Changes [depends_on: diff_versions]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute identify breaking changes operations for the Migration Guide Generator workflow.
+Expected: `identify_breaking_changes_artifacts`
+
+### Step 3: Generate Guide [depends_on: identify_breaking_changes]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute generate guide operations for the Migration Guide Generator workflow.
+Expected: `generate_guide_artifacts`
+
+### Step 4: Publish [depends_on: generate_guide]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute publish operations for the Migration Guide Generator workflow.
+Expected: `publish_artifacts`
+
+### Step 5: KG Persistence [depends_on: publish]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Migration Guide Generator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

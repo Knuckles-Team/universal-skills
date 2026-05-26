@@ -1,28 +1,71 @@
 ---
 name: deploy_database_cluster
-description: Parallel execution workflow for deploy database cluster using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy database cluster using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-container-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-database-cluster]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Database Cluster
+# Deploy Database Cluster Workflow
 
-This workflow defines the topological parallel execution steps for deploy database cluster.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy database cluster using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: postgres_primary
-Execute the postgres primary phase for the deploy_database_cluster workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: postgres_primary_artifacts
-### Step 2: replicas [depends_on: postgres_primary]
-Execute the replicas phase for the deploy_database_cluster workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: replicas_artifacts
-### Step 3: pgbouncer [depends_on: replicas]
-Execute the pgbouncer phase for the deploy_database_cluster workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pgbouncer_artifacts
-### Step 4: monitoring [depends_on: pgbouncer]
-Execute the monitoring phase for the deploy_database_cluster workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: monitoring_artifacts
+### Step 1: Postgres Primary
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute postgres primary operations for the Deploy Database Cluster workflow.
+Expected: `postgres_primary_artifacts`
+
+### Step 2: Replicas [depends_on: postgres_primary]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute replicas operations for the Deploy Database Cluster workflow.
+Expected: `replicas_artifacts`
+
+### Step 3: Pgbouncer [depends_on: replicas]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute pgbouncer operations for the Deploy Database Cluster workflow.
+Expected: `pgbouncer_artifacts`
+
+### Step 4: Monitoring [depends_on: pgbouncer]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute monitoring operations for the Deploy Database Cluster workflow.
+Expected: `monitoring_artifacts`
+
+### Step 5: KG Persistence [depends_on: monitoring]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Database Cluster results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

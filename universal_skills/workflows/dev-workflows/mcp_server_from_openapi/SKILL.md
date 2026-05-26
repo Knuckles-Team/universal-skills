@@ -1,31 +1,78 @@
 ---
 name: mcp_server_from_openapi
-description: Parallel execution workflow for mcp server from openapi using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for mcp server from openapi using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-github-mcp
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, mcp-server-from-openapi]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Mcp Server From Openapi
+# Mcp Server From Openapi Workflow
 
-This workflow defines the topological parallel execution steps for mcp server from openapi.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for mcp server from openapi using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fetch_spec
-Execute the fetch spec phase for the mcp_server_from_openapi workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fetch_spec_artifacts
-### Step 2: generate_client [depends_on: fetch_spec]
-Execute the generate client phase for the mcp_server_from_openapi workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_client_artifacts
-### Step 3: build_mcp_tools [depends_on: generate_client]
-Execute the build MCP tools phase for the mcp_server_from_openapi workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: build_mcp_tools_artifacts
-### Step 4: test [depends_on: build_mcp_tools]
-Execute the test phase for the mcp_server_from_openapi workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: test_artifacts
-### Step 5: deploy [depends_on: test]
-Execute the deploy phase for the mcp_server_from_openapi workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: deploy_artifacts
+### Step 1: Fetch Spec
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute fetch spec operations for the Mcp Server From Openapi workflow.
+Expected: `fetch_spec_artifacts`
+
+### Step 2: Generate Client [depends_on: fetch_spec]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute generate client operations for the Mcp Server From Openapi workflow.
+Expected: `generate_client_artifacts`
+
+### Step 3: Build Mcp Tools [depends_on: generate_client]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute build mcp tools operations for the Mcp Server From Openapi workflow.
+Expected: `build_mcp_tools_artifacts`
+
+### Step 4: Test [depends_on: build_mcp_tools]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute test operations for the Mcp Server From Openapi workflow.
+Expected: `test_artifacts`
+
+### Step 5: Deploy [depends_on: test]
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute deploy operations for the Mcp Server From Openapi workflow.
+Expected: `deploy_artifacts`
+
+### Step 6: KG Persistence [depends_on: deploy]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Mcp Server From Openapi results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,28 +1,71 @@
 ---
 name: earnings_calendar_pipeline
-description: Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-data-science
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, earnings-calendar-pipeline]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Earnings Calendar Pipeline
+# Earnings Calendar Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for earnings calendar pipeline.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fetch_calendar
-Execute the fetch calendar phase for the earnings_calendar_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fetch_calendar_artifacts
-### Step 2: pre_earnings_analysis [depends_on: fetch_calendar]
-Execute the pre-earnings analysis phase for the earnings_calendar_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pre_earnings_analysis_artifacts
-### Step 3: position [depends_on: pre_earnings_analysis]
-Execute the position phase for the earnings_calendar_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: position_artifacts
-### Step 4: post_earnings_review [depends_on: position]
-Execute the post-earnings review phase for the earnings_calendar_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: post_earnings_review_artifacts
+### Step 1: Fetch Calendar
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute fetch calendar operations for the Earnings Calendar Pipeline workflow.
+Expected: `fetch_calendar_artifacts`
+
+### Step 2: Pre Earnings Analysis [depends_on: fetch_calendar]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute pre earnings analysis operations for the Earnings Calendar Pipeline workflow.
+Expected: `pre_earnings_analysis_artifacts`
+
+### Step 3: Position [depends_on: pre_earnings_analysis]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute position operations for the Earnings Calendar Pipeline workflow.
+Expected: `position_artifacts`
+
+### Step 4: Post Earnings Review [depends_on: position]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute post earnings review operations for the Earnings Calendar Pipeline workflow.
+Expected: `post_earnings_review_artifacts`
+
+### Step 5: KG Persistence [depends_on: post_earnings_review]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Earnings Calendar Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

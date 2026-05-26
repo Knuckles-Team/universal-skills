@@ -1,25 +1,62 @@
 ---
 name: docstring_coverage_campaign
-description: Parallel execution workflow for docstring coverage campaign using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for docstring coverage campaign using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+tags: [dev-workflows, docstring-coverage-campaign]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Docstring Coverage Campaign
+# Docstring Coverage Campaign Workflow
 
-This workflow defines the topological parallel execution steps for docstring coverage campaign.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for docstring coverage campaign using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: analyze_gaps
-Execute the analyze gaps phase for the docstring_coverage_campaign workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: analyze_gaps_artifacts
-### Step 2: generate_docstrings [depends_on: analyze_gaps]
-Execute the generate docstrings phase for the docstring_coverage_campaign workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_docstrings_artifacts
-### Step 3: pr [depends_on: generate_docstrings]
-Execute the PR phase for the docstring_coverage_campaign workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pr_artifacts
+### Step 1: Analyze Gaps
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute analyze gaps operations for the Docstring Coverage Campaign workflow.
+Expected: `analyze_gaps_artifacts`
+
+### Step 2: Generate Docstrings [depends_on: analyze_gaps]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute generate docstrings operations for the Docstring Coverage Campaign workflow.
+Expected: `generate_docstrings_artifacts`
+
+### Step 3: Pr [depends_on: generate_docstrings]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute pr operations for the Docstring Coverage Campaign workflow.
+Expected: `pr_artifacts`
+
+### Step 4: KG Persistence [depends_on: pr]
+**Agent**: `validator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Docstring Coverage Campaign results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

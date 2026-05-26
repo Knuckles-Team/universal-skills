@@ -1,28 +1,74 @@
 ---
 name: offboarding_pipeline
-description: Parallel execution workflow for offboarding pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for offboarding pipeline using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-microsoft
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, offboarding-pipeline]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Offboarding Pipeline
+# Offboarding Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for offboarding pipeline.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for offboarding pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: revoke_access
-Execute the revoke access phase for the offboarding_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: revoke_access_artifacts
-### Step 2: collect_equipment [depends_on: revoke_access]
-Execute the collect equipment phase for the offboarding_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: collect_equipment_artifacts
-### Step 3: knowledge_transfer [depends_on: collect_equipment]
-Execute the knowledge transfer phase for the offboarding_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: knowledge_transfer_artifacts
-### Step 4: exit_interview [depends_on: knowledge_transfer]
-Execute the exit interview phase for the offboarding_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: exit_interview_artifacts
+### Step 1: Revoke Access
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute revoke access operations for the Offboarding Pipeline workflow.
+Expected: `revoke_access_artifacts`
+
+### Step 2: Collect Equipment [depends_on: revoke_access]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute collect equipment operations for the Offboarding Pipeline workflow.
+Expected: `collect_equipment_artifacts`
+
+### Step 3: Knowledge Transfer [depends_on: collect_equipment]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute knowledge transfer operations for the Offboarding Pipeline workflow.
+Expected: `knowledge_transfer_artifacts`
+
+### Step 4: Exit Interview [depends_on: knowledge_transfer]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute exit interview operations for the Offboarding Pipeline workflow.
+Expected: `exit_interview_artifacts`
+
+### Step 5: KG Persistence [depends_on: exit_interview]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Offboarding Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

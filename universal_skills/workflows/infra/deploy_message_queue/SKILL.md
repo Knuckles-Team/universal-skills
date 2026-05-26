@@ -1,28 +1,71 @@
 ---
 name: deploy_message_queue
-description: Parallel execution workflow for deploy message queue using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy message queue using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-portainer
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-message-queue]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Message Queue
+# Deploy Message Queue Workflow
 
-This workflow defines the topological parallel execution steps for deploy message queue.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy message queue using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: rabbitmq_nats
-Execute the rabbitmq/nats phase for the deploy_message_queue workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: rabbitmq_nats_artifacts
-### Step 2: consumers [depends_on: rabbitmq_nats]
-Execute the consumers phase for the deploy_message_queue workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: consumers_artifacts
-### Step 3: dead_letter [depends_on: consumers]
-Execute the dead-letter phase for the deploy_message_queue workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dead_letter_artifacts
-### Step 4: monitor [depends_on: dead_letter]
-Execute the monitor phase for the deploy_message_queue workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: monitor_artifacts
+### Step 1: Rabbitmq Nats
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute rabbitmq nats operations for the Deploy Message Queue workflow.
+Expected: `rabbitmq_nats_artifacts`
+
+### Step 2: Consumers [depends_on: rabbitmq_nats]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute consumers operations for the Deploy Message Queue workflow.
+Expected: `consumers_artifacts`
+
+### Step 3: Dead Letter [depends_on: consumers]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute dead letter operations for the Deploy Message Queue workflow.
+Expected: `dead_letter_artifacts`
+
+### Step 4: Monitor [depends_on: dead_letter]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute monitor operations for the Deploy Message Queue workflow.
+Expected: `monitor_artifacts`
+
+### Step 5: KG Persistence [depends_on: monitor]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Message Queue results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

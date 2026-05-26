@@ -1,26 +1,71 @@
 ---
 name: tax_lot_optimization
-description: Parses lot ledger dates, computes unrealized holding gains, harvests short/long term losses, and synthesizes lot trades.
+description: >-
+  Parses lot ledger dates, computes unrealized holding gains, harvests short/long term losses, and synthesizes lot trades.
 domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [tax-harvest, lot-ledger, unrealized-gains, accounting]
+concept: CONCEPT:EE-011
 ---
+
 # Tax Lot Optimization Workflow
 
-This workflow coordinates multi-agent parallel executions of Parses lot ledger dates, computes unrealized holding gains, harvests short/long term losses, and synthesizes lot trades.
+**CONCEPT:EE-011**
 
-### Step 1: lot-ledger-parser [depends_on: none]
+Parses lot ledger dates, computes unrealized holding gains, harvests short/long term losses, and synthesizes lot trades.
+
+## Steps
+
+### Step 1: Lot Ledger Parser
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Standardizes transaction acquisition date records and cost basis parameters.
-Expected: tax-lot-inventories
+Expected: `tax-lot-inventories`
 
-### Step 2: unrealized-gain-calculator [depends_on: lot-ledger-parser]
+### Step 2: Unrealized Gain Calculator [depends_on: lot-ledger-parser]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Measures unrealized short-term and long-term gains and losses.
-Expected: unrealized-capital-gains
+Expected: `unrealized-capital-gains`
 
-### Step 3: harvest-candidate-selector [depends_on: unrealized-gain-calculator]
+### Step 3: Harvest Candidate Selector [depends_on: unrealized-gain-calculator]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Identifies tax-loss harvesting candidates using MinTax/FIFO policies.
-Expected: harvest-lot-candidates
+Expected: `harvest-lot-candidates`
 
-### Step 4: order-proposal-synthesis [depends_on: harvest-candidate-selector]
+### Step 4: Order Proposal Synthesis [depends_on: harvest-candidate-selector]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Synthesizes optimized lot execution recommendations.
-Expected: tax-optimized-order-proposals
+Expected: `tax-optimized-order-proposals`
 
+### Step 5: KG Persistence [depends_on: order-proposal-synthesis]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Tax Lot Optimization results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

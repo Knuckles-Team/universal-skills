@@ -1,31 +1,81 @@
 ---
 name: vendor_evaluation_pipeline
-description: Parallel execution workflow for vendor evaluation pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for vendor evaluation pipeline using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-searxng
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, vendor-evaluation-pipeline]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Vendor Evaluation Pipeline
+# Vendor Evaluation Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for vendor evaluation pipeline.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for vendor evaluation pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_vendor_capabilities
-Execute the Fan-out per vendor: capabilities phase for the vendor_evaluation_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_vendor_capabilities_artifacts
-### Step 2: pricing
-Execute the pricing phase for the vendor_evaluation_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pricing_artifacts
-### Step 3: reviews
-Execute the reviews phase for the vendor_evaluation_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: reviews_artifacts
-### Step 4: risk
-Execute the risk phase for the vendor_evaluation_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: risk_artifacts
-### Step 5: scorecard [depends_on: fan_out_per_vendor_capabilities, pricing, reviews, risk]
-Execute the scorecard phase for the vendor_evaluation_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scorecard_artifacts
+### Step 1: Fan Out Per Vendor Capabilities
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute fan out per vendor capabilities operations for the Vendor Evaluation Pipeline workflow.
+Expected: `fan_out_per_vendor_capabilities_artifacts`
+
+### Step 2: Pricing
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute pricing operations for the Vendor Evaluation Pipeline workflow.
+Expected: `pricing_artifacts`
+
+### Step 3: Reviews
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute reviews operations for the Vendor Evaluation Pipeline workflow.
+Expected: `reviews_artifacts`
+
+### Step 4: Risk
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute risk operations for the Vendor Evaluation Pipeline workflow.
+Expected: `risk_artifacts`
+
+### Step 5: Scorecard [depends_on: fan_out_per_vendor_capabilities, pricing, reviews, risk]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute scorecard operations for the Vendor Evaluation Pipeline workflow.
+Expected: `scorecard_artifacts`
+
+### Step 6: KG Persistence [depends_on: scorecard]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Vendor Evaluation Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

@@ -1,31 +1,81 @@
 ---
 name: meeting_intelligence
-description: Parallel execution workflow for meeting intelligence using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for meeting intelligence using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-audio-transcriber
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, meeting-intelligence]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Meeting Intelligence
+# Meeting Intelligence Workflow
 
-This workflow defines the topological parallel execution steps for meeting intelligence.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for meeting intelligence using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: transcribe
-Execute the transcribe phase for the meeting_intelligence workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: transcribe_artifacts
-### Step 2: extract_action_items [depends_on: transcribe]
-Execute the extract action items phase for the meeting_intelligence workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: extract_action_items_artifacts
-### Step 3: assign [depends_on: extract_action_items]
-Execute the assign phase for the meeting_intelligence workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: assign_artifacts
-### Step 4: follow_up [depends_on: assign]
-Execute the follow-up phase for the meeting_intelligence workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: follow_up_artifacts
-### Step 5: summary [depends_on: follow_up]
-Execute the summary phase for the meeting_intelligence workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: summary_artifacts
+### Step 1: Transcribe
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute transcribe operations for the Meeting Intelligence workflow.
+Expected: `transcribe_artifacts`
+
+### Step 2: Extract Action Items [depends_on: transcribe]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute extract action items operations for the Meeting Intelligence workflow.
+Expected: `extract_action_items_artifacts`
+
+### Step 3: Assign [depends_on: extract_action_items]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute assign operations for the Meeting Intelligence workflow.
+Expected: `assign_artifacts`
+
+### Step 4: Follow Up [depends_on: assign]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute follow up operations for the Meeting Intelligence workflow.
+Expected: `follow_up_artifacts`
+
+### Step 5: Summary [depends_on: follow_up]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute summary operations for the Meeting Intelligence workflow.
+Expected: `summary_artifacts`
+
+### Step 6: KG Persistence [depends_on: summary]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Meeting Intelligence results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

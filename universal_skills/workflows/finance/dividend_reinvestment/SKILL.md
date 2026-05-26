@@ -1,26 +1,71 @@
 ---
 name: dividend_reinvestment
-description: Audits cash dividend payouts, fits target weight deficits, sizes reinvestment lots, and executes trades.
+description: >-
+  Audits cash dividend payouts, fits target weight deficits, sizes reinvestment lots, and executes trades.
 domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [dividend, reinvestment, allocation, accounting]
+concept: CONCEPT:EE-011
 ---
+
 # Dividend Reinvestment Workflow
 
-This workflow coordinates multi-agent parallel executions of Audits cash dividend payouts, fits target weight deficits, sizes reinvestment lots, and executes trades.
+**CONCEPT:EE-011**
 
-### Step 1: dividend-payment-auditor [depends_on: none]
+Audits cash dividend payouts, fits target weight deficits, sizes reinvestment lots, and executes trades.
+
+## Steps
+
+### Step 1: Dividend Payment Auditor
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Checks account ledger events and flags cash dividend payouts.
-Expected: dividend-ledger-receipts
+Expected: `dividend-ledger-receipts`
 
-### Step 2: target-allocation-solver [depends_on: dividend-payment-auditor]
+### Step 2: Target Allocation Solver [depends_on: dividend-payment-auditor]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Resolves active weights to find under-allocated target holdings.
-Expected: reinvestment-weight-adjustments
+Expected: `reinvestment-weight-adjustments`
 
-### Step 3: order-lot-sizing [depends_on: target-allocation-solver]
+### Step 3: Order Lot Sizing [depends_on: target-allocation-solver]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Calculates standard buy order lots matching the cash balance.
-Expected: sized-dividend-orders
+Expected: `sized-dividend-orders`
 
-### Step 4: reinvest-order-runner [depends_on: order-lot-sizing]
+### Step 4: Reinvest Order Runner [depends_on: order-lot-sizing]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Executes trades and logs updated lot holdings parameters.
-Expected: dividend-reinvestment-logs
+Expected: `dividend-reinvestment-logs`
 
+### Step 5: KG Persistence [depends_on: reinvest-order-runner]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Dividend Reinvestment results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

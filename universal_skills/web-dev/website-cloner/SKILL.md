@@ -28,41 +28,59 @@ You act as a foreman walking the job site. As you inspect each section of the pa
 - **In scope:** Visual layout, component structure, interactions, responsive design, and mock data.
 - **Out of scope:** Real backend/DB, authentication, or live real-time features.
 
-## Pre-Flight
+## Workflow
 
-1. **Browser Required:** This skill requires browser automation (e.g., `agent-browser` or Chrome MCP).
-2. **Setup Scaffold:** Initialize the Project Scaffold in the current directory if it's empty. Use the `scripts/init_scaffold.py` script provided in this skill.
-3. **Verify Build:** Ensure the base project builds: `npm run build`.
+### Step 1: browser-setup
 
----
+Set up the browser environment and project structure:
+- **Browser Required:** Ensure browser automation is available (e.g., `agent-browser` or Chrome MCP).
+- **Setup Scaffold:** Initialize the Project Scaffold in the current directory if it is empty using `scripts/init_scaffold.py`.
+- **Verify Build:** Ensure the base project compiles successfully via `npm run build`.
 
-## The Workflow Pipeline
+### Step 2: reconnaissance [depends_on: browser-setup]
 
-### Phase 1: Reconnaissance (The Inspection)
-Navigate to the target URL and perform a dedicated pass to discover every behavior.
-- **Mandatory Interaction Sweep:** Scroll (slowly!), click every tab/pill, and hover over elements.
-- **Global Extraction:** Identify fonts, colors, and global scroll behaviors (e.g., Lenis).
-- **Page Topology:** Map every distinct section from top to bottom in `docs/research/PAGE_TOPOLOGY.md`.
+Navigate to the target URL and perform a comprehensive visual audit:
+- **Mandatory Interaction Sweep:** Scroll (slowly!), click every tab/pill, and hover over elements to discover dynamic behaviors.
+- **Global Extraction:** Identify custom web fonts, core colors, and global scroll libraries (e.g., Lenis).
 
-### Phase 2: Foundation Build (The Base)
-This touches core project files and integrates foundational tokens.
-1. **Fonts & Colors:** Update `src/app/layout.tsx` and `src/app/globals.css`.
-2. **Assets:** Discover and download images, videos, and SVGs to `public/`.
-3. **Icons:** Extract inline SVGs to `src/components/icons.tsx`.
+### Step 3: page-topology [depends_on: reconnaissance]
 
-### Phase 3: Component Specification (The Blueprint)
-For each section in your topology, you MUST:
-1. **Extract Computed Styles:** Get exact CSS values from the live site. (See `references/extraction_scripts.md`)
-2. **Write a Spec File:** Create `docs/research/components/<ComponentName>.spec.md`. (See `references/component_spec_template.md`)
-3. **Identify Interaction Model:** Document whether it is scroll-driven, click-driven, or static.
+Map out the layout page structure:
+- **Page Topology:** Map every distinct visual section from top to bottom in `docs/research/PAGE_TOPOLOGY.md`.
 
-### Phase 4: Implementation (The Build)
-Build each section based on its `.spec.md` file.
-- **Small Tasks:** Break complex sections into sub-components.
-- **Verified Build:** Ensure `npx tsc --noEmit` passes after each section.
+### Step 4: fonts-colors [depends_on: page-topology]
 
-### Phase 5: Visual QA Diff (The Polish)
-Take side-by-side screenshots of the clone vs. the original. Verify every alignment, transition, and hover effect.
+Build the CSS and token framework for the clone:
+- **Fonts & Colors:** Update `src/app/layout.tsx` and `src/app/globals.css` with extracted variables.
+- **Global Layout:** Configure base margins, overflow, and custom typography classes.
+
+### Step 5: asset-extraction [depends_on: page-topology]
+
+Gather standard media assets:
+- **Assets:** Discover and download images, videos, and standard assets to `public/`.
+
+### Step 6: icon-extraction [depends_on: page-topology]
+
+Gather vector icon assets:
+- **Icons:** Extract inline SVGs directly to `src/components/icons.tsx` as reusable components.
+
+### Step 7: component-spec [depends_on: fonts-colors, asset-extraction, icon-extraction]
+
+Map precise styles and interactions for every section identified in the topology:
+- **Extract Computed Styles:** Gather exact CSS values from the live site via `getComputedStyle()` (see `references/extraction_scripts.md`).
+- **Write a Spec File:** Create a detailed blueprint at `docs/research/components/<ComponentName>.spec.md` (see `references/component_spec_template.md`).
+- **Identify Interaction Model:** Document whether each component is scroll-driven, click-driven, or static.
+
+### Step 8: component-build [depends_on: component-spec]
+
+Implement the page sections in code:
+- **Small Tasks:** Break down complex sections into modular, sub-components.
+- **Verified Build:** Ensure typing and builds pass via `npx tsc --noEmit` after implementing each section.
+
+### Step 9: visual-diff-qa [depends_on: component-build]
+
+Verify that the rebuilt site is pixel-perfect:
+- **Side-by-Side Screenshots:** Capture screenshots of the clone and the target website to verify every spacing element, hover transition, and font weight matches perfectly.
 
 ---
 

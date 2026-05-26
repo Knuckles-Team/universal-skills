@@ -1,29 +1,71 @@
 ---
 name: container_health_check
-description: Full Docker infrastructure health assessment. Lists containers, images, volumes, and networks, then retrieves logs from a running container.
-domain: infrastructure
+description: >-
+  Full Docker infrastructure health assessment. Lists containers, images, volumes, and networks, then retrieves logs from a running container.
+domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
 tags: ['docker', 'health', 'monitoring', 'containers']
-requires: ['DOCKER_HOST', 'container-manager-mcp']
+concept: CONCEPT:INFRA-001
 ---
 
-# container_health_check Workflow
+# Container Health Check Workflow
+
+**CONCEPT:INFRA-001**
 
 Full Docker infrastructure health assessment. Lists containers, images, volumes, and networks, then retrieves logs from a running container.
 
-### Step 0: container-manager-mcp
+## Steps
+
+### Step 0: Container Manager Mcp
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 List all running containers and their current status
-Expected: container, running, status
+Expected: `container, running, status`
 
-### Step 1: container-manager-mcp
+### Step 1: Container Manager Mcp
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 List all Docker images with their sizes and tags
-Expected: image, tag
+Expected: `image, tag`
 
-### Step 2: container-manager-mcp
+### Step 2: Container Manager Mcp
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 Show all Docker volumes and networks
-Expected: volume, network
-Depends On: Step 0, Step 1
+Expected: `volume, network`
 
-### Step 3: container-manager-mcp
+### Step 3: Container Manager Mcp
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
 Get the logs for one of the running containers
-Expected: log
-Depends On: Step 0
+Expected: `log`
+
+### Step 4: KG Persistence [depends_on: container-manager-mcp]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Container Health Check results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

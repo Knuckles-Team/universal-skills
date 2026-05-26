@@ -1,30 +1,71 @@
 ---
 name: ssh_bootstrap
-description: Interactive SSH key bootstrap for new infrastructure hosts. Checks existing connectivity, generates RSA keys if missing, and distributes them via tunnel-manager to establish passwordless SSH access for future discovery scans.
-domain: infrastructure
+description: >-
+  Interactive SSH key bootstrap for new infrastructure hosts. Checks existing connectivity, generates RSA keys if missing, and distributes them via tunnel-manager to establish passwordless SSH access for future discovery scans.
+domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
 tags: ['ssh', 'bootstrap', 'keys', 'onboarding', 'security']
-requires: ['tunnel-manager-mcp', 'systems-manager-mcp']
+concept: CONCEPT:INFRA-001
 ---
 
-# ssh_bootstrap Workflow
+# Ssh Bootstrap Workflow
+
+**CONCEPT:INFRA-001**
 
 Interactive SSH key bootstrap for new infrastructure hosts. Checks existing connectivity, generates RSA keys if missing, and distributes them via tunnel-manager to establish passwordless SSH access for future discovery scans.
 
-### Step 0: tunnel-manager-mcp
+## Steps
+
+### Step 0: Tunnel Manager Mcp
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 List all hosts from the inventory file and check current SSH connectivity status
-Expected: host, inventory, status
+Expected: `host, inventory, status`
 
-### Step 1: systems-manager-mcp
+### Step 1: Systems Manager Mcp
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Check if SSH keys exist at ~/.ssh/id_rsa. If not, generate a new RSA key pair
-Expected: ssh, key, generate
-Depends On: Step 0
+Expected: `ssh, key, generate`
 
-### Step 2: tunnel-manager-mcp
+### Step 2: Tunnel Manager Mcp
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 For each host that failed connectivity, set up passwordless SSH using the generated key
-Expected: ssh, passwordless, setup
-Depends On: Step 1
+Expected: `ssh, passwordless, setup`
 
-### Step 3: tunnel-manager-mcp
+### Step 3: Tunnel Manager Mcp
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
 Verify connectivity to all hosts after key distribution
-Expected: verify, connectivity
-Depends On: Step 2
+Expected: `verify, connectivity`
+
+### Step 4: KG Persistence [depends_on: tunnel-manager-mcp]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Ssh Bootstrap results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

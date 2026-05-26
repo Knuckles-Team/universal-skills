@@ -1,34 +1,88 @@
 ---
 name: change_request_pipeline
-description: Parallel execution workflow for change request pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for change request pipeline using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-servicenow
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, change-request-pipeline]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Change Request Pipeline
+# Change Request Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for change request pipeline.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for change request pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: submit
-Execute the submit phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: submit_artifacts
-### Step 2: review [depends_on: submit]
-Execute the review phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: review_artifacts
-### Step 3: approve [depends_on: review]
-Execute the approve phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: approve_artifacts
-### Step 4: implement [depends_on: approve]
-Execute the implement phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: implement_artifacts
-### Step 5: verify [depends_on: implement]
-Execute the verify phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verify_artifacts
-### Step 6: close [depends_on: verify]
-Execute the close phase for the change_request_pipeline workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: close_artifacts
+### Step 1: Submit
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute submit operations for the Change Request Pipeline workflow.
+Expected: `submit_artifacts`
+
+### Step 2: Review [depends_on: submit]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute review operations for the Change Request Pipeline workflow.
+Expected: `review_artifacts`
+
+### Step 3: Approve [depends_on: review]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute approve operations for the Change Request Pipeline workflow.
+Expected: `approve_artifacts`
+
+### Step 4: Implement [depends_on: approve]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute implement operations for the Change Request Pipeline workflow.
+Expected: `implement_artifacts`
+
+### Step 5: Verify [depends_on: implement]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute verify operations for the Change Request Pipeline workflow.
+Expected: `verify_artifacts`
+
+### Step 6: Close [depends_on: verify]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute close operations for the Change Request Pipeline workflow.
+Expected: `close_artifacts`
+
+### Step 7: KG Persistence [depends_on: close]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Change Request Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

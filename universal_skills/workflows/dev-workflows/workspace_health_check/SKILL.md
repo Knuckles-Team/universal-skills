@@ -1,24 +1,62 @@
 ---
 name: workspace_health_check
-description: Combined workspace + system health validation. Checks repository state alongside system resources.
-domain: development
+description: >-
+  Combined workspace + system health validation. Checks repository state alongside system resources.
+domain: dev-workflows
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
 tags: ['workspace', 'health', 'systems', 'cross-domain']
-requires: ['repository-manager-mcp', 'systems-manager']
+concept: CONCEPT:DEV-001
 ---
 
-# workspace_health_check Workflow
+# Workspace Health Check Workflow
+
+**CONCEPT:DEV-001**
 
 Combined workspace + system health validation. Checks repository state alongside system resources.
 
-### Step 0: repository-manager-mcp
+## Steps
+
+### Step 0: Repository Manager Mcp
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
 List the available workspace actions and current workspace configuration
-Expected: workspace, list
+Expected: `workspace, list`
 
-### Step 1: systems-manager
+### Step 1: Systems Manager
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
 Get current system memory and CPU utilization
-Expected: memory, cpu
+Expected: `memory, cpu`
 
-### Step 2: systems-manager
+### Step 2: Systems Manager
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
 Check disk usage for the main workspace partition
-Expected: disk, usage
-Depends On: Step 1
+Expected: `disk, usage`
+
+### Step 3: KG Persistence [depends_on: systems-manager]
+**Agent**: `validator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Workspace Health Check results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

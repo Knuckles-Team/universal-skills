@@ -1,28 +1,71 @@
 ---
 name: deploy_productivity_stack
-description: Parallel execution workflow for deploy productivity stack using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy productivity stack using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-portainer
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-productivity-stack]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Productivity Stack
+# Deploy Productivity Stack Workflow
 
-This workflow defines the topological parallel execution steps for deploy productivity stack.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy productivity stack using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: nextcloud
-Execute the nextcloud phase for the deploy_productivity_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: nextcloud_artifacts
-### Step 2: mealie
-Execute the mealie phase for the deploy_productivity_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: mealie_artifacts
-### Step 3: listmonk
-Execute the listmonk phase for the deploy_productivity_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: listmonk_artifacts
-### Step 4: dns_rewrites [depends_on: nextcloud, mealie, listmonk]
-Execute the DNS rewrites phase for the deploy_productivity_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dns_rewrites_artifacts
+### Step 1: Nextcloud
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute nextcloud operations for the Deploy Productivity Stack workflow.
+Expected: `nextcloud_artifacts`
+
+### Step 2: Mealie
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute mealie operations for the Deploy Productivity Stack workflow.
+Expected: `mealie_artifacts`
+
+### Step 3: Listmonk
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute listmonk operations for the Deploy Productivity Stack workflow.
+Expected: `listmonk_artifacts`
+
+### Step 4: Dns Rewrites [depends_on: nextcloud, mealie, listmonk]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute dns rewrites operations for the Deploy Productivity Stack workflow.
+Expected: `dns_rewrites_artifacts`
+
+### Step 5: KG Persistence [depends_on: dns_rewrites]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Productivity Stack results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

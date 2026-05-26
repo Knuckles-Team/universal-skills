@@ -1,20 +1,53 @@
 ---
 name: smart_home_automation_orchestrator
-description: Interacts with Home Assistant using home-assistant-agent to read device states, query calendar schedules, and trigger specific smart home services, scenes, scripts, or events.
+description: >-
+  Interacts with Home Assistant using home-assistant-agent to read device states, query calendar schedules, and trigger specific smart home services, scenes, scripts, or events.
 domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
 tags: ['home-assistant', 'iot', 'automation', 'scene-management', 'home-assistant-agent']
-requires: ['home-assistant-agent']
+concept: CONCEPT:INFRA-001
 ---
 
-# smart_home_automation_orchestrator Workflow
+# Smart Home Automation Orchestrator Workflow
+
+**CONCEPT:INFRA-001**
 
 Interacts with Home Assistant using home-assistant-agent to read device states, query calendar schedules, and trigger specific smart home services, scenes, scripts, or events.
 
-### Step 0: home-assistant-agent
-Retrieve current device states, entity metrics, and active calendar event triggers using home_assistant_states list_states and home_assistant_calendar get_calendar_events tools. Target sensor context: {{task}}
-Expected: sensor_states, calendar_schedules, target_devices
+## Steps
 
-### Step 1: home-assistant-agent
+### Step 0: Home Assistant Agent
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Retrieve current device states, entity metrics, and active calendar event triggers using home_assistant_states list_states and home_assistant_calendar get_calendar_events tools. Target sensor context: {{task}}
+Expected: `sensor_states, calendar_schedules, target_devices`
+
+### Step 1: Home Assistant Agent
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Execute the smart home automation scene or service update. Call home_assistant_services call_service to trigger lighting, climate, script, or custom notification actions matching the target schedule and state.
-Expected: automation_results, service_call_logs
-Depends On: Step 0
+Expected: `automation_results, service_call_logs`
+
+### Step 2: KG Persistence [depends_on: home-assistant-agent]
+**Agent**: `deployer-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Smart Home Automation Orchestrator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,25 +1,62 @@
 ---
 name: cross_agent_integration_test
-description: Parallel execution workflow for cross agent integration test using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for cross agent integration test using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+tags: [dev-workflows, cross-agent-integration-test]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Cross Agent Integration Test
+# Cross Agent Integration Test Workflow
 
-This workflow defines the topological parallel execution steps for cross agent integration test.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for cross agent integration test using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: agent_a_calls_agent_b
-Execute the agent A calls agent B phase for the cross_agent_integration_test workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: agent_a_calls_agent_b_artifacts
-### Step 2: verify_e2e [depends_on: agent_a_calls_agent_b]
-Execute the verify E2E phase for the cross_agent_integration_test workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verify_e2e_artifacts
-### Step 3: report [depends_on: verify_e2e]
-Execute the report phase for the cross_agent_integration_test workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Agent A Calls Agent B
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute agent a calls agent b operations for the Cross Agent Integration Test workflow.
+Expected: `agent_a_calls_agent_b_artifacts`
+
+### Step 2: Verify E2E [depends_on: agent_a_calls_agent_b]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute verify e2e operations for the Cross Agent Integration Test workflow.
+Expected: `verify_e2e_artifacts`
+
+### Step 3: Report [depends_on: verify_e2e]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute report operations for the Cross Agent Integration Test workflow.
+Expected: `report_artifacts`
+
+### Step 4: KG Persistence [depends_on: report]
+**Agent**: `validator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Cross Agent Integration Test results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

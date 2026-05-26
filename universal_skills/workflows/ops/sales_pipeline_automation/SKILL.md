@@ -1,31 +1,81 @@
 ---
 name: sales_pipeline_automation
-description: Parallel execution workflow for sales pipeline automation using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for sales pipeline automation using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-microsoft
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, sales-pipeline-automation]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Sales Pipeline Automation
+# Sales Pipeline Automation Workflow
 
-This workflow defines the topological parallel execution steps for sales pipeline automation.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for sales pipeline automation using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: qualify_lead
-Execute the qualify lead phase for the sales_pipeline_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: qualify_lead_artifacts
-### Step 2: demo_scheduling [depends_on: qualify_lead]
-Execute the demo scheduling phase for the sales_pipeline_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: demo_scheduling_artifacts
-### Step 3: proposal [depends_on: demo_scheduling]
-Execute the proposal phase for the sales_pipeline_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: proposal_artifacts
-### Step 4: follow_up [depends_on: proposal]
-Execute the follow-up phase for the sales_pipeline_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: follow_up_artifacts
-### Step 5: close [depends_on: follow_up]
-Execute the close phase for the sales_pipeline_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: close_artifacts
+### Step 1: Qualify Lead
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute qualify lead operations for the Sales Pipeline Automation workflow.
+Expected: `qualify_lead_artifacts`
+
+### Step 2: Demo Scheduling [depends_on: qualify_lead]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute demo scheduling operations for the Sales Pipeline Automation workflow.
+Expected: `demo_scheduling_artifacts`
+
+### Step 3: Proposal [depends_on: demo_scheduling]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute proposal operations for the Sales Pipeline Automation workflow.
+Expected: `proposal_artifacts`
+
+### Step 4: Follow Up [depends_on: proposal]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute follow up operations for the Sales Pipeline Automation workflow.
+Expected: `follow_up_artifacts`
+
+### Step 5: Close [depends_on: follow_up]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute close operations for the Sales Pipeline Automation workflow.
+Expected: `close_artifacts`
+
+### Step 6: KG Persistence [depends_on: close]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Sales Pipeline Automation results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

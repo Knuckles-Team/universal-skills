@@ -1,31 +1,78 @@
 ---
 name: disaster_recovery_drill
-description: Parallel execution workflow for disaster recovery drill using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+description: >-
+  Parallel execution workflow for disaster recovery drill using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, disaster-recovery-drill]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Disaster Recovery Drill
+# Disaster Recovery Drill Workflow
 
-This workflow defines the topological parallel execution steps for disaster recovery drill.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for disaster recovery drill using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: snapshot
-Execute the snapshot phase for the disaster_recovery_drill workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: snapshot_artifacts
-### Step 2: failover [depends_on: snapshot]
-Execute the failover phase for the disaster_recovery_drill workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: failover_artifacts
-### Step 3: validate [depends_on: failover]
-Execute the validate phase for the disaster_recovery_drill workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: validate_artifacts
-### Step 4: restore [depends_on: validate]
-Execute the restore phase for the disaster_recovery_drill workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: restore_artifacts
-### Step 5: report [depends_on: restore]
-Execute the report phase for the disaster_recovery_drill workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Snapshot
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute snapshot operations for the Disaster Recovery Drill workflow.
+Expected: `snapshot_artifacts`
+
+### Step 2: Failover [depends_on: snapshot]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute failover operations for the Disaster Recovery Drill workflow.
+Expected: `failover_artifacts`
+
+### Step 3: Validate [depends_on: failover]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute validate operations for the Disaster Recovery Drill workflow.
+Expected: `validate_artifacts`
+
+### Step 4: Restore [depends_on: validate]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute restore operations for the Disaster Recovery Drill workflow.
+Expected: `restore_artifacts`
+
+### Step 5: Report [depends_on: restore]
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute report operations for the Disaster Recovery Drill workflow.
+Expected: `report_artifacts`
+
+### Step 6: KG Persistence [depends_on: report]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Disaster Recovery Drill results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,28 +1,71 @@
 ---
 name: cloudflare_tunnel_setup
-description: Parallel execution workflow for cloudflare tunnel setup using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-tunnel-manager
+description: >-
+  Parallel execution workflow for cloudflare tunnel setup using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, cloudflare-tunnel-setup]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Cloudflare Tunnel Setup
+# Cloudflare Tunnel Setup Workflow
 
-This workflow defines the topological parallel execution steps for cloudflare tunnel setup.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for cloudflare tunnel setup using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: create_tunnel
-Execute the create tunnel phase for the cloudflare_tunnel_setup workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: create_tunnel_artifacts
-### Step 2: configure_dns [depends_on: create_tunnel]
-Execute the configure DNS phase for the cloudflare_tunnel_setup workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: configure_dns_artifacts
-### Step 3: verify_routing [depends_on: configure_dns]
-Execute the verify routing phase for the cloudflare_tunnel_setup workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verify_routing_artifacts
-### Step 4: monitor [depends_on: verify_routing]
-Execute the monitor phase for the cloudflare_tunnel_setup workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: monitor_artifacts
+### Step 1: Create Tunnel
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute create tunnel operations for the Cloudflare Tunnel Setup workflow.
+Expected: `create_tunnel_artifacts`
+
+### Step 2: Configure Dns [depends_on: create_tunnel]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute configure dns operations for the Cloudflare Tunnel Setup workflow.
+Expected: `configure_dns_artifacts`
+
+### Step 3: Verify Routing [depends_on: configure_dns]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute verify routing operations for the Cloudflare Tunnel Setup workflow.
+Expected: `verify_routing_artifacts`
+
+### Step 4: Monitor [depends_on: verify_routing]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute monitor operations for the Cloudflare Tunnel Setup workflow.
+Expected: `monitor_artifacts`
+
+### Step 5: KG Persistence [depends_on: monitor]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Cloudflare Tunnel Setup results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,31 +1,78 @@
 ---
 name: operational_risk_audit
-description: Parallel execution workflow for operational risk audit using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for operational risk audit using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-uptime-kuma
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, operational-risk-audit]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Operational Risk Audit
+# Operational Risk Audit Workflow
 
-This workflow defines the topological parallel execution steps for operational risk audit.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for operational risk audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: api_uptime
-Execute the API uptime phase for the operational_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: api_uptime_artifacts
-### Step 2: latency
-Execute the latency phase for the operational_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: latency_artifacts
-### Step 3: error_rates
-Execute the error rates phase for the operational_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: error_rates_artifacts
-### Step 4: failover_test
-Execute the failover test phase for the operational_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: failover_test_artifacts
-### Step 5: report [depends_on: api_uptime, latency, error_rates, failover_test]
-Execute the report phase for the operational_risk_audit workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Api Uptime
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute api uptime operations for the Operational Risk Audit workflow.
+Expected: `api_uptime_artifacts`
+
+### Step 2: Latency
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute latency operations for the Operational Risk Audit workflow.
+Expected: `latency_artifacts`
+
+### Step 3: Error Rates
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute error rates operations for the Operational Risk Audit workflow.
+Expected: `error_rates_artifacts`
+
+### Step 4: Failover Test
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute failover test operations for the Operational Risk Audit workflow.
+Expected: `failover_test_artifacts`
+
+### Step 5: Report [depends_on: api_uptime, latency, error_rates, failover_test]
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute report operations for the Operational Risk Audit workflow.
+Expected: `report_artifacts`
+
+### Step 6: KG Persistence [depends_on: report]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Operational Risk Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

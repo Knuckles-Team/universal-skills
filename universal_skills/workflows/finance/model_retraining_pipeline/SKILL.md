@@ -1,31 +1,78 @@
 ---
 name: model_retraining_pipeline
-description: Parallel execution workflow for model retraining pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for model retraining pipeline using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-data-science
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, model-retraining-pipeline]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Model Retraining Pipeline
+# Model Retraining Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for model retraining pipeline.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for model retraining pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fetch_new_data
-Execute the fetch new data phase for the model_retraining_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fetch_new_data_artifacts
-### Step 2: retrain [depends_on: fetch_new_data]
-Execute the retrain phase for the model_retraining_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: retrain_artifacts
-### Step 3: validate [depends_on: retrain]
-Execute the validate phase for the model_retraining_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: validate_artifacts
-### Step 4: a_b_test [depends_on: validate]
-Execute the A/B test phase for the model_retraining_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: a_b_test_artifacts
-### Step 5: deploy [depends_on: a_b_test]
-Execute the deploy phase for the model_retraining_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: deploy_artifacts
+### Step 1: Fetch New Data
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute fetch new data operations for the Model Retraining Pipeline workflow.
+Expected: `fetch_new_data_artifacts`
+
+### Step 2: Retrain [depends_on: fetch_new_data]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute retrain operations for the Model Retraining Pipeline workflow.
+Expected: `retrain_artifacts`
+
+### Step 3: Validate [depends_on: retrain]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute validate operations for the Model Retraining Pipeline workflow.
+Expected: `validate_artifacts`
+
+### Step 4: A B Test [depends_on: validate]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute a b test operations for the Model Retraining Pipeline workflow.
+Expected: `a_b_test_artifacts`
+
+### Step 5: Deploy [depends_on: a_b_test]
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute deploy operations for the Model Retraining Pipeline workflow.
+Expected: `deploy_artifacts`
+
+### Step 6: KG Persistence [depends_on: deploy]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Model Retraining Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

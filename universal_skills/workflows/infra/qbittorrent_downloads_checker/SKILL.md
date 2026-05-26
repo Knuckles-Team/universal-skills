@@ -1,24 +1,62 @@
 ---
 name: qbittorrent_downloads_checker
-description: Connects to your qBittorrent server, lists active and completed torrents, and displays a comprehensive download progress dashboard.
+description: >-
+  Connects to your qBittorrent server, lists active and completed torrents, and displays a comprehensive download progress dashboard.
 domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['qbittorrent', 'torrents', 'downloads', 'media', 'qbittorrent-agent']
-requires: ['qbittorrent-agent']
+concept: CONCEPT:INFRA-001
 ---
 
-# qbittorrent_downloads_checker Workflow
+# Qbittorrent Downloads Checker Workflow
+
+**CONCEPT:INFRA-001**
 
 Connects to your qBittorrent server, lists active and completed torrents, and displays a comprehensive download progress dashboard.
 
-### Step 0: qbittorrent-agent
+## Steps
+
+### Step 0: Qbittorrent Agent
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 Fetch all active and completed torrents, state information, and progress rates using qbittorrent_torrents with the get_torrent_list action.
-Expected: active_torrent_list
+Expected: `active_torrent_list`
 
-### Step 1: systems-manager
+### Step 1: Systems Manager
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Query the available host disk capacity metrics to verify storage headroom for active downloads.
-Expected: disk_space_metrics
+Expected: `disk_space_metrics`
 
-### Step 2: user-interaction
+### Step 2: User Interaction
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 Present a comprehensive downloading status and disk capacity report, highlighting completed items and active disk headroom warnings.
-Expected: view_confirmation
-Depends On: Step 0, Step 1
+Expected: `view_confirmation`
+
+### Step 3: KG Persistence [depends_on: user-interaction]
+**Agent**: `verifier-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Qbittorrent Downloads Checker results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

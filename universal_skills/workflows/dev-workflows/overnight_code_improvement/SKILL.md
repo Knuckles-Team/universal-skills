@@ -1,31 +1,78 @@
 ---
 name: overnight_code_improvement
-description: Parallel execution workflow for overnight code improvement using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for overnight code improvement using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-github-mcp
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, overnight-code-improvement]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Overnight Code Improvement
+# Overnight Code Improvement Workflow
 
-This workflow defines the topological parallel execution steps for overnight code improvement.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for overnight code improvement using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: audit
-Execute the audit phase for the overnight_code_improvement workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: audit_artifacts
-### Step 2: enhance [depends_on: audit]
-Execute the enhance phase for the overnight_code_improvement workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: enhance_artifacts
-### Step 3: test [depends_on: enhance]
-Execute the test phase for the overnight_code_improvement workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: test_artifacts
-### Step 4: pr [depends_on: test]
-Execute the PR phase for the overnight_code_improvement workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pr_artifacts
-### Step 5: report [depends_on: pr]
-Execute the report phase for the overnight_code_improvement workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Audit
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute audit operations for the Overnight Code Improvement workflow.
+Expected: `audit_artifacts`
+
+### Step 2: Enhance [depends_on: audit]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute enhance operations for the Overnight Code Improvement workflow.
+Expected: `enhance_artifacts`
+
+### Step 3: Test [depends_on: enhance]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute test operations for the Overnight Code Improvement workflow.
+Expected: `test_artifacts`
+
+### Step 4: Pr [depends_on: test]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute pr operations for the Overnight Code Improvement workflow.
+Expected: `pr_artifacts`
+
+### Step 5: Report [depends_on: pr]
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute report operations for the Overnight Code Improvement workflow.
+Expected: `report_artifacts`
+
+### Step 6: KG Persistence [depends_on: report]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Overnight Code Improvement results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

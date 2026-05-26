@@ -1,31 +1,81 @@
 ---
 name: bedtime_routine_orchestrator
-description: Parallel execution workflow for bedtime routine orchestrator using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for bedtime routine orchestrator using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-home-assistant
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, bedtime-routine-orchestrator]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Bedtime Routine Orchestrator
+# Bedtime Routine Orchestrator Workflow
 
-This workflow defines the topological parallel execution steps for bedtime routine orchestrator.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for bedtime routine orchestrator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: lights_dim
-Execute the lights dim phase for the bedtime_routine_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: lights_dim_artifacts
-### Step 2: thermostat_down
-Execute the thermostat down phase for the bedtime_routine_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: thermostat_down_artifacts
-### Step 3: locks_check
-Execute the locks check phase for the bedtime_routine_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: locks_check_artifacts
-### Step 4: alarm_set
-Execute the alarm set phase for the bedtime_routine_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: alarm_set_artifacts
-### Step 5: report [depends_on: lights_dim, thermostat_down, locks_check, alarm_set]
-Execute the report phase for the bedtime_routine_orchestrator workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_artifacts
+### Step 1: Lights Dim
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute lights dim operations for the Bedtime Routine Orchestrator workflow.
+Expected: `lights_dim_artifacts`
+
+### Step 2: Thermostat Down
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute thermostat down operations for the Bedtime Routine Orchestrator workflow.
+Expected: `thermostat_down_artifacts`
+
+### Step 3: Locks Check
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute locks check operations for the Bedtime Routine Orchestrator workflow.
+Expected: `locks_check_artifacts`
+
+### Step 4: Alarm Set
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute alarm set operations for the Bedtime Routine Orchestrator workflow.
+Expected: `alarm_set_artifacts`
+
+### Step 5: Report [depends_on: lights_dim, thermostat_down, locks_check, alarm_set]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute report operations for the Bedtime Routine Orchestrator workflow.
+Expected: `report_artifacts`
+
+### Step 6: KG Persistence [depends_on: report]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Bedtime Routine Orchestrator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

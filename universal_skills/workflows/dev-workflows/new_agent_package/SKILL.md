@@ -1,34 +1,85 @@
 ---
 name: new_agent_package
-description: Parallel execution workflow for new agent package using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for new agent package using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, new-agent-package]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: New Agent Package
+# New Agent Package Workflow
 
-This workflow defines the topological parallel execution steps for new agent package.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for new agent package using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: scaffold
-Execute the scaffold phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: scaffold_artifacts
-### Step 2: api_client [depends_on: scaffold]
-Execute the api-client phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: api_client_artifacts
-### Step 3: mcp_server [depends_on: api_client]
-Execute the mcp-server phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: mcp_server_artifacts
-### Step 4: agent [depends_on: mcp_server]
-Execute the agent phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: agent_artifacts
-### Step 5: tests [depends_on: agent]
-Execute the tests phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: tests_artifacts
-### Step 6: docs [depends_on: tests]
-Execute the docs phase for the new_agent_package workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: docs_artifacts
+### Step 1: Scaffold
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute scaffold operations for the New Agent Package workflow.
+Expected: `scaffold_artifacts`
+
+### Step 2: Api Client [depends_on: scaffold]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute api client operations for the New Agent Package workflow.
+Expected: `api_client_artifacts`
+
+### Step 3: Mcp Server [depends_on: api_client]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute mcp server operations for the New Agent Package workflow.
+Expected: `mcp_server_artifacts`
+
+### Step 4: Agent [depends_on: mcp_server]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute agent operations for the New Agent Package workflow.
+Expected: `agent_artifacts`
+
+### Step 5: Tests [depends_on: agent]
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute tests operations for the New Agent Package workflow.
+Expected: `tests_artifacts`
+
+### Step 6: Docs [depends_on: tests]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute docs operations for the New Agent Package workflow.
+Expected: `docs_artifacts`
+
+### Step 7: KG Persistence [depends_on: docs]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- New Agent Package results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

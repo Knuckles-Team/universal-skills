@@ -1,28 +1,71 @@
 ---
 name: deploy_backup_system
-description: Parallel execution workflow for deploy backup system using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy backup system using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-backup-system]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Backup System
+# Deploy Backup System Workflow
 
-This workflow defines the topological parallel execution steps for deploy backup system.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy backup system using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: restic
-Execute the restic phase for the deploy_backup_system workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: restic_artifacts
-### Step 2: borgmatic
-Execute the borgmatic phase for the deploy_backup_system workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: borgmatic_artifacts
-### Step 3: rclone
-Execute the rclone phase for the deploy_backup_system workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: rclone_artifacts
-### Step 4: schedule_cron [depends_on: restic, borgmatic, rclone]
-Execute the schedule cron phase for the deploy_backup_system workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: schedule_cron_artifacts
+### Step 1: Restic
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute restic operations for the Deploy Backup System workflow.
+Expected: `restic_artifacts`
+
+### Step 2: Borgmatic
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute borgmatic operations for the Deploy Backup System workflow.
+Expected: `borgmatic_artifacts`
+
+### Step 3: Rclone
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute rclone operations for the Deploy Backup System workflow.
+Expected: `rclone_artifacts`
+
+### Step 4: Schedule Cron [depends_on: restic, borgmatic, rclone]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute schedule cron operations for the Deploy Backup System workflow.
+Expected: `schedule_cron_artifacts`
+
+### Step 5: KG Persistence [depends_on: schedule_cron]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Backup System results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

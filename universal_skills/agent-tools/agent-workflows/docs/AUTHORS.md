@@ -7,7 +7,6 @@ This skill registers all homelab A2A agents and exposes them for orchestration v
 | Deployment | Agent URL(s) | MCP URL(s) | Status |
 |------------|--------------|------------|--------|
 | homelab-genius-agent | genius-agent.arpa/a2a | archivebox-mcp.arpa | WIP, not deployed |
-| homelab-adguard-home-agent | adguard-agent.arpa/a2a | adguard-mcp.arpa | Deployed |
 | homelab-arr-stack-agent | arr-agent.arpa/a2a | chaptarr-mcp.arpa, lidarr-mcp.arpa, prowlarr-mcp.arpa, radarr-mcp.arpa, sonarr-mcp.arpa, bazarr-mcp.arpa, seerr-mcp.arpa, arr-mcp.arpa | Deployed |
 | homelab-archivebox-agent | archivebox-agent.arpa/a2a | archivebox-mcp.arpa | Deployed |
 | homelab-audio-transcriber-agent | audio-transcriber-agent.arpa/a2a | audio-transcriber-mcp.arpa | WIP |

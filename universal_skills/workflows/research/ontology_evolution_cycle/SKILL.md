@@ -1,31 +1,78 @@
 ---
 name: ontology_evolution_cycle
-description: Parallel execution workflow for ontology evolution cycle using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for ontology evolution cycle using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-graph-os
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, ontology-evolution-cycle]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Ontology Evolution Cycle
+# Ontology Evolution Cycle Workflow
 
-This workflow defines the topological parallel execution steps for ontology evolution cycle.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for ontology evolution cycle using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: audit_current_ontology
-Execute the audit current ontology phase for the ontology_evolution_cycle workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: audit_current_ontology_artifacts
-### Step 2: find_gaps [depends_on: audit_current_ontology]
-Execute the find gaps phase for the ontology_evolution_cycle workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: find_gaps_artifacts
-### Step 3: propose_extensions [depends_on: find_gaps]
-Execute the propose extensions phase for the ontology_evolution_cycle workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: propose_extensions_artifacts
-### Step 4: validate [depends_on: propose_extensions]
-Execute the validate phase for the ontology_evolution_cycle workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: validate_artifacts
-### Step 5: apply [depends_on: validate]
-Execute the apply phase for the ontology_evolution_cycle workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: apply_artifacts
+### Step 1: Audit Current Ontology
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute audit current ontology operations for the Ontology Evolution Cycle workflow.
+Expected: `audit_current_ontology_artifacts`
+
+### Step 2: Find Gaps [depends_on: audit_current_ontology]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute find gaps operations for the Ontology Evolution Cycle workflow.
+Expected: `find_gaps_artifacts`
+
+### Step 3: Propose Extensions [depends_on: find_gaps]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute propose extensions operations for the Ontology Evolution Cycle workflow.
+Expected: `propose_extensions_artifacts`
+
+### Step 4: Validate [depends_on: propose_extensions]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute validate operations for the Ontology Evolution Cycle workflow.
+Expected: `validate_artifacts`
+
+### Step 5: Apply [depends_on: validate]
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute apply operations for the Ontology Evolution Cycle workflow.
+Expected: `apply_artifacts`
+
+### Step 6: KG Persistence [depends_on: apply]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Ontology Evolution Cycle results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,28 +1,71 @@
 ---
 name: deploy_ai_inference_stack
-description: Parallel execution workflow for deploy ai inference stack using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy ai inference stack using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-ai-inference-stack]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Ai Inference Stack
+# Deploy Ai Inference Stack Workflow
 
-This workflow defines the topological parallel execution steps for deploy ai inference stack.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy ai inference stack using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: gpu_drivers
-Execute the GPU drivers phase for the deploy_ai_inference_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: gpu_drivers_artifacts
-### Step 2: vllm_ollama [depends_on: gpu_drivers]
-Execute the vLLM/ollama phase for the deploy_ai_inference_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: vllm_ollama_artifacts
-### Step 3: model_download [depends_on: vllm_ollama]
-Execute the model download phase for the deploy_ai_inference_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: model_download_artifacts
-### Step 4: load_test [depends_on: model_download]
-Execute the load test phase for the deploy_ai_inference_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: load_test_artifacts
+### Step 1: Gpu Drivers
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute gpu drivers operations for the Deploy Ai Inference Stack workflow.
+Expected: `gpu_drivers_artifacts`
+
+### Step 2: Vllm Ollama [depends_on: gpu_drivers]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute vllm ollama operations for the Deploy Ai Inference Stack workflow.
+Expected: `vllm_ollama_artifacts`
+
+### Step 3: Model Download [depends_on: vllm_ollama]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute model download operations for the Deploy Ai Inference Stack workflow.
+Expected: `model_download_artifacts`
+
+### Step 4: Load Test [depends_on: model_download]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute load test operations for the Deploy Ai Inference Stack workflow.
+Expected: `load_test_artifacts`
+
+### Step 5: KG Persistence [depends_on: load_test]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Ai Inference Stack results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

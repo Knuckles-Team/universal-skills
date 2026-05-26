@@ -1,34 +1,85 @@
 ---
 name: helm_chart_release
-description: Parallel execution workflow for helm chart release using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for helm chart release using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-portainer
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, helm-chart-release]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Helm Chart Release
+# Helm Chart Release Workflow
 
-This workflow defines the topological parallel execution steps for helm chart release.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for helm chart release using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: lint
-Execute the lint phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: lint_artifacts
-### Step 2: template [depends_on: lint]
-Execute the template phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: template_artifacts
-### Step 3: package [depends_on: template]
-Execute the package phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: package_artifacts
-### Step 4: push [depends_on: package]
-Execute the push phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: push_artifacts
-### Step 5: deploy [depends_on: push]
-Execute the deploy phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: deploy_artifacts
-### Step 6: verify [depends_on: deploy]
-Execute the verify phase for the helm_chart_release workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verify_artifacts
+### Step 1: Lint
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute lint operations for the Helm Chart Release workflow.
+Expected: `lint_artifacts`
+
+### Step 2: Template [depends_on: lint]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute template operations for the Helm Chart Release workflow.
+Expected: `template_artifacts`
+
+### Step 3: Package [depends_on: template]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute package operations for the Helm Chart Release workflow.
+Expected: `package_artifacts`
+
+### Step 4: Push [depends_on: package]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute push operations for the Helm Chart Release workflow.
+Expected: `push_artifacts`
+
+### Step 5: Deploy [depends_on: push]
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute deploy operations for the Helm Chart Release workflow.
+Expected: `deploy_artifacts`
+
+### Step 6: Verify [depends_on: deploy]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute verify operations for the Helm Chart Release workflow.
+Expected: `verify_artifacts`
+
+### Step 7: KG Persistence [depends_on: verify]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Helm Chart Release results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

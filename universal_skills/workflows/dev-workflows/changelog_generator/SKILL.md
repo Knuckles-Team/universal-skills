@@ -1,28 +1,71 @@
 ---
 name: changelog_generator
-description: Parallel execution workflow for changelog generator using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for changelog generator using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, changelog-generator]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Changelog Generator
+# Changelog Generator Workflow
 
-This workflow defines the topological parallel execution steps for changelog generator.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for changelog generator using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: parse_commits
-Execute the parse commits phase for the changelog_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parse_commits_artifacts
-### Step 2: classify [depends_on: parse_commits]
-Execute the classify phase for the changelog_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: classify_artifacts
-### Step 3: generate_notes [depends_on: classify]
-Execute the generate notes phase for the changelog_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_notes_artifacts
-### Step 4: publish [depends_on: generate_notes]
-Execute the publish phase for the changelog_generator workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: publish_artifacts
+### Step 1: Parse Commits
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute parse commits operations for the Changelog Generator workflow.
+Expected: `parse_commits_artifacts`
+
+### Step 2: Classify [depends_on: parse_commits]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute classify operations for the Changelog Generator workflow.
+Expected: `classify_artifacts`
+
+### Step 3: Generate Notes [depends_on: classify]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute generate notes operations for the Changelog Generator workflow.
+Expected: `generate_notes_artifacts`
+
+### Step 4: Publish [depends_on: generate_notes]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute publish operations for the Changelog Generator workflow.
+Expected: `publish_artifacts`
+
+### Step 5: KG Persistence [depends_on: publish]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Changelog Generator results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

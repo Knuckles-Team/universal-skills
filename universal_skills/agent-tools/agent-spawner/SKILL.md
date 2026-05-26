@@ -68,7 +68,6 @@ You can easily connect to any of these pre-configured MCP servers by passing the
 | MCP Server | Config File | Description |
 |------------|-------------|-------------|
 | ServiceNow | `servicenow-api.json` | ITSM and Workflow automation |
-| AdGuard Home | `adguard-home-agent.json` | Network-wide ad & tracker blocking |
 | GitLab | `gitlab-api.json` | DevOps platform for source control & CI/CD |
 | Microsoft 365 | `microsoft-agent.json` | Office 365, Outlook, OneDrive, Teams |
 | Systems Manager | `systems-manager.json` | System administration and OS-level tools |

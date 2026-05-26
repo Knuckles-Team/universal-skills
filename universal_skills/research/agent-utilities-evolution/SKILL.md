@@ -342,9 +342,8 @@ All agent-packages projects connect to agent-utilities via `CONCEPT:ECO-4.0`
 
 | Prefix | Project | | Prefix | Project |
 |--------|---------|---|--------|--------|
-| `AH` | adguard-home-agent | | `AU` | agent-utilities |
 | `ABOX` | archivebox-api | | `ARR` | arr-mcp |
-| `ATL` | atlassian-agent | | `AUDIO` | audio-transcriber |
+| `ATL` | atlassian-agent | | `AU` | agent-utilities |
 | `CMGR` | container-manager-mcp | | `DSCI` | data-science-mcp |
 | `DOCDB` | documentdb-mcp | | `GENIUS` | genius-agent |
 | `GH` | github-agent | | `GL` | gitlab-api |

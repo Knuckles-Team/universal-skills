@@ -1,27 +1,67 @@
 ---
 name: paper-scan
 description: >-
-  Extracts focus topics, fetches daily papers, scores them, and downloads the most valuable papers.
+  >-
+domain: research
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
 tags: [research, scan, arxiv, papers]
-metadata:
-  author: agent-utilities
-  version: '1.0.0'
+concept: CONCEPT:RESEARCH-001
 ---
+
 # Paper Scan Workflow
 
-> [!NOTE]
-> This workflow was migrated from the legacy WorkflowBundle preset system.
+**CONCEPT:RESEARCH-001**
 
-## Workflow Execution Steps
+>-
 
-### Step 1: topic-extractor
+## Steps
+
+### Step 1: Topic Extractor
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
 Extract focus topics from the Knowledge Graph to build a relevance taxonomy.
 
-### Step 2: scholarx-fetcher
+### Step 2: Scholarx Fetcher
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
 Fetch daily papers via the scholarx MCP using the extracted taxonomy.
 
-### Step 3: paper-scorer
+### Step 3: Paper Scorer
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
 Score the fetched papers locally against the relevance taxonomy.
 
-### Step 4: paper-downloader
+### Step 4: Paper Downloader
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
 Bulk download the most valuable papers for ingestion.
+
+### Step 5: KG Persistence [depends_on: paper-downloader]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Paper Scan results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

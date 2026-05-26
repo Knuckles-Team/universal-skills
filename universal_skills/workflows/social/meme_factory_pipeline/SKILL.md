@@ -1,31 +1,78 @@
 ---
 name: meme_factory_pipeline
-description: Parallel execution workflow for meme factory pipeline using the Unified Parallel Engine
-domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-postiz
+description: >-
+  Parallel execution workflow for meme factory pipeline using the Unified Parallel Engine
+domain: social
+agent: content_strategist
+team_config:
+  name: content_creation_team
+  task_pattern: content creation and social media management
+  execution_mode: sequential
+  specialist_ids:
+    - content-creator
+    - media-processor
+    - publisher-agent
+    - analytics-agent
+  tool_assignments:
+    content-creator: [graph_query, document_tools]
+    media-processor: [graph_analyze]
+    publisher-agent: [graph_write]
+    analytics-agent: [graph_query, graph_analyze]
+tags: [social, meme-factory-pipeline]
+concept: CONCEPT:SOCIAL-001
 ---
 
-# Parallel Workflow: Meme Factory Pipeline
+# Meme Factory Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for meme factory pipeline.
+**CONCEPT:SOCIAL-001**
+
+Parallel execution workflow for meme factory pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: trend_scan
-Execute the trend scan phase for the meme_factory_pipeline workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: trend_scan_artifacts
-### Step 2: template_select [depends_on: trend_scan]
-Execute the template select phase for the meme_factory_pipeline workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: template_select_artifacts
-### Step 3: generate_variants [depends_on: template_select]
-Execute the generate variants phase for the meme_factory_pipeline workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: generate_variants_artifacts
-### Step 4: a_b_test [depends_on: generate_variants]
-Execute the A/B test phase for the meme_factory_pipeline workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: a_b_test_artifacts
-### Step 5: post [depends_on: a_b_test]
-Execute the post phase for the meme_factory_pipeline workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: post_artifacts
+### Step 1: Trend Scan
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute trend scan operations for the Meme Factory Pipeline workflow.
+Expected: `trend_scan_artifacts`
+
+### Step 2: Template Select [depends_on: trend_scan]
+**Agent**: `media-processor`
+**Tools**: `graph_analyze`
+
+Execute template select operations for the Meme Factory Pipeline workflow.
+Expected: `template_select_artifacts`
+
+### Step 3: Generate Variants [depends_on: template_select]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Execute generate variants operations for the Meme Factory Pipeline workflow.
+Expected: `generate_variants_artifacts`
+
+### Step 4: A B Test [depends_on: generate_variants]
+**Agent**: `analytics-agent`
+**Tools**: `graph_query, graph_analyze`
+
+Execute a b test operations for the Meme Factory Pipeline workflow.
+Expected: `a_b_test_artifacts`
+
+### Step 5: Post [depends_on: a_b_test]
+**Agent**: `content-creator`
+**Tools**: `graph_query, document_tools`
+
+Execute post operations for the Meme Factory Pipeline workflow.
+Expected: `post_artifacts`
+
+### Step 6: KG Persistence [depends_on: post]
+**Agent**: `analytics-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Meme Factory Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,0 +1,19 @@
+name: Code Enhancement Swarm
+task_pattern: Perform deep multi-domain code enhancement audits and persist reports in Graph-OS
+specialist_ids:
+  - analysis-agent
+  - security-agent
+  - test-agent
+  - doc-agent
+  - synthesis-agent
+capability_overrides:
+  analysis-agent:
+    - stuck_loop_detection
+  security-agent:
+    - stuck_loop_detection
+  test-agent:
+    - stuck_loop_detection
+  doc-agent:
+    - stuck_loop_detection
+  synthesis-agent:
+    - stuck_loop_detection

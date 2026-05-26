@@ -1,31 +1,78 @@
 ---
 name: literature_review_builder
-description: Parallel execution workflow for literature review builder using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for literature review builder using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-scholarx
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, literature-review-builder]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Literature Review Builder
+# Literature Review Builder Workflow
 
-This workflow defines the topological parallel execution steps for literature review builder.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for literature review builder using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: define_scope
-Execute the define scope phase for the literature_review_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: define_scope_artifacts
-### Step 2: parallel_search [depends_on: define_scope]
-Execute the parallel search phase for the literature_review_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_search_artifacts
-### Step 3: dedupe [depends_on: parallel_search]
-Execute the dedupe phase for the literature_review_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: dedupe_artifacts
-### Step 4: summarize [depends_on: dedupe]
-Execute the summarize phase for the literature_review_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: summarize_artifacts
-### Step 5: bibliography [depends_on: summarize]
-Execute the bibliography phase for the literature_review_builder workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: bibliography_artifacts
+### Step 1: Define Scope
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute define scope operations for the Literature Review Builder workflow.
+Expected: `define_scope_artifacts`
+
+### Step 2: Parallel Search [depends_on: define_scope]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute parallel search operations for the Literature Review Builder workflow.
+Expected: `parallel_search_artifacts`
+
+### Step 3: Dedupe [depends_on: parallel_search]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute dedupe operations for the Literature Review Builder workflow.
+Expected: `dedupe_artifacts`
+
+### Step 4: Summarize [depends_on: dedupe]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute summarize operations for the Literature Review Builder workflow.
+Expected: `summarize_artifacts`
+
+### Step 5: Bibliography [depends_on: summarize]
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute bibliography operations for the Literature Review Builder workflow.
+Expected: `bibliography_artifacts`
+
+### Step 6: KG Persistence [depends_on: bibliography]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Literature Review Builder results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

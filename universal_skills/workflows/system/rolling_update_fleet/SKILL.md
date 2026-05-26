@@ -1,28 +1,71 @@
 ---
 name: rolling_update_fleet
-description: Parallel execution workflow for rolling update fleet using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-portainer
+description: >-
+  Parallel execution workflow for rolling update fleet using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, rolling-update-fleet]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Rolling Update Fleet
+# Rolling Update Fleet Workflow
 
-This workflow defines the topological parallel execution steps for rolling update fleet.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for rolling update fleet using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: wave_per_batch_drain
-Execute the Wave per batch: drain phase for the rolling_update_fleet workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: wave_per_batch_drain_artifacts
-### Step 2: update [depends_on: wave_per_batch_drain]
-Execute the update phase for the rolling_update_fleet workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: update_artifacts
-### Step 3: health_check [depends_on: update]
-Execute the health check phase for the rolling_update_fleet workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: health_check_artifacts
-### Step 4: next_batch [depends_on: health_check]
-Execute the next batch phase for the rolling_update_fleet workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: next_batch_artifacts
+### Step 1: Wave Per Batch Drain
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute wave per batch drain operations for the Rolling Update Fleet workflow.
+Expected: `wave_per_batch_drain_artifacts`
+
+### Step 2: Update [depends_on: wave_per_batch_drain]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute update operations for the Rolling Update Fleet workflow.
+Expected: `update_artifacts`
+
+### Step 3: Health Check [depends_on: update]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute health check operations for the Rolling Update Fleet workflow.
+Expected: `health_check_artifacts`
+
+### Step 4: Next Batch [depends_on: health_check]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute next batch operations for the Rolling Update Fleet workflow.
+Expected: `next_batch_artifacts`
+
+### Step 5: KG Persistence [depends_on: next_batch]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Rolling Update Fleet results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

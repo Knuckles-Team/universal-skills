@@ -1,25 +1,65 @@
 ---
 name: sla_compliance_monitor
-description: Parallel execution workflow for sla compliance monitor using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for sla compliance monitor using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-servicenow
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+tags: [ops, sla-compliance-monitor]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Sla Compliance Monitor
+# Sla Compliance Monitor Workflow
 
-This workflow defines the topological parallel execution steps for sla compliance monitor.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for sla compliance monitor using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: check_response_times
-Execute the check response times phase for the sla_compliance_monitor workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: check_response_times_artifacts
-### Step 2: resolution_times [depends_on: check_response_times]
-Execute the resolution times phase for the sla_compliance_monitor workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: resolution_times_artifacts
-### Step 3: breach_alerts [depends_on: resolution_times]
-Execute the breach alerts phase for the sla_compliance_monitor workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: breach_alerts_artifacts
+### Step 1: Check Response Times
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute check response times operations for the Sla Compliance Monitor workflow.
+Expected: `check_response_times_artifacts`
+
+### Step 2: Resolution Times [depends_on: check_response_times]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute resolution times operations for the Sla Compliance Monitor workflow.
+Expected: `resolution_times_artifacts`
+
+### Step 3: Breach Alerts [depends_on: resolution_times]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute breach alerts operations for the Sla Compliance Monitor workflow.
+Expected: `breach_alerts_artifacts`
+
+### Step 4: KG Persistence [depends_on: breach_alerts]
+**Agent**: `validator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Sla Compliance Monitor results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

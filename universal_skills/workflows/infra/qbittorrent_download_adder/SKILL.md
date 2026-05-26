@@ -1,20 +1,53 @@
 ---
 name: qbittorrent_download_adder
-description: Prompts the user for a torrent/magnet download link and custom save parameters, then schedules and starts the download on qBittorrent.
+description: >-
+  Prompts the user for a torrent/magnet download link and custom save parameters, then schedules and starts the download on qBittorrent.
 domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
 tags: ['qbittorrent', 'torrents', 'adder', 'downloads', 'qbittorrent-agent']
-requires: ['qbittorrent-agent']
+concept: CONCEPT:INFRA-001
 ---
 
-# qbittorrent_download_adder Workflow
+# Qbittorrent Download Adder Workflow
+
+**CONCEPT:INFRA-001**
 
 Prompts the user for a torrent/magnet download link and custom save parameters, then schedules and starts the download on qBittorrent.
 
-### Step 0: user-interaction
-Prompt the user for the magnet link, torrent URL, custom save path category, and queue priorities.
-Expected: download_link, save_category, start_immediately
+## Steps
 
-### Step 1: qbittorrent-agent
+### Step 0: User Interaction
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Prompt the user for the magnet link, torrent URL, custom save path category, and queue priorities.
+Expected: `download_link, save_category, start_immediately`
+
+### Step 1: Qbittorrent Agent
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Schedule the new download by calling qbittorrent_torrents with the add_new_torrent action, passing the target link and parameters.
-Expected: addition_result
-Depends On: Step 0
+Expected: `addition_result`
+
+### Step 2: KG Persistence [depends_on: qbittorrent-agent]
+**Agent**: `deployer-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Qbittorrent Download Adder results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

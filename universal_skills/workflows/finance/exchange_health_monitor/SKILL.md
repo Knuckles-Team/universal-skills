@@ -1,28 +1,71 @@
 ---
 name: exchange_health_monitor
-description: Parallel execution workflow for exchange health monitor using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for exchange health monitor using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-emerald-exchange
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
+tags: [finance, exchange-health-monitor]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Exchange Health Monitor
+# Exchange Health Monitor Workflow
 
-This workflow defines the topological parallel execution steps for exchange health monitor.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for exchange health monitor using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: prerequisites_setup
-Execute the prerequisites setup phase for the exchange_health_monitor workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: prerequisites_setup_artifacts
-### Step 2: parallel_execution [depends_on: prerequisites_setup]
-Execute the parallel execution phase for the exchange_health_monitor workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parallel_execution_artifacts
-### Step 3: verification_and_testing [depends_on: parallel_execution]
-Execute the verification and testing phase for the exchange_health_monitor workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verification_and_testing_artifacts
-### Step 4: synthesis_and_reporting [depends_on: verification_and_testing]
-Execute the synthesis and reporting phase for the exchange_health_monitor workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: synthesis_and_reporting_artifacts
+### Step 1: Prerequisites Setup
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute prerequisites setup operations for the Exchange Health Monitor workflow.
+Expected: `prerequisites_setup_artifacts`
+
+### Step 2: Parallel Execution [depends_on: prerequisites_setup]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute parallel execution operations for the Exchange Health Monitor workflow.
+Expected: `parallel_execution_artifacts`
+
+### Step 3: Verification And Testing [depends_on: parallel_execution]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute verification and testing operations for the Exchange Health Monitor workflow.
+Expected: `verification_and_testing_artifacts`
+
+### Step 4: Synthesis And Reporting [depends_on: verification_and_testing]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
+Execute synthesis and reporting operations for the Exchange Health Monitor workflow.
+Expected: `synthesis_and_reporting_artifacts`
+
+### Step 5: KG Persistence [depends_on: synthesis_and_reporting]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Exchange Health Monitor results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

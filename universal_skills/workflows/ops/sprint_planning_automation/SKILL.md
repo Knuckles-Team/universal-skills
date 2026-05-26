@@ -1,31 +1,81 @@
 ---
 name: sprint_planning_automation
-description: Parallel execution workflow for sprint planning automation using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for sprint planning automation using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-atlassian
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, sprint-planning-automation]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Sprint Planning Automation
+# Sprint Planning Automation Workflow
 
-This workflow defines the topological parallel execution steps for sprint planning automation.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for sprint planning automation using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: pull_backlog
-Execute the pull backlog phase for the sprint_planning_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: pull_backlog_artifacts
-### Step 2: prioritize [depends_on: pull_backlog]
-Execute the prioritize phase for the sprint_planning_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: prioritize_artifacts
-### Step 3: estimate [depends_on: prioritize]
-Execute the estimate phase for the sprint_planning_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: estimate_artifacts
-### Step 4: assign [depends_on: estimate]
-Execute the assign phase for the sprint_planning_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: assign_artifacts
-### Step 5: create_sprint [depends_on: assign]
-Execute the create sprint phase for the sprint_planning_automation workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: create_sprint_artifacts
+### Step 1: Pull Backlog
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute pull backlog operations for the Sprint Planning Automation workflow.
+Expected: `pull_backlog_artifacts`
+
+### Step 2: Prioritize [depends_on: pull_backlog]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute prioritize operations for the Sprint Planning Automation workflow.
+Expected: `prioritize_artifacts`
+
+### Step 3: Estimate [depends_on: prioritize]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute estimate operations for the Sprint Planning Automation workflow.
+Expected: `estimate_artifacts`
+
+### Step 4: Assign [depends_on: estimate]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute assign operations for the Sprint Planning Automation workflow.
+Expected: `assign_artifacts`
+
+### Step 5: Create Sprint [depends_on: assign]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute create sprint operations for the Sprint Planning Automation workflow.
+Expected: `create_sprint_artifacts`
+
+### Step 6: KG Persistence [depends_on: create_sprint]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Sprint Planning Automation results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

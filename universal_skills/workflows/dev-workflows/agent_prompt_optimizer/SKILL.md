@@ -1,28 +1,71 @@
 ---
 name: agent_prompt_optimizer
-description: Parallel execution workflow for agent prompt optimizer using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for agent prompt optimizer using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-langfuse
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+    - publisher-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+    publisher-agent: [rep_rm_git, gl_merge_requests]
+tags: [dev-workflows, agent-prompt-optimizer]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Agent Prompt Optimizer
+# Agent Prompt Optimizer Workflow
 
-This workflow defines the topological parallel execution steps for agent prompt optimizer.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for agent prompt optimizer using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: fan_out_per_prompt_benchmark
-Execute the Fan-out per prompt: benchmark phase for the agent_prompt_optimizer workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: fan_out_per_prompt_benchmark_artifacts
-### Step 2: variant_generation [depends_on: fan_out_per_prompt_benchmark]
-Execute the variant generation phase for the agent_prompt_optimizer workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: variant_generation_artifacts
-### Step 3: a_b_eval [depends_on: variant_generation]
-Execute the A/B eval phase for the agent_prompt_optimizer workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: a_b_eval_artifacts
-### Step 4: select_best [depends_on: a_b_eval]
-Execute the select best phase for the agent_prompt_optimizer workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: select_best_artifacts
+### Step 1: Fan Out Per Prompt Benchmark
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute fan out per prompt benchmark operations for the Agent Prompt Optimizer workflow.
+Expected: `fan_out_per_prompt_benchmark_artifacts`
+
+### Step 2: Variant Generation [depends_on: fan_out_per_prompt_benchmark]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute variant generation operations for the Agent Prompt Optimizer workflow.
+Expected: `variant_generation_artifacts`
+
+### Step 3: A B Eval [depends_on: variant_generation]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute a b eval operations for the Agent Prompt Optimizer workflow.
+Expected: `a_b_eval_artifacts`
+
+### Step 4: Select Best [depends_on: a_b_eval]
+**Agent**: `publisher-agent`
+**Tools**: `rep_rm_git, gl_merge_requests`
+
+Execute select best operations for the Agent Prompt Optimizer workflow.
+Expected: `select_best_artifacts`
+
+### Step 5: KG Persistence [depends_on: select_best]
+**Agent**: `publisher-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Agent Prompt Optimizer results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

@@ -1,28 +1,71 @@
 ---
 name: author_tracker
-description: Parallel execution workflow for author tracker using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for author tracker using the Unified Parallel Engine
 domain: research
-tags:
-  - parallel-workflow
-  - research
-  - mcp-scholarx
+agent: research_coordinator
+team_config:
+  name: research_discovery_team
+  task_pattern: research discovery and knowledge synthesis
+  execution_mode: parallel
+  specialist_ids:
+    - search-agent
+    - analyzer-agent
+    - synthesizer-agent
+    - ingestor-agent
+  tool_assignments:
+    search-agent: [sx_search, graph_query]
+    analyzer-agent: [graph_analyze, sx_storage]
+    synthesizer-agent: [graph_analyze, document_tools]
+    ingestor-agent: [graph_write, kg_graph_ingest]
+tags: [research, author-tracker]
+concept: CONCEPT:RESEARCH-001
 ---
 
-# Parallel Workflow: Author Tracker
+# Author Tracker Workflow
 
-This workflow defines the topological parallel execution steps for author tracker.
+**CONCEPT:RESEARCH-001**
+
+Parallel execution workflow for author tracker using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: publications
-Execute the publications phase for the author_tracker workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: publications_artifacts
-### Step 2: h_index [depends_on: publications]
-Execute the h-index phase for the author_tracker workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: h_index_artifacts
-### Step 3: recent_work [depends_on: h_index]
-Execute the recent work phase for the author_tracker workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: recent_work_artifacts
-### Step 4: collaboration_graph [depends_on: recent_work]
-Execute the collaboration graph phase for the author_tracker workflow under the research domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: collaboration_graph_artifacts
+### Step 1: Publications
+**Agent**: `search-agent`
+**Tools**: `sx_search, graph_query`
+
+Execute publications operations for the Author Tracker workflow.
+Expected: `publications_artifacts`
+
+### Step 2: H Index [depends_on: publications]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, sx_storage`
+
+Execute h index operations for the Author Tracker workflow.
+Expected: `h_index_artifacts`
+
+### Step 3: Recent Work [depends_on: h_index]
+**Agent**: `synthesizer-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute recent work operations for the Author Tracker workflow.
+Expected: `recent_work_artifacts`
+
+### Step 4: Collaboration Graph [depends_on: recent_work]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write, kg_graph_ingest`
+
+Execute collaboration graph operations for the Author Tracker workflow.
+Expected: `collaboration_graph_artifacts`
+
+### Step 5: KG Persistence [depends_on: collaboration_graph]
+**Agent**: `ingestor-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Author Tracker results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

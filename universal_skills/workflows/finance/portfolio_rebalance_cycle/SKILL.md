@@ -1,26 +1,71 @@
 ---
 name: portfolio_rebalance_cycle
-description: Audits current portfolio position ledger weights, calculates MVO targets, sizers trades, and routes rebalances.
+description: >-
+  Audits current portfolio position ledger weights, calculates MVO targets, sizers trades, and routes rebalances.
 domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+    - report-generator
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+    report-generator: [graph_write, document_tools]
 tags: [rebalance, portfolio, mvo, execution]
+concept: CONCEPT:EE-011
 ---
+
 # Portfolio Rebalance Cycle Workflow
 
-This workflow coordinates multi-agent parallel executions of Audits current portfolio position ledger weights, calculates MVO targets, sizers trades, and routes rebalances.
+**CONCEPT:EE-011**
 
-### Step 1: position-auditor [depends_on: none]
+Audits current portfolio position ledger weights, calculates MVO targets, sizers trades, and routes rebalances.
+
+## Steps
+
+### Step 1: Position Auditor
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Fetches current exchange asset holdings and currency weights.
-Expected: current-portfolio-holdings
+Expected: `current-portfolio-holdings`
 
-### Step 2: mean-variance-optimizer [depends_on: position-auditor]
+### Step 2: Mean Variance Optimizer [depends_on: position-auditor]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Runs a mean-variance and Black-Litterman allocation model.
-Expected: target-portfolio-allocations
+Expected: `target-portfolio-allocations`
 
-### Step 3: order-sizer-generator [depends_on: mean-variance-optimizer]
+### Step 3: Order Sizer Generator [depends_on: mean-variance-optimizer]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Matches target weights to calculate standard buy and sell trade size lots.
-Expected: sized-rebalancing-orders
+Expected: `sized-rebalancing-orders`
 
-### Step 4: rebalance-executor [depends_on: order-sizer-generator]
+### Step 4: Rebalance Executor [depends_on: order-sizer-generator]
+**Agent**: `report-generator`
+**Tools**: `graph_write, document_tools`
+
 Dispatches execution orders and verifies correct settlement feeds.
-Expected: execution-rebalancing-receipts
+Expected: `execution-rebalancing-receipts`
 
+### Step 5: KG Persistence [depends_on: rebalance-executor]
+**Agent**: `report-generator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Portfolio Rebalance Cycle results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

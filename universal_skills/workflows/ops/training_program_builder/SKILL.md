@@ -1,31 +1,81 @@
 ---
 name: training_program_builder
-description: Parallel execution workflow for training program builder using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for training program builder using the Unified Parallel Engine
 domain: ops
-tags:
-  - parallel-workflow
-  - ops
-  - mcp-atlassian
+agent: operations_coordinator
+team_config:
+  name: operations_team
+  task_pattern: operational process coordination
+  execution_mode: sequential
+  specialist_ids:
+    - intake-agent
+    - processor-agent
+    - validator-agent
+    - report-agent
+  tool_assignments:
+    intake-agent: [graph_query, nc_files]
+    processor-agent: [graph_analyze, document_tools]
+    validator-agent: [graph_query]
+    report-agent: [graph_write, document_tools]
+tags: [ops, training-program-builder]
+concept: CONCEPT:KG-2.12
 ---
 
-# Parallel Workflow: Training Program Builder
+# Training Program Builder Workflow
 
-This workflow defines the topological parallel execution steps for training program builder.
+**CONCEPT:KG-2.12**
+
+Parallel execution workflow for training program builder using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: skill_gap_analysis
-Execute the skill gap analysis phase for the training_program_builder workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: skill_gap_analysis_artifacts
-### Step 2: curate_content [depends_on: skill_gap_analysis]
-Execute the curate content phase for the training_program_builder workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: curate_content_artifacts
-### Step 3: build_curriculum [depends_on: curate_content]
-Execute the build curriculum phase for the training_program_builder workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: build_curriculum_artifacts
-### Step 4: schedule [depends_on: build_curriculum]
-Execute the schedule phase for the training_program_builder workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: schedule_artifacts
-### Step 5: track [depends_on: schedule]
-Execute the track phase for the training_program_builder workflow under the ops domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: track_artifacts
+### Step 1: Skill Gap Analysis
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute skill gap analysis operations for the Training Program Builder workflow.
+Expected: `skill_gap_analysis_artifacts`
+
+### Step 2: Curate Content [depends_on: skill_gap_analysis]
+**Agent**: `processor-agent`
+**Tools**: `graph_analyze, document_tools`
+
+Execute curate content operations for the Training Program Builder workflow.
+Expected: `curate_content_artifacts`
+
+### Step 3: Build Curriculum [depends_on: curate_content]
+**Agent**: `validator-agent`
+**Tools**: `graph_query`
+
+Execute build curriculum operations for the Training Program Builder workflow.
+Expected: `build_curriculum_artifacts`
+
+### Step 4: Schedule [depends_on: build_curriculum]
+**Agent**: `report-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute schedule operations for the Training Program Builder workflow.
+Expected: `schedule_artifacts`
+
+### Step 5: Track [depends_on: schedule]
+**Agent**: `intake-agent`
+**Tools**: `graph_query, nc_files`
+
+Execute track operations for the Training Program Builder workflow.
+Expected: `track_artifacts`
+
+### Step 6: KG Persistence [depends_on: track]
+**Agent**: `report-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Training Program Builder results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions
+
+## Human Oversight Required
+✅ Critical decisions require human review and approval.

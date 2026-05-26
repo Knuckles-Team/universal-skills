@@ -1,25 +1,62 @@
 ---
 name: esg_screening_pipeline
-description: Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
 domain: finance
-tags:
-  - parallel-workflow
-  - finance
-  - mcp-scholarx
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
+tags: [finance, esg-screening-pipeline]
+concept: CONCEPT:EE-011
 ---
 
-# Parallel Workflow: Esg Screening Pipeline
+# Esg Screening Pipeline Workflow
 
-This workflow defines the topological parallel execution steps for esg screening pipeline.
+**CONCEPT:EE-011**
+
+Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: esg_score_lookup
-Execute the ESG score lookup phase for the esg_screening_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: esg_score_lookup_artifacts
-### Step 2: controversy_check [depends_on: esg_score_lookup]
-Execute the controversy check phase for the esg_screening_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: controversy_check_artifacts
-### Step 3: exclusion_filter [depends_on: controversy_check]
-Execute the exclusion filter phase for the esg_screening_pipeline workflow under the finance domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: exclusion_filter_artifacts
+### Step 1: Esg Score Lookup
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
+Execute esg score lookup operations for the Esg Screening Pipeline workflow.
+Expected: `esg_score_lookup_artifacts`
+
+### Step 2: Controversy Check [depends_on: esg_score_lookup]
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
+Execute controversy check operations for the Esg Screening Pipeline workflow.
+Expected: `controversy_check_artifacts`
+
+### Step 3: Exclusion Filter [depends_on: controversy_check]
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
+Execute exclusion filter operations for the Esg Screening Pipeline workflow.
+Expected: `exclusion_filter_artifacts`
+
+### Step 4: KG Persistence [depends_on: exclusion_filter]
+**Agent**: `risk-assessor`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Esg Screening Pipeline results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

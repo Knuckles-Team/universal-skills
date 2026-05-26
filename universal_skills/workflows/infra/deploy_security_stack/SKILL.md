@@ -1,28 +1,71 @@
 ---
 name: deploy_security_stack
-description: Parallel execution workflow for deploy security stack using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for deploy security stack using the Unified Parallel Engine
 domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-systems-manager
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
+tags: [infra, deploy-security-stack]
+concept: CONCEPT:INFRA-001
 ---
 
-# Parallel Workflow: Deploy Security Stack
+# Deploy Security Stack Workflow
 
-This workflow defines the topological parallel execution steps for deploy security stack.
+**CONCEPT:INFRA-001**
+
+Parallel execution workflow for deploy security stack using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: openbao
-Execute the openbao phase for the deploy_security_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: openbao_artifacts
-### Step 2: cert_manager [depends_on: openbao]
-Execute the cert-manager phase for the deploy_security_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: cert_manager_artifacts
-### Step 3: crowdsec [depends_on: cert_manager]
-Execute the crowdsec phase for the deploy_security_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: crowdsec_artifacts
-### Step 4: wazuh [depends_on: crowdsec]
-Execute the wazuh phase for the deploy_security_stack workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: wazuh_artifacts
+### Step 1: Openbao
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
+Execute openbao operations for the Deploy Security Stack workflow.
+Expected: `openbao_artifacts`
+
+### Step 2: Cert Manager [depends_on: openbao]
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
+Execute cert manager operations for the Deploy Security Stack workflow.
+Expected: `cert_manager_artifacts`
+
+### Step 3: Crowdsec [depends_on: cert_manager]
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
+Execute crowdsec operations for the Deploy Security Stack workflow.
+Expected: `crowdsec_artifacts`
+
+### Step 4: Wazuh [depends_on: crowdsec]
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
+Execute wazuh operations for the Deploy Security Stack workflow.
+Expected: `wazuh_artifacts`
+
+### Step 5: KG Persistence [depends_on: wazuh]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Deploy Security Stack results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

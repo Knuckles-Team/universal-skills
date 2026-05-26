@@ -1,25 +1,62 @@
 ---
 name: concept_traceability_audit
-description: Parallel execution workflow for concept traceability audit using the Unified Parallel Engine
+description: >-
+  Parallel execution workflow for concept traceability audit using the Unified Parallel Engine
 domain: dev-workflows
-tags:
-  - parallel-workflow
-  - dev-workflows
-  - mcp-repository-manager
+agent: dev_ops_engineer
+team_config:
+  name: development_operations_team
+  task_pattern: development workflow automation
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - builder-agent
+    - validator-agent
+  tool_assignments:
+    scanner-agent: [rep_rm_workspace, rep_rm_git]
+    builder-agent: [rep_rm_projects]
+    validator-agent: [rep_rm_projects, gl_pipelines]
+tags: [dev-workflows, concept-traceability-audit]
+concept: CONCEPT:DEV-001
 ---
 
-# Parallel Workflow: Concept Traceability Audit
+# Concept Traceability Audit Workflow
 
-This workflow defines the topological parallel execution steps for concept traceability audit.
+**CONCEPT:DEV-001**
+
+Parallel execution workflow for concept traceability audit using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: grep_concept_refs
-Execute the grep CONCEPT refs phase for the concept_traceability_audit workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: grep_concept_refs_artifacts
-### Step 2: verify_against_concept_map [depends_on: grep_concept_refs]
-Execute the verify against concept_map phase for the concept_traceability_audit workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: verify_against_concept_map_artifacts
-### Step 3: report_gaps [depends_on: verify_against_concept_map]
-Execute the report gaps phase for the concept_traceability_audit workflow under the dev-workflows domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: report_gaps_artifacts
+### Step 1: Grep Concept Refs
+**Agent**: `scanner-agent`
+**Tools**: `rep_rm_workspace, rep_rm_git`
+
+Execute grep concept refs operations for the Concept Traceability Audit workflow.
+Expected: `grep_concept_refs_artifacts`
+
+### Step 2: Verify Against Concept Map [depends_on: grep_concept_refs]
+**Agent**: `builder-agent`
+**Tools**: `rep_rm_projects`
+
+Execute verify against concept map operations for the Concept Traceability Audit workflow.
+Expected: `verify_against_concept_map_artifacts`
+
+### Step 3: Report Gaps [depends_on: verify_against_concept_map]
+**Agent**: `validator-agent`
+**Tools**: `rep_rm_projects, gl_pipelines`
+
+Execute report gaps operations for the Concept Traceability Audit workflow.
+Expected: `report_gaps_artifacts`
+
+### Step 4: KG Persistence [depends_on: report_gaps]
+**Agent**: `validator-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Concept Traceability Audit results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

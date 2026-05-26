@@ -1,29 +1,67 @@
 ---
 name: container-health-check
 description: >-
-  Full Docker infrastructure health assessment.
-  Lists containers, images, volumes, and networks,
-  then retrieves logs from a running container.
+  >-
+domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+    - dns-configurator
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
+    dns-configurator: [adg_rewrites, td_zones]
 tags: [infrastructure, docker, health, monitoring, containers]
-metadata:
-  author: agent-utilities
-  version: '1.0.0'
+concept: CONCEPT:INFRA-001
 ---
+
 # Container Health Check Workflow
 
-> [!NOTE]
-> This workflow was migrated from the legacy WorkflowBundle preset system.
+**CONCEPT:INFRA-001**
 
-## Workflow Execution Steps
+>-
 
-### Step 1: container-manager-mcp
+## Steps
+
+### Step 1: Container Manager Mcp
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 List all running containers and their current status
 
-### Step 2: container-manager-mcp
+### Step 2: Container Manager Mcp
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 List all Docker images with their sizes and tags
 
-### Step 3: container-manager-mcp
+### Step 3: Container Manager Mcp
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 Show all Docker volumes and networks
 
-### Step 4: container-manager-mcp
+### Step 4: Container Manager Mcp
+**Agent**: `dns-configurator`
+**Tools**: `adg_rewrites, td_zones`
+
 Get the logs for one of the running containers
+
+### Step 5: KG Persistence [depends_on: container-manager-mcp]
+**Agent**: `dns-configurator`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Container Health Check results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

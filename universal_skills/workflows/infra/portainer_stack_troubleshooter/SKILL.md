@@ -1,25 +1,62 @@
 ---
 name: portainer_stack_troubleshooter
-description: Identifies stopped or unhealthy containers inside Portainer stacks, aggregates logs, and creates a step-by-step resolution plan using portainer-agent and tunnel-manager.
+description: >-
+  Identifies stopped or unhealthy containers inside Portainer stacks, aggregates logs, and creates a step-by-step resolution plan using portainer-agent and tunnel-manager.
 domain: infra
+agent: infrastructure_operator
+team_config:
+  name: infrastructure_ops_team
+  task_pattern: infrastructure deployment and operations
+  execution_mode: parallel
+  specialist_ids:
+    - discovery-agent
+    - deployer-agent
+    - verifier-agent
+  tool_assignments:
+    discovery-agent: [tun_tm_system, tun_tm_hosts]
+    deployer-agent: [pt_stack, cnt_cm_compose_operations]
+    verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['portainer', 'stacks', 'docker', 'troubleshooting', 'portainer-agent', 'tunnel-manager']
-requires: ['portainer-agent']
+concept: CONCEPT:INFRA-001
 ---
 
-# portainer_stack_troubleshooter Workflow
+# Portainer Stack Troubleshooter Workflow
+
+**CONCEPT:INFRA-001**
 
 Identifies stopped or unhealthy containers inside Portainer stacks, aggregates logs, and creates a step-by-step resolution plan using portainer-agent and tunnel-manager.
 
-### Step 0: portainer-agent
+## Steps
+
+### Step 0: Portainer Agent
+**Agent**: `discovery-agent`
+**Tools**: `tun_tm_system, tun_tm_hosts`
+
 Retrieve active stacks list using portainer_stack get_stacks tool, and retrieve the full list of running and stopped containers using portainer_docker docker_list_containers tool.
-Expected: portainer_stacks, containers_status
+Expected: `portainer_stacks, containers_status`
 
-### Step 1: user-interaction
+### Step 1: User Interaction
+**Agent**: `deployer-agent`
+**Tools**: `pt_stack, cnt_cm_compose_operations`
+
 Scan containers_status to isolate unhealthy, degraded, or stopped instances. Construct a visual status dashboard highlighting failed stacks and down services.
-Expected: stack_triage_dashboard
-Depends On: Step 0
+Expected: `stack_triage_dashboard`
 
-### Step 2: portainer-agent
+### Step 2: Portainer Agent
+**Agent**: `verifier-agent`
+**Tools**: `pt_docker, cnt_cm_container_operations`
+
 For the identified failed containers, fetch the diagnostic logs using portainer_docker docker_get_container_logs tool. Suggest precise stack-level updates or restart commands.
-Expected: container_diagnostics, resolution_plan
-Depends On: Step 1
+Expected: `container_diagnostics, resolution_plan`
+
+### Step 3: KG Persistence [depends_on: portainer-agent]
+**Agent**: `verifier-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Portainer Stack Troubleshooter results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

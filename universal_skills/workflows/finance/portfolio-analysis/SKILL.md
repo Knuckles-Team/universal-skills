@@ -1,25 +1,59 @@
 ---
 name: portfolio-analysis
 description: >-
-  Analyzes a financial portfolio and extracts key risk metrics, exposures, and
-  returns against a benchmark.
+  >-
+domain: finance
+agent: quant_analyst
+team_config:
+  name: quantitative_trading_team
+  task_pattern: quantitative analysis and financial computation
+  execution_mode: parallel
+  specialist_ids:
+    - data-fetcher
+    - compute-engine
+    - risk-assessor
+  tool_assignments:
+    data-fetcher: [graph_query, sx_search]
+    compute-engine: [graph_analyze]
+    risk-assessor: [graph_query, graph_analyze]
 tags: [finance, analysis, portfolio]
-metadata:
-  author: agent-utilities
-  version: '1.0.0'
+concept: CONCEPT:EE-011
 ---
+
 # Portfolio Analysis Workflow
 
-> [!NOTE]
-> This workflow was migrated from the legacy WorkflowBundle preset system.
+**CONCEPT:EE-011**
 
-## Workflow Execution Steps
+>-
 
-### Step 1: data-extractor
+## Steps
+
+### Step 1: Data Extractor
+**Agent**: `data-fetcher`
+**Tools**: `graph_query, sx_search`
+
 Extract the latest holding data from the portfolio system and fetch benchmark data.
 
-### Step 2: risk-analyzer
+### Step 2: Risk Analyzer
+**Agent**: `compute-engine`
+**Tools**: `graph_analyze`
+
 Calculate risk metrics, exposures, and VaR based on the extracted holding data.
 
-### Step 3: report-generator
+### Step 3: Report Generator
+**Agent**: `risk-assessor`
+**Tools**: `graph_query, graph_analyze`
+
 Synthesize the risk metrics and holding data into a formatted markdown report.
+
+### Step 4: KG Persistence [depends_on: report-generator]
+**Agent**: `risk-assessor`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Portfolio Analysis results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

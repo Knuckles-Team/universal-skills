@@ -1,0 +1,4 @@
+name: Polymarket Multi Strategy Arb Swarm
+task_pattern: Perform Polymarket Multi Strategy Arb operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph

@@ -1,28 +1,71 @@
 ---
 name: dns_query_analytics
-description: Parallel execution workflow for dns query analytics using the Unified Parallel Engine
-domain: infra
-tags:
-  - parallel-workflow
-  - infra
-  - mcp-adguard-home
+description: >-
+  Parallel execution workflow for dns query analytics using the Unified Parallel Engine
+domain: system
+agent: systems_engineer
+team_config:
+  name: systems_operations_team
+  task_pattern: system administration and management
+  execution_mode: parallel
+  specialist_ids:
+    - scanner-agent
+    - analyzer-agent
+    - remediator-agent
+    - reporter-agent
+  tool_assignments:
+    scanner-agent: [tun_tm_system, tun_tm_remote]
+    analyzer-agent: [graph_analyze, tun_tm_security]
+    remediator-agent: [tun_tm_remote, tun_tm_inventory]
+    reporter-agent: [graph_write, document_tools]
+tags: [system, dns-query-analytics]
+concept: CONCEPT:SYS-001
 ---
 
-# Parallel Workflow: Dns Query Analytics
+# Dns Query Analytics Workflow
 
-This workflow defines the topological parallel execution steps for dns query analytics.
+**CONCEPT:SYS-001**
+
+Parallel execution workflow for dns query analytics using the Unified Parallel Engine
 
 ## Steps
 
-### Step 1: sequential_pull_logs
-Execute the Sequential: pull logs phase for the dns_query_analytics workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: sequential_pull_logs_artifacts
-### Step 2: parse_patterns [depends_on: sequential_pull_logs]
-Execute the parse patterns phase for the dns_query_analytics workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: parse_patterns_artifacts
-### Step 3: top_domains [depends_on: parse_patterns]
-Execute the top domains phase for the dns_query_analytics workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: top_domains_artifacts
-### Step 4: block_recommendations [depends_on: top_domains]
-Execute the block recommendations phase for the dns_query_analytics workflow under the infra domain. This involves orchestrating the designated specialists to process inputs, configure tools, and perform targeted operations.
-Expected: block_recommendations_artifacts
+### Step 1: Sequential Pull Logs
+**Agent**: `scanner-agent`
+**Tools**: `tun_tm_system, tun_tm_remote`
+
+Execute sequential pull logs operations for the Dns Query Analytics workflow.
+Expected: `sequential_pull_logs_artifacts`
+
+### Step 2: Parse Patterns [depends_on: sequential_pull_logs]
+**Agent**: `analyzer-agent`
+**Tools**: `graph_analyze, tun_tm_security`
+
+Execute parse patterns operations for the Dns Query Analytics workflow.
+Expected: `parse_patterns_artifacts`
+
+### Step 3: Top Domains [depends_on: parse_patterns]
+**Agent**: `remediator-agent`
+**Tools**: `tun_tm_remote, tun_tm_inventory`
+
+Execute top domains operations for the Dns Query Analytics workflow.
+Expected: `top_domains_artifacts`
+
+### Step 4: Block Recommendations [depends_on: top_domains]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write, document_tools`
+
+Execute block recommendations operations for the Dns Query Analytics workflow.
+Expected: `block_recommendations_artifacts`
+
+### Step 5: KG Persistence [depends_on: block_recommendations]
+**Agent**: `reporter-agent`
+**Tools**: `graph_write`
+
+Persist workflow results as nodes and edges in the Knowledge Graph.
+Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Output
+- Dns Query Analytics results persisted in KG
+- Structured report (MD/PDF)
+- Audit trail with timestamps and agent attributions

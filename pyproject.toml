@@ -53,6 +53,7 @@ session-handoff = []
 skill-builder = ["PyYAML"]
 skill-installer = []
 skill-graph-builder = ["crawl4ai", "playwright", "psutil", "requests", "pymupdf4llm>=0.0.17", "mdsplit", "markitdown>=0.1.5", "pyyaml>=6.0"]
+skill-workflow-builder = ["PyYAML"]
 system-tools = ["psutil"]
 tdd-methodology = []
 theme-factory = []
@@ -98,6 +99,7 @@ all = [
     "universal-skills[session-handoff]>=0.17.0",
     "universal-skills[skill-builder]>=0.17.0",
     "universal-skills[skill-graph-builder]>=0.17.0",
+    "universal-skills[skill-workflow-builder]>=0.17.0",
     "universal-skills[skill-installer]>=0.17.0",
     "universal-skills[system-tools]>=0.17.0",
     "universal-skills[tdd-methodology]>=0.17.0",
