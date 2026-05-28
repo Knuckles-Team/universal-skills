@@ -117,4 +117,3 @@ graph TD
         K1 & K2 & K3 & K4 & K5 --> L[Ingest Full Topology Snapshot into Graph-OS]
     end
 ```
-

@@ -37,14 +37,14 @@ Compute momentum, fundamental quality, and news sentiment factor signals in para
 Compute rolling standard momentum, RSI, mean-reversion metrics, and volume-weighted indicators from high-frequency market tick logs.
 Expected: `technical-factors`
 
-### Step 2: Fundamental Alpha
+### Step 2: Fundamental Alpha [depends_on: none]
 **Agent**: `compute-engine`
 **Tools**: `graph_analyze`
 
 Extract historical and recent financial filing data, calculating PE, debt-to-equity ratios, and gross margin momentum.
 Expected: `fundamental-factors`
 
-### Step 3: Sentiment Alpha
+### Step 3: Sentiment Alpha [depends_on: none]
 **Agent**: `risk-assessor`
 **Tools**: `graph_query, graph_analyze`
 

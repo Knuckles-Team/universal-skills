@@ -1,0 +1,4 @@
+name: Service-Deployment-Orchestrator Swarm
+task_pattern: Perform Service-Deployment-Orchestrator operations concurrently across all target layers
+specialist_ids:
+  - knowledge-graph

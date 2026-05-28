@@ -509,7 +509,7 @@ docker/mcp.compose.yml
 """
 
 ENV_TEMPLATE = """\
-LLM_BASE_URL=http://10.0.0.18:1234/v1
+LLM_BASE_URL=http://vllm.arpa/v1
 LLM_API_KEY=llama
 ENABLE_OTEL=True
 OTEL_EXPORTER_OTLP_ENDPOINT=http://langfuse.arpa/api/public/otel

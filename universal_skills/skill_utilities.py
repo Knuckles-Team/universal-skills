@@ -6,37 +6,8 @@ from pathlib import Path
 from importlib.resources import files, as_file
 from typing import Optional
 
-try:
-    from openai import AsyncOpenAI
-    from pydantic_ai.providers.openai import OpenAIProvider
-except ImportError:
-    AsyncOpenAI = None  # type: ignore
-    OpenAIProvider = None  # type: ignore
 
-try:
-    from groq import AsyncGroq
-    from pydantic_ai.providers.groq import GroqProvider
-except ImportError:
-    AsyncGroq = None  # type: ignore
-    GroqProvider = None  # type: ignore
-
-try:
-    from mistralai import Mistral
-    from pydantic_ai.providers.mistral import MistralProvider
-except ImportError:
-    Mistral = None  # type: ignore
-    MistralProvider = None  # type: ignore
-
-try:
-    from pydantic_ai.models.anthropic import AnthropicModel
-    from anthropic import AsyncAnthropic
-    from pydantic_ai.providers.anthropic import AnthropicProvider
-except ImportError:
-    AnthropicModel = None  # type: ignore
-    AsyncAnthropic = None  # type: ignore
-    AnthropicProvider = None  # type: ignore
-
-__version__ = "0.17.0"
+__version__ = "0.18.0"
 
 
 def get_universal_skills_package_name() -> str:
@@ -67,6 +38,7 @@ SKILL_DEFAULTS = {
     "manual-testing-enhanced": True,
     "code-walkthrough": True,
     "interactive-explain": True,
+    "analyze_portainer_health": True,
 }
 
 

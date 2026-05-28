@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "universal-skills"
-version = "0.17.0"
+version = "0.18.0"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -46,6 +46,7 @@ marp-presentations = []
 mcp-builder = ["fastmcp"]
 mermaid-diagrams = []
 product-strategy = []
+pre-mortem = []
 react-development = []
 react-native-skills = []
 security-tools = ["networkx", "requests"]
@@ -93,6 +94,7 @@ all = [
     "universal-skills[google-workspace]>=0.17.0",
     "universal-skills[internal-comms]>=0.17.0",
     "universal-skills[product-strategy]>=0.17.0",
+    "universal-skills[pre-mortem]>=0.17.0",
     "universal-skills[react-development]>=0.17.0",
     "universal-skills[react-native-skills]>=0.17.0",
     "universal-skills[security-tools]>=0.17.0",

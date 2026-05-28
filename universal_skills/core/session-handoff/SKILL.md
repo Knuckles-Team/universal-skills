@@ -12,7 +12,7 @@ license: MIT
 tags: [handoff, context, session, resumption, continuity, memory]
 metadata:
   author: Genius
-  version: '0.17.0'
+  version: '0.18.0'
 ---
 # Session Handoff
 
@@ -140,4 +140,3 @@ Example: `2024-01-15-143022-implementing-auth.md`
 
 - `references/handoff-template.md` — Complete template structure with guidance
 - `references/resume-checklist.md` — Verification checklist for resuming agents
-

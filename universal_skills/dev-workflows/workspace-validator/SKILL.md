@@ -34,8 +34,11 @@ This skill defines the autonomous workflow for systematically validating all pro
 ### Phase 2: Initial Validation (Async Job Queue)
 3. For the **first run**, submit validation using the `rm_projects` MCP tool with `action="validate"` and `type="all"`. You MUST pass `output_dir="/home/apps/workspace/reports"` to store the validation reports. DO NOT write to `/tmp` or any path outside the workspace. Do NOT pass the `repositories` parameter on the first run — validate all projects. Do NOT pass `coverage=true` unless the user explicitly requests code coverage.
 4. The tool will return immediately with a `job_id`. **Do NOT wait idle.** While validation runs in the background, you can begin examining the codebase, reviewing recent changes, or preparing for remediation.
-5. **Poll for results** by calling `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. Keep polling (with reasonable intervals) until `status` is `"completed"`.
-6. Once complete, the `result` field will point you to the path of the highly compressed `summary.md`. **Read this `summary.md` file instead of `index.md`** to review the failures and catalog all issues efficiently.
+5. **Poll for results & triage on-the-fly:** Call `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. Keep polling (with reasonable intervals) until `status` is `"completed"`.
+   - **CRITICAL:** Do NOT wait for the entire validation to complete before acting. During polling, check the `<report_root>/` folder (where `<report_root>` is the sub-folder named `validation-reports-<timestamp>` inside `/home/apps/workspace/reports/`).
+   - As each project's scan finishes, a folder `<project>-results/` will be dynamically created containing only `installation-*.md`, `pre-commit-results-*.md` (if failures occurred), and finally a single `summary_<repo_underscores>_<timestamp>.md` file.
+   - **Immediately read** the project-specific `summary_<repo_underscores>_<timestamp>.md` file to identify validation errors for that project, and start triaging and fixing them in parallel while the main validation job is still running. This completely eliminates wait times!
+6. Once the main validation job is complete, read the global `summary.md` in the top level of `<report_root>/` to review any remaining failures and ensure all project summaries have been processed.
 
 ### Phase 3: Remediation Loop (Command-Driven)
 
@@ -45,7 +48,7 @@ You will enter a continuous loop of fixing issues, then running the exact comman
 8. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), you MUST ALWAYS first come to understand the root cause by understanding how the variable, implementation, or code should have functioned, closing that knowledge gap. Follow the **Error Resolution Policy** above strictly. Note: Never automatically inject `# nosec` or `# noqa` for static analysis—evaluate manually and fix properly or suppress carefully.
 9. Work on fixing the identified issues concurrently across different projects.
 10. **Execute the Next Command from the Report:** After applying fixes, open the latest `index.md` report file. At the top of the report, there is a **"🔄 Next Validation Command"** section that contains the exact `rm_projects` MCP tool parameters to use for the next iteration. **Execute that command exactly as specified** — do NOT manually construct the parameters. The report auto-generates the correct `repositories` filter targeting only the previously failed projects.
-11. Each subsequent validation call also returns a `job_id`. Poll with `validate_status` as in Phase 2. Use the time while validation runs to continue working on other fixes.
+11. Each subsequent validation call also returns a `job_id`. Poll with `validate_status` as in Phase 2, and continue monitoring and triaging newly generated per-repository `summary_<repo_underscores>_<timestamp>.md` files dynamically.
 12. Review the new report. If there are still failures, repeat from step 7. Continue this loop until the report shows 0 failures.
 
 ### Phase 4: Final Regression Sweep

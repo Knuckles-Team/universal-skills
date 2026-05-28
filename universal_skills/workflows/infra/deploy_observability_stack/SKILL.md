@@ -37,14 +37,14 @@ Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard inte
 Deploy the Prometheus container to scrape system metrics and container stats.
 Expected: `prometheus-running`
 
-### Step 2: Grafana Setup
+### Step 2: Grafana Setup [depends_on: none]
 **Agent**: `deployer-agent`
 **Tools**: `pt_stack, cnt_cm_compose_operations`
 
 Deploy the Grafana container and auto-register Prometheus and Loki data sources.
 Expected: `grafana-running`
 
-### Step 3: Loki Setup
+### Step 3: Loki Setup [depends_on: none]
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 

@@ -54,10 +54,10 @@ flowchart TD
     A[Start Agent OS Deployment] --> B[Phase 1: Network & Workspace Discovery]
     B --> C[Parse inventory.yml/yaml for Node IPs]
     B --> D[Parse workspace.yml via Repository Manager]
-    
+
     C --> E[Phase 2: SSH Mesh Bootstrapping]
     E --> F[Generate SSH Keys & Run mesh_bootstrap]
-    
+
     F --> G[Phase 3: Zero-Dependency Bootstrap]
     G --> H[1. Boot Swarm & Overlay Networks]
     H --> I[2. Deploy Vault/OpenBao Secrets Engine]
@@ -65,10 +65,10 @@ flowchart TD
     J --> K[4. Deploy GitLab & Push Core Repositories]
     K --> L[5. Deploy Centralised Caddy Ingress Gateway]
     L --> M[6. Deploy Keycloak SSO Platform]
-    
+
     M --> N[Phase 4: GitOps Application Rollout]
     N --> O[Deploy Swarm Stacks in Batches from GitLab]
-    
+
     O --> P[Phase 5: Validation & Diagnostics]
     P --> Q{Check Health Metrics & Resolvers}
     Q -->|Success| R[Mark Deployment Healthy & Index in KG]

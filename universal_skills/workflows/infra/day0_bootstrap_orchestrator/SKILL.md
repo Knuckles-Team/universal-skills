@@ -119,61 +119,71 @@ Scan subnets, physical NIC interfaces, active subnets, and VLAN configuration pr
 Discover CPU models, free physical RAM capacity, disk partitions, and active GPU/accelerator devices:
 - Requires: `systems-manager-mcp`, `tunnel-manager-mcp`
 
-### Step 4: swarm-mesh-provisioner
-[depends_on: Step 2]
+### Step 4: deployment-planner
+[depends_on: Step 2, Step 3]
+Run the **Deployment Planner** to determine optimal service placement across discovered hardware. Classifies services into operational tiers (T0-T6), scores candidate nodes using capacity/affinity/density heuristics, and generates a deterministic placement manifest:
+- Inputs: hardware profiles from Step 3, network topology from Step 2
+- Outputs: `golden-deployment.yaml` with node role assignments, service-to-node mappings, and migration plans
+- Requires: `systems-manager-mcp`, `tunnel-manager-mcp`, `container-manager-mcp`
+
+### Step 5: swarm-mesh-provisioner
+[depends_on: Step 4]
 Initialize Docker Swarm Mode on Manager (`R710`) and join the workers (`R510`, `RW710`, `R820`, `GR1080`). Provision global attachable Swarm Overlay network `overlay-net`:
 - Requires: `container-manager-mcp`, `tunnel-manager-mcp`
 
-### Step 5: dns-record-manager
-[depends_on: Step 4]
+### Step 6: dns-record-manager
+[depends_on: Step 5]
 Deploy primary authoritative **Technitium DNS** Server using a macvlan driver on `R710` (binding statically to IP `10.0.0.199`):
 - Requires: `technitium-dns-mcp`
 
-### Step 6: portainer-sync-agent
-[depends_on: Step 5]
+### Step 7: portainer-sync-agent
+[depends_on: Step 6]
 Deploy **Portainer CE** on the Swarm manager. Configure administrative credentials and enable local Swarm endpoints:
 - Requires: `portainer-mcp`
 
-### Step 7: secret-vault-manager
-[depends_on: Step 6]
+### Step 8: secret-vault-manager
+[depends_on: Step 7]
 Deploy security foundation stacks on Swarm nodes. Launch, initialize, and unseal **OpenBao Secure Vault**, mount KV2 engines, and configure **Keycloak Identity Provider**:
 - Requires: `openbao-mcp`
 
-### Step 8: gitlab-repository-seeder
-[depends_on: Step 7]
+### Step 9: gitlab-repository-seeder
+[depends_on: Step 8]
 Deploy **GitLab CE** on Swarm. Auto-provision projects for all 19 target platforms, seed repositories with stack compose files, and generate scoped PATs:
 - Requires: `gitlab-mcp`
 
-### Step 9: portainer-sync-agent
-[depends_on: Step 8]
+### Step 10: portainer-sync-agent
+[depends_on: Step 9]
 Configure Portainer stack GitOps synchronizations. Bind application stacks to GitLab repositories using the generated Personal Access Tokens:
 - Requires: `portainer-mcp`
 
-### Step 10: portainer-sync-agent
-[depends_on: Step 9]
-Concurrently provision all 19 services in dependency-tiered execution phases:
-- Tier 1: Core Storage & DB (MinIO, MariaDB, Postgres, Redis)
-- Tier 2: Business Apps (Twenty CRM, ERPNext, Plane, Mattermost, Firefly-III, Reitti)
-- Tier 3: Platform AI engines (Faster Whisper, Netboot.xyz, Ollama, XTTS, Uptime Kuma)
+### Step 11: portainer-sync-agent
+[depends_on: Step 10]
+Concurrently provision all services using the placement manifest from Step 4. Deploy in dependency-tiered execution phases:
+- Tier 0: Critical Infrastructure (DNS, Caddy, VPN, Registry) → Gateway node
+- Tier 1: Core Platform (Portainer, GitLab, Keycloak, OpenBao, LGTM) → Compute leader + Gateway
+- Tier 2: Business Apps (Twenty CRM, ERPNext, Plane, Mattermost, Firefly-III) → App server
+- Tier 3: Lifestyle/Utility (Mealie, wger, Gramps, FreshRSS, Calibre) → Compute leader
+- Tier 4: AI/ML (Ollama, XTTS, Faster Whisper) → AI/GPU node
+- Tier 5: Agent MCP Servers (all stateless MCP containers) → Compute leader
+- Tier 6: Media/NAS-bound (arr-suite, Jellyfin, Immich) → NAS node
 - Requires: `portainer-mcp`
 
-### Step 11: dns-record-manager
-[depends_on: Step 10]
+### Step 12: dns-record-manager
+[depends_on: Step 11]
 Synchronize authoritative zone records and routing configurations. Register A records in Technitium DNS for all `.arpa` domain names:
 - Requires: `technitium-dns-mcp`
 
-### Step 12: secret-vault-manager
-[depends_on: Step 11]
+### Step 13: secret-vault-manager
+[depends_on: Step 12]
 Register OIDC single sign-on clients in Keycloak. Store secure environment credentials in OpenBao KV2:
 - Requires: `openbao-mcp`
 
-### Step 13: systems-manager-mcp
-[depends_on: Step 12]
+### Step 14: systems-manager-mcp
+[depends_on: Step 13]
 Deploy Loki/Prometheus scraping adapters and configure Borgmatic scheduled backups to target storage mounts:
 - Requires: `systems-manager-mcp`
 
-### Step 14: graph-os
-[depends_on: Step 13]
+### Step 15: graph-os
+[depends_on: Step 14]
 Materialize the full Day 0 topology snapshot in the Graph-OS Knowledge Graph, aligning with BFO-infrastructure classes:
 - Requires: `graph-os`
-
