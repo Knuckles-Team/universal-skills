@@ -425,6 +425,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#day-0-bootstrap-multi-service-wiring-orchestrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 0 Bootstrap &amp; Multi-Service Wiring Orchestrator
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -539,6 +550,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#day-0-bootstrap-multi-service-wiring-orchestrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 0 Bootstrap &amp; Multi-Service Wiring Orchestrator
+      
+    </span>
+  </a>
   
 </li>
       
@@ -693,6 +715,44 @@ Built on <a href="https://github.com/Knuckles-Team/agent-utilities"><code>agent-
 <h3 id="streamable-http-mode">Streamable HTTP Mode<a class="headerlink" href="#streamable-http-mode" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>universal-mcp<span class="w"> </span>--transport<span class="w"> </span>streamable-http<span class="w"> </span>--port<span class="w"> </span><span class="m">8001</span>
 </code></pre></div>
+<h2 id="day-0-bootstrap-multi-service-wiring-orchestrator">Day 0 Bootstrap &amp; Multi-Service Wiring Orchestrator<a class="headerlink" href="#day-0-bootstrap-multi-service-wiring-orchestrator" title="Permanent link">&para;</a></h2>
+<p>The package includes a comprehensive, graph-driven <strong>Day 0 Bootstrap &amp; Multi-Service Wiring Orchestrator</strong> workflow. It maps the automated top-down provisioning and configuration of all <strong>19 homelab services</strong> starting from a single bare-metal server:</p>
+<pre class="mermaid"><code>graph TD
+    subgraph "Layer 0: Host Discovery &amp; Pre-flight"
+        A[SSH key Full-Mesh Bootstrap] --&gt; B[Host OS &amp; HW Discovery]
+        B --&gt; C[Overlay Networks Provisioning]
+    end
+
+    subgraph "Layer 1: Edge Router &amp; Authoritative DNS"
+        C --&gt; D[Technitium DNS Server macvlan/static IP 10.0.0.199]
+        D --&gt; E[Caddy Dynamic Ingress Router HTTP/HTTPS]
+    end
+
+    subgraph "Layer 2: Identity &amp; Security Foundations"
+        E --&gt; F[Keycloak SSO OIDC/SAML]
+        F --&gt; G[OpenBao Secure Vault KV2 Engine]
+    end
+
+    subgraph "Layer 3: DevOps &amp; GitOps Automation"
+        G --&gt; H[GitLab Project &amp; Repo Provisioning]
+        H --&gt; I[Portainer GitOps Syncing with GitLab PATs]
+    end
+
+    subgraph "Layer 4: Automated Services Provisioning"
+        I --&gt; J[Launch 19 Services in Dependency Tiers]
+    end
+
+    subgraph "Layer 5: Unified Cross-Service Wiring"
+        J --&gt; K1[DNS: Technitium Authoritative Records Mapping]
+        J --&gt; K2[Proxy: Caddy Dynamic Overlay Routing]
+        J --&gt; K3[SSO: Keycloak Clients Auto-Registration]
+        J --&gt; K4[Observability: Loki/Prometheus Scraping &amp; Langfuse OTEL Traces]
+        J --&gt; K5[Backups: BorgBackup Database Dumps &amp; Repository Sync]
+    end
+
+    subgraph "Layer 6: Knowledge Graph Materialization"
+        K1 &amp; K2 &amp; K3 &amp; K4 &amp; K5 --&gt; L[Ingest Full Topology Snapshot into Graph-OS]
+    end</code></pre>
 
 
 
