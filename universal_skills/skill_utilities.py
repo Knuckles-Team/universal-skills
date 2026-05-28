@@ -7,7 +7,7 @@ from importlib.resources import files, as_file
 from typing import Optional
 
 
-__version__ = "0.23.1"
+__version__ = "0.23.2"
 
 
 def get_universal_skills_package_name() -> str:

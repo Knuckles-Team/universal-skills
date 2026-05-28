@@ -9,7 +9,7 @@ license: MIT
 tags: [api, client, integration, development, python, pydantic, graphql, gql]
 metadata:
   author: Genius
-  version: '0.23.1'
+  version: '0.23.2'
 ---
 # API Client Builder
 

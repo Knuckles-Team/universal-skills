@@ -5,7 +5,7 @@ license: MIT
 tags: []
 metadata:
   author: Genius
-  version: '0.23.1'
+  version: '0.23.2'
 ---
 
 # Code Walkthrough

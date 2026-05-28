@@ -12,7 +12,7 @@ license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
 metadata:
   author: Genius
-  version: '0.23.1'
+  version: '0.23.2'
 ---
 # C4 Architecture Documentation
 
