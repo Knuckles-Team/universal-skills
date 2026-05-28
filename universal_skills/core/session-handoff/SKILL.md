@@ -12,7 +12,7 @@ license: MIT
 tags: [handoff, context, session, resumption, continuity, memory]
 metadata:
   author: Genius
-  version: '0.21.0'
+  version: '0.22.0'
 ---
 # Session Handoff
 
