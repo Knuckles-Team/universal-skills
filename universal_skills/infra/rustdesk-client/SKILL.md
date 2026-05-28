@@ -281,8 +281,30 @@ echo "RUSTDESK_ID_RESULT:\$RUSTDESK_ID"
        sudo systemctl stop gdm3
        sudo systemctl start lightdm
        ```
-    5. Verify the active session type is X11:
+    5. **Force User Session to X11 (Prevent Post-Login Wayland Redirect)**:
+       * **Symptom**: After migrating GDM to LightDM, the login screen successfully displays via X11. However, immediately after logging in, the desktop redirects to a Wayland session, triggering the *"Wayland Please select the screen to be shared"* popup.
+       * **Cause**: The logged-in user's desktop session config in AccountsService still defaults to Wayland (`Session=ubuntu`). LightDM respects this and launches GNOME on Wayland.
+       * **Remediation**: We must force both the global LightDM session and the per-user desktop session config to `ubuntu-xorg` (X11):
+         * **Global LightDM Default**: Create a drop-in configuration file `/etc/lightdm/lightdm.conf.d/50-default-xorg.conf`:
+           ```ini
+           [Seat:*]
+           user-session=ubuntu-xorg
+           ```
+           Apply this via shell:
+           ```bash
+           echo -e "[Seat:*]\nuser-session=ubuntu-xorg" | sudo tee /etc/lightdm/lightdm.conf.d/50-default-xorg.conf
+           ```
+         * **Per-User Configuration**: Update the AccountsService user definition for the remote user (e.g., `<username>` = `genius`):
+           ```bash
+           # Update or insert Session and XSession keys in /var/lib/AccountsService/users/<username>
+           sudo python3 -c "import sys; filepath='/var/lib/AccountsService/users/genius'; f=open(filepath,'r'); content=f.read(); f.close(); lines=content.splitlines(); out=[]; [out.append('Session=ubuntu-xorg') if l.startswith('Session=') else (out.append('XSession=ubuntu-xorg') if l.startswith('XSession=') else out.append(l)) for l in lines]; [out.insert(out.index('[User]')+1, 'XSession=ubuntu-xorg') if not any(x.startswith('XSession=') for x in out) else None]; [out.insert(out.index('[User]')+1, 'Session=ubuntu-xorg') if not any(x.startswith('Session=') for x in out) else None]; f=open(filepath,'w'); f.write('\n'.join(out)+'\n'); f.close()"
+           ```
+         * **Restart Display Manager to Apply**:
+           ```bash
+           sudo systemctl restart lightdm
+           ```
+    6. Verify the active session type is X11:
        ```bash
        loginctl list-sessions --no-legend | awk '{print $1}' | while read id; do loginctl show-session "$id" -p Type; done
-       # Output should be Type=x11 for seat0 (login/greeter session)
+       # Output should be Type=x11 for seat0 (login/greeter session) and Type=x11 for user desktop sessions
        ```
