@@ -8,7 +8,7 @@ license: MIT
 tags: [jupyter, notebook, python, data-science, research]
 metadata:
   author: Genius
-  version: '0.27.0'
+  version: '0.28.0'
 ---
 # Jupyter Notebook
 

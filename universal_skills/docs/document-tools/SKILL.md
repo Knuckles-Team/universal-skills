@@ -11,7 +11,7 @@ license: MIT
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
 metadata:
   author: Genius
-  version: '0.27.0'
+  version: '0.28.0'
 ---
 # Document Tools
 
