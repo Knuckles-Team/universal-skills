@@ -9,7 +9,7 @@ license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
   author: Genius
-  version: '0.23.2'
+  version: '0.24.0'
 ---
 # MCP Client Skill
 

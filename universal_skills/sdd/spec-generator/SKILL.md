@@ -7,7 +7,7 @@ license: MIT
 tags: [spec generator]
 metadata:
   author: Genius
-  version: '0.23.2'
+  version: '0.24.0'
 ---
 
 # SDD Spec Generator
