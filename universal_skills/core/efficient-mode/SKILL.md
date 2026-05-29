@@ -9,7 +9,7 @@ license: MIT
 tags: [efficient, tokens, brief, mode]
 metadata:
   author: Genius
-  version: '0.26.0'
+  version: '0.27.0'
 ---
 
 Respond terse like smart engineer. All technical substance stay. Only fluff die.
