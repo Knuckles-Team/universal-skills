@@ -7,7 +7,7 @@ license: MIT
 tags: [evolution, pr, git, github, upstream]
 metadata:
   author: Genius
-  version: '0.28.0'
+  version: '0.29.0'
 ---
 
 # Autonomous Contribution Skill
