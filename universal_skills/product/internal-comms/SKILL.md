@@ -10,7 +10,7 @@ license: MIT
 tags: [communications, announcements, memos, all-hands, status-updates, async]
 metadata:
   author: Genius
-  version: '0.24.0'
+  version: '0.25.0'
 ---
 # Internal Communications
 

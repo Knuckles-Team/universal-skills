@@ -10,7 +10,7 @@ license: MIT
 tags: [research, scanner, scholarx, automation, agent-workflow]
 metadata:
   author: Genius
-  version: '0.24.0'
+  version: '0.25.0'
 ---
 
 # Research Scanner Skill
