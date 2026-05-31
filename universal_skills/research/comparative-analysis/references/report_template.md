@@ -43,7 +43,7 @@
 
 Use this template for visual comparison:
 
-```mermaid-template
+```text
 %%{init: {'theme': 'dark'}}%%
 radar-beta
   title Comparative Analysis
