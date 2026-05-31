@@ -6,11 +6,15 @@ import logging
 import re
 from technitium_dns_mcp.api.api_client import Api
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class DNSAdapter:
     def parse(self, file_path):
         raise NotImplementedError("Adapters must implement the parse method.")
+
 
 class AdGuardAdapter(DNSAdapter):
     def parse(self, file_path):
@@ -18,7 +22,7 @@ class AdGuardAdapter(DNSAdapter):
         logging.info(f"Parsing AdGuard rewrites file: {file_path}")
         with open(file_path, "r") as f:
             data = json.load(f)
-            
+
         # AdGuard can export as a list of {"domain": "...", "answer": "..."}
         entries = data if isinstance(data, list) else data.get("rewrites", [])
         for entry in entries:
@@ -27,6 +31,7 @@ class AdGuardAdapter(DNSAdapter):
             if domain and answer:
                 records.append({"domain": domain, "answer": answer, "type": "A"})
         return records
+
 
 class PiholeAdapter(DNSAdapter):
     def parse(self, file_path):
@@ -38,18 +43,21 @@ class PiholeAdapter(DNSAdapter):
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                parts = re.split(r'\s+', line)
+                parts = re.split(r"\s+", line)
                 if len(parts) >= 2:
                     ip, domain = parts[0], parts[1]
                     records.append({"domain": domain, "answer": ip, "type": "A"})
         return records
+
 
 class BindAdapter(DNSAdapter):
     def parse(self, file_path):
         records = []
         logging.info(f"Parsing Bind9 zone file: {file_path}")
         # Standard zone format parser (simplified example matching basic A records)
-        a_record_pattern = re.compile(r'^([a-zA-Z0-9_\-\.]+)\s+(?:\d+\s+)?(?:IN\s+)?A\s+([0-9\.]+)')
+        a_record_pattern = re.compile(
+            r"^([a-zA-Z0-9_\-\.]+)\s+(?:\d+\s+)?(?:IN\s+)?A\s+([0-9\.]+)"
+        )
         with open(file_path, "r") as f:
             for line in f:
                 line = line.strip()
@@ -60,6 +68,7 @@ class BindAdapter(DNSAdapter):
                     domain, ip = match.group(1), match.group(2)
                     records.append({"domain": domain, "answer": ip, "type": "A"})
         return records
+
 
 class GenericAdapter(DNSAdapter):
     def parse(self, file_path):
@@ -75,22 +84,26 @@ class GenericAdapter(DNSAdapter):
                 records.append({"domain": domain, "answer": answer, "type": rtype})
         return records
 
+
 def get_adapter(format_name):
     adapters = {
         "adguard": AdGuardAdapter,
         "pihole": PiholeAdapter,
         "bind": BindAdapter,
-        "generic": GenericAdapter
+        "generic": GenericAdapter,
     }
     adapter_class = adapters.get(format_name.lower())
     if not adapter_class:
-        raise ValueError(f"Unsupported DNS format: {format_name}. Supported: {list(adapters.keys())}")
+        raise ValueError(
+            f"Unsupported DNS format: {format_name}. Supported: {list(adapters.keys())}"
+        )
     return adapter_class()
+
 
 def migrate_records(records, technitium_url, user, password, zone_name="arpa"):
     logging.info(f"Connecting to Technitium DNS at {technitium_url}...")
     api = Api(base_url=technitium_url)
-    
+
     # Authenticate
     try:
         login_res = api.login(user=user, password=password)
@@ -126,7 +139,9 @@ def migrate_records(records, technitium_url, user, password, zone_name="arpa"):
         rtype = record["type"]
 
         if not domain.endswith(f".{zone_name}") and domain != zone_name:
-            logging.warning(f"Skipping domain outside authoritative zone scope: {domain}")
+            logging.warning(
+                f"Skipping domain outside authoritative zone scope: {domain}"
+            )
             continue
 
         logging.info(f"Adding record: {domain} ({rtype}) -> {answer}")
@@ -136,7 +151,7 @@ def migrate_records(records, technitium_url, user, password, zone_name="arpa"):
                 domain=domain,
                 type=rtype,
                 ipAddress=answer,
-                overwrite=True
+                overwrite=True,
             )
             if res.get("status") == "ok":
                 success_count += 1
@@ -147,16 +162,34 @@ def migrate_records(records, technitium_url, user, password, zone_name="arpa"):
             logging.error(f"Exception adding record {domain}: {e}")
             fail_count += 1
 
-    logging.info(f"Migration Complete: Successfully loaded {success_count} records. Failed {fail_count} records.")
+    logging.info(
+        f"Migration Complete: Successfully loaded {success_count} records. Failed {fail_count} records."
+    )
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Generalized DNS Migrator to Technitium DNS")
-    parser.add_argument("--source-file", required=True, help="Path to input source file")
-    parser.add_argument("--source-format", required=True, choices=["adguard", "pihole", "bind", "generic"], help="Format of the source file")
-    parser.add_argument("--technitium-url", required=True, help="Base URL of Technitium DNS (e.g. http://10.0.0.199:5380)")
+    parser = argparse.ArgumentParser(
+        description="Generalized DNS Migrator to Technitium DNS"
+    )
+    parser.add_argument(
+        "--source-file", required=True, help="Path to input source file"
+    )
+    parser.add_argument(
+        "--source-format",
+        required=True,
+        choices=["adguard", "pihole", "bind", "generic"],
+        help="Format of the source file",
+    )
+    parser.add_argument(
+        "--technitium-url",
+        required=True,
+        help="Base URL of Technitium DNS (e.g. http://10.0.0.199:5380)",
+    )
     parser.add_argument("--user", default="admin", help="Technitium admin user")
     parser.add_argument("--password", required=True, help="Technitium admin password")
-    parser.add_argument("--zone", default="arpa", help="Primary authoritative zone name")
+    parser.add_argument(
+        "--zone", default="arpa", help="Primary authoritative zone name"
+    )
 
     args = parser.parse_args()
 
@@ -172,6 +205,7 @@ def main():
         sys.exit(0)
 
     migrate_records(records, args.technitium_url, args.user, args.password, args.zone)
+
 
 if __name__ == "__main__":
     main()

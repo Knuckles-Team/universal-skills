@@ -8,6 +8,7 @@ into the Uptime Kuma SQLite database.
 Usage:
     python sync_kuma_monitors.py [--caddyfile PATH] [--db PATH] [--dry-run]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,9 +48,7 @@ def parse_caddyfile(caddyfile_path: str) -> list[tuple[str, str]]:
                 name = current_comment
                 if not name:
                     domain_prefix = (
-                        url.replace("http://", "")
-                        .replace("https://", "")
-                        .split(".")[0]
+                        url.replace("http://", "").replace("https://", "").split(".")[0]
                     )
                     name = domain_prefix.replace("-", " ").title()
 
@@ -160,7 +159,9 @@ def main() -> None:
     print(f"Syncing monitors ({mode})...")
     count = sync_monitors(monitors, args.db, dry_run=args.dry_run)
 
-    print(f"\nDone. {count} new monitor(s) {'would be' if args.dry_run else ''} registered.")
+    print(
+        f"\nDone. {count} new monitor(s) {'would be' if args.dry_run else ''} registered."
+    )
 
 
 if __name__ == "__main__":

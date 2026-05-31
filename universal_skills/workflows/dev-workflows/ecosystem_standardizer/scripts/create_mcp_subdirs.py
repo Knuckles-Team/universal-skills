@@ -30,7 +30,11 @@ def extract_register_functions(mcp_server_path: Path) -> dict[str, list[int]]:
 
     functions = {}
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name.startswith("register_") and node.name.endswith("_tools"):
+        if (
+            isinstance(node, ast.FunctionDef)
+            and node.name.startswith("register_")
+            and node.name.endswith("_tools")
+        ):
             domain = node.name.replace("register_", "").replace("_tools", "")
             functions[domain] = (node.lineno, node.end_lineno or node.lineno)
 
@@ -45,7 +49,7 @@ def create_mcp_subpackage(project_dir: Path, project_name: str) -> int:
 
     if not mcp_server_path.exists():
         return 0
-    
+
     mcp_dir = src_dir / "mcp"
     if mcp_dir.exists():
         return 0  # Already has mcp/ folder
@@ -121,7 +125,9 @@ def main():
             mcp_dir.mkdir(exist_ok=True)
             for f in tools_dir.iterdir():
                 if f.suffix == ".py" and f.name != "__init__.py":
-                    new_name = f"mcp_{f.name}" if not f.name.startswith("mcp_") else f.name
+                    new_name = (
+                        f"mcp_{f.name}" if not f.name.startswith("mcp_") else f.name
+                    )
                     (mcp_dir / new_name).write_text(f.read_text())
                 elif f.name == "__init__.py":
                     # Rewrite imports to use mcp_ prefix
@@ -130,8 +136,12 @@ def main():
             print(f"  ✅ {proj}: tools/ → mcp/ (parallel copy created)")
             total_projects += 1
 
-    print(f"\n📊 Created mcp/ subdirectory for {total_projects} projects ({total_domains} total domains)")
-    print("   mcp_server.py still contains original functions (import migration needed per-project)")
+    print(
+        f"\n📊 Created mcp/ subdirectory for {total_projects} projects ({total_domains} total domains)"
+    )
+    print(
+        "   mcp_server.py still contains original functions (import migration needed per-project)"
+    )
 
 
 if __name__ == "__main__":

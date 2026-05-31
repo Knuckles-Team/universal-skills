@@ -175,31 +175,32 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
             f"Model Context Protocol server entry point |"
         )
         lines.append(
-            f"| `CONCEPT:{prefix}-003` | A2A Agent | "
-            f"Agent-to-Agent protocol server |"
+            f"| `CONCEPT:{prefix}-003` | A2A Agent | Agent-to-Agent protocol server |"
         )
 
-    lines.extend([
-        "",
-        "## Cross-Project References (from agent-utilities)",
-        "",
-        "| Concept ID | Name | Origin |",
-        "|------------|------|--------|",
-        "| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |",
-        "| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |",
-        "| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |",
-        "| `CONCEPT:OS-5.2` | Cognitive Scheduler | agent-utilities |",
-        "| `CONCEPT:OS-5.3` | Guardrail Engine | agent-utilities |",
-        "| `CONCEPT:OS-5.4` | Audit Logging | agent-utilities |",
-        "| `CONCEPT:KG-2.0` | Knowledge Graph Core | agent-utilities |",
-        "",
-        "## Synergy with agent-utilities",
-        "",
-        f"This project integrates with `agent-utilities` via `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion). "
-        f"The `{pkg_name}` MCP server registers its tools with the agent-utilities FastMCP middleware, "
-        f"enabling automatic discovery, telemetry, and Knowledge Graph ingestion of all {prefix}-* concepts.",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Cross-Project References (from agent-utilities)",
+            "",
+            "| Concept ID | Name | Origin |",
+            "|------------|------|--------|",
+            "| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |",
+            "| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |",
+            "| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |",
+            "| `CONCEPT:OS-5.2` | Cognitive Scheduler | agent-utilities |",
+            "| `CONCEPT:OS-5.3` | Guardrail Engine | agent-utilities |",
+            "| `CONCEPT:OS-5.4` | Audit Logging | agent-utilities |",
+            "| `CONCEPT:KG-2.0` | Knowledge Graph Core | agent-utilities |",
+            "",
+            "## Synergy with agent-utilities",
+            "",
+            f"This project integrates with `agent-utilities` via `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion). "
+            f"The `{pkg_name}` MCP server registers its tools with the agent-utilities FastMCP middleware, "
+            f"enabling automatic discovery, telemetry, and Knowledge Graph ingestion of all {prefix}-* concepts.",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 

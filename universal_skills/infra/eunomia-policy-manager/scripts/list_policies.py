@@ -4,6 +4,7 @@
 Usage:
     python list_policies.py [--endpoint URL]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,9 +13,7 @@ import sys
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="List Eunomia authorization policies."
-    )
+    parser = argparse.ArgumentParser(description="List Eunomia authorization policies.")
     parser.add_argument(
         "--endpoint",
         default=os.environ.get("EUNOMIA_ENDPOINT", "http://eunomia.arpa"),

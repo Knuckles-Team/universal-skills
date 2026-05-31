@@ -23,9 +23,17 @@ from pathlib import Path
 # ──────────────────────────────────────────────────────────────────────────────
 
 ROOT_FILES = [
-    "README.md", "CHANGELOG.md", "AGENTS.md", "pyproject.toml",
-    "requirements.txt", ".pre-commit-config.yaml", ".bumpversion.cfg",
-    ".gitignore", ".gitattributes", ".dockerignore", ".env",
+    "README.md",
+    "CHANGELOG.md",
+    "AGENTS.md",
+    "pyproject.toml",
+    "requirements.txt",
+    ".pre-commit-config.yaml",
+    ".bumpversion.cfg",
+    ".gitignore",
+    ".gitattributes",
+    ".dockerignore",
+    ".env",
 ]
 
 DOC_FILES = ["docs/index.md", "docs/overview.md", "docs/concepts.md"]
@@ -33,51 +41,83 @@ DEPRECATED_FILES = ["docs/legacy_readme.md"]
 DOCKER_FILES = ["docker/Dockerfile", "docker/mcp.compose.yml"]
 
 SOURCE_FILES = [
-    "__init__.py", "__main__.py", "agent_server.py", "mcp_server.py",
+    "__init__.py",
+    "__main__.py",
+    "agent_server.py",
+    "mcp_server.py",
 ]
 
 TEST_FILES = [
-    "tests/conftest.py", "tests/test_concept_parity.py",
-    "tests/test_init_dynamics.py", "tests/test_startup.py",
+    "tests/conftest.py",
+    "tests/test_concept_parity.py",
+    "tests/test_init_dynamics.py",
+    "tests/test_startup.py",
 ]
 
 # Env var patterns that indicate non-standard naming
 NONSTANDARD_ENV_PATTERNS = [
     (r"_BASE_URL", "_URL", "Use {SERVICE}_URL instead of _BASE_URL"),
     (r"_INSTANCE", "_URL", "Use {SERVICE}_URL instead of _INSTANCE"),
-    (r"_AGENT_VERIFY", "_SSL_VERIFY", "Use {SERVICE}_SSL_VERIFY instead of _AGENT_VERIFY"),
+    (
+        r"_AGENT_VERIFY",
+        "_SSL_VERIFY",
+        "Use {SERVICE}_SSL_VERIFY instead of _AGENT_VERIFY",
+    ),
     (r"_API_KEY", "_TOKEN", "Use {SERVICE}_TOKEN instead of _API_KEY"),
     (r"_ACCESS_TOKEN", "_TOKEN", "Use {SERVICE}_TOKEN instead of _ACCESS_TOKEN"),
 ]
 
 # First-party env vars that are exceptions to our naming rules
 FIRST_PARTY_EXCEPTIONS = {
-    "GITHUB_TOKEN", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY",
-    "LANGFUSE_BASE_URL", "ANTHROPIC_API_KEY", "MONGODB_URI",
-    "MONGODB_HOST", "MONGODB_PORT",
+    "GITHUB_TOKEN",
+    "LANGFUSE_PUBLIC_KEY",
+    "LANGFUSE_SECRET_KEY",
+    "LANGFUSE_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "MONGODB_URI",
+    "MONGODB_HOST",
+    "MONGODB_PORT",
 }
 
 # Known CONCEPT prefixes (for collision detection)
 KNOWN_PREFIXES = {
     "ANSIBLE": "ansible-tower-mcp",
-    "ABOX": "archivebox-api", "ARR": "arr-mcp",
-    "ATL": "atlassian-agent", "AU": "agent-utilities",
-    "AUDIO": "audio-transcriber", "CMGR": "container-manager-mcp",
-    "DSCI": "data-science-mcp", "DOCDB": "documentdb-mcp",
-    "GENIUS": "genius-agent", "GH": "github-agent",
-    "GL": "gitlab-api", "HASS": "home-assistant-agent",
-    "JELLYFIN": "jellyfin-mcp", "LF": "langfuse-agent",
-    "LIX": "leanix-agent", "LM": "listmonk-api",
-    "MEAL": "mealie-mcp", "MDLD": "media-downloader",
-    "MSFT": "microsoft-agent", "NC": "nextcloud-agent",
-    "OC": "owncast-agent", "PA": "postiz-agent",
-    "PLANE": "plane-agent", "PORT": "portainer-agent",
-    "QBT": "qbittorrent-agent", "RM": "repository-manager",
-    "SNOW": "servicenow-api", "SRX": "searxng-mcp",
-    "SX": "scholarx", "SYS": "systems-manager",
-    "STIRLINGPDF": "stirlingpdf-agent", "TUI": "agent-terminal-ui",
-    "TUN": "tunnel-manager", "UKA": "uptime-kuma-agent",
-    "VEC": "vector-mcp", "WEBUI": "agent-webui",
+    "ABOX": "archivebox-api",
+    "ARR": "arr-mcp",
+    "ATL": "atlassian-agent",
+    "AU": "agent-utilities",
+    "AUDIO": "audio-transcriber",
+    "CMGR": "container-manager-mcp",
+    "DSCI": "data-science-mcp",
+    "DOCDB": "documentdb-mcp",
+    "GENIUS": "genius-agent",
+    "GH": "github-agent",
+    "GL": "gitlab-api",
+    "HASS": "home-assistant-agent",
+    "JELLYFIN": "jellyfin-mcp",
+    "LF": "langfuse-agent",
+    "LIX": "leanix-agent",
+    "LM": "listmonk-api",
+    "MEAL": "mealie-mcp",
+    "MDLD": "media-downloader",
+    "MSFT": "microsoft-agent",
+    "NC": "nextcloud-agent",
+    "OC": "owncast-agent",
+    "PA": "postiz-agent",
+    "PLANE": "plane-agent",
+    "PORT": "portainer-agent",
+    "QBT": "qbittorrent-agent",
+    "RM": "repository-manager",
+    "SNOW": "servicenow-api",
+    "SRX": "searxng-mcp",
+    "SX": "scholarx",
+    "SYS": "systems-manager",
+    "STIRLINGPDF": "stirlingpdf-agent",
+    "TUI": "agent-terminal-ui",
+    "TUN": "tunnel-manager",
+    "UKA": "uptime-kuma-agent",
+    "VEC": "vector-mcp",
+    "WEBUI": "agent-webui",
     "WGER": "wger-agent",
 }
 
@@ -85,6 +125,7 @@ KNOWN_PREFIXES = {
 # ──────────────────────────────────────────────────────────────────────────────
 # Audit functions
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def audit_root_files(project_dir: Path) -> dict:
     """Check root-level file presence."""
@@ -199,7 +240,9 @@ def audit_env_vars(project_dir: Path, pkg_name: str) -> dict:
                 prefix = prefix.replace("_BASE", "").replace("_AGENT", "")
                 prefixes.add(prefix)
             if len(prefixes) < len(genuine_url_vars):
-                results["issues"].append(f"Potential duplicate URL vars: {genuine_url_vars}")
+                results["issues"].append(
+                    f"Potential duplicate URL vars: {genuine_url_vars}"
+                )
 
     return results
 
@@ -379,9 +422,7 @@ def compute_scores(audit: dict) -> dict:
     scores["concepts"] = score_category(present, len(concept_checks))
 
     # Weighted overall
-    scores["overall"] = sum(
-        scores[cat] * weight for cat, weight in WEIGHTS.items()
-    )
+    scores["overall"] = sum(scores[cat] * weight for cat, weight in WEIGHTS.items())
 
     return scores
 
@@ -401,6 +442,7 @@ def grade(score: float) -> str:
 # ──────────────────────────────────────────────────────────────────────────────
 # Report generation
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def audit_project(project_dir: Path) -> dict:
     """Run full audit on a single project."""
@@ -435,22 +477,38 @@ def generate_markdown_report(audits: list[dict], output_path: Path | None) -> st
     ]
 
     # Overall summary
-    avg_score = sum(a["scores"]["overall"] for a in audits) / len(audits) if audits else 0
-    lines.extend([
-        f"## Overall Ecosystem Compliance: {avg_score:.1f}/100 ({grade(avg_score)})",
-        "",
-        "### Category Averages",
-        "",
-        "| Category | Average Score | Grade |",
-        "|----------|-------------|-------|",
-    ])
+    avg_score = (
+        sum(a["scores"]["overall"] for a in audits) / len(audits) if audits else 0
+    )
+    lines.extend(
+        [
+            f"## Overall Ecosystem Compliance: {avg_score:.1f}/100 ({grade(avg_score)})",
+            "",
+            "### Category Averages",
+            "",
+            "| Category | Average Score | Grade |",
+            "|----------|-------------|-------|",
+        ]
+    )
 
     for cat in WEIGHTS:
         cat_avg = sum(a["scores"][cat] for a in audits) / len(audits) if audits else 0
-        lines.append(f"| {cat.replace('_', ' ').title()} | {cat_avg:.1f} | {grade(cat_avg)} |")
+        lines.append(
+            f"| {cat.replace('_', ' ').title()} | {cat_avg:.1f} | {grade(cat_avg)} |"
+        )
 
     # Per-project scorecards
-    lines.extend(["", "---", "", "## Per-Project Scorecards", "", "| Project | Overall | Root | Docs | Docker | Source | Tests | Env Vars | Concepts |", "|---------|---------|------|------|--------|--------|-------|----------|----------|"])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## Per-Project Scorecards",
+            "",
+            "| Project | Overall | Root | Docs | Docker | Source | Tests | Env Vars | Concepts |",
+            "|---------|---------|------|------|--------|--------|-------|----------|----------|",
+        ]
+    )
 
     sorted_audits = sorted(audits, key=lambda a: a["scores"]["overall"])
     for a in sorted_audits:
@@ -468,7 +526,9 @@ def generate_markdown_report(audits: list[dict], output_path: Path | None) -> st
         if a["scores"]["overall"] >= 99.5:
             continue  # Skip fully compliant
 
-        lines.append(f"### {a['name']} — {grade(a['scores']['overall'])} ({a['scores']['overall']:.0f}/100)")
+        lines.append(
+            f"### {a['name']} — {grade(a['scores']['overall'])} ({a['scores']['overall']:.0f}/100)"
+        )
         lines.append("")
 
         issues = []
@@ -554,14 +614,16 @@ def generate_markdown_report(audits: list[dict], output_path: Path | None) -> st
 
 def main():
     parser = argparse.ArgumentParser(description="Ecosystem drift audit")
-    parser.add_argument("--agents-dir", default="agent-packages/agents",
-                       help="Path to agents directory")
-    parser.add_argument("--output", default=None,
-                       help="Output markdown report path")
-    parser.add_argument("--json", action="store_true",
-                       help="Output JSON instead of markdown")
-    parser.add_argument("--projects", default=None,
-                       help="Comma-separated list of specific projects")
+    parser.add_argument(
+        "--agents-dir", default="agent-packages/agents", help="Path to agents directory"
+    )
+    parser.add_argument("--output", default=None, help="Output markdown report path")
+    parser.add_argument(
+        "--json", action="store_true", help="Output JSON instead of markdown"
+    )
+    parser.add_argument(
+        "--projects", default=None, help="Comma-separated list of specific projects"
+    )
     args = parser.parse_args()
 
     agents_dir = Path(args.agents_dir)
@@ -574,8 +636,7 @@ def main():
         projects = [agents_dir / p.strip() for p in args.projects.split(",")]
     else:
         projects = sorted(
-            d for d in agents_dir.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
+            d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
         )
 
     print(f"🔍 Auditing {len(projects)} projects...")

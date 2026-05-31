@@ -8,6 +8,7 @@ policy directory state.
 Usage:
     python push_policies.py [--endpoint URL] [--policy-dir DIR] [--dry-run]
 """
+
 from __future__ import annotations
 
 import argparse

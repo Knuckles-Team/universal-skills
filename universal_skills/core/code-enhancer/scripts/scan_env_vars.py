@@ -53,6 +53,7 @@ def _scan_python_files(root: Path) -> list[dict]:
         and "__pycache__" not in f.parts
         and "node_modules" not in f.parts
         and ".git" not in f.parts
+        and "target" not in f.parts
     ]
 
     for filepath in py_files:

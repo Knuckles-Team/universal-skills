@@ -17,6 +17,7 @@ def get_latest_version(project_dir: Path) -> str:
     if not toml_path.exists():
         return "0.1.0"
     import tomllib
+
     data = tomllib.loads(toml_path.read_text())
     return data.get("project", {}).get("version", "0.1.0")
 
@@ -25,12 +26,25 @@ def get_git_log(project_dir: Path, max_entries: int = 20) -> list[str]:
     """Get recent git log entries for a project."""
     try:
         result = subprocess.run(
-            ["git", "log", f"--max-count={max_entries}", "--oneline", "--", str(project_dir)],
-            capture_output=True, text=True, timeout=10,
+            [
+                "git",
+                "log",
+                f"--max-count={max_entries}",
+                "--oneline",
+                "--",
+                str(project_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
             cwd=project_dir.parent.parent,
         )
         if result.returncode == 0:
-            return [line.strip() for line in result.stdout.strip().splitlines() if line.strip()]
+            return [
+                line.strip()
+                for line in result.stdout.strip().splitlines()
+                if line.strip()
+            ]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         pass
     return []

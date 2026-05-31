@@ -105,11 +105,11 @@ def migrate_auth_file(project: str, migrations: list[tuple[str, str]]) -> int:
             # Only replace if not already migrated (avoid double-wrapping)
             # Check if the new var is already referenced nearby
             start = max(0, match.start() - 50)
-            context = content[start:match.end()]
+            context = content[start : match.end()]
             if new_var in context:
                 continue
 
-            content = content[:match.start()] + replacement + content[match.end():]
+            content = content[: match.start()] + replacement + content[match.end() :]
             changes += 1
 
     if changes > 0:

@@ -5,7 +5,7 @@ license: MIT
 tags: [constitution generator]
 metadata:
   author: Genius
-  version: '0.31.0'
+  version: '0.35.0'
 ---
 
 # SDD Constitution Generator

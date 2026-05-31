@@ -26,7 +26,11 @@ def parse_arguments():
         "--output",
         help="Path to write the generated markdown report. If not specified, the report is printed to stdout.",
     )
-    return parser.parse_parse_args() if hasattr(parser, "parse_parse_args") else parser.parse_args()
+    return (
+        parser.parse_parse_args()
+        if hasattr(parser, "parse_parse_args")
+        else parser.parse_args()
+    )
 
 
 def load_json_file(filepath):
@@ -194,9 +198,15 @@ def main():
     md.append(f"| **Total Portainer Stacks** | {len(stacks_data)} | - |")
     md.append(f"| **Total Swarm Services** | {len(services_data)} | - |")
     md.append(f"| **Healthy Stacks** | {len(healthy_stacks)} | 🟢 Operational |")
-    md.append(f"| **Degraded Stacks** | {len(degraded_stacks)} | 🟡 Warning (Updating/Rollback) |")
-    md.append(f"| **Unhealthy Stacks** | {len(unhealthy_stacks)} | 🔴 Action Required (Update Paused) |")
-    md.append(f"| **Standalone Swarm Services** | {len(orphan_services)} | 🌐 Unmanaged by Portainer Stacks |")
+    md.append(
+        f"| **Degraded Stacks** | {len(degraded_stacks)} | 🟡 Warning (Updating/Rollback) |"
+    )
+    md.append(
+        f"| **Unhealthy Stacks** | {len(unhealthy_stacks)} | 🔴 Action Required (Update Paused) |"
+    )
+    md.append(
+        f"| **Standalone Swarm Services** | {len(orphan_services)} | 🌐 Unmanaged by Portainer Stacks |"
+    )
     md.append("\n")
 
     # Recommendations Section
@@ -210,7 +220,9 @@ def main():
                     md.append(
                         f"  - Service `{svc['name']}` update state is `{svc['update_state']}`. Error message: *{svc['update_message'] or 'No message available'}*"
                     )
-            md.append("  - *Action*: Inspect the task exit codes and container logs using `docker service ps` and `docker service logs`.")
+            md.append(
+                "  - *Action*: Inspect the task exit codes and container logs using `docker service ps` and `docker service logs`."
+            )
             md.append("\n")
 
     if degraded_stacks:
@@ -227,7 +239,9 @@ def main():
                     md.append(
                         f"  - Service `{svc['name']}` update state is `{svc['update_state']}`."
                     )
-            md.append("  - *Action*: Monitor the roll-out progression or check if resources are constrained on the active node.")
+            md.append(
+                "  - *Action*: Monitor the roll-out progression or check if resources are constrained on the active node."
+            )
             md.append("\n")
 
     # Git configuration warnings
@@ -239,7 +253,9 @@ def main():
         )
         for s in sorted(orphan_git_stacks, key=lambda x: x.get("Name", "")):
             md.append(f"  - `{s.get('Name')}` (ID: {s.get('Id')})")
-        md.append("  - *Action*: Seed GitLab repositories for these orphan stacks to ensure configuration management, change control, and pipeline stability.")
+        md.append(
+            "  - *Action*: Seed GitLab repositories for these orphan stacks to ensure configuration management, change control, and pipeline stability."
+        )
         md.append("\n")
 
     md.append("---\n")
@@ -255,7 +271,9 @@ def main():
             md.append("| :--- | :--- |")
             md.append(f"| **Status** | {stack['status']} |")
             md.append(f"| **Created At** | {stack['created_at']} |")
-            md.append(f"| **Last Updated** | {stack['updated_at']} by `{stack['updated_by']}` |")
+            md.append(
+                f"| **Last Updated** | {stack['updated_at']} by `{stack['updated_by']}` |"
+            )
             git_status = (
                 f"[`{stack['git_repo']}`]({stack['git_repo']}) (ref: `{stack['git_ref']}`)"
                 if stack["git_repo"]
@@ -265,7 +283,9 @@ def main():
             md.append("\n")
 
             md.append("#### Services Detail:")
-            md.append("| Service Name | Image | Replicas | Update State | Status Message |")
+            md.append(
+                "| Service Name | Image | Replicas | Update State | Status Message |"
+            )
             md.append("| :--- | :--- | :---: | :---: | :--- |")
             for s in stack["services"]:
                 status_emoji = (
@@ -289,16 +309,26 @@ def main():
             md.append("| Attribute | Value |")
             md.append("| :--- | :--- |")
             md.append(f"| **Created At** | {stack['created_at']} |")
-            md.append(f"| **Last Updated** | {stack['updated_at']} by `{stack['updated_by']}` |")
+            md.append(
+                f"| **Last Updated** | {stack['updated_at']} by `{stack['updated_by']}` |"
+            )
             md.append("\n")
 
             md.append("#### Services Detail:")
-            md.append("| Service Name | Image | Replicas | Update State | Status Message |")
+            md.append(
+                "| Service Name | Image | Replicas | Update State | Status Message |"
+            )
             md.append("| :--- | :--- | :---: | :---: | :--- |")
             for s in stack["services"]:
                 status_emoji = (
                     "🟡 " + s["update_state"]
-                    if s["update_state"] in ["updating", "rollback_started", "rollback_paused", "rollback_completed"]
+                    if s["update_state"]
+                    in [
+                        "updating",
+                        "rollback_started",
+                        "rollback_paused",
+                        "rollback_completed",
+                    ]
                     else "🟢 completed"
                 )
                 msg = s["update_message"] if s["update_message"] else "-"
@@ -321,12 +351,16 @@ def main():
                 if s["update_state"] in ["paused", "failed"]
                 else "🟢 operational"
             )
-            md.append(f"| `{s['name']}` | `{s['image']}` | {s['replicas']} | {status_str} |")
+            md.append(
+                f"| `{s['name']}` | `{s['image']}` | {s['replicas']} | {status_str} |"
+            )
         md.append("\n---\n")
 
     # Healthy Stacks Section
     md.append("## 🟢 Healthy Stacks\n")
-    md.append("These stacks are fully operational with all services running normally.\n")
+    md.append(
+        "These stacks are fully operational with all services running normally.\n"
+    )
     md.append("| Stack Name | ID | Services | Git-Backed | Last Updated |")
     md.append("| :--- | :---: | :---: | :---: | :--- |")
     for stack in sorted(healthy_stacks, key=lambda x: x["name"]):
@@ -345,7 +379,10 @@ def main():
                 f.write(report_content)
             print(f"Diagnostics report written successfully to '{args.output}'")
         except Exception as e:
-            print(f"Error: Failed to write report to '{args.output}': {e}", file=sys.stderr)
+            print(
+                f"Error: Failed to write report to '{args.output}': {e}",
+                file=sys.stderr,
+            )
             sys.exit(1)
     else:
         print(report_content)

@@ -6,15 +6,20 @@ license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow]
 metadata:
   author: Genius
-  version: '0.3.0'
+  version: '0.4.0'
 ---
 # Workspace Validator
 
-This skill defines the autonomous workflow for systematically validating all projects in the workspace, reviewing and fixing the identified issues concurrently, and optionally publishing updates. Validation runs as a **background job** — the `rm_projects` tool returns a `job_id` immediately, and you poll for results using `action="validate_status"`.
+This skill defines the autonomous workflow for systematically validating all projects in the workspace, reviewing and fixing the identified issues concurrently, and optionally publishing updates. Validation runs as a **background job** per repository using `rm_projects`. The tool returns a job dictionary immediately, and you poll for results using `action="validate_status"`.
 
 ## ⚠️ Requirements
 - Ensure the `repository-manager` MCP server is active so you have access to `rm_projects`, `rm_git`, and `rm_workspace` tools.
-- DO NOT use the CLI `repository-manager` command for validation. You must use the MCP tools to optimize token usage and avoid reading large text report files.
+- DO NOT use the CLI `repository-manager` command for validation. You must use the MCP tools to optimize token usage.
+- **NEVER manually edit pyproject.toml versions, commit, tag, or push releases.** All maintenance must be driven automatically via the `repository-manager` using the `auto_bump` and `auto_push` parameters.
+- **Topological Release Order (`CONCEPT:RM-TOPOLOGY`):**
+  - **Phase 3:** `agent-utilities` must be bumped and published first.
+  - **Phase 4:** Core Tools & UIs (including `geniusbot`, `agent-terminal-ui`, `agent-webui`, `universal-skills`, `skill-graphs`) consume `agent-utilities`. Bumping `agent-utilities` triggers automated dependency updates in Phase 4 projects.
+  - Circular dependencies are prevented by the `repository-manager` skipping dependency updates for any project belonging to a phase lower than the currently bumped phase.
 
 ## ⚠️ Error Resolution Policy
 
@@ -35,7 +40,7 @@ The root `pyproject.toml` uses `uv` workspace globs (e.g. `agent-packages/agents
 error: Workspace member `/path/to/broken-project` is missing a `pyproject.toml`
 ```
 
-**Detection:** If the `summary.md` shows the exact same error message across many or all projects pointing at a single workspace member, that project is the "poison pill".
+**Detection:** If the `rm_projects` JSON results show the exact same error message across many or all projects pointing at a single workspace member, that project is the "poison pill".
 
 **Resolution:**
 1. Navigate to the broken project directory.
@@ -51,47 +56,26 @@ error: Workspace member `/path/to/broken-project` is missing a `pyproject.toml`
 1. When triggered, first clarify with the user if they only want to validate and fix issues, or if they *also* want to perform a phased bump (e.g. minor version) and phased push once 0 issues are found.
 2. If not specified by the user, the default behavior is to ONLY validate and fix. Do not proceed to bumping/pushing unless explicitly confirmed.
 
-### Phase 2: Initial Validation (Async Job Queue)
-3. For the **first run**, submit validation using the `rm_projects` MCP tool with `action="validate"` and `type="all"`. You MUST pass `output_dir="/home/apps/workspace/reports"` to store the validation reports. DO NOT write to `/tmp` or any path outside the workspace. Do NOT pass the `repositories` parameter on the first run — validate all projects. Do NOT pass `coverage=true` unless the user explicitly requests code coverage.
-4. The tool will return immediately with a `job_id`. **Do NOT wait idle.** While validation runs in the background, you can begin examining the codebase, reviewing recent changes, or preparing for remediation.
-5. **Poll for results & triage on-the-fly:** Call `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. Keep polling (with reasonable intervals) until `status` is `"completed"`.
-   - **CRITICAL:** Do NOT wait for the entire validation to complete before acting. During polling, check the `<report_root>/` folder (where `<report_root>` is the sub-folder named `validation-reports-<timestamp>` inside `/home/apps/workspace/reports/`).
-   - As each project's scan finishes, a folder `<project>-results/` will be dynamically created inside `<report_root>/`. This folder will contain:
-     - `installation-<N>-error(s)-<N>-warning(s)-<timestamp>.md` — Ecosystem Installation phase results (only if errors occurred)
-     - `pre-commit-results-<N>-error(s)-<N>-warning(s)-<timestamp>.md` — Pre-commit Compliance results (only if errors occurred)
-     - `summary_<repo_underscores>_<timestamp>.md` — The **single definitive per-project summary** with all phases rolled up. This is the **only file you need to read** for triage.
-   - **IMPORTANT:** Each project gets exactly **one** summary file. Do NOT read the per-phase files separately — the summary consolidates everything. Avoid reading duplicate reports.
-   - **Immediately read** the project-specific `summary_<repo_underscores>_<timestamp>.md` file to identify validation errors for that project, and start triaging and fixing them in parallel while the main validation job is still running. This completely eliminates wait times!
-6. Once the main validation job is complete, read the global `summary.md` in the top level of `<report_root>/` to review any remaining failures and ensure all project summaries have been processed.
+### Phase 2: Parallel Validation
+3. For the **first run**, submit validation using the `rm_projects` MCP tool with `action="validate"`. Do NOT pass the `repositories` parameter on the first run — validate all projects.
+4. The tool now runs asynchronously in the background and immediately returns a job submission confirmation.
+5. **Poll for Progress:** Call the `rm_projects` tool with `action="validate_status"`. The tool returns an enriched JSON object containing:
+   - `running_projects`: Array of repository names still being validated.
+   - `failed_projects_csv`: A comma-separated string of repositories that failed validation (perfect for re-feeding into `validate`).
+   - `jobs`: Array of job detail objects (each containing `repo_name`, `status`, and `summary`).
+6. **Analyze the Return:** As soon as a job finishes, if it failed, its `summary.failures` will contain the exact hook failure messages. You can use the `failed_projects_csv` field to immediately identify failures and use `jq` on the tool's raw output file to extract the exact hook failures for those projects without waiting for the entire sweep to finish!
+7. **Monitor:** Continue polling `validate_status` (with reasonable intervals) until `running_projects` is empty.
 
-### Phase 2.5: Concurrent On-the-Fly Remediation
+### Phase 3: Remediation Loop
+You will enter a continuous loop of fixing issues based on the JSON hook outputs.
 
-> While the validation job is still running, you should already be fixing issues from completed projects.
+8. **Automated Remediation:** For systemic validation failures (such as simple formatting issues), you should use the native automated fix logic. Call the `rm_workspace` tool with `action="remediate"`.
+9. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), follow the **Error Resolution Policy** above strictly. Fix issues concurrently across different projects.
+10. **Re-Validate Specific Projects:** After applying fixes to specific repositories, call `rm_projects(action="validate", repositories="repo1,repo2")` targeting ONLY the projects you fixed or that previously failed.
+11. Review the new structured JSON. If there are still failures, repeat from step 8. Continue this loop until the target repositories pass.
 
-7. **As each project's `summary_<repo>_<timestamp>.md` appears**, read it immediately.
-8. If errors are found, begin fixing them in the project's source code right away — do NOT wait for the full validation sweep to finish.
-9. Use this time efficiently: while waiting for slow projects (e.g. large test suites), fix errors in projects that have already completed their scan.
-10. **Avoid fixing the same project twice.** Track which project summaries you have already triaged. If a project summary appears and shows 0 errors, skip it.
-
-### Phase 3: Remediation Loop (Command-Driven)
-
-You will enter a continuous loop of fixing issues, then running the exact command specified in the report's `summary.md` or `index.md` file.
-
-11. **Automated Remediation:** For systemic validation failures (such as `check-bumpversion` mismatches or simple `end-of-file-fixer` issues), you should use the native automated fix logic. Call the `rm_workspace` tool with `action="remediate"` and optionally pass the `repositories` parameter.
-12. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), you MUST ALWAYS first come to understand the root cause by understanding how the variable, implementation, or code should have functioned, closing that knowledge gap. Follow the **Error Resolution Policy** above strictly. Note: Never automatically inject `# nosec` or `# noqa` for static analysis—evaluate manually and fix properly or suppress carefully.
-13. Work on fixing the identified issues concurrently across different projects.
-14. **Execute the Next Command from the Report:** After applying fixes, open the latest `index.md` report file. At the top of the report, there is a **"🔄 Next Validation Command"** section that contains the exact `rm_projects` MCP tool parameters to use for the next iteration. **Execute that command exactly as specified** — do NOT manually construct the parameters. The report auto-generates the correct `repositories` filter targeting only the previously failed projects.
-15. Each subsequent validation call also returns a `job_id`. Poll with `validate_status` as in Phase 2, and continue monitoring and triaging newly generated per-repository `summary_<repo_underscores>_<timestamp>.md` files dynamically.
-16. Review the new report. If there are still failures, repeat from step 11. Continue this loop until the report shows 0 failures.
-
-### Phase 4: Final Regression Sweep
-
-17. When the targeted validation shows 0 errors, the `index.md` will display a **"✅ Targeted Validation Passed — Run Full Regression Sweep"** section. This contains the command to run validation against ALL repositories (no `repositories` parameter). **Execute that command exactly as specified.**
-18. If the full sweep passes with 0 errors, the report will show **"✅ All Repositories Passed — Validation Complete"**. Only at this point do you progress to the next phase.
-19. If the full sweep reveals new regressions, return to Phase 3 step 11 and repeat the remediation loop.
-
-### Phase 5: Bump and Push (Optional)
-20. If the user confirmed in Phase 1 that they want to bump and push:
-    a. **CRITICAL:** Before running any bumpversion logic, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before bumping. Do NOT commit bumps to the wrong branches.
-    b. Run the `rm_workspace` tool with `action="maintain"` and `part="minor"` to perform a phased bump to the next minor version.
-    c. If the bump is successful, run the `rm_git` tool with `action="phased_push"` or `push` to push all projects back to github.
+### Phase 4: Final Regression Sweep & Release
+12. When the targeted validation shows 0 errors, run validation against ALL repositories one last time. If the user confirmed in Phase 1 that they want to bump and push, you can cascade this final run into a release by calling `rm_projects` with `action="validate"`, `auto_bump=true`, and `auto_push=true`. Do not pass the `repositories` parameter.
+13. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
+14. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
+15. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.

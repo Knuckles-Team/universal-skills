@@ -3,7 +3,9 @@ from pathlib import Path
 import pytest
 
 # Ensure agent-utilities is in sys.path if not already loaded
-agent_utils_path = str(Path(__file__).resolve().parent.parent.parent.parent / "agent-utilities")
+agent_utils_path = str(
+    Path(__file__).resolve().parent.parent.parent.parent / "agent-utilities"
+)
 if agent_utils_path not in sys.path:
     sys.path.insert(0, agent_utils_path)
 
@@ -18,7 +20,9 @@ skill_dirs = [p.parent for p in skills_root.rglob("SKILL.md")]
 skill_dirs.sort(key=lambda p: p.as_posix())
 
 
-@pytest.mark.parametrize("skill_dir", skill_dirs, ids=lambda p: p.relative_to(skills_root).as_posix())
+@pytest.mark.parametrize(
+    "skill_dir", skill_dirs, ids=lambda p: p.relative_to(skills_root).as_posix()
+)
 def test_compile_and_validate_workflow(skill_dir):
     """Compiles the SKILL.md file and asserts zero compilation or dependency errors."""
     plan = SkillCompiler.compile(skill_dir)
@@ -31,12 +35,16 @@ def test_compile_and_validate_workflow(skill_dir):
     # Assert all depends_on references exist within the plan
     for step in plan.steps:
         for dep in step.depends_on:
-            assert dep in step_id_to_idx, f"Step '{step.node_id}' in {skill_dir.name} has non-existent dependency '{dep}'"
+            assert dep in step_id_to_idx, (
+                f"Step '{step.node_id}' in {skill_dir.name} has non-existent dependency '{dep}'"
+            )
 
     # Verify topological wave sorting resolves without circular dependencies
     runner = WorkflowRunner()
     waves = runner._build_execution_waves(plan)
-    assert len(waves) > 0, f"Failed to resolve execution waves for workflow {skill_dir.name}"
+    assert len(waves) > 0, (
+        f"Failed to resolve execution waves for workflow {skill_dir.name}"
+    )
 
     # Verify mock registration in the knowledge graph
     reg_outcome = SkillCompiler.register_in_kg(None, skill_dir)

@@ -58,6 +58,8 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
     except (SyntaxError, UnicodeDecodeError):
         return findings
 
+    is_test_file = "tests" in filepath.parts or filepath.name.startswith("test_")
+
     for node in ast.walk(tree):
         # Check for dangerous function calls
         if isinstance(node, ast.Call):
@@ -69,6 +71,10 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
                     call_name = f"{node.func.value.id}.{node.func.attr}"
 
             for cwe_id, pattern in CWE_PATTERNS.items():
+                # Suppress CWE-78 for test files (subprocess usage is common)
+                if cwe_id == "CWE-78" and is_test_file:
+                    continue
+
                 if call_name in pattern.get("ast_calls", []):
                     findings.append(
                         {
@@ -96,6 +102,10 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
                                 isinstance(node.value.value, str)
                                 and len(node.value.value) > 3
                             ):
+                                # Suppress CWE-798 for test files (dummy secrets are common)
+                                if is_test_file:
+                                    continue
+
                                 findings.append(
                                     {
                                         "cwe": "CWE-798",
@@ -177,6 +187,7 @@ def analyze_security(root_dir: str = ".") -> dict:
         and "__pycache__" not in f.parts
         and "node_modules" not in f.parts
         and ".git" not in f.parts
+        and "target" not in f.parts
     ]
 
     if not py_files:

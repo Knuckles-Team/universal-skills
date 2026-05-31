@@ -1,0 +1,830 @@
+{
+  "mcpServers": {
+    "graph-os": {
+      "command": "/home/apps/workspace/.venv/bin/graph-os",
+      "args": [],
+      "env": {
+        "WORKSPACE_PATH": "/home/apps/workspace",
+        "AGENT_UTILITIES_CONFIG_DIR": "/home/genius/.config/agent-utilities",
+        "GRAPH_PERSISTENCE_PATH": "/home/genius/.local/share/agent-utilities/graph_state",
+        "KG_LLM_CONCURRENCY": "6",
+        "CHUNK_SIZE": "768",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "RESET_RELO AD": "2"
+      }
+    },
+    "scholarx-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/scholarx-mcp",
+      "args": [],
+      "env": {
+        "WORKSPACE_PATH": "/home/apps/workspace",
+        "AGENT_UTILITIES_CONFIG_DIR": "/home/genius/.config/agent-utilities",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "repository-manager-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/repository-manager-mcp",
+      "args": [],
+      "env": {
+        "WORKSPACE_PATH": "/home/apps/workspace",
+        "AGENT_UTILITIES_CONFIG_DIR": "/home/genius/.config/agent-utilities",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "portainer-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/portainer-mcp",
+      "args": [],
+      "env": {
+        "PORTAINER_URL": "http://portainer.arpa",
+        "PORTAINER_TOKEN": "",
+        "PORTAINER_SSL_VERIFY": "False",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "langfuse-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/langfuse-mcp",
+      "args": [],
+      "env": {
+        "LANGFUSE_BASE_URL": "http://langfuse.arpa",
+        "LANGFUSE_PUBLIC_KEY": "",
+        "LANGFUSE_SECRET_KEY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "systems-manager-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-r510": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "r510"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-r510": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "r510"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-r710": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "r710"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-r710": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "r710"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_image_operations",
+        "cm_container_operations",
+        "cm_volume_operations",
+        "cm_network_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "cm_compose_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-rw710": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "rw710"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-rw710": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "rw710"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-r820": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "r820"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-r820": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "r820"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-gr1080": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "gr1080"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-gr1080": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "gr1080"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "systems-manager-mcp-gb10": {
+      "command": "/home/apps/workspace/.venv/bin/systems-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SYSTEMS_MANAGER_HOST": "gb10"
+      },
+      "disabledTools": [
+        "health_check",
+        "get_process_details",
+        "get_network_connections",
+        "capture_system_snapshot",
+        "list_services",
+        "manage_service",
+        "list_kernel_modules",
+        "start_system_trace",
+        "stop_system_trace",
+        "sm_user_operations",
+        "sm_cron_operations",
+        "sm_firewall_operations",
+        "sm_advanced_operations",
+        "sm_agent_identity_operations",
+        "sm_agent_policy_operations",
+        "sm_agent_specialist_operations",
+        "sm_agent_scheduler_operations",
+        "sm_agent_watchdog_operations",
+        "sm_agent_maintenance_operations"
+      ]
+    },
+    "container-manager-mcp-gb10": {
+      "command": "/home/apps/workspace/.venv/bin/container-manager-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "CONTAINER_MANAGER_HOST": "gb10"
+      },
+      "disabledTools": [
+        "cm_info_operations",
+        "cm_swarm_operations",
+        "cm_system_operations",
+        "trace_port_namespace"
+      ]
+    },
+    "tunnel-manager-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/tunnel-manager-mcp",
+      "args": [],
+      "env": {
+        "TUNNEL_IDENTITY_FILE": "",
+        "TUNNEL_INVENTORY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "TM_HOSTS_TOOL": "True",
+        "TM_REMOTE_TOOL": "True",
+        "TM_INVENTORY_TOOL": "True",
+        "TM_OPERATIONS_TOOL": "True",
+        "TM_SYSTEM_TOOL": "True",
+        "TM_FILES_TOOL": "True",
+        "TM_SECURITY_TOOL": "True"
+      }
+    },
+    "leanix-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/leanix-mcp",
+      "args": [],
+      "env": {
+        "LEANIX_WORKSPACE": "",
+        "LEANIX_API_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "audio-transcriber-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/audio-transcriber-mcp",
+      "args": [],
+      "env": {
+        "TRANSCRIBE_DIRECTORY": "",
+        "WHISPER_MODEL": "base",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "archivebox-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/archivebox-mcp",
+      "args": [],
+      "env": {
+        "ARCHIVEBOX_TOKEN": "",
+        "ARCHIVEBOX_USERNAME": "",
+        "ARCHIVEBOX_PASSWORD": "",
+        "ARCHIVEBOX_API_KEY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "ARCHIVEBOX_BASE_URL": "http://archivebox.arpa",
+        "ARCHIVEBOX_SSL_VERIFY": "True"
+      }
+    },
+    "data-science-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/data-science-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "ansible-tower-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/ansible-tower-mcp",
+      "args": [],
+      "env": {
+        "ANSIBLE_TOWER_URL": "",
+        "ANSIBLE_TOWER_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "github-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/github-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "GITHUB_TOKEN": ""
+      }
+    },
+    "gitlab-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/gitlab-mcp",
+      "args": [],
+      "env": {
+        "GITLAB_URL": "http://gitlab.arpa/api/v4",
+        "GITLAB_TOKEN": "",
+        "GITLAB_SSL_VERIFY": "False",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      },
+      "disabledTools": [
+        "gitlab_branches",
+        "gitlab_protected_branches",
+        "gitlab_commits",
+        "gitlab_deploy_tokens",
+        "gitlab_environments",
+        "gitlab_groups",
+        "gitlab_jobs",
+        "gitlab_members",
+        "gitlab_merge_requests",
+        "gitlab_merge_rules",
+        "gitlab_packages",
+        "gitlab_pipelines",
+        "gitlab_pipeline_schedules",
+        "gitlab_projects",
+        "gitlab_releases",
+        "gitlab_runners",
+        "gitlab_tags",
+        "gitlab_labels",
+        "gitlab_milestones",
+        "gitlab_snippets",
+        "gitlab_notes",
+        "gitlab_epics",
+        "gitlab_issues",
+        "api_request",
+        "gitlab_graphql",
+        "gitlab_discover_graphql_schema"
+      ]
+    },
+    "home-assistant-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/home-assistant-mcp",
+      "args": [],
+      "env": {
+        "HOME_ASSISTANT_URL": "http://home-assistant.arpa",
+        "HOME_ASSISTANT_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "arr-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/arr-mcp",
+      "args": [],
+      "env": {
+        "BAZARR_BASE_URL": "http://bazarr.arpa",
+        "BAZARR_MCP_URL": "http://bazarr-mcp:8065/mcp",
+        "BAZARR_API_KEY": "",
+        "BAZARR_VERIFY": "True",
+        "CHAPTARR_BASE_URL": "http://chaptarr.arpa",
+        "CHAPTARR_MCP_URL": "http://chaptarr-mcp:8060/mcp",
+        "CHAPTARR_API_KEY": "",
+        "CHAPTARR_VERIFY": "True",
+        "LIDARR_BASE_URL": "http://lidarr.arpa",
+        "LIDARR_MCP_URL": "http://lidarr-mcp:8061/mcp",
+        "LIDARR_API_KEY": "",
+        "LIDARR_VERIFY": "True",
+        "PROWLARR_BASE_URL": "http://prowlarr.arpa",
+        "PROWLARR_MCP_URL": "http://prowlarr-mcp:8062/mcp",
+        "PROWLARR_API_KEY": "",
+        "PROWLARR_VERIFY": "True",
+        "RADARR_BASE_URL": "http://radarr.arpa",
+        "RADARR_MCP_URL": "http://radarr-mcp:8063/mcp",
+        "RADARR_API_KEY": "",
+        "RADARR_VERIFY": "True",
+        "SONARR_BASE_URL": "http://sonarr.arpa",
+        "SONARR_MCP_URL": "http://sonarr-mcp:8064/mcp",
+        "SONARR_API_KEY": "",
+        "SONARR_VERIFY": "True",
+        "SEERR_BASE_URL": "http://seerr.arpa",
+        "SEERR_MCP_URL": "http://seerr-mcp:8066/mcp",
+        "SEERR_API_KEY": "",
+        "SEERR_VERIFY": "True",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "plane-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/plane-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "PLANE_BASE_URL": "http://plane.arpa",
+        "PLANE_API_KEY": "",
+        "PLANE_WORKSPACE_SLUG": ""
+      }
+    },
+    "mealie-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/mealie-mcp",
+      "args": [],
+      "env": {
+        "MEALIE_URL": "",
+        "MEALIE_API_KEY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      },
+      "disabledTools": [
+        "mealie_app"
+      ]
+    },
+    "postiz-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/postiz-mcp",
+      "args": [],
+      "env": {
+        "POSTIZ_URL": "http://postiz.arpa",
+        "POSTIZ_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "owncast-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/owncast-mcp",
+      "args": [],
+      "env": {
+        "OWNCAST_URL": "http://owncast.arpa",
+        "OWNCAST_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "jellyfin-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/jellyfin-mcp",
+      "args": [],
+      "env": {
+        "JELLYFIN_URL": "http://jellyfin.arpa",
+        "JELLYFIN_API_KEY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "microsoft-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/microsoft-mcp",
+      "args": [],
+      "env": {
+        "MICROSOFT_CLIENT_ID": "",
+        "MICROSOFT_CLIENT_SECRET": "",
+        "MICROSOFT_TENANT_ID": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "listmonk-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/listmonk-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "LISTMONK_URL": "",
+        "LISTMONK_TOKEN": "",
+        "LISTMONK_USERNAME": "",
+        "LISTMONK_PASSWORD": ""
+      }
+    },
+    "nextcloud-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/nextcloud-mcp",
+      "args": [],
+      "env": {
+        "NEXTCLOUD_URL": "http://nextcloud.arpa",
+        "NEXTCLOUD_USERNAME": "",
+        "NEXTCLOUD_PASSWORD": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "atlassian-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/atlassian-mcp",
+      "args": [],
+      "env": {
+        "ATLASSIAN_AGENT_URL": "",
+        "ATLASSIAN_AGENT_USER": "",
+        "ATLASSIAN_AGENT_TOKEN": "",
+        "ATLASSIAN_AGENT_VERIFY": "True",
+        "ATLASSIAN_OAUTH_TOKEN": "",
+        "ENABLE_DELEGATION": "false",
+        "AUDIENCE": "",
+        "DELEGATED_SCOPES": "",
+        "ATLASSIAN_JIRA_CLOUD_URL": "",
+        "ATLASSIAN_JIRA_CLOUD_USER": "",
+        "ATLASSIAN_JIRA_CLOUD_TOKEN": "",
+        "ATLASSIAN_JIRA_SERVER_URL": "",
+        "ATLASSIAN_JIRA_SERVER_USER": "",
+        "ATLASSIAN_JIRA_SERVER_TOKEN": "",
+        "ATLASSIAN_CONFLUENCE_CLOUD_URL": "",
+        "ATLASSIAN_CONFLUENCE_CLOUD_USER": "",
+        "ATLASSIAN_CONFLUENCE_CLOUD_TOKEN": "",
+        "ATLASSIAN_CONFLUENCE_SERVER_URL": "",
+        "ATLASSIAN_CONFLUENCE_SERVER_USER": "",
+        "ATLASSIAN_CONFLUENCE_SERVER_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "servicenow-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/servicenow-mcp",
+      "args": [],
+      "env": {
+        "SERVICENOW_INSTANCE": "",
+        "SERVICENOW_USERNAME": "",
+        "SERVICENOW_PASSWORD": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "SERVICENOW_CLIENT_ID": "",
+        "SERVICENOW_CLIENT_SECRET": ""
+      },
+      "disabledTools": []
+    },
+    "qbittorrent-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/qbittorrent-mcp",
+      "args": [],
+      "env": {
+        "QBITTORRENT_URL": "http://qbittorrent.arpa",
+        "QBITTORRENT_USERNAME": "",
+        "QBITTORRENT_PASSWORD": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "searxng-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/searxng-mcp",
+      "args": [],
+      "env": {
+        "SEARXNG_INSTANCE_URL": "http://searxng.arpa",
+        "USE_RANDOM_INSTANCE": "false",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "media-downloader-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/media-downloader-mcp",
+      "args": [],
+      "env": {
+        "DOWNLOAD_DIRECTORY": "~/Downloads",
+        "AUDIO_ONLY": "False",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "stirlingpdf-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/stirlingpdf-mcp",
+      "args": [],
+      "env": {
+        "STIRLINGPDF_URL": "http://stirlingpdf.arpa",
+        "STIRLINGPDF_API_KEY": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "wger-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/wger-mcp",
+      "args": [],
+      "env": {
+        "WGER_INSTANCE": "http://wger.arpa",
+        "WGER_ACCESS_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "uptime-kuma-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/uptime-mcp",
+      "args": [],
+      "env": {
+        "UPTIME_KUMA_URL": "http://uptime.arpa",
+        "UPTIME_KUMA_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "technitium-dns-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/technitium-dns-mcp",
+      "args": [],
+      "env": {
+        "TECHNITIUM_DNS_URL": "http://10.0.0.199:5380",
+        "TECHNITIUM_DNS_TOKEN": "",
+        "TECHNITIUM_DNS_SSL_VERIFY": "True",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "caddy-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/caddy-mcp",
+      "args": [],
+      "env": {
+        "CADDY_URL": "http://localhost:2019",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "keycloak-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/keycloak-mcp",
+      "args": [],
+      "env": {
+        "KEYCLOAK_URL": "",
+        "KEYCLOAK_USERNAME": "",
+        "KEYCLOAK_PASSWORD": "",
+        "KEYCLOAK_REALM": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "twenty-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/twenty-mcp",
+      "args": [],
+      "env": {
+        "TWENTY_URL": "http://localhost:3000",
+        "TWENTY_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "erpnext-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/erpnext-mcp",
+      "args": [],
+      "env": {
+        "ERPNEXT_URL": "http://localhost:8000",
+        "ERPNEXT_API_KEY": "",
+        "ERPNEXT_API_SECRET": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "openbao-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/openbao-mcp",
+      "args": [],
+      "env": {
+        "OPENBAO_URL": "http://openbao.arpa",
+        "OPENBAO_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "lgtm-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/lgtm-mcp",
+      "args": [],
+      "env": {
+        "LGTM_URL": "http://localhost:3100",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "mattermost-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/mattermost-mcp",
+      "args": [],
+      "env": {
+        "MATTERMOST_URL": "http://localhost:8065",
+        "MATTERMOST_TOKEN": "",
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false"
+      }
+    },
+    "legal-peripherals-mcp": {
+      "command": "/home/apps/workspace/.venv/bin/legal-peripherals-mcp",
+      "args": [],
+      "env": {
+        "FASTMCP_CHECK_FOR_UPDATES": "off",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "BYPASS_IRS_FILING_HOURS": "True"
+      }
+    }
+  }
+}

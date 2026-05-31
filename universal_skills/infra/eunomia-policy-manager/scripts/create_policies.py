@@ -4,6 +4,7 @@
 Usage:
     python create_policies.py [--policy-dir DIR] [--services SVC1,SVC2,...]
 """
+
 from __future__ import annotations
 
 import argparse

@@ -5,7 +5,14 @@ from pathlib import Path
 
 # Load build_workflow dynamically since agent-tools contains a hyphen
 tests_dir = Path(__file__).resolve().parent
-script_path = tests_dir.parent / "universal_skills" / "agent-tools" / "skill-workflow-builder" / "scripts" / "build_workflow.py"
+script_path = (
+    tests_dir.parent
+    / "universal_skills"
+    / "agent-tools"
+    / "skill-workflow-builder"
+    / "scripts"
+    / "build_workflow.py"
+)
 spec = importlib.util.spec_from_file_location("build_workflow", str(script_path))
 build_workflow = importlib.util.module_from_spec(spec)
 sys.modules["build_workflow"] = build_workflow
@@ -19,21 +26,9 @@ parse_workflow_skill = build_workflow.parse_workflow_skill
 def test_validate_steps_dag_valid():
     """Validates that a linear DAG passes validation."""
     steps = [
-        {
-            "step": 0,
-            "component": "step-0",
-            "depends_on": []
-        },
-        {
-            "step": 1,
-            "component": "step-1",
-            "depends_on": ["Step 0"]
-        },
-        {
-            "step": 2,
-            "component": "step-2",
-            "depends_on": ["Step 1"]
-        }
+        {"step": 0, "component": "step-0", "depends_on": []},
+        {"step": 1, "component": "step-1", "depends_on": ["Step 0"]},
+        {"step": 2, "component": "step-2", "depends_on": ["Step 1"]},
     ]
     is_valid, errors = validate_steps_dag(steps)
     assert is_valid is True
@@ -43,16 +38,8 @@ def test_validate_steps_dag_valid():
 def test_validate_steps_dag_circular():
     """Validates that circular dependencies are caught."""
     steps = [
-        {
-            "step": 0,
-            "component": "step-0",
-            "depends_on": ["Step 1"]
-        },
-        {
-            "step": 1,
-            "component": "step-1",
-            "depends_on": ["Step 0"]
-        }
+        {"step": 0, "component": "step-0", "depends_on": ["Step 1"]},
+        {"step": 1, "component": "step-1", "depends_on": ["Step 0"]},
     ]
     is_valid, errors = validate_steps_dag(steps)
     assert is_valid is False
@@ -61,13 +48,7 @@ def test_validate_steps_dag_circular():
 
 def test_validate_steps_dag_missing_reference():
     """Validates that references to non-existent steps are caught."""
-    steps = [
-        {
-            "step": 0,
-            "component": "step-0",
-            "depends_on": ["Step 5"]
-        }
-    ]
+    steps = [{"step": 0, "component": "step-0", "depends_on": ["Step 5"]}]
     is_valid, errors = validate_steps_dag(steps)
     assert is_valid is False
     assert any("non-existent Step 5" in err for err in errors)
@@ -83,15 +64,15 @@ def test_scaffold_and_parse_workflow():
                 "component": "user-interaction",
                 "description": "Get inputs",
                 "expected": "user_inputs",
-                "depends_on": []
+                "depends_on": [],
             },
             {
                 "step": 1,
                 "component": "container-manager-mcp",
                 "description": "Deploy container",
                 "expected": "container_status",
-                "depends_on": ["Step 0"]
-            }
+                "depends_on": ["Step 0"],
+            },
         ]
 
         # Scaffold
@@ -102,7 +83,7 @@ def test_scaffold_and_parse_workflow():
             tags=["test", "temp"],
             requires=["portainer-mcp"],
             steps=steps,
-            root_path=tmp_path
+            root_path=tmp_path,
         )
 
         assert dest_dir is not None
