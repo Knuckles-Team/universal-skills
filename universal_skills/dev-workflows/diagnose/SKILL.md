@@ -9,7 +9,7 @@ license: MIT
 tags: [debugging, diagnose, troubleshooting, bugfix]
 metadata:
   author: Genius
-  version: '0.35.2'
+  version: '0.35.3'
 ---
 
 # Diagnose

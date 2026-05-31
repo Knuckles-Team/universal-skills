@@ -9,7 +9,7 @@ license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
 metadata:
   author: Genius
-  version: '0.35.2'
+  version: '0.35.3'
 ---
 # Web Crawler Skill
 

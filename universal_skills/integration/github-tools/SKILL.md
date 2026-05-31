@@ -10,7 +10,7 @@ license: MIT
 tags: [github, git, pull-requests, ci, code-review, workflow, worktrees, gh-cli]
 metadata:
   author: Genius
-  version: '0.35.2'
+  version: '0.35.3'
 ---
 # GitHub & Git Workflow Tools
 
