@@ -10,7 +10,7 @@ license: MIT
 tags: [agent, sub-agent, mcp, dynamic, spawner, pydantic-ai, orchestration]
 metadata:
   author: Genius
-  version: '0.35.4'
+  version: '0.36.0'
 ---
 # Agent Spawner Skill
 

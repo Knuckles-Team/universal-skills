@@ -8,7 +8,7 @@ license: MIT
 tags: [agent, development, pydantic-ai, architecture]
 metadata:
   author: Genius
-  version: '0.35.4'
+  version: '0.36.0'
 ---
 # Agent Builder Guide
 

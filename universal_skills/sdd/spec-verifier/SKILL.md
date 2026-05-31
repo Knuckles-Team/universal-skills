@@ -7,7 +7,7 @@ license: MIT
 tags: [verifier, sdd, qa]
 metadata:
   author: Genius
-  version: '0.35.4'
+  version: '0.36.0'
 ---
 
 You are the Spec Verifier agent in a Spec-Driven Development workflow.
