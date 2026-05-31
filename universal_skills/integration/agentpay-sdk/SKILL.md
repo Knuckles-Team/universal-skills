@@ -13,7 +13,7 @@ license: MIT
 tags: [agentpay sdk]
 metadata:
   author: Genius
-  version: '0.35.1'
+  version: '0.35.2'
 ---
 
 # AgentPay SDK
