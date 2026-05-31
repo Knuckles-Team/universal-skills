@@ -44,14 +44,14 @@ Expected: `scan_artifacts`
 Execute score operations for the Weekly Research Digest workflow.
 Expected: `score_artifacts`
 
-### Step 3: Summarize Top 5 [depends_on: score]
+### Step 3: Summarize Top Five [depends_on: score]
 **Agent**: `synthesizer-agent`
 **Tools**: `graph_analyze, document_tools`
 
-Execute summarize top 5 operations for the Weekly Research Digest workflow.
-Expected: `summarize_top_5_artifacts`
+Execute summarize top five operations for the Weekly Research Digest workflow.
+Expected: `summarize_top_five_artifacts`
 
-### Step 4: Email Newsletter [depends_on: summarize_top_5]
+### Step 4: Email Newsletter [depends_on: summarize_top_five]
 **Agent**: `ingestor-agent`
 **Tools**: `graph_write, kg_graph_ingest`
 

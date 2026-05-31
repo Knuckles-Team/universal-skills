@@ -28,28 +28,28 @@ Search for papers, explore categories, and download relevant publications for of
 
 ## Steps
 
-### Step 0: Scholarx Mcp
+### Step 0: Search Papers
 **Agent**: `search-agent`
 **Tools**: `sx_search, graph_query`
 
 List available research paper sources and their categories
 Expected: `source, categories`
 
-### Step 1: Scholarx Mcp
+### Step 1: Analyze Papers
 **Agent**: `analyzer-agent`
 **Tools**: `graph_analyze, sx_storage`
 
 Search for recent papers on multi-agent orchestration systems
 Expected: `paper, agent`
 
-### Step 2: Scholarx Mcp
+### Step 2: Synthesize Papers
 **Agent**: `synthesizer-agent`
 **Tools**: `graph_analyze, document_tools`
 
 Get details on the most relevant paper from the search results
 Expected: `abstract, author`
 
-### Step 3: KG Persistence [depends_on: scholarx-mcp]
+### Step 3: KG Persistence [depends_on: synthesize_papers]
 **Agent**: `synthesizer-agent`
 **Tools**: `graph_write`
 
