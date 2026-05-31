@@ -69,13 +69,12 @@ error: Workspace member `/path/to/broken-project` is missing a `pyproject.toml`
 ### Phase 3: Remediation Loop
 You will enter a continuous loop of fixing issues based on the JSON hook outputs.
 
-8. **Automated Remediation:** For systemic validation failures (such as simple formatting issues), you should use the native automated fix logic. Call the `rm_workspace` tool with `action="remediate"`.
-9. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), follow the **Error Resolution Policy** above strictly. Fix issues concurrently across different projects.
-10. **Re-Validate Specific Projects:** After applying fixes to specific repositories, call `rm_projects(action="validate", repositories="repo1,repo2")` targeting ONLY the projects you fixed or that previously failed.
-11. Review the new structured JSON. If there are still failures, repeat from step 8. Continue this loop until the target repositories pass.
+8. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), follow the **Error Resolution Policy** above strictly. Fix issues concurrently across different projects.
+9. **Re-Validate Specific Projects:** After applying fixes to specific repositories, call `rm_projects(action="validate", repositories="repo1,repo2")` targeting ONLY the projects you fixed or that previously failed.
+10. Review the new structured JSON. If there are still failures, repeat from step 8. Continue this loop until the target repositories pass.
 
 ### Phase 4: Final Regression Sweep & Release
-12. When the targeted validation shows 0 errors, run validation against ALL repositories one last time. If the user confirmed in Phase 1 that they want to bump and push, you can cascade this final run into a release by calling `rm_projects` with `action="validate"`, `auto_bump=true`, and `auto_push=true`. Do not pass the `repositories` parameter.
-13. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
-14. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
-15. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
+11. When the targeted validation shows 0 errors, run validation against ALL repositories one last time. If the user confirmed in Phase 1 that they want to bump and push, you can cascade this final run into a release by calling `rm_projects` with `action="validate"`, `auto_bump=true`, and `auto_push=true`. Do not pass the `repositories` parameter.
+12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
+13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
+14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.

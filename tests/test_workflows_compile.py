@@ -10,7 +10,6 @@ if agent_utils_path not in sys.path:
     sys.path.insert(0, agent_utils_path)
 
 from agent_utilities.workflows.skill_compiler import SkillCompiler
-from agent_utilities.workflows.runner import WorkflowRunner
 
 # Find all directories under universal_skills/ containing a SKILL.md file
 skills_root = Path(__file__).resolve().parent.parent / "universal_skills"
@@ -40,11 +39,11 @@ def test_compile_and_validate_workflow(skill_dir):
             )
 
     # Verify topological wave sorting resolves without circular dependencies
-    runner = WorkflowRunner()
-    waves = runner._build_execution_waves(plan)
-    assert len(waves) > 0, (
-        f"Failed to resolve execution waves for workflow {skill_dir.name}"
-    )
+    from graphlib import TopologicalSorter
+    ts = TopologicalSorter()
+    for step in plan.steps:
+        ts.add(step.node_id, *step.depends_on)
+    ts.prepare()  # Raises CycleError if circular dependency exists
 
     # Verify mock registration in the knowledge graph
     reg_outcome = SkillCompiler.register_in_kg(None, skill_dir)
