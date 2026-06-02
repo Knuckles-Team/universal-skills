@@ -70,6 +70,11 @@ All `*.arpa` resolve to the **Caddy ingress at `10.0.0.13`** (wildcard `*.arpa` 
 that point directly at a host/macvlan IP are preserved: `adguard.arpa`/Technitium → 10.0.0.199,
 `home-assistant` → its macvlan IP, and per-node `dozzle*`/`container-manager-*` agent records.
 
+> **Troubleshooting:** see [`references/TROUBLESHOOTING.md`](references/TROUBLESHOOTING.md) — a
+> symptom→diagnosis→fix runbook for swarm quorum loss, manager re-IP / advertise-addr,
+> worker rejoin, DNS `.arpa` repointing, and the **caddy overlay VIP-corruption pitfall**
+> (do NOT change a live overlay's subnet in place).
+
 ## Failure-handling policy
 
 - **Missing upstream images** — several `*-mcp` services have no image in `registry.arpa` /
