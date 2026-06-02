@@ -1,12 +1,15 @@
 ---
 name: day0_bootstrap_orchestrator
 description: >
-  Day 0 Bootstrap & Multi-Service Wiring Orchestrator workflow to deploy, discover,
-  and integrate 19 enterprise homelab services across hybrid Swarm nodes starting
-  from a single server.
+  Day 0 (re)install orchestrator: agent-first unfolding of the homelab / Agent OS
+  from bare hosts to a fully wired Docker Swarm — SSH mesh, hardware-driven placement,
+  swarm + overlay networks + custom ingress, Caddy/Technitium edge, GitLab/Portainer
+  GitOps, tiered service deploy with missing-image tolerance and first-time canaries,
+  cross-service wiring, and Knowledge-Graph materialization. Idempotent and re-runnable.
 domain: infrastructure
 tags:
   - bootstrap
+  - day0
   - infrastructure
   - orchestration
   - swarm
@@ -28,162 +31,170 @@ requires:
 
 # Day 0 Bootstrap & Multi-Service Wiring Orchestrator
 
-This advanced workflow skill outlines the exact sequential phases and integration steps to automate a complete, top-down deployment and service wiring operation starting from a single Day 0 server.
+Agent-first, idempotent unfolding of the homelab from bare hosts to a fully wired
+Docker Swarm. This is the repeatable "day-0 (re)install" entrypoint for the Agent OS
+in `agent-utilities`: it consumes the Ansible inventory (`~/.config/agent-utilities/inventory.yaml`)
+and the `workspace.yml` service manifest, drives the convergence via MCP tools (preferring
+the MCP path, with a full-mesh RSA key fallback), and records the resulting topology in the
+Knowledge Graph.
 
-## 🚀 Architectural Vision: Top-Down Single-Click Integration
+## Verified topology (source of truth)
 
-```mermaid
-graph TD
-    subgraph "Layer 0: Host Discovery & Pre-flight"
-        A[SSH key Full-Mesh Bootstrap] --> B[Host OS & HW Discovery]
-        B --> C[Overlay Networks Provisioning]
-    end
+| Host | IP | Swarm role | Notes |
+|------|-----|-----------|-------|
+| R820 | 10.0.0.13 | **Manager** | Caddy ingress (host-mode 80/443), most MCP servers |
+| R710 | 10.0.0.11 | Worker | GitLab CE + registry, high-RAM JVM workloads |
+| R510 | 10.0.0.10 | Worker | storage/NAS, arr-stack, Immich DB |
+| RW710 | 10.0.0.12 | Worker | misc MCPs |
+| GR1080 | 10.0.0.16 | Worker | GPU (CUDA) workloads |
+| GB10 | 10.0.0.18 | Worker | Grace-Blackwell; vLLM |
 
-    subgraph "Layer 1: Edge Router & Authoritative DNS"
-        C --> D[Technitium DNS Server macvlan/static IP 10.0.0.199]
-        D --> E[Caddy Dynamic Ingress Router HTTP/HTTPS]
-    end
+> Placement is **hardware-determined** (Step 4), never hardcoded. The table is the
+> expected steady state; the planner may relocate services based on live capacity.
 
-    subgraph "Layer 2: Identity & Security Foundations"
-        E --> F[Keycloak SSO OIDC/SAML]
-        F --> G[OpenBao Secure Vault KV2 Engine]
-    end
+## Networking contract (matches `networks/compose.yml`)
 
-    subgraph "Layer 3: DevOps & GitOps Automation"
-        G --> H[GitLab Project & Repo Provisioning]
-        H --> I[Portainer GitOps Syncing with GitLab PATs]
-    end
+| Network | Subnet | Flags | Purpose |
+|---------|--------|-------|---------|
+| `internet` | 172.16.0.0/20 | overlay, attachable | outbound egress |
+| `caddy` | 172.16.16.0/20 | overlay, attachable, **internal** | service mesh behind ingress |
+| `vpn` | 172.16.32.0/20 | overlay, attachable, mtu 1380 | VPN-routed services |
+| `cloudflare` | 172.16.48.0/20 | overlay, attachable, **internal** | cloudflare connector |
+| `ingress` (custom) | 172.20.0.0/16 | overlay, `--ingress` | replaces Swarm's default ingress |
+| `adguard_vlan` | 10.0.0.0/8 | macvlan (`eno4`) | Technitium static IP 10.0.0.199 |
 
-    subgraph "Layer 4: Automated Services Provisioning"
-        I --> J[Launch 19 Services in Dependency Tiers]
-    end
+## DNS policy
 
-    subgraph "Layer 5: Unified Cross-Service Wiring"
-        J --> K1[DNS: Technitium Authoritative Records Mapping]
-        J --> K2[Proxy: Caddy Dynamic Overlay Routing]
-        J --> K3[SSO: Keycloak Clients Auto-Registration]
-        J --> K4[Observability: Loki/Prometheus Scraping & Langfuse OTEL Traces]
-        J --> K5[Backups: BorgBackup Database Dumps & Repository Sync]
-    end
+All `*.arpa` resolve to the **Caddy ingress at `10.0.0.13`** (wildcard `*.arpa` + explicit
+`portainer`), which routes by Host header via its static Caddyfile. Intentional exceptions
+that point directly at a host/macvlan IP are preserved: `adguard.arpa`/Technitium → 10.0.0.199,
+`home-assistant` → its macvlan IP, and per-node `dozzle*`/`container-manager-*` agent records.
 
-    subgraph "Layer 6: Knowledge Graph Materialization"
-        K1 & K2 & K3 & K4 & K5 --> L[Ingest Full Topology Snapshot into Graph-OS]
-    end
-```
+## Failure-handling policy
 
----
-
-## 🛠️ The 19 Integrated Services Matrix
-
-All 19 services will be systematically deployed, managed via Portainer Swarm stacks, backed up, and integrated into Keycloak SSO:
-
-| # | Service Name | Target Node | Role / Category | Primary Domain | Integration & Security |
-|---|---|---|---|---|---|
-| 1 | **Portainer CE** | `R710` (Swarm Mgr) | Container Orchestration UI | `portainer.arpa` | Dynamic DNS + Direct Auth |
-| 2 | **GitLab CE** | `RW710` (Swarm Worker)| Local Git / GitOps Repo | `gitlab.arpa` | Keycloak SSO + OpenBao Token Store |
-| 3 | **Technitium DNS**| `R710` (macvlan) | Authoritative Primary DNS | `adguard.arpa` (DNS VM) | Primary Recursive Resolver |
-| 4 | **Caddy Ingress** | `RW710` (Host Ports) | Reverse Proxy / SSL Ingress | Dynamic Routing | Self-Signed Internal TLS CA |
-| 5 | **Keycloak** | `RW710` | Identity Provider (SSO) | `keycloak.arpa` | OIDC / SAML Gateway |
-| 6 | **OpenBao** | `R710` | Key-Value Secret Storage | `openbao.arpa` | Vault-API for Env-Config injection |
-| 7 | **Twenty CRM** | `RW710` | Enterprise Customer CRM | `twenty.arpa` | Keycloak SSO + DB Persistent Vol |
-| 8 | **ERPNext** | `RW710` | ERP / Asset Management | `erpnext.arpa` | Keycloak SSO + MariaDB Cluster |
-| 9 | **Plane CE** | `RW710` | Agile Project Tracking | `plane.arpa` | Keycloak SSO + MinIO Object Store |
-| 10| **Mattermost** | `RW710` | Chat & Team Collaboration | `mattermost.arpa` | Keycloak SSO + DB State Persistent |
-| 11| **Uptime Kuma** | `RW710` | Heartbeat & Uptime Monitor | `uptime.arpa` | OAuth2-Proxy SSO + Metric Scraping |
-| 12| **Prometheus** | `RW710` (LGTM) | Metric Storage Backend | `prometheus.arpa` | NodeExporter / Cadvisor Targets |
-| 13| **Grafana** | `RW710` (LGTM) | Data Dashboards & UI | `grafana.arpa` | Keycloak SSO + Loki datasource |
-| 14| **BorgBackup** | `R820` (Storage Node)| Backup Repository | `borgbackup.arpa` | Borgmatic schedule + OpenBao encryption |
-| 15| **Faster Whisper**| `R820` (GPU Node) | AI Audio-to-Text Transcription | `whisper.arpa` | Core-Whisper HuggingFace Caching |
-| 16| **Firefly-III** | `R820` | Financial Management | `firefly.arpa` | Keycloak SSO + Ledger exports |
-| 17| **Netboot.xyz** | `R820` | PXE Network Installation | `netboot.arpa` | DHCP Option 66/67 Next-Server |
-| 18| **Ollama** | `GR1080` (AI Node) | Local LLM Engine (CUDA) | `ollama.arpa` | OpenTelemetry Tracer + Port 11434 |
-| 19| **XTTS** | `GR1080` (AI Node) | Coqui Voice Cloning Server | `xtts.arpa` | Dynamic Audio-API endpoint |
-| 20| **Reitti** | `R710` | Public Transport Router | `reitti.arpa` | Ingress Route Mapping |
+- **Missing upstream images** — several `*-mcp` services have no image in `registry.arpa` /
+  Docker Hub yet. Pre-scan each stack's `image:` for availability; **skip gracefully and add to
+  a deferred report** (service → missing image). Never abort a tier for a missing image.
+- **First-time / untested stacks** (`apache-jena`/Fuseki, `camunda`, `archimate`/Archi, `kafka`)
+  are deployed as **canaries**: deploy in isolation, gate on a health check (env/volumes/ports/
+  depends_on sanity + container healthy), and surface logs on failure rather than continuing blindly.
 
 ---
 
 ## Steps
 
 ### Step 1: ssh-bootstrap
-Verify connection parameters across inventory hosts. Establish passwordless full-mesh SSH key distribution:
-- Target hosts: `R510`, `R710`, `RW710`, `R820`, `GR1080`
+Verify connectivity across inventory hosts and establish passwordless **full-mesh** SSH keys
+(every host → every host) as an RSA fallback. Prefer MCP tool usage; the mesh is the safety net.
+- Target hosts: `R510`, `R710`, `RW710`, `R820`, `GR1080`, `GB10`
 - Requires: `tunnel-manager-mcp`, `systems-manager-mcp`
+- Expected: `mesh-reachable`
 
 ### Step 2: network-topology-sweep
 [depends_on: Step 1]
-Scan subnets, physical NIC interfaces, active subnets, and VLAN configuration profiles on reachable hosts:
+Scan subnets, NICs, active links, and VLAN profiles on reachable hosts (confirm `eno4` exists for the Technitium macvlan).
 - Requires: `tunnel-manager-mcp`, `systems-manager-mcp`
+- Expected: `topology-mapped`
 
 ### Step 3: hardware-profile-sweep
 [depends_on: Step 1]
-Discover CPU models, free physical RAM capacity, disk partitions, and active GPU/accelerator devices:
+Discover CPU models/cores, free RAM, disk partitions, and GPU/accelerator devices per host.
 - Requires: `systems-manager-mcp`, `tunnel-manager-mcp`
+- Expected: `hardware-profiled`
 
 ### Step 4: deployment-planner
 [depends_on: Step 2, Step 3]
-Run the **Deployment Planner** to determine optimal service placement across discovered hardware. Classifies services into operational tiers (T0-T6), scores candidate nodes using capacity/affinity/density heuristics, and generates a deterministic placement manifest:
-- Inputs: hardware profiles from Step 3, network topology from Step 2
-- Outputs: `golden-deployment.yaml` with node role assignments, service-to-node mappings, and migration plans
+Run the **Deployment Planner** to compute hardware-driven placement: classify services into tiers
+(T0–T6), score candidate nodes by capacity/affinity/density, and emit a deterministic manifest.
+Bind GPU→GR1080, storage/NAS→R510, JVM/RAM-heavy (`kafka`, `camunda`, `apache-jena`, `archimate`)→
+highest-free-RAM node, manager/edge (Caddy)→R820. This manifest drives node labels and compose constraints.
+- Inputs: hardware profiles (Step 3), topology (Step 2), `workspace.yml` service list
+- Outputs: `golden-deployment.yaml` (node roles, service→node map, network plan)
 - Requires: `systems-manager-mcp`, `tunnel-manager-mcp`, `container-manager-mcp`
+- Expected: `placement-manifest`
 
 ### Step 5: swarm-mesh-provisioner
 [depends_on: Step 4]
-Initialize Docker Swarm Mode on Manager (`R710`) and join the workers (`R510`, `RW710`, `R820`, `GR1080`). Provision global attachable Swarm Overlay network `overlay-net`:
+Converge the swarm + networks via the **Ansible bootstrap playbook** (`networks/bootstrap/swarm.yml`,
+driven by `inventory.yaml`; `-e reset_swarm=true` for a destructive clean rebuild) — idempotent and re-runnable:
+- `docker swarm init` on **R820 (10.0.0.13)**; join workers `R510`, `R710`, `RW710`, `GR1080`, `GB10`.
+- Remove Swarm's auto-created default ingress and create the **custom ingress** `172.20.0.0/16`.
+- Create overlay networks per the networking contract: `internet`, `caddy` (internal), `vpn` (mtu 1380), `cloudflare` (internal).
 - Requires: `container-manager-mcp`, `tunnel-manager-mcp`
+- Expected: `swarm-ready, networks-created`
 
-### Step 6: dns-record-manager
+### Step 6: node-labeling
 [depends_on: Step 5]
-Deploy primary authoritative **Technitium DNS** Server using a macvlan driver on `R710` (binding statically to IP `10.0.0.199`):
-- Requires: `technitium-dns-mcp`
+Apply `docker node update --label-add name=<HOST>` for every node (so `node.labels.name == ${SERVER}`
+constraints resolve), plus role labels from the planner (`gpu=true`, `storage=true`, `edge=true`, etc.).
+- Requires: `container-manager-mcp`, `tunnel-manager-mcp`
+- Expected: `nodes-labeled`
 
-### Step 7: portainer-sync-agent
+### Step 7: core-edge-deploy
 [depends_on: Step 6]
-Deploy **Portainer CE** on the Swarm manager. Configure administrative credentials and enable local Swarm endpoints:
-- Requires: `portainer-mcp`
+Bring up the bootstrap-critical core **in dependency order**, resolving the registry/GitLab chicken-and-egg
+(registry + GitLab must use a publicly pullable base for first boot):
+1. `registry` (so `registry.arpa/*` pulls resolve) → 2. `gitlab` (R710) → 3. `technitium-dns` (macvlan, static `10.0.0.199`) → 4. `caddy` (R820, host-mode 80/443) → 5. `portainer`.
+- Requires: `portainer-mcp`, `container-manager-mcp`, `technitium-dns-mcp`, `caddy-mcp`
+- Expected: `core-edge-up`
 
 ### Step 8: secret-vault-manager
 [depends_on: Step 7]
-Deploy security foundation stacks on Swarm nodes. Launch, initialize, and unseal **OpenBao Secure Vault**, mount KV2 engines, and configure **Keycloak Identity Provider**:
-- Requires: `openbao-mcp`
+Deploy, initialize, and unseal **OpenBao** (KV2 engine) and bring up **Keycloak** (OIDC/SAML).
+- Requires: `openbao-mcp`, `keycloak-mcp`
+- Expected: `vault-sso-up`
 
 ### Step 9: gitlab-repository-seeder
 [depends_on: Step 8]
-Deploy **GitLab CE** on Swarm. Auto-provision projects for all 19 target platforms, seed repositories with stack compose files, and generate scoped PATs:
+On GitLab CE, auto-provision projects from `workspace.yml`, seed stack compose files, and mint scoped PATs.
 - Requires: `gitlab-mcp`
+- Expected: `repos-seeded, pats-issued`
 
-### Step 10: portainer-sync-agent
+### Step 10: portainer-gitops-bind
 [depends_on: Step 9]
-Configure Portainer stack GitOps synchronizations. Bind application stacks to GitLab repositories using the generated Personal Access Tokens:
+Bind Portainer stacks to their GitLab repositories using the PATs (GitOps auto-sync).
 - Requires: `portainer-mcp`
+- Expected: `gitops-bound`
 
-### Step 11: portainer-sync-agent
+### Step 11: tiered-service-deploy
 [depends_on: Step 10]
-Concurrently provision all services using the placement manifest from Step 4. Deploy in dependency-tiered execution phases:
-- Tier 0: Critical Infrastructure (DNS, Caddy, VPN, Registry) → Gateway node
-- Tier 1: Core Platform (Portainer, GitLab, Keycloak, OpenBao, LGTM) → Compute leader + Gateway
-- Tier 2: Business Apps (Twenty CRM, ERPNext, Plane, Mattermost, Firefly-III) → App server
-- Tier 3: Lifestyle/Utility (Mealie, wger, Gramps, FreshRSS, Calibre) → Compute leader
-- Tier 4: AI/ML (Ollama, XTTS, Faster Whisper) → AI/GPU node
-- Tier 5: Agent MCP Servers (all stateless MCP containers) → Compute leader
-- Tier 6: Media/NAS-bound (arr-suite, Jellyfin, Immich) → NAS node
-- Requires: `portainer-mcp`
+Deploy all stacks per the placement manifest in dependency tiers (T0→T6), applying the failure-handling policy:
+**pre-scan each stack's `image:` for availability → skip+report missing-image `*-mcp` stacks; deploy first-time
+stacks (`apache-jena`/Fuseki, `camunda`, `archimate`, `kafka`) as health-gated canaries**.
+- T0 Critical edge (DNS, Caddy, VPN, registry) → already up (Step 7), verify
+- T1 Core platform (Portainer, GitLab, Keycloak, OpenBao, LGTM)
+- T2 Business apps (Twenty, ERPNext, Plane, Mattermost, Firefly, **Camunda**, **Archi**)
+- T3 Lifestyle/utility (Mealie, wger, Gramps, FreshRSS, Calibre, Reitti)
+- T4 AI/ML (vLLM→GB10, Ollama, XTTS, Faster-Whisper) → GPU nodes
+- T5 Agent MCP servers (stateless) — **tolerate missing images**
+- T6 Media/NAS-bound (arr-suite, Jellyfin, Immich) → R510
+- Data platform (**Kafka**, **Apache-Jena**/Fuseki) → highest-RAM node, canary-gated
+- Requires: `portainer-mcp`, `container-manager-mcp`
+- Expected: `services-deployed, deferred-report`
 
 ### Step 12: dns-record-manager
 [depends_on: Step 11]
-Synchronize authoritative zone records and routing configurations. Register A records in Technitium DNS for all `.arpa` domain names:
+Apply the DNS policy in Technitium: wildcard `*.arpa` → `10.0.0.13`, explicit `portainer` → `10.0.0.13`,
+preserve intentional direct records (`adguard`→.199, `home-assistant`, per-node agents). Verify resolution.
 - Requires: `technitium-dns-mcp`
+- Expected: `dns-synced`
 
-### Step 13: secret-vault-manager
+### Step 13: keycloak-oidc-wiring
 [depends_on: Step 12]
-Register OIDC single sign-on clients in Keycloak. Store secure environment credentials in OpenBao KV2:
-- Requires: `openbao-mcp`
+Register OIDC SSO clients in Keycloak for SSO-enabled services; store their secrets in OpenBao KV2.
+- Requires: `keycloak-mcp`, `openbao-mcp`
+- Expected: `sso-wired`
 
-### Step 14: systems-manager-mcp
+### Step 14: observability-and-backups
 [depends_on: Step 13]
-Deploy Loki/Prometheus scraping adapters and configure Borgmatic scheduled backups to target storage mounts:
+Wire Loki/Promtail + Prometheus scraping for all nodes/stacks and configure Borgmatic scheduled backups.
 - Requires: `systems-manager-mcp`
+- Expected: `observability-up, backups-scheduled`
 
 ### Step 15: graph-os
 [depends_on: Step 14]
-Materialize the full Day 0 topology snapshot in the Graph-OS Knowledge Graph, aligning with BFO-infrastructure classes:
+Materialize the full topology in the Knowledge Graph (`HostNode`, `ContainerStackNode`,
+`PlatformService`, network + placement edges), including the **deferred/skipped report** so missing-image
+services are tracked for later push+validation.
 - Requires: `graph-os`
+- Expected: `topology-ingested`
