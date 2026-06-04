@@ -42,10 +42,21 @@ fi
 HOSTS=$(echo "$HOSTS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
 [ -n "$HOSTS" ] || { echo "no hosts (use --hosts or --inventory)" >&2; exit 1; }
 
-if [ -z "$PASSWORD" ]; then
-  [ "$GENERATE" = 1 ] || { echo "provide --password or --generate" >&2; exit 1; }
+if [ -z "$PASSWORD" ] && [ "$GENERATE" = 1 ]; then
   PASSWORD=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
   echo "GENERATED password for '$USER_NAME': $PASSWORD"
+fi
+# No password supplied and not generating: prompt securely at the terminal (hidden input).
+# This keeps the secret out of shell history / process args / any transcript.
+if [ -z "$PASSWORD" ]; then
+  if [ -t 0 ]; then
+    read -r -s -p "New password for '$USER_NAME': " PASSWORD; echo
+    read -r -s -p "Confirm password: " PASSWORD2; echo
+    [ -n "$PASSWORD" ] || { echo "empty password" >&2; exit 1; }
+    [ "$PASSWORD" = "$PASSWORD2" ] || { echo "passwords do not match" >&2; exit 1; }
+  else
+    echo "provide --password or --generate, or run in a terminal to be prompted" >&2; exit 1
+  fi
 fi
 
 SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=8"
