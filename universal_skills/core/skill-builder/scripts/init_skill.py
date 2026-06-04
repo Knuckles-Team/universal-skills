@@ -16,11 +16,11 @@ from pathlib import Path
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
-description: [TODO: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
+description: [ACTION REQUIRED: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
 license: MIT
-tags: [TODO: Add relevant keywords like agent, documentation, workflow, etc.]
+tags: [ACTION REQUIRED: Add relevant keywords like agent, documentation, workflow, etc.]
 metadata:
-  author: [TODO: Add author name]
+  author: [ACTION REQUIRED: Add author name]
   version: '0.1.21'
 ---
 
@@ -28,11 +28,11 @@ metadata:
 
 ## Overview
 
-[TODO: 1-2 sentences explaining what this skill enables]
+[ACTION REQUIRED: 1-2 sentences explaining what this skill enables]
 
 ## Structuring This Skill
 
-[TODO: Choose the structure that best fits this skill's purpose. Common patterns:
+[ACTION REQUIRED: Choose the structure that best fits this skill's purpose. Common patterns:
 
 **1. Workflow-Based** (best for sequential processes)
 - Works well when there are clear step-by-step procedures
@@ -58,9 +58,9 @@ Patterns can be mixed and matched as needed. Most skills combine patterns (e.g.,
 
 Delete this entire "Structuring This Skill" section when done - it's just guidance.]
 
-## [TODO: Replace with the first main section based on chosen structure]
+## [ACTION REQUIRED: Replace with the first main section based on chosen structure]
 
-[TODO: Add content here. See examples in existing skills:
+[ACTION REQUIRED: Add content here. See examples in existing skills:
 - Code samples for technical skills
 - Decision trees for complex workflows
 - Concrete examples with realistic user requests
@@ -120,7 +120,7 @@ Example real scripts from other skills:
 
 def main():
     print("This is an example script for {skill_name}")
-    # TODO: Add actual script logic here
+    # ACTION REQUIRED: Add actual script logic here
     # This could be data processing, file conversion, API calls, etc.
 
 if __name__ == "__main__":

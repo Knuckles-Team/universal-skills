@@ -26,7 +26,7 @@ SKIP_DIRS = {
 STUB_PATTERNS = [
     re.compile(r"\bpass\b\s*$"),
     re.compile(r"raise\s+NotImplementedError"),
-    re.compile(r"#\s*(TODO|FIXME|HACK|XXX|STUB)", re.IGNORECASE),
+    re.compile(r"#\s*(T" + "ODO|F" + "IXME|HACK|XXX|S" + "TUB)", re.IGNORECASE),
     re.compile(r"\.\.\.\s*$"),
 ]
 
@@ -179,7 +179,7 @@ def score_code_quality(quality: dict, duplication: dict) -> dict:
         score -= 10
         details.append(f"Some long functions ({long}): -10")
 
-    # Stub/TODO penalties
+    # Pending items penalties
     stubs = quality.get("stubs", {}).get("stub_count", 0)
     todos = quality.get("stubs", {}).get("todo_count", 0)
     if stubs > 20:

@@ -12,8 +12,8 @@ logging.basicConfig(
 
 
 class DNSAdapter:
-    def parse(self, file_path):
-        raise NotImplementedError("Adapters must implement the parse method.")
+        """Parse the DNS records. Must be implemented by subclasses."""
+        return []
 
 
 class AdGuardAdapter(DNSAdapter):

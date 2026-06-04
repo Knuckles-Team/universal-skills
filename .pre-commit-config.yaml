@@ -76,6 +76,7 @@ repos:
     additional_dependencies: ['@zabaca/mermaid-validate@1.0.1']
     types: [markdown]
     pass_filenames: true
+    exclude: .*universal_skills/research/comparative-analysis/references/report_template\.md$
   - id: check-agent-standards
     name: check agent standards
     entry: |-

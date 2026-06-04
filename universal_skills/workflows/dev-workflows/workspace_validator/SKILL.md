@@ -26,7 +26,7 @@ Clarify with the user if they only want to validate and fix issues, or if they a
 Expected: run_parameters
 
 ### Step 1: repository-manager-mcp
-Submit validation using the `rm_projects` tool with `action="validate"` and `type="all"`, storing the reports in `/home/apps/workspace/reports`.
+Submit validation using the `rm_projects` tool with `action="validate"`. If the user requested a phased bump and phased push, pass `auto_bump=true`, `auto_push=true`, and the requested `bump_part` parameter. This ensures the ecosystem will automatically bump and publish on the very first run if 0 issues are found. Store the reports in `/home/apps/workspace/reports`.
 Expected: job_id
 Depends On: Step 0
 

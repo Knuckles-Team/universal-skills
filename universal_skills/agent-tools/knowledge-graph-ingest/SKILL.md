@@ -118,3 +118,70 @@ agent_utilities/knowledge_graph/ontology.ttl
 agent_utilities/knowledge_graph/ontology_infrastructure.ttl
 agent_utilities/workflows/catalog.yaml
 ```
+
+---
+
+## 8. Unified Ingestion Engine — category → `graph_ingest` matrix (KG-2.7/2.8)
+
+All content enters through ONE `IngestionEngine` (`graph_ingest` is a thin MCP
+wrapper). Set `content_type` to route a path/sentinel synchronously; otherwise
+it auto-classifies. Delta-skip (durable manifest) means re-ingesting unchanged
+sources is a no-op.
+
+| Category | content_type | target_path | Produces |
+|---|---|---|---|
+| LLM/embedding config | `config` | `config.json` | `LanguageModel`/`EmbeddingModel`/`SystemConfig` |
+| Prompts | `prompt` | `agent_utilities/prompts/*.json` | `Prompt` + `Concept` (MENTIONS) |
+| MCP servers | `mcp_server` | `mcp_config.json` | `Server` + `NativeTool` (PROVIDES) w/ tool descriptions |
+| Skills | `skill` | a skill dir (`SKILL.md` frontmatter) | `Skill` |
+| Documents | `document` | a file or dir (md/pdf/txt) | `Document` + `Concept` (MENTIONS) |
+| Specs | (auto in codebase) | `**/.specify/**` | `Spec`/`ImplementationPlan` |
+| Chats | `conversation` | `"chats"` sentinel | `Thread`/`Message` + per-thread `Concept` |
+| Codebases | `codebase` | a repo path | `Code`/`Test`/`Feature` (CALLS/IMPLEMENTS/COVERS) |
+
+## Verification queries (read-only; supported shapes only)
+
+```cypher
+-- per-category node counts
+MATCH (n:Concept) RETURN count(n)
+-- cross-category interweaving (chats/docs share Concept nodes)
+MATCH (t:Thread)-[r:MENTIONS]->(c:Concept) RETURN count(r)
+MATCH (s:Document)-[:MENTIONS]->(c:Concept) RETURN count(DISTINCT c)
+-- OWL edges present: PROVIDES, IMPLEMENTS, CALLS, CONTAINS, MENTIONS, ADDRESSES
+```
+
+NOTE: the L1 epistemic interpreter cannot traverse relationships — relationship
+`MATCH (a:L1)-[:R]->(b:L2)` reads are routed to L3 (pggraph `kg_edges`) by the
+TieredGraphBackend. **Negation (`WHERE NOT (c)-[:R]->()`) is NOT transpiled** —
+compute set-differences in code (see `topic_resolver.unresolved_topics`).
+
+## OWL cross-category relationship expectations
+
+`MENTIONS` (chats/docs→Concept), `RELATES_TO`/`REALIZES` (Concept→Code, via the
+embedding-backed `link_concepts_to_code` once embeddings are backfilled),
+`PROVIDES` (Server→NativeTool), `CONTAINS` (Thread→Message), `IMPLEMENTS`/`CALLS`
+/`DEPENDS_ON` (Code), `ADDRESSES`/`ADDRESSED_BY` (research source→topic).
+
+## Orchestration + self-evolution recipe
+
+```text
+# regular prompt through the pydantic-ai graph (dynamic model+prompt selection)
+graph_orchestrate(action="execute_agent", agent_name="<agent>", task="...")
+# skill-workflow
+graph_orchestrate(action="execute_workflow", agent_name="<workflow>", task="...")
+# propose-only self-evolution golden loop (intake→acquire→ADDRESSES→synthesize)
+graph_orchestrate(action="golden_loop", max_fan_out=5)
+```
+
+See the companion **`autonomous-research-loop`** skill for the golden loop.
+
+## Performance & robustness (KG-2.8 optimization pass)
+
+Bulk ingest is bounded/throttled via `KG_BULK_INGEST=1` (keeps queue drainers,
+skips analytical daemons). Hardened hot paths: O(1) id-keyed upserts + `count(n)`
+fast-path + single-round-trip full-scan in the epistemic backend; `os.walk`
+skip-dir pruning for the delta-hash; bounded LLM `timeout`/retries; concurrent
+chat concept extraction (`KG_CHAT_CONCURRENCY`); a dedicated embedding-backfill
+daemon thread (`KG_EMBED_BACKFILL`) so vector features have substrate. The KG
+runs ONE consolidated daemon (`KG_DAEMON_ROLE` host/client/auto) hosted by the
+gateway / `graph-os-daemon`.

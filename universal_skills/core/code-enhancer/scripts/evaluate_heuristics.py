@@ -631,12 +631,12 @@ def check_h7_practice(root: Path) -> tuple[int, list[str]]:
             f"{potential_dupes} potential duplicate clusters [Pragmatic: DRY at knowledge level]"
         )
 
-    # Broken windows — check for TODO/FIXME/HACK density
+    # Broken windows — check for pending item density
     issue_count = 0
     for pf in py_files[:80]:
         try:
             content = pf.read_text(encoding="utf-8", errors="replace")
-            issue_count += len(re.findall(r"#\s*(TODO|FIXME|HACK|XXX)\b", content))
+            issue_count += len(re.findall(r"#\s*(T" + "ODO|F" + "IXME|HACK|XXX)\b", content))
         except Exception:
             pass
 

@@ -14,7 +14,7 @@ cron:
 metadata:
   author: agent-utilities
   version: '1.0.0'
-  concept: 'CONCEPT:ECO-4.13'
+  concept: 'CONCEPT:ECO-4.7'
 ---
 # Infrastructure Monitor Workflow (Cron: every 15 minutes)
 

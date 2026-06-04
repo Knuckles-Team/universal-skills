@@ -331,16 +331,64 @@ def main():
     results = []
 
     if args.kg_enabled:
-        # TODO: Query KG for all ingested items when integrated with engine
-        print(
-            json.dumps(
-                {
-                    "error": "KG mode requires running via MCP (kg_analyze action='relevance_sweep'). "
-                    "Use filesystem mode with explicit paths instead.",
-                }
+        try:
+            from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+            from agent_utilities.core.paths import kg_db_path
+            import networkx as nx
+
+            engine = IntelligenceGraphEngine(
+                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
             )
-        )
-        sys.exit(1)
+
+            # Query all items (Codebases, Articles, Documents) from KG
+            nodes = engine.query_cypher(
+                "MATCH (n) WHERE labels(n)[0] IN ['Codebase', 'Article', 'Document'] "
+                "RETURN labels(n)[0] AS label, n.id AS id, n.name AS name, n.path AS path, "
+                "n.keywords AS keywords, n.patterns AS patterns, n.modules AS modules, n.content AS content"
+            )
+
+            if not nodes:
+                print(json.dumps({"error": "No Codebase or Article items found in Knowledge Graph."}))
+                sys.exit(1)
+
+            for row in nodes:
+                label = row.get("label", "")
+                item_type = "paper" if label in ("Article", "Document") else "codebase"
+
+                def _parse_list_prop(val):
+                    if isinstance(val, list): return val
+                    if isinstance(val, str):
+                        try: return json.loads(val)
+                        except: return []
+                    return []
+
+                content = row.get("content", "")
+                content_sample = content[:500] if isinstance(content, str) else ""
+
+                item_profile = {
+                    "name": row.get("name") or row.get("id", "unknown"),
+                    "path": row.get("path") or row.get("id", "unknown"),
+                    "type": item_type,
+                    "keywords": _parse_list_prop(row.get("keywords")),
+                    "patterns": _parse_list_prop(row.get("patterns")),
+                    "modules": _parse_list_prop(row.get("modules")),
+                    "content_sample": content_sample,
+                    "is_research": item_type == "paper"
+                }
+
+                scores = score_item(target_profile, item_profile)
+                results.append(
+                    {
+                        "id": item_profile["name"],
+                        "type": item_profile["type"],
+                        "path": item_profile["path"],
+                        **scores,
+                    }
+                )
+
+        except Exception as e:
+            print(json.dumps({"error": f"Failed to query Knowledge Graph: {e}"}))
+            sys.exit(1)
     else:
         for item_path in args.items:
             p = Path(item_path)

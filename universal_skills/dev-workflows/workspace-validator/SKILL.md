@@ -58,23 +58,44 @@ error: Workspace member `/path/to/broken-project` is missing a `pyproject.toml`
 
 ### Phase 2: Parallel Validation
 3. For the **first run**, submit validation using the `rm_projects` MCP tool with `action="validate"`. Do NOT pass the `repositories` parameter on the first run — validate all projects.
-4. The tool now runs asynchronously in the background and immediately returns a job submission confirmation.
-5. **Poll for Progress:** Call the `rm_projects` tool with `action="validate_status"`. The tool returns an enriched JSON object containing:
-   - `running_projects`: Array of repository names still being validated.
-   - `failed_projects_csv`: A comma-separated string of repositories that failed validation (perfect for re-feeding into `validate`).
-   - `jobs`: Array of job detail objects (each containing `repo_name`, `status`, and `summary`).
-6. **Analyze the Return:** As soon as a job finishes, if it failed, its `summary.failures` will contain the exact hook failure messages. You can use the `failed_projects_csv` field to immediately identify failures and use `jq` on the tool's raw output file to extract the exact hook failures for those projects without waiting for the entire sweep to finish!
-7. **Monitor:** Continue polling `validate_status` (with reasonable intervals) until `running_projects` is empty.
+4. The tool runs asynchronously and immediately returns a **terse submission** (`queued_count` + `queued_projects`) — not a giant id map.
+5. **Poll for Progress (terse by default):** Call `rm_projects` with `action="validate_status"`. It returns a COMPACT roll-up (`summary=true` is the default) so it stays inline-returnable even at **thousands of repos**:
+   - `summary`: `{total, completed, running, failed, passed}` counts.
+   - `running_projects`: names still validating.
+   - `failed_projects_csv`: comma-separated failures.
+   - `failed_details`: `{repo: {job_id, failures:[...]}}` — exact hook failure messages for ONLY the failed repos.
+   - (Pass `summary=false` for the full per-job `jobs` dict — avoid at scale; it can exceed the response limit and spill to a file.)
+6. **Analyze the Return:** Use `failed_details[repo].failures` for the exact hook output to fix; `failed_projects_csv` is the failure set.
+7. **Monitor:** Continue polling `validate_status` (reasonable intervals) until `summary.running == 0`.
 
 ### Phase 3: Remediation Loop
 You will enter a continuous loop of fixing issues based on the JSON hook outputs.
 
 8. **Manual Fixes:** For any remaining issues (e.g. static analysis, failing tests), follow the **Error Resolution Policy** above strictly. Fix issues concurrently across different projects.
-9. **Re-Validate Specific Projects:** After applying fixes to specific repositories, call `rm_projects(action="validate", repositories="repo1,repo2")` targeting ONLY the projects you fixed or that previously failed.
-10. Review the new structured JSON. If there are still failures, repeat from step 8. Continue this loop until the target repositories pass.
+9. **Re-Validate ONLY the failures:** After applying fixes, call `rm_projects(action="validate", failed_only=true)`. This auto-targets exactly the repos whose most-recent validation failed (and forces past the cache) — do NOT re-run the whole workspace during remediation. (You may instead pass `repositories="repo1,repo2"` to target a specific subset.) A repo that now passes drops out of the failed set automatically.
+10. Poll `validate_status` (summary). If `summary.failed > 0`, repeat from step 8 on the new `failed_projects_csv`. Continue until `failed == 0`.
 
 ### Phase 4: Final Regression Sweep & Release
-11. When the targeted validation shows 0 errors, run validation against ALL repositories one last time. If the user confirmed in Phase 1 that they want to bump and push, you can cascade this final run into a release by calling `rm_projects` with `action="validate"`, `auto_bump=true`, and `auto_push=true`. Do not pass the `repositories` parameter.
+11. **Ecosystem-wide clean gate:** Once `failed_only` reruns reach 0 failures, run ONE final validation against **ALL** repositories (no `repositories`, no `failed_only`, `force_revalidate=true`) so the entire dependency graph is verified green together — fixing one repo can regress a dependent. If the user confirmed bump+push in Phase 1, cascade this final all-repos run into the release by adding `auto_bump=true` and `auto_push=true`.
 12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
 13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
 14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
+
+## Scaling to thousands of repositories
+
+The validator is built to scale; keep these in mind for very large workspaces:
+
+- **Always poll with the default terse `summary=true`.** The full per-job dump
+  grows linearly with repo count and will exceed the response limit (spilling to
+  a file) past a few hundred repos. The terse roll-up (counts + `failed_details`
+  + `failed_projects_csv`) stays small regardless of workspace size.
+- **Remediation re-runs use `failed_only=true`, never the whole workspace.** This
+  keeps each loop O(failures), not O(repos). Only the FINAL gate validates all.
+- **Tune concurrency with `RM_MAX_WORKERS`** (env on the repository-manager MCP
+  server). Default is ~40% of cores, bounded [4, 64]; raise it on big hosts.
+  Each validation runs pre-commit + pytest, so it's CPU/IO-heavy.
+- **Validation is cached** (`force_revalidate=false` default): unchanged repos
+  return cached results instantly, so repeated full sweeps are cheap. Use
+  `force_revalidate=true` only for the failed set and the final gate.
+- **Topological release stays phase-ordered** (`agent-utilities` → dependents) so
+  PyPI dependencies publish before the projects that consume them.
