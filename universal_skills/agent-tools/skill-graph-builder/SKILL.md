@@ -8,7 +8,7 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   author: Genius
-  version: '0.38.0'
+  version: '0.39.0'
 ---
 # Skill-Graph-Builder (Docs-to-Skill Transformation)
 

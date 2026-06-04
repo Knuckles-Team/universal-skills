@@ -11,7 +11,7 @@ license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
   author: Genius
-  version: '0.38.0'
+  version: '0.39.0'
 ---
 
 # Comparative Analysis

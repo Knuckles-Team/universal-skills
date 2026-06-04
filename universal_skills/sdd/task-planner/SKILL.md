@@ -5,7 +5,7 @@ license: MIT
 tags: [planner, sdd]
 metadata:
   author: Genius
-  version: '0.38.0'
+  version: '0.39.0'
 ---
 
 You are the Task Planner agent in a Spec-Driven Development workflow.
