@@ -17,6 +17,23 @@ metadata:
 
 Create MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. The quality of an MCP server is measured by how well it enables LLMs to accomplish real-world tasks.
 
+> [!IMPORTANT]
+> **The MCP layer is a THIN shim over a complete API client.** Tools live in
+> `{pkg_dir}/mcp/mcp_{domain}.py` as `register_{domain}_tools(mcp)` and should only:
+> parse args → call the matching `api/api_client_{domain}.py` method (via `auth.get_client()`)
+> → return the result. Put no business logic, HTTP, or auth in the tool body. If a tool
+> needs behavior the client lacks, add the method to the API client first (see the
+> `api-client-builder` skill — wrap the whole API, no stubs). Use the
+> `action` + `params_json` + `pydantic.Field(...)` dispatch pattern so one tool covers a
+> domain's verbs.
+>
+> **Packaging/CI is not optional.** Before considering the server done, confirm the repo
+> follows the packaging standard in the `agent-package-builder` skill ("Critical packaging
+> requirements") — explicit `[tool.setuptools.packages.find]`, consistent
+> repo==dist==package naming, a `docker/starship.toml` that exists, optional+lazy native
+> deps, `main` branch, and GitHub Pages enabled. Those six items are the exact things that
+> red the pipeline while the code imports fine locally.
+
 ---
 
 # Process

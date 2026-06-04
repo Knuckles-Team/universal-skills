@@ -37,6 +37,18 @@ All API clients MUST use the `api/` subdirectory pattern (the monolithic `api_cl
 
 Review the provided API documentation (OpenAPI JSON/YAML, developer guides). Identify endpoints, authentication methods, request parameters, and response schemas. Determine if the API supports GraphQL (create both REST + GraphQL clients if so).
 
+> [!IMPORTANT]
+> **Wrap the WHOLE API — no stubs.** These repos exist to fully wrap their service's
+> API; the MCP layer is a thin shim on top. A `class DomainClient: pass` placeholder is
+> not acceptable (the jena/kafka/camunda/archi rebuilds replaced exactly such stubs).
+> Enumerate every endpoint group the service exposes and implement a method for each —
+> e.g. Apache Jena Fuseki = SPARQL query/update + Graph Store Protocol + the `/$/` admin
+> API (datasets, stats, tasks, backup, compact); Kafka REST Proxy = clusters/topics/
+> partitions/records/consumer-groups/brokers/ACLs. Coverage is auditable via
+> `scripts/verify_api_integration.py`; a near-zero score means the wrapper is a stub.
+> Keep heavy/native client libraries (e.g. `confluent-kafka`) as **optional extras** and
+> import them lazily so the wheel build never depends on a C toolchain.
+
 ### 2. Formulate Pydantic Models
 
 Create `{pkg_dir}/models.py`:

@@ -99,6 +99,63 @@ Generate the complete directory tree. The standard project structure is:
         └── IDENTITY.md
 ```
 
+#### Critical packaging requirements (these prevent real CI failures)
+
+These were the exact causes of build/publish failures in the jena/kafka/camunda/archi
+rebuilds. Bake them into every scaffold — a package that omits them looks fine locally
+but reds the pipeline:
+
+1. **`pyproject.toml` MUST declare explicit package discovery.** Without it, setuptools'
+   flat-layout auto-discovery fails with
+   `error: Multiple top-level packages discovered in a flat-layout: ['docker', 'prompts', '{pkg_dir}']`
+   because the repo has sibling dirs (`docker/`, `prompts/`, `docs/`, `scripts/`, `tests/`).
+   Always include:
+   ```toml
+   [build-system]
+   requires = [ "setuptools>=80.9.0", "wheel",]
+   build-backend = "setuptools.build_meta"
+
+   [tool.setuptools]
+   include-package-data = true
+
+   [tool.setuptools.package-data]
+   {pkg_dir} = [ "mcp_config.json", "agent_data/**",]
+
+   [tool.setuptools.packages.find]
+   where = [ ".",]
+   ```
+
+2. **Naming MUST be consistent across all three identifiers — no deviations.**
+   repo name (kebab) == distribution `name` (kebab) == package dir (snake_case).
+   e.g. repo `jena-mcp` → `name = "jena-mcp"` → package `jena_mcp/`.
+   NOT `apache-jena-mcp`/`apache_jena_mcp`; NOT `archimate_mcp` for repo `archi-mcp`.
+   Console scripts: `{repo} = "{pkg_dir}.mcp_server:mcp_server"` and
+   `{repo-base}-agent = "{pkg_dir}.agent_server:agent_server"`.
+
+3. **The Dockerfile must copy an existing `docker/starship.toml`.** The standard
+   Dockerfile does `COPY docker/starship.toml /root/.config/starship.toml`; if the file
+   is missing the build dies with
+   `failed to compute cache key: "/docker/starship.toml": not found`.
+   Scaffold the file (copy an existing one) — never reference a file you did not create.
+
+4. **Heavy / native-compiled deps MUST be optional extras + lazy-imported.** Libraries
+   with C/build requirements (`confluent-kafka`/librdkafka, `rdkafka`, openblas) break
+   manylinux/Windows wheel builds if placed in core `dependencies`. Put them under
+   `[project.optional-dependencies]` (e.g. `native = ["confluent-kafka>=2.3.0"]`) and
+   `import` them *inside* the function with `try/except ImportError` raising a clear
+   "install `{repo}[native]`" message. Core deps stay `agent-utilities` (+ `requests`
+   for HTTP API wrappers).
+
+5. **New GitHub repos:** default branch must be `main` (not `master`); enable GitHub
+   Pages with `build_type=workflow`
+   (`POST /repos/{owner}/{repo}/pages -d '{"build_type":"workflow"}'`) or the `pages.yml`
+   deploy fails with `Get Pages site failed ... HttpError: Not Found`. `.gitignore` must
+   exclude `build/ dist/ *.egg-info/ .pytest_cache/ .ruff_cache/ .mypy_cache/`.
+
+6. **CI image name:** the reusable `container_pipeline.yml` builds
+   `${DOCKER_USERNAME}/${repo-name}` (matches the `*-mcp` Portainer stack image refs).
+   Do not rely on a `DOCKER_REPOSITORY` secret.
+
 ### Step 3: api-client [depends_on: scaffold-tree]
 
 Read the `api-client-builder` skill and follow its instructions to:
