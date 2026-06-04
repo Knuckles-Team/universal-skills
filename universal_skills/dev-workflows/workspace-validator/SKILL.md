@@ -77,6 +77,7 @@ You will enter a continuous loop of fixing issues based on the JSON hook outputs
 
 ### Phase 4: Final Regression Sweep & Release
 11. **Ecosystem-wide clean gate:** Once `failed_only` reruns reach 0 failures, run ONE final validation against **ALL** repositories (no `repositories`, no `failed_only`, `force_revalidate=true`) so the entire dependency graph is verified green together — fixing one repo can regress a dependent. If the user confirmed bump+push in Phase 1, cascade this final all-repos run into the release by adding `auto_bump=true` and `auto_push=true`.
+    - **Committing feature code (not just version bumps):** when uncommitted/new feature code is in the working tree, add `commit_code=true` + `commit_message="..."`. The backend then runs a concurrent **stage (`git add -A`) → pre-commit → commit** pass across all targeted repos AFTER validation passes and BEFORE the bump, so untracked/new files are committed (the bump and push no longer rely on a tracked-only `git add -u` safety net). The bump waits on this step. This is the tool-driven equivalent of "add all of our code, pre-commit, then bump." Standalone equivalents exist as `rm_git(action="pre_commit")` and `rm_git(action="commit_code", message=...)`.
 12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
 13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
 14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
@@ -92,8 +93,10 @@ The validator is built to scale; keep these in mind for very large workspaces:
 - **Remediation re-runs use `failed_only=true`, never the whole workspace.** This
   keeps each loop O(failures), not O(repos). Only the FINAL gate validates all.
 - **Tune concurrency with `RM_MAX_WORKERS`** (env on the repository-manager MCP
-  server). Default is ~40% of cores, bounded [4, 64]; raise it on big hosts.
-  Each validation runs pre-commit + pytest, so it's CPU/IO-heavy.
+  server). Default caps the worker pool at **min(20% CPU, 20% RAM)** of the host
+  (env-tunable: `RM_CPU_FRACTION`, `RM_RAM_FRACTION`, `RM_WORKER_MEM_GB`); set
+  `RM_MAX_WORKERS` to override outright. Each validation runs pre-commit + pytest,
+  so it's CPU/IO-heavy. The same throttle governs the `commit_code` pass.
 - **Validation is cached** (`force_revalidate=false` default): unchanged repos
   return cached results instantly, so repeated full sweeps are cheap. Use
   `force_revalidate=true` only for the failed set and the final gate.
