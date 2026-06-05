@@ -14,7 +14,13 @@ metadata:
 ---
 # Skill Installer Skill
 
-This skill allows you to "install" the universal skills by copying them into the dedicated skill folders of various agent tools.
+This skill allows you to "install" the universal skills into the dedicated skill folders of various
+agent tools — by **copy** (default) or by **symlink** (`--symlink`).
+
+> **Prefer `--symlink`.** It links each skill to the installed `universal_skills` package instead of
+> copying, so there are no duplicate files on disk and every skill auto-updates on
+> `pip install -U universal-skills` (no stale copy to re-sync). It falls back to a copy if the
+> filesystem refuses symlinks. This is the pattern the bundled skills already use.
 
 ## Supported Tools
 
@@ -40,7 +46,15 @@ pip install skill-graphs
 - `--tool`: The target tool to install into (windsurf, claude, openclaw, opencode, antigravity, or a custom path).
 - `--skills`: (Optional) Comma-separated list of skill names to install. Defaults to all.
 - `--force`: (Optional) Overwrite existing skills.
+- `--symlink` / `--link`: (Optional, **recommended**) Symlink skills to the installed package instead
+  of copying — no duplicate files; auto-updates on `pip install -U`. Idempotent (an already-correct
+  symlink is left untouched). Falls back to copy if symlinks are unavailable.
 - `--install-skill-graphs`: (Optional) Also install skill-graphs from the skill-graphs repository.
+
+```bash
+# symlink all skills into Claude Code (recommended)
+python install.py --tool claude --symlink
+```
 
 #### Examples
 ```bash

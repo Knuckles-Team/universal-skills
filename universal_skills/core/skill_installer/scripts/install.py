@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import shutil
 import sys
 import logging
@@ -102,14 +103,31 @@ def get_workspace_root() -> Optional[Path]:
     return current
 
 
+def _remove_dest(skill_dst: Path) -> None:
+    """Remove an existing destination, whether it's a symlink, file, or directory."""
+    if skill_dst.is_symlink() or skill_dst.is_file():
+        skill_dst.unlink()
+    elif skill_dst.is_dir():
+        shutil.rmtree(skill_dst)
+
+
 def install_skills(
     target_path: Path,
     skill_names: Optional[List[str]] = None,
     group: Optional[str] = None,
     force: bool = False,
     include_graphs: bool = False,
+    symlink: bool = False,
 ):
-    """Copies skills to the target path."""
+    """Install skills to the target path by copy (default) or symlink.
+
+    When ``symlink=True``, each skill is symlinked to its source in the installed
+    ``universal_skills`` package instead of copied. This avoids duplicating files on disk and means
+    the installed skills track the package automatically on every ``pip install -U`` — there is no
+    stale copy to re-sync. Falls back to a copy if the filesystem refuses the symlink (e.g. Windows
+    without privileges). This is the same pattern the bundled skills already use (e.g. the
+    ``code-enhancer`` skill is a symlink into this package).
+    """
     if not target_path.exists():
         logger.info(f"Creating target directory: {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
@@ -131,22 +149,44 @@ def install_skills(
         else:
             skill_dst = target_path / skill_src.name
 
+        src_abs = skill_src.resolve()
+
+        # Idempotent: an already-correct symlink needs no work (even without --force).
+        if (
+            symlink
+            and skill_dst.is_symlink()
+            and skill_dst.resolve() == src_abs
+        ):
+            logger.info(f"{skill_src.name} already symlinked → up to date.")
+            continue
+
         if skill_dst.exists() and not force:
             logger.info(
                 f"Skipping {skill_src.name} (already exists). Use --force to overwrite."
             )
             continue
 
-        logger.info(f"Installing {skill_src.name} to {skill_dst}...")
+        verb = "Symlinking" if symlink else "Installing"
+        logger.info(f"{verb} {skill_src.name} to {skill_dst}...")
         try:
-            if skill_dst.exists():
-                shutil.rmtree(skill_dst)
-            shutil.copytree(skill_src, skill_dst)
+            if skill_dst.exists() or skill_dst.is_symlink():
+                _remove_dest(skill_dst)
+            if symlink:
+                try:
+                    os.symlink(src_abs, skill_dst, target_is_directory=True)
+                except OSError as link_err:
+                    logger.warning(
+                        f"Symlink unavailable for {skill_src.name} ({link_err}); copying instead."
+                    )
+                    shutil.copytree(src_abs, skill_dst)
+            else:
+                shutil.copytree(src_abs, skill_dst)
             installed_count += 1
         except Exception as e:
             logger.error(f"Failed to install {skill_src.name}: {e}")
 
-    logger.info(f"Successfully installed {installed_count} items.")
+    mode = "symlinked" if symlink else "installed"
+    logger.info(f"Successfully {mode} {installed_count} items.")
     return True
 
 
@@ -172,6 +212,15 @@ def main():
     )
     parser.add_argument(
         "--force", action="store_true", help="Overwrite existing skills"
+    )
+    parser.add_argument(
+        "--symlink",
+        "--link",
+        action="store_true",
+        help=(
+            "Symlink skills to the installed universal_skills package instead of copying. "
+            "No duplicate files; skills auto-update on every 'pip install -U universal-skills'."
+        ),
     )
     parser.add_argument(
         "--install-skill-graphs",
@@ -201,7 +250,12 @@ def main():
     skill_names = args.skills.split(",") if args.skills else None
 
     install_skills(
-        target, skill_names, args.group, args.force, args.install_skill_graphs
+        target,
+        skill_names,
+        args.group,
+        args.force,
+        args.install_skill_graphs,
+        symlink=args.symlink,
     )
 
 
