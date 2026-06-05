@@ -41,6 +41,7 @@ ANALYZER_SCRIPTS = [
     "evaluate_heuristics.py",
     "analyze_architecture.py",
     "analyze_version_sync.py",
+    "analyze_opportunities.py",
 ]
 # Scripts that expose their own --self-test.
 SELFTEST_SCRIPTS = ["enhance_repo.py", "kg_ingest_run.py", "kg_query_runs.py"]

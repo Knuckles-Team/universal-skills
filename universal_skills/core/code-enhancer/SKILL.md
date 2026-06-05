@@ -61,6 +61,8 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 27. **CONCEPT ID Parity** — Verify that every project has a `docs/concepts.md` with a unique prefix, cross-reference CONCEPT IDs in docs against code annotations, detect orphaned or undocumented concepts, and verify no prefix collisions across the ecosystem.
 28. **Environment Variable Standardization Audit** — Check `auth.py` files across all agents for non-standard env var naming patterns (e.g., `_VERIFY` vs `_SSL_VERIFY`, `_BASE_URL` vs `_URL`, `_INSTANCE` vs `_URL`). Flag duplicates within the same project and deviations from the ecosystem standard.
 
+29. **Intent & Opportunity Discovery** — Infer the codebase's intent (README/docs/entrypoints) and surface value-add opportunities in three tiers: low-hanging fruit (capabilities built but not exposed/wired), implied-but-missing (partial CRUD lifecycles, stubs), and net-new intent-aligned features. Answers *what could this become?*, not just *what's broken?*
+
 ## Grading System
 
 All domains are scored 0–100 using standardized criteria:
@@ -175,6 +177,7 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `scripts/kg_ingest_run.py` — KG-native ingest of a run into graph-os via the MCP (CE-032)
 - `scripts/kg_query_runs.py` — Cross-repo + bi-temporal queries over runs (CE-034)
 - `scripts/selftest.py` — Toolchain self-test harness; smoke-runs every analyzer (CE-033)
+- `scripts/analyze_opportunities.py` — **Intent & Opportunity Discovery**: infers codebase intent, surfaces low-hanging-fruit / implied-missing / net-new value-adds (CE-035)
 - `scripts/detect_language.py` — Language ecosystem detection (CE-018)
 - `scripts/analyze_project.py` — Project structure and pattern analysis (FR-001)
 - `scripts/audit_dependencies.py` — PyPI dependency audit with version comparison (FR-002)
