@@ -75,6 +75,37 @@ All domains are scored 0–100 using standardized criteria:
 
 Every grade includes a justification with specific file paths and evidence citations.
 
+## Headless & KG-Native Operation (60-repo scale)
+
+For batch/CI use across many repositories, prefer the headless driver over running the 11 agent
+steps by hand:
+
+```bash
+# 1. Validate the toolchain before a batch (smoke-runs every analyzer on a fixture)
+python scripts/selftest.py                       # exits non-zero if any script is broken
+
+# 2. Analyze ONE repo headlessly — language-gated, per-domain timeout + fault isolation,
+#    incremental JSON written as each domain completes (CE-031)
+python scripts/enhance_repo.py /path/to/repo --out reports/ --kg
+
+# 3. Ingest the run into graph-os via the MCP (best-effort; skips cleanly with no endpoint) (CE-032)
+GRAPH_OS_MCP_URL=http://localhost:8000 python scripts/kg_ingest_run.py reports/repo.enhance.json
+
+# 4. Cross-repo + bi-temporal questions the KG answers but a filesystem tool can't (CE-034)
+python scripts/kg_query_runs.py list                          # the cross-repo Cypher library
+python scripts/kg_query_runs.py query regressions            # via graph-os MCP
+python scripts/kg_query_runs.py deltas --current reports/ --prior reports_prev/   # offline diff
+```
+
+- **`enhance_repo.py`** is the per-repo unit; `run_multi_project.py` fans it out across repos with
+  `-c` concurrency. Domains not applicable to the detected primary language are skipped (a Python
+  dependency audit does not run on a Rust repo).
+- **KG-native** ingest/query talk to the **graph-os MCP server over HTTP**, never via a direct
+  `import agent_utilities.*` (that hard dependency previously broke the KG step). Each run is
+  time-stamped so the KG's bi-temporal layer surfaces per-repo score deltas over time.
+- Every new script supports `--self-test`; `selftest.py` aggregates them plus a fixture run of every
+  analyzer.
+
 ## Steps
 
 ### Step 1: detect_language
@@ -139,6 +170,11 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 ## Bundled Resources
 
 ### Scripts
+- `scripts/enhance_repo.py` — **Headless single-repo driver**: runs all applicable domains for one
+  repo, language-gated, per-domain timeout + fault isolation, incremental output (CE-031)
+- `scripts/kg_ingest_run.py` — KG-native ingest of a run into graph-os via the MCP (CE-032)
+- `scripts/kg_query_runs.py` — Cross-repo + bi-temporal queries over runs (CE-034)
+- `scripts/selftest.py` — Toolchain self-test harness; smoke-runs every analyzer (CE-033)
 - `scripts/detect_language.py` — Language ecosystem detection (CE-018)
 - `scripts/analyze_project.py` — Project structure and pattern analysis (FR-001)
 - `scripts/audit_dependencies.py` — PyPI dependency audit with version comparison (FR-002)
