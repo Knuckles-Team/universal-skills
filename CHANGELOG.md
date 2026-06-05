@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`research/comparative-analysis` — Lightweight Mode + CA→SDD inner loop.** Optimized the skill
+  for repeated code-vs-code innovation extraction. New **Innovation Ledger** artifact bridges
+  comparative analysis to SDD, plus six self-testing scripts: `pin_source.py` (CA-017, source
+  pin/incremental/cache), `verify_claims.py` (CA-013, marketing-vs-code gate), `parse_concept_registry.py`
+  (CA-012, offline Extend-Before-Invent), `score_recommendations.py` (CA-015, leverage/effort/risk +
+  build order + success-metric enforcement), `ledger_to_sdd.py` (CA-014, scaffolds `.specify/`
+  design/spec/tasks), and `check_wiring.py` (CA-016, runnable ≤3-hop import-graph wiring audit). Added
+  `references/innovation_ledger_schema.md` and `references/exploration_return_schema.md`; SKILL.md gains
+  a Mode Selection section (Lightweight default vs Deep/KG), an enforced pre-flight, and mode-conditional
+  steps. The pipeline is `pin → explore→ledger → verify → score → scaffold-SDD → wiring-audit`.
+
+### Fixed
+- `research/comparative-analysis/scripts/check_wiring.py` — **plugin-registration awareness**: a module nothing imports directly but that self-registers via a decorator/registry (`@adaptor`, `register_source`, entry-points, `pkgutil` discovery) is no longer false-flagged as a Wire-First violation (`registered_via_plugin` in the result). Surfaced while auditing self-registering enrichment extractors.
+- `research/comparative-analysis/scripts/check_wiring.py` — normalize ledger `target_module`
+  paths (repo-root relative, e.g. `pkg/sub/mod.py`) by stripping the `--package` prefix so they
+  match the `--root`-relative import-graph keys. Surfaced while dogfooding the memory-os analysis.
 - `dev-workflows/diagnose` skill for structured debugging loops.
 - `integration/issue-triage` skill for triaging GitHub issues via state machine.
 - `system/zoom-out` skill for meta-level architectural reviews.

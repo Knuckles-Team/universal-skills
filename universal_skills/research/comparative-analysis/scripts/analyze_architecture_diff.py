@@ -21,7 +21,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from analyze_architecture import (  # noqa: E402
     analyze_design_patterns,
-    analyze_module_structure,
     detect_protocols,
     discover_c4_architecture,
     identify_hot_paths,
@@ -165,7 +164,7 @@ def identify_wiring_opportunities(
                     "pattern": pattern,
                     "action": f"Consider adopting {pattern} pattern ({diff['source']}x in source)",
                     "priority": "medium",
-                    "wiring_hint": f"Source examples: see analyze_design_patterns output",
+                    "wiring_hint": "Source examples: see analyze_design_patterns output",
                 }
             )
 

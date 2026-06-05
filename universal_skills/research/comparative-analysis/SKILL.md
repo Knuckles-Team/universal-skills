@@ -34,7 +34,62 @@ This skill operates in **4 modes** depending on the inputs:
 
 ## Workflow
 
-### Phase -1: KG-Native Discovery & Analysis (Preferred)
+### Mode Selection (do this first)
+
+Pick the mode before anything else — they have different default step sets (G8):
+
+| Mode | When | Engine | Heavy maturity steps? |
+|------|------|--------|------------------------|
+| **Lightweight** (default for code-vs-code feature extraction) | Extracting innovations from a focused OSS repo/paper to feed SDD | Agent exploration + the CA scripts; **no live KG required** | Skipped unless asked |
+| **Deep** | Recurring/large corpora, or when the `agent-utilities-kg` MCP server is up and inputs are ingested | KG MCP tools (Phase -1) | Optional |
+
+**Lightweight Mode is the fast inner loop** and the common case. It does not need the KG to be
+running, and it does not run the 11-step maturity audit (governance/bus-factor/SemVer/container
+weight are irrelevant to feature extraction). It is a 6-stage pipeline built around the
+**Innovation Ledger** — the machine-usable bridge to SDD:
+
+```
+pin → explore(→ledger rows) → verify-claims → score → scaffold-SDD → wiring-audit
+```
+
+1. **Pin the source** (reproducibility, G4/G11):
+   ```bash
+   python scripts/pin_source.py --source-root /path/to/clone            # records repo@sha
+   python scripts/pin_source.py --check --repo owner/name --commit <sha> # skip if cached
+   ```
+2. **Explore → ledger rows** (G7): fan out Explore sub-agents; each returns a JSON array of
+   **Innovation Ledger rows** (`references/exploration_return_schema.md`), not prose. Merge by
+   `id`/`source_ref`. The ledger row schema is `references/innovation_ledger_schema.md`.
+3. **Verify claims** against the actual code (G2 — marketing vs. code):
+   ```bash
+   python scripts/verify_claims.py --ledger ledger.json --source-root /path/to/clone --out verified.json
+   ```
+   Stamps each row `verified | claimed-only | refuted`. For the top-N high-leverage rows, also run
+   an **adversarial LLM refutation** pass (a second agent tries to disprove the claim) before trusting it.
+4. **Map concepts offline + score** (G1/G5/G6):
+   ```bash
+   # Extend-Before-Invent without a live KG — prefer the clean docs/concept_map.md over concepts.yaml:
+   python scripts/parse_concept_registry.py --registry <target>/docs/concept_map.md --query "<feature>" --json
+   python scripts/score_recommendations.py --ledger verified.json --strict --out scored.json
+   ```
+   `--strict` fails if any verified row lacks a **success metric** (G6) or violates Wire-First.
+5. **Scaffold SDD** straight from the ledger (G3 — removes the manual design-doc grind):
+   ```bash
+   python scripts/ledger_to_sdd.py --ledger scored.json --target /path/to/target_project
+   ```
+   Writes `.specify/design|specs/<id>/{design,spec,tasks}.md` pre-filled with provenance, KG-analysis
+   table, C4, data flow, wiring, and success metric.
+6. **Wiring audit** after implementation (G10 — runnable, replaces the manual checklist):
+   ```bash
+   python scripts/check_wiring.py --root <target>/<pkg> --package <pkg> \
+     --entry-points mcp/server.py,server/app.py,cli.py --ledger scored.json --max-hops 3
+   ```
+
+Switch to **Deep Mode** (Phase -1 below) when the KG is the source of truth or the corpus is large
+enough to amortize ingestion. The two modes share the same Innovation Ledger artifact, so you can
+start Lightweight and promote to Deep without rework.
+
+### Phase -1: KG-Native Discovery & Analysis (Deep Mode)
 
 The Knowledge Graph (via the `agent-utilities-kg` MCP server) is the **primary source of truth**.
 The KG backend provides **native layered analysis** — use MCP tools first, scripts second.
@@ -147,13 +202,18 @@ embedded metadata for downstream analysis scripts.
 
 ## Steps
 
-### Step 1: pre_flight_config
-Before starting any comparative analysis, gather the following configuration from the user. Ask if not explicitly stated:
+### Step 1: pre_flight_config (ENFORCED — G9)
+Before any analysis, resolve this checklist. Use `AskUserQuestion` for anything not stated; do not
+proceed past this step with an unanswered item (record each answer so the run is auditable):
 1. **Primary Project**: Which codebase is the primary target for enhancement?
-2. **Knowledge Graph Available?**: Is the `agent-utilities-kg` MCP server running?
-3. **Concept Registry?**: Does the project have a concept map (e.g., `docs/concept_map.md` with `CONCEPT:ID` tags)?
-4. **Architecture Docs?**: Does the project have C4 architecture diagrams?
-5. **Analysis Depth**: Full analysis or focused analysis?
+2. **Mode**: Lightweight (default, code-vs-code) or Deep (KG)? — see Mode Selection above.
+3. **Knowledge Graph Available?**: Is the `agent-utilities-kg` MCP server running? (If No → Lightweight.)
+4. **Concept Registry?**: Path to `docs/concept_map.md` / `docs/concepts.yaml` for offline Extend-Before-Invent (`parse_concept_registry.py`). Prefer `concept_map.md` (clean names).
+5. **Architecture Docs?**: Does the project have C4 architecture diagrams?
+6. **Analysis Depth & Output**: Full vs focused; where does the Innovation Ledger + SDD land?
+
+The mandatory artifact of this skill is the **Innovation Ledger** (`references/innovation_ledger_schema.md`).
+Every recommendation MUST become a verified, scored ledger row before it is scaffolded into SDD.
 
 ### Step 2: discovery_classification [depends_on: pre_flight_config]
 Classify inputs (codebase vs research), detect language ecosystems, clone Git URLs if provided into a temporary folder, and rank all comparison items by their potential value to the primary target codebase (0-100 composite ranking):
@@ -318,7 +378,19 @@ research paper scoring dimensions and innovation extraction scoring.
 - `scripts/concept_cross_reference.py` — CA-011: Concept-seeded cross-reference engine
 - `scripts/generate_comparison_report.py` — CA-009: Unified report with radar charts
 
+**Lightweight-Mode inner loop (the fast CA→SDD pipeline):**
+- `scripts/pin_source.py` — CA-017: Source pinning (repo@sha), incremental diff vs prior ledger, analysis cache (`~/.scholarx/analysis/`)
+- `scripts/verify_claims.py` — CA-013: Source-claim verification (verified | claimed-only | refuted) — marketing-vs-code gate
+- `scripts/parse_concept_registry.py` — CA-012: Offline Extend-Before-Invent matcher over `concepts.yaml` / `concept_map.md` (no KG)
+- `scripts/score_recommendations.py` — CA-015: Prioritize by leverage/(effort+risk), build-order topo-sort, enforce success metrics (G6)
+- `scripts/ledger_to_sdd.py` — CA-014: Scaffold `.specify/design|specs/<id>/{design,spec,tasks}.md` from the Innovation Ledger
+- `scripts/check_wiring.py` — CA-016: Runnable Wiring Audit — entry-point→target reachability ≤3 hops via the import graph (+ plugin/decorator self-registration detection so self-registering modules aren't false-flagged)
+
+Every CA script supports `--self-test` for a dependency-free smoke check.
+
 ### References
+- `references/innovation_ledger_schema.md` — **The Innovation Ledger row schema** (the CA→SDD bridge artifact)
+- `references/exploration_return_schema.md` — JSON return shape for exploration sub-agents (deterministic merge)
 - `references/grading_rubric.md` — Scoring criteria for all domains and modes
 - `references/industry_frameworks.md` — CHAOSS, DORA, OWASP, 12-Factor, SOLID, ISO 25010
 - `references/license_compatibility.md` — OSI/SPDX compatibility matrix and risk tiers

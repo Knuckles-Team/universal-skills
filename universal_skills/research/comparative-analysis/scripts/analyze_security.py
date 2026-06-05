@@ -6,7 +6,6 @@ Usage: python analyze_security.py /path/to/project
 CONCEPT:CA-005 — Security & Compliance
 """
 
-import ast
 import json
 import re
 import sys

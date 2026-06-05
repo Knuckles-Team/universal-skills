@@ -171,7 +171,7 @@ def score_architecture(
         details.append(f"Multi-protocol ({proto_count}): +20")
     elif proto_count >= 1:
         score += 10
-        details.append(f"Single protocol: +10")
+        details.append("Single protocol: +10")
 
     # Type system (25 points)
     cov = types.get("coverage_pct", 0)

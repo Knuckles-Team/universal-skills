@@ -162,7 +162,7 @@ def generate_report(
 
     # Build report
     report = []
-    report.append(f"# Comparative Analysis Report")
+    report.append("# Comparative Analysis Report")
     report.append(f"\n**Date**: {now}")
     report.append(f"**Projects Analyzed**: {len(project_names)}")
     report.append(f"**Projects**: {', '.join(project_names)}")
