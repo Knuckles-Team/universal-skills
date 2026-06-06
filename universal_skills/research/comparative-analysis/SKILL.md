@@ -202,8 +202,8 @@ embedded metadata for downstream analysis scripts.
 
 ## Steps
 
-### Step 1: pre_flight_config (ENFORCED — G9)
-Before any analysis, resolve this checklist. Use `AskUserQuestion` for anything not stated; do not
+### Step 1: pre_flight_config
+**(ENFORCED — G9)** Before any analysis, resolve this checklist. Use `AskUserQuestion` for anything not stated; do not
 proceed past this step with an unanswered item (record each answer so the run is auditable):
 1. **Primary Project**: Which codebase is the primary target for enhancement?
 2. **Mode**: Lightweight (default, code-vs-code) or Deep (KG)? — see Mode Selection above.
