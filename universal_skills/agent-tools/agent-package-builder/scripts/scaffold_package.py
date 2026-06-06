@@ -206,15 +206,23 @@ ENV HOST=${{HOST}} \\
     PATH="/root/.local/bin:/usr/local/bin:${{PATH}}" \\
     UV_HTTP_TIMEOUT=3600 \\
     UV_SYSTEM_PYTHON=1 \\
-    UV_COMPILE_BYTECODE=1
+    UV_COMPILE_BYTECODE=1 \\
+    UV_LINK_MODE=copy
 
-RUN apt-get update \\
+# uv cache is mounted (not baked into a layer) so wheels are reused across
+# builds; UV_LINK_MODE=copy avoids the per-file reflink probe/fallback that is
+# slow on overlayfs (the "os error 95" spam). Dropped --no-cache (it defeated
+# the mount) and --verbose (log noise). Pairs with registry layer cache in
+# container_pipeline.yml — together they keep cold builds well under the GitHub
+# Actions cache token's ~1h lifetime.
+RUN --mount=type=cache,target=/root/.cache/uv \\
+    apt-get update \\
     && apt-get install -y default-jre ripgrep tree fd-find curl nano \\
     && curl -LsSf https://astral.sh/uv/install.sh | sh \\
     && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
     && mkdir -p /root/.config \\
     && echo 'eval "$(starship init bash)"' >> /root/.bashrc \\
-    && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
+    && uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
 
 COPY starship.toml /root/.config/starship.toml
 
