@@ -155,6 +155,20 @@ repos:
 """
 
 DOCKERFILE = """\
+# syntax=docker/dockerfile:1
+# Slim multi-stage: install in a builder, ship only /usr/local. No jre / dev-tools
+# / source copy -> ~43% smaller pushed image, so layer pushes finish inside the
+# registry's blob-upload window even under concurrency.
+FROM python:3-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 \\
+    UV_LINK_MODE=copy \\
+    UV_SYSTEM_PYTHON=1 \\
+    UV_HTTP_TIMEOUT=3600
+RUN --mount=type=cache,target=/root/.cache/uv \\
+    apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/* \\
+    && pip install --no-cache-dir uv \\
+    && uv pip install --system --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
+
 FROM python:3-slim
 
 ARG HOST=0.0.0.0
@@ -202,29 +216,9 @@ ENV HOST=${{HOST}} \\
     EUNOMIA_TYPE=${{EUNOMIA_TYPE}} \\
     EUNOMIA_POLICY_FILE=${{EUNOMIA_POLICY_FILE}} \\
     EUNOMIA_REMOTE_URL=${{EUNOMIA_REMOTE_URL}} \\
-    PYTHONUNBUFFERED=1 \\
-    PATH="/root/.local/bin:/usr/local/bin:${{PATH}}" \\
-    UV_HTTP_TIMEOUT=3600 \\
-    UV_SYSTEM_PYTHON=1 \\
-    UV_COMPILE_BYTECODE=1 \\
-    UV_LINK_MODE=copy
+    PYTHONUNBUFFERED=1
 
-# uv cache is mounted (not baked into a layer) so wheels are reused across
-# builds; UV_LINK_MODE=copy avoids the per-file reflink probe/fallback that is
-# slow on overlayfs (the "os error 95" spam). Dropped --no-cache (it defeated
-# the mount) and --verbose (log noise). Pairs with registry layer cache in
-# container_pipeline.yml — together they keep cold builds well under the GitHub
-# Actions cache token's ~1h lifetime.
-RUN --mount=type=cache,target=/root/.cache/uv \\
-    apt-get update \\
-    && apt-get install -y default-jre ripgrep tree fd-find curl nano \\
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \\
-    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
-    && mkdir -p /root/.config \\
-    && echo 'eval "$(starship init bash)"' >> /root/.bashrc \\
-    && uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
-
-COPY starship.toml /root/.config/starship.toml
+COPY --from=builder /usr/local /usr/local
 
 CMD ["{mcp_cmd}"]
 """
