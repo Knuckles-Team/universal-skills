@@ -10,7 +10,7 @@ license: MIT
 tags: [agent, agents.md, documentation, ai-optimization, mcp, architecture]
 metadata:
   author: Genius
-  version: '0.42.0'
+  version: '0.42.1'
 ---
 
 # AGENTS.md Generator
