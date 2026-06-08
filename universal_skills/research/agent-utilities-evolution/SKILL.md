@@ -95,6 +95,37 @@ The evolution pipeline runs as a background daemon (`KG-Evolution-Daemon`) in th
 The daemon is enabled by default and can be configured via `KG_EVOLUTION_INTERVAL`
 environment variable (seconds, default: 3600).
 
+## Graph-Native Assimilation Engine (CONCEPT:KG-2.7)
+
+The comparative-analysis → plan-generation work is now a **graph-compute pipeline**
+(`agent_utilities/knowledge_graph/assimilation/`), not per-source LLM reading. After
+sources are ingested, run the assimilation pass — directly or via MCP:
+
+```
+graph_orchestrate(action="assimilate")                 # dedup → gap → synergy → rank
+graph_orchestrate(action="assimilate", task="synthesize")  # + propose grounded SDD plans
+graph_orchestrate(action="assimilate", task="force")       # ignore the idempotency watermark
+```
+
+Stages (all graph operations, LLM only at plan synthesis):
+1. **dedup** — collapse the same capability across paper/library/our-code → `SIMILAR_TO` + `SUPERSEDES`.
+2. **gap** (`auto_satisfy`) — match features vs our `Concept`s → `SATISFIED_BY`; `open_features()` excludes anything already built (the "stop rediscovering" filter).
+3. **synergy** — cross-pillar community detection → `HAS_SYNERGY_WITH` bundles.
+4. **rank** — leverage = `source_count × (1+centrality)`.
+5. **plan synthesis** — grounded SDD proposals from each top gap's KG neighborhood.
+
+**Idempotency:** a per-cycle **state watermark** ((id, status, content_hash) of feature/source
+nodes) skips the pass when nothing changed; ingest is content-addressed (`canonical_source_id`
+collapses arxiv/DOI/URL/path duplicates; `content_fingerprint` per-item skip). Cost grows with the
+*delta*, not the *corpus*. On implementation, `ledger.close_out` writes
+`DERIVED_FROM_RESEARCH` + `ASSIMILATED_INTO` so the feature is permanently excluded.
+
+**Multi-source:** ingest docs (PRD/BRD/SOW/tasks → `Requirement`) and chat/SDD (→ `Decision`) via
+`assimilation.ingest`, alongside papers, OSS libraries, and our ~62 repos — all into one graph.
+
+The background daemon (golden-loop tick) runs this pass each cycle automatically. See
+`.specify/specs/ecosystem-evolution/PHASE0_IMPLEMENTATION_PLAN.md`.
+
 ## Execution Steps
 
 ### Step 1: Topic Detection (KG-First)
