@@ -134,10 +134,37 @@ sources is a no-op.
 | Prompts | `prompt` | `agent_utilities/prompts/*.json` | `Prompt` + `Concept` (MENTIONS) |
 | MCP servers | `mcp_server` | `mcp_config.json` | `Server` + `NativeTool` (PROVIDES) w/ tool descriptions |
 | Skills | `skill` | a skill dir (`SKILL.md` frontmatter) | `Skill` |
-| Documents | `document` | a file or dir (md/pdf/txt) | `Document` + `Concept` (MENTIONS) |
+| Documents | `document` | a file, dir, or URL (md/pdf/txt) | `Document{content}` + verbatim `IdeaBlock` chunks (`PART_OF`) + `Concept` (MENTIONS) — same shape regardless of submission form (KG-2.7) |
 | Specs | (auto in codebase) | `**/.specify/**` | `Spec`/`ImplementationPlan` |
 | Chats | `conversation` | `"chats"` sentinel | `Thread`/`Message` + per-thread `Concept` |
 | Codebases | `codebase` | a repo path | `Code`/`Test`/`Feature` (CALLS/IMPLEMENTS/COVERS) |
+
+## 9. Skill-graph packages — distill OUT / import back (KG-2.7 / AHE-3.9)
+
+The KG is the source of truth; a **skill-graph is a versioned, round-trippable
+projection of a KG subgraph**. Two symmetric `graph_ingest` actions:
+
+- **Distill (export):** `graph_ingest(action="distill", target_path="<out dir>",
+  corpus_name="<seed node id>"  OR  description="<semantic query>", max_depth=2)`.
+  Walks a coherent subgraph → a `reference/` markdown tree + `kg_manifest.json`
+  (node ids, edges, ontology, snapshot). The output dir is consumable verbatim by
+  `skill-graph-builder` (`generate_skill.py --from-kg "<seed-or-query>"`), which
+  also surfaces the manifest in the SKILL.md frontmatter (`kg_manifest`,
+  `kg_snapshot`, `kg_anchors`). Community detection → folders; edges → TOC nesting
+  + inline cross-links; a `Document` and its chunks are de-duplicated to one file.
+  Pass `content_type="workflow"` to instead distill a **graph-native
+  skill-workflow** — a procedure step-DAG where `PRECEDES` edges become
+  `depends_on` ordering (validatable by `skill-workflow-builder`).
+- **Import (round-trip):** `graph_ingest(action="import_pack",
+  target_path="<skill-graph dir>", corpus_name="dedup")`. Reads `kg_manifest.json`
+  and reconstructs the subgraph here — preserving original node ids + edges — so a
+  curated package merges into another brain. `corpus_name="dedup"` runs the
+  IdeaBlock dedup-merge so two packages on the same topic converge instead of
+  duplicating.
+
+Route a fresh crawl straight in with `crawl.py --ingest-kg` or
+`generate_skill.py --ingest-kg` (standardized document ingestion), then distill a
+clean, curated, shareable package from the KG.
 
 ## Verification queries (read-only; supported shapes only)
 

@@ -107,6 +107,61 @@ def render_toc(tree: dict, indent: int = 0) -> list[str]:
     return lines
 
 
+def _distill_from_kg(
+    selector: str, skill_name: str, max_depth: int
+) -> tuple[Path | None, Path | None]:
+    """Distill a KG subgraph into a temp reference/ tree via the agent-utilities
+    distiller CLI (decoupled process-boundary shell-out). Returns
+    ``(reference_dir, manifest_path)`` or ``(None, None)`` on failure.
+
+    ``selector`` is treated as a seed node id when it looks like ``ns:id``
+    (a colon, no spaces), otherwise as a natural-language semantic query.
+    """
+    import subprocess
+    import sys
+    import tempfile
+
+    tmp = Path(tempfile.mkdtemp(prefix="kgdistill_"))
+    # A node id never contains whitespace; a natural-language query does. So treat
+    # a whitespace-free selector as a seed node id (works without an embedding
+    # model), and anything with spaces as a semantic query.
+    is_seed = not any(ch.isspace() for ch in selector.strip())
+    cmd = [
+        sys.executable,
+        "-m",
+        "agent_utilities.knowledge_graph.distillation.skill_graph_distiller",
+        "--seed" if is_seed else "--query",
+        selector,
+        "--depth",
+        str(max_depth),
+        "--out-dir",
+        str(tmp),
+    ]
+    mode = "seed" if is_seed else "query"
+    print(f"🧠 Distilling skill-graph from the Knowledge Graph ({mode}: {selector})…")
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
+    except FileNotFoundError:
+        print("   ⚠️  Distiller unavailable: agent-utilities not importable.")
+        return None, None
+    except Exception as e:  # noqa: BLE001
+        print(f"   ⚠️  Distiller errored: {e}")
+        return None, None
+    if proc.returncode != 0:
+        print(
+            "   ⚠️  Distiller failed (is the graph daemon running?):\n"
+            f"{(proc.stderr or proc.stdout or '').strip()[:1500]}"
+        )
+        return None, None
+    ref = tmp / "reference"
+    manifest = tmp / "kg_manifest.json"
+    n = len(list(ref.rglob("*.md"))) if ref.exists() else 0
+    print(f"   ✅ Distilled {n} reference file(s) from the KG.")
+    return (ref if ref.exists() else None), (
+        manifest if manifest.exists() else None
+    )
+
+
 def generate_skill(
     source_input: str,
     skill_name: str,
@@ -120,6 +175,8 @@ def generate_skill(
     wait_for: str | None = None,
     no_sitemap: bool = False,
     append: bool = False,
+    ingest_kg: bool = False,
+    from_kg: str | None = None,
 ):
     # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
@@ -158,7 +215,7 @@ def generate_skill(
 
     reference_dir = target_skill_dir / "reference"
 
-    sources = [s.strip() for s in source_input.split(",")]
+    sources = [s.strip() for s in (source_input or "").split(",") if s.strip()]
     source_urls = []
 
     # Create fresh target
@@ -169,6 +226,16 @@ def generate_skill(
         reference_dir.mkdir(parents=True, exist_ok=True)
     else:
         reference_dir.mkdir(parents=True, exist_ok=True)
+
+    # KG-native source: distill a coherent subgraph out of the Knowledge Graph
+    # into a temp reference/ tree (+ kg_manifest.json), then feed it through the
+    # SAME local-directory pipeline below. The KG becomes the source of truth and
+    # the skill-graph a versioned, round-trippable projection of it (CONCEPT:KG-2.7).
+    kg_manifest_path: Path | None = None
+    if from_kg:
+        kg_tmp, kg_manifest_path = _distill_from_kg(from_kg, skill_name, max_depth)
+        if kg_tmp is not None:
+            sources.append(str(kg_tmp))  # merged as a local directory source
 
     crawl_urls = []
     local_sources = []
@@ -522,6 +589,19 @@ def generate_skill(
     toc_lines = render_toc(doc_tree)
     md_count = len(list(reference_dir.rglob("*.md")))
 
+    # If distilled from the KG, ship the provenance manifest alongside the docs
+    # so the package is round-trippable (another KG can re-ingest + dedup-merge).
+    kg_meta = None
+    if kg_manifest_path and kg_manifest_path.exists():
+        try:
+            import json as _json
+
+            shutil.copyfile(kg_manifest_path, target_skill_dir / "kg_manifest.json")
+            with open(kg_manifest_path, encoding="utf-8") as mf:
+                kg_meta = _json.load(mf)
+        except Exception:
+            kg_meta = None
+
     # --- Write polished SKILL.md ---
     skill_md_path = target_skill_dir / "SKILL.md"
     with open(skill_md_path, "w", encoding="utf-8") as f:
@@ -533,6 +613,16 @@ def generate_skill(
             f.write(f"source_url: {', '.join(source_urls)}\n")
         f.write("categories: [Documentation, Knowledge Base, Reference]\n")
         f.write(f"tags: [docs, reference, {skill_name}, knowledge-base]\n")
+        if kg_meta:
+            # Provenance for a KG-distilled skill-graph (CONCEPT:KG-2.7).
+            f.write("kg_manifest: kg_manifest.json\n")
+            f.write(f"kg_ontology: {kg_meta.get('ontology', 'agent-utilities')}\n")
+            if kg_meta.get("snapshot_ts"):
+                f.write(f"kg_snapshot: {kg_meta['snapshot_ts']}\n")
+            anchors = kg_meta.get("anchors") or []
+            if anchors:
+                rendered = ", ".join(repr(a) for a in anchors)
+                f.write(f"kg_anchors: [{rendered}]\n")
         f.write("---\n\n")
 
         f.write(
@@ -572,6 +662,39 @@ def generate_skill(
     )
     print(f"   📊 {md_count} documentation files • Hierarchical TOC ready")
 
+    # Optional: route the assembled reference/ docs into the Knowledge Graph so the
+    # KG becomes the canonical, distillable source of truth (CONCEPT:KG-2.7). The
+    # final merged + de-duplicated reference dir is ingested ONCE (not the per-URL
+    # crawl temp dirs). Decoupled process-boundary shell-out; best-effort.
+    if ingest_kg and md_count > 0:
+        import subprocess
+        import sys
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "agent_utilities.knowledge_graph.ingestion",
+            str(reference_dir),
+            "--content-type",
+            "document",
+        ]
+        print(f"🧠 Routing {md_count} docs into the Knowledge Graph for distillation…")
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
+            if proc.returncode == 0:
+                print("   ✅ Knowledge Graph ingestion complete.")
+            else:
+                print(
+                    "   ⚠️  KG ingestion failed (is agent-utilities installed and the "
+                    f"graph daemon running?):\n{(proc.stderr or proc.stdout or '').strip()[:1500]}"
+                )
+        except FileNotFoundError:
+            print(
+                "   ⚠️  KG ingestion skipped: agent-utilities not importable in this env."
+            )
+        except Exception as e:  # noqa: BLE001
+            print(f"   ⚠️  KG ingestion errored: {e}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -579,7 +702,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "source",
-        help="Comma-separated list of markdown directories or starting URLs.",
+        nargs="?",
+        default="",
+        help="Comma-separated list of markdown directories or starting URLs. "
+        "Optional when --from-kg is given.",
     )
     parser.add_argument(
         "skill_name", help="Name of the skill (kebab-case recommended)."
@@ -632,8 +758,28 @@ if __name__ == "__main__":
         action="store_true",
         help="Append to existing reference files instead of wiping them.",
     )
+    parser.add_argument(
+        "--ingest-kg",
+        "--ingest_kg",
+        action="store_true",
+        help="After building, route the reference docs into the Knowledge Graph "
+        "(standardized ingestion) so the skill-graph can later be distilled FROM "
+        "the KG. Requires agent-utilities + a running graph daemon.",
+    )
+    parser.add_argument(
+        "--from-kg",
+        "--from_kg",
+        type=str,
+        default=None,
+        metavar="SEED_OR_QUERY",
+        help="Distill the skill-graph FROM the Knowledge Graph instead of (or in "
+        "addition to) crawling: a seed node id (e.g. 'concept:servicenow') or a "
+        "natural-language query. Emits a kg_manifest.json provenance record.",
+    )
 
     args = parser.parse_args()
+    if not args.source and not args.from_kg:
+        parser.error("provide a source (URL/dir) or --from-kg <seed-or-query>")
     generate_skill(
         args.source,
         args.skill_name,
@@ -647,4 +793,6 @@ if __name__ == "__main__":
         args.wait_for,
         args.no_sitemap,
         args.append,
+        args.ingest_kg,
+        args.from_kg,
     )

@@ -545,6 +545,14 @@ async def main():
         type=str,
         help="Custom CSS selector or JS expression to wait for.",
     )
+    parser.add_argument(
+        "--ingest-kg",
+        "--ingest_kg",
+        action="store_true",
+        help="After crawling, route the output directory into the Knowledge Graph "
+        "via the standardized ingestion engine (so it can be distilled back into "
+        "skill-graphs). Requires agent-utilities + a running graph daemon.",
+    )
 
     args = parser.parse_args()
 
@@ -798,6 +806,46 @@ async def main():
 
     if args.output_dir:
         cleanup_filenames(args.output_dir)
+
+    # Optional: route the freshly-crawled markdown into the Knowledge Graph so it
+    # becomes the canonical, distillable source of truth (CONCEPT:KG-2.7). Done as
+    # a process-boundary shell-out (no agent-utilities import here) — best-effort.
+    if getattr(args, "ingest_kg", False) and args.output_dir:
+        _ingest_into_kg(args.output_dir)
+
+
+def _ingest_into_kg(output_dir: str) -> None:
+    """Shell out to the agent-utilities ingestion CLI (decoupled, best-effort)."""
+    import subprocess
+    import sys
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "agent_utilities.knowledge_graph.ingestion",
+        output_dir,
+        "--content-type",
+        "document",
+    ]
+    logger.info("Routing crawl output into the Knowledge Graph: %s", output_dir)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+        if proc.returncode == 0:
+            logger.info("KG ingestion complete for %s", output_dir)
+        else:
+            logger.warning(
+                "KG ingestion failed (rc=%s). Is agent-utilities installed and the "
+                "graph daemon running?\n%s",
+                proc.returncode,
+                (proc.stderr or proc.stdout or "").strip()[:2000],
+            )
+    except FileNotFoundError:
+        logger.warning(
+            "KG ingestion skipped: agent-utilities not importable in this "
+            "environment (python -m agent_utilities.knowledge_graph.ingestion)."
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("KG ingestion errored: %s", e)
 
 
 if __name__ == "__main__":
