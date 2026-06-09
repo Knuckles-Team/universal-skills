@@ -23,6 +23,11 @@
 
 *Version: 0.42.1*
 
+> **Documentation** — The complete catalog of universal skills, skill-graph
+> authoring guidance, security and SSL configuration, and installation and
+> integration instructions are maintained in the
+> [official documentation](https://knuckles-team.github.io/universal-skills/).
+
 ## Overview
 
 Universal Skills is a collection of shared, reusable skills designed for Pydantic AI Agents. It provides a standardized way to give agents advanced capabilities like codebase searching, file navigation, and inter-agent communication.
