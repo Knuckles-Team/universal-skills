@@ -113,6 +113,47 @@ async def my_tool(param: str) -> str:
 ## When Stuck
 - Propose a plan first before making large changes.
 - Check `agent-utilities` documentation for existing helpers.
+
+## Quality Bar — Leave the Codebase Clean (REQUIRED)
+
+After completing any code change, run the project's pre-commit suite and drive it
+**fully green** before committing:
+
+```bash
+pre-commit run --all-files
+```
+
+Resolve **every** issue it reports — failures, lint errors, type errors, and
+warnings — **including problems that pre-date your change and were not caused by
+your edits**. The standing goal is a clean, working codebase with **no errors and
+no warnings**. Do not silence checks (`# noqa`, `# type: ignore`, `SKIP=`,
+`--no-verify`) to force green unless the exception is already documented in this
+file as a known, unavoidable limitation. Only commit once `pre-commit run
+--all-files` passes cleanly; if a check legitimately cannot pass, stop and explain
+why rather than bypassing it.
+
+## Working with Git Worktrees (multi-session)
+
+Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
+edit the canonical checkout** (`/home/apps/workspace/agent-packages/<repo>`) — a
+background `repository-manager` sync can reset its working tree and discard
+uncommitted edits. Take your own git worktree on your own branch instead:
+
+```bash
+# preferred — repository-manager MCP:
+rm_worktree add <repo> <your-branch>      # -> /home/apps/worktrees/<repo>/<your-branch>
+
+# raw-git fallback:
+git -C agent-packages/<repo> checkout main
+git -C agent-packages/<repo> worktree add /home/apps/worktrees/<repo>/<branch> -b <branch>
+```
+
+Work in the worktree, **commit often** (commits survive a working-tree reset),
+then merge to main locally (`rm_worktree merge <repo> <branch>`, or `git merge
+--no-ff`). Each session must use a **distinct branch** — git allows a branch in
+only one worktree, which is what keeps concurrent sessions from colliding.
+Worktrees live under `/home/apps/worktrees/` (outside the workspace scan, so the
+sync leaves them alone). Push only when asked.
 """
 
 
