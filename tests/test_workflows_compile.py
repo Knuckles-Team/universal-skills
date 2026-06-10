@@ -9,7 +9,12 @@ agent_utils_path = str(
 if agent_utils_path not in sys.path:
     sys.path.insert(0, agent_utils_path)
 
-from agent_utilities.workflows.skill_compiler import SkillCompiler
+# The compiler lives in the sibling agent-utilities package and pulls in its full
+# runtime (pydantic_ai, …). Skip cleanly when that stack isn't installed (e.g. the
+# isolated pre-commit uv env); the test runs wherever agent-utilities is available.
+SkillCompiler = pytest.importorskip(
+    "agent_utilities.workflows.skill_compiler"
+).SkillCompiler
 
 # Find all directories under universal_skills/ containing a SKILL.md file
 skills_root = Path(__file__).resolve().parent.parent / "universal_skills"

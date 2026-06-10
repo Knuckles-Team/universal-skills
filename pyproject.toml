@@ -16,6 +16,7 @@ test = [
     "pytest-xdist>=3.6.0",
     "pytest",
     "pytest-asyncio", "pytest-cov",
+    "pytest-timeout",
     "PyYAML",
     "httpx"
 ]
