@@ -1,0 +1,24 @@
+name: Microstructure Trading Loop Swarm
+task_pattern: >-
+  curate trading knowledge, backtest microstructure signals, fuse priors, and run
+  paper-first trading decisions with human-gated graduation
+specialist_ids:
+- ingest-knowledge
+- research-goldenloop
+- register-substrate
+- backtest-signals
+- seed-fusion
+- paper-decisions
+- journal-decisions
+- evaluate-graduation
+capability_overrides:
+  backtest-signals:
+  - stuck_loop_detection
+  - checkpointing
+  seed-fusion:
+  - adversarial_verification
+  paper-decisions:
+  - stuck_loop_detection
+  - adversarial_verification
+  evaluate-graduation:
+  - adversarial_verification
