@@ -1,0 +1,12 @@
+name: Model Training Swarm
+task_pattern: train, fine-tune, or pretrain a language model with agents and gate on evaluation
+specialist_ids:
+  - ml_orchestrator
+  - data_curator
+  - training_engineer
+  - eval_judge
+capability_overrides:
+  ml_orchestrator:
+    - stuck_loop_detection
+  eval_judge:
+    - critic
