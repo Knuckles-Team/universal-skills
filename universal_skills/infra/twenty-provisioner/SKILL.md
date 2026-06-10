@@ -41,13 +41,14 @@ schema via the Metadata REST API instead (`/rest/metadata/objects|fields|relatio
 
 1. **Twenty stack deployed** (Portainer/GitOps). Compose must set `ACCESS_TOKEN_SECRET`,
    `REFRESH_TOKEN_SECRET`, `ENCRYPTION_KEY`, `PG_DATABASE_URL`, `REDIS_URL`, `SERVER_URL`,
-   `FRONTEND_URL`. For SSO also: `AUTH_SSO_ENABLED=true`, `AUTH_OIDC_ENABLED=true`,
-   `AUTH_OIDC_ISSUER`, `AUTH_OIDC_CLIENT_ID`, `AUTH_OIDC_CLIENT_SECRET`,
-   `AUTH_OIDC_CALLBACK_URL=<url>/auth/oidc/callback`. Service is healthy when
-   `curl <url>/healthz` returns `{"status":"ok"}`.
-2. **Keycloak realm + OIDC client** for Twenty (use the `keycloak-client-onboarder` skill):
-   client_id `twenty`, redirect URIs `<url>/*`, a client secret. Realm OIDC discovery at
-   `<kc>/realms/<realm>/.well-known/openid-configuration` must return 200.
+   `FRONTEND_URL`. **Pin the image to an explicit tag** (e.g. `twentycrm/twenty:v2.11.1`),
+   not `:latest`, for deterministic deploys (and to avoid surprise migrations). Service is
+   healthy when `curl <url>/healthz` returns `{"status":"ok"}`. (The `AUTH_SSO_ENABLED` /
+   `AUTH_OIDC_*` env vars are **inert on the Community image** — SSO is Enterprise-only; see
+   Step 6.)
+2. **Keycloak realm + OIDC client** for Twenty (only needed if you have Twenty **Enterprise**;
+   use the `keycloak-client-onboarder` skill): client_id `twenty`, redirect URIs `<url>/*`,
+   a client secret. (Not required for the API-key + harvester flow.)
 3. **OpenBao unsealed** (use `secret-vault-manager`) if storing the credential there.
 
 ## Step 1 — Bootstrap the admin account (first user + workspace)
@@ -104,25 +105,27 @@ curl -s -X POST -H "X-Vault-Token: $BAO_ROOT_TOKEN" -H 'Content-Type: applicatio
   `DataStore::twenty` (SoftwareServer) + `Dataset::Twenty::{Company,Person}::*`
   (`additionalProperties.source=Twenty`, confidentiality L2/L3).
 
-## Step 6 — Keycloak OIDC SSO (best-effort; see KNOWN ISSUE)
+## Step 6 — Keycloak OIDC SSO
 
-Intended (authenticated, on `/metadata`):
-```graphql
-mutation { createOIDCIdentityProvider(input:{
-  name:"Keycloak", issuer:"<kc>/realms/<realm>",
-  clientID:"twenty", clientSecret:"<kc client secret>"
-}){ id type name issuer status } }
-```
-Get the KC client secret from `GET <kc>/admin/realms/<realm>/clients/<uuid>/client-secret`.
-
-> **KNOWN ISSUE (twentycrm/twenty:latest, 2026-06-10):** both `getSSOIdentityProviders`
-> (query) and `createOIDCIdentityProvider` (mutation) fail **server-side** with
-> `Cannot read properties of undefined (reading 'headers')` regardless of input/token,
-> while every other `/metadata` op works. SSO-IdP provisioning via the API is therefore
-> blocked on this build. Workarounds: pin Twenty to a version where SSO management works;
-> create the IdP via Settings→Security→SSO in the UI; or rely on the env-based global
-> `AUTH_OIDC_*` (note: on this build the login UI still showed only email/password —
-> the harvester does **not** need SSO; it uses the API key).
+> **⛔ SSO is a Twenty ENTERPRISE feature — not available in the Community image.**
+> Verified on `twentycrm/twenty:v2.11.1` (Community): Settings → General → Security shows
+> **"SSO — Enterprise"** with an "Add SSO Identity Provider" link that is a **no-op**
+> (clicking does nothing), exactly like the "Audit Logs — Enterprise / Upgrade to
+> Enterprise" entry. The bottom-left nav reads **"Community"**.
+>
+> Consequences (all symptoms of the same edition gate, **not** a version bug):
+> - The `AUTH_SSO_ENABLED` / `AUTH_OIDC_*` env vars in the compose do **nothing** on the
+>   Community image — no "Sign in with SSO" button appears.
+> - The headless API (`getSSOIdentityProviders`, `createOIDCIdentityProvider` on
+>   `/metadata`) errors `Cannot read properties of undefined (reading 'headers')` — the
+>   enterprise SSO module isn't licensed/initialized. **Pinning a different version does
+>   not fix this** (any Community version gates SSO).
+>
+> **Options:** (a) use **Twenty Enterprise** (license/key) if SSO is required; (b) stay on
+> Community with **email/password** auth. The egeria harvester does **not** need SSO — it
+> authenticates with the API key (Step 2). The intended mutation, for reference once on
+> Enterprise: `createOIDCIdentityProvider(input:{name,issuer,clientID,clientSecret})` on
+> `/metadata`; KC client secret via `GET <kc>/admin/realms/<realm>/clients/<uuid>/client-secret`.
 
 ## Notes
 - API keys are **role-scoped** (Twenty ≥ recent) — always pass `roleId`.
