@@ -1,0 +1,14 @@
+name: ML Classification Project Swarm
+task_pattern: train an XGBoost direction classifier, benchmark vs coin flip, and publish
+specialist_ids:
+  - quant-researcher
+  - risk-analyst
+  - quant-developer
+capability_overrides:
+  quant-researcher:
+    - stuck_loop_detection
+    - adversarial_verification
+  risk-analyst:
+    - stuck_loop_detection
+  quant-developer:
+    - checkpointing

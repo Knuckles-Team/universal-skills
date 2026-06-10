@@ -1,0 +1,11 @@
+name: Sentiment Alpha Project Swarm
+task_pattern: score news with FinBERT, build a sentiment signal, backtest, and publish
+specialist_ids:
+  - quant-researcher
+  - quant-developer
+capability_overrides:
+  quant-researcher:
+    - stuck_loop_detection
+    - adversarial_verification
+  quant-developer:
+    - checkpointing

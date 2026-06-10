@@ -1,0 +1,14 @@
+name: Pairs Trading Project Swarm
+task_pattern: build, backtest, and publish a cointegration-based pairs-trading strategy
+specialist_ids:
+  - quant-developer
+  - quant-researcher
+  - risk-analyst
+capability_overrides:
+  quant-developer:
+    - stuck_loop_detection
+    - checkpointing
+  quant-researcher:
+    - adversarial_verification
+  risk-analyst:
+    - stuck_loop_detection

@@ -1,0 +1,11 @@
+name: Volatility Forecast Project Swarm
+task_pattern: fit GARCH volatility forecasts, grade against realized vol, and publish
+specialist_ids:
+  - risk-analyst
+  - quant-developer
+capability_overrides:
+  risk-analyst:
+    - stuck_loop_detection
+    - adversarial_verification
+  quant-developer:
+    - checkpointing

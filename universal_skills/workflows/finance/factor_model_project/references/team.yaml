@@ -1,0 +1,11 @@
+name: Factor Model Project Swarm
+task_pattern: replicate the Fama-French 3-factor model and publish the analysis
+specialist_ids:
+  - quant-researcher
+  - quant-developer
+capability_overrides:
+  quant-researcher:
+    - stuck_loop_detection
+    - adversarial_verification
+  quant-developer:
+    - checkpointing

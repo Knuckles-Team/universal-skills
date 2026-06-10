@@ -160,13 +160,13 @@ DOCKERFILE = """\
 # / source copy -> ~43% smaller pushed image, so layer pushes finish inside the
 # registry's blob-upload window even under concurrency.
 FROM python:3-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
     UV_SYSTEM_PYTHON=1 \\
     UV_HTTP_TIMEOUT=3600
 RUN --mount=type=cache,target=/root/.cache/uv \\
     apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/* \\
-    && pip install --no-cache-dir uv \\
     && uv pip install --system --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
 
 FROM python:3-slim

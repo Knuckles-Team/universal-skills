@@ -1,0 +1,18 @@
+name: Quant Career Roadmap Swarm
+task_pattern: mentor a learner through the seven-phase zero-to-hired quant roadmap
+specialist_ids:
+  - quant-career-mentor
+  - quant-developer
+  - quant-researcher
+  - quant-trader
+  - risk-analyst
+capability_overrides:
+  quant-career-mentor:
+    - stuck_loop_detection
+    - checkpointing
+  quant-developer:
+    - stuck_loop_detection
+    - checkpointing
+  quant-researcher:
+    - stuck_loop_detection
+    - adversarial_verification
