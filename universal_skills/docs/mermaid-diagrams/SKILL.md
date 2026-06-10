@@ -13,7 +13,7 @@ license: MIT
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
 metadata:
   author: Genius
-  version: '0.42.1'
+  version: '0.43.0'
 ---
 # Mermaid Diagramming
 

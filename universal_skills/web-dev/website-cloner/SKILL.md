@@ -10,7 +10,7 @@ license: MIT
 tags: [frontend, website, cloner, nextjs, tailwind, shadcn, reverse-engineering]
 metadata:
   author: Genius
-  version: '0.42.1'
+  version: '0.43.0'
 ---
 
 # Website Cloner

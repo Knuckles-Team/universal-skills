@@ -9,7 +9,7 @@ license: MIT
 tags: [web, fetch, markdown, crawl4ai, extraction]
 metadata:
   author: Genius
-  version: '0.42.1'
+  version: '0.43.0'
 ---
 
 # Web Fetch
