@@ -22,6 +22,72 @@ Automate browser interactions using the `agent-browser` CLI tool. Every automati
 
 ---
 
+## Setup — run this FIRST (self-installing)
+
+The `agent-browser` CLI is **not preinstalled**. This skill ships `bootstrap.sh`,
+which is idempotent — run it at the start of every task; it no-ops if already set up:
+
+```bash
+# install the CLI + ensure Chromium, and export PATH/PNPM_HOME/PLAYWRIGHT_BROWSERS_PATH
+source "$(dirname "$0")/bootstrap.sh" 2>/dev/null || source ./bootstrap.sh
+# (the skill dir is printed by `agent-browser skills path` once installed)
+```
+
+If you only need the binary on PATH (no env persistence), run it as a subprocess:
+`bash <skill-dir>/bootstrap.sh`.
+
+### What bootstrap handles (and why — validated 2026-06-10)
+
+- **Install with `pnpm`, not `npm`.** The bundled npm (Python `nodejs_wheel`) is
+  broken here. `pnpm add -g agent-browser` (public npm registry) works. pnpm prints
+  *"Ignored build scripts"* — harmless. The bin lands in `$PNPM_HOME`
+  (default `~/.local/share/pnpm`), which bootstrap adds to `PATH`.
+- **Playwright Chromium is usually already cached** at `~/.cache/ms-playwright`
+  (`PLAYWRIGHT_BROWSERS_PATH`). Bootstrap only downloads it if absent.
+
+## Headless server / SSH environments (e.g. this homelab)
+
+- **Headless is the default** — do *not* pass `--headed` on a server with no display.
+- **Containers need `--no-sandbox`.** Bootstrap sets `AGENT_BROWSER_ARGS=--no-sandbox`.
+  Use a **single** flag here: multiple space-split flags in `AGENT_BROWSER_ARGS` trip
+  Chromium's `Multiple targets are not supported in headless mode`.
+- **Internal / plain-HTTP sites are blocked by default.** Homelab `*.arpa` hosts
+  (served by Caddy over **http**) — and any pure-http site — return
+  `ERR_BLOCKED_BY_CLIENT` and land on `chrome-error://`. Cause: Chromium's
+  **HTTPS-Upgrade** auto-upgrades `http`→`https` and won't fall back. `--no-sandbox`
+  alone does NOT fix this, and the needed `--disable-features` flag can't be added via
+  `AGENT_BROWSER_ARGS` (see the multi-flag bug above).
+
+  **Working fix — pre-launch Chromium with the flags, then attach over CDP:**
+
+  ```bash
+  bash <skill-dir>/bootstrap.sh --connect      # launches Chromium + `agent-browser connect`
+  agent-browser open http://twenty.arpa/       # now loads (verified -> /welcome)
+  ```
+
+  Equivalent manual form:
+
+  ```bash
+  CHROME=$(find ~/.cache/ms-playwright -name chrome -path '*chromium-*' | head -1)
+  "$CHROME" --headless=new --no-sandbox --disable-gpu \
+    --disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2 \
+    --remote-debugging-port=9222 --user-data-dir="$(mktemp -d)" &
+  agent-browser connect 9222
+  ```
+
+- **Self-signed HTTPS:** add `--ignore-https-errors` on `open`.
+
+## Daemon hygiene
+
+- Reset the persistent browser with **`agent-browser close --all`**.
+- **Do NOT `pkill -f agent-browser`** — the pattern matches your own shell/command
+  line and kills the session (seen as exit 144). Kill a *pre-launched* Chromium by
+  its unique `--user-data-dir` path instead (e.g. `pkill -f /tmp/agent-browser-prof`).
+- A stale daemon is a common cause of `Multiple targets are not supported in headless
+  mode`; `close --all` (and, if needed, killing the CDP Chromium) clears it.
+
+---
+
 ## Core Workflow
 
 Every browser automation task follows this pattern:
