@@ -193,8 +193,9 @@ but reds the pipeline:
    [dependency-groups]    # dev = pytest-timeout
    ```
    License classifier is `"License :: OSI Approved :: MIT License"` with
-   `[project.license] text = "MIT"`. (gitlab-api itself still carries the stale
-   `"License :: Public Domain"` classifier — do not copy that; see PARITY_MANIFEST.md.)
+   `[project.license] text = "MIT"`. (gitlab-api's formerly stale
+   `"License :: Public Domain"` classifier was fixed in the 2026-06 golden-defect
+   pass; see PARITY_MANIFEST.md §8.)
 
 2. **Naming MUST be consistent across all three identifiers — no deviations.**
    repo name (kebab) == distribution `name` (kebab) == package dir (snake_case).

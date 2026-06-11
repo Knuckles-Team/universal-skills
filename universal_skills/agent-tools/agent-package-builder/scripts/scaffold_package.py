@@ -115,6 +115,14 @@ tag = True
 search = version = "{{current_version}}"
 replace = version = "{{new_version}}"
 
+[bumpversion:file(all-extra):pyproject.toml]
+search = {package_name}[{all_extras}]>={{current_version}}
+replace = {package_name}[{all_extras}]>={{new_version}}
+
+[bumpversion:file:a2a.json]
+search = "version": "{{current_version}}"
+replace = "version": "{{new_version}}"
+
 [bumpversion:file:README.md]
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
@@ -2246,8 +2254,8 @@ def scaffold(
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
     has_graphql = "graphql" in types
-    gql_core_dep = ' "gql>=4.0.0",' if has_graphql else ""
-    gql_extra = 'gql = [ "gql>=4.0.0",]\n' if has_graphql else ""
+    gql_core_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
+    gql_extra = 'gql = [ "gql[requests]>=4.0.0",]\n' if has_graphql else ""
     all_extras = "mcp,agent,gql,logfire" if has_graphql else "mcp,agent,logfire"
     gql_module_name = f"{to_pkg_dir(short_name)}_gql"
     gql_optional_module = (
