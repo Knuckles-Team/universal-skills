@@ -382,9 +382,11 @@ once per session before the first creation call.
    creation + settings; credentials from `agents/github-agent/.env`:
    `GITHUB_URL`/`GITHUB_TOKEN`). Repo name = the solidified package name.
    Immediately after creation, **ALWAYS enable GitHub Pages with the
-   Actions build type** (the docs/pages workflows fail without it):
-   `POST /repos/{owner}/{repo}/pages` with `{"build_type": "workflow"}`
-   (201 = enabled, 409 = already enabled). Then apply the remaining standard
+   Actions build type** (the docs/pages workflows fail without it): use the
+   github-agent `github_repos` tool action `pages_create`
+   (`{"build_type": "workflow"}`; 201 = enabled, 409 = already enabled). If
+   the first pages deploy still races, trigger `pages_request_build` instead
+   of manually rerunning failed jobs. Then apply the remaining standard
    settings (Actions enabled) — the github-project-provisioner skill covers
    defaults. Note the residual first-deploy race: even with Pages pre-enabled,
    the very first pages deploy may need a rerun-failed-jobs.
