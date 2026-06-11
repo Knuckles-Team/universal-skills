@@ -6,7 +6,7 @@ license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow]
 metadata:
   author: Genius
-  version: '0.4.0'
+  version: '0.5.0'
 ---
 # Workspace Validator
 
@@ -20,6 +20,7 @@ This skill defines the autonomous workflow for systematically validating all pro
   - **Phase 3:** `agent-utilities` must be bumped and published first.
   - **Phase 4:** Core Tools & UIs (including `geniusbot`, `agent-terminal-ui`, `agent-webui`, `universal-skills`, `skill-graphs`) consume `agent-utilities`. Bumping `agent-utilities` triggers automated dependency updates in Phase 4 projects.
   - Circular dependencies are prevented by the `repository-manager` skipping dependency updates for any project belonging to a phase lower than the currently bumped phase.
+- **Change-aware start (`CONCEPT:RM-PHASE-START`):** `auto_bump` and `auto_push` do not blindly start at Phase 1. The backend detects the **lowest phase that actually has repository changes** and begins there, cascading to every later phase and skipping unchanged upstream phases (and their inter-phase `wait_minutes`). Because phases are topologically ordered, a change in phase *N* only ever affects phases `>= N`, so this is safe. Practical effect: editing one Phase-4 repo runs Phase 4 onward without sitting through the Phase-3 wait; if nothing changed anywhere, the bump/push is a no-op. A repo counts as changed when it is not both clean and in sync with origin (uncommitted changes, an unpushed feature commit, or an unpushed bump). You do not configure this — it is automatic whenever `auto_bump`/`auto_push` are set.
 
 ## ⚠️ Error Resolution Policy
 
@@ -79,7 +80,7 @@ You will enter a continuous loop of fixing issues based on the JSON hook outputs
 11. **Ecosystem-wide clean gate:** Once `failed_only` reruns reach 0 failures, run ONE final validation against **ALL** repositories (no `repositories`, no `failed_only`, `force_revalidate=true`) so the entire dependency graph is verified green together — fixing one repo can regress a dependent. If the user confirmed bump+push in Phase 1, cascade this final all-repos run into the release by adding `auto_bump=true` and `auto_push=true`.
     - **Committing feature code (not just version bumps):** when uncommitted/new feature code is in the working tree, add `commit_code=true` + `commit_message="..."`. The backend then runs a concurrent **stage (`git add -A`) → pre-commit → commit** pass across all targeted repos AFTER validation passes and BEFORE the bump, so untracked/new files are committed (the bump and push no longer rely on a tracked-only `git add -u` safety net). The bump waits on this step. This is the tool-driven equivalent of "add all of our code, pre-commit, then bump." Standalone equivalents exist as `rm_git(action="pre_commit")` and `rm_git(action="commit_code", message=...)`.
 12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
-13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results.
+13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results. The bump and push **auto-start at the lowest phase that changed** (see Change-aware start above), so a release touching only later-phase repos will not replay earlier phases or their waits; if no repo changed, the bump/push reports a no-op.
 14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
 
 ## Scaling to thousands of repositories
