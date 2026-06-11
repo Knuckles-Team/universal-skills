@@ -262,7 +262,8 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
   && for f in docs/index.md docs/overview.md docs/concepts.md; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
-  && for f in docker/Dockerfile docker/compose.yml; do \
+  && for f in docker/Dockerfile docker/debug.Dockerfile docker/agent.compose.yml \
+    docker/mcp.compose.yml docker/starship.toml; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
   && for f in {pkg_dir}/__init__.py {pkg_dir}/__main__.py {pkg_dir}/mcp_server.py; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \

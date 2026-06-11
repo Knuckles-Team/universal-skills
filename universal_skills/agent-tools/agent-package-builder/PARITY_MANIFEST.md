@@ -1,0 +1,186 @@
+# PARITY_MANIFEST — agent-package connector standard
+
+**Golden reference:** `/home/apps/workspace/agent-packages/agents/gitlab-api`
+(designated EXACT parity standard for all agent-package connector repos: file/folder
+structure, GitHub workflows, configs).
+
+This is the mechanical checklist a standardization pass applies to any connector repo
+to verify/repair exact parity. Each row: file path → required/optional → content
+pattern. Substitution variables are listed at the end.
+
+Legend: **R** = required, **O** = optional (justified omission allowed), **G** = generated/local (never committed with secrets).
+
+## 1. Root configuration files
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `pyproject.toml` | R | Golden shape: build-system `setuptools>=80.9.0` + `wheel`; `requires-python = ">=3.11, <3.15"`; deps `agent-utilities>=0.47.0` (+ `python-dotenv`, `gql` if GraphQL); `[[project.authors]]` table; `[project.license] text = "MIT"`; extras `mcp` / `agent` / (`gql`) / `all = ["{name}[mcp,agent,(gql,)logfire]>={version}"]` (self-referencing — bumpversion keeps the pin current) / `test`; `[project.scripts]` `{short}-mcp` + `{short}-agent`; `[tool.setuptools] include-package-data`; `[tool.setuptools.package-data] {pkg_dir} = ["mcp_config.json", "agent_data/**"]`; `[tool.setuptools.packages.find] where = ["."]`; `[tool.ruff]` line-length 88 / target py310; `[tool.ruff.lint]` select E,F,I,UP,B ignore E402,E501,B008; `[tool.mypy]` py 3.10 + ignore_missing_imports + check_untyped_defs; `[tool.vulture] ignore_names = ["request", "config"]`; `[dependency-groups] dev = ["pytest-timeout>=2.4.0"]`. License classifier: `"License :: OSI Approved :: MIT License"` (⚠ gitlab-api carries stale `"License :: Public Domain"` — do not propagate; see §8). |
+| `.bumpversion.cfg` | R | Targets: `pyproject.toml` (`version = "…"`), `README.md` (`Version: …`), `docker/Dockerfile` (`{name}[all]>=…`), `{pkg_dir}/agent_server.py` + `{pkg_dir}/mcp_server.py` (`__version__ = "…"`). `commit = True`, `tag = True`. All five targets must contain the current version or the pre-commit `check-bumpversion` hook fails. |
+| `.pre-commit-config.yaml` | R | Byte-parity with golden: pre-commit-hooks v6.0.0 (incl. `no-commit-to-branch`, `check-added-large-files --maxkb=2000`); ruff-pre-commit **v0.15.12** (`ruff-check --fix --ignore=E402,B008,E501` + `ruff-format`); mirrors-mypy v1.20.2; vulture v2.16 (min-confidence 95); codespell v2.4.2 (`--ignore-words=.codespellignore`); bandit 1.9.4 (skip B101,B404,B603); nbQA 1.9.1; uv-pre-commit 0.11.8 (`uv-lock`); local hooks `check-mermaid`, `check-stubs` (agent-utilities scripts), `mermaid-validate` (node), `check-agent-standards` (agent_server must have `warnings.filterwarnings` + `file=sys.stderr`), `check-cli-help` (`uv run python -m … --help`), `check-bumpversion` (bump2version dry-run), `pytest` (`uv run --all-extras pytest … --timeout=60`); hadolint-py v2.14.0; docker-pre-commit v3.0.1 (`docker-compose-check`); local `verify-api-integration` (`scripts/verify_api_integration.py --local`) and `security-sanitizer` (`scripts/security_sanitizer.py`). |
+| `pytest.ini` | R | `timeout = 60`, `asyncio_mode = auto`, `testpaths = tests`, `integration` marker excluded by default via `addopts = -m "not integration"`. |
+| `requirements.txt` | R | Mirrors `[project].dependencies` (one per line). |
+| `uv.lock` | R | Committed; kept fresh by the `uv-lock` pre-commit hook. |
+| `MANIFEST.in` | R | `include LICENSE` / `include README.md` / `include requirements.txt` / `recursive-include {pkg_dir} *.py *.json` — one directive per line (⚠ golden's copy is a malformed single line; see §8). |
+| `.gitignore` | R | Python packaging/caches + `.env`/`.venv` + `/site` + root-scratch guards: `/test_*.py /fix_*.py /debug_*.py /scratch_*.py /temp_*.py`, `*.orig *.rej *.patch *.log *output*.txt *errors*.txt failed_tests.txt trace.txt`. |
+| `.gitattributes` | R | `* text=auto` + eol/diff mappings for sh/py/md etc. |
+| `.dockerignore` | R | Excludes git/env/tests/scripts/.github/build, `{pkg_dir}.egg-info*`, plus `Dockerfile`, `debug.Dockerfile`, `compose.yml`. |
+| `.codespellignore` | R | Word-per-line ignore list referenced by the codespell hook; grows per repo. |
+| `.vulture_ignore` | R | Symbol-per-line list; pairs with `[tool.vulture]` in pyproject. |
+| `.env.example` | R | Sectioned: MCP server settings (HOST/PORT/TRANSPORT), OTEL/Langfuse, Eunomia (`EUNOMIA_TYPE/POLICY_FILE/REMOTE_URL`), service credentials (`{SERVICE}_URL` / `{SERVICE}_TOKEN` commented), full `*TOOL` toggle list (one per MCP domain). |
+| `.env` | G | Local copy of `.env.example`; git-ignored; never committed with real secrets. |
+| `a2a.json` | R | A2A agent card: `name = "{name}-agent"`, `type = "agent"`, version, description, repo `url`, `license: MIT`, `capabilities[]` (incl. `run_graph_flow`), `tools[]` (incl. `graph-flow`). |
+| `opencode.json` | R | `$schema https://opencode.ai/config.json`; lmstudio provider (`@ai-sdk/openai-compatible`, baseURL `http://vllm.arpa/v1`), model `lmstudio/qwen/qwen3.5-9b`. |
+| `mcp_config.json` (root) | R | One `mcpServers` entry keyed `{name}`: `command: "uv"`, `args: ["run", "{short}-mcp"]`, env block with `<YOUR_…>` placeholders for `{SERVICE}_URL`/`{SERVICE}_TOKEN`/`{SERVICE}_SSL_VERIFY` + all `*TOOL` toggles. |
+| `AGENTS.md` | R | Canonical agent guidance. Sections: Tech Stack & Architecture (+ mermaid architecture & workflow diagrams), Commands, Project Structure Quick Reference, Code Style, Dos and Don'ts, Safety & Boundaries, When Stuck, ⛔ No Scratch Files, ⛔ Root Pristine, Working Discipline, **Quality Bar (REQUIRED)**, **Working with Git Worktrees**. |
+| `CLAUDE.md` | R | Pure stub: header + "canonical guidance lives in AGENTS.md" + `@AGENTS.md` import. No body content. |
+| `README.md` | R | Title + badge block, `*Version: {version}*` line (bumpversion target), pointer to the GitHub Pages docs site, overview, MCP env vars + stdio run snippet, `pip install {name}`. |
+| `CHANGELOG.md` | R | Keep a Changelog 1.1.0 + SemVer; `## [Unreleased]` section maintained. |
+| `LICENSE` | R | MIT. |
+| `mkdocs.yml` | R | Material theme; `site_url https://knuckles-team.github.io/{name}/`; repo_name/repo_url `Knuckles-Team/{name}`; `edit_uri edit/main/docs/`; features incl. navigation.tabs/instant/footer, content.code.copy; 3-state palette (auto/light/dark, indigo); plugins `search`; markdown_extensions incl. pymdownx.highlight/inlinehilite/snippets/superfences(mermaid)/tabbed/emoji, admonition, attr_list, md_in_html, toc permalink; `extra.social` GitHub + PyPI; **nav exactly**: Home / Overview / Installation / Deployment / Usage (API / CLI / MCP) / Backing Platform ({Platform}) / Concepts. |
+
+## 2. GitHub workflows (`.github/workflows/`)
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `pipeline.yml` | R | Name `Build\|Upload\|Release Python Package`; trigger `push: branches: ['main']`; job `publish-pypi` → `Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main` (secret `PYPI_API_TOKEN`); job `publish-docker` `needs: publish-pypi` → `container_pipeline.yml@main` (secrets `DOCKER_REGISTRY/USERNAME/PASSWORD/REPOSITORY`). **Pin `@main`, never `@latest`.** Docker build-cache config (org-wide `type=registry` cache convention, pipelines PR#1 — replaced the expiring `type=gha` SAS-token cache) lives inside the reusable `container_pipeline.yml`; per-repo workflows carry no cache config. Image name is `${DOCKER_USERNAME}/${repo-name}`. |
+| `docs.yml` | R | Name `Deploy Documentation`; trigger push→main + `workflow_dispatch`; `permissions: contents: write`; single job: checkout@v4 (fetch-depth 0) → setup-python@v5 (3.12) → `pip install mkdocs-material` → `mkdocs gh-deploy --force`. |
+| `pages.yml` | R | Name `Deploy GitHub Pages`; trigger push→main with paths filter `docs/**`, `mkdocs.yml`, `README.md`; job → `Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main`. Repo must have Pages enabled with `build_type=workflow`. |
+
+## 3. docker/
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `docker/Dockerfile` | R | `# syntax=docker/dockerfile:1`; multi-stage: builder `python:3.11-slim` + `COPY --from=ghcr.io/astral-sh/uv:0.11.7`; `UV_COMPILE_BYTECODE/UV_LINK_MODE=copy/UV_SYSTEM_PYTHON/UV_HTTP_TIMEOUT=3600`; `RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --upgrade --break-system-packages --prerelease=allow {name}[all]>={version}` (bumpversion target); final stage copies `/usr/local`; ARG/ENV HOST/PORT/TRANSPORT/AUTH_TYPE; `CMD ["{short}-mcp"]`. |
+| `docker/debug.Dockerfile` | R | Single-stage dev image: apt default-jre/ripgrep/tree/fd-find/curl/nano/build-essential/cmake/libssl-dev/pkg-config; installs uv + starship + rustup; `COPY . /app` + `uv pip install … .[all]`; `COPY docker/starship.toml /root/.config/starship.toml` (file must exist); `CMD ["{short}-mcp"]`. |
+| `docker/agent.compose.yml` | R | Two services: `{name}-mcp` and `{name}-agent` (both `image: knucklessg1/{name}:latest`); agent `depends_on` mcp, `command: ["{short}-agent"]`, `MCP_URL=http://{name}-mcp:8000/mcp`, per-repo agent port; both: `env_file: ../.env`, `TRANSPORT=streamable-http` (mcp), `/health` python-urllib healthcheck, json-file logging 10m×3, `restart: always`. |
+| `docker/mcp.compose.yml` | R | MCP service only — same `{name}-mcp` block as above (port 8000). |
+| `docker/starship.toml` | R | Standard prompt config (copy golden verbatim). Located in `docker/`, not repo root. |
+
+## 4. docs/ (published site — 7 pages, nav order canonical)
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `docs/index.md` | R | Hub: title, "Official documentation" admonition, PyPI/MCP/License/GitHub badges, overview, grid-cards linking the other pages. |
+| `docs/overview.md` | R | Concept overview: category/role header, description, architecture, concept-registry table w/ inherited ECO-4.x rows, link to agent-utilities full registry. |
+| `docs/installation.md` | R | Requirements (Python 3.11–3.14), PyPI install, extras table (mcp/agent/(gql)/all), from-source, Docker pull. |
+| `docs/deployment.md` | R | MCP transports (stdio/streamable-http/sse tabs), `/health` check, Compose (`mcp.compose.yml` / `agent.compose.yml`), A2A agent server, Caddy + Technitium guidance. |
+| `docs/usage.md` | R | Same capability three ways: MCP tools (+ `*TOOL` toggles table), Python API (`get_client()`), CLI. |
+| `docs/platform.md` | R/O | Backing-platform Docker recipe (the system the connector targets). Omit only for connectors of managed-only services (e.g. clarity-api) — document the omission. |
+| `docs/concepts.md` | R | CONCEPT registry: `Prefix: CONCEPT:{PREFIX}-*`, version, ECO-4.0 bridge link, project-specific table (one row per MCP domain), cross-project references. |
+
+## 5. scripts/ (repo validation; wired into pre-commit)
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `scripts/security_sanitizer.py` | R | Golden copy (generic). Called by the `security-sanitizer` pre-commit hook; blocks scratch/transient files and secret leaks. |
+| `scripts/verify_api_integration.py` | R | Golden copy. Called by `verify-api-integration --local` hook; AST-maps MCP tools→API client methods and enforces the coverage baseline — add the repo to its `BASELINES` dict. |
+| `scripts/validate_a2a_agent.py` | R | Golden copy; A2A endpoint smoke validator (adjust `A2A_URL` port). |
+| `scripts/validate_agent.py` | R | Per-repo: imports the package's `agent_server` as a smoke test. |
+
+## 6. Package layout (`{pkg_dir}/`)
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `__init__.py` | R | Dynamic exposure: `CORE_MODULES` (api) + `OPTIONAL_MODULES` (agent_server/mcp_server/gql) with `_MCP_AVAILABLE`/`_AGENT_AVAILABLE` flags; urllib3 warning filter. |
+| `__main__.py` | R | Invokes `agent_server()`. |
+| `agent_server.py` | R | `__version__` (bumpversion target); lazy `agent_utilities` imports inside `agent_server()`; `initialize_workspace()`/`load_identity()`; `warnings.filterwarnings` + startup print to `file=sys.stderr` (enforced by `check-agent-standards` hook); `create_agent_parser()`/`create_agent_server()`. |
+| `mcp_server.py` | R | `__version__`; `get_mcp_instance()` returning `(mcp, args, middlewares)` via `create_mcp_server`; per-domain `DEFAULT_{DOMAIN}TOOL = to_boolean(os.getenv("{DOMAIN}TOOL", "True"))` gating `register_{domain}_tools(mcp)`; transport dispatch stdio/streamable-http/sse; `--help` must work (`check-cli-help` hook). |
+| `api_client.py` | R | Facade re-export from `api/` (backward compatibility). |
+| `auth.py` | R | `get_client()` singleton; env `{SERVICE}_URL`/`{SERVICE}_TOKEN`/`{SERVICE}_SSL_VERIFY`; wraps failures in `RuntimeError("AUTHENTICATION ERROR: …")`. |
+| `api/__init__.py` + `api/api_client_base.py` + `api/api_client_{domain}.py` | R | Modular client mixins; base wraps requests.Session. |
+| `mcp/__init__.py` + `mcp/mcp_{domain}.py` | R | One module per domain exposing `register_{domain}_tools(mcp)`; action-routed single tool per domain (`action` + `params_json` + `Field(...)`); lowercase tags; CONCEPT ID in docstring. |
+| `{short}_input_models.py` | R | Pydantic input models (golden: `gitlab_input_models.py` — not `models.py`). |
+| `{short}_response_models.py` | R | Pydantic response models. |
+| `{short}_gql.py` | O | GraphQL wrapper (only for services with a GraphQL API; pairs with `gql` extra). |
+| `mcp_config.json` | R | Package-level: `{"mcpServers": {}}` (shipped via package-data). |
+| `main_agent.json` | R | Main-agent prompt definition (task/input/type/description/tools/topic/tone/style/goal). |
+| `agent_data/` | O | Identity/workspace files (`IDENTITY.md`). Golden repo omits the directory but keeps the `agent_data/**` package-data glob — keep the glob either way. |
+
+## 7. tests/ (flat pytest layout)
+
+| Path | Req | Content pattern |
+|---|---|---|
+| `tests/__init__.py` | R | Empty. |
+| `tests/conftest.py` | R | Shared fixtures (mock API client). |
+| `tests/test_auth.py` | R | Auth error path raises `RuntimeError("AUTHENTICATION ERROR …")`. |
+| `tests/test_api_wrapper.py` | R | API client request/response behavior (mocked session). |
+| `tests/test_{short}_mcp_validation.py` | R | `get_mcp_instance()` registers tools. |
+| `tests/test_init_dynamics.py` | R | Package import + `__all__` exposure. |
+| `tests/test_startup.py` | R | Entry-point modules importable. |
+| `tests/test_concept_parity.py` | R | `docs/concepts.md` exists, contains `ECO-4.0` bridge and the repo's `CONCEPT:{PREFIX}-` rows. |
+| `tests/test_{short}_a2a_validation.py`, `test_mock_coverage.py`, brute-force coverage, model tests | O | Golden has them; add as the API surface grows. |
+
+## 8. Known golden-repo deviations (adjudicate before copying)
+
+Found during the 2026-06 audit (cross-checked vs twenty-mcp, kafka-mcp, clarity-api).
+These are places where **gitlab-api itself** is stale or internally inconsistent — do
+NOT propagate them; they need a fix in gitlab-api or an explicit user decision:
+
+1. **License classifier mismatch** — gitlab-api (and clarity-api) declare
+   `"License :: Public Domain"` while `[project.license] text = "MIT"`. twenty-mcp /
+   kafka-mcp use the correct `"License :: OSI Approved :: MIT License"`. The scaffold
+   uses the MIT classifier.
+2. **`MANIFEST.in` malformed** — golden's file is a single line containing three
+   directives (`include README.md include requirements.txt recursive-include …`);
+   setuptools parses one directive per line. The scaffold writes the multi-line form.
+3. **`AGENTS.md` file tree is stale/machine-dumped** — golden's tree embeds
+   `.mypy_cache/`, `.venv/` listings and names `docker/compose.yml` (actual file is
+   `agent.compose.yml`) and a 2-page `docs/`. Treat golden's AGENTS.md *sections* as
+   canonical, not its embedded tree.
+4. **`all` extra self-pin** — golden pins `all = ["gitlab-api[mcp,agent,gql,logfire]>=25.42.0"]`
+   (self-referencing); twenty-mcp/kafka-mcp instead pin upstream
+   `agent-utilities[…]`. Golden is the designated standard, so the scaffold keeps the
+   self-pin (bumpversion does not update it — only the Dockerfile pin — so it can
+   drift; flag when found stale).
+5. **`a2a.json` placeholder URL** — golden's `url` is `https://github.com/user/gitlab-api/tree/main`
+   ("user" org) and version `0.1.0` while the repo is at 25.x. The scaffold uses the
+   `Knuckles-Team` org; keep `a2a.json` version in sync manually or add it to
+   `.bumpversion.cfg`.
+6. **Pre-commit local hooks use absolute paths** —
+   `/home/apps/workspace/agent-packages/agent-utilities/scripts/{mermaid_linter,check_stubs}.py`.
+   Works fleet-wide on this infra; breaks for external contributors. Kept verbatim for
+   parity.
+7. **Fleet stragglers (for the standardization pass, not the scaffold)** — twenty-mcp
+   is missing a2a.json/opencode.json/MANIFEST.in/pytest.ini/.codespellignore/uv.lock/
+   debug.Dockerfile/agent.compose.yml/starship.toml/scripts/* and has a minimal
+   pre-commit (ruff v0.3.4); kafka-mcp's pre-commit has only trailing-whitespace
+   (v4.4.0) and its Dockerfile version pin (0.2.0) lags pyproject (0.6.0); twenty-mcp's
+   Dockerfile pin (0.22.0) lags pyproject (0.31.0); kafka-mcp adds an extra
+   `docs/architecture.md` page (acceptable superset); clarity-api omits opencode.json,
+   .vulture_ignore (config lives in pyproject `[tool.vulture]` — acceptable),
+   docs/platform.md (managed-only service), and the agent-validation scripts.
+
+## 9. Per-repo substitution variables
+
+| Variable | Derivation | Example (gitlab-api) |
+|---|---|---|
+| `{name}` | Repo / distribution name (kebab-case) | `gitlab-api` |
+| `{pkg_dir}` | `{name}` with `-`→`_` | `gitlab_api` |
+| `{short}` | `{name}` minus trailing `-mcp`/`-agent`/`-api` suffix | `gitlab` |
+| `{short}-mcp` | MCP console script | `gitlab-mcp` |
+| `{short}-agent` | Agent console script | `gitlab-agent` |
+| `{Display Name}` | Title-cased name | `Gitlab Api` |
+| `{description}` | One-liner; pattern `"{Platform} API + MCP Server + A2A Server"` | `GitLab API + MCP Server + A2A Server` |
+| `{version}` | Current SemVer (bumpversion-managed, 5 sync points: pyproject, README, Dockerfile, agent_server, mcp_server) | `25.42.0` |
+| `{SERVICE}_URL` / `{SERVICE}_TOKEN` / `{SERVICE}_SSL_VERIFY` | `{name}` upper-snake env prefix (preserve first-party names where they exist) | `GITLAB_URL` / `GITLAB_TOKEN` / `GITLAB_SSL_VERIFY` |
+| `{PREFIX}` | CONCEPT ID prefix — check the registry in SKILL.md for collisions | `GL` |
+| `{agent_port}` | Per-repo A2A agent port (compose + healthcheck) | `9017` |
+| `{Platform}` | Backing-platform label in mkdocs nav / platform.md | `GitLab` |
+| Docker Hub image | `knucklessg1/{name}:latest` | `knucklessg1/gitlab-api:latest` |
+| GitHub org / Pages | `Knuckles-Team/{name}` / `https://knuckles-team.github.io/{name}/` | — |
+
+## 10. Mechanical verification
+
+Quick gate: run the drift-check script in SKILL.md Step 9. Deep audit: the
+`ecosystem_standardizer` workflow. For byte-level parity of invariant files
+(`.pre-commit-config.yaml`, the three workflows, `opencode.json`, `pytest.ini`,
+`docker/starship.toml`), diff directly against the golden repo:
+
+```bash
+G=/home/apps/workspace/agent-packages/agents/gitlab-api
+for f in .pre-commit-config.yaml .github/workflows/pipeline.yml \
+         .github/workflows/docs.yml .github/workflows/pages.yml \
+         opencode.json pytest.ini docker/starship.toml; do
+  diff -q "$f" "$G/$f" || echo "DRIFT: $f"
+done
+```
