@@ -3,14 +3,22 @@
 """
 Agent Package Builder — Scaffolds a complete agent-package project.
 
-Generates the full project structure following the jellyfin-mcp gold standard,
-including modular split folders for api/ and mcp/, modern Material theme mkdocs,
-Keep a Changelog CHANGELOG.md, and unified pytest layout.
+Generates the full project structure following the gitlab-api golden standard
+(/home/apps/workspace/agent-packages/agents/gitlab-api), including the modular
+api/ and mcp/ split, the full pre-commit gate, the three GitHub workflows
+(pipeline/docs/pages), the 7-page Material mkdocs site, AGENTS.md+CLAUDE.md
+stub pattern, and the a2a.json / opencode.json / pytest.ini / MANIFEST.in /
+.codespellignore / .vulture_ignore config set.
+
+See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
 """
 
 import argparse
 import datetime
+import shutil
 from pathlib import Path
+
+TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
 # ── Utility ──────────────────────────────────────────────────────────────────
 
@@ -30,11 +38,14 @@ def to_upper_env(name: str) -> str:
     return name.replace("-", "_").upper()
 
 
-# ── Templates ────────────────────────────────────────────────────────────────
+# ── Templates (golden standard: gitlab-api) ──────────────────────────────────
+# Templates are stored as (text, needs_format) pairs in the files map below.
+# needs_format=False templates are written verbatim (they contain literal
+# braces that str.format would mangle).
 
 PYPROJECT_TOML = """\
 [build-system]
-requires = ["setuptools>=80.9.0", "wheel"]
+requires = [ "setuptools>=80.9.0", "wheel",]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -42,37 +53,56 @@ name = "{package_name}"
 version = "0.1.0"
 description = "{description}"
 readme = "README.md"
-authors = [{{ name = "{author}", email = "{email}" }}]
-license = {{ text = "MIT" }}
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
-    "Environment :: Console",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3"]
-requires-python = ">=3.10"
-dependencies = [
-    "agent-utilities[mcp]>=0.2.12"]
+classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
+requires-python = ">=3.11, <3.15"
+dependencies = [ "agent-utilities>=0.47.0", "python-dotenv>=1.0.0",{gql_core_dep}]
+[[project.authors]]
+name = "{author}"
+email = "{email}"
+
+[project.license]
+text = "MIT"
 
 [project.optional-dependencies]
-agent = [
-    "agent-utilities[agent,logfire]>=0.2.12"]
-{gql_dep}
-all = [
-    "{all_dep_line}"]
+mcp = [ "agent-utilities[mcp]>=0.47.0",]
+agent = [ "agent-utilities[agent,logfire]>=0.47.0",]
+{gql_extra}all = [ "{package_name}[{all_extras}]>=0.1.0",]
+test = [
+    "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
 [project.scripts]
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
 {agent_cmd} = "{pkg_dir}.agent_server:agent_server"
 
-[tool.setuptools.packages.find]
-where = ["."]
-
 [tool.setuptools]
 include-package-data = true
 
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "pytest-timeout>=2.4.0",
+]
+
 [tool.setuptools.package-data]
-{pkg_dir} = [ "mcp_config.json", "agent/**", "skills/**"]
+{pkg_dir} = [ "mcp_config.json", "agent_data/**",]
+
+[tool.ruff.lint]
+select = [ "E", "F", "I", "UP", "B",]
+ignore = [ "E402", "E501", "B008",]
+
+[tool.setuptools.packages.find]
+where = [ ".",]
+
+[tool.vulture]
+ignore_names = ["request", "config"]
 """
 
 BUMPVERSION_CFG = """\
@@ -102,315 +132,335 @@ search = __version__ = "{{current_version}}"
 replace = __version__ = "{{new_version}}"
 """
 
+# Verbatim golden gitlab-api pre-commit gate (no format placeholders — the
+# bash one-liners contain literal braces).
 PRECOMMIT_CONFIG = """\
 default_language_version:
   python: python3
-exclude: 'dotnet'
+exclude: 'dotnet|node_modules'
 ci:
   autofix_prs: true
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit suggestions'
   autoupdate_schedule: 'monthly'
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-    - id: check-added-large-files
-      exclude: '{pkg_dir}/skills/.*-docs/'
-    - id: check-ast
-    - id: check-yaml
-    - id: check-toml
-    - id: check-json
-    - id: fix-byte-order-marker
-      exclude: .gitignore
-    - id: check-merge-conflict
-    - id: detect-private-key
-    - id: trailing-whitespace
-    - id: end-of-file-fixer
-    - id: no-commit-to-branch
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  - id: check-added-large-files
+    args: ["--maxkb=2000"]
+  - id: check-ast
+    exclude: ^(tests/|test/|scripts/|script/)
+  - id: check-yaml
+    args: ["--unsafe"]
+  - id: check-toml
+  - id: check-json
+  - id: fix-byte-order-marker
+    exclude: .gitignore
+  - id: check-merge-conflict
+  - id: detect-private-key
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: no-commit-to-branch
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.15.12
+  hooks:
+  - id: ruff-check
+    args: ["--fix", "--ignore=E402,B008,E501"]
+    exclude: ^(tests/|test/|scripts/|script/)
+  - id: ruff-format
+    exclude: ^(tests/|test/|scripts/|script/)
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.20.2
+  hooks:
+  - id: mypy
+    additional_dependencies: [pydantic, types-PyYAML, types-requests,
+        types-setuptools]
+    args: ["--ignore-missing-imports"]
+- repo: https://github.com/jendrikseipp/vulture
+  rev: v2.16
+  hooks:
+  - id: vulture
+    pass_filenames: false
+    args: [".", "--min-confidence", "95", "--exclude", "node_modules,dotnet,.venv"]
+    require_serial: true
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.4.2
+  hooks:
+  - id: codespell
+    args: ["-L", "ans,linar,nam,tread,ot,", "--ignore-words=.codespellignore"]
+    exclude: ^(tests/|test/|scripts/|script/|.*lock.*)
+- repo: https://github.com/PyCQA/bandit
+  rev: 1.9.4
+  hooks:
+  - id: bandit
+    args: ["--skip", "B101,B404,B603"]
+    exclude: ^(tests/|test/|scripts/|script/|__tests__/)
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 1.9.1
+  hooks:
+  - id: nbqa-ruff
+    args: ["--fix"]
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: 0.11.8
+  hooks:
+  - id: uv-lock
+- repo: local
+  hooks:
+  - id: check-mermaid
+    name: Check Mermaid syntax
+    entry: python3 /home/apps/workspace/agent-packages/agent-utilities/scripts/mermaid_linter.py
+    language: system
+    files: \\.md$
+    pass_filenames: true
+  - id: check-stubs
+    name: Check for Active Stubs and TODOs
+    entry: python3 /home/apps/workspace/agent-packages/agent-utilities/scripts/check_stubs.py
+    language: system
+    types: [python]
+  - id: mermaid-validate
+    name: mermaid-validate
+    entry: mermaid-validate
+    language: node
+    additional_dependencies: ['@zabaca/mermaid-validate@1.0.1']
+    types: [markdown]
+    pass_filenames: true
+  - id: check-agent-standards
+    name: check agent standards
+    entry: |-
+      bash -c 'for f in $(find . -type f -name "agent_server.py" -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do grep -q "warnings.filterwarnings" "$f" && grep -q "file=sys.stderr" "$f" || { echo "Missing warnings.filterwarnings or file=sys.stderr in $f"; exit 1; }; done'
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: check-cli-help
+    name: check cli help
+    entry: |-
+      bash -c 'for f in $(find . -type f \\( -name "mcp_server.py" -o -name "agent_server.py" \\) -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do mod=$(echo "$f" | sed -e "s/^\\.\\///" -e "s/\\.py$//" -e "s/\\//./g"); uv run python -m "$mod" --help >/dev/null || exit 1; done'
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: check-bumpversion
+    name: validate bumpversion config
+    entry: |-
+      bash -c 'if [ -f ".bumpversion.cfg" ]; then bump2version patch --dry-run --allow-dirty; fi'
+    language: system
+    pass_filenames: false
+    always_run: true
+- repo: local
+  hooks:
+  - id: pytest
+    name: pytest
+    entry: bash -c 'test_target="tests"; for d in tests/unit test/unit tests test; do if [ -d "$d" ]; then test_target="$d"; break; fi; done; if [ -f uv.lock ]; then uv run --all-extras pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; else pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; fi'
+    language: system
+    types: [python]
+    pass_filenames: false
+    always_run: true
+- repo: https://github.com/AleksaC/hadolint-py
+  rev: v2.14.0
+  hooks:
+  - id: hadolint
+    args:
+    - --ignore=DL3008
+    - --ignore=DL3015
+    - --ignore=DL3009
+    - --ignore=DL4006
+    - --ignore=SC2102
+- repo: https://github.com/IamTheFij/docker-pre-commit
+  rev: v3.0.1
+  hooks:
+  - id: docker-compose-check
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.4
-    hooks:
-      - id: ruff
-        exclude: ^(tests/|test/|scripts/|script/)
-        types_or: [ python, pyi, jupyter ]
-        args: ["--fix", "--ignore=E402"]
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-      - id: codespell
-        args: ["-L", "nam,tread,ot,"]
-        exclude: |
-            (?x)^(
-              \\./test/.*|
-              \\./tests/.*|
-              {pkg_dir}/skills/.*-docs/.*
-            )$
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.9.1
-    hooks:
-      - id: nbqa-ruff
-        exclude: ^(tests/|test/|scripts/|script/)
+- repo: local
+  hooks:
+  - id: verify-api-integration
+    name: Verify API-to-MCP Integration Coverage
+    entry: python scripts/verify_api_integration.py --local
+    language: system
+    pass_filenames: false
+    always_run: true
+- repo: local
+  hooks:
+  - id: security-sanitizer
+    name: Security and Garbage Sanitizer
+    entry: python scripts/security_sanitizer.py
+    language: python
+    pass_filenames: false
+    always_run: true
 """
 
 DOCKERFILE = """\
 # syntax=docker/dockerfile:1
-# Slim multi-stage: install in a builder, ship only /usr/local. No jre / dev-tools
-# / source copy -> ~43% smaller pushed image, so layer pushes finish inside the
-# registry's blob-upload window even under concurrency.
-FROM python:3-slim AS builder
+# Slim multi-stage build: install in a builder, ship only /usr/local. Cuts the
+# pushed image ~43% (no default-jre/dev-tools/source) so layer pushes finish well
+# inside the registry's blob-upload window even under concurrency.
+FROM python:3.11-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
     UV_SYSTEM_PYTHON=1 \\
     UV_HTTP_TIMEOUT=3600
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/* \\
-    && uv pip install --system --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
 
-FROM python:3-slim
+FROM python:3.11-slim
 
 ARG HOST=0.0.0.0
 ARG PORT=8000
-ARG TRANSPORT="http"
+ARG TRANSPORT="stdio"
 ARG AUTH_TYPE="none"
-ARG TOKEN_JWKS_URI=""
-ARG TOKEN_ISSUER=""
-ARG TOKEN_AUDIENCE=""
-ARG OAUTH_UPSTREAM_AUTH_ENDPOINT=""
-ARG OAUTH_UPSTREAM_TOKEN_ENDPOINT=""
-ARG OAUTH_UPSTREAM_CLIENT_ID=""
-ARG OAUTH_UPSTREAM_CLIENT_SECRET=""
-ARG OAUTH_BASE_URL=""
-ARG OIDC_CONFIG_URL=""
-ARG OIDC_CLIENT_ID=""
-ARG OIDC_CLIENT_SECRET=""
-ARG OIDC_BASE_URL=""
-ARG REMOTE_AUTH_SERVERS=""
-ARG REMOTE_BASE_URL=""
-ARG ALLOWED_CLIENT_REDIRECT_URIS=""
-ARG EUNOMIA_TYPE="none"
-ARG EUNOMIA_POLICY_FILE="mcp_policies.json"
-ARG EUNOMIA_REMOTE_URL=""
 
 ENV HOST=${{HOST}} \\
     PORT=${{PORT}} \\
     TRANSPORT=${{TRANSPORT}} \\
     AUTH_TYPE=${{AUTH_TYPE}} \\
-    TOKEN_JWKS_URI=${{TOKEN_JWKS_URI}} \\
-    TOKEN_ISSUER=${{TOKEN_ISSUER}} \\
-    TOKEN_AUDIENCE=${{TOKEN_AUDIENCE}} \\
-    OAUTH_UPSTREAM_AUTH_ENDPOINT=${{OAUTH_UPSTREAM_AUTH_ENDPOINT}} \\
-    OAUTH_UPSTREAM_TOKEN_ENDPOINT=${{OAUTH_UPSTREAM_TOKEN_ENDPOINT}} \\
-    OAUTH_UPSTREAM_CLIENT_ID=${{OAUTH_UPSTREAM_CLIENT_ID}} \\
-    OAUTH_UPSTREAM_CLIENT_SECRET=${{OAUTH_UPSTREAM_CLIENT_SECRET}} \\
-    OAUTH_BASE_URL=${{OAUTH_BASE_URL}} \\
-    OIDC_CONFIG_URL=${{OIDC_CONFIG_URL}} \\
-    OIDC_CLIENT_ID=${{OIDC_CLIENT_ID}} \\
-    OIDC_CLIENT_SECRET=${{OIDC_CLIENT_SECRET}} \\
-    OIDC_BASE_URL=${{OIDC_BASE_URL}} \\
-    REMOTE_AUTH_SERVERS=${{REMOTE_AUTH_SERVERS}} \\
-    REMOTE_BASE_URL=${{REMOTE_BASE_URL}} \\
-    ALLOWED_CLIENT_REDIRECT_URIS=${{ALLOWED_CLIENT_REDIRECT_URIS}} \\
-    EUNOMIA_TYPE=${{EUNOMIA_TYPE}} \\
-    EUNOMIA_POLICY_FILE=${{EUNOMIA_POLICY_FILE}} \\
-    EUNOMIA_REMOTE_URL=${{EUNOMIA_REMOTE_URL}} \\
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \\
+    PATH="/root/.local/bin:/usr/local/bin:${{PATH}}" \\
+    UV_HTTP_TIMEOUT=3600 \\
+    UV_SYSTEM_PYTHON=1 \\
+    UV_COMPILE_BYTECODE=1 \\
+    UV_LINK_MODE=copy
 
+# Install base dependencies, uv, and starship shell prompt
 COPY --from=builder /usr/local /usr/local
 
 CMD ["{mcp_cmd}"]
 """
 
 DEBUG_DOCKERFILE = """\
-FROM python:3-slim
+FROM python:3.11-slim
 
 ARG HOST=0.0.0.0
 ARG PORT=8000
-ARG TRANSPORT="http"
+ARG TRANSPORT="stdio"
 ARG AUTH_TYPE="none"
-ARG TOKEN_JWKS_URI=""
-ARG TOKEN_ISSUER=""
-ARG TOKEN_AUDIENCE=""
-ARG OAUTH_UPSTREAM_AUTH_ENDPOINT=""
-ARG OAUTH_UPSTREAM_TOKEN_ENDPOINT=""
-ARG OAUTH_UPSTREAM_CLIENT_ID=""
-ARG OAUTH_UPSTREAM_CLIENT_SECRET=""
-ARG OAUTH_BASE_URL=""
-ARG OIDC_CONFIG_URL=""
-ARG OIDC_CLIENT_ID=""
-ARG OIDC_CLIENT_SECRET=""
-ARG OIDC_BASE_URL=""
-ARG REMOTE_AUTH_SERVERS=""
-ARG REMOTE_BASE_URL=""
-ARG ALLOWED_CLIENT_REDIRECT_URIS=""
-ARG EUNOMIA_TYPE="none"
-ARG EUNOMIA_POLICY_FILE="mcp_policies.json"
-ARG EUNOMIA_REMOTE_URL=""
 
 ENV HOST=${{HOST}} \\
     PORT=${{PORT}} \\
     TRANSPORT=${{TRANSPORT}} \\
     AUTH_TYPE=${{AUTH_TYPE}} \\
-    TOKEN_JWKS_URI=${{TOKEN_JWKS_URI}} \\
-    TOKEN_ISSUER=${{TOKEN_ISSUER}} \\
-    TOKEN_AUDIENCE=${{TOKEN_AUDIENCE}} \\
-    OAUTH_UPSTREAM_AUTH_ENDPOINT=${{OAUTH_UPSTREAM_AUTH_ENDPOINT}} \\
-    OAUTH_UPSTREAM_TOKEN_ENDPOINT=${{OAUTH_UPSTREAM_TOKEN_ENDPOINT}} \\
-    OAUTH_UPSTREAM_CLIENT_ID=${{OAUTH_UPSTREAM_CLIENT_ID}} \\
-    OAUTH_UPSTREAM_CLIENT_SECRET=${{OAUTH_UPSTREAM_CLIENT_SECRET}} \\
-    OAUTH_BASE_URL=${{OAUTH_BASE_URL}} \\
-    OIDC_CONFIG_URL=${{OIDC_CONFIG_URL}} \\
-    OIDC_CLIENT_ID=${{OIDC_CLIENT_ID}} \\
-    OIDC_CLIENT_SECRET=${{OIDC_CLIENT_SECRET}} \\
-    OIDC_BASE_URL=${{OIDC_BASE_URL}} \\
-    REMOTE_AUTH_SERVERS=${{REMOTE_AUTH_SERVERS}} \\
-    REMOTE_BASE_URL=${{REMOTE_BASE_URL}} \\
-    ALLOWED_CLIENT_REDIRECT_URIS=${{ALLOWED_CLIENT_REDIRECT_URIS}} \\
-    EUNOMIA_TYPE=${{EUNOMIA_TYPE}} \\
-    EUNOMIA_POLICY_FILE=${{EUNOMIA_POLICY_FILE}} \\
-    EUNOMIA_REMOTE_URL=${{EUNOMIA_REMOTE_URL}} \\
     PYTHONUNBUFFERED=1 \\
-    PATH="/root/.local/bin:/usr/local/bin:${{PATH}}" \\
+    PATH="/usr/local/cargo/bin:/root/.local/bin:/usr/local/bin:${{PATH}}" \\
     UV_HTTP_TIMEOUT=3600 \\
     UV_SYSTEM_PYTHON=1 \\
-    UV_COMPILE_BYTECODE=1
+    UV_COMPILE_BYTECODE=1 \\
+    RUSTUP_HOME="/usr/local/rustup" \\
+    CARGO_HOME="/usr/local/cargo"
+
+# Install base dependencies, uv, and starship shell prompt
+RUN apt-get update \\
+    && apt-get install -y default-jre ripgrep tree fd-find curl nano build-essential cmake libssl-dev libcurl4-openssl-dev pkg-config \\
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \\
+    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
+    && curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal \\
+    && mkdir -p /root/.config \\
+    && echo "eval \\"\\$(starship init bash)\\"" >> /root/.bashrc \\
+    && apt-get clean \\
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . /app
-RUN apt-get update \\
-    && apt-get install -y default-jre ripgrep tree fd-find curl nano \\
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \\
-    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
-    && mkdir -p /root/.config \\
-    && echo 'eval "$(starship init bash)"' >> /root/.bashrc \\
-    && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[all]
 
-COPY starship.toml /root/.config/starship.toml
+# Compile and install package in-place
+RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[all]
+
+COPY docker/starship.toml /root/.config/starship.toml
 
 CMD ["{mcp_cmd}"]
 """
 
-COMPOSE_YML = """\
----
+AGENT_COMPOSE_YML = """\
+version: '3.8'
+
 services:
-  {agent_service_name}:
-    # image: docker.io/knucklessg1/{package_name}:latest
-    build:
-      context: .. # Debug
-      dockerfile: docker/debug.Dockerfile
-    container_name: {agent_service_name}
-    hostname: {agent_service_name}
-    command: [ "{agent_cmd}" ]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+  {package_name}-mcp:
+    image: knucklessg1/{package_name}:latest
+    container_name: {package_name}-mcp
+    hostname: {package_name}-mcp
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=8000
+      - TRANSPORT=streamable-http
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
+  {package_name}-agent:
+    image: knucklessg1/{package_name}:latest
+    container_name: {package_name}-agent
+    hostname: {package_name}-agent
     restart: always
+    depends_on:
+      - {package_name}-mcp
     env_file:
       - ../.env
+    command: [ "{agent_cmd}" ]
     environment:
-      - "HOST=0.0.0.0"
-      - "PORT=9001"
-      - "TRANSPORT=stdio"
-      - "{service_url_env}=${{{service_url_env}}}"
-      - "{auth_env}=${{{auth_env}}}"
-      - "PROVIDER=openai"
-      - "LLM_BASE_URL=${{LLM_BASE_URL:-http://host.docker.internal:1234/v1}}"
-      - "LLM_API_KEY=${{LLM_API_KEY:-llama}}"
-      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3.5-9b}}"
-      - "DEBUG=False"
-      - "ENABLE_WEB_UI=True"
-      - "ENABLE_OTEL=True"
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT={agent_port}
+      - MCP_URL=http://{package_name}-mcp:8000/mcp
+      - PROVIDER=${{PROVIDER:-openai}}
+      - MODEL_ID=${{MODEL_ID:-gpt-4o}}
+      - ENABLE_WEB_UI=True
+      - ENABLE_OTEL=True
     ports:
-      - "9001:9001"
+      - "{agent_port}:{agent_port}"
     healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9001/health')" ]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:{agent_port}/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 """
 
 MCP_COMPOSE_YML = """\
----
-services:
-  {mcp_cmd}:
-    build:
-      context: .. # Production
-      dockerfile: docker/debug.Dockerfile # Using debug for local dev usually
-    container_name: {mcp_cmd}
-    hostname: {mcp_cmd}
-    command: [ "{mcp_cmd}" ]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: always
-    volumes:
-      - ../mcp:/app
-    env_file:
-      - ../.env
-    environment:
-      - "PYTHONUNBUFFERED=1"
-      - "HOST=0.0.0.0"
-      - "PORT=8004"
-      - "TRANSPORT=streamable-http"
-    ports:
-      - "8004:8004"
-    healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+version: '3.8'
 
-  {agent_service_name}:
-    build:
-      context: .. # Production
-      dockerfile: docker/debug.Dockerfile
-    container_name: {agent_service_name}
-    hostname: {agent_service_name}
-    command: [ "{agent_cmd}" ]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - {mcp_cmd}
+services:
+  {package_name}-mcp:
+    image: knucklessg1/{package_name}:latest
+    container_name: {package_name}-mcp
+    hostname: {package_name}-mcp
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=8000
+      - TRANSPORT=streamable-http
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
-    restart: always
-    env_file:
-      - ../.env
-    environment:
-      - "PYTHONUNBUFFERED=1"
-      - "HOST=0.0.0.0"
-      - "PORT=9004"
-      - "MCP_URL=http://{mcp_cmd}:8004/mcp"
-      - "PROVIDER=openai"
-      - "LLM_BASE_URL=${{LLM_BASE_URL:-http://host.docker.internal:1234/v1}}"
-      - "LLM_API_KEY=${{LLM_API_KEY:-llama}}"
-      - "MODEL_ID=${{MODEL_ID:-qwen/qwen3.5-9b}}"
-      - "DEBUG=False"
-      - "ENABLE_WEB_UI=True"
-      - "ENABLE_OTEL=True"
-    ports:
-      - "9004:9004"
-    healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9004/health')" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 """
 
 STARSHIP_TOML = """\
@@ -495,7 +545,7 @@ __pycache__/
 .env
 scripts/
 tests/
-*.egg-info*
+{pkg_dir}.egg-info*
 models/
 .github/
 build/
@@ -504,30 +554,137 @@ build/
 pytest.ini
 ./tests/
 
-docker/Dockerfile
-docker/debug.Dockerfile
-docker/compose.yml
-docker/mcp.compose.yml
+Dockerfile
+debug.Dockerfile
+compose.yml
 """
 
-ENV_TEMPLATE = """\
-LLM_BASE_URL=http://vllm.arpa/v1
-LLM_API_KEY=llama
+ENV_EXAMPLE = """\
+# ==============================================================================
+# {display_name} Environment Configuration
+# ==============================================================================
+
+# --- MCP Server Settings ---
+HOST=0.0.0.0
+PORT=8000
+TRANSPORT=stdio # options: stdio, streamable-http, sse
+
+# --- Telemetry & Observability (OTEL / Langfuse) ---
 ENABLE_OTEL=True
-OTEL_EXPORTER_OTLP_ENDPOINT=http://langfuse.arpa/api/public/otel
-OTEL_EXPORTER_OTLP_PUBLIC_KEY=""
-OTEL_EXPORTER_OTLP_SECRET_KEY=""
-OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:8080/api/public/otel
+# OTEL_EXPORTER_OTLP_PUBLIC_KEY=pk-...
+# OTEL_EXPORTER_OTLP_SECRET_KEY=sk-...
+# OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+
+# --- Enterprise Security & Access Governance (Eunomia) ---
+EUNOMIA_TYPE=none # options: none, embedded, remote
+EUNOMIA_POLICY_FILE=mcp_policies.json
+# EUNOMIA_REMOTE_URL=http://eunomia-server:8000
+
+# --- Core API / Client Credentials for {display_name} ---
 {service_url_env}=http://localhost:8080
-{auth_env}=your_token_here
+# {auth_env}=your_token_here
+
+# --- Tool Toggle Switches ---
+SYSTEMTOOL=True
 """
 
-REQUIREMENTS_TXT = """\
-requests>=2.8.1
-urllib3>=2.2.2
-fastmcp>=2.13.0.2
-uvicorn>=0.29.0
-fastapi>=0.110.0
+PYTEST_INI = """\
+[pytest]
+timeout = 60
+asyncio_mode = auto
+testpaths = tests
+markers =
+    integration: Integration tests
+addopts = -m "not integration"
+filterwarnings =
+    ignore:.*exclude_args.*
+"""
+
+A2A_JSON = """\
+{{
+  "name": "{package_name}-agent",
+  "type": "agent",
+  "version": "0.1.0",
+  "description": "{description}",
+  "url": "https://github.com/Knuckles-Team/{package_name}/tree/main",
+  "license": "MIT",
+  "capabilities": [
+    {{
+      "id": "run_graph_flow",
+      "name": "Graph Flow Execution",
+      "description": "Execute a workflow through the agent's graph orchestration engine"
+    }}
+  ],
+  "tools": [
+    {{
+      "id": "graph-flow",
+      "type": "flow",
+      "description": "Run complex multi-step workflows via Pydantic-Graph"
+    }}
+  ]
+}}
+"""
+
+OPENCODE_JSON = """\
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LM Studio (local)",
+      "options": {
+        "baseURL": "http://vllm.arpa/v1"
+      },
+      "models": {
+        "qwen/qwen3.5-9b": {
+          "name": "Qwen 3.5-9B"
+        }
+      }
+    }
+  },
+  "model": "lmstudio/qwen/qwen3.5-9b"
+}
+"""
+
+CODESPELLIGNORE = """\
+# codespell ignore words list
+linar
+nam
+tread
+ot
+ans
+uv
+mcp
+pydantic
+logfire
+langfuse
+fastmcp
+eunomia
+agentic
+pre-commit
+setuptools
+pyproject
+bumpversion
+"""
+
+VULTURE_IGNORE = """\
+DEFAULT_AGENT_DESCRIPTION
+DEFAULT_AGENT_SYSTEM_PROMPT
+health_check
+get_client
+"""
+
+CLAUDE_MD = """\
+# CLAUDE.md
+
+Guidance for Claude Code (claude.ai/code) when working in this repository.
+
+To prevent drift, the **canonical agent guidance lives in `AGENTS.md`** and is
+imported below, so `CLAUDE.md` and `AGENTS.md` always stay in sync. Edit
+`AGENTS.md` for any change — never edit the body of this file.
+
+@AGENTS.md
 """
 
 LICENSE_MIT = """\
@@ -558,7 +715,7 @@ MANIFEST_IN = """\
 include LICENSE
 include README.md
 include requirements.txt
-recursive-include {pkg_dir} *.md *.json *.yaml *.yml *.py
+recursive-include {pkg_dir} *.py *.json
 """
 
 GITIGNORE = """\
@@ -592,10 +749,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -615,70 +768,6 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-# .python-version
-
-# pipenv
-#Pipfile.lock
-
-# UV
-#uv.lock
-
-# poetry
-#poetry.lock
-#poetry.toml
-
-# pdm
-#pdm.lock
-#pdm.toml
-.pdm-python
-.pdm-build/
-
-# pixi
-#pixi.lock
-.pixi
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
 # Environments
 .env
 .envrc
@@ -689,13 +778,6 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
 # mkdocs documentation
 /site
 
@@ -704,32 +786,28 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# Abstra
-.abstra/
-
 # Ruff stuff:
 .ruff_cache/
 
 # PyPI configuration file
 .pypirc
 
-# Cursor
-.cursorignore
-.cursorindexingignore
+# Scratch / debug files at root (keep the repo root pristine)
+/test_*.py
+/fix_*.py
+/debug_*.py
+/scratch_*.py
+/temp_*.py
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+# Transient logs, traces, patch files, and test outputs
+*.orig
+*.rej
+*.patch
+*.log
+*output*.txt
+*errors*.txt
+failed_tests.txt
+trace.txt
 """
 
 GITATTRIBUTES = """\
@@ -740,37 +818,20 @@ GITATTRIBUTES = """\
 *.bash            text eol=lf
 *.bat             text eol=crlf
 *.cmd             text eol=crlf
-*.coffee          text
 *.css             text diff=css
 *.htm             text diff=html
 *.html            text diff=html
-*.inc             text
 *.ini             text
 *.js              text
 *.json            text
 *.jsx             text
-*.less            text
-*.ls              text
-*.map             text -diff
-*.od              text
-*.onlydata        text
-*.php             text diff=php
-*.pl              text
 *.ps1             text eol=crlf
 *.py              text diff=python
-*.rb              text diff=ruby
-*.sass            text
-*.scm             text
-*.scss            text diff=css
 *.sh              text eol=lf
-.husky/*          text eol=lf
 *.sql             text
-*.styl            text
-*.tag             text
 *.ts              text
 *.tsx             text
 *.xml             text
-*.xhtml           text diff=html
 
 # Docker
 Dockerfile        text
@@ -779,33 +840,32 @@ Dockerfile        text
 *.ipynb           text
 *.markdown        text diff=markdown eol=lf
 *.md              text diff=markdown eol=lf
-*.mdwn            text diff=markdown eol=lf
-*.mdown           text diff=markdown eol=lf
-*.mkd             text diff=markdown eol=lf
-*.mkdn            text diff=markdown eol=lf
-*.mdtxt           text eol=lf
-*.mdtext          text eol=lf
 *.txt             text
 AUTHORS           text
 CHANGELOG         text
-CHANGES           text
-CONTRIBUTING      text
-COPYING           text
-copyright         text
-*COPYRIGHT*       text
-INSTALL           text
-license           text
 LICENSE           text
-NEWS              text
-readme            text
 *README*          text
-TODO              text
 """
 
 README_MD = """\
-# {display_name} - A2A | AG-UI | MCP
+# {display_name}
+## CLI or API | MCP | Agent
+
+![PyPI - Version](https://img.shields.io/pypi/v/{package_name})
+![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
+![PyPI - Downloads](https://img.shields.io/pypi/dd/{package_name})
+![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/{package_name})
+![PyPI - License](https://img.shields.io/pypi/l/{package_name})
+![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/{package_name})
 
 *Version: 0.1.0*
+
+> **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
+> interfaces, the integrated A2A agent server, and guidance for provisioning the
+> backing platform are maintained in the
+> [official documentation](https://knuckles-team.github.io/{package_name}/).
+
+---
 
 ## Overview
 
@@ -819,7 +879,8 @@ This repository is actively maintained - Contributions are welcome!
 
 ### Using as an MCP Server
 
-The MCP Server can be run in two modes: `stdio` (for local testing) or `http` (for networked access).
+The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
+`sse` mode.
 
 #### Environment Variables
 
@@ -839,6 +900,321 @@ export {auth_env}="your_token"
 python -m pip install {package_name}
 ```
 """
+
+CHANGELOG_MD = """\
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - {date}
+
+### Added
+- Initial release.
+- Modular subfolders for API wrappers (`api/`) and action-routed MCP tools (`mcp/`).
+- Material-theme mkdocs documentation site (7 standard pages).
+- Full pre-commit quality gate and flat `tests/` structure.
+"""
+
+# ── GitHub workflows (golden verbatim) ───────────────────────────────────────
+
+PIPELINE_YML = """\
+name: Build|Upload|Release Python Package
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  publish-pypi:
+    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+  publish-docker:
+    needs: publish-pypi
+    uses: Knuckles-Team/pipelines/.github/workflows/container_pipeline.yml@main
+    secrets:
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
+"""
+
+DOCS_YML = """\
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs
+        run: pip install mkdocs-material
+
+      - name: Build and Deploy
+        run: mkdocs gh-deploy --force
+"""
+
+PAGES_YML = """\
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'README.md'
+
+jobs:
+  publish-pages:
+    uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main
+"""
+
+# ── AGENTS.md (golden pattern, incl. Quality Bar + worktree sections) ─────────
+
+ROOT_AGENTS_MD = """\
+# AGENTS.md
+
+> Claude Code loads this file via `CLAUDE.md` (`@AGENTS.md` import) — the two stay
+> in sync. Edit **this** file, not `CLAUDE.md`.
+
+## Tech Stack & Architecture
+- Language/Version: Python 3.11+
+- Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
+- Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
+- Architecture:
+    - `{pkg_dir}/api/`: Modular folder for target service client wrappers.
+    - `{pkg_dir}/mcp/`: Modular folder for action-routed dynamic MCP tool tags.
+    - `{pkg_dir}/mcp_server.py`: Main MCP server entry point and tool registration.
+    - `{pkg_dir}/agent_server.py`: Pydantic AI agent definition and logic.
+
+### Architecture Diagram
+```mermaid
+graph TD
+    User([User/A2A]) --> Server[A2A Server / FastAPI]
+    Server --> Agent[Pydantic AI Agent]
+    Agent --> Skills[Modular Skills]
+    Agent --> MCP[MCP Server / FastMCP]
+    MCP --> Client[API Client / Wrapper]
+    Client --> ExternalAPI([External Service API])
+```
+
+### Workflow Diagram
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Server
+    participant A as Agent
+    participant T as MCP Tool
+    participant API as External API
+
+    U->>S: Request
+    S->>A: Process Query
+    A->>T: Invoke Tool
+    T->>API: API Request
+    API-->>T: API Response
+    T-->>A: Tool Result
+    A-->>S: Final Response
+    S-->>U: Output
+```
+
+## Commands (run these exactly)
+# Installation
+pip install .[all]
+
+# Quality & Linting (run from project root)
+pre-commit run --all-files
+
+# Execution Commands
+# Run MCP Server
+{mcp_cmd}
+# Run Agent
+{agent_cmd}
+
+## Project Structure Quick Reference
+- MCP Entry Point → `{pkg_dir}/mcp_server.py`
+- Agent Entry Point → `{pkg_dir}/agent_server.py`
+- Source Code → `{pkg_dir}/`
+- API client mixins → `{pkg_dir}/api/`
+- MCP tool modules → `{pkg_dir}/mcp/`
+- Tests → `tests/`
+- Documentation → `docs/` (published via mkdocs + GitHub Pages)
+
+## Code Style & Conventions
+**Always:**
+- Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent_server`).
+- Define input/output models using Pydantic.
+- Include descriptive docstrings for all tools (they are used as tool descriptions for LLMs).
+- Check for optional dependencies using `try/except ImportError`.
+
+## Dos and Don'ts
+**Do:**
+- Run `pre-commit` before pushing changes.
+- Use existing patterns from `agent-utilities`.
+- Keep tools focused and idempotent where possible.
+
+**Don't:**
+- Use `cd` commands in scripts; use absolute paths or relative to project root.
+- Add new dependencies to `dependencies` in `pyproject.toml` without checking `optional-dependencies` first.
+- Hardcode secrets; use environment variables or `.env` files.
+
+## Safety & Boundaries
+**Always do:**
+- Run lint/test via `pre-commit`.
+- Use `agent-utilities` base classes.
+
+**Ask first:**
+- Major refactors of `mcp_server.py` or `agent_server.py`.
+- Deleting or renaming public tool functions.
+
+**Never do:**
+- Commit `.env` files or secrets.
+- Modify `agent-utilities` or `universal-skills` files from within this package.
+
+## When Stuck
+- Propose a plan first before making large changes.
+- Check `agent-utilities` documentation for existing helpers.
+
+## ⛔ No Scratch or Temporary Files in Repository
+
+**NEVER write any of the following to this repository:**
+- Temporary test scripts (`test_*.py`, `debug_*.py` outside of `tests/`)
+- Scratch scripts or experimental one-off files
+- Log files (`.log`, `.txt` command output)
+- Random text files with command output or debug dumps
+- Any file that is NOT production source code, tests in `tests/`, or documentation
+
+**Why:** These files expose private filesystem paths, credentials, and internal infrastructure details when pushed to GitHub publicly.
+
+**Where to put scratch work instead:**
+- Use `~/workspace/scratch/` for temporary scripts and experiments
+- Use `~/workspace/reports/` for command output and reports
+- Keep test scripts in the `tests/` directory following proper pytest conventions
+
+## ⛔ Keep the Repository Root Pristine — No Scratch / Temp / Debug Files
+
+**The repository ROOT must contain only canonical project files** (packaging,
+config, docs, lockfiles). The only hidden directories allowed at root are
+`.git/`, `.github/`, and `.specify/` (plus a local, git-ignored `.venv/`).
+
+**NEVER write any of the following — anywhere in the repo, and ESPECIALLY at the root:**
+- One-off / debug / migration scripts: `fix_*.py`, `migrate_*.py`, `refactor_*.py`,
+  `replace_*.py`, `update_*.py`, `debug_*.py`, or `test_*.py` **at the root**
+  (real tests live in `tests/` only).
+- Databases / data dumps: `*.db`, `*.db-wal`, `*.sqlite*`, `*.corrupted`.
+- Logs / command output: `*.log`, scratch `*.txt`, `*.orig`, `*.rej`, `*.bak`.
+- Build artifacts: `*.tsbuildinfo`, compiled binaries, coverage files.
+- AI agent scratch directories: `.agent/`, `.agents/`, `.agent_data/`, `.tmp/`,
+  `.hypothesis/`, or any per-tool cache committed to git.
+- Any file that is NOT production source, a test in `tests/`, documentation, or
+  a recognized config/lockfile.
+
+**Why:** scratch at the root leaks private paths/credentials, bloats the tree,
+and erodes a pristine codebase.
+
+**Where scratch goes instead:** `~/workspace/scratch/` (experiments),
+`~/workspace/reports/` (command output); tests go in `tests/` (pytest).
+Before finishing a task, run `git status` and confirm no stray root files were added.
+
+## Working Discipline — think, simplify, stay surgical, verify
+
+These four habits cut the most common LLM coding mistakes. For trivial tasks, use
+judgment; the bias here is correctness over speed.
+
+- **Think before coding.** State your assumptions explicitly. If a request has more than
+  one reasonable reading, surface the options instead of silently picking one. If a
+  simpler approach exists, say so and push back when warranted. When something is
+  genuinely unclear, stop and name what's confusing — ask, don't guess.
+- **Simplicity first.** Write the minimum code that solves the stated problem — no
+  speculative features, no abstraction for single-use code, no configurability that
+  wasn't requested, no error handling for impossible states. If you wrote 200 lines and
+  it could be 50, rewrite it. (Name code from its purpose, never `wave0`/`phase2`/`v2`.)
+- **Stay surgical.** Every changed line should trace directly to the task. Don't refactor,
+  reformat, or "improve" working code adjacent to your change; match the existing style
+  even where you'd do it differently. Remove only the imports/symbols your own change
+  orphaned; if you spot unrelated dead code, mention it rather than deleting it inline.
+  *Exception — the Quality Bar below:* lint/format/type errors the pre-commit gate flags
+  get fixed regardless of who introduced them. In short: **surgical on behavior, clean on
+  lint.**
+- **Verify against a goal.** Turn the task into a checkable outcome before you start:
+  "fix the bug" → "write a failing test that reproduces it, then make it pass"; "add
+  validation" → "tests for the invalid inputs pass". For multi-step work, state the short
+  plan and the check for each step, then loop until the checks pass.
+
+## Quality Bar — Leave the Codebase Clean (REQUIRED)
+
+After completing any code change, run the project's pre-commit suite and drive it
+**fully green** before committing:
+
+```bash
+pre-commit run --all-files
+```
+
+Resolve **every** issue it reports — failures, lint errors, type errors, and
+warnings — **including problems that pre-date your change and were not caused by
+your edits**. The standing goal is a clean, working codebase with **no errors and
+no warnings**. Do not silence checks (`# noqa`, `# type: ignore`, `SKIP=`,
+`--no-verify`) to force green unless the exception is already documented in this
+file as a known, unavoidable limitation. Only commit once `pre-commit run
+--all-files` passes cleanly; if a check legitimately cannot pass, stop and explain
+why rather than bypassing it.
+
+## Working with Git Worktrees (multi-session)
+
+Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
+edit the canonical checkout** (`/home/apps/workspace/agent-packages/<repo>`) — a
+background `repository-manager` sync can reset its working tree and discard
+uncommitted edits. Take your own git worktree on your own branch instead:
+
+```bash
+# preferred — repository-manager MCP:
+rm_worktree add <repo> <your-branch>      # -> /home/apps/worktrees/<repo>/<your-branch>
+
+# raw-git fallback:
+git -C agent-packages/<repo> checkout main
+git -C agent-packages/<repo> worktree add /home/apps/worktrees/<repo>/<branch> -b <branch>
+```
+
+Work in the worktree and **commit often** (commits survive a working-tree reset).
+Each session must use a **distinct branch** — git allows a branch in only one
+worktree, which is what keeps concurrent sessions from colliding. Worktrees live
+under `/home/apps/worktrees/` (outside the workspace scan, so the sync leaves them
+alone).
+
+**Finishing work in a worktree** — run this sequence before calling it done:
+1. **Pre-commit green** — `pre-commit run --all-files`; resolve every issue per the
+   Quality Bar above (including pre-existing), no `--no-verify`.
+2. **Commit** in the worktree.
+3. **Merge to main locally** — `rm_worktree merge <repo> <branch> --into main`
+   (or `git merge --no-ff`). Push only when the user asks.
+4. **Clean up** — remove the worktree and delete the merged branch:
+   `rm_worktree remove <repo> <branch> --delete-branch`; `rm_worktree prune` clears
+   stale entries. (Raw-git: `git worktree remove <path> && git branch -d <branch>`.)
+"""
+
+# ── Package source templates ─────────────────────────────────────────────────
 
 INIT_PY = """\
 #!/usr/bin/env python
@@ -896,11 +1272,6 @@ for module_name, extra_name in OPTIONAL_MODULES.items():
     else:
         globals()[f"_{{extra_name.upper()}}_AVAILABLE"] = False
 
-_MCP_AVAILABLE = OPTIONAL_MODULES.get("{pkg_dir}.mcp_server") in [
-    m.__name__ for m in globals().values() if hasattr(m, "__name__")
-]
-_AGENT_AVAILABLE = "{pkg_dir}.agent_server" in globals()
-
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
 """
 
@@ -909,7 +1280,9 @@ AUTH_PY = """\
 # coding: utf-8
 
 import os
+
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
+
 from .api import ApiClientSystem
 
 _client = None
@@ -921,7 +1294,7 @@ def get_client() -> ApiClientSystem:
     if _client is None:
         base_url = os.getenv("{service_url_env}", "http://localhost:8080")
         token = os.getenv("{auth_env}", "")
-        verify = os.getenv("{verify_env}", "True").lower() in ("true", "1", "yes")
+        verify = os.getenv("{ssl_verify_env}", "True").lower() in ("true", "1", "yes")
 
         try:
             _client = ApiClientSystem(
@@ -948,15 +1321,16 @@ MCP_SERVER_PY = """\
 #!/usr/bin/python
 # coding: utf-8
 
+import logging
 import os
 import sys
-import logging
 from typing import Any
-from dotenv import load_dotenv, find_dotenv
-from fastmcp import FastMCP
+
 from agent_utilities.base_utilities import to_boolean
 from agent_utilities.mcp_utilities import create_mcp_server
 from agent_utilities.utilities import get_logger
+from dotenv import find_dotenv, load_dotenv
+
 from .mcp import register_system_tools
 
 __version__ = "0.1.0"
@@ -1007,249 +1381,13 @@ if __name__ == "__main__":
     mcp_server()
 """
 
-# ── Split directories layout ───────────────────────────────────────────
-
-API_CLIENT_BASE = """\
-import os
-import requests
-from typing import Dict, Any
-
-class ApiClientBase:
-    \"\"\"Base HTTP API client wrapper.\"\"\"
-    def __init__(self, base_url: str, token: str, verify: bool = True):
-        self.base_url = base_url.rstrip("/")
-        self.token = token
-        self.verify = verify
-        self.session = requests.Session()
-        self.session.headers.update({{"Authorization": f"Bearer {{token}}"}})
-
-    def request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
-        url = f"{{self.base_url}}/{{path.lstrip('/')}}"
-        response = self.session.request(method, url, verify=self.verify, **kwargs)
-        response.raise_for_status()
-        try:
-            return response.json()
-        except ValueError:
-            return {{"status": response.status_code, "text": response.text}}
-"""
-
-API_CLIENT_SYSTEM = """\
-from .api_client_base import ApiClientBase
-from typing import Dict, Any
-
-class ApiClientSystem(ApiClientBase):
-    \"\"\"System status and monitoring API operations.\"\"\"
-    def get_system_status(self) -> Dict[str, Any]:
-        \"\"\"Retrieve the status of the target system.\"\"\"
-        return self.request("GET", "/health")
-"""
-
-API_INIT_PY = """\
-from .api_client_base import ApiClientBase
-from .api_client_system import ApiClientSystem
-
-__all__ = ["ApiClientBase", "ApiClientSystem"]
-"""
-
-MCP_SYSTEM_PY = """\
-from fastmcp import FastMCP, Context
-from fastmcp.dependencies import Depends
-from pydantic import Field
-from ..auth import get_client
-
-def register_system_tools(mcp: FastMCP):
-    \"\"\"Register system tag dynamic tools.\"\"\"
-    @mcp.tool(tags={{"system"}})
-    async def system_operations(
-        action: str = Field(
-            description="Action to perform. Must be 'status' or 'info'."
-        ),
-        params_json: str = Field(
-            default="{{}}", description="JSON string of parameters to pass to the action."
-        ),
-        client=Depends(get_client),
-        ctx: Context | None = Field(
-            default=None, description="MCP context for progress reporting"
-        ),
-    ) -> dict:
-        \"\"\"Manage system tag operations.\"\"\"
-        if ctx:
-            ctx.info("Executing system tool...")
-        import json
-        try:
-            kwargs = json.loads(params_json)
-        except Exception as e:
-            return {{"error": f"Invalid params_json: {{e}}"}}
-
-        if action == "status":
-            try:
-                return client.get_system_status()
-            except Exception as e:
-                return {{"error": str(e)}}
-        else:
-            return {{"info": "System operations dynamic placeholder."}}
-"""
-
-MCP_INIT_PY = """\
-from .mcp_system import register_system_tools
-
-__all__ = ["register_system_tools"]
-"""
-
-# ── Docs ───────────────────────────────────────────────────────────────
-
-MKDOCS_YML = """\
-site_name: "{package_name}"
-repo_name: "Knuckles-Team/{package_name}"
-repo_url: "https://github.com/Knuckles-Team/{package_name}"
-theme:
-  name: material
-  features:
-    - navigation.sections
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.code.annotate
-  palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/github
-plugins:
-  - search
-markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - admonition
-  - pymdownx.details
-  - attr_list
-  - tables
-  - toc:
-      permalink: true
-nav:
-  - Home: index.md
-  - Overview: overview.md
-"""
-
-DOCS_INDEX_MD = """\
-# {display_name} Documentation
-
-Welcome to the documentation for **{display_name}**!
-
-This project provides a unified Model Context Protocol (MCP) server and A2A Agent designed to integrate with standard tools and clients seamlessly.
-
-## Getting Started
-
-Refer to the [Overview](overview.md) or the [README](../README.md) for quick start instructions.
-"""
-
-DOCS_OVERVIEW_MD = """\
-# {display_name} Overview
-
-This agent package provides premium tools and workflows for interacting with the target service.
-
-## Key Features
-- **Modular Design**: Broken up into `api/` and `mcp/` directories for cleaner organization.
-- **Dynamic Tool Registration**: Exposes action-routed dynamic tool tags strictly complying with lowercase tags constraint.
-- **Test Automation**: Shipped with flat-file `tests/` directory covering auth error cases and API verification.
-"""
-
-CHANGELOG_MD = """\
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-## [0.1.0] - {date}
-
-### Added
-- Initial release.
-- Modular subfolders for API wrappers (`api/`) and MCP servers (`mcp/`).
-- Modernized material theme mkdocs setup.
-- Flat `tests/` structure for comprehensive endpoint verification.
-"""
-
-# ── Tests ──────────────────────────────────────────────────────────────
-
-TESTS_CONFTEST = """\
-import pytest
-from unittest.mock import MagicMock
-
-@pytest.fixture
-def mock_api_client():
-    client = MagicMock()
-    client.get_system_status.return_value = {{"status": "OK"}}
-    return client
-"""
-
-TESTS_API_AUTH = """\
-import pytest
-from unittest.mock import patch
-from {pkg_dir}.auth import get_client
-
-def test_get_client_auth_error():
-    # Test instantiating the api client base setup
-    with patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls:
-        mock_client_cls.side_effect = Exception("Auth Failure")
-        with pytest.raises(RuntimeError) as exc_info:
-            get_client()
-        assert "AUTHENTICATION ERROR" in str(exc_info.value)
-"""
-
-TESTS_MCP_SERVER = """\
-import pytest
-from {pkg_dir}.mcp_server import get_mcp_instance
-
-def test_mcp_instance_registration():
-    mcp, args, middlewares = get_mcp_instance()
-    assert mcp is not None
-    # Verify that the system tool was registered correctly
-    tools = [t.name for t in mcp.tools]
-    assert any("system_operations" in t for t in tools)
-"""
-
-
-# ── Rest of agent templates ───────────────────────────────────────────
-
-AGENT_PY = """\
+AGENT_SERVER_PY = """\
 #!/usr/bin/python
 # coding: utf-8
+import logging
 import os
 import sys
-import logging
 import warnings
-from pathlib import Path
-
-from agent_utilities import (
-    build_system_prompt_from_workspace,
-    create_agent_parser,
-    create_agent_server,
-    initialize_workspace,
-    load_identity,
-    get_workspace_path,
-)
 
 __version__ = "0.1.0"
 
@@ -1260,25 +1398,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load identity and system prompt from workspace
-initialize_workspace()
-meta = load_identity()
-DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
-DEFAULT_AGENT_DESCRIPTION = os.getenv(
-    "AGENT_DESCRIPTION",
-    meta.get("description", "{description}"),
-)
-DEFAULT_AGENT_SYSTEM_PROMPT = os.getenv(
-    "AGENT_SYSTEM_PROMPT",
-    meta.get("content") or build_system_prompt_from_workspace(),
-)
-
 
 def agent_server():
+    from agent_utilities import (
+        build_system_prompt_from_workspace,
+        create_agent_parser,
+        create_agent_server,
+        initialize_workspace,
+        load_identity,
+    )
+
     warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
     warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
 
-    print(f"{{DEFAULT_AGENT_NAME}} v{{__version__}}", file=sys.stderr)
+    initialize_workspace()
+    meta = load_identity()
+    agent_name = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
+
+    print(f"{{agent_name}} v{{__version__}}", file=sys.stderr)
     parser = create_agent_parser()
     args = parser.parse_args()
 
@@ -1286,7 +1423,6 @@ def agent_server():
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
 
-    # Start server using the auto-discovery pattern (from mcp_config.json)
     create_agent_server(
         mcp_url=args.mcp_url,
         mcp_config=args.mcp_config or "mcp_config.json",
@@ -1298,6 +1434,13 @@ def agent_server():
         agent_model=args.model_id,
         base_url=args.base_url,
         api_key=args.api_key,
+        agent_description=os.getenv(
+            "AGENT_DESCRIPTION", meta.get("description", "{description}")
+        ),
+        system_prompt=os.getenv(
+            "AGENT_SYSTEM_PROMPT",
+            meta.get("content") or build_system_prompt_from_workspace(),
+        ),
         custom_skills_directory=args.custom_skills_directory,
         enable_web_ui=args.web,
         enable_otel=args.otel,
@@ -1323,6 +1466,192 @@ if __name__ == "__main__":
     agent_server()
 """
 
+API_CLIENT_FACADE = """\
+#!/usr/bin/python
+# coding: utf-8
+\"\"\"Facade re-export of the modular api/ sub-package (backward compatibility).\"\"\"
+
+from .api import *  # noqa: F401,F403
+from .api import __all__ as _api_all
+
+__all__ = list(_api_all)
+"""
+
+API_CLIENT_BASE = """\
+from typing import Any, Dict
+
+import requests
+
+
+class ApiClientBase:
+    \"\"\"Base HTTP API client wrapper.\"\"\"
+
+    def __init__(self, base_url: str, token: str, verify: bool = True):
+        self.base_url = base_url.rstrip("/")
+        self.token = token
+        self.verify = verify
+        self.session = requests.Session()
+        self.session.headers.update({{"Authorization": f"Bearer {{token}}"}})
+
+    def request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
+        url = f"{{self.base_url}}/{{path.lstrip('/')}}"
+        response = self.session.request(method, url, verify=self.verify, **kwargs)
+        response.raise_for_status()
+        try:
+            return response.json()
+        except ValueError:
+            return {{"status": response.status_code, "text": response.text}}
+"""
+
+API_CLIENT_SYSTEM = """\
+from typing import Any, Dict
+
+from .api_client_base import ApiClientBase
+
+
+class ApiClientSystem(ApiClientBase):
+    \"\"\"System status and monitoring API operations.\"\"\"
+
+    def get_system_status(self) -> Dict[str, Any]:
+        \"\"\"Retrieve the status of the target system.\"\"\"
+        return self.request("GET", "/health")
+"""
+
+API_INIT_PY = """\
+from .api_client_base import ApiClientBase
+from .api_client_system import ApiClientSystem
+
+__all__ = ["ApiClientBase", "ApiClientSystem"]
+"""
+
+INPUT_MODELS_PY = """\
+#!/usr/bin/python
+# coding: utf-8
+\"\"\"Pydantic input models for {display_name} API request parameters.\"\"\"
+
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+
+class SystemStatusInput(BaseModel):
+    \"\"\"Input model for system status queries.\"\"\"
+
+    verbose: Optional[bool] = Field(
+        default=False, description="Return extended status details."
+    )
+"""
+
+RESPONSE_MODELS_PY = """\
+#!/usr/bin/python
+# coding: utf-8
+\"\"\"Pydantic response models for {display_name} API payloads.\"\"\"
+
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
+
+
+class SystemStatusResponse(BaseModel):
+    \"\"\"Response model for system status queries.\"\"\"
+
+    status: Optional[str] = Field(default=None, description="Service status string.")
+    raw: Optional[Dict[str, Any]] = Field(
+        default=None, description="Raw response payload."
+    )
+"""
+
+MCP_SYSTEM_PY = """\
+import json
+
+from fastmcp import Context, FastMCP
+from fastmcp.dependencies import Depends
+from pydantic import Field
+
+from ..auth import get_client
+
+
+def register_system_tools(mcp: FastMCP):
+    \"\"\"Register system tag dynamic tools.\"\"\"
+
+    @mcp.tool(tags={{"system"}})
+    async def system_operations(
+        action: str = Field(
+            description="Action to perform. Must be 'status' or 'info'."
+        ),
+        params_json: str = Field(
+            default="{{}}", description="JSON string of parameters to pass to the action."
+        ),
+        client=Depends(get_client),
+        ctx: Context | None = Field(
+            default=None, description="MCP context for progress reporting"
+        ),
+    ) -> dict:
+        \"\"\"Manage system tag operations. CONCEPT:{concept_prefix}-001\"\"\"
+        if ctx:
+            ctx.info("Executing system tool...")
+        try:
+            kwargs = json.loads(params_json)
+        except Exception as e:
+            return {{"error": f"Invalid params_json: {{e}}"}}
+
+        if action == "status":
+            try:
+                return client.get_system_status(**kwargs)
+            except Exception as e:
+                return {{"error": str(e)}}
+        return {{"info": "System operations dynamic placeholder."}}
+"""
+
+MCP_INIT_PY = """\
+from .mcp_system import register_system_tools
+
+__all__ = ["register_system_tools"]
+"""
+
+PKG_MCP_CONFIG_JSON = """\
+{
+  "mcpServers": {}
+}
+"""
+
+ROOT_MCP_CONFIG_JSON = """\
+{{
+  "mcpServers": {{
+    "{package_name}": {{
+      "command": "uv",
+      "args": [
+        "run",
+        "{mcp_cmd}"
+      ],
+      "env": {{
+        "{service_url_env}": "<YOUR_{service_url_env}>",
+        "{auth_env}": "<YOUR_{auth_env}>",
+        "{ssl_verify_env}": "<YOUR_{ssl_verify_env}>",
+        "SYSTEMTOOL": "True"
+      }}
+    }}
+  }}
+}}
+"""
+
+MAIN_AGENT_JSON = """\
+{
+  "task": "main-agent",
+  "input": "# main-agent\\n\\nYou are the primary orchestrator for this workspace. Your goal is to help the user manage their projects and coordinate specialized agents.\\n\\n### Core Principles\\n* Be concise and efficient.\\n* Use the knowledge graph to discover tools and experts.\\n* Verify your work before concluding.\\n\\nYour personality:\\n* **Emoji:** 🤖\\n* **Vibe:** Professional, efficient, helpful",
+  "type": "prompt",
+  "description": "The primary orchestrator agent for this workspace.",
+  "tools": [
+    "workspace-manager",
+    "agent-workflows"
+  ],
+  "topic": "General Expertise",
+  "tone": "technical and precise",
+  "style": "professional assistant",
+  "goal": "Coordinate specialized agents and manage the workspace."
+}
+"""
+
 IDENTITY_MD = """\
 # IDENTITY.md - {display_name} Agent Identity
 
@@ -1333,195 +1662,12 @@ IDENTITY_MD = """\
 
  ### System Prompt
  You are the {display_name} Agent.
- You must always first run `list_skills` to show all skills.
- Then, use the `mcp-client` universal skill and check the reference documentation for `{package_name}.md` to discover the exact tags and tools available for your capabilities.
+ Use the `mcp-client` universal skill and check the reference documentation for
+ `{package_name}.md` to discover the exact tags and tools available for your capabilities.
 
  ### Capabilities
- - **MCP Operations**: Leverage the `mcp-client` skill to interact with the target MCP server. Refer to `{package_name}.md` for specific tool capabilities.
+ - **MCP Operations**: Leverage the `mcp-client` skill to interact with the target MCP server.
  - **Custom Agent**: Handle custom tasks or general tasks.
-"""
-
-CRON_MD = """\
-# CRON.md - Persistent Scheduled Tasks
-Last updated: {date}
-
-## Active Tasks
-
-| ID          | Name              | Interval (min) | Prompt                              | Last run          | Next approx |
-|-------------|-------------------|----------------|-------------------------------------|-------------------|-------------|
-| heartbeat   | Heartbeat         | 30             | @HEARTBEAT.md                       | —                 | —           |
-| log-cleanup | Log Cleanup       | 720            | __internal:cleanup_cron_log         | —                 | —           |
-
-*Edit this table to add/remove tasks. The agent reloads it periodically.*
-*Use `@filename.md` in the Prompt column to load a multi-line prompt from a workspace file.*
-"""
-
-HEARTBEAT_MD = """\
-# Heartbeat — Periodic Self-Check
-
-You are running a scheduled heartbeat. Perform these checks and report results concisely.
-
-## Checks
-
-1. **Tool Availability** — Call `list_tools` or equivalent to verify your MCP tools are reachable. Report any connection failures.
-2. **Memory Review** — Query the **Knowledge Graph** for any pending follow-up tasks, architectural decisions, or action items.
-3. **Cron Log** — Read `CRON_LOG.md` and check for recent errors (❌). Summarize any failures from the last 24 hours.
-4. **Peer Agents** — Read `AGENTS.md` and note if any registered peers need attention.
-5. **Domain-Specific Checks**:
-   - **Service Health**: Check service health status and scan recent logs for critical errors using available tools.
-6. **Self-Diagnostics** — Report your current model, available tool count, and any anomalies.
-
-## Response Format
-
-If everything is healthy:
-```
-HEARTBEAT_OK — All systems nominal. [tool_count] tools available. No pending actions.
-```
-
-If issues found:
-```
-HEARTBEAT_ALERT — [summary of issues found]
-- Issue 1: ...
-- Issue 2: ...
-- Action needed: ...
-```
-"""
-CRON_LOG_MD = """# CRON_LOG.md - Scheduled Task History
-Last updated: {date}
-
-| Timestamp | Task ID | Status | Message |
-|-----------|---------|--------|---------|
-"""
-
-MCP_CONFIG_MD = """{{
-  "mcpServers": {{
-    "{mcp_short_name}": {{
-      "command": "{mcp_cmd}",
-      "env": {{
-        "{service_url_env}": "${{{service_url_env}:-http://localhost:8080}}",
-        "{auth_env}": "${{{auth_env}}}"
-      }}
-    }}
-  }}
-}}"""
-
-MCP_AGENTS_MD = """# MCP_AGENTS.md - Dynamic Agent Registry
-
-This file tracks the generated agents from MCP servers. You can manually modify the 'Tools' list to customize agent expertise.
-
-## Agent Mapping Table
-
-| Name | Description | System Prompt | Tools | Tag | Source MCP |
-|------|-------------|---------------|-------|-----|------------|
-
-## Tool Inventory Table
-
-| Tool Name | Description | Tag | Source |
-|-----------|-------------|-----|--------|
-"""
-
-PIPELINE_YML = """\
-name: Build|Upload|Release Python Package
-
-on:
-  push:
-    branches:
-      - 'main'
-
-jobs:
-  publish-pypi:
-    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@latest
-    secrets:
-      PYPI_API_TOKEN: ${{{{ secrets.PYPI_API_TOKEN }}}}
-  publish-docker:
-    needs: publish-pypi
-    uses: Knuckles-Team/pipelines/.github/workflows/container_pipeline.yml@latest
-    secrets:
-      DOCKER_REGISTRY: ${{{{ secrets.DOCKER_REGISTRY }}}}
-      DOCKER_USERNAME: ${{{{ secrets.DOCKER_USERNAME }}}}
-      DOCKER_PASSWORD: ${{{{ secrets.DOCKER_PASSWORD }}}}
-      DOCKER_REPOSITORY: ${{{{ secrets.DOCKER_REPOSITORY }}}}
-"""
-
-ROOT_AGENTS_MD = """# AGENTS.md
-
-## Tech Stack & Architecture
-- Language/Version: Python 3.10+
-- Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
-- Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
-- Architecture:
-    - `api/`: Modular folder for target service client wrappers.
-    - `mcp/`: Modular folder for Model Context Protocol action-routed dynamic tool tags.
-    - `mcp_server.py`: Main MCP server entry point and tool registration loading.
-    - `agent_server.py`: Pydantic AI agent definition and logic.
-    - `skills/`: Directory containing modular agent skills (if applicable).
-
-### Architecture Diagram
-```mermaid
-graph TD
-    User([User/A2A]) --> Server[A2A Server / FastAPI]
-    Server --> Agent[Pydantic AI Agent]
-    Agent --> Skills[Modular Skills]
-    Agent --> MCP[MCP Server / FastMCP]
-    MCP --> Client[API Client / Wrapper]
-    Client --> ExternalAPI([External Service API])
-```
-
-### Workflow Diagram
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Server
-    participant A as Agent
-    participant T as MCP Tool
-    participant API as External API
-
-    U->>S: Request
-    S->>A: Process Query
-    A->>T: Invoke Tool
-    T->>API: API Request
-    API-->>T: API Response
-    T-->>A: Tool Result
-    A-->>S: Final Response
-    S-->>U: Output
-```
-
-## Commands (run these exactly)
-# Installation
-pip install .[all]
-
-# Quality & Linting (run from project root)
-pre-commit run --all-files
-
-# Execution Commands
-# Run MCP Server
-{mcp_cmd}
-# Run Agent
-{agent_cmd}
-"""
-
-AGENTS_MD_PEER = """# AGENTS.md - Known A2A Peer Agents
-Last updated: {date}
-
-This file is the local registry of other A2A agents this agent can discover and call.
-
-## Registered A2A Peers
-
-| Name            | Endpoint URL                    | Description                          | Capabilities                     | Auth      | Notes / Last Connected |
-|-----------------|---------------------------------|--------------------------------------|----------------------------------|-----------|------------------------|
-| SearchMaster    | http://search-agent:9000/a2a    | Advanced web researcher              | web_search, summarize, browse    | none      | {date}             |
-
-*Add new rows manually or let the agent call `register_a2a_peer(...)`.*
-"""
-
-USER_MD = """\
-# USER.md - About the Human
-
-* **Name:** User
-* **Preferred name:** User
-* **Timezone:** America/Chicago
-* **Location:** Chicago, Illinois
-* **Style:** Technical, concise, no fluff
 """
 
 GQL_PY = """\
@@ -1532,18 +1678,19 @@ GQL_PY = """\
 Provides a GraphQL interface using the `gql` library that mirrors
 REST API methods with GraphQL queries and mutations.
 
-Requires: pip install gql[requests]
+Requires: pip install {package_name}[gql]
 \"\"\"
 
 import logging
-from typing import Dict, Any, Optional, Union, List
-from gql import gql, Client
-from gql.transport.requests import RequestsHTTPTransport
+from typing import Any, Dict, Optional
+
 from agent_utilities.core.decorators import require_auth
 from agent_utilities.core.exceptions import (
     MissingParameterError,
     ParameterError,
 )
+from gql import Client, gql
+from gql.transport.requests import RequestsHTTPTransport
 
 
 class GraphQL:
@@ -1605,67 +1752,504 @@ class GraphQL:
             raise ParameterError(f"Query execution failed: {{str(e)}}")
 """
 
+VALIDATE_AGENT_PY = """\
+#!/usr/bin/env python3
+\"\"\"Smoke-validate the A2A agent server entry point.\"\"\"
+
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from {pkg_dir}.agent_server import agent_server  # noqa: F401
+except ImportError as e:
+    print(f"Agent import failed: {{e}}")
+    sys.exit(1)
+
+print("Agent entry point import OK")
+"""
+
+# ── mkdocs + docs site (7 standard pages) ─────────────────────────────────────
+
+MKDOCS_YML = """\
+site_name: "{package_name}"
+site_description: "{description}"
+site_url: "https://knuckles-team.github.io/{package_name}/"
+repo_name: "Knuckles-Team/{package_name}"
+repo_url: "https://github.com/Knuckles-Team/{package_name}"
+edit_uri: "edit/main/docs/"
+copyright: "Copyright &copy; Knuckles-Team — MIT licensed"
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/graph-outline
+  favicon: https://raw.githubusercontent.com/squidfunk/mkdocs-material/master/material/templates/assets/images/favicon.png
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Knuckles-Team/{package_name}
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/{package_name}/
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
+  - Installation: installation.md
+  - Deployment: deployment.md
+  - Usage (API / CLI / MCP): usage.md
+  - Backing Platform ({display_name}): platform.md
+  - Concepts: concepts.md
+"""
+
+DOCS_INDEX_MD = """\
+# {package_name}
+
+{display_name} **API + MCP Server + A2A Agent** for the agent-utilities ecosystem — a
+typed, action-routed connector.
+
+!!! info "Official documentation"
+    This site is the canonical reference for `{package_name}`, maintained alongside
+    every release.
+
+[![PyPI](https://img.shields.io/pypi/v/{package_name})](https://pypi.org/project/{package_name}/)
+![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
+[![License](https://img.shields.io/pypi/l/{package_name})](https://github.com/Knuckles-Team/{package_name}/blob/main/LICENSE)
+[![GitHub](https://img.shields.io/badge/source-GitHub-181717?logo=github)](https://github.com/Knuckles-Team/{package_name})
+
+## Overview
+
+`{package_name}` wraps the target service with typed, deterministic MCP tools and an
+optional Pydantic-AI agent server.
+
+The connector remains inactive when credentials are absent: configure
+`{service_url_env}` and `{auth_env}` to connect it to an instance.
+
+## Explore the documentation
+
+<div class="grid cards" markdown>
+
+- :material-rocket-launch: **[Installation](installation.md)** — pip, source, extras, and the prebuilt Docker image.
+- :material-server-network: **[Deployment](deployment.md)** — run the MCP and agent servers, Docker Compose, Caddy + Technitium.
+- :material-console: **[Usage](usage.md)** — the MCP tools, the Python client, and the CLI.
+- :material-database-cog: **[Backing Platform](platform.md)** — deploy the target service with Docker.
+- :material-sitemap: **[Overview](overview.md)** — the action-routed tool surface and architecture.
+- :material-graph: **[Concepts](concepts.md)** — the CONCEPT ID registry.
+
+</div>
+"""
+
+DOCS_OVERVIEW_MD = """\
+# {package_name} — Concept Overview
+
+> **Category**: Integration | **Ecosystem Role**: MCP Server + A2A Agent
+> Built on [`agent-utilities`](https://github.com/Knuckles-Team/agent-utilities) — the unified AGI Harness.
+
+## Description
+
+{description}
+
+## Architecture
+
+This project follows the standardized agent-package pattern:
+
+- **Modular Design**: split into `api/` (client mixins) and `mcp/` (action-routed
+  tool modules) for cleaner organization.
+- **Dynamic Tool Registration**: action-routed dynamic tool tags, strictly
+  lowercase, each togglable with a `*TOOL` environment flag.
+- **A2A Agent Server**: a Pydantic-AI graph agent (console script `{agent_cmd}`)
+  that calls the MCP tool surface and exposes an AG-UI web interface.
+
+## Concept Registry
+
+This project implements or inherits the following ecosystem concepts:
+
+| Concept ID | Description | Source |
+|:-----------|:------------|:-------|
+| ECO-4.1 | MCP & Universal Skills | `agent-utilities` (inherited) |
+| ECO-4.2 | A2A Network & Consensus | `agent-utilities` (inherited) |
+
+> 📖 **Full Registry**: See [`agent-utilities/docs/overview.md`](https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/overview.md) for the complete 5-Pillar concept index.
+"""
+
+DOCS_INSTALLATION_MD = """\
+# Installation
+
+`{package_name}` is a standard Python package and a prebuilt container image.
+
+## Requirements
+
+- **Python 3.11 – 3.14**.
+- A reachable target service instance and access token.
+
+## From PyPI (recommended)
+
+```bash
+pip install {package_name}
+```
+
+### Optional extras
+
+| Extra | Install | Pulls in |
+|---|---|---|
+| `mcp` | `pip install "{package_name}[mcp]"` | FastMCP MCP-server runtime (`agent-utilities[mcp]`) |
+| `agent` | `pip install "{package_name}[agent]"` | Pydantic-AI agent + Logfire tracing |
+| `all` | `pip install "{package_name}[all]"` | Everything above |
+
+## From source
+
+```bash
+git clone https://github.com/Knuckles-Team/{package_name}.git
+cd {package_name}
+pip install -e ".[all]"
+```
+
+## Docker
+
+```bash
+docker pull knucklessg1/{package_name}:latest
+```
+"""
+
+DOCS_DEPLOYMENT_MD = """\
+# Deployment
+
+This page covers running `{package_name}` as long-lived servers.
+
+> `{package_name}` ships both an **MCP server** (console script `{mcp_cmd}`) and an
+> **A2A agent server** (console script `{agent_cmd}`).
+
+## Run the MCP server
+
+=== "stdio (default)"
+
+    ```bash
+    {mcp_cmd}
+    ```
+
+=== "streamable-http"
+
+    ```bash
+    {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
+    ```
+
+=== "sse"
+
+    ```bash
+    {mcp_cmd} --transport sse --host 0.0.0.0 --port 8000
+    ```
+
+Health check (HTTP transports):
+
+```bash
+curl -s http://localhost:8000/health        # {{"status":"OK"}}
+```
+
+## Docker Compose
+
+```bash
+docker compose -f docker/mcp.compose.yml up -d      # MCP server only
+docker compose -f docker/agent.compose.yml up -d    # MCP + agent
+```
+
+## Run the A2A agent server
+
+```bash
+{agent_cmd} --mcp-config mcp_config.json --web
+```
+"""
+
+DOCS_USAGE_MD = """\
+# Usage — API / CLI / MCP
+
+`{package_name}` exposes the same capability three ways: as **MCP tools** an agent
+calls, as a **Python API** you import, and as a **CLI**.
+
+## As an MCP server
+
+Once [deployed](deployment.md), the server registers consolidated, action-routed
+tool modules. Each module is independently togglable with a `*TOOL` environment
+flag.
+
+## As a Python API
+
+```python
+from {pkg_dir}.auth import get_client
+
+api = get_client()        # reads {service_url_env} / {auth_env} from the environment / .env
+status = api.get_system_status()
+```
+
+## As a CLI
+
+```bash
+export {service_url_env}="http://localhost:8080"
+export {auth_env}="your_token"
+{mcp_cmd} --transport stdio
+```
+"""
+
+DOCS_PLATFORM_MD = """\
+# Backing Platform — {display_name}
+
+`{package_name}` is a **client** of a backing service instance. This page provides a
+Docker recipe for deploying one locally to serve as the target of
+`{service_url_env}`.
+
+!!! note "Backing-system recipe"
+    Each connector in the ecosystem follows the same convention — a
+    `docs/platform.md` recipe for the system it integrates with, accompanied by a
+    sample Compose stack. Systems offered only as a managed service have no local
+    recipe.
+
+## Single-node deployment (Compose)
+
+```yaml
+# docker/platform.compose.yml — replace with the real backing-service recipe
+services:
+  platform:
+    image: REPLACE_ME
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+```
+"""
+
+DOCS_CONCEPTS_MD = """\
+# Concept Registry — {package_name}
+
+> **Prefix**: `CONCEPT:{concept_prefix}-*`
+> **Version**: 0.1.0
+> **Bridge**: [`CONCEPT:ECO-4.0`](https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/concepts.md) (Unified Toolkit Ingestion)
+
+---
+
+## Project-Specific Concepts
+
+| Concept ID | Name | Description |
+|------------|------|-------------|
+| `CONCEPT:{concept_prefix}-001` | System Operations | MCP tool domain `system` — Action-routed dynamic tool registration |
+
+## Cross-Project References (from agent-utilities)
+
+| Concept ID | Name | Origin |
+|------------|------|--------|
+| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |
+| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |
+| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |
+"""
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+
+TESTS_CONFTEST = """\
+import pytest
+from unittest.mock import MagicMock
+
+
+@pytest.fixture
+def mock_api_client():
+    client = MagicMock()
+    client.get_system_status.return_value = {{"status": "OK"}}
+    return client
+"""
+
+TESTS_AUTH = """\
+import pytest
+from unittest.mock import patch
+
+import {pkg_dir}.auth as auth_module
+from {pkg_dir}.auth import get_client
+
+
+def test_get_client_auth_error():
+    auth_module._client = None
+    with patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls:
+        mock_client_cls.side_effect = Exception("Auth Failure")
+        with pytest.raises(RuntimeError) as exc_info:
+            get_client()
+        assert "AUTHENTICATION ERROR" in str(exc_info.value)
+    auth_module._client = None
+"""
+
+TESTS_API_WRAPPER = """\
+from unittest.mock import MagicMock, patch
+
+from {pkg_dir}.api import ApiClientBase
+
+
+def test_request_returns_json():
+    client = ApiClientBase(base_url="http://localhost", token="t")
+    response = MagicMock()
+    response.json.return_value = {{"ok": True}}
+    with patch.object(client.session, "request", return_value=response):
+        assert client.request("GET", "/health") == {{"ok": True}}
+"""
+
+TESTS_MCP_VALIDATION = """\
+from {pkg_dir}.mcp_server import get_mcp_instance
+
+
+def test_mcp_instance_registration(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["{mcp_cmd}"])
+    mcp, args, middlewares = get_mcp_instance()
+    assert mcp is not None
+"""
+
+TESTS_INIT_DYNAMICS = """\
+import importlib
+
+
+def test_package_imports():
+    module = importlib.import_module("{pkg_dir}")
+    assert hasattr(module, "__all__")
+"""
+
+TESTS_STARTUP = """\
+import importlib
+
+
+def test_mcp_server_module_importable():
+    assert importlib.import_module("{pkg_dir}.mcp_server") is not None
+"""
+
+TESTS_CONCEPT_PARITY = """\
+from pathlib import Path
+
+CONCEPTS_DOC = Path(__file__).resolve().parents[1] / "docs" / "concepts.md"
+
+
+def test_concepts_doc_exists():
+    assert CONCEPTS_DOC.is_file()
+
+
+def test_eco_bridge_present():
+    assert "ECO-4.0" in CONCEPTS_DOC.read_text(encoding="utf-8")
+
+
+def test_prefix_registered():
+    assert "CONCEPT:{concept_prefix}-" in CONCEPTS_DOC.read_text(encoding="utf-8")
+"""
+
+
 # ── Main Scaffolding Logic ───────────────────────────────────────────────────
 
 
 def scaffold(
     package_name: str,
     output_dir: str = ".",
-    pkg_types: str = "api_client,mcp,agent,graphql",
+    pkg_types: str = "api_client,mcp,agent",
     display_name: str = "",
     description: str = "",
     author: str = "Audel Rouhi",
     email: str = "knucklessg1@gmail.com",
     service_url_env: str = "",
     auth_env: str = "",
+    concept_prefix: str = "",
     doc_urls: str = "",
     in_place: bool = False,
 ):
-    """Scaffold a complete agent-package project."""
+    """Scaffold a complete agent-package project (gitlab-api golden parity)."""
     types = [t.strip() for t in pkg_types.split(",")]
     pkg_dir = to_pkg_dir(package_name)
     if not display_name:
         display_name = to_display(package_name)
     if not description:
-        description = f"Agent package for {display_name}."
+        description = f"{display_name} API + MCP Server + A2A Server"
     upper_name = to_upper_env(package_name)
     if not service_url_env:
         service_url_env = f"{upper_name}_URL"
     if not auth_env:
         auth_env = f"{upper_name}_TOKEN"
+    if not concept_prefix:
+        concept_prefix = upper_name.split("_")[0]
 
-    # Derived names
+    # Derived names: console scripts strip a trailing -mcp/-agent/-api suffix.
     parts = package_name.rsplit("-", 1)
     if len(parts) == 2 and parts[1] in ("mcp", "agent", "api"):
         mcp_cmd = f"{parts[0]}-mcp"
         agent_cmd = f"{parts[0]}-agent"
-        mcp_short_name = parts[0]
+        short_name = parts[0]
     else:
         mcp_cmd = f"{package_name}-mcp"
         agent_cmd = f"{package_name}-agent"
-        mcp_short_name = package_name
+        short_name = package_name
 
-    agent_service_name = agent_cmd
-    verify_env = f"{upper_name}_VERIFY"
-    api_module_name = "api"
+    ssl_verify_env = f"{upper_name}_SSL_VERIFY"
     year = datetime.datetime.now().year
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    mcp_entry = f'{mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"'
-    agent_entry = (
-        f'\n{agent_cmd} = "{pkg_dir}.agent_server:agent_server"'
-        if "agent" in types
-        else ""
-    )
-
-    gql_module_name = "gql_client"
     has_graphql = "graphql" in types
-    gql_dep = '\ngql = [\n    "gql>=4.0.0"]\n' if has_graphql else "\n"
-    all_dep_line = (
-        f"{package_name}[mcp,agent,gql,logfire]>=0.1.0"
-        if has_graphql
-        else "agent-utilities[mcp,agent,logfire]>=0.2.12"
-    )
+    gql_core_dep = ' "gql>=4.0.0",' if has_graphql else ""
+    gql_extra = 'gql = [ "gql>=4.0.0",]\n' if has_graphql else ""
+    all_extras = "mcp,agent,gql,logfire" if has_graphql else "mcp,agent,logfire"
+    gql_module_name = f"{to_pkg_dir(short_name)}_gql"
     gql_optional_module = (
         f'\n    "{pkg_dir}.{gql_module_name}": "gql",' if has_graphql else ""
     )
@@ -1680,105 +2264,142 @@ def scaffold(
         "email": email,
         "service_url_env": service_url_env,
         "auth_env": auth_env,
-        "verify_env": verify_env,
+        "ssl_verify_env": ssl_verify_env,
+        "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "agent_cmd": agent_cmd,
-        "agent_service_name": agent_service_name,
-        "mcp_short_name": mcp_short_name,
-        "api_module_name": api_module_name,
-        "gql_module_name": gql_module_name,
-        "gql_dep": gql_dep,
-        "all_dep_line": all_dep_line,
+        "short_name": short_name,
+        "agent_port": "9000",
+        "gql_core_dep": gql_core_dep,
+        "gql_extra": gql_extra,
+        "all_extras": all_extras,
         "gql_optional_module": gql_optional_module,
         "gql_all_extend": gql_all_extend,
         "year": year,
         "date": date,
-        "mcp_entry": mcp_entry,
-        "agent_entry": agent_entry,
         "upper_name": upper_name,
     }
 
     root = Path(output_dir) if in_place else Path(output_dir) / package_name
     pkg = root / pkg_dir
-    agent_dir = pkg / "agent"
-    agent_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Root-level files ─────────────────────────────────────────────────
+    # files: path -> (template, needs_format)
     files = {
-        root / "pyproject.toml": PYPROJECT_TOML,
-        root / ".bumpversion.cfg": BUMPVERSION_CFG,
-        root / ".pre-commit-config.yaml": PRECOMMIT_CONFIG,
-        root / ".dockerignore": DOCKERIGNORE,
-        root / ".env": ENV_TEMPLATE,
-        root / ".gitignore": GITIGNORE,
-        root / ".gitattributes": GITATTRIBUTES,
-        root / "docker/Dockerfile": DOCKERFILE,
-        root / "docker/debug.Dockerfile": DEBUG_DOCKERFILE,
-        root / "docker/compose.yml": COMPOSE_YML,
-        root / "docker/mcp.compose.yml": MCP_COMPOSE_YML,
-        root / "AGENTS.md": ROOT_AGENTS_MD,
-        root / "LICENSE": LICENSE_MIT,
-        root / "MANIFEST.in": MANIFEST_IN,
-        root / "README.md": README_MD,
-        root / "requirements.txt": REQUIREMENTS_TXT,
-        root / "starship.toml": STARSHIP_TOML,
-        root / ".github/workflows/pipeline.yml": PIPELINE_YML,
-        root / "CHANGELOG.md": CHANGELOG_MD,
-        root / "mkdocs.yml": MKDOCS_YML,
-        root / "docs/index.md": DOCS_INDEX_MD,
-        root / "docs/overview.md": DOCS_OVERVIEW_MD,
+        # Root configs
+        root / "pyproject.toml": (PYPROJECT_TOML, True),
+        root / ".bumpversion.cfg": (BUMPVERSION_CFG, True),
+        root / ".pre-commit-config.yaml": (PRECOMMIT_CONFIG, False),
+        root / ".dockerignore": (DOCKERIGNORE, True),
+        root / ".env.example": (ENV_EXAMPLE, True),
+        root / ".env": (ENV_EXAMPLE, True),
+        root / ".gitignore": (GITIGNORE, False),
+        root / ".gitattributes": (GITATTRIBUTES, False),
+        root / ".codespellignore": (CODESPELLIGNORE, False),
+        root / ".vulture_ignore": (VULTURE_IGNORE, False),
+        root / "pytest.ini": (PYTEST_INI, False),
+        root / "a2a.json": (A2A_JSON, True),
+        root / "opencode.json": (OPENCODE_JSON, False),
+        root / "mcp_config.json": (ROOT_MCP_CONFIG_JSON, True),
+        root / "AGENTS.md": (ROOT_AGENTS_MD, True),
+        root / "CLAUDE.md": (CLAUDE_MD, False),
+        root / "LICENSE": (LICENSE_MIT, True),
+        root / "MANIFEST.in": (MANIFEST_IN, True),
+        root / "README.md": (README_MD, True),
+        root / "CHANGELOG.md": (CHANGELOG_MD, True),
+        # Docker
+        root / "docker/Dockerfile": (DOCKERFILE, True),
+        root / "docker/debug.Dockerfile": (DEBUG_DOCKERFILE, True),
+        root / "docker/agent.compose.yml": (AGENT_COMPOSE_YML, True),
+        root / "docker/mcp.compose.yml": (MCP_COMPOSE_YML, True),
+        root / "docker/starship.toml": (STARSHIP_TOML, True),
+        # GitHub workflows
+        root / ".github/workflows/pipeline.yml": (PIPELINE_YML, False),
+        root / ".github/workflows/docs.yml": (DOCS_YML, False),
+        root / ".github/workflows/pages.yml": (PAGES_YML, False),
+        # Docs site (7 standard pages)
+        root / "mkdocs.yml": (MKDOCS_YML, True),
+        root / "docs/index.md": (DOCS_INDEX_MD, True),
+        root / "docs/overview.md": (DOCS_OVERVIEW_MD, True),
+        root / "docs/installation.md": (DOCS_INSTALLATION_MD, True),
+        root / "docs/deployment.md": (DOCS_DEPLOYMENT_MD, True),
+        root / "docs/usage.md": (DOCS_USAGE_MD, True),
+        root / "docs/platform.md": (DOCS_PLATFORM_MD, True),
+        root / "docs/concepts.md": (DOCS_CONCEPTS_MD, True),
+        # Repo scripts
+        root / "scripts/validate_agent.py": (VALIDATE_AGENT_PY, True),
     }
 
-    # ── Package files ────────────────────────────────────────────────────
-    files[pkg / "__init__.py"] = INIT_PY
-    files[pkg / "auth.py"] = AUTH_PY
+    # Package files
+    files[pkg / "__init__.py"] = (INIT_PY, True)
+    files[pkg / "auth.py"] = (AUTH_PY, True)
+    files[pkg / "api_client.py"] = (API_CLIENT_FACADE, False)
+    files[pkg / f"{to_pkg_dir(short_name)}_input_models.py"] = (INPUT_MODELS_PY, True)
+    files[pkg / f"{to_pkg_dir(short_name)}_response_models.py"] = (
+        RESPONSE_MODELS_PY,
+        True,
+    )
+    files[pkg / "mcp_config.json"] = (PKG_MCP_CONFIG_JSON, False)
+    files[pkg / "main_agent.json"] = (MAIN_AGENT_JSON, False)
 
     # API modular directory scaffolding
-    files[pkg / "api" / "__init__.py"] = API_INIT_PY
-    files[pkg / "api" / "api_client_base.py"] = API_CLIENT_BASE
-    files[pkg / "api" / "api_client_system.py"] = API_CLIENT_SYSTEM
+    files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)
+    files[pkg / "api" / "api_client_base.py"] = (API_CLIENT_BASE, True)
+    files[pkg / "api" / "api_client_system.py"] = (API_CLIENT_SYSTEM, True)
 
     # MCP modular directory scaffolding
-    files[pkg / "mcp" / "__init__.py"] = MCP_INIT_PY
-    files[pkg / "mcp" / "mcp_system.py"] = MCP_SYSTEM_PY
+    files[pkg / "mcp" / "__init__.py"] = (MCP_INIT_PY, False)
+    files[pkg / "mcp" / "mcp_system.py"] = (MCP_SYSTEM_PY, True)
 
     if "mcp" in types:
-        files[pkg / "mcp_server.py"] = MCP_SERVER_PY
+        files[pkg / "mcp_server.py"] = (MCP_SERVER_PY, True)
 
     if "agent" in types:
-        files[pkg / "agent_server.py"] = AGENT_PY
-        files[agent_dir / "IDENTITY.md"] = IDENTITY_MD
-        files[agent_dir / "CRON.md"] = CRON_MD
-        files[agent_dir / "CRON_LOG.md"] = CRON_LOG_MD
-        files[agent_dir / "HEARTBEAT.md"] = HEARTBEAT_MD
-        files[agent_dir / "AGENTS.md"] = AGENTS_MD_PEER
-        files[agent_dir / "USER.md"] = USER_MD
-        files[agent_dir / "mcp_config.json"] = MCP_CONFIG_MD
-        files[agent_dir / "MCP_AGENTS.md"] = MCP_AGENTS_MD
-        files[pkg / "__main__.py"] = MAIN_PY
+        files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
+        files[pkg / "__main__.py"] = (MAIN_PY, True)
+        files[pkg / "agent_data" / "IDENTITY.md"] = (IDENTITY_MD, True)
 
-        # Create empty icon.png
-        (agent_dir / "icon.png").write_bytes(b"")
-        # Create chats directory
-        (agent_dir / "chats").mkdir(parents=True, exist_ok=True)
+    if has_graphql:
+        files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
 
-    if "graphql" in types:
-        files[pkg / f"{gql_module_name}.py"] = GQL_PY
-
-    # Scaffolding flat tests directory
-    files[root / "tests" / "conftest.py"] = TESTS_CONFTEST
-    files[root / "tests" / "test_api_auth_errors.py"] = TESTS_API_AUTH
-    files[root / "tests" / "test_mcp_server_coverage.py"] = TESTS_MCP_SERVER
+    # Flat tests directory
+    files[root / "tests" / "__init__.py"] = ("", False)
+    files[root / "tests" / "conftest.py"] = (TESTS_CONFTEST, True)
+    files[root / "tests" / "test_auth.py"] = (TESTS_AUTH, True)
+    files[root / "tests" / "test_api_wrapper.py"] = (TESTS_API_WRAPPER, True)
+    files[root / "tests" / f"test_{to_pkg_dir(short_name)}_mcp_validation.py"] = (
+        TESTS_MCP_VALIDATION,
+        True,
+    )
+    files[root / "tests" / "test_init_dynamics.py"] = (TESTS_INIT_DYNAMICS, True)
+    files[root / "tests" / "test_startup.py"] = (TESTS_STARTUP, True)
+    files[root / "tests" / "test_concept_parity.py"] = (TESTS_CONCEPT_PARITY, True)
 
     # ── Write all files ──────────────────────────────────────────────────
-    for path, template in files.items():
-        if path.name == "requirements.txt":
-            continue
+    for path, (template, needs_format) in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
-        content = template.format(**ctx)
+        content = template.format(**ctx) if needs_format else template
         path.write_text(content, encoding="utf-8")
         print(f"  ✅ {path.relative_to(root.parent)}")
 
+    # Bundled golden validation scripts (verbatim from gitlab-api)
+    for script_name in (
+        "security_sanitizer.py",
+        "verify_api_integration.py",
+        "validate_a2a_agent.py",
+    ):
+        src = TEMPLATES_DIR / script_name
+        dst = root / "scripts" / script_name
+        if src.is_file():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+            print(f"  ✅ {dst.relative_to(root.parent)} (bundled golden script)")
+        else:
+            print(
+                f"  ⚠️  {script_name} template missing — copy it from "
+                "agents/gitlab-api/scripts/ manually"
+            )
+
+    # requirements.txt mirrors [project].dependencies
     import tomllib
 
     pyproject_content = (root / "pyproject.toml").read_text(encoding="utf-8")
@@ -1791,7 +2412,10 @@ def scaffold(
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")
+    print(f"   Console scripts: {mcp_cmd}, {agent_cmd}")
+    print(f"   Concept prefix: CONCEPT:{concept_prefix}-*")
     print(f"   Types: {', '.join(types)}")
+    print("   → Run `uv lock` to generate uv.lock (required by the pre-commit gate).")
     if doc_urls:
         print(f"   Doc URLs saved: {doc_urls}")
         print("   → Run skill-graph-builder to generate docs skill.")
@@ -1801,7 +2425,7 @@ def scaffold(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Scaffold a complete agent-package project following the jellyfin-mcp gold standard."
+        description="Scaffold a complete agent-package project following the gitlab-api golden standard."
     )
     parser.add_argument(
         "package_name",
@@ -1814,10 +2438,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--type",
-        default="api_client,mcp,agent,graphql",
+        default="api_client,mcp,agent",
         dest="pkg_types",
         type=str,
-        help="Comma-separated types: api_client, mcp, agent, graphql (default: all)",
+        help="Comma-separated types: api_client, mcp, agent, graphql (default: api_client,mcp,agent)",
     )
     parser.add_argument(
         "--display-name",
@@ -1850,6 +2474,11 @@ if __name__ == "__main__":
         help="Environment variable name for auth token (default: {UPPER_NAME}_TOKEN)",
     )
     parser.add_argument(
+        "--concept-prefix",
+        default="",
+        help="Unique CONCEPT ID prefix (default: derived from package name; check the registry in SKILL.md for collisions)",
+    )
+    parser.add_argument(
         "--doc-urls",
         default="",
         help="Comma-separated documentation URLs for skill-graph generation",
@@ -1872,6 +2501,7 @@ if __name__ == "__main__":
         email=args.email,
         service_url_env=args.service_url_env,
         auth_env=args.auth_env,
+        concept_prefix=args.concept_prefix,
         doc_urls=args.doc_urls,
         in_place=args.in_place,
     )
