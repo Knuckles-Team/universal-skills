@@ -381,10 +381,13 @@ once per session before the first creation call.
 1. **GitHub repository** — via the **github-agent** MCP server tools (repo
    creation + settings; credentials from `agents/github-agent/.env`:
    `GITHUB_URL`/`GITHUB_TOKEN`). Repo name = the solidified package name.
-   Afterwards apply the standard project settings (Actions enabled, Pages for
-   the docs workflow) — the github-project-provisioner skill covers defaults.
-   Note the known first-deploy race: GitHub Pages needs a rerun-failed-jobs
-   after the very first pages deploy.
+   Immediately after creation, **ALWAYS enable GitHub Pages with the
+   Actions build type** (the docs/pages workflows fail without it):
+   `POST /repos/{owner}/{repo}/pages` with `{"build_type": "workflow"}`
+   (201 = enabled, 409 = already enabled). Then apply the remaining standard
+   settings (Actions enabled) — the github-project-provisioner skill covers
+   defaults. Note the residual first-deploy race: even with Pages pre-enabled,
+   the very first pages deploy may need a rerun-failed-jobs.
 2. **DockerHub image repository** — via the **dockerhub-api** MCP server tools
    (`hub_repos` action `create`; credentials use the OFFICIAL hub-tool env
    names: `DOCKER_HUB_USER` / `DOCKER_HUB_TOKEN`). Image path =
