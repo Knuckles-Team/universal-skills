@@ -86,9 +86,32 @@ that point directly at a host/macvlan IP are preserved: `adguard.arpa`/Technitiu
 
 ---
 
+## Deployment profiles (agent-utilities day-0)
+
+This orchestrator is **profile-driven**. Step 0 selects a profile, which gates
+the remaining steps so the same workflow scales from a laptop to a full swarm:
+
+| Profile | Scope | Steps run |
+|---|---|---|
+| **tiny** | One host, **zero external infra** — the KG runs in-process. | Step 0 → Step A1 only (collapses to `agent-utilities/scripts/bootstrap.sh`). |
+| **single-node-prod** | One host, durable: Postgres/pggraph KG + gateway + the `single-node-prod` connector slice + Caddy; optional OpenBao/Langfuse. No swarm. | Step 0, a Caddy/Portainer subset of Step 7, Step 8 (OpenBao optional), Steps A1–A4. |
+| **enterprise** | Full multi-node swarm + all integrations + the entire `*-mcp` fleet. | All steps (1–15 + A1–A4). |
+
+Each integration is an independent toggle gathered in Step 0 —
+`pggraph`, `kafka`, `openbao`, `keycloak`, `langfuse` — and any step that depends
+on a disabled integration is skipped and reported.
+
 ## Steps
 
+### Step 0: deployment-profile
+Present the profile + integration questionnaire and resolve the run plan. Read a
+default from `~/.config/agent-utilities/inventory.yaml` (`deployment_profile`) if
+present, else ask.
+- Outputs: `deployment_profile` ∈ {tiny, single-node-prod, enterprise}; integration toggles {pggraph, kafka, openbao, keycloak, langfuse}
+- Expected: `profile-selected` — gates every subsequent step.
+
 ### Step 1: ssh-bootstrap
+[depends_on: Step 0] (profiles: single-node-prod, enterprise — skipped for tiny)
 Verify connectivity across inventory hosts and establish passwordless **full-mesh** SSH keys
 (every host → every host) as an RSA fallback. Prefer MCP tool usage; the mesh is the safety net.
 - Target hosts: `R510`, `R710`, `RW710`, `R820`, `GR1080`, `GB10`
@@ -203,3 +226,51 @@ Materialize the full topology in the Knowledge Graph (`HostNode`, `ContainerStac
 services are tracked for later push+validation.
 - Requires: `graph-os`
 - Expected: `topology-ingested`
+
+---
+
+## Steps — agent-utilities core (A-series)
+
+These steps install and wire **agent-utilities itself** (its deps, the graph-os
+MCP + multiplexer, the `*-mcp` connector fleet, and the integrations). They are
+profile-gated; the **tiny** profile runs only Step A1.
+
+### Step A1: agent-utilities-install
+[depends_on: Step 0]
+Install agent-utilities dependencies on the target host(s): `uv sync` (or
+`pip install -e ".[all]"`). For **tiny**, write the zero-infra `.env`
+(`GRAPH_BACKEND=tiered`) and run `agent-utilities/scripts/bootstrap.sh` (which
+also runs a KG smoke test) — the tiny profile **stops here**.
+- Requires: `systems-manager-mcp`
+- Expected: `agent-utilities-installed` (tiny: `bootstrap-verified`)
+
+### Step A2: graph-os-and-multiplexer
+[depends_on: Step A1] (profiles: single-node-prod, enterprise)
+Start the `graph-os` MCP server (streamable-http) and the REST gateway
+(`graph-os-daemon`, `:8100`, `KG_DAEMON_ROLE=host`), plus `mcp-multiplexer`
+federating graph-os + the connector fleet. For durable profiles, point
+`GRAPH_DB_URI` at the pggraph tier (Step A4).
+- Requires: `graph-os`, `container-manager-mcp`
+- Expected: `graph-os-up, multiplexer-up`
+
+### Step A3: mcp-fleet-deploy
+[depends_on: Step A2] (profiles: single-node-prod, enterprise)
+Deploy the `*-mcp` connector fleet from
+`agent-utilities/deploy/mcp-fleet.registry.yml`, filtered to services whose
+`profiles:` include the active profile. Each is a per-service Portainer stack
+(streamable-http, container port `8000` → its registry `host_port`) bound to Git
+for GitOps auto-sync via `portainer-sync-agent`. Apply the missing-image
+Failure-handling policy. (Regenerate the registry with
+`python agent-utilities/scripts/gen_mcp_fleet_registry.py --agents-dir <…>/agents`.)
+- Requires: `portainer-mcp`, `container-manager-mcp`
+- Expected: `mcp-fleet-deployed, deferred-report`
+
+### Step A4: integrations-wiring
+[depends_on: Step A3] (toggle-gated)
+Wire **only the enabled** integrations into the agent-utilities config: `pggraph`
+(`GRAPH_DB_URI`), `kafka` (`QUEUE_BACKEND=kafka` + `KAFKA_BOOTSTRAP_SERVERS`),
+`openbao` (`SECRETS_VAULT_URL` + `VAULT_AUTH_METHOD`), `keycloak`
+(`AUTH_JWT_JWKS_URI` / OIDC), `langfuse` (`LANGFUSE_*` + `ENABLE_OTEL`). Disabled
+toggles are skipped and reported.
+- Requires: `openbao-mcp`, `keycloak-mcp`
+- Expected: `integrations-wired`
