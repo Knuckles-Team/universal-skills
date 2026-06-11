@@ -17,7 +17,17 @@ metadata:
 
 # Agent Package Builder
 
-Scaffolds a complete, production-ready agent-package project following the standardized ecosystem conventions. The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env`, `.dockerignore`), Docker infrastructure (`docker/Dockerfile`, `docker/debug.Dockerfile`, `docker/compose.yml`, `docker/mcp.compose.yml`), Python packaging (`pyproject.toml`, `requirements.txt`), documentation (`README.md`, `CHANGELOG.md`, `AGENTS.md`, `docs/`), and agent workspace files (`prompts/main_agent.md`). All state, logs, memory, and chat history are handled natively via the **Knowledge Graph**.
+Scaffolds a complete, production-ready agent-package project following the standardized ecosystem conventions. **The golden-standard reference repo is `agents/gitlab-api`** — a fresh scaffold must match its file/folder structure, GitHub workflows, and config shapes exactly. The definitive file-by-file checklist lives in [`PARITY_MANIFEST.md`](PARITY_MANIFEST.md) (sibling of this file); use it to verify a scaffold or to standardize an existing connector repo.
+
+The generated project includes all hidden config files (`.pre-commit-config.yaml`, `.bumpversion.cfg`, `.gitignore`, `.gitattributes`, `.env` + `.env.example`, `.dockerignore`, `.codespellignore`, `.vulture_ignore`), Docker infrastructure (`docker/Dockerfile`, `docker/debug.Dockerfile`, `docker/agent.compose.yml`, `docker/mcp.compose.yml`, `docker/starship.toml`), the three GitHub workflows (`pipeline.yml`, `docs.yml`, `pages.yml`), Python packaging (`pyproject.toml`, `requirements.txt`, `MANIFEST.in`, `pytest.ini`), documentation (`README.md`, `CHANGELOG.md`, `AGENTS.md` + `CLAUDE.md` stub, `mkdocs.yml` + the 7-page `docs/` site), agent metadata (`a2a.json`, `opencode.json`, root + package `mcp_config.json`, `main_agent.json`), and repo validation scripts (`scripts/`). All state, logs, memory, and chat history are handled natively via the **Knowledge Graph**.
+
+The bundled scaffolder does the mechanical work:
+
+```bash
+python3 scripts/scaffold_package.py <package-name> \
+  [--type api_client,mcp,agent[,graphql]] [--concept-prefix XYZ] \
+  [--display-name ...] [--description ...] [--output-dir ...] [--in-place]
+```
 
 ---
 
@@ -31,8 +41,8 @@ Collect the following from the user. Ask only for what is missing — do not re-
 |-----------|----------|---------|-------------|
 | `package-name` | ✅ | — | Kebab-case name (e.g., `jellyfin-mcp`) |
 | `--display-name` | ❌ | Derived from package name | Human-readable name (e.g., `Jellyfin MCP`) |
-| `--description` | ❌ | `"Agent package for {display_name}"` | One-line description |
-| `--type` | ❌ | `api_client,mcp,agent` | Comma-separated: `api_client`, `mcp`, `agent` |
+| `--description` | ❌ | `"{Display Name} API + MCP Server + A2A Server"` | One-line description |
+| `--type` | ❌ | `api_client,mcp,agent` | Comma-separated: `api_client`, `mcp`, `agent`, `graphql` |
 | `--output-dir` | ❌ | Current directory | Where to create the project |
 | `--author` | ❌ | `"Audel Rouhi"` | Author name |
 | `--email` | ❌ | `"knucklessg1@gmail.com"` | Author email |
@@ -43,61 +53,90 @@ Collect the following from the user. Ask only for what is missing — do not re-
 
 ### Step 2: scaffold-tree [depends_on: gather-requirements]
 
-Generate the complete directory tree. The standard project structure is:
+Run `scripts/scaffold_package.py` (or generate the same set manually). The standard project structure — **exact gitlab-api parity** — is:
 
 ```
 {project_dir}/
 ├── .bumpversion.cfg
+├── .codespellignore
 ├── .dockerignore
-├── .env
+├── .env                      # local copy of .env.example (git-ignored)
+├── .env.example
 ├── .gitattributes
+├── .github/
+│   └── workflows/
+│       ├── docs.yml          # mkdocs gh-deploy --force on push to main
+│       ├── pages.yml         # reusable pages_pipeline.yml@main (docs/** path filter)
+│       └── pipeline.yml      # reusable python_pipeline.yml + container_pipeline.yml @main
 ├── .gitignore
-├── .pre-commit-config.yaml
-├── AGENTS.md
-├── CHANGELOG.md
-├── README.md
+├── .pre-commit-config.yaml   # FULL gate — see PARITY_MANIFEST.md
+├── .vulture_ignore
+├── a2a.json                  # A2A agent card
+├── AGENTS.md                 # canonical agent guidance (Quality Bar + worktree sections)
+├── CHANGELOG.md              # Keep a Changelog
+├── CLAUDE.md                 # 3-line stub importing @AGENTS.md — never holds content
+├── LICENSE                   # MIT
+├── MANIFEST.in
+├── mcp_config.json           # root: uv-run launcher entry with env placeholders
+├── mkdocs.yml                # Material theme, tabs nav, 7 pages
+├── opencode.json
 ├── pyproject.toml
-├── requirements.txt
+├── pytest.ini
+├── README.md
+├── requirements.txt          # mirrors [project].dependencies
+├── uv.lock                   # generate with `uv lock` (pre-commit uv-lock hook keeps it fresh)
 ├── docker/
-│   ├── Dockerfile
-│   ├── debug.Dockerfile
-│   ├── compose.yml
-│   └── mcp.compose.yml
+│   ├── Dockerfile            # slim multi-stage, uv 0.11.7, cache mount
+│   ├── debug.Dockerfile      # full dev image; COPY docker/starship.toml
+│   ├── agent.compose.yml     # MCP + agent services (image knucklessg1/{name}:latest)
+│   ├── mcp.compose.yml       # MCP service only
+│   └── starship.toml
 ├── docs/
-│   ├── index.md              # Navigation hub
-│   ├── overview.md            # Full technical overview
-│   └── concepts.md            # CONCEPT ID registry
-├── prompts/
-│   └── main_agent.md
+│   ├── index.md              # navigation hub w/ badges + grid cards
+│   ├── overview.md           # concept overview / architecture
+│   ├── installation.md       # pip / source / extras / docker
+│   ├── deployment.md         # transports, compose, agent server, Caddy/Technitium
+│   ├── usage.md              # API / CLI / MCP usage
+│   ├── platform.md           # backing-platform deploy recipe
+│   └── concepts.md           # CONCEPT ID registry
+├── scripts/
+│   ├── security_sanitizer.py        # pre-commit hook (bundled golden copy)
+│   ├── verify_api_integration.py    # pre-commit hook (bundled golden copy)
+│   ├── validate_a2a_agent.py        # A2A endpoint smoke validator
+│   └── validate_agent.py            # agent entry-point import smoke test
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py
-│   ├── test_init_dynamics.py
+│   ├── test_api_wrapper.py
 │   ├── test_auth.py
-│   ├── test_mcp_handlers.py
-│   ├── test_mcp_registration.py
-│   ├── test_api_client.py
-│   ├── test_agent_integration.py
 │   ├── test_concept_parity.py
-│   └── test_startup.py
+│   ├── test_init_dynamics.py
+│   ├── test_startup.py
+│   └── test_{short}_mcp_validation.py
 └── {pkg_dir}/
-    ├── __init__.py
-    ├── __main__.py
+    ├── __init__.py           # dynamic CORE/OPTIONAL module exposure
+    ├── __main__.py           # invokes agent_server()
     ├── agent_server.py
-    ├── auth.py
-    ├── mcp_server.py           # Entrypoint (imports from mcp/)
-    ├── api_client.py            # Facade re-export from api/
-    ├── models.py
-    ├── mcp_config.json
+    ├── api_client.py         # facade re-export from api/
+    ├── auth.py               # get_client() singleton, std env var names
+    ├── main_agent.json       # main-agent prompt definition
+    ├── mcp_config.json       # package-level: {"mcpServers": {}}
+    ├── mcp_server.py         # entrypoint (imports from mcp/)
+    ├── {short}_gql.py        # GraphQL wrapper (graphql type only)
+    ├── {short}_input_models.py
+    ├── {short}_response_models.py
+    ├── agent_data/
+    │   └── IDENTITY.md       # optional — golden repo omits it; keep glob in package-data
     ├── api/
     │   ├── __init__.py
     │   ├── api_client_base.py
     │   └── api_client_{domain}.py
-    ├── mcp/
-    │   ├── __init__.py
-    │   └── mcp_{domain}.py
-    └── agent_data/
-        └── IDENTITY.md
+    └── mcp/
+        ├── __init__.py
+        └── mcp_{domain}.py
 ```
+
+After scaffolding, run `uv lock` in the project — the pre-commit `uv-lock` hook and the `pytest` hook (`uv run --all-extras pytest …`) both expect `uv.lock` to exist.
 
 #### Critical packaging requirements (these prevent real CI failures)
 
@@ -105,15 +144,24 @@ These were the exact causes of build/publish failures in the jena/kafka/camunda/
 rebuilds. Bake them into every scaffold — a package that omits them looks fine locally
 but reds the pipeline:
 
-1. **`pyproject.toml` MUST declare explicit package discovery.** Without it, setuptools'
-   flat-layout auto-discovery fails with
-   `error: Multiple top-level packages discovered in a flat-layout: ['docker', 'prompts', '{pkg_dir}']`
-   because the repo has sibling dirs (`docker/`, `prompts/`, `docs/`, `scripts/`, `tests/`).
-   Always include:
+1. **`pyproject.toml` MUST follow the golden shape exactly.** Explicit package
+   discovery (setuptools' flat-layout auto-discovery fails with sibling dirs
+   `docker/`, `docs/`, `scripts/`, `tests/`), and the golden metadata conventions:
    ```toml
    [build-system]
    requires = [ "setuptools>=80.9.0", "wheel",]
    build-backend = "setuptools.build_meta"
+
+   [project]
+   # name/version/description/readme/classifiers …
+   requires-python = ">=3.11, <3.15"
+   dependencies = [ "agent-utilities>=0.47.0", "python-dotenv>=1.0.0",]
+
+   [project.optional-dependencies]
+   mcp = [ "agent-utilities[mcp]>=0.47.0",]
+   agent = [ "agent-utilities[agent,logfire]>=0.47.0",]
+   all = [ "{name}[mcp,agent,logfire]>=…",]   # self-referencing, bumpversion keeps in sync
+   test = [ "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
    [tool.setuptools]
    include-package-data = true
@@ -123,20 +171,32 @@ but reds the pipeline:
 
    [tool.setuptools.packages.find]
    where = [ ".",]
+
+   [tool.ruff]            # line-length 88, target py310
+   [tool.ruff.lint]       # select E,F,I,UP,B; ignore E402,E501,B008
+   [tool.mypy]            # 3.10, ignore_missing_imports, check_untyped_defs
+   [tool.vulture]         # ignore_names request/config
+   [dependency-groups]    # dev = pytest-timeout
    ```
+   License classifier is `"License :: OSI Approved :: MIT License"` with
+   `[project.license] text = "MIT"`. (gitlab-api itself still carries the stale
+   `"License :: Public Domain"` classifier — do not copy that; see PARITY_MANIFEST.md.)
 
 2. **Naming MUST be consistent across all three identifiers — no deviations.**
    repo name (kebab) == distribution `name` (kebab) == package dir (snake_case).
    e.g. repo `jena-mcp` → `name = "jena-mcp"` → package `jena_mcp/`.
    NOT `apache-jena-mcp`/`apache_jena_mcp`; NOT `archimate_mcp` for repo `archi-mcp`.
-   Console scripts: `{repo} = "{pkg_dir}.mcp_server:mcp_server"` and
-   `{repo-base}-agent = "{pkg_dir}.agent_server:agent_server"`.
+   Console scripts strip the `-mcp`/`-agent`/`-api` suffix:
+   `{short}-mcp = "{pkg_dir}.mcp_server:mcp_server"` and
+   `{short}-agent = "{pkg_dir}.agent_server:agent_server"`
+   (gitlab-api → `gitlab-mcp` / `gitlab-agent`).
 
-3. **The Dockerfile must copy an existing `docker/starship.toml`.** The standard
-   Dockerfile does `COPY docker/starship.toml /root/.config/starship.toml`; if the file
-   is missing the build dies with
+3. **`docker/debug.Dockerfile` copies `docker/starship.toml` — the file must exist.**
+   If it is missing the build dies with
    `failed to compute cache key: "/docker/starship.toml": not found`.
-   Scaffold the file (copy an existing one) — never reference a file you did not create.
+   The production `docker/Dockerfile` is a slim multi-stage build (uv `0.11.7`,
+   `--mount=type=cache,target=/root/.cache/uv`, installs `{name}[all]>={version}` —
+   the version pin is maintained by `.bumpversion.cfg`).
 
 4. **Heavy / native-compiled deps MUST be optional extras + lazy-imported.** Libraries
    with C/build requirements (`confluent-kafka`/librdkafka, `rdkafka`, openblas) break
@@ -150,11 +210,17 @@ but reds the pipeline:
    Pages with `build_type=workflow`
    (`POST /repos/{owner}/{repo}/pages -d '{"build_type":"workflow"}'`) or the `pages.yml`
    deploy fails with `Get Pages site failed ... HttpError: Not Found`. `.gitignore` must
-   exclude `build/ dist/ *.egg-info/ .pytest_cache/ .ruff_cache/ .mypy_cache/`.
+   exclude `build/ dist/ *.egg-info/ .pytest_cache/ .ruff_cache/ .mypy_cache/` plus the
+   root-scratch patterns (`/test_*.py`, `/fix_*.py`, `*.log`, …).
 
-6. **CI image name:** the reusable `container_pipeline.yml` builds
-   `${DOCKER_USERNAME}/${repo-name}` (matches the `*-mcp` Portainer stack image refs).
-   Do not rely on a `DOCKER_REPOSITORY` secret.
+6. **Workflows pin the reusable pipelines at `@main` (not `@latest`).** `pipeline.yml`
+   calls `Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main` then
+   `container_pipeline.yml@main`; `pages.yml` calls `pages_pipeline.yml@main`. The
+   Docker build-cache configuration (registry cache, `type=registry` — the org-wide
+   convention from pipelines PR#1 that replaced expiring `type=gha` SAS tokens) lives
+   **inside the reusable `container_pipeline.yml`**, not in per-repo workflows — never
+   inline cache config in a connector repo. The CI image name is
+   `${DOCKER_USERNAME}/${repo-name}`.
 
 ### Step 3: api-client [depends_on: scaffold-tree]
 
@@ -163,8 +229,10 @@ Read the `api-client-builder` skill and follow its instructions to:
    - `{pkg_dir}/api/api_client_base.py` — The HTTP/REST client base wrapper.
    - `{pkg_dir}/api/api_client_{domain}.py` — Domain-specific subclasses with API endpoint methods.
    - `{pkg_dir}/api/__init__.py` — Expose base and domain clients.
-2. Create `{pkg_dir}/api_client.py` — **Facade file** that re-exports from `api/` for backward compatibility.
-3. Create `{pkg_dir}/models.py` — Pydantic input/output models for standard API schemas.
+2. Keep `{pkg_dir}/api_client.py` — **Facade file** that re-exports from `api/` for backward compatibility.
+3. Populate `{pkg_dir}/{short}_input_models.py` and `{pkg_dir}/{short}_response_models.py` —
+   Pydantic input/response models (golden convention: two files named after the package,
+   e.g. `gitlab_input_models.py` / `gitlab_response_models.py` — not a single `models.py`).
 4. Update `{pkg_dir}/auth.py` — Configure authentication using **standard env var names**:
    - `{SERVICE}_URL` — Service endpoint (NOT `_BASE_URL` or `_INSTANCE`)
    - `{SERVICE}_TOKEN` — API token (NOT `_API_KEY`)
@@ -179,7 +247,8 @@ Read the `mcp-builder` skill and follow its instructions to:
    - `{pkg_dir}/mcp/__init__.py` — Expose `register_{domain}_tools` functions.
 2. Implement `{pkg_dir}/mcp_server.py` as the entrypoint:
    - Import `register_*_tools` from `{pkg_dir}/mcp/`
-   - Gate each domain with env var toggles: `DEFAULT_{DOMAIN}TOOL`
+   - Gate each domain with env var toggles: `DEFAULT_{DOMAIN}TOOL` (env `{DOMAIN}TOOL`);
+     mirror every toggle in `.env.example` and the root `mcp_config.json`.
    - Add CONCEPT ID to tool descriptions (e.g., `CONCEPT:{PREFIX}-001`)
 3. **Tag Rules**: All MCP tool tags MUST be strictly lowercase with hyphens (e.g. `tag="user-management"`). No camelCase or underscores.
 4. **Action-Routed Dynamic Generation**: ALL new agents use dynamic runtime generation. No monolithic static `@mcp.tool` files.
@@ -188,16 +257,22 @@ Read the `mcp-builder` skill and follow its instructions to:
 ### Step 5: agent-server [depends_on: scaffold-tree]
 
 Read the `agent-builder` skill and follow its instructions to:
-1. Configure `{pkg_dir}/agent_server.py` with proper identity loading.
-2. Update `{pkg_dir}/agent_data/IDENTITY.md` with standard YAML frontmatter.
-3. Suppress known fastmcp/urllib3 warnings, print startup telemetry to `sys.stderr`.
-4. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
+1. Configure `{pkg_dir}/agent_server.py` with proper identity loading
+   (`initialize_workspace()` + `load_identity()`), lazy `agent_utilities` imports,
+   `warnings.filterwarnings`, and startup telemetry to `sys.stderr` (the pre-commit
+   `check-agent-standards` hook enforces the latter two).
+2. Keep `{pkg_dir}/main_agent.json` — the main-agent prompt definition.
+3. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
+4. Update `a2a.json` with the agent's real capabilities.
 
 ### Step 6: docs-generation [depends_on: api-client, mcp-server, agent-server]
 
-Generate all required documentation:
+Generate the full 7-page docs site (`mkdocs.yml` nav order is canonical):
+`index.md` (hub w/ badges + grid cards), `overview.md`, `installation.md`,
+`deployment.md`, `usage.md`, `platform.md` (backing-platform Docker recipe),
+`concepts.md`.
 
-#### 6a. docs/concepts.md (REQUIRED)
+#### docs/concepts.md (REQUIRED)
 Every project must have a CONCEPT ID registry:
 ```markdown
 # Concept Registry — {package-name}
@@ -221,19 +296,16 @@ Every project must have a CONCEPT ID registry:
 | `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |
 ```
 
-#### 6b. docs/overview.md
-Standard technical overview with architecture, tool descriptions, and concept references.
-
-#### 6c. docs/index.md
-Navigation hub linking to all other docs.
-
-#### 6d. CHANGELOG.md
+Also keep `CHANGELOG.md` (Keep a Changelog) and the `AGENTS.md` + `CLAUDE.md` stub
+pattern current: `CLAUDE.md` contains only the `@AGENTS.md` import; all guidance —
+including the **Quality Bar** and **Git Worktrees** sections — lives in `AGENTS.md`.
 
 ### Step 7: verify-build [depends_on: docs-generation]
 
 Validate build syntax and entry points:
 - **Validate syntax**: Run syntax checking `python -c "import tomllib; ..."`
-- **Test entry points**: Run dynamic verification helper `pip install -e . && python -m {pkg_dir}.mcp --help`
+- **Lock**: `uv lock`
+- **Test entry points**: `pip install -e . && {short}-mcp --help && python -m {pkg_dir} --help`
 
 ### Step 8: run-pre-commit [depends_on: verify-build]
 
@@ -242,26 +314,43 @@ Run all formatting and style hooks across the scaffold:
 
 ### Step 9: drift-check [depends_on: run-pre-commit]
 
-Run a drift audit against the ecosystem standard to confirm 100% compliance before marking the package as complete. This ensures no files were missed and all conventions are met.
+Run a drift audit against the golden standard to confirm 100% compliance before
+marking the package as complete. The full checklist is `PARITY_MANIFEST.md`; the
+quick gate:
 
 ```bash
 cd {project_dir} && echo "=== Drift Audit ===" \
-  && for f in README.md CHANGELOG.md AGENTS.md pyproject.toml requirements.txt \
+  && for f in README.md CHANGELOG.md AGENTS.md CLAUDE.md LICENSE MANIFEST.in \
+    pyproject.toml pytest.ini requirements.txt uv.lock mkdocs.yml \
     .pre-commit-config.yaml .bumpversion.cfg .gitignore .gitattributes \
-    .dockerignore .env mcp_config.json; do \
+    .dockerignore .codespellignore .vulture_ignore .env.example \
+    a2a.json opencode.json mcp_config.json; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
-  && for f in docs/index.md docs/overview.md docs/concepts.md; do \
+  && for f in docs/index.md docs/overview.md docs/installation.md docs/deployment.md \
+    docs/usage.md docs/platform.md docs/concepts.md; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
-  && for f in docker/Dockerfile docker/compose.yml; do \
+  && for f in docker/Dockerfile docker/debug.Dockerfile docker/agent.compose.yml \
+    docker/mcp.compose.yml docker/starship.toml; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
-  && for f in {pkg_dir}/__init__.py {pkg_dir}/__main__.py {pkg_dir}/mcp_server.py; do \
+  && for f in .github/workflows/pipeline.yml .github/workflows/docs.yml \
+    .github/workflows/pages.yml; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in scripts/security_sanitizer.py scripts/verify_api_integration.py; do \
+    [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
+  && for f in {pkg_dir}/__init__.py {pkg_dir}/__main__.py {pkg_dir}/mcp_server.py \
+    {pkg_dir}/agent_server.py {pkg_dir}/api_client.py {pkg_dir}/auth.py \
+    {pkg_dir}/mcp_config.json {pkg_dir}/main_agent.json; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
   && [ -d "{pkg_dir}/mcp" ] && echo "✅ mcp/ subdir" || echo "❌ mcp/ MISSING" \
+  && [ -d "{pkg_dir}/api" ] && echo "✅ api/ subdir" || echo "❌ api/ MISSING" \
   && for f in tests/conftest.py tests/test_concept_parity.py \
-    tests/test_init_dynamics.py tests/test_startup.py; do \
+    tests/test_init_dynamics.py tests/test_startup.py tests/test_auth.py; do \
     [ -f "$f" ] && echo "✅ $f" || echo "❌ $f MISSING"; done \
   && grep -q "ECO-4.0" docs/concepts.md && echo "✅ ECO-4.0 bridge" \
-    || echo "❌ ECO-4.0 bridge MISSING"
+    || echo "❌ ECO-4.0 bridge MISSING" \
+  && grep -q "pipelines/.github/workflows/python_pipeline.yml@main" \
+    .github/workflows/pipeline.yml && echo "✅ pipeline @main" \
+    || echo "❌ pipeline not pinned @main"
 ```
 
 If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring.
@@ -295,8 +384,9 @@ When assigning a prefix, check this registry to avoid collisions:
 | `ABOX` | archivebox-api | | `ARR` | arr-mcp |
 | `ATL` | atlassian-agent | | `AU` | agent-utilities |
 | `ANSIBLE` | ansible-tower-mcp | | `AUDIO` | audio-transcriber |
-| `CMGR` | container-manager-mcp | | `DSCI` | data-science-mcp |
-| `EE` | emerald-exchange | | `GENIUS` | genius-agent |
+| `CLA` | clarity-api | | `CMGR` | container-manager-mcp |
+| `DSCI` | data-science-mcp | | `EE` | emerald-exchange |
+| `FAN` | fan-manager | | `GENIUS` | genius-agent |
 | `GH` | github-agent | | `GL` | gitlab-api |
 | `HASS` | home-assistant-agent | | `JELLYFIN` | jellyfin-mcp |
 | `LF` | langfuse-agent | | `LIX` | leanix-agent |
@@ -305,9 +395,10 @@ When assigning a prefix, check this registry to avoid collisions:
 | `NC` | nextcloud-agent | | `OC` | owncast-agent |
 | `PA` | postiz-agent | | `PLANE` | plane-agent |
 | `PORT` | portainer-agent | | `QBT` | qbittorrent-agent |
-| `RM` | repository-manager | | `SNOW` | servicenow-api |
-| `SRX` | searxng-mcp | | `SX` | scholarx |
-| `SYS` | systems-manager | | `STIRLINGPDF` | stirlingpdf-agent |
-| `TUI` | agent-terminal-ui | | `TUN` | tunnel-manager |
-| `UKA` | uptime-kuma-agent | | `VEC` | vector-mcp |
-| `WEBUI` | agent-webui | | `WGER` | wger-agent |
+| `RM` | repository-manager | | `ROM` | rom-manager |
+| `SNOW` | servicenow-api | | `SRX` | searxng-mcp |
+| `SX` | scholarx | | `SYS` | systems-manager |
+| `STIRLINGPDF` | stirlingpdf-agent | | `TUI` | agent-terminal-ui |
+| `TUN` | tunnel-manager | | `UKA` | uptime-kuma-agent |
+| `VEC` | vector-mcp | | `WEBUI` | agent-webui |
+| `WGER` | wger-agent | | | |

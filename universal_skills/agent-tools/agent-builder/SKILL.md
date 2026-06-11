@@ -32,7 +32,7 @@ Follow these steps when defining a new agent package:
 ### 2. Configure Agent Workspace Files
 The agent's behavior and state are controlled by several core files in the `agent_data/` directory:
 
-- **prompts/main_agent.md**: Injects the agent's name, role, system prompt, and tools instructions. Use the standard YAML frontmatter for metadata.
+- **main_agent.json** (lives at `{pkg_dir}/main_agent.json`, golden-standard convention): the main-agent prompt definition — name, role, system prompt, tools, tone, and goal.
 - **USER.md**: Information about the user (name, style, preferences).
 - **A2A_AGENTS.md**: Registry of known A2A peer agents.
 - **Knowledge Graph** (`knowledge_graph.db`): Long-term memory and topological intelligence (managed via `knowledge_tools`).
@@ -53,7 +53,7 @@ Ensure you extract the appropriate arguments from `create_agent_parser` to pass 
 - `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
 
 ### 4. System Prompt and Context
-When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure core context files (`prompts/main_agent.md`) are combined into a rich prompt. Historical context, logs, and cron data are injected dynamically during the execution graph's `memory_selection_step` via the Knowledge Graph.
+When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure core context files (e.g. `{pkg_dir}/main_agent.json`) are combined into a rich prompt. Historical context, logs, and cron data are injected dynamically during the execution graph's `memory_selection_step` via the Knowledge Graph.
 
 ### 4. Verification
 After implementation:
