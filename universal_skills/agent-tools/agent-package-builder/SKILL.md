@@ -37,6 +37,20 @@ python3 scripts/scaffold_package.py <package-name> \
 
 Collect the following from the user. Ask only for what is missing — do not re-ask for values already provided.
 
+**Name availability gate (REQUIRED before anything is scaffolded):** the package
+name must be the AVAILABLE name on PyPI — the published distribution name, the
+GitHub repo name, and the DockerHub image name are all derived from it, so it is
+solidified only after this check passes:
+
+```bash
+code=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/{package-name}/json")
+[ "$code" = "404" ] && echo "AVAILABLE — name solidified" || echo "TAKEN — pick another name"
+```
+
+If taken, iterate with the user on a variant (suffix conventions in the fleet:
+`-mcp` for MCP-centric connectors, `-api` for API-client-centric wraps,
+`-agent` for agent-centric packages) and re-check until available.
+
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `package-name` | ✅ | — | Kebab-case name (e.g., `jellyfin-mcp`) |
@@ -357,6 +371,34 @@ If ANY item shows ❌, fix it before completing the build. The `ecosystem_standa
 ```
 Trigger: "run ecosystem standardizer" with scope={package-name}
 ```
+
+### Step 10: remote-provisioning [depends_on: drift-check]
+
+Create the package's remote homes using the fleet's own connectors (NOT manual
+clicks). Both require credentials and are outward-facing — confirm with the user
+once per session before the first creation call.
+
+1. **GitHub repository** — via the **github-agent** MCP server tools (repo
+   creation + settings; credentials from `agents/github-agent/.env`:
+   `GITHUB_URL`/`GITHUB_TOKEN`). Repo name = the solidified package name.
+   Afterwards apply the standard project settings (Actions enabled, Pages for
+   the docs workflow) — the github-project-provisioner skill covers defaults.
+   Note the known first-deploy race: GitHub Pages needs a rerun-failed-jobs
+   after the very first pages deploy.
+2. **DockerHub image repository** — via the **dockerhub-api** MCP server tools
+   (`hub_repos` action `create`; credentials use the OFFICIAL hub-tool env
+   names: `DOCKER_HUB_USER` / `DOCKER_HUB_TOKEN`). Image path =
+   `{DOCKER_HUB_USER}/{package-name}`, matching the `image:` references in
+   `docker/agent.compose.yml` + `docker/mcp.compose.yml` and the container
+   pipeline's push target.
+3. **Wire-up** — `git remote add origin <github-url>`; verify the
+   `docker/*.compose.yml` image paths and workflow registry references match
+   the created DockerHub repo; register the project in the workspace.yml set
+   (root `/home/apps/workspace/workspace.yml` + the repository-manager and
+   agent-utilities XDG-config copies — all three must stay in sync) so
+   repository-manager validation tracks it.
+
+Push only when the user asks (releases go through the phased auto_push flow).
 
 > [!IMPORTANT]
 > A new package is not complete until it passes the drift check with 0 missing items. This is a hard gate.
