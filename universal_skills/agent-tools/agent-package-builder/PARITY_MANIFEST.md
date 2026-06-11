@@ -14,13 +14,13 @@ Legend: **R** = required, **O** = optional (justified omission allowed), **G** =
 
 | Path | Req | Content pattern |
 |---|---|---|
-| `pyproject.toml` | R | Golden shape: build-system `setuptools>=80.9.0` + `wheel`; `requires-python = ">=3.11, <3.15"`; deps `agent-utilities>=0.47.0` (+ `python-dotenv`, `gql` if GraphQL); `[[project.authors]]` table; `[project.license] text = "MIT"`; extras `mcp` / `agent` / (`gql`) / `all = ["{name}[mcp,agent,(gql,)logfire]>={version}"]` (self-referencing — bumpversion keeps the pin current) / `test`; `[project.scripts]` `{short}-mcp` + `{short}-agent`; `[tool.setuptools] include-package-data`; `[tool.setuptools.package-data] {pkg_dir} = ["mcp_config.json", "agent_data/**"]`; `[tool.setuptools.packages.find] where = ["."]`; `[tool.ruff]` line-length 88 / target py310; `[tool.ruff.lint]` select E,F,I,UP,B ignore E402,E501,B008; `[tool.mypy]` py 3.10 + ignore_missing_imports + check_untyped_defs; `[tool.vulture] ignore_names = ["request", "config"]`; `[dependency-groups] dev = ["pytest-timeout>=2.4.0"]`. License classifier: `"License :: OSI Approved :: MIT License"` (⚠ gitlab-api carries stale `"License :: Public Domain"` — do not propagate; see §8). |
-| `.bumpversion.cfg` | R | Targets: `pyproject.toml` (`version = "…"`), `README.md` (`Version: …`), `docker/Dockerfile` (`{name}[all]>=…`), `{pkg_dir}/agent_server.py` + `{pkg_dir}/mcp_server.py` (`__version__ = "…"`). `commit = True`, `tag = True`. All five targets must contain the current version or the pre-commit `check-bumpversion` hook fails. |
+| `pyproject.toml` | R | Golden shape: build-system `setuptools>=80.9.0` + `wheel`; `requires-python = ">=3.11, <3.15"`; deps `agent-utilities>=0.47.0` (+ `python-dotenv`, `gql[requests]` if GraphQL — the `requests` extra supplies `requests_toolbelt` needed by `gql.transport.requests`); `[[project.authors]]` table; `[project.license] text = "MIT"`; extras `mcp` / `agent` / (`gql`) / `all = ["{name}[mcp,agent,(gql,)logfire]>={version}"]` (self-referencing — bumpversion keeps the pin current) / `test`; `[project.scripts]` `{short}-mcp` + `{short}-agent`; `[tool.setuptools] include-package-data`; `[tool.setuptools.package-data] {pkg_dir} = ["mcp_config.json", "agent_data/**"]`; `[tool.setuptools.packages.find] where = ["."]`; `[tool.ruff]` line-length 88 / target py310; `[tool.ruff.lint]` select E,F,I,UP,B ignore E402,E501,B008; `[tool.mypy]` py 3.10 + ignore_missing_imports + check_untyped_defs; `[tool.vulture] ignore_names = ["request", "config"]`; `[dependency-groups] dev = ["pytest-timeout>=2.4.0"]`. License classifier: `"License :: OSI Approved :: MIT License"` (gitlab-api's stale `"License :: Public Domain"` was fixed in the 2026-06 golden-defect pass; see §8). |
+| `.bumpversion.cfg` | R | Targets: `pyproject.toml` (`version = "…"` **and** a `[bumpversion:file(all-extra):pyproject.toml]` section for the self-referencing `{name}[…]>=…` `all`-extra pin), `a2a.json` (`"version": "…"`), `README.md` (`Version: …`), `docker/Dockerfile` (`{name}[all]>=…`), `{pkg_dir}/agent_server.py` + `{pkg_dir}/mcp_server.py` (`__version__ = "…"`). `commit = True`, `tag = True`. All seven targets must contain the current version or the pre-commit `check-bumpversion` hook fails. |
 | `.pre-commit-config.yaml` | R | Byte-parity with golden: pre-commit-hooks v6.0.0 (incl. `no-commit-to-branch`, `check-added-large-files --maxkb=2000`); ruff-pre-commit **v0.15.12** (`ruff-check --fix --ignore=E402,B008,E501` + `ruff-format`); mirrors-mypy v1.20.2; vulture v2.16 (min-confidence 95); codespell v2.4.2 (`--ignore-words=.codespellignore`); bandit 1.9.4 (skip B101,B404,B603); nbQA 1.9.1; uv-pre-commit 0.11.8 (`uv-lock`); local hooks `check-mermaid`, `check-stubs` (agent-utilities scripts), `mermaid-validate` (node), `check-agent-standards` (agent_server must have `warnings.filterwarnings` + `file=sys.stderr`), `check-cli-help` (`uv run python -m … --help`), `check-bumpversion` (bump2version dry-run), `pytest` (`uv run --all-extras pytest … --timeout=60`); hadolint-py v2.14.0; docker-pre-commit v3.0.1 (`docker-compose-check`); local `verify-api-integration` (`scripts/verify_api_integration.py --local`) and `security-sanitizer` (`scripts/security_sanitizer.py`). |
 | `pytest.ini` | R | `timeout = 60`, `asyncio_mode = auto`, `testpaths = tests`, `integration` marker excluded by default via `addopts = -m "not integration"`. |
 | `requirements.txt` | R | Mirrors `[project].dependencies` (one per line). |
 | `uv.lock` | R | Committed; kept fresh by the `uv-lock` pre-commit hook. |
-| `MANIFEST.in` | R | `include LICENSE` / `include README.md` / `include requirements.txt` / `recursive-include {pkg_dir} *.py *.json` — one directive per line (⚠ golden's copy is a malformed single line; see §8). |
+| `MANIFEST.in` | R | `include LICENSE` / `include README.md` / `include requirements.txt` / `recursive-include {pkg_dir} *.py *.json` — one directive per line (golden's formerly malformed single-line copy was fixed in the 2026-06 golden-defect pass; see §8). |
 | `.gitignore` | R | Python packaging/caches + `.env`/`.venv` + `/site` + root-scratch guards: `/test_*.py /fix_*.py /debug_*.py /scratch_*.py /temp_*.py`, `*.orig *.rej *.patch *.log *output*.txt *errors*.txt failed_tests.txt trace.txt`. |
 | `.gitattributes` | R | `* text=auto` + eol/diff mappings for sh/py/md etc. |
 | `.dockerignore` | R | Excludes git/env/tests/scripts/.github/build, `{pkg_dir}.egg-info*`, plus `Dockerfile`, `debug.Dockerfile`, `compose.yml`. |
@@ -28,7 +28,7 @@ Legend: **R** = required, **O** = optional (justified omission allowed), **G** =
 | `.vulture_ignore` | R | Symbol-per-line list; pairs with `[tool.vulture]` in pyproject. |
 | `.env.example` | R | Sectioned: MCP server settings (HOST/PORT/TRANSPORT), OTEL/Langfuse, Eunomia (`EUNOMIA_TYPE/POLICY_FILE/REMOTE_URL`), service credentials (`{SERVICE}_URL` / `{SERVICE}_TOKEN` commented), full `*TOOL` toggle list (one per MCP domain). |
 | `.env` | G | Local copy of `.env.example`; git-ignored; never committed with real secrets. |
-| `a2a.json` | R | A2A agent card: `name = "{name}-agent"`, `type = "agent"`, version, description, repo `url`, `license: MIT`, `capabilities[]` (incl. `run_graph_flow`), `tools[]` (incl. `graph-flow`). |
+| `a2a.json` | R | A2A agent card: `name = "{name}-agent"`, `type = "agent"`, version (bumpversion-managed sync point), description, repo `url` (`https://github.com/Knuckles-Team/{name}/tree/main`), `license: MIT`, `capabilities[]` (incl. `run_graph_flow`), `tools[]` (incl. `graph-flow`). |
 | `opencode.json` | R | `$schema https://opencode.ai/config.json`; lmstudio provider (`@ai-sdk/openai-compatible`, baseURL `http://vllm.arpa/v1`), model `lmstudio/qwen/qwen3.5-9b`. |
 | `mcp_config.json` (root) | R | One `mcpServers` entry keyed `{name}`: `command: "uv"`, `args: ["run", "{short}-mcp"]`, env block with `<YOUR_…>` placeholders for `{SERVICE}_URL`/`{SERVICE}_TOKEN`/`{SERVICE}_SSL_VERIFY` + all `*TOOL` toggles. |
 | `AGENTS.md` | R | Canonical agent guidance. Sections: Tech Stack & Architecture (+ mermaid architecture & workflow diagrams), Commands, Project Structure Quick Reference, Code Style, Dos and Don'ts, Safety & Boundaries, When Stuck, ⛔ No Scratch Files, ⛔ Root Pristine, Working Discipline, **Quality Bar (REQUIRED)**, **Working with Git Worktrees**. |
@@ -113,29 +113,33 @@ Legend: **R** = required, **O** = optional (justified omission allowed), **G** =
 ## 8. Known golden-repo deviations (adjudicate before copying)
 
 Found during the 2026-06 audit (cross-checked vs twenty-mcp, kafka-mcp, clarity-api).
-These are places where **gitlab-api itself** is stale or internally inconsistent — do
-NOT propagate them; they need a fix in gitlab-api or an explicit user decision:
+These were places where **gitlab-api itself** was stale or internally inconsistent.
+Items 1–5 were **fixed in gitlab-api** by the 2026-06 golden-defect pass
+(`fix/golden-standard-defects`); the notes below record the adjudication so the
+defects are recognized if encountered in fleet repos:
 
-1. **License classifier mismatch** — gitlab-api (and clarity-api) declare
-   `"License :: Public Domain"` while `[project.license] text = "MIT"`. twenty-mcp /
-   kafka-mcp use the correct `"License :: OSI Approved :: MIT License"`. The scaffold
-   uses the MIT classifier.
-2. **`MANIFEST.in` malformed** — golden's file is a single line containing three
-   directives (`include README.md include requirements.txt recursive-include …`);
-   setuptools parses one directive per line. The scaffold writes the multi-line form.
-3. **`AGENTS.md` file tree is stale/machine-dumped** — golden's tree embeds
-   `.mypy_cache/`, `.venv/` listings and names `docker/compose.yml` (actual file is
-   `agent.compose.yml`) and a 2-page `docs/`. Treat golden's AGENTS.md *sections* as
-   canonical, not its embedded tree.
-4. **`all` extra self-pin** — golden pins `all = ["gitlab-api[mcp,agent,gql,logfire]>=25.42.0"]`
-   (self-referencing); twenty-mcp/kafka-mcp instead pin upstream
-   `agent-utilities[…]`. Golden is the designated standard, so the scaffold keeps the
-   self-pin (bumpversion does not update it — only the Dockerfile pin — so it can
-   drift; flag when found stale).
-5. **`a2a.json` placeholder URL** — golden's `url` is `https://github.com/user/gitlab-api/tree/main`
-   ("user" org) and version `0.1.0` while the repo is at 25.x. The scaffold uses the
-   `Knuckles-Team` org; keep `a2a.json` version in sync manually or add it to
-   `.bumpversion.cfg`.
+1. **License classifier mismatch** — FIXED in golden. gitlab-api (and clarity-api)
+   declared `"License :: Public Domain"` while `[project.license] text = "MIT"`.
+   The standard (and the scaffold) is `"License :: OSI Approved :: MIT License"`;
+   clarity-api still needs the same fix.
+2. **`MANIFEST.in` malformed** — FIXED in golden. The file was a single line
+   containing three directives; setuptools parses one directive per line. Golden and
+   the scaffold now both use the multi-line form (incl. `include LICENSE`).
+3. **`AGENTS.md` file tree was stale/machine-dumped** — FIXED in golden. The tree
+   embedded `.mypy_cache/`/`.venv/` listings, named `docker/compose.yml` (actual:
+   `agent.compose.yml`/`mcp.compose.yml`) and a 2-page `docs/`. Golden's tree now
+   reflects git-tracked files only; keep generated trees pruned of caches/venvs.
+4. **`all` extra self-pin** — drift risk FIXED in golden. Golden pins
+   `all = ["gitlab-api[mcp,agent,gql,logfire]>={version}"]` (self-referencing);
+   twenty-mcp/kafka-mcp instead pin upstream `agent-utilities[…]`. Golden is the
+   designated standard, so the scaffold keeps the self-pin, and the pin is now a
+   `.bumpversion.cfg` sync point (`[bumpversion:file(all-extra):pyproject.toml]`)
+   so it can no longer drift.
+5. **`a2a.json` placeholder URL/version** — FIXED in golden. The `url` was
+   `https://github.com/user/gitlab-api/tree/main` ("user" org) and version `0.1.0`
+   while the repo was at 25.x. Golden now uses the `Knuckles-Team` org URL and the
+   real version, with `a2a.json` as a `.bumpversion.cfg` sync point (the
+   new-connector convention, e.g. dockerhub-api).
 6. **Pre-commit local hooks use absolute paths** —
    `/home/apps/workspace/agent-packages/agent-utilities/scripts/{mermaid_linter,check_stubs}.py`.
    Works fleet-wide on this infra; breaks for external contributors. Kept verbatim for
@@ -161,7 +165,7 @@ NOT propagate them; they need a fix in gitlab-api or an explicit user decision:
 | `{short}-agent` | Agent console script | `gitlab-agent` |
 | `{Display Name}` | Title-cased name | `Gitlab Api` |
 | `{description}` | One-liner; pattern `"{Platform} API + MCP Server + A2A Server"` | `GitLab API + MCP Server + A2A Server` |
-| `{version}` | Current SemVer (bumpversion-managed, 5 sync points: pyproject, README, Dockerfile, agent_server, mcp_server) | `25.42.0` |
+| `{version}` | Current SemVer (bumpversion-managed, 7 sync points: pyproject version + `all`-extra self-pin, a2a.json, README, Dockerfile, agent_server, mcp_server) | `25.42.0` |
 | `{SERVICE}_URL` / `{SERVICE}_TOKEN` / `{SERVICE}_SSL_VERIFY` | `{name}` upper-snake env prefix (preserve first-party names where they exist) | `GITLAB_URL` / `GITLAB_TOKEN` / `GITLAB_SSL_VERIFY` |
 | `{PREFIX}` | CONCEPT ID prefix — check the registry in SKILL.md for collisions | `GL` |
 | `{agent_port}` | Per-repo A2A agent port (compose + healthcheck) | `9017` |
