@@ -40,6 +40,15 @@ MCP server containers, DNS routing, and Knowledge Graph registration.
 ## Steps
 
 ### Step 0: user-interaction
+
+> **Canonical profiles** — agent-utilities' day-0 uses three tiers:
+> **tiny** (all-local, zero-infra → `agent-utilities/scripts/bootstrap.sh`),
+> **single-node-prod** (one durable host), and **enterprise** (full swarm). This
+> workflow's `minimal`→**tiny/single-node-prod**, `homelab`/`enterprise`→**enterprise**.
+> The `*-mcp` connector set per profile is the single source of truth in
+> `agent-utilities/deploy/mcp-fleet.registry.yml` (see the
+> `day0_bootstrap_orchestrator` A-series steps).
+
 Present the deployment profile questionnaire to the user. Ask:
 1. **Deployment profile**: homelab (all services), enterprise (ITIL + productivity), or minimal (core infrastructure only)
 2. **Target host**: localhost, remote SSH host (via tunnel-manager), or multi-node cluster
