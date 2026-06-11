@@ -246,12 +246,26 @@ also runs a KG smoke test) — the tiny profile **stops here**.
 
 ### Step A2: graph-os-and-multiplexer
 [depends_on: Step A1] (profiles: single-node-prod, enterprise)
-Start the `graph-os` MCP server (streamable-http) and the REST gateway
-(`graph-os-daemon`, `:8100`, `KG_DAEMON_ROLE=host`), plus `mcp-multiplexer`
-federating graph-os + the connector fleet. For durable profiles, point
-`GRAPH_DB_URI` at the pggraph tier (Step A4).
-- Requires: `graph-os`, `container-manager-mcp`
-- Expected: `graph-os-up, multiplexer-up`
+Deploy the **agent-utilities `graph-os` MCP server** (`knucklessg1/agent-utilities`,
+container `command: graph-os`, streamable-http :8000) as a Portainer GitOps stack
+pinned to the **KG host node (R820)** with `KG_DAEMON_ROLE=host` — it owns the
+single consolidated KG daemon. Also start `mcp-multiplexer` federating graph-os +
+the connector fleet, and (optionally) the REST gateway `graph-os-daemon` (:8100).
+For durable profiles, point `GRAPH_DB_URI` at the pggraph tier (Step A4).
+
+**Shared agent-utilities config volume (CONCEPT: OS-5.x):** seed an **external**
+named volume `agent_utilities_config` (and `agent_utilities_data`) on the KG host
+with the bare-metal `~/.config/agent-utilities/config.json`, and mount it at
+`/root/.config/agent-utilities` in graph-os. This is the single source of
+config (models, backends, secrets, OTel/Langfuse) — the same volume a bare-metal
+install reads. Any **config-aware** `*-mcp` (those that use agent-utilities
+models / KG / secrets — e.g. `data-science-mcp`, `scholarx-mcp`,
+`repository-manager-mcp`, `emerald-exchange-mcp`) mounts the **same** volume and
+is **co-located on the KG host** so the node-local named volume resolves (or back
+it with a shared/NFS driver). Thin API-wrapper connectors (github, gitlab,
+servicenow, …) do **not** need it — they take their own creds via stack env.
+- Requires: `graph-os`, `container-manager-mcp`, `portainer-mcp`
+- Expected: `graph-os-up, multiplexer-up, config-volume-seeded`
 
 ### Step A3: mcp-fleet-deploy
 [depends_on: Step A2] (profiles: single-node-prod, enterprise)
@@ -274,3 +288,17 @@ Wire **only the enabled** integrations into the agent-utilities config: `pggraph
 toggles are skipped and reported.
 - Requires: `openbao-mcp`, `keycloak-mcp`
 - Expected: `integrations-wired`
+
+### Step A5: mcp-config-rewire (streamable-http, no stdio)
+[depends_on: Step A3] (profiles: single-node-prod, enterprise)
+Once the fleet is deployed, **back up** every `mcp_config*.json` (workspace +
+`~/.config/agent-utilities/mcp_config.json`) to a timestamped dir, then **rewire**
+each connector entry from a local **stdio** spawn
+(`{"command": ".venv/bin/<name>", ...}`) to the deployed **streamable-http**
+endpoint (`{"transport": "streamable-http", "url": "http://<name>.arpa/mcp"}`).
+We no longer run the connectors as stdio servers. `graph-os` likewise points at
+its R820 streamable-http endpoint. Only rewire entries whose container is live
+(use the deferred/skipped report from Step A3); leave the rest stdio until
+deployed. Reload the multiplexer.
+- Requires: `container-manager-mcp`
+- Expected: `mcp-config-rewired, stdio-retired`
