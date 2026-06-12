@@ -7,15 +7,23 @@ install it at container start, and run its console script over streamable-http.
 Code edits on the host go live on a container restart — no image rebuild, no
 registry round-trip.
 
-This generalizes that pattern. For every ``services/<name>-mcp`` whose source
-exists at ``agent-packages/agents/<name>-mcp``, it emits a sibling
-``compose.dev.yml`` derived from the production ``compose.yml`` — preserving
-networks / dns / env / healthcheck / logging, swapping the image for the editable
-runtime, and pinning the service to the node that holds the bind-mounted source.
+This generalizes that pattern across the fleet. The **source of truth is
+``agent-packages/agents/*``** (the connector packages). The agent directory name
+often differs from its deployed stack (``agents/github-agent`` →
+``services/github-mcp``, ``agents/clarity-api`` → ``services/clarity-mcp``), so each
+agent is mapped to its stack via its ``*-mcp`` console script (from pyproject). For
+each connector it writes a ``compose.dev.yml``:
 
-    gen_editable_compose.py                       # generate for all source-backed connectors
-    gen_editable_compose.py --only caddy-mcp,arr-mcp
-    gen_editable_compose.py --server RW710 --workspace /home/apps/workspace
+* with a matching ``services/<stack>``: derived from that production ``compose.yml``
+  (networks / dns / env / healthcheck / logging preserved);
+* without one: from a standard streamable-http template (a new ``services/<mcp>`` dir).
+
+Either way the image becomes ``python:3.11-slim``, the command installs the
+bind-mounted **agent source** and execs the MCP console script, and the service is
+pinned to the node holding the source.
+
+    gen_editable_compose.py                 # whole fleet
+    gen_editable_compose.py --only github-mcp,caddy-mcp --dry-run
 """
 
 from __future__ import annotations
@@ -23,107 +31,172 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import tomllib
 
 import yaml
 
 EDITABLE_IMAGE = "python:3.11-slim"
 
 
-def _editable_command(orig_command, src="/src") -> list[str]:
-    """Wrap the production command so the container installs the bind-mounted
-    source first, then execs the original console script / args."""
-    if isinstance(orig_command, str):
-        run = orig_command
-    elif isinstance(orig_command, list):
-        run = " ".join(str(c) for c in orig_command)
-    else:
-        run = ""
-    if not run:
-        raise ValueError("service has no 'command' to wrap")
-    return [
-        "sh",
-        "-c",
-        f"pip install --no-cache-dir {src} && exec {run}",
-    ]
+def discover(workspace: str) -> list[dict]:
+    """Map every connector: agent dir -> mcp console script -> services stack."""
+    agents_root = os.path.join(workspace, "agent-packages", "agents")
+    services_dir = os.path.join(workspace, "services")
+    stacks = {
+        e
+        for e in os.listdir(services_dir)
+        if os.path.isfile(os.path.join(services_dir, e, "compose.yml"))
+    }
+    out = []
+    for agent in sorted(os.listdir(agents_root)):
+        adir = os.path.join(agents_root, agent)
+        pj = os.path.join(adir, "pyproject.toml")
+        if not os.path.isdir(adir) or not os.path.isfile(pj):
+            continue
+        try:
+            scripts = (tomllib.load(open(pj, "rb")).get("project", {}) or {}).get(
+                "scripts", {}
+            ) or {}
+        except Exception:
+            scripts = {}
+        mcp = [k for k in scripts if k.endswith("-mcp")]
+        script = mcp[0] if mcp else (next(iter(scripts)) if scripts else None)
+        if not script:
+            continue
+        candidates = [
+            script,
+            agent,
+            agent.replace("-agent", "-mcp").replace("-api", "-mcp"),
+        ]
+        stack = next((c for c in candidates if c in stacks), None)
+        out.append({"agent": agent, "script": script, "stack": stack})
+    return out
 
 
-def make_editable(compose: dict, name: str, source_path: str, server: str) -> dict:
-    """Transform a production compose dict into its editable-dev variant."""
+def _wrap_command(script: str) -> list[str]:
+    return ["sh", "-c", f"pip install --no-cache-dir /src && exec {script}"]
+
+
+def _template_compose(name: str) -> dict:
+    """Standard streamable-http stack for a connector with no production compose."""
+    return {
+        "version": "3.8",
+        "services": {
+            name: {
+                "hostname": name,
+                "restart": "always",
+                "networks": ["caddy", "cloudflare", "internet"],
+                "dns": ["10.0.0.199"],
+                "environment": [
+                    "PYTHONUNBUFFERED=1",
+                    "HOST=0.0.0.0",
+                    "PORT=8000",
+                    "TRANSPORT=streamable-http",
+                ],
+                "healthcheck": {
+                    "test": [
+                        "CMD",
+                        "python3",
+                        "-c",
+                        "import socket; socket.create_connection(('localhost', 8000), timeout=5)",
+                    ],
+                    "interval": "30s",
+                    "timeout": "10s",
+                    "retries": 3,
+                },
+                "logging": {
+                    "driver": "json-file",
+                    "options": {"max-size": "10m", "max-file": "3"},
+                },
+            }
+        },
+        "networks": {
+            "caddy": {"external": True},
+            "cloudflare": {"external": True},
+            "internet": {"external": True},
+        },
+    }
+
+
+def make_editable(
+    compose: dict, svc_name: str, source: str, script: str, server: str
+) -> dict:
     services = compose.get("services", {})
-    if name not in services:
-        # single-service compose under a different key — take the only service.
+    if svc_name not in services:
         if len(services) != 1:
-            raise ValueError(f"cannot locate the service for {name}")
-        name = next(iter(services))
-    svc = services[name]
-
+            raise ValueError("cannot locate the service entry")
+        svc_name = next(iter(services))
+    svc = services[svc_name]
     svc["image"] = EDITABLE_IMAGE
-    svc["command"] = _editable_command(svc.get("command"))
-
-    volumes = [v for v in svc.get("volumes", []) if ":/src:" not in str(v)]
-    volumes.insert(0, f"{source_path}:/src:ro")
-    svc["volumes"] = volumes
-
-    # First boot pip-installs the package + deps — give the healthcheck room.
-    hc = svc.get("healthcheck")
-    if isinstance(hc, dict):
-        hc["start_period"] = "90s"
-
-    # Bind-mounted source lives on one node → the editable service must run there.
+    svc["command"] = _wrap_command(script)
+    vols = [v for v in svc.get("volumes", []) if ":/src:" not in str(v)]
+    vols.insert(0, f"{source}:/src:ro")
+    svc["volumes"] = vols
+    if isinstance(svc.get("healthcheck"), dict):
+        svc["healthcheck"]["start_period"] = "90s"
     deploy = svc.setdefault("deploy", {})
     deploy.setdefault("placement", {})["constraints"] = [
         f"node.labels.name == ${{SERVER:-{server}}}"
     ]
+    deploy.setdefault("restart_policy", {"condition": "any"})
     return compose
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--workspace", default=os.environ.get("WORKSPACE", "/home/apps/workspace"))
-    ap.add_argument("--server", default="RW710", help="node label holding the source")
-    ap.add_argument("--only", help="comma-separated subset of service names")
+    ap.add_argument(
+        "--workspace", default=os.environ.get("WORKSPACE", "/home/apps/workspace")
+    )
+    ap.add_argument("--server", default="RW710")
+    ap.add_argument("--only", help="comma-separated stack/script names")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    services_dir = os.path.join(args.workspace, "services")
-    source_root = os.path.join(args.workspace, "agent-packages", "agents")
     only = {s.strip() for s in (args.only or "").split(",") if s.strip()}
+    connectors = discover(args.workspace)
+    derived, templated, skipped = [], [], []
 
-    generated, skipped = [], []
-    for entry in sorted(os.listdir(services_dir)):
-        if not entry.endswith("-mcp") or (only and entry not in only):
+    for c in connectors:
+        name = c["stack"] or c["script"]
+        if only and name not in only and c["script"] not in only:
             continue
-        compose_path = os.path.join(services_dir, entry, "compose.yml")
-        source_path = os.path.join(source_root, entry)
-        if not os.path.isfile(compose_path) or not os.path.isdir(source_path):
-            skipped.append(entry)
-            continue
-        with open(compose_path) as f:
-            compose = yaml.safe_load(f)
+        source = os.path.join(args.workspace, "agent-packages", "agents", c["agent"])
+        services_dir = os.path.join(args.workspace, "services")
+        if c["stack"]:
+            with open(os.path.join(services_dir, c["stack"], "compose.yml")) as f:
+                compose = yaml.safe_load(f)
+            kind = derived
+        else:
+            compose = _template_compose(name)
+            kind = templated
         try:
-            editable = make_editable(compose, entry, source_path, args.server)
+            editable = make_editable(compose, name, source, c["script"], args.server)
         except ValueError as e:
-            skipped.append(f"{entry} ({e})")
+            skipped.append(f"{c['agent']} ({e})")
             continue
-        out = os.path.join(services_dir, entry, "compose.dev.yml")
+        out_dir = os.path.join(services_dir, name)
+        out = os.path.join(out_dir, "compose.dev.yml")
         header = (
             "# EDITABLE-DEV variant (generated by gen_editable_compose.py).\n"
-            "# Runs python:3.11-slim + bind-mounted source + runtime pip install;\n"
-            "# edit the source on the host, restart this service, changes are live.\n"
-            f"# Pinned to the node holding the source ({args.server}). Deploy as a\n"
-            "# Portainer string-stack (or `docker stack deploy -c compose.dev.yml`).\n"
+            "# python:3.11-slim + bind-mounted agent source + runtime pip install;\n"
+            f"# source: agent-packages/agents/{c['agent']} (console script: {c['script']}).\n"
+            "# Edit the source on the host, restart this service, changes are live.\n"
+            f"# Pinned to the node holding the source ({args.server}).\n"
         )
         body = yaml.safe_dump(editable, sort_keys=False, default_flow_style=False)
         if args.dry_run:
-            print(f"--- {out} ---\n{header}{body}")
+            print(f"--- {out} ---\n{header}{body}\n")
         else:
+            os.makedirs(out_dir, exist_ok=True)
             with open(out, "w") as f:
                 f.write(header + body)
-        generated.append(entry)
+        kind.append(name)
 
-    print(f"generated {len(generated)} editable compose.dev.yml: {', '.join(generated)}")
+    print(f"derived {len(derived)} (from production compose): {', '.join(derived)}")
+    print(f"templated {len(templated)} (no stack — new dir): {', '.join(templated)}")
     if skipped:
-        print(f"skipped {len(skipped)} (no local source / not single-service): {', '.join(skipped[:40])}")
+        print(f"skipped {len(skipped)}: {', '.join(skipped)}")
+    print(f"TOTAL compose.dev.yml: {len(derived) + len(templated)}")
     return 0
 
 
