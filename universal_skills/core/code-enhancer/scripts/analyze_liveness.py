@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -156,6 +157,174 @@ def _is_environ_get(call: ast.Call) -> bool:
         if isinstance(recv, ast.Attribute) and recv.attr == "environ":
             return True
     return False
+
+
+# ── Facade detection (Layer 4): "invoked but fake" ────────────────────────────
+# Admitted tells of placeholder/stub code in strings or comments.
+_PLACEHOLDER_RE = re.compile(
+    r"\b(TODO|FIXME|XXX|HACK|stub(?:bed|s)?|placeholder|mock(?:ed)?|dummy|"
+    r"for now|not[ _-]?implemented|coming soon|hard[ -]?coded|sample data|"
+    r"example only|fake|lorem ipsum|in (?:a|the) real|real implementation|"
+    r"would (?:be|go) here|replace this|simulate[d]?)\b",
+    re.IGNORECASE,
+)
+# Path segments that mean "this module is a LIVE external surface" — its handlers
+# are expected to do real work (query/compute), not return canned data.
+_SURFACE_PARTS = frozenset(
+    {"mcp", "server", "routers", "router", "gateway", "api", "endpoints", "commands"}
+)
+# Decorators that mark a function as a live surface handler (tool / route / command).
+_SURFACE_DECORATORS = frozenset(
+    {"tool", "route", "get", "post", "put", "delete", "patch", "command", "endpoint"}
+)
+# String/list/dict methods that are pure formatting — calling ONLY these is not work.
+_PURE_METHODS = frozenset(
+    {
+        "format",
+        "join",
+        "split",
+        "strip",
+        "lstrip",
+        "rstrip",
+        "lower",
+        "upper",
+        "replace",
+        "startswith",
+        "endswith",
+        "title",
+        "capitalize",
+        "items",
+        "keys",
+        "values",
+        "append",
+        "extend",
+        "get",
+        "encode",
+        "decode",
+        "splitlines",
+        "rstrip",
+        "zfill",
+        "ljust",
+        "rjust",
+        "isdigit",
+    }
+)
+_PURE_BUILTINS = frozenset(
+    {
+        "len",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "list",
+        "dict",
+        "set",
+        "tuple",
+        "sorted",
+        "reversed",
+        "enumerate",
+        "range",
+        "zip",
+        "min",
+        "max",
+        "sum",
+        "any",
+        "all",
+        "repr",
+        "f",
+        "print",
+        "isinstance",
+        "getattr",
+        "hasattr",
+    }
+)
+# Handlers whose job IS to return static text — legitimately literal, not facades.
+_INFO_NAMES_RE = re.compile(r"help|usage|about|version|info|ping|menu|banner|readme")
+
+
+def _does_real_work(func: ast.AST) -> bool:
+    """A handler does 'real work' if it awaits, or calls anything beyond pure
+    string/list/dict formatting + builtins (i.e. it reaches a dependency, a service,
+    or another function). A body that only builds literals/strings and returns does
+    NO real work — a facade candidate."""
+    for n in ast.walk(func):
+        if isinstance(n, (ast.Await, ast.Yield, ast.YieldFrom)):
+            return True
+        if isinstance(n, ast.Call):
+            f = n.func
+            if isinstance(f, ast.Attribute):
+                if f.attr not in _PURE_METHODS:
+                    return True  # method call on some object → real work
+            elif isinstance(f, ast.Name):
+                if f.id not in _PURE_BUILTINS:
+                    return True  # delegates to another function → real work
+    return False
+
+
+def _is_canned_value(v: ast.expr) -> bool:
+    """A non-trivial literal payload (dict/list, or a long/multi-line string) — the
+    fabricated-output shape, vs a trivial ``return None``/``return True``."""
+    if isinstance(v, (ast.Dict, ast.List)):
+        return True
+    if isinstance(v, ast.Constant) and isinstance(v.value, str):
+        return len(v.value) > 60 or "\n" in v.value
+    if isinstance(v, ast.JoinedStr):  # f-string with a long literal part
+        return any(
+            isinstance(x, ast.Constant)
+            and isinstance(x.value, str)
+            and ("\n" in x.value or len(x.value) > 60)
+            for x in v.values
+        )
+    return False
+
+
+def _returns_canned_payload(func: ast.AST) -> bool:
+    return any(
+        isinstance(n, ast.Return) and n.value is not None and _is_canned_value(n.value)
+        for n in ast.walk(func)
+    )
+
+
+def _stmts_real_work(stmts: list[ast.stmt]) -> bool:
+    return any(_does_real_work(s) for s in stmts)
+
+
+def _stmts_return_canned(stmts: list[ast.stmt]) -> bool:
+    return any(
+        isinstance(n, ast.Return) and n.value is not None and _is_canned_value(n.value)
+        for s in stmts
+        for n in ast.walk(s)
+    )
+
+
+def _if_tests_info_keyword(test: ast.expr) -> bool:
+    """The branch is keyed on a help/usage/info command (e.g. ``cmd == "help"``) —
+    its static text is legitimate, not a facade."""
+    return any(
+        isinstance(n, ast.Constant)
+        and isinstance(n.value, str)
+        and _INFO_NAMES_RE.search(n.value)
+        for n in ast.walk(test)
+    )
+
+
+def _facade_branches(func: ast.AST) -> list[int]:
+    """if/elif branches inside a live-surface dispatcher that return a canned payload
+    while doing NO real work — the per-branch facade (e.g. a `/graph stats` arm that
+    returns fabricated counts). Returns the branch line numbers."""
+    lines: list[int] = []
+    for n in ast.walk(func):
+        if not isinstance(n, ast.If) or _if_tests_info_keyword(n.test):
+            continue
+        branches = [n.body]
+        # n.orelse is an `else:` body unless it's a single nested If (an `elif`,
+        # which the outer ast.walk visits on its own).
+        if n.orelse and not (len(n.orelse) == 1 and isinstance(n.orelse[0], ast.If)):
+            branches.append(n.orelse)
+        for b in branches:
+            if b and not _stmts_real_work(b) and _stmts_return_canned(b):
+                lines.append(b[0].lineno)
+    return lines
 
 
 def analyze_liveness(argv: list[str]) -> dict[str, Any]:
@@ -348,6 +517,38 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         and len(k) > 1
     )
 
+    # ── Layer 4: facade detection ("invoked but fake") ───────────────────────
+    facade_handlers: list[str] = []
+    placeholder_hits: list[str] = []
+    for p, tree in trees.items():
+        if _is_test(p):
+            continue
+        mod = _module_name(root, p)
+        is_surface_mod = bool(set(p.parts) & _SURFACE_PARTS)
+        # admitted placeholder/stub tells in raw source (comments + strings)
+        try:
+            for i, line in enumerate(
+                p.read_text(encoding="utf-8", errors="ignore").splitlines(), 1
+            ):
+                if _PLACEHOLDER_RE.search(line):
+                    placeholder_hits.append(f"{mod}:{i}")
+        except OSError:
+            pass
+        # live-surface handlers that return a canned payload doing NO real work —
+        # whole-function facades, OR per-branch facades inside a real dispatcher
+        # (the /graph-stats-returns-"42-nodes" class lives in one such branch).
+        for n in ast.walk(tree):
+            if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            decorated = bool(_decorator_names(n) & _SURFACE_DECORATORS)
+            if not (is_surface_mod or decorated) or _INFO_NAMES_RE.search(n.name):
+                continue
+            if not _does_real_work(n) and _returns_canned_payload(n):
+                facade_handlers.append(f"{mod}:{n.name}")
+                continue  # whole function is a facade; don't double-count its branches
+            for line in _facade_branches(n):
+                facade_handlers.append(f"{mod}:{n.name}@{line}")
+
     # ── Score + report ───────────────────────────────────────────────────────
     counts = {
         "orphan_modules": len(orphan_modules),
@@ -355,16 +556,21 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         "never_executed": len(never_executed),
         "untyped_seams": len(untyped_seams),
         "orphan_read_keys": len(orphan_read_keys),
+        "facade_handlers": len(facade_handlers),
+        "placeholder_markers": len(placeholder_hits),
     }
-    # weighted penalty; never-executed + orphan modules are the most damning
+    # weighted penalty; facades (fake live surfaces) + never-executed + orphan
+    # modules are the most damning.
     penalty = (
         counts["orphan_modules"] * 5
+        + counts["facade_handlers"] * 4
         + counts["never_executed"] * 2
         + counts["dead_definitions"] * 1
         # untyped seams are a contract-drift RISK surface, not dead code — capped so
         # a dict-heavy (but live) codebase isn't graded red on style alone.
         + min(15, counts["untyped_seams"] * 0.5)
         + counts["orphan_read_keys"] * 2
+        + min(20, counts["placeholder_markers"] * 0.5)
     )
     score = max(0, round(100 - penalty))
     grade = "🟢" if score >= 80 else ("🟡" if score >= 60 else "🔴")
@@ -394,6 +600,15 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         findings.append(
             f"{len(untyped_seams)} public function(s) return an untyped dict (contract-drift-prone seam): {untyped_seams[:8]}"
         )
+    if facade_handlers:
+        findings.append(
+            f"{len(facade_handlers)} FACADE handler(s) on a live surface (tool/route/command) that do NO real "
+            f"work but return a canned payload — invoked-but-fake: {facade_handlers[:8]}"
+        )
+    if placeholder_hits:
+        findings.append(
+            f"{len(placeholder_hits)} placeholder/stub marker(s) (TODO/FIXME/mock/'for now'/sample data): {placeholder_hits[:8]}"
+        )
     if not findings:
         findings.append("No dead pathways detected.")
 
@@ -409,6 +624,8 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
             "never_executed": never_executed,
             "orphan_read_keys": orphan_read_keys,
             "untyped_seams": untyped_seams,
+            "facade_handlers": facade_handlers,
+            "placeholder_markers": placeholder_hits,
         },
         "coverage_available": coverage_available,
     }
