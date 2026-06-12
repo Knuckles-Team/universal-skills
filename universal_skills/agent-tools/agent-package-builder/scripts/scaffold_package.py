@@ -895,12 +895,57 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 *   `{service_url_env}`: The URL of the target service.
 *   `{auth_env}`: The API token or access token.
 
-#### Run in stdio mode (default):
-```bash
-export {service_url_env}="http://localhost:8080"
-export {auth_env}="your_token"
-{mcp_cmd} --transport "stdio"
+#### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{
+      "command": "uvx",
+      "args": ["--from", "{package_name}", "{mcp_cmd}"],
+      "env": {{
+        "{service_url_env}": "https://service.example.com",
+        "{auth_env}": "your_token"
+      }}
+    }}
+  }}
+}}
 ```
+
+#### Streamable-HTTP Transport (networked / production)
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{
+      "command": "uvx",
+      "args": ["--from", "{package_name}", "{mcp_cmd}", "--transport", "streamable-http", "--port", "8000"],
+      "env": {{
+        "TRANSPORT": "streamable-http",
+        "HOST": "0.0.0.0",
+        "PORT": "8000",
+        "{service_url_env}": "https://service.example.com",
+        "{auth_env}": "your_token"
+      }}
+    }}
+  }}
+}}
+```
+
+<!-- BEGIN GENERATED: additional-deployment-options -->
+### Additional Deployment Options
+
+`{package_name}` can also run as a **local container** (Docker / Podman / `uv`) or be
+consumed from a **remote deployment**. The
+[Deployment guide](https://knuckles-team.github.io/{package_name}/deployment/) has full,
+copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable-http**,
+**local container / uv**, and **remote URL**:
+
+- **Local container / uv** — launch the server from `mcp_config.json` via `uvx`,
+  `docker run`, or `podman run`, or point at a local streamable-http container by `url`.
+- **Remote URL** — connect to a server deployed behind Caddy at
+  `http://{mcp_cmd}.arpa/mcp` using the `"url"` key.
+<!-- END GENERATED: additional-deployment-options -->
 
 ## Install Python Package
 
@@ -1994,31 +2039,106 @@ This page covers running `{package_name}` as long-lived servers.
 > `{package_name}` ships both an **MCP server** (console script `{mcp_cmd}`) and an
 > **A2A agent server** (console script `{agent_cmd}`).
 
-## Run the MCP server
+<!-- BEGIN GENERATED: deployment-options -->
+## Deployment Options
 
-=== "stdio (default)"
+`{package_name}` exposes its MCP server (console script `{mcp_cmd}`) four ways. Pick the
+row that matches where the server runs relative to your MCP client, then copy the
+matching `mcp_config.json` below.
 
-    ```bash
-    {mcp_cmd}
-    ```
+| # | Option | Transport | Where it runs | `mcp_config.json` key |
+|---|--------|-----------|---------------|------------------------|
+| 1 | stdio | `stdio` | client launches a subprocess | `command` |
+| 2 | Streamable-HTTP (local) | `streamable-http` | a local network port | `command` or `url` |
+| 3 | Local container / uv | `stdio` or `streamable-http` | Docker / Podman / uv on this host | `command` or `url` |
+| 4 | Remote URL | `streamable-http` | a remote host behind Caddy | `url` |
 
-=== "streamable-http"
+### 1. stdio (local subprocess)
 
-    ```bash
-    {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
-    ```
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{
+      "command": "uvx",
+      "args": ["--from", "{package_name}", "{mcp_cmd}"],
+      "env": {{
+        "{service_url_env}": "https://service.example.com",
+        "{auth_env}": "your_token"
+      }}
+    }}
+  }}
+}}
+```
 
-=== "sse"
-
-    ```bash
-    {mcp_cmd} --transport sse --host 0.0.0.0 --port 8000
-    ```
-
-Health check (HTTP transports):
+### 2. Streamable-HTTP (local process)
 
 ```bash
+uvx --from {package_name} {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
 curl -s http://localhost:8000/health        # {{"status":"OK"}}
 ```
+
+Connect to the running process by URL:
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{ "url": "http://localhost:8000/mcp" }}
+  }}
+}}
+```
+
+### 3. Local container / uv
+
+Launch a container directly from `mcp_config.json` (swap `docker` for `podman` for a
+daemonless runtime):
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "TRANSPORT=stdio",
+        "-e", "{service_url_env}=https://service.example.com",
+        "-e", "{auth_env}=your_token",
+        "knucklessg1/{package_name}:latest"
+      ]
+    }}
+  }}
+}}
+```
+
+Or run a local streamable-http container and connect by URL:
+
+```bash
+docker compose -f docker/mcp.compose.yml up -d
+```
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{ "url": "http://localhost:8000/mcp" }}
+  }}
+}}
+```
+
+### 4. Remote URL (deployed behind Caddy)
+
+When the server is deployed remotely and published through Caddy on the internal
+`*.arpa` zone, connect with the `"url"` key — no local process or image required:
+
+```json
+{{
+  "mcpServers": {{
+    "{mcp_cmd}": {{ "url": "http://{mcp_cmd}.arpa/mcp" }}
+  }}
+}}
+```
+
+Caddy reverse-proxies `http://{mcp_cmd}.arpa` to the container's `:8000`
+streamable-http listener.
+<!-- END GENERATED: deployment-options -->
 
 ## Docker Compose
 

@@ -287,6 +287,35 @@ Generate the full 7-page docs site (`mkdocs.yml` nav order is canonical):
 `deployment.md`, `usage.md`, `platform.md` (backing-platform Docker recipe),
 `concepts.md`.
 
+#### Deployment documentation: four options (REQUIRED)
+
+The MCP server's deployment docs MUST present a consistent **four** options, split
+between the README (kept light) and `docs/deployment.md` (authoritative detail):
+
+1. **stdio** — client launches the server over stdio (`command: uvx --from <pkg> <script>`).
+2. **streamable-http** — long-lived local HTTP process; consume by `command` or `url`.
+3. **Local container / uv** — launch a container from `mcp_config.json` via
+   `command: "docker"`/`"podman"` (stdio-over-container) **and** a local
+   streamable-http container reached by `url: http://localhost:8000/mcp`; plus the
+   `uv run` variant.
+4. **Remote URL** — connect to a server deployed behind Caddy at
+   `http://<service>-mcp.arpa/mcp` using the `"url"` key.
+
+Placement rule:
+- **README** keeps options 1–2 inline and carries a concise, marker-delimited
+  `### Additional Deployment Options` block (`<!-- BEGIN/END GENERATED:
+  additional-deployment-options -->`) pointing to the Deployment guide for options 3–4.
+- **`docs/deployment.md`** carries all four as full, copy-paste `mcp_config.json`,
+  inside `<!-- BEGIN/END GENERATED: deployment-options -->` markers.
+
+The scaffold emits both marker blocks. The ecosystem sweep
+`agent-packages/scripts/standardize_deployment_docs.py` re-renders the marked regions
+from the authoritative `agent-utilities/deploy/mcp-fleet.registry.yml` (package →
+console-script → image → `*-mcp.arpa` host), so the markers must be preserved verbatim.
+Generated docs must satisfy the **code-enhancer** documentation-governance domain: a
+published docs site, a `deployment.md` covering every transport, and a README that links
+to it.
+
 #### docs/concepts.md (REQUIRED)
 Every project must have a CONCEPT ID registry:
 ```markdown
