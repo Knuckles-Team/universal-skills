@@ -136,13 +136,28 @@ def make_editable(
             raise ValueError("cannot locate the service entry")
         svc_name = next(iter(services))
     svc = services[svc_name]
-    svc["image"] = EDITABLE_IMAGE
-    svc["command"] = _wrap_command(script)
+    if svc.get("image"):
+        # Derived from a production stack: the baked image IS the pre-built base
+        # (deps + console script already installed). KEEP image+command, bind-mount
+        # the live source, set PYTHONPATH=/src so imports resolve to source first.
+        # No boot-time pip install → boots in seconds like baked (no stampede).
+        env = svc.setdefault("environment", [])
+        if not any(str(e).startswith("PYTHONPATH=") for e in env):
+            env.append("PYTHONPATH=/src")
+    else:
+        # No baked image (templated connector): fall back to python:3.11-slim and
+        # install the bind-mounted source at boot (copy to a writable tmp first
+        # since /src is read-only).
+        svc["image"] = EDITABLE_IMAGE
+        svc["command"] = _wrap_command(script)
     vols = [v for v in svc.get("volumes", []) if ":/src:" not in str(v)]
     vols.insert(0, f"{source}:/src:ro")
     svc["volumes"] = vols
     if isinstance(svc.get("healthcheck"), dict):
-        svc["healthcheck"]["start_period"] = "180s"  # first boot copies + pip-installs
+        # Baked-base boots in seconds; the pip fallback needs install headroom.
+        svc["healthcheck"]["start_period"] = (
+            "180s" if svc.get("image") == EDITABLE_IMAGE else "40s"
+        )
     deploy = svc.setdefault("deploy", {})
     deploy.setdefault("placement", {})["constraints"] = [
         f"node.labels.name == ${{SERVER:-{server}}}"
