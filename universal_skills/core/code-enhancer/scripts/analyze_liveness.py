@@ -234,8 +234,34 @@ _PURE_BUILTINS = frozenset(
         "f",
         "print",
         "isinstance",
-        "getattr",
-        "hasattr",
+    }
+)
+# Dict key-sets that signal a STATUS/ERROR ENVELOPE (a guard/validation/success
+# return), NOT a fabricated DATA payload. A dict whose keys are ALL envelope keys
+# (e.g. {"status": 403, "error": ...} or {"status": "success"}) is the standard
+# guard return inside a real dispatcher — the single biggest CE-038 false positive.
+_ENVELOPE_KEYS = frozenset(
+    {
+        "status",
+        "error",
+        "errors",
+        "detail",
+        "details",
+        "message",
+        "reason",
+        "ok",
+        "success",
+        "code",
+        "source",
+        "needs_input",
+        "warning",
+        # data-wrapper keys: in a guard/error/empty envelope these hold None or an
+        # empty collection (e.g. {"status": 403, "error": ..., "data": None}); a real
+        # fabricated payload populates them, but such a branch then carries non-status
+        # keys too, so an all-envelope-key dict is still a safe envelope signal.
+        "data",
+        "result",
+        "results",
     }
 )
 # Handlers whose job IS to return static text — legitimately literal, not facades.
@@ -258,12 +284,46 @@ def _does_real_work(func: ast.AST) -> bool:
             elif isinstance(f, ast.Name):
                 if f.id not in _PURE_BUILTINS:
                     return True  # delegates to another function → real work
+            else:
+                # func is itself a Call/Subscript → dynamic dispatch, e.g.
+                # getattr(client, action)(...) or handlers[name](...) — real work.
+                return True
+    return False
+
+
+def _is_envelope_or_empty(v: ast.expr) -> bool:
+    """A status/error envelope or empty result — NOT fabricated data. Excludes the
+    big false-positive idioms: ``{}``/``[]``, guard returns like ``{"status": 403,
+    "error": ...}``, the HTTP-204 ``{"status": "success"}`` branch, and
+    all-empty-collection dicts like ``{"columns": [], "rows": []}``."""
+    if isinstance(v, ast.List):
+        return len(v.elts) == 0
+    if isinstance(v, ast.Dict):
+        if not v.keys:
+            return True
+        str_keys = {
+            k.value
+            for k in v.keys
+            if isinstance(k, ast.Constant) and isinstance(k.value, str)
+        }
+        # every key is a status/error envelope key → not a data payload
+        if str_keys and str_keys <= _ENVELOPE_KEYS:
+            return True
+        # every value is an empty list/dict → empty-result envelope
+        if v.values and all(
+            (isinstance(x, ast.List) and not x.elts)
+            or (isinstance(x, ast.Dict) and not x.keys)
+            for x in v.values
+        ):
+            return True
     return False
 
 
 def _is_canned_value(v: ast.expr) -> bool:
-    """A non-trivial literal payload (dict/list, or a long/multi-line string) — the
-    fabricated-output shape, vs a trivial ``return None``/``return True``."""
+    """A non-trivial fabricated DATA payload (dict/list of data, or a long/multi-line
+    string) — vs a trivial ``return None`` or a status/error/empty envelope."""
+    if _is_envelope_or_empty(v):
+        return False
     if isinstance(v, (ast.Dict, ast.List)):
         return True
     if isinstance(v, ast.Constant) and isinstance(v.value, str):
