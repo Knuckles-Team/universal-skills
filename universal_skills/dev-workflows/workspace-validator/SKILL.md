@@ -6,7 +6,7 @@ license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow, worktree, git-state]
 metadata:
   author: Genius
-  version: '0.6.0'
+  version: '0.7.0'
 ---
 # Workspace Validator
 
@@ -79,8 +79,9 @@ You will enter a continuous loop of fixing issues based on the JSON hook outputs
 ### Phase 4: Final Regression Sweep & Release
 11. **Ecosystem-wide clean gate:** Once `failed_only` reruns reach 0 failures, run ONE final validation against **ALL** repositories (no `repositories`, no `failed_only`, `force_revalidate=true`) so the entire dependency graph is verified green together — fixing one repo can regress a dependent. If the user confirmed bump+push in Phase 1, cascade this final all-repos run into the release by adding `auto_bump=true` and `auto_push=true`.
     - **Committing feature code (not just version bumps):** when uncommitted/new feature code is in the working tree, add `commit_code=true` + `commit_message="..."`. The backend then runs a concurrent **stage (`git add -A`) → pre-commit → commit** pass across all targeted repos AFTER validation passes and BEFORE the bump, so untracked/new files are committed (the bump and push no longer rely on a tracked-only `git add -u` safety net). The bump waits on this step. This is the tool-driven equivalent of "add all of our code, pre-commit, then bump." Standalone equivalents exist as `rm_git(action="pre_commit")` and `rm_git(action="commit_code", message=...)`.
+    - **Worktree hygiene (automatic, report-only):** whenever `auto_bump`/`auto_push` is set, the release chains a final `worktree_hygiene` job after the bump/push and returns its `worktree_hygiene_job_id`. By **default it only reports** — its result carries the same audit classification (`safe_to_prune`, `do_not_disturb`, `summary`) so you can see which session worktrees are already merged into `main` without anything being deleted. Add `prune_worktrees=true` to make that step actually remove the `merged` worktrees (and `dangling` admin pointers) — it **never** touches `active`/in-flight work or orphaned directories. This is the audit-aware cleanup that replaces blind reaping; surface the `safe_to_prune` list to the user before opting in.
 12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
-13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results. The bump and push **auto-start at the lowest phase that changed** (see Change-aware start above), so a release touching only later-phase repos will not replay earlier phases or their waits; if no repo changed, the bump/push reports a no-op.
+13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results plus the `worktree_hygiene_job_id` (poll it for the worktree audit/prune outcome). The bump and push **auto-start at the lowest phase that changed** (see Change-aware start above), so a release touching only later-phase repos will not replay earlier phases or their waits; if no repo changed, the bump/push reports a no-op.
 14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
 
 ## Worktree & Git-State Hygiene Audit
@@ -140,11 +141,18 @@ list with the user before running the one-shot sweep.
 
 ### Tie-in with releases (Phase 4)
 
-The Phase 4 pre-bump check already calls `rm_workspace(action="list_branches")` to
-confirm every project is on `main`. Run `rm_worktree(action="audit")` alongside it:
-in-flight worktrees (`do_not_disturb`) and `unpushed`/`base_unpushed` repos are
-exactly the work that a release sweep could otherwise surprise. Make those visible
-before bumping so nothing in flight gets disturbed.
+The release pipeline runs this audit **for you**: a `validate` with
+`auto_bump`/`auto_push` automatically chains a `worktree_hygiene` job after the
+bump/push and returns its `worktree_hygiene_job_id` (see Phase 4, step 11). That job
+is **report-only by default** — poll it for the `safe_to_prune`/`do_not_disturb`
+classification — and only deletes when you pass `prune_worktrees=true`, and even then
+only `merged`/`dangling` worktrees, never in-flight or orphaned ones. So the release
+both surfaces in-flight worktrees (`do_not_disturb`) and offers safe, opt-in cleanup
+in a single flow.
+
+The Phase 4 pre-bump check also calls `rm_workspace(action="list_branches")` to
+confirm every project is on `main`; you can still run `rm_worktree(action="audit")`
+standalone at any time for an ad-hoc snapshot.
 
 ## Scaling to thousands of repositories
 
