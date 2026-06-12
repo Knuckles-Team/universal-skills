@@ -1,20 +1,21 @@
 ---
 name: code-enhancer
 description: >-
-  Comprehensive code analysis and enhancement skill that performs 28-domain deep-
+  Comprehensive code analysis and enhancement skill that performs 31-domain deep-
   dive reviews of any codebase. Covers project analysis, dependency audit,
   changelog audit, codebase optimization, security analysis, test coverage, pytest
   quality grading, test execution, pre-commit compliance, documentation
   governance, directory organization, language detection, UI/UX heuristics,
   architecture review, concept traceability, linting, vulnerability scanning,
-  environment variable scanning, brainstorming, multi-project orchestration,
+  environment variable scanning, runtime and scale profiling (memory, startup,
+  instances-per-GB), brainstorming, multi-project orchestration,
   cross-project integration, and actionable reporting with standardized 0-100
   grading and SDD handoff integration. Language-agnostic: supports Python, Go,
   Node, Rust, Java. Use when tasked with "auditing", "optimizing", "updating",
   "improving", "reviewing", "grading", or "enhancing" an agent, repository, or
   codebase. Replaces self-improver.
 license: MIT
-tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars]
+tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars, profiling]
 metadata:
   author: Genius
   version: '0.43.0'
@@ -62,6 +63,8 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 28. **Environment Variable Standardization Audit** — Check `auth.py` files across all agents for non-standard env var naming patterns (e.g., `_VERIFY` vs `_SSL_VERIFY`, `_BASE_URL` vs `_URL`, `_INSTANCE` vs `_URL`). Flag duplicates within the same project and deviations from the ecosystem standard.
 
 29. **Intent & Opportunity Discovery** — Infer the codebase's intent (README/docs/entrypoints) and surface value-add opportunities in three tiers: low-hanging fruit (capabilities built but not exposed/wired), implied-but-missing (partial CRUD lifecycles, stubs), and net-new intent-aligned features. Answers *what could this become?*, not just *what's broken?*
+30. **Runtime Profiling** — Measure what a single running instance actually costs: import-time resident memory, startup wall time, and the heaviest transitive imports (via `-X importtime`), profiling the console-script entry module rather than the bare package. Flags heavy dependencies (ML runtimes, browser engines) loaded unconditionally into every process. Budget-scored on RSS and startup. **Opt-in** (executes the target).
+31. **Scale Profiling** — Spawn N idle instances concurrently, sample real resident memory, and report per-instance footprint, instances-per-GB density, and a projection across common RAM sizes (1/2/4/8 GB) — answers *how many of these fit on a Raspberry Pi / small node?* **Opt-in** (executes the target; never runs in the default sweep).
 
 ## Grading System
 
@@ -178,6 +181,8 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `scripts/kg_query_runs.py` — Cross-repo + bi-temporal queries over runs (CE-034)
 - `scripts/selftest.py` — Toolchain self-test harness; smoke-runs every analyzer (CE-033)
 - `scripts/analyze_opportunities.py` — **Intent & Opportunity Discovery**: infers codebase intent, surfaces low-hanging-fruit / implied-missing / net-new value-adds (CE-035)
+- `scripts/analyze_runtime_profile.py` — **Runtime Profiling**: import RSS, startup wall time, heaviest transitive imports, heavy-dependency flags; budget-scored (CE-036, opt-in)
+- `scripts/analyze_scale_profile.py` — **Scale Profiling**: spawns N idle instances, reports per-instance footprint + instances-per-GB density projection (CE-037, opt-in)
 - `scripts/detect_language.py` — Language ecosystem detection (CE-018)
 - `scripts/analyze_project.py` — Project structure and pattern analysis (FR-001)
 - `scripts/audit_dependencies.py` — PyPI dependency audit with version comparison (FR-002)
@@ -211,6 +216,7 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `references/security_checklist.md` — CWE/STRIDE/OWASP reference for security analysis
 - `references/architecture_patterns.md` — Industry patterns (hexagonal, SOLID, event-driven)
 - `references/optimization_methodology.md` — Code smell taxonomy and remediation patterns
+- `references/profiling_methodology.md` — Runtime/scale profiling budgets, scoring, per-language tool matrix, and the heavy-import failure mode (CE-036/CE-037)
 - `references/report_template.md` — Prettified report template with Mermaid and table patterns
 - `references/ui_heuristics.md` — Nielsen's heuristics, WCAG criteria, SUS reference
 - `references/integration_patterns.md` — Cross-project dependency and interface patterns

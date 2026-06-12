@@ -4467,6 +4467,7 @@ cloudflare-deploy = [
 code-enhancer = [
     { name = "keepachangelog" },
     { name = "packaging" },
+    { name = "psutil" },
     { name = "requests" },
 ]
 creative-media = [
@@ -4611,6 +4612,7 @@ requires-dist = [
     { name = "playwright", marker = "extra == 'skill-graph-builder'" },
     { name = "playwright", marker = "extra == 'web-crawler'" },
     { name = "playwright", marker = "extra == 'web-fetch'" },
+    { name = "psutil", marker = "extra == 'code-enhancer'", specifier = ">=5.9.0" },
     { name = "psutil", marker = "extra == 'skill-graph-builder'" },
     { name = "psutil", marker = "extra == 'system-tools'" },
     { name = "psutil", marker = "extra == 'web-crawler'" },
