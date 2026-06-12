@@ -1,12 +1,12 @@
 ---
 name: workspace-validator
 description: >-
-  Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, or ensure all projects are valid.
+  Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Also audits worktree and git state — classifying which worktrees are merged (safe to prune), in-flight (do not disturb), or dangling, and which projects have unmerged/unpushed changes. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, ensure all projects are valid, or check which worktrees/projects are dangling, in flight, or safe to prune.
 license: MIT
-tags: [validation, workspace, repository-manager, bugfix, workflow]
+tags: [validation, workspace, repository-manager, bugfix, workflow, worktree, git-state]
 metadata:
   author: Genius
-  version: '0.5.0'
+  version: '0.6.0'
 ---
 # Workspace Validator
 
@@ -82,6 +82,69 @@ You will enter a continuous loop of fixing issues based on the JSON hook outputs
 12. **CRITICAL:** Before running any validation with `auto_bump=true`, call the `rm_workspace` tool with `action="list_branches"`. Verify that every single project is currently on the `main` branch. If any project is on a different branch, you MUST stop and ask the user how to proceed, or align them back to `main` before validating with the bump flag.
 13. The backend will now orchestrate the entire sequence in a single background job. Poll `action="validate_status"` until the job completes. The results will contain the validation summary, and if successful, the `bump` and `push` release results. The bump and push **auto-start at the lowest phase that changed** (see Change-aware start above), so a release touching only later-phase repos will not replay earlier phases or their waits; if no repo changed, the bump/push reports a no-op.
 14. If the full sweep passes and the release occurs, you are done. If new validation regressions are revealed, the bump/push will be safely aborted by the backend, and you must repeat the remediation loop.
+
+## Worktree & Git-State Hygiene Audit
+
+Many concurrent agent sessions work the `agent-packages/*` repos in their own git
+worktrees under `/home/apps/worktrees/<repo>/<branch>` (CONCEPT:RM-WORKTREE). Over
+time these accumulate: some are already merged into `main` and just clutter, some
+hold live in-flight work that must NOT be disturbed, and some go stale or dangling.
+Use the audit to see the whole picture before pruning or releasing — it answers
+"which projects have unmerged/unpushed changes, and which worktrees are safe to
+remove vs actively developed."
+
+### Running the audit (read-only by default)
+
+Call `rm_worktree(action="audit")`. It is **non-destructive** unless you pass
+`prune_merged=true`. It returns:
+
+- `summary` — counts per class (`merged`, `active`, `stale`, `dangling`, `orphans`,
+  `unpushed_repos`).
+- `worktrees` — one entry per linked worktree with `class`, `dirty`, `ahead`,
+  `behind`, `merged`, `last_commit_age_days`, and `base_unpushed`.
+- `repos` — every canonical repo's git state: `class ∈ {clean, dirty, unpushed}`,
+  `ahead_origin`/`behind_origin`, `no_upstream`, `base_unpushed`.
+- `safe_to_prune` / `do_not_disturb` / `review` — pre-bucketed worktree lists.
+- `orphans` — directories under the worktree root that look like worktrees but no
+  repo tracks (reported, **never** auto-removed — they may hold uncommitted work).
+
+### Interpreting the classes
+
+| Class | Meaning | What to do |
+|-------|---------|------------|
+| `merged` | clean **and** the branch tip is already an ancestor of local `main` — work is captured | **safe to prune** |
+| `active` | dirty, or unmerged-and-ahead with recent commits | **DO NOT disturb** — live development |
+| `stale` | unmerged + ahead but quiet longer than `stale_days` (default 14) | surface to the user for a decision |
+| `dangling` | detached HEAD, deleted branch, or missing-on-disk admin entry | prune candidate |
+
+A worktree counts as `merged` once its branch is in **local** `main`, even if `main`
+itself has not been pushed yet — the work is not lost, the worktree is just
+redundant. When that worktree's `base_unpushed` is `true`, remind the user that
+`main` still owes a push (drive it via the phased push in Phase 4), but the worktree
+is still prunable.
+
+### Pruning
+
+After surfacing `safe_to_prune` to the user, prune either way:
+
+- **One-shot:** `rm_worktree(action="audit", prune_merged=true)` — removes every
+  `merged` worktree (and deletes its branch) and prunes `dangling` admin pointers in
+  a single call. It **never** touches `active`/`stale` work or `orphans`, and never
+  force-removes a dirty tree. The result includes `pruned` and `kept` (with reasons).
+- **Per item:** `rm_worktree(action="remove", repo=..., branch=..., delete_branch=true)`
+  when you want to remove worktrees individually.
+
+Because `prune_merged=true` deletes worktrees and branches, the repository-manager
+Universal Tool Guard treats it as a sensitive call — confirm the `safe_to_prune`
+list with the user before running the one-shot sweep.
+
+### Tie-in with releases (Phase 4)
+
+The Phase 4 pre-bump check already calls `rm_workspace(action="list_branches")` to
+confirm every project is on `main`. Run `rm_worktree(action="audit")` alongside it:
+in-flight worktrees (`do_not_disturb`) and `unpushed`/`base_unpushed` repos are
+exactly the work that a release sweep could otherwise surprise. Make those visible
+before bumping so nothing in flight gets disturbed.
 
 ## Scaling to thousands of repositories
 
