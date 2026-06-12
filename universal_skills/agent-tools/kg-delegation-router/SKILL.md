@@ -61,6 +61,24 @@ The router supports three delegation modes via `graph_orchestrate`:
 | **Workflow** | `execute_workflow` | Pre-compiled multi-step workflows stored in KG |
 | **Compile + Execute** | `compile_workflow` → `execute_workflow` | Ad-hoc multi-step tasks from natural language |
 
+### In-band alternative: the dynamic multiplexer gateway (CONCEPT:ECO-4.36)
+
+This router delegates **out-of-band** — the KG runs the chosen agent server-side
+and returns a result. When the caller is itself an MCP client (e.g. Claude Code)
+connected through the **mcp-multiplexer in `dynamic` mode**, there is a
+complementary **in-band** path that makes the discovered tools directly callable
+in the client instead of running them remotely:
+
+1. `find_tools(query)` — same KG-backed discovery (`graph_search` over
+   `CallableResource` nodes), returning ranked prefixed tool names.
+2. `load_tools(tools=[...])` — mounts the owning child server lazily and exposes
+   those tools live (the client is sent `tools/list_changed`).
+3. call the tools natively; `unload_tools(...)` to release them.
+
+Use this router's `graph_orchestrate` path for autonomous/headless delegation;
+use the multiplexer meta-tools when an interactive client should gain the tools
+itself. Both share the same KG `Server → PROVIDES → CallableResource` substrate.
+
 ## Workflow
 
 ### Step 1: KG Discovery [depends_on: none]
