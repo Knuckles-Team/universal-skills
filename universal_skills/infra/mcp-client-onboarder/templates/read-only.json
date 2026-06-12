@@ -1,0 +1,3 @@
+{ "name": "{{CLIENT}}-readonly", "effect": "allow",
+  "principal_conditions": [{"path":"uri","operator":"equals","value":"agent:{{CLIENT}}"}],
+  "resource_conditions": [], "actions": ["list"] }

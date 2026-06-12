@@ -1,0 +1,5 @@
+{
+  "devops": ["container-manager-mcp", "portainer-mcp", "caddy-mcp"],
+  "research": ["searxng-mcp", "archivebox-mcp"],
+  "media": ["jellyfin-mcp", "media-downloader-mcp", "arr-mcp"]
+}

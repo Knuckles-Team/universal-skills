@@ -1,0 +1,4 @@
+{ "name": "{{CLIENT}}-srv-{{PREFIX}}", "effect": "allow",
+  "principal_conditions": [{"path":"uri","operator":"equals","value":"agent:{{CLIENT}}"}],
+  "resource_conditions": [{"path":"attributes.name","operator":"startswith","value":"{{PREFIX}}__"}],
+  "actions": ["list","execute"] }
