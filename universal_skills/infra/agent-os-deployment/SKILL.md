@@ -243,6 +243,35 @@ is the `mcp-client-onboarder` flow (plan Phase 4).
 
 ---
 
+## Editable streamable-http connector dev loop
+
+The multiplexer's `compose.dev.yml` proved an **edit-locally / run-in-Docker** loop
+that any `*-mcp` connector can reuse: instead of a baked image, run
+`python:3.11-slim`, bind-mount the connector's **source**, `pip install` it at
+container start, and run its console script over streamable-http. Edits on the host
+go live on a container restart — no image rebuild, no registry round-trip.
+
+`scripts/gen_editable_compose.py` generates a `compose.dev.yml` next to each
+`services/<name>-mcp/compose.yml` whose source exists at
+`agent-packages/agents/<name>-mcp`, derived from the production compose (networks /
+dns / env / healthcheck / logging preserved):
+
+```bash
+python scripts/gen_editable_compose.py                  # all source-backed connectors
+python scripts/gen_editable_compose.py --only caddy-mcp --dry-run
+```
+
+The transform: `image → python:3.11-slim`; `command → sh -c "pip install
+--no-cache-dir /src && exec <orig console script>"`; add `…/agents/<name>:/src:ro`;
+bump the healthcheck `start_period` (first boot installs deps); and **pin the
+service to the node holding the source** (`${SERVER:-RW710}`) — a bind-mount only
+exists on its own node. Deploy the `compose.dev.yml` as a Portainer string-stack
+(or `docker stack deploy -c compose.dev.yml <name>`). Switch back to the baked
+`compose.yml` for production.
+
+> Connectors whose source isn't under `agent-packages/agents/<name>-mcp` (external
+> images, or a differently-named source) are skipped — wire those by hand or extend
+> the generator with an explicit source map.
 
 ## Verification Plan
 
