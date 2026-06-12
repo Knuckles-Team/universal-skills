@@ -85,6 +85,22 @@ DOMAINS: list[dict[str, Any]] = [
         "langs": None,
         "timeout": 60,
     },
+    # Profiling domains execute the target (import / spawn instances), so they are
+    # opt_in: skipped in the default sweep, run only when named via --domains.
+    {
+        "key": "runtime_profile",
+        "script": "analyze_runtime_profile.py",
+        "langs": {"python"},
+        "timeout": 180,
+        "opt_in": True,
+    },
+    {
+        "key": "scale_profile",
+        "script": "analyze_scale_profile.py",
+        "langs": {"python"},
+        "timeout": 180,
+        "opt_in": True,
+    },
 ]
 
 
@@ -181,6 +197,14 @@ def enhance_repo(
 
     for domain in DOMAINS:
         if only and domain["key"] not in only:
+            continue
+        # opt_in domains (e.g. profiling, which executes the target) run only when
+        # explicitly named via ``only``; never in the default sweep.
+        if domain.get("opt_in") and not (only and domain["key"] in only):
+            report["domains"][domain["key"]] = {
+                "status": "skipped",
+                "reason": "opt-in domain; pass --domains to run",
+            }
             continue
         if domain["langs"] is not None and primary not in domain["langs"]:
             report["domains"][domain["key"]] = {
