@@ -8,10 +8,9 @@ CONCEPT:CE-TEST — Code Enhancer Test Suite
 """
 
 import json
-import os
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -686,3 +685,91 @@ class TestTraceConceptsEnhanced:
         tp3 = result["concept_map"]["TP-003"]
         assert tp3["docs"] > 0
         assert tp3["code"] == 0
+
+
+# ---------------------------------------------------------------------------
+# CE-038: deceptive except-fallback facade detection
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.concept("CE-038")
+class TestDeceptiveExceptFallback:
+    """A try that does real work paired with a broad except that returns a fabricated
+    literal payload is a 'fail-fake' facade — caught structurally, no marker word
+    needed. The legitimate parse-fallback (payload derived from runtime state) and the
+    empty/neutral fallback must NOT be flagged."""
+
+    def _flag_lines(self, src: str) -> list[int]:
+        import ast
+
+        mod = _import_script("analyze_liveness")
+        tree = ast.parse(textwrap.dedent(src))
+        func = next(
+            n
+            for n in ast.walk(tree)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        )
+        return mod._facade_except_handlers(func)
+
+    def test_fabricated_literal_fallback_is_flagged(self):
+        """except returns a hardcoded inventory after a real call fails → facade."""
+        src = """
+            def get_hosts():
+                try:
+                    return {"hosts": HostManager().list_hosts()}
+                except Exception:
+                    return {"hosts": [
+                        {"alias": "production-api-node", "hostname": "10.0.0.15"},
+                        {"alias": "staging-db", "hostname": "192.168.1.50"},
+                    ]}
+        """
+        assert self._flag_lines(src), "fabricated-literal except-fallback must flag"
+
+    def test_runtime_derived_fallback_not_flagged(self):
+        """The api-client parse-fallback returns data from `response` — not fabricated."""
+        src = """
+            def request(self, method, endpoint):
+                response = self._session.request(method, endpoint)
+                response.raise_for_status()
+                try:
+                    return response.json()
+                except Exception:
+                    return {"status": "success", "text": response.text}
+        """
+        assert self._flag_lines(src) == [], "runtime-derived fallback is not a facade"
+
+    def test_empty_neutral_fallback_not_flagged(self):
+        """An empty/neutral fallback like `return "", []` is not fabricated data."""
+        src = """
+            def tenant_scope(dialect):
+                try:
+                    actor = current_actor()
+                    return predicate(dialect), [actor.tenant_id]
+                except Exception:
+                    return "", []
+        """
+        assert self._flag_lines(src) == [], "empty/neutral fallback is not a facade"
+
+    def test_honest_reraise_not_flagged(self):
+        """Re-raising the real error is the honest pattern — never a facade."""
+        src = """
+            def kill(pid):
+                try:
+                    proc = psutil.Process(pid)
+                    proc.kill()
+                    return {"status": "success"}
+                except Exception as e:
+                    raise HTTPException(status_code=502, detail=str(e))
+        """
+        assert self._flag_lines(src) == [], "honest re-raise is not a facade"
+
+    def test_narrow_except_not_flagged(self):
+        """A narrow, intentional recovery (not a blanket Exception) is legitimate."""
+        src = """
+            def get(key):
+                try:
+                    return {"v": fetch(key)}
+                except KeyError:
+                    return {"v": "default-value-string-fallback-content"}
+        """
+        assert self._flag_lines(src) == [], "narrow recovery is not a blanket fail-fake"
