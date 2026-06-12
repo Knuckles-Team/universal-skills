@@ -68,8 +68,11 @@ flowchart TD
 
     M --> N[Phase 4: GitOps Application Rollout]
     N --> O[Deploy Swarm Stacks in Batches from GitLab]
+    O --> O2[7. Provision Keycloak MCP clients + scope]
+    O2 --> O3[8. Deploy Central MCP Multiplexer JWT-gated]
+    O3 --> O4[9. Add Caddy route mcp-multiplexer.arpa]
 
-    O --> P[Phase 5: Validation & Diagnostics]
+    O4 --> P[Phase 5: Validation & Diagnostics]
     P --> Q{Check Health Metrics & Resolvers}
     Q -->|Success| R[Mark Deployment Healthy & Index in KG]
     Q -->|Failure| S[Run Self-Healing & Process Logs]
@@ -109,6 +112,108 @@ Seed repository configurations, project layouts, and personal access tokens on G
 Register the GitOps stack configurations on Portainer referencing GitLab PATs for automated pull-updates:
 - Requires: `portainer-mcp`
 - Output: Active, sync-configured application stacks running on Swarm nodes.
+
+### Step 7: mcp-multiplexer-deployment [depends_on: portainer-sync-agent]
+Provision JWT identity and deploy the **central MCP multiplexer** — one
+streamable-http aggregator (`mcp-multiplexer.arpa`) that fronts the whole `*-mcp`
+fleet, verifies a Keycloak Bearer token at ingress, and (Phase 3) authorizes each
+principal via Eunomia. See the **Central MCP Multiplexer** runbook below.
+- Requires: `keycloak` reachable, `caddy` ingress live, the `*-mcp` fleet deployed.
+- Output: `mcp-multiplexer.arpa` serving, rejecting unauthenticated requests (401),
+  accepting `claude-code` client_credentials tokens.
+
+---
+
+## Central MCP Multiplexer (JWT-gated ingress)
+
+The multiplexer is the single MCP endpoint every client connects to instead of each
+spawning ~52 child connections. It is **zero-trust**: a request must present a valid
+Keycloak JWT (`aud: mcp-fleet`), and the token's `azp`/`client_id` is the principal
+Eunomia authorizes. Deploy it **after** Caddy + Keycloak + the `*-mcp` fleet are up.
+
+Files live in `services/mcp-multiplexer/` (`compose.dev.yml` editable-source variant,
+`compose.yml` baked-image prod, `.env`, `mcp_config_central.json`, `mint_token.py`) and
+`services/keycloak/create_mcp_clients.py`. (Implements the dynamic MCP tool gateway,
+agent-utilities concept ECO-4.36.)
+
+### 1. Provision Keycloak identity (machine clients + audience scope)
+```bash
+KEYCLOAK_ADMIN_PASSWORD=… python services/keycloak/create_mcp_clients.py
+```
+This is idempotent and creates:
+- a **client scope `mcp-fleet`** carrying an *audience protocol mapper* — without it
+  Keycloak omits `aud` and FastMCP's `JWTVerifier` rejects every token (the classic
+  Keycloak gotcha);
+- a confidential **`client_credentials` client `claude-code`** (our own client, 8h
+  token lifespan) with that scope as a default scope.
+
+The client secret is written to `services/keycloak/mcp_clients.json` (git-ignored) —
+store it in OpenBao and `services/mcp-multiplexer/.env` (`CLAUDE_CODE_CLIENT_SECRET`),
+**never** commit it. Verify a minted token carries the audience:
+```bash
+python services/mcp-multiplexer/mint_token.py | cut -d. -f2 | base64 -d 2>/dev/null
+# expect:  "aud":"mcp-fleet"  "iss":".../realms/homelab"  "azp":"claude-code"
+```
+
+### 2. Deploy the multiplexer with JWT enabled
+The multiplexer reads JWT config from env and is launched with `--auth-type jwt`
+(the JWT verification path is already wired in `agent_utilities/mcp/server_factory.py`
+→ `create_mcp_server` → `_configure_jwt_auth`). Required env (set as **literals** —
+see the Portainer caveat below):
+```
+FASTMCP_SERVER_AUTH_JWT_JWKS_URI = http://keycloak.arpa/realms/homelab/protocol/openid-connect/certs
+FASTMCP_SERVER_AUTH_JWT_ISSUER   = http://keycloak.arpa/realms/homelab
+FASTMCP_SERVER_AUTH_JWT_AUDIENCE = mcp-fleet
+```
+Deploy via Portainer (string stack) or `docker stack deploy -c compose.yml mcp-multiplexer`.
+> **Portainer caveat (cost us a crash-loop):** Portainer string-stacks expand neither
+> `${VAR:-default}` **nor** a bare `$VAR` *inside the command* — it substitutes them at
+> deploy time and bakes an empty string (`--auth-type ""` → `invalid choice: ''`). So
+> hardcode `--auth-type jwt` in the command and use literal env values, not `${...}`.
+> For a day-0 bootstrap *before* Keycloak is reachable, set `--auth-type none`, then
+> redeploy with `jwt` once identity is up.
+
+### 3. Add the Caddy route (git-SoT, applied via bootstrap — not Portainer-git)
+Caddy is the ingress, so it is git-backed-as-source-of-truth but **not** deployed
+through Portainer-from-git (it can't deploy through itself on a fresh day-0). Add to
+`services/caddy/Caddyfile` (and expose admin so `caddy-mcp` can manage routes):
+```
+{
+    admin 0.0.0.0:2019     # lets caddy-mcp manage routes over the overlay
+}
+http://mcp-multiplexer.arpa {
+    reverse_proxy mcp-multiplexer_mcp-multiplexer:8000
+}
+```
+Apply on the node running caddy: sync the repo `Caddyfile` → `/home/apps/caddy/Caddyfile`,
+then `docker service update --force caddy_caddy` (the admin-address change needs a task
+restart, not just `caddy reload`).
+
+### 4. Point clients at the multiplexer
+Mint a token and wire the client. For our own client (`~/.claude.json`):
+```bash
+python services/mcp-multiplexer/mint_token.py --export ~/.config/mcp-multiplexer.env
+```
+```json
+"mcp-multiplexer": {
+  "type": "http", "url": "http://mcp-multiplexer.arpa/mcp",
+  "headers": { "Authorization": "Bearer ${CLAUDE_MCP_JWT}" }
+}
+```
+
+### 5. Verify
+```bash
+# unauthenticated → 401
+curl -s -o /dev/null -w "%{http_code}\n" http://mcp-multiplexer.arpa/mcp -X POST \
+  -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
+# with a token → MCP initialize succeeds
+TOKEN=$(python services/mcp-multiplexer/mint_token.py)
+curl -s http://mcp-multiplexer.arpa/mcp -X POST -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}'
+```
+Onboarding additional clients (templates, per-principal Eunomia policies, TTL/ephemeral)
+is the `mcp-client-onboarder` flow (plan Phase 4).
 
 ---
 
