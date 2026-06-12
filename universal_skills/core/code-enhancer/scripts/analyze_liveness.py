@@ -387,6 +387,91 @@ def _facade_branches(func: ast.AST) -> list[int]:
     return lines
 
 
+# Nodes that reference runtime state — their presence means a value is computed from
+# real data, not fabricated. A pure-literal payload has none of these.
+_RUNTIME_REF = (
+    ast.Name,
+    ast.Attribute,
+    ast.Call,
+    ast.Subscript,
+    ast.Starred,
+    ast.JoinedStr,
+    ast.FormattedValue,
+)
+
+
+def _has_substantive_literal(v: ast.expr) -> bool:
+    """Contains a non-trivial constant — a non-empty string or a non-zero number — i.e.
+    actual fabricated content, not an empty/neutral fallback like ``("", [])``."""
+    for n in ast.walk(v):
+        if isinstance(n, ast.Constant):
+            if isinstance(n.value, str) and n.value:
+                return True
+            if (
+                isinstance(n.value, (int, float))
+                and not isinstance(n.value, bool)
+                and n.value != 0
+            ):
+                return True
+    return False
+
+
+def _is_fabricated_literal(v: ast.expr) -> bool:
+    """A dict/list payload built ENTIRELY from hardcoded literals with substantive
+    content — a fabricated record, not data derived from runtime state. The distinction
+    that separates a real deceptive fallback (``return {'cpu_percent': 24.5, ...}``)
+    from the legitimate ``return {'status': 'success', 'text': response.text}``
+    parse-fallback (references ``response`` — real data) and from an empty/neutral
+    fallback like ``return "", []`` (no substantive content)."""
+    if _is_envelope_or_empty(v) or not isinstance(v, (ast.Dict, ast.List, ast.Tuple)):
+        return False
+    if any(isinstance(n, _RUNTIME_REF) for n in ast.walk(v)):
+        return False  # references a real value → not fabricated
+    return _has_substantive_literal(v)
+
+
+def _is_broad_except(handler: ast.ExceptHandler) -> bool:
+    """A catch-all handler (bare ``except:`` or ``except Exception``/``BaseException``)
+    — the breadth that turns an error path into a silent failure-masking fallback."""
+    t = handler.type
+    if t is None:
+        return True
+    names = t.elts if isinstance(t, ast.Tuple) else [t]
+    return any(
+        isinstance(x, ast.Name) and x.id in ("Exception", "BaseException")
+        for x in names
+    )
+
+
+def _facade_except_handlers(func: ast.AST) -> list[int]:
+    """Deceptive except-fallbacks: a ``try`` that does real work paired with a broad
+    ``except`` that swallows the failure and RETURNS a fabricated literal payload. This
+    is the structural facade behind handlers that fabricate data (a fake host inventory,
+    hardcoded resource figures) on a backend error — caught even without any tell-tale
+    marker word. Restricted to all-literal payloads so the legitimate
+    ``except: return {..., 'text': response.text}`` parse-fallback is NOT flagged."""
+    lines: list[int] = []
+    for n in ast.walk(func):
+        if not isinstance(n, ast.Try) or not _stmts_real_work(n.body):
+            continue  # nothing real to mask → not a deceptive fallback
+        for handler in n.handlers:
+            if not _is_broad_except(handler):
+                continue  # a narrow, intentional recovery path → not a blanket fallback
+            for s in handler.body:
+                for r in ast.walk(s):
+                    if (
+                        isinstance(r, ast.Return)
+                        and r.value is not None
+                        and _is_fabricated_literal(r.value)
+                    ):
+                        lines.append(handler.lineno)
+                        break
+                else:
+                    continue
+                break
+    return lines
+
+
 def analyze_liveness(argv: list[str]) -> dict[str, Any]:
     args = list(argv)
     cov_path = baseline_path = None
@@ -608,6 +693,9 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
                 continue  # whole function is a facade; don't double-count its branches
             for line in _facade_branches(n):
                 facade_handlers.append(f"{mod}:{n.name}@{line}")
+            # deceptive except-fallbacks: real try, fabricated/fake-success except
+            for line in _facade_except_handlers(n):
+                facade_handlers.append(f"{mod}:{n.name}@{line}")
 
     # ── Score + report ───────────────────────────────────────────────────────
     counts = {
@@ -663,7 +751,8 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
     if facade_handlers:
         findings.append(
             f"{len(facade_handlers)} FACADE handler(s) on a live surface (tool/route/command) that do NO real "
-            f"work but return a canned payload — invoked-but-fake: {facade_handlers[:8]}"
+            f"work but return a canned payload, OR swallow a real failure in a broad except and return a "
+            f"fabricated-literal fallback (deceptive 'fail-fake') — invoked-but-fake: {facade_handlers[:8]}"
         )
     if placeholder_hits:
         findings.append(
