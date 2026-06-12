@@ -74,7 +74,16 @@ def discover(workspace: str) -> list[dict]:
 
 
 def _wrap_command(script: str) -> list[str]:
-    return ["sh", "-c", f"pip install --no-cache-dir /src && exec {script}"]
+    # /src is bind-mounted read-only, but `pip install` builds the package and
+    # setuptools writes <pkg>.egg-info INTO the source dir → fails on a RO mount.
+    # Copy the source to a writable tmp dir first (minus .git), install there, then
+    # exec the console script. Edits on the host go live on the next restart.
+    return [
+        "sh",
+        "-c",
+        "mkdir -p /tmp/pkg && cp -a /src/. /tmp/pkg/ && rm -rf /tmp/pkg/.git "
+        f"&& pip install --no-cache-dir /tmp/pkg && exec {script}",
+    ]
 
 
 def _template_compose(name: str) -> dict:
@@ -133,7 +142,7 @@ def make_editable(
     vols.insert(0, f"{source}:/src:ro")
     svc["volumes"] = vols
     if isinstance(svc.get("healthcheck"), dict):
-        svc["healthcheck"]["start_period"] = "90s"
+        svc["healthcheck"]["start_period"] = "180s"  # first boot copies + pip-installs
     deploy = svc.setdefault("deploy", {})
     deploy.setdefault("placement", {})["constraints"] = [
         f"node.labels.name == ${{SERVER:-{server}}}"
