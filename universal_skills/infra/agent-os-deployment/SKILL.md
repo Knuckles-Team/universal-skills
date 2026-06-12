@@ -156,22 +156,48 @@ python services/mcp-multiplexer/mint_token.py | cut -d. -f2 | base64 -d 2>/dev/n
 ```
 
 ### 2. Deploy the multiplexer with JWT enabled
-The multiplexer reads JWT config from env and is launched with `--auth-type jwt`
-(the JWT verification path is already wired in `agent_utilities/mcp/server_factory.py`
-→ `create_mcp_server` → `_configure_jwt_auth`). Required env (set as **literals** —
-see the Portainer caveat below):
+The JWT verification path is already wired in `agent_utilities/mcp/server_factory.py`
+(`create_mcp_server` → `_configure_jwt_auth`); the multiplexer just needs the config.
+These values are **non-secret** (the JWKS is a public Keycloak endpoint fetched at
+runtime), so supply them through the **Portainer stack Env** (or `.env` for plain
+`docker-compose`) and reference them in the compose as plain `${VAR}`:
 ```
+MCP_AUTH_TYPE                    = jwt          # set "none" for a pre-Keycloak day-0 bootstrap
 FASTMCP_SERVER_AUTH_JWT_JWKS_URI = http://keycloak.arpa/realms/homelab/protocol/openid-connect/certs
 FASTMCP_SERVER_AUTH_JWT_ISSUER   = http://keycloak.arpa/realms/homelab
 FASTMCP_SERVER_AUTH_JWT_AUDIENCE = mcp-fleet
 ```
-Deploy via Portainer (string stack) or `docker stack deploy -c compose.yml mcp-multiplexer`.
-> **Portainer caveat (cost us a crash-loop):** Portainer string-stacks expand neither
-> `${VAR:-default}` **nor** a bare `$VAR` *inside the command* — it substitutes them at
-> deploy time and bakes an empty string (`--auth-type ""` → `invalid choice: ''`). So
-> hardcode `--auth-type jwt` in the command and use literal env values, not `${...}`.
-> For a day-0 bootstrap *before* Keycloak is reachable, set `--auth-type none`, then
-> redeploy with `jwt` once identity is up.
+Deploy via Portainer (string stack, pass these in the stack **Env** array) or
+`docker stack deploy -c compose.yml mcp-multiplexer`.
+> **Portainer caveat (cost us a crash-loop):** Portainer string-stacks do their
+> `${VAR}` substitution at **deploy** time and support **neither** `${VAR:-default}`
+> **nor** a `$VAR` that isn't in the stack Env — an unset var bakes an empty string
+> (`--auth-type ""` → `invalid choice: ''`). Fix: put every value in the stack **Env**
+> and use plain `${VAR}` (no `:-`). Then the `MCP_AUTH_TYPE` toggle works at deploy time.
+
+### 2b. Authorization: zero-trust Eunomia (plan Phase 3)
+Identity (who) is established; authorization (what they may do) is the embedded
+**Eunomia** PDP. Set in the stack Env:
+```
+EUNOMIA_TYPE        = embedded            # in-process PDP — no hot-path dep on a remote Eunomia
+EUNOMIA_POLICY_FILE = /eunomia_policy.json
+```
+and mount `services/mcp-multiplexer/eunomia_policy.json` at that path. The policy is
+**default-deny**; only listed principals may `list`/`execute`. Our own client is
+allow-all:
+```json
+{ "default_effect": "deny",
+  "rules": [{ "name": "claude-code-allow-all", "effect": "allow",
+    "principal_conditions": [{"path":"uri","operator":"equals","value":"agent:claude-code"}],
+    "resource_conditions": [], "actions": ["list","execute"] }] }
+```
+Crucially, with `--auth-type jwt` the principal is the **cryptographically verified
+JWT** (`azp`/`client_id` → `agent:<id>`), not the spoofable `x-agent-id` header —
+`agent_utilities/mcp/eunomia_principal.JwtPrincipalEunomiaMiddleware` enforces this.
+So `tools/list` returns only what the principal is allowed, and a disallowed
+`tools/call` is denied. Add a client by appending a rule (or use the
+`mcp-client-onboarder` flow, plan Phase 4). Embedded is chosen over remote
+`eunomia.arpa` so an Eunomia outage can never lock the gateway out.
 
 ### 3. Add the Caddy route (git-SoT, applied via bootstrap — not Portainer-git)
 Caddy is the ingress, so it is git-backed-as-source-of-truth but **not** deployed
