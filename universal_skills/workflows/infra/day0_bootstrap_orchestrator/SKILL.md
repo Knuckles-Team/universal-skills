@@ -306,6 +306,20 @@ source-mounted at `/src`, pinned to the source node — edits go live on restart
 are reachable because the multiplexer presents its service token (Step A2). Flip jwt in
 **phased waves** (read-only → data → sensitive; `portainer-mcp` last; never the multiplexer),
 verifying multiplexer reachability after each wave.
+
+**Gotchas baked in from live rollout (see `references/TROUBLESHOOTING.md`):**
+- **eunomia needs the fastmcp-3.x compat build** (§9): without `apply_fastmcp_enabled_compat()`
+  in the deployed agent-utilities, every `tools/call` on a eunomia service errors. Don't flip
+  `EUNOMIA_TYPE=remote` onto images that predate that build.
+- **Stack env is inert unless the compose passes it** (§10): set BOTH the stack Env value AND
+  `- VAR=${VAR}` in the compose `environment:` (tokens, connector URLs).
+- **Healthcheck port must equal `PORT`** (§11): a mismatch crash-loops the service to 502;
+  prefer a `socket.create_connection(('localhost', PORT))` check.
+- **Mount the connector's working data** (§13): repository-manager → workspace +
+  `WORKSPACE_PATH`; container/tunnel-manager → `inventory.yaml` + `~/.ssh`. A missing import
+  module is a packaging fix (add dep + rebuild), not a mount.
+- After restarting any child, **reconnect the multiplexer** before re-validating (§12) — stale
+  sessions hang tool calls 300s.
 - Requires: `portainer-mcp`, `container-manager-mcp`
 - Expected: `mcp-fleet-deployed, auth-on, metrics-exposed, deferred-report`
 
@@ -342,6 +356,12 @@ Assert the realized end-state (CONCEPT:OS-5.32 / OS-5.23):
 - Each jwt MCP rejects unauthenticated calls: `curl -s -o /dev/null -w '%{http_code}'
   -X POST http://<svc>.arpa/mcp` → `401`.
 - The multiplexer can call a tool on a jwt child (service token attached) → success.
+- **Validate at the TOOL-CALL level, not just `initialize`** — `initialize`/`tools/list`
+  passing hides per-call failures (eunomia, missing module, bad URL). Run a full host-side MCP
+  session with the A0 token (`initialize`→`initialized`→`tools/list`→`tools/call`) per service;
+  see `references/TROUBLESHOOTING.md` §8. In particular, after enabling `EUNOMIA_TYPE=remote`,
+  confirm a real `tools/call` returns data and NOT `'FunctionTool' object has no attribute
+  'enabled'` (the fastmcp-3.x eunomia break — §9; requires the agent-utilities compat build).
 - `/metrics` returns Prometheus exposition: `curl http://<svc>.arpa/metrics`; a tool call
   increments the per-tool counter.
 - Prometheus shows `up{job="mcp-fleet"}==1` and `probe_success{job="blackbox-mcp"}==1` for

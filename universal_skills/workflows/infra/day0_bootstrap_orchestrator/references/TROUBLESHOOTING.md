@@ -97,3 +97,103 @@ done   # 2xx/3xx/401/403 = reachable; 502 = Caddy up but upstream unreachable; 0
 ## 7. tunnel-manager MCP
 Always pass a short `timeout` (e.g. 10). The hardened client (bounded connect/banner/auth
 timeouts, retry+backoff, keepalive, bounded exit-status) fails fast on dead hosts instead of hanging.
+
+---
+
+## 8. Validate an MCP connector the RIGHT way (tool-level, not just reachable)
+
+`initialize` succeeding only proves the server is **up + auth passes** — it hides bugs that
+only fire on a real tool call (eunomia middleware, missing module, bad URL). Validate with a
+**full host-side MCP session** carrying the multiplexer's A0 token, with short timeouts (never
+hang the session):
+
+```bash
+# 1) mint the A0 token (client_credentials) exactly like the multiplexer does
+TOK=$(curl -s -m10 -X POST "http://keycloak.arpa/realms/master/protocol/openid-connect/token" \
+  -d grant_type=client_credentials -d client_id=mcp-multiplexer -d client_secret="$SECRET" \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+# 2) initialize -> capture mcp-session-id -> notifications/initialized -> tools/list -> tools/call
+#    Accept: application/json, text/event-stream ; Authorization: Bearer $TOK
+#    A 401 unauth + 200 with token = jwt enforced + A0 works.
+```
+
+Sweep the whole fleet from `mcp_config*.json` URLs this way (8s timeout each) to get a real
+up/down + per-tool matrix. **Through the live multiplexer**, prefer a non-disruptive
+`multiplexer_status` first; mux tool calls can hang 300s on a stale child session (see §12).
+
+---
+
+## 9. Tool calls fail with `'FunctionTool' object has no attribute 'enabled'` (eunomia ↔ fastmcp 3.x)
+
+**Signature:** auth + `initialize` + `tools/list` all succeed, but every `tools/call` on a
+**eunomia-enforced** server returns `Internal error: 'FunctionTool' object has no attribute
+'enabled'`. Servers WITHOUT `EUNOMIA_TYPE` work fine.
+
+**Cause:** `eunomia-mcp` (≤0.3.10) gates each call on `component.enabled` — a **fastmcp 2.x**
+attribute. **fastmcp 3.x removed it** (every registered component is live), so the access raises.
+This silently breaks the *entire* jwt+eunomia rollout once images carry fastmcp 3.x.
+
+**Fix (in agent-utilities):** `apply_fastmcp_enabled_compat()` in
+`agent_utilities/mcp/eunomia_principal.py` sets `FastMCPComponent.enabled=True` (3.x semantics);
+applied at import (embedded/JWT path) and from the server-factory eunomia block (remote path).
+Reaches a deployed server only after an agent-utilities release + image rebuild (or, for
+editable services that `pip install` at start, a restart). **Validate every eunomia service at
+the tool-call level (§8) after flipping `AUTH_TYPE=jwt`/`EUNOMIA_TYPE=remote`.**
+
+---
+
+## 10. Deployed connector ignores its env (inert-env pattern)
+
+A deployed `-mcp` container only receives env the **compose actually passes**. Setting a var in
+the Portainer **stack Env** does nothing unless the compose `environment:` interpolates it
+(`- MY_VAR=${MY_VAR}`). Symptom: connector behaves as if a token/URL is unset though the stack
+Env shows it. **Fix:** add both — the value in stack Env AND `- VAR=${VAR}` in the compose, then
+redeploy. Keep `HOST`/`PORT`/`TRANSPORT` as the deployment sets them; don't let dev `.env`
+values override. (Connector URL/token var NAMES vary: e.g. caddy reads `CADDY_URL`, technitium
+`TECHNITIUM_DNS_URL`, erpnext `ERPNEXT_URL`, dockerhub `DOCKER_HUB_TOKEN`/`DOCKER_HUB_USER`.)
+
+---
+
+## 11. Service crash-loops → 502 from a healthcheck PORT mismatch
+
+**Signature:** swarm tasks cycle `running`→`complete`/`shutdown` every few minutes; logs show a
+clean `Application startup complete` immediately followed by `Shutting down`; `*.arpa` = 502.
+**Cause:** the compose **healthcheck probes the wrong port** (e.g. `localhost:8026/health` while
+the server listens on `PORT=8000`) → healthcheck never passes → swarm kills + restarts.
+**Fix:** align the healthcheck to the container's `PORT`. Prefer a port-only check that doesn't
+depend on a route existing on older images:
+`python3 -c "import socket; socket.create_connection(('localhost', 8000), timeout=5)"`
+(use `/health` only when the image ships agent-utilities ≥ the B1 build that adds the route).
+Generators must derive the healthcheck port from `PORT`, not a per-service offset.
+
+---
+
+## 12. Multiplexer tool call hangs ~300s after you restarted a child container
+
+**Signature:** a tool call through the multiplexer hangs to its `call_timeout` (300s) and
+returns `MCPChildCallTimeoutError ... did not answer`, even though the child is healthy when
+probed directly (§8 returns 200 in ~10ms). **Cause:** the live mux holds a **stale streamable-
+HTTP session** to a child you just redeployed; the child dropped the session, the mux waits
+forever to reuse it. **Fix:** `/mcp reconnect` (re-spawns the mux: clears stale sessions, reloads
+A0 env from `~/.claude.json`, and mounts any newly-added children). In **dynamic** mode
+`multiplexer_status` shows only the **mounted** subset (~a dozen), NOT all configured children —
+that is expected, not a missing-config bug. After restarting containers, reconnect before
+re-validating through the mux.
+
+---
+
+## 13. New connector won't deploy / appear in the fleet
+
+- **Only a `compose.dev.yml`, no Portainer stack** → the service was never deployed. Create the
+  swarm stack (POST `/api/stacks/create/swarm/string`, `endpointId=3`) from a compose mirroring a
+  working sibling (baked image + `/src` bind + `PYTHONPATH=/src` + `node.labels.name==RW710`).
+- **Image name ≠ service name.** Some packages publish under the API name, not `<svc>-mcp` (e.g.
+  `agents/dockerhub-api` → image `knucklessg1/dockerhub-api:latest`, console script
+  `dockerhub-mcp`). Check the package's own `docker/*.compose.yml` for the real `image:`.
+- **Add it to `mcp_config*.json`** (and reconnect) so the multiplexer mounts it.
+- **Connector needs its working data mounted.** Tools that operate on host state need the data
+  bind-mounted into the editable container: repository-manager needs the workspace
+  (`/home/apps/workspace` + `WORKSPACE_PATH`); container-manager/tunnel-manager need
+  `~/.config/agent-utilities/inventory.yaml` + `~/.ssh`. A missing **dependency module**
+  (e.g. container-manager importing `tunnel_manager`) is a packaging fix — add the dep + rebuild;
+  a volume mount alone won't satisfy an absent import.
