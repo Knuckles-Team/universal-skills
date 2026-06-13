@@ -101,6 +101,17 @@ def _template_compose(name: str) -> dict:
                     "HOST=0.0.0.0",
                     "PORT=8000",
                     "TRANSPORT=streamable-http",
+                    # Fleet-standard auth ON by default (CONCEPT:OS-5.32): the
+                    # shared agent_utilities factory verifies Keycloak JWTs
+                    # (audience agent-services) + enforces eunomia. Non-secret
+                    # internal URLs. Derived-from-prod composes inherit these via
+                    # make_editable; this is the no-prod-compose fallback.
+                    "AUTH_TYPE=jwt",
+                    "FASTMCP_SERVER_AUTH_JWT_AUDIENCE=agent-services",
+                    "FASTMCP_SERVER_AUTH_JWT_ISSUER=http://keycloak.arpa/realms/master",
+                    "FASTMCP_SERVER_AUTH_JWT_JWKS_URI=http://keycloak.arpa/realms/master/protocol/openid-connect/certs",
+                    "EUNOMIA_TYPE=remote",
+                    "EUNOMIA_REMOTE_URL=http://eunomia.arpa",
                 ],
                 "healthcheck": {
                     "test": [
