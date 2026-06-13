@@ -14,7 +14,7 @@ license: MIT
 tags: [mcp, multiplexer, authorization, eunomia, keycloak, zero-trust, onboarding, security]
 metadata:
   author: Genius
-  version: '0.44.0'
+  version: '0.45.0'
 ---
 
 # MCP Client Onboarder

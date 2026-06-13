@@ -7,7 +7,7 @@ tags: [pre-mortem, planning, risk-analysis, decision-making, strategy]
 license: MIT
 metadata:
   author: Genius
-  version: '0.44.0'
+  version: '0.45.0'
 ---
 # Pre-Mortem Skill (pre-mortem)
 

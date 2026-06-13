@@ -8,7 +8,7 @@ license: MIT
 tags: [skills, development, guide, builder, creator]
 metadata:
   author: Genius
-  version: '0.44.0'
+  version: '0.45.0'
 ---
 # Skill Builder
 
