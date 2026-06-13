@@ -210,14 +210,28 @@ preserve intentional direct records (`adguard`→.199, `home-assistant`, per-nod
 ### Step 13: keycloak-oidc-wiring
 [depends_on: Step 12]
 Register OIDC SSO clients in Keycloak for SSO-enabled services; store their secrets in OpenBao KV2.
-- Requires: `keycloak-mcp`, `openbao-mcp`
-- Expected: `sso-wired`
+**MCP fleet auth (CONCEPT:OS-5.32):** also create the **`mcp-multiplexer` confidential
+client** (audience `agent-services`) via `keycloak-client-onboarder` and store its secret
+in OpenBao — this is the service identity the multiplexer uses to reach jwt children
+(Step A2). Then load the **baseline eunomia policy** (allow the multiplexer principal,
+deny `unknown`) via `eunomia-policy-manager` at `eunomia.arpa` — eunomia fails CLOSED, so
+this MUST exist before any MCP enforces jwt.
+- Requires: `keycloak-mcp`, `openbao-mcp` (+ skills `keycloak-client-onboarder`, `eunomia-policy-manager`)
+- Expected: `sso-wired, mcp-multiplexer-client-created, eunomia-baseline-loaded`
 
 ### Step 14: observability-and-backups
 [depends_on: Step 13]
-Wire Loki/Promtail + Prometheus scraping for all nodes/stacks and configure Borgmatic scheduled backups.
-- Requires: `systems-manager-mcp`
-- Expected: `observability-up, backups-scheduled`
+Stand up the full LGTM observability standard (CONCEPT:OS-5.23) + Borgmatic backups:
+- node-exporter + cAdvisor (global) already give every host + every container metrics.
+- Generate the MCP scrape/probe targets and dashboards from the fleet registry:
+  `agent-utilities/scripts/gen_prometheus_mcp_targets.py` + `gen_grafana_dashboards.py`.
+- Deploy the LGTM stack carrying: the `mcp-fleet` (`/metrics`) + `blackbox-mcp` (`/health`)
+  Prometheus jobs, the global `promtail` (container logs → Loki), the full `rules.yml`
+  alert set (→ Mattermost), and the provisioned Grafana datasources + dashboards
+  (Fleet Overview / Per-Service / Host & Infra).
+- Drive per-service wiring via `service-observability-provisioner`.
+- Requires: `systems-manager-mcp`, `portainer-mcp` (+ skill `service-observability-provisioner`)
+- Expected: `observability-up, mcp-fleet-scraped, dashboards-provisioned, alerts-loaded, backups-scheduled`
 
 ### Step 15: graph-os
 [depends_on: Step 14]
@@ -253,6 +267,13 @@ single consolidated KG daemon. Also start `mcp-multiplexer` federating graph-os 
 the connector fleet, and (optionally) the REST gateway `graph-os-daemon` (:8100).
 For durable profiles, point `GRAPH_DB_URI` at the pggraph tier (Step A4).
 
+**Multiplexer outbound auth (CONCEPT:OS-5.32):** set `MCP_CLIENT_AUTH=oidc-client-credentials`,
+`OIDC_CLIENT_ID=mcp-multiplexer`, `OIDC_CLIENT_SECRET` (OpenBao ref from Step 13),
+`OIDC_AUDIENCE=agent-services` on the multiplexer so it mints + attaches a Keycloak service
+token to every jwt child. Without this, children with `AUTH_TYPE=jwt` are unreachable (401)
+through the multiplexer. The multiplexer itself stays at its own inbound-auth posture (do
+NOT flip it to a jwt child — it is the client).
+
 **Shared agent-utilities config volume (CONCEPT: OS-5.x):** seed an **external**
 named volume `agent_utilities_config` (and `agent_utilities_data`) on the KG host
 with the bare-metal `~/.config/agent-utilities/config.json`, and mount it at
@@ -276,8 +297,17 @@ Deploy the `*-mcp` connector fleet from
 for GitOps auto-sync via `portainer-sync-agent`. Apply the missing-image
 Failure-handling policy. (Regenerate the registry with
 `python agent-utilities/scripts/gen_mcp_fleet_registry.py --agents-dir <…>/agents`.)
+
+**Auth + deploy artifact (CONCEPT:OS-5.32 / OS-5.23):** the generated composes ship
+`AUTH_TYPE=jwt` + eunomia by default (from `gen_mcp_service_stacks.py` / `gen_editable_compose.py`),
+and every service exposes unauthenticated `/metrics` + `/health`. Deploy the **editable**
+`compose.dev.yml` (set Portainer `ConfigFilePath=compose.dev.yml`): one container per MCP,
+source-mounted at `/src`, pinned to the source node — edits go live on restart. Children
+are reachable because the multiplexer presents its service token (Step A2). Flip jwt in
+**phased waves** (read-only → data → sensitive; `portainer-mcp` last; never the multiplexer),
+verifying multiplexer reachability after each wave.
 - Requires: `portainer-mcp`, `container-manager-mcp`
-- Expected: `mcp-fleet-deployed, deferred-report`
+- Expected: `mcp-fleet-deployed, auth-on, metrics-exposed, deferred-report`
 
 ### Step A4: integrations-wiring
 [depends_on: Step A3] (toggle-gated)
@@ -300,5 +330,22 @@ We no longer run the connectors as stdio servers. `graph-os` likewise points at
 its R820 streamable-http endpoint. Only rewire entries whose container is live
 (use the deferred/skipped report from Step A3); leave the rest stdio until
 deployed. Reload the multiplexer.
+**Auth note (CONCEPT:OS-5.32):** rewired entries are remote `streamable-http` children that
+enforce jwt — leave their `headers` empty; the multiplexer's service token (Step A2) is
+attached automatically. Do NOT bake per-child bearer tokens into `mcp_config.json`.
 - Requires: `container-manager-mcp`
 - Expected: `mcp-config-rewired, stdio-retired`
+
+### Step A6: verify auth + observability end-state
+[depends_on: Step A5] (profiles: single-node-prod, enterprise)
+Assert the realized end-state (CONCEPT:OS-5.32 / OS-5.23):
+- Each jwt MCP rejects unauthenticated calls: `curl -s -o /dev/null -w '%{http_code}'
+  -X POST http://<svc>.arpa/mcp` → `401`.
+- The multiplexer can call a tool on a jwt child (service token attached) → success.
+- `/metrics` returns Prometheus exposition: `curl http://<svc>.arpa/metrics`; a tool call
+  increments the per-tool counter.
+- Prometheus shows `up{job="mcp-fleet"}==1` and `probe_success{job="blackbox-mcp"}==1` for
+  live services; Grafana "MCP Fleet Overview" is populated; stopping a service fires
+  `McpServiceDown`/`McpProbeFailed` to Mattermost.
+- Requires: `portainer-mcp`, `systems-manager-mcp`
+- Expected: `auth-enforced, multiplexer-reachable, metrics-live, dashboards-populated, alerts-firing`
