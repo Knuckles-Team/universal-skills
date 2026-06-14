@@ -2,14 +2,53 @@
 import os
 import re
 import argparse
+import hashlib
 import shutil
 import datetime
 from pathlib import Path
 
+try:
+    from universal_skills.skill_utilities import portable_name as _portable_name
+except Exception:  # pragma: no cover - standalone execution
+    _RESERVED = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+
+    def _portable_name(name: str, max_len: int = 80) -> str:
+        if not name:
+            return "_"
+        cleaned = (
+            re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name)
+            .rstrip(". ")
+            .lstrip(" ")
+            .replace("~", "-")
+        ) or "_"
+        stem, dot, ext = cleaned.rpartition(".")
+        base, suffix = (stem, dot + ext) if dot and stem else (cleaned, "")
+        if base.upper() in _RESERVED:
+            base = f"{base}_"
+        full = f"{base}{suffix}"
+        if len(full) > max_len:
+            digest = hashlib.sha1(name.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
+            keep = max(1, max_len - len(suffix) - 9)
+            full = f"{base[:keep]}-{digest}{suffix}"
+        return full or "_"
+
 
 def sanitize_for_windows(name: str) -> str:
-    """Sanitize a string to be a valid Windows filename."""
-    return re.sub(r'[<>:"/\\|?*]', "-", name)
+    """Sanitize a string to a cross-platform-safe filename component.
+
+    Beyond stripping Windows-illegal characters, this now length-bounds the name and
+    guards reserved device names / trailing dots (delegating to the shared
+    ``portable_name``) so generated reference trees stay within Windows MAX_PATH and
+    macOS limits.
+    """
+    return _portable_name(name)
 
 
 def extract_title(file_path: Path) -> str:
@@ -157,9 +196,7 @@ def _distill_from_kg(
     manifest = tmp / "kg_manifest.json"
     n = len(list(ref.rglob("*.md"))) if ref.exists() else 0
     print(f"   ✅ Distilled {n} reference file(s) from the KG.")
-    return (ref if ref.exists() else None), (
-        manifest if manifest.exists() else None
-    )
+    return (ref if ref.exists() else None), (manifest if manifest.exists() else None)
 
 
 def generate_skill(

@@ -29,12 +29,46 @@ def to_boolean(string=None):
 import os
 import asyncio
 import argparse
+import hashlib
 import re
 import logging
 import sys
 from typing import List
 from xml.etree import ElementTree
 from urllib.parse import urlparse, urldefrag, urljoin
+
+# Cross-platform-safe filename generation. Prefer the shared util; fall back to a
+# compact local copy when this script runs outside the installed package.
+try:
+    from universal_skills.skill_utilities import portable_name
+except Exception:  # pragma: no cover - standalone execution
+    _ILLEGAL = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+    _RESERVED = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+
+    def portable_name(name: str, max_len: int = 80) -> str:
+        if not name:
+            return "_"
+        cleaned = (
+            _ILLEGAL.sub("-", name).rstrip(". ").lstrip(" ").replace("~", "-")
+        ) or "_"
+        stem, dot, ext = cleaned.rpartition(".")
+        base, suffix = (stem, dot + ext) if dot and stem else (cleaned, "")
+        if base.upper() in _RESERVED:
+            base = f"{base}_"
+        full = f"{base}{suffix}"
+        if len(full) > max_len:
+            digest = hashlib.sha1(name.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
+            keep = max(1, max_len - len(suffix) - 9)
+            full = f"{base[:keep]}-{digest}{suffix}"
+        return full or "_"
+
 
 # Setup logging
 logging.basicConfig(
@@ -95,14 +129,14 @@ def save_markdown(content: str, url: str, output_dir: str, prefix: str = ""):
     os.makedirs(output_dir, exist_ok=True)
     parsed = urlparse(url)
 
-    # Clean slug generation
+    # Clean slug generation (cross-platform safe: length-bounded, no illegal chars).
     path_slug = parsed.path.strip("/").replace("/", "_") or "index"
     if not path_slug.endswith(".md"):
         path_slug += ".md"
 
-    filename = re.sub(r"[^a-zA-Z0-9_\-\.]", "", path_slug)
     if prefix:
-        filename = f"{prefix}_{filename}"
+        path_slug = f"{prefix}_{path_slug}"
+    filename = portable_name(path_slug)
 
     filepath = os.path.join(output_dir, filename)
     try:
@@ -208,7 +242,9 @@ async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str):
         parsed = urlparse(url)
         safe_name = parsed.path.strip("/").replace("/", "_") or "index"
         for idx, chunk in enumerate(chunks):
-            filepath = os.path.join(output_dir, f"{safe_name}_chunk_{idx + 1}.md")
+            filepath = os.path.join(
+                output_dir, portable_name(f"{safe_name}_chunk_{idx + 1}.md")
+            )
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(chunk)
             logger.info(f"Saved chunk {idx + 1} to {filepath}")
