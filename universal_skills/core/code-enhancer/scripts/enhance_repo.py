@@ -48,6 +48,12 @@ DOMAINS: list[dict[str, Any]] = [
         "timeout": 60,
     },
     {"key": "security", "script": "analyze_security.py", "langs": None, "timeout": 120},
+    {
+        "key": "minimalism",
+        "script": "analyze_minimalism.py",
+        "langs": {"python"},
+        "timeout": 90,
+    },
     {"key": "env_vars", "script": "scan_env_vars.py", "langs": None, "timeout": 60},
     {
         "key": "documentation",
