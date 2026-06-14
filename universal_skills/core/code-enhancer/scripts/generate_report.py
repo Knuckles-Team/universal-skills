@@ -164,9 +164,16 @@ def _generate_domain_scorecard(result: dict) -> str:
 
 
 def generate_report(
-    results: list[dict], project_name: str = "Unknown", output_path: str | None = None
+    results: list[dict],
+    project_name: str = "Unknown",
+    output_path: str | None = None,
+    baseline_diff: dict | None = None,
 ) -> str:
-    """Generate the full prettified report."""
+    """Generate the full prettified report.
+
+    When ``baseline_diff`` (from ``analyze_baseline.diff``) is supplied, a
+    "New Debt This Run" section is inserted so reviewers see new vs. legacy debt.
+    """
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     gpa = _compute_gpa(results)
 
@@ -185,6 +192,12 @@ def generate_report(
         "",
         "---",
         "",
+    ]
+    if baseline_diff is not None:
+        import analyze_baseline  # local module
+
+        sections += [analyze_baseline.to_markdown(baseline_diff), "---", ""]
+    sections += [
         "## 📋 Domain Scorecards",
         "",
     ]
@@ -236,11 +249,26 @@ if __name__ == "__main__":
     parser.add_argument("results_file", help="JSON file with domain results")
     parser.add_argument("--output", "-o", help="Output path for report", default=None)
     parser.add_argument("--name", "-n", help="Project name", default="Unknown")
+    parser.add_argument(
+        "--baseline", help="Baseline snapshot to diff against (CE-039)", default=None
+    )
     args = parser.parse_args()
 
     with open(args.results_file) as f:
         results = json.load(f)
 
-    report = generate_report(results, project_name=args.name, output_path=args.output)
+    baseline_diff = None
+    if args.baseline:
+        import analyze_baseline  # local module
+
+        with open(args.baseline) as f:
+            baseline_diff = analyze_baseline.diff(results, json.load(f))
+
+    report = generate_report(
+        results,
+        project_name=args.name,
+        output_path=args.output,
+        baseline_diff=baseline_diff,
+    )
     if not args.output:
         print(report)
