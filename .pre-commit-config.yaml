@@ -115,3 +115,11 @@ repos:
     language: python
     pass_filenames: false
     always_run: true
+- repo: local
+  hooks:
+  - id: check-path-portability
+    name: cross-platform path portability
+    entry: python scripts/check_path_portability.py . --max-path 200 --max-name 100 --max-violations 0
+    language: system
+    pass_filenames: false
+    always_run: true
