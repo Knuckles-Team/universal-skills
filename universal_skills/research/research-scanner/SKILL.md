@@ -3,11 +3,12 @@ name: research-scanner
 description: >-
   Agentic research paper discovery pipeline. Extracts focus topics from the Knowledge Graph,
   dynamically builds a relevance taxonomy, fetches daily papers via the scholarx MCP,
-  scores them locally, and bulk downloads the most valuable papers for ingestion.
+  and also sweeps open-web & social sources (Hacker News, Reddit, X, YouTube, news, web)
+  via the PulseLink MCP, scores them locally, and ingests the most valuable items.
   Triggers on "scan for papers", "find new research", "check arxiv", "research scan",
   proactively discover research that could enhance a codebase.
 license: MIT
-tags: [research, scanner, scholarx, automation, agent-workflow]
+tags: [research, scanner, scholarx, pulselink, automation, agent-workflow]
 metadata:
   author: Genius
   version: '0.45.0'
@@ -40,6 +41,22 @@ Save the resulting JSON output to a local file, e.g., `papers.json`.
 
 *Note: For targeted searches, you can use the `search_papers` tool instead.*
 
+### Step 3b: Broaden beyond papers — PulseLink reach sources (optional, on by default)
+Research is not only arXiv. For the same focus topics, also sweep the open web and
+social/community sources via the **PulseLink** MCP server (`pulselink-mcp`, the
+keyless-first sibling to `scholarx`). Use its tools to gather discussion, talks, and
+news that papers miss:
+- `pulse_search(source="hackernews"|"reddit"|"x"|"github"|"news"|"web", query=<topic>)`
+  — normalized `{documents:[{id,title,url,text,author,created_at,metrics}], next_cursor}`.
+- `pulse_fetch(source, target)` for full text/threads; `pulse_transcribe(target)` for a
+  YouTube talk transcript.
+- `pulse_status()` first to see which sources are live (keyless sources are always
+  ready; X/Reddit/LinkedIn light up only when a credential is configured).
+
+Keyless sources (hackernews, web, news, youtube, rss, v2ex, bilibili) need **zero**
+setup. Auth-walled sources authenticate through the shared credential provider — no
+keys go in this skill.
+
 ### Step 4: Score the Papers Dynamically
 Use the provided `scripts/dynamic_scorer.py` to evaluate the fetched papers. The script will automatically auto-detect the agent-utilities KG and construct a taxonomy dynamically without needing hardcoded files!
 
@@ -64,3 +81,12 @@ For the new, highly-relevant IDs, queue them for background downloading using th
 
 ### Step 6: Ingest into the Knowledge Graph
 Once downloaded, perform a "double-write" by invoking `mcp_agent-utilities-kg_kg_ingest` on the newly downloaded PDFs/markdown files to store them permanently in the Knowledge Graph for other agents to discover.
+
+For PulseLink reach sources (Step 3b), ingest declaratively via the `mcp_tool` source
+presets (`pulselink-hackernews`, `pulselink-reddit`, `pulselink-x`, `pulselink-youtube`,
+`pulselink-web`, `pulselink-news`, `pulselink-github`, `pulselink-rss`, `pulselink-v2ex`,
+… — see `agent-utilities` `MCP_TOOL_PRESETS`). Each fetched item then becomes a
+first-class KG `Document` (chunked, embedded, deduplicated, ACL'd) — the same pipeline
+as papers — so `deep-research` and other agents can synthesize across papers **and**
+open-web/social evidence together. Example: ingest with
+`{"content_type": "connector", "connector": {"source_type": "mcp_tool", "preset": "pulselink-hackernews", "params": {"query": "<topic>"}}}`.
