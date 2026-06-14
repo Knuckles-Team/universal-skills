@@ -34,3 +34,29 @@ Follow established application security frameworks from the `docs/` directory wh
 - Review design documents systematically using STRIDE.
 - Apply secure-by-default coding conventions to Python, JS/TS, and Go codebases.
 - Do NOT perform performative threat modeling unless explicitly requested by the user. Keep assessments focused on actual abuse paths, assets, and boundaries.
+
+## 4. False-Positive Filtering (shared, CE-041)
+When triaging a security register (your own findings, or `code-enhancer`'s
+`analyze_security.py` output), reduce noise with the shared two-stage filter
+`code-enhancer/scripts/findings_filter.py` instead of hand-tuning regexes:
+
+- **Hard-exclusion stage** (deterministic, no network) drops the chronic
+  low-signal classes — generic DOS/resource-exhaustion, "add rate limiting"
+  advice, resource leaks, open redirects, regex-injection, memory-safety findings
+  outside C/C++, and SSRF in static HTML. Findings on each finding's
+  `{name, detail, file}` shape.
+- **LLM confidence stage** *(opt-in)* — in an agent-driven review (where a model
+  is available), pass a `judge(finding) -> (keep, confidence 1–10, reason)`
+  callable to `filter_findings(...)`; findings below confidence 8 are dropped,
+  and a judge error safely **keeps** the finding. Use this to apply
+  organization-specific context ("we use Cognito for auth; don't flag missing
+  password validation") — the natural-language equivalent of custom exclusion
+  rules.
+
+```python
+from findings_filter import filter_findings  # code-enhancer/scripts on path
+kept, excluded, stats = filter_findings(register)            # deterministic
+kept, excluded, stats = filter_findings(register, judge=my_llm_judge)  # + LLM
+```
+
+Borrowed from Anthropic's `claude-code-security-review` (MIT).
