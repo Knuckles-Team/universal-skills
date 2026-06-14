@@ -189,6 +189,8 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `scripts/audit_dependencies.py` — PyPI dependency audit with version comparison (FR-002)
 - `scripts/analyze_codebase.py` — Code quality, complexity, and duplication analysis (FR-003)
 - `scripts/analyze_security.py` — Security and vulnerability scanning (FR-004, FR-010)
+- `scripts/analyze_minimalism.py` — **Minimalism / over-engineering audit** (CE-040): deterministic ponytail "lazy senior dev" lens — flags commented-out code (`delete:`), trivial wrapper functions (`yagni:`), and shrinkable expressions (`shrink:`), ranked biggest-cut-first with a `net: -N lines possible` estimate, and counts `ponytail:`/`upgrade-path:` marked shortcuts. No LLM.
+- `scripts/analyze_baseline.py` — **Baseline-aware new-debt gate** (CE-039): fingerprints findings (line- and count-independent) and diffs a run against a saved snapshot → `new`/`persisting`/`fixed`, so CI can fail only on *new* debt. Used by `enhance_repo.py --baseline/--write-baseline` and `generate_report.py --baseline`.
 - `scripts/analyze_tests.py` — Test coverage and intent classification (FR-005)
 - `scripts/audit_documentation.py` — Documentation governance and drift detection (FR-006)
 - `scripts/analyze_architecture.py` — Architecture pattern evaluation (FR-011)
@@ -217,6 +219,7 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `references/security_checklist.md` — CWE/STRIDE/OWASP reference for security analysis
 - `references/architecture_patterns.md` — Industry patterns (hexagonal, SOLID, event-driven)
 - `references/optimization_methodology.md` — Code smell taxonomy and remediation patterns
+- `references/minimalism-ladder.md` — Lazy-first ladder (YAGNI → stdlib → native → existing dep → one line) and the `ponytail:`/`upgrade-path:` marked-shortcut convention; the discipline `analyze_minimalism.py` audits and that generation/refactor should follow (CE-040)
 - `references/profiling_methodology.md` — Runtime/scale profiling budgets, scoring, per-language tool matrix, and the heavy-import failure mode (CE-036/CE-037)
 - `references/report_template.md` — Prettified report template with Mermaid and table patterns
 - `references/ui_heuristics.md` — Nielsen's heuristics, WCAG criteria, SUS reference

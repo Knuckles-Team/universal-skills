@@ -30,6 +30,7 @@ ANALYZER_SCRIPTS = [
     "analyze_codebase.py",
     "analyze_directory_density.py",
     "analyze_security.py",
+    "analyze_minimalism.py",
     "scan_env_vars.py",
     "audit_documentation.py",
     "audit_changelog.py",
@@ -46,7 +47,13 @@ ANALYZER_SCRIPTS = [
     "analyze_scale_profile.py",
 ]
 # Scripts that expose their own --self-test.
-SELFTEST_SCRIPTS = ["enhance_repo.py", "kg_ingest_run.py", "kg_query_runs.py"]
+SELFTEST_SCRIPTS = [
+    "enhance_repo.py",
+    "kg_ingest_run.py",
+    "kg_query_runs.py",
+    "analyze_baseline.py",
+    "findings_filter.py",
+]
 
 
 def _make_fixture(root: Path) -> Path:

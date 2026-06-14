@@ -177,8 +177,14 @@ def _score_to_grade(score: int) -> str:
     return "F"
 
 
-def analyze_security(root_dir: str = ".") -> dict:
-    """Analyze security posture and produce scored results."""
+def analyze_security(root_dir: str = ".", *, filter_fp: bool = True) -> dict:
+    """Analyze security posture and produce scored results.
+
+    When ``filter_fp`` (default), the consolidated register is passed through the
+    deterministic false-positive filter (CE-041) to drop the noisy classes
+    (generic DOS/rate-limit advice, resource leaks, non-C memory-safety, etc.)
+    before scoring, so the grade reflects real findings.
+    """
     root = Path(root_dir).resolve()
     py_files = [
         f
@@ -223,6 +229,16 @@ def analyze_security(root_dir: str = ".") -> dict:
                     "detail": vuln.get("description", ""),
                 }
             )
+
+    # CE-041: drop likely false positives before scoring (deterministic, no network).
+    fp_excluded: list[dict] = []
+    if filter_fp and all_vulns:
+        try:
+            from findings_filter import filter_findings  # local module
+
+            all_vulns, fp_excluded, _ = filter_findings(all_vulns)
+        except ImportError:
+            pass  # filter optional; fall back to the raw register
 
     # Scoring
     score = 100
@@ -270,10 +286,16 @@ def analyze_security(root_dir: str = ".") -> dict:
         "findings": findings,
         "justifications": justifications,
         "vulnerabilities": all_vulns[:50],
+        "filtered_false_positives": len(fp_excluded),
         "attack_surface": attack_surface,
     }
 
 
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else "."
-    print(json.dumps(analyze_security(target), indent=2))
+    args = [a for a in sys.argv[1:] if a != "--no-filter"]
+    target = args[0] if args else "."
+    print(
+        json.dumps(
+            analyze_security(target, filter_fp="--no-filter" not in sys.argv), indent=2
+        )
+    )

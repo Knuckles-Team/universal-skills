@@ -48,6 +48,12 @@ DOMAINS: list[dict[str, Any]] = [
         "timeout": 60,
     },
     {"key": "security", "script": "analyze_security.py", "langs": None, "timeout": 120},
+    {
+        "key": "minimalism",
+        "script": "analyze_minimalism.py",
+        "langs": {"python"},
+        "timeout": 90,
+    },
     {"key": "env_vars", "script": "scan_env_vars.py", "langs": None, "timeout": 60},
     {
         "key": "documentation",
@@ -179,6 +185,8 @@ def enhance_repo(
     only: set[str] | None = None,
     timeout_override: int | None = None,
     now: str | None = None,
+    baseline_path: Path | None = None,
+    write_baseline_path: Path | None = None,
 ) -> dict[str, Any]:
     """Run all applicable domains for one repo, writing incrementally. Returns the aggregate."""
     repo = repo.resolve()
@@ -231,6 +239,21 @@ def enhance_repo(
     report["domains_errored"] = sum(
         1 for v in report["domains"].values() if v.get("status") == "error"
     )
+
+    # CE-039: baseline-aware "fail only on new debt". Diff against a saved
+    # snapshot and/or write a fresh one. Findings are fingerprinted (line- and
+    # count-independent) so legacy debt does not gate CI — only new debt does.
+    if baseline_path or write_baseline_path:
+        import analyze_baseline  # local module
+
+        if baseline_path and Path(baseline_path).exists():
+            baseline = json.loads(Path(baseline_path).read_text())
+            report["baseline"] = analyze_baseline.diff(report, baseline)
+        if write_baseline_path:
+            snap = analyze_baseline.snapshot(report, now=now)
+            Path(write_baseline_path).write_text(json.dumps(snap, indent=2))
+            report["_baseline_written"] = str(write_baseline_path)
+
     if out_file:
         out_file.write_text(json.dumps(report, indent=2))
         report["_out_file"] = str(out_file)
@@ -253,6 +276,14 @@ def to_markdown(report: dict[str, Any]) -> str:
             f"| {key} | {v.get('grade', '—')} | {v.get('score', '—')} | {v.get('status')}"
             f"{(': ' + v['error']) if v.get('error') else ''} |"
         )
+    bl = report.get("baseline")
+    if bl:
+        c = bl["counts"]
+        lines += [
+            "",
+            f"**New-debt gate: {bl['new_debt_score']}/100** — "
+            f"🆕 {c['new']} new · 🔁 {c['persisting']} persisting · ✅ {c['fixed']} fixed",
+        ]
     return "\n".join(lines) + "\n"
 
 
@@ -284,6 +315,14 @@ def main() -> int:
     p.add_argument("--domains", help="Comma-separated subset of domain keys to run.")
     p.add_argument("--timeout", type=int, help="Override per-domain timeout (seconds).")
     p.add_argument(
+        "--baseline",
+        help="Diff findings against this baseline snapshot (CE-039); reports new vs. legacy debt.",
+    )
+    p.add_argument(
+        "--write-baseline",
+        help="Write a fresh baseline snapshot of this run's findings to this path.",
+    )
+    p.add_argument(
         "--json", action="store_true", help="Print the aggregate JSON to stdout."
     )
     p.add_argument(
@@ -311,6 +350,8 @@ def main() -> int:
         out_dir=out_dir,
         only=only,
         timeout_override=args.timeout,
+        baseline_path=Path(args.baseline) if args.baseline else None,
+        write_baseline_path=Path(args.write_baseline) if args.write_baseline else None,
     )
 
     if args.kg:
