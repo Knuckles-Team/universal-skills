@@ -86,10 +86,32 @@ CLI equivalent: `setup-databases --profile <prod|dev> --postgres-mode <…> --ds
 
 ### Step 6 — Report & confirm consumption
 Surface the step report (`verify_postgres` → `configure_backend` → `publish_ontology`
-→ `backfill_to_age` → `verify_sparql`). Tell the user the SPARQL URL to consume:
+→ `register_stardog_mirror` (prod) → `backfill_to_age` → `verify_sparql`). Tell the
+user the SPARQL URL to consume:
 - **prod**: `$STARDOG_ENDPOINT/$STARDOG_DATABASE/query`
 - **dev**: the gateway's `GET/POST /api/sparql` (or the Fuseki dataset).
 Confirm the backfill is consistent (`reconcile.nodes_missing == 0`).
+
+### Step 7 — Populate Stardog with INSTANCE DATA (not just the ontology)
+Step 5 pushes the **ontology** (TBox). To also get the KG's **data** — the nodes/edges
+from sources like LeanIX and ServiceNow — Stardog is a first-class SPARQL data backend.
+Data is partitioned into `urn:source:<system>` named graphs so each source is a slice
+you can push, query, or re-ingest on its own. Two modes (use both):
+
+- **Continuous (live mirror):** the prod profile registers Stardog as a
+  `role="mirror"` connection by default, so under `GRAPH_BACKEND=tiered` every KG write
+  — including each source sync — fans out into Stardog. (Set `--no-mirror-data` /
+  `mirror_data_to_stardog=false` to publish only the ontology.) Backfill existing data
+  with `graph_configure(action="reconcile")`.
+- **On-demand** via `graph_configure` (REST twin: `POST /graph/configure`):
+  - `action="push_to_stardog"`, `config_value='{"sources":["leanix","servicenow"]}'`
+    (omit `sources` to push everything) — writes nodes/edges into their named graphs.
+  - `action="stardog_sparql"`, `config_value='{"query":"SELECT ?s ?p ?o WHERE { GRAPH <urn:source:leanix> { ?s ?p ?o } } LIMIT 25"}'`
+    — run any SPARQL SELECT/ASK/CONSTRUCT/UPDATE.
+  - `action="pull_from_stardog"`, `config_value='{"source":"leanix"}'` — re-ingest a
+    named graph back into the KG.
+
+Reuses the same `STARDOG_*` credentials from Step 1; no new env flags.
 
 ## Notes
 - No new environment flags are introduced — every key (`GRAPH_DB_URI`, `GRAPH_PG_AGE`,
