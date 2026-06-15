@@ -109,8 +109,16 @@ state around it.
 Report the final state: profile, config path, SPARQL URL, gateway URL, and any doctor
 findings the operator still needs to resolve.
 
+### Step 9 — Enterprise data sources (optional) → delegate to `leanix-integration`
+If the org runs an EA system-of-record (SAP LeanIX), wire it in **after** the runtime
+is verified: run the **`leanix-integration`** skill to discover the LeanIX metamodel
+as OWL, mirror every fact sheet into the KG, schedule delta sync, and (optionally)
+enable fail-closed backfeed. It needs only `LEANIX_URL`/`LEANIX_TOKEN` + a reachable
+graph-os. Skip when there is no LeanIX tenant.
+
 ## Notes
 - No new env flags — `setup-config` operates over the existing AgentConfig schema.
 - Single-purpose delegation: this skill orchestrates; databases live in
   `database-environment-setup`, swarm in `agent-os-genesis` (`day0`), secrets in
-  `secret-vault-manager`. Full narrative: agent-utilities `docs/guides/self-setup.md`.
+  `secret-vault-manager`, EA/LeanIX data-source onboarding in `leanix-integration`.
+  Full narrative: agent-utilities `docs/guides/self-setup.md`.
