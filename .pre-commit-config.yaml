@@ -123,3 +123,11 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+- repo: local
+  hooks:
+  - id: check-atomicity
+    name: atomicity edict (atomic skills + dual-mode workflows)
+    entry: python scripts/check_atomicity.py
+    language: system
+    pass_filenames: false
+    always_run: true

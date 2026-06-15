@@ -233,3 +233,11 @@ Both pipelines share downstream tools: `comparative-analysis`, `sdd-implementer`
 - [comparative-analysis](../comparative-analysis/SKILL.md) — Feature extraction
 - [x-assistant guide](../../../../agent-utilities/docs/guides/x-assistant.md) — X tools
 - [knowledge-assimilation guide](../../../../agent-utilities/docs/guides/knowledge-assimilation.md) — MCP pattern
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — scout; Step 1 — classify; Step 2 — ingest; Step 3 — analyze; Step 4 — plan
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

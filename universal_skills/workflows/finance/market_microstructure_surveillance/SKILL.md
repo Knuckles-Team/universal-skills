@@ -94,3 +94,15 @@ report flagging toxic/stealth windows. The OWL bridge reasons over the new node
 transitively (grounded_in / supports) so the finding participates in cross-domain
 inference. Reuse the `kg-report-persister` atomic skill for the write.
 Expected: `surveillance-signal-node`, `surveillance-report`
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — pull-order-flow
+- **After level 0:** Step 1 — compute-surveillance
+- **After level 1:** Step 2 — backtest-priors
+- **After level 2:** Step 3 — evaluate-posture
+- **After level 3:** Step 4 — persist-report
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

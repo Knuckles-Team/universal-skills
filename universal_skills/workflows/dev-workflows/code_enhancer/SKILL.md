@@ -113,3 +113,15 @@ Expected: `kg_persistence_artifacts`
 - Unified multi-domain codebase enhancement audit report in `.specify/`
 - Prioritized TODO checklist and SDD-ready implementation specification
 - Nodes and edges persisted to Knowledge Graph representing code quality and compliance status
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — Detect Language
+- **After level 0:** Step 2 — Project Analysis; Step 3 — Run Linters; Step 4 — Run Tests
+- **After level 1:** Step 5 — Deep Code Analysis; Step 6 — Security Analysis; Step 7 — Documentation Audit; Step 8 — Concept Traceability Audit; Step 9 — User Interface Analysis
+- **After level 2:** Step 10 — Generate Report
+- **After level 3:** Step 11 — KG Persistence
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -1,5 +1,8 @@
 ---
-name: legal_compliance_review
+name: legal-compliance
+description: 'Review legal and regulatory compliance: research applicable regulations, analyze
+  contracts and policies, and check compliance. Use for legal compliance and regulatory
+  review tasks.'
 domain: ops
 agent: legal_compliance_coordinator
 team_config:
@@ -65,3 +68,11 @@ a summary report with recommendations for human review.
 
 ## Human Oversight Required
 ✅ All final legal decisions require human approval.
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — Legal Research; Step 1 — Contract Analysis; Step 2 — Compliance Validation; Step 3 — KG Persistence; Step 4 — Human Escalation
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

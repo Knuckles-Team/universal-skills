@@ -144,3 +144,11 @@ Present the deployment summary dashboard to the user:
 - Next steps: run `full_infrastructure_discovery` to populate detailed container metrics
 Expected: deployment_report, user_acknowledgment
 Depends On: Step 8
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — user-interaction; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — portainer-mcp; Step 4 — technitium-dns-mcp; Step 5 — portainer-mcp; Step 6 — portainer-mcp; Step 7 — technitium-dns-mcp; Step 8 — graph-os; Step 9 — user-interaction
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -1,5 +1,53 @@
 # AGENTS.md
 
+## ⭐ The Atomicity Edict — every skill is atomic; a skill-workflow is only a grouping (READ FIRST)
+
+This is the governing rule of this repository. Every other convention below is an
+application of it.
+
+- **Every skill is ATOMIC.** A skill has exactly **one purpose, one trigger surface,
+  one primary capability**. Its `SKILL.md` body describes that single capability and
+  nothing more. An atomic skill **must not** contain a multi-step orchestration — no
+  numbered `### Step N:` sequence, no `depends_on`, no "first do A, then B, then C"
+  pipeline. If a capability needs ordered/parallel stages, it is **not a skill — it is
+  a skill-workflow.**
+
+- **A skill-workflow is PURELY the grouping of atomic skills.** It lives in
+  `universal_skills/workflows/<domain>/<name>/` and is a topological DAG whose every
+  step **references an existing atomic skill** (or a single MCP tool) by name, declares
+  its `depends_on`, and carries **no inline business logic of its own**. The workflow
+  decides *ordering and composition*; the atomic skills it names do the *work*.
+
+- **Claude-compatible is mandatory** (for both skills and workflows). Each is a
+  `SKILL.md` directory with valid frontmatter — `name` kebab-case **== directory
+  name**; `description` ≤ 1024 chars, trigger-oriented, and **self-sufficient without
+  the body** (agents route on the description alone). It must install cleanly to
+  `~/.claude/skills/` via `skill-installer`.
+
+- **Skill-workflows are dual-mode: one DAG, two executors.** The `depends_on` DAG (+
+  `references/team.yaml`) is the single source of truth. From it, a workflow's
+  `SKILL.md` body MUST also render a **Claude-executable layer** — an `## Execution`
+  section stating, per step, what runs **in parallel** vs **after** (so an agent with
+  no DAG engine executes it via its own parallel tool-calls / subagents, invoking the
+  named atomic skills in dependency order) — and end with the standard **delegation
+  footer**:
+
+  > **Execution:** If graph-os is reachable, offload the whole DAG via
+  > `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill)
+  > for true parallel/swarm execution. Otherwise execute the steps natively in
+  > dependency order: run steps with no unmet `depends_on` in parallel, then their
+  > dependents.
+
+  The machine layer (frontmatter DAG + `team.yaml`) drives the agent-utilities graph-os
+  orchestrator unchanged; the rendered `## Execution` layer is what lets Claude (or any
+  agent) run the *same* workflow natively. `scripts/check_atomicity.py` enforces both.
+
+- **Enforcement.** `python scripts/check_atomicity.py` is a pre-commit/CI gate: it
+  **fails** on an atomic skill that hides a multi-step DAG, and validates that
+  workflows carry the dual-mode layers and reference resolvable atomic skills. Author
+  new skills with `skill-builder` (atomic) and new workflows with
+  `skill-workflow-builder` (which scaffolds both layers).
+
 ## Tech Stack & Architecture
 - **Language**: Python 3.10+
 - **Architecture**: A modular library of "Universal Skills". Each skill is a self-contained directory containing instructions (`SKILL.md`) and implementation scripts (`scripts/`).

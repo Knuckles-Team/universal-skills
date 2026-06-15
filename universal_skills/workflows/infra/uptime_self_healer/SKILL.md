@@ -44,3 +44,11 @@ Depends On: Step 4
 ### Step 6: user-interaction
 Deliver the final uptime status validation report showing the successful self-healing and recovery timeline.
 Depends On: Step 5
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — uptime-kuma-agent; Step 1 — user-interaction; Step 2 — container-manager-mcp; Step 3 — portainer-agent; Step 4 — container-manager-mcp; Step 5 — uptime-kuma-agent; Step 6 — user-interaction
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

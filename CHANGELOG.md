@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **The Atomicity Edict (AGENTS.md / STANDARDS.md).** Governing rule: every skill is
+  atomic (one purpose / trigger / capability); a skill-workflow is purely the
+  topological grouping of atomic skills. Skill-workflows are **dual-mode** — one
+  `depends_on` DAG (machine layer for the graph-os orchestrator) plus a rendered
+  Claude-executable `## Execution` layer (parallel/after groups) and a graph-os
+  delegation footer, so the same workflow runs under Claude *or* graph-os.
+- **`scripts/check_atomicity.py` gate** (wired into pre-commit): errors on
+  swarm-blocks inside atomic skills, missing/over-long descriptions, workflow DAG
+  cycles; advisory on workflow-in-disguise skills (delegating to other atomic
+  skills), dual-mode gaps, name≠dir, and flatten-to-Claude name collisions.
+
+### Changed
+- **Dual-mode retrofit of all 317 skill-workflows** — each now carries a
+  Claude-executable `## Execution` section (parallel groups computed from its DAG)
+  + delegation footer, making every workflow installable to and runnable by Claude.
+- **`infrastructure-orchestrator` and `agent-os-deployment`** converted from
+  atomic skills (they delegated to other atomic skills) into dual-mode
+  skill-workflows under `workflows/infra/`.
+- **`build_workflow.py validate`** now resolves name-based `depends_on` (slug-matched
+  to step components), not just numeric `Step N` references.
+- Renamed 3 mis-named `docs/` skill dirs (`subagent-driven-development`,
+  `security-threat-model`, `frontend-design`) to avoid flatten-to-Claude collisions.
+
 - **`integration/agent-utilities-source-integration` skill.** One source-parameterized skill that
   drives end-to-end source onboarding into the KG: unified `graph_writeback`, bidirectional
   ServiceNow/ERPNext (CMDB/ERP) sync, and inventory push — replacing the prior per-source

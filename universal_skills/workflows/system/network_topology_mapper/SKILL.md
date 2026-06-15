@@ -69,3 +69,15 @@ Expected: `visualize_artifacts`
 - Network Topology Mapper results persisted in KG
 - Structured report (MD/PDF)
 - Audit trail with timestamps and agent attributions
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — Scan Hosts
+- **After level 0:** Step 2 — Trace Routes
+- **After level 1:** Step 3 — Build Graph
+- **After level 2:** Step 4 — Kg Ingest
+- **After level 3:** Step 5 — Visualize
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

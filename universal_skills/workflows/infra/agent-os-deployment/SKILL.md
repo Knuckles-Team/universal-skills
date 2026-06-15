@@ -1,12 +1,35 @@
 ---
 name: agent-os-deployment
 description: >-
-  Scale-agnostic enterprise deployment and recovery workflow for Agent OS.
-  Scans Ansible inventory.yml/yaml files, ingests workspace.yml repositories, bootstraps
-  multi-node systems using tunnel-manager SSH mesh, deploys core infrastructure (Vault, DNS, Ingress, SSO),
-  and transitions services to Caddy & Technitium.
+  Scale-agnostic enterprise deployment and recovery workflow for Agent OS — a
+  grouping of atomic skills. Scans Ansible inventory.yml/yaml files, ingests
+  workspace.yml repositories, bootstraps multi-node systems using a tunnel-manager
+  SSH mesh, deploys core infrastructure (Vault, DNS, Ingress, SSO), and transitions
+  services to Caddy & Technitium. Use to bootstrap, recover, migrate, or scale Agent
+  OS across homelab or enterprise clusters.
 license: MIT
+domain: infra
+agent: agent_os_deployment_coordinator
+team_config:
+  name: agent_os_deployment_team
+  task_pattern: discover hosts, migrate DNS, seed GitOps, and roll out the swarm fleet
+  execution_mode: dag
+  specialist_ids:
+    - network-topology-sweep
+    - hardware-profile-sweep
+    - dns-migration-utility
+    - dns-record-manager
+    - gitlab-repository-seeder
+    - portainer-sync-agent
+  tool_assignments:
+    network-topology-sweep: [tunnel-manager-mcp, systems-manager-mcp]
+    hardware-profile-sweep: [systems-manager-mcp, tunnel-manager-mcp]
+    dns-migration-utility: [systems-manager-mcp]
+    dns-record-manager: [technitium-dns-mcp]
+    gitlab-repository-seeder: [gitlab-mcp]
+    portainer-sync-agent: [portainer-mcp]
 tags: [agent-os, bootstrap, deployment, scale, dns, gitops, discovery, vault, ssh-mesh]
+concept: CONCEPT:OS-5.3
 metadata:
   author: Genius
   version: '1.0.0'
@@ -121,6 +144,26 @@ principal via Eunomia. See the **Central MCP Multiplexer** runbook below.
 - Requires: `keycloak` reachable, `caddy` ingress live, the `*-mcp` fleet deployed.
 - Output: `mcp-multiplexer.arpa` serving, rejecting unauthenticated requests (401),
   accepting `claude-code` client_credentials tokens.
+
+---
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on`
+run in parallel; dependents run after their prerequisites complete. Steps 1–6 each
+invoke the named atomic skill; Step 7 follows the Central MCP Multiplexer runbook below.
+
+- **Run first:** Step 1 — network-topology-sweep
+- **After Step 1 (in parallel):** Step 2 — hardware-profile-sweep; Step 3 — dns-migration-utility
+- **After (in parallel):** Step 4 — dns-record-manager (after Step 3); Step 5 — gitlab-repository-seeder (after Step 2)
+- **After Step 5:** Step 6 — portainer-sync-agent
+- **After Step 6:** Step 7 — mcp-multiplexer-deployment
+
+**Execution:** If graph-os is reachable, offload the whole DAG via
+`graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill)
+for true parallel/swarm execution. Otherwise execute the steps natively in
+dependency order: run steps with no unmet `depends_on` in parallel, then their
+dependents.
 
 ---
 
@@ -285,10 +328,10 @@ dig @10.0.0.199 my-service.arpa +short
 curl -sf -o /dev/null -H "Host: my-service.arpa" http://10.0.0.12
 
 # Check Node Cluster state via Systems Manager
-python /path/to/universal_skills/universal_skills/infra/agent-os-deployment/scripts/verify_cluster.py
+python /path/to/universal_skills/universal_skills/workflows/infra/agent-os-deployment/scripts/gitops_sync.py --verify
 ```
 
 ## References
 - [infrastructure-orchestrator](../infrastructure-orchestrator/SKILL.md) — Platform deployment and discovery
-- [mcp-client](../../agent-tools/mcp-client/SKILL.md) — Universal MCP connection logic
-- [workspace-manager](../../../core/workspace-manager/SKILL.md) — Workspace configurations
+- [mcp-client](../../../agent-tools/mcp-client/SKILL.md) — Universal MCP connection logic
+- [workspace-manager](../../../sdd/workspace-manager/SKILL.md) — Workspace configurations

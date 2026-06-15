@@ -385,3 +385,24 @@ Assert the realized end-state (CONCEPT:OS-5.32 / OS-5.23):
   `McpServiceDown`/`McpProbeFailed` to Mattermost.
 - Requires: `portainer-mcp`, `systems-manager-mcp`
 - Expected: `auth-enforced, multiplexer-reachable, metrics-live, dashboards-populated, alerts-firing`
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — deployment-profile; Step 1 — ssh-bootstrap
+- **After level 0:** Step 2 — network-topology-sweep; Step 3 — hardware-profile-sweep
+- **After level 1:** Step 4 — deployment-planner
+- **After level 2:** Step 5 — swarm-mesh-provisioner
+- **After level 3:** Step 6 — node-labeling
+- **After level 4:** Step 7 — core-edge-deploy
+- **After level 5:** Step 8 — secret-vault-manager
+- **After level 6:** Step 9 — gitlab-repository-seeder
+- **After level 7:** Step 10 — portainer-gitops-bind
+- **After level 8:** Step 11 — tiered-service-deploy
+- **After level 9:** Step 12 — dns-record-manager
+- **After level 10:** Step 13 — keycloak-oidc-wiring
+- **After level 11:** Step 14 — observability-and-backups
+- **After level 12:** Step 15 — graph-os
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -2,6 +2,23 @@
 
 This document defines the mandatory structure and metadata for all skills in the `universal-skills` package. Adhering to these standards ensures consistency, discoverability, and optimal performance across all agents.
 
+## 0. The Atomicity Edict (governing rule)
+
+Every standard below is an application of one rule (see `AGENTS.md` for the full text):
+
+- **Every skill is atomic** — one purpose, one trigger surface, one primary capability.
+  An atomic skill's `SKILL.md` body contains **no** multi-step orchestration (no
+  numbered `### Step N:` sequence, no `depends_on`). Ordered/parallel stages mean it is
+  a **skill-workflow**, not a skill.
+- **A skill-workflow is purely the grouping of atomic skills** — it lives in
+  `universal_skills/workflows/<domain>/<name>/`, and each step references an existing
+  **atomic skill** (or a single MCP tool) with `depends_on`; it adds no inline logic.
+- **Skill-workflows are dual-mode** — the `depends_on` DAG (+ `references/team.yaml`)
+  is the single source of truth, and the body also renders a Claude-executable
+  `## Execution` section (parallel-vs-after) plus the standard graph-os delegation
+  footer, so the same workflow runs under Claude OR the graph-os orchestrator.
+- Enforced by `scripts/check_atomicity.py` (pre-commit/CI gate).
+
 ## 1. Directory Structure
 
 Each skill must reside in its own directory under `universal_skills/skills/`.

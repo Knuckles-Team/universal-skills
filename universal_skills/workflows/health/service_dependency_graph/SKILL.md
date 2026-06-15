@@ -65,3 +65,14 @@ Expected: `kg_ingest_artifacts`
 
 ## Human Oversight Required
 ✅ Critical decisions require human review and approval.
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — Scan All Containers
+- **After level 0:** Step 2 — Extract Env Vars
+- **After level 1:** Step 3 — Build Dep Graph
+- **After level 2:** Step 4 — Kg Ingest
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

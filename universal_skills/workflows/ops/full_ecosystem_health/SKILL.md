@@ -72,3 +72,12 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 ## Human Oversight Required
 ✅ Critical decisions require human review and approval.
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — Systems Manager; Step 1 — Container Manager Mcp; Step 2 — Langfuse Mcp; Step 3 — Repository Manager Mcp
+- **After level 0:** Step 4 — KG Persistence
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
