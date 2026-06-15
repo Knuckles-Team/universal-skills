@@ -116,7 +116,13 @@ on a disabled integration is skipped and reported.
 ### Step 0: deployment-profile
 Present the profile + integration questionnaire and resolve the run plan. Read a
 default from `~/.config/agent-utilities/inventory.yaml` (`deployment_profile`) if
-present, else ask.
+present, else ask. The repo's **`genesis.yaml`** (root of agent-utilities) is the
+machine-readable manifest for this run — profiles, host preflight, the MCP `servers`
+fleet (it references `deploy/mcp-fleet.registry.yml`), UI `components`, and
+`ide_targets`. Loop it rather than hard-coding. Before touching hosts, run the host
+preflight: `agent-utilities-doctor --preflight --profile enterprise` (or MCP
+`graph_configure action=preflight config_key=enterprise`) — **no Rust needed** (the
+engine ships as a wheel); Docker/Swarm are required at this tier.
 - Outputs: `deployment_profile` ∈ {tiny, single-node-prod, enterprise}; integration toggles {pggraph, kafka, openbao, keycloak, langfuse}
 - Expected: `profile-selected` — gates every subsequent step.
 

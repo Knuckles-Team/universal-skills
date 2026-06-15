@@ -31,20 +31,86 @@ try:
 except ImportError:
     skill_graph_utilities = None
 
-# Standard skill paths for various tools
-TOOL_PATHS = {
-    "windsurf": Path("~/.codeium/windsurf/skills").expanduser(),
-    "claude": Path("~/.claude/skills").expanduser(),
-    "openclaw": Path("~/.openclaw/skills").expanduser(),
-    "opencode": Path("~/.config/opencode/skills").expanduser(),
-    "antigravity": Path("~/.gemini/antigravity/skills").expanduser(),
-}
+
+def get_tool_paths() -> dict:
+    """Return per-tool skill-install directories, OS-aware.
+
+    Kept in parity with the mcp-installer's tool set so a single bootstrap can
+    install both skills and MCP config into every agent tool a host has. Each
+    value is the *skills* directory for that tool; ``detect_present_tools()``
+    decides which of these to write to in ``--all-detected`` mode.
+    """
+    is_windows = sys.platform == "win32"
+    is_mac = sys.platform == "darwin"
+    home = Path("~").expanduser()
+
+    paths = {
+        "windsurf": home / ".codeium" / "windsurf" / "skills",
+        "claude": home / ".claude" / "skills",
+        "openclaw": home / ".openclaw" / "skills",
+        "antigravity": home / ".gemini" / "antigravity" / "skills",
+        "codex": home / ".codex" / "skills",
+        "devin": home / ".devin" / "skills",
+        "cursor": home / ".cursor" / "skills",
+    }
+
+    # OpenCode
+    if is_windows:
+        appdata = Path(os.environ.get("APPDATA", "~\\AppData\\Roaming")).expanduser()
+        paths["opencode"] = appdata / "opencode" / "skills"
+        paths["zed"] = appdata / "Zed" / "skills"
+    else:
+        paths["opencode"] = home / ".config" / "opencode" / "skills"
+        paths["zed"] = home / ".config" / "zed" / "skills"
+
+    # Agent Utilities / Agent Terminal UI (shared config dir)
+    if is_windows:
+        localappdata = Path(
+            os.environ.get("LOCALAPPDATA", "~\\AppData\\Local")
+        ).expanduser()
+        agent_utils_path = localappdata / "agent-utilities" / "skills"
+    elif is_mac:
+        agent_utils_path = (
+            home / "Library" / "Application Support" / "agent-utilities" / "skills"
+        )
+    else:
+        agent_utils_path = home / ".config" / "agent-utilities" / "skills"
+    paths["agent-utilities"] = agent_utils_path
+    paths["agent-terminal-ui"] = agent_utils_path
+
+    return paths
+
+
+# Standard skill paths for various tools (OS-aware; parity with mcp-installer).
+TOOL_PATHS = get_tool_paths()
 
 # Workspace-specific skill paths (relative to workspace root)
 WORKSPACE_PATHS = {
     "antigravity": Path(".agent/skills"),
     "default": Path(".agent/skills"),
 }
+
+
+def detect_present_tools() -> dict:
+    """Return the subset of TOOL_PATHS whose tool is actually installed.
+
+    A tool counts as present when the parent of its skills directory exists
+    (e.g. ``~/.claude`` for Claude Code). This keeps ``--all-detected`` from
+    materialising skill folders for tools the host doesn't have. Duplicate
+    destinations (agent-utilities/agent-terminal-ui share a dir) are collapsed.
+    """
+    present: dict = {}
+    seen: set = set()
+    for tool, skills_dir in TOOL_PATHS.items():
+        marker = skills_dir.parent
+        if not marker.exists():
+            continue
+        resolved = str(skills_dir)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        present[tool] = skills_dir
+    return present
 
 
 def get_source_paths(
@@ -152,11 +218,7 @@ def install_skills(
         src_abs = skill_src.resolve()
 
         # Idempotent: an already-correct symlink needs no work (even without --force).
-        if (
-            symlink
-            and skill_dst.is_symlink()
-            and skill_dst.resolve() == src_abs
-        ):
+        if symlink and skill_dst.is_symlink() and skill_dst.resolve() == src_abs:
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
@@ -195,7 +257,19 @@ def main():
         description="Install universal-skills into agent tools"
     )
     parser.add_argument(
-        "--tool", help="Target tool (windsurf, claude, openclaw, opencode, antigravity)"
+        "--tool",
+        help=("Target tool: " + ", ".join(sorted(TOOL_PATHS)) + "."),
+    )
+    parser.add_argument(
+        "--all-detected",
+        action="store_true",
+        help="Install into every agent tool detected on this host (skips absent tools).",
+    )
+    parser.add_argument(
+        "--all",
+        dest="all_tools",
+        action="store_true",
+        help="Install into every known tool path whether or not it is detected.",
     )
     parser.add_argument("--path", help="Explicit custom path to install skills into")
     parser.add_argument(
@@ -230,6 +304,35 @@ def main():
 
     args = parser.parse_args()
 
+    skill_names = args.skills.split(",") if args.skills else None
+
+    # Fan-out modes: install into many tool dirs in one shot.
+    if args.all_detected or args.all_tools:
+        targets = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
+        if not targets:
+            print(
+                "No agent tools detected on this host. Use --tool/--path to target one "
+                "explicitly, or --all to install into every known path.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        # Collapse duplicate destinations (e.g. agent-utilities/agent-terminal-ui).
+        seen: set = set()
+        for tool, target in targets.items():
+            if str(target) in seen:
+                continue
+            seen.add(str(target))
+            logger.info(f"→ {tool}: {target}")
+            install_skills(
+                target,
+                skill_names,
+                args.group,
+                args.force,
+                args.install_skill_graphs,
+                symlink=args.symlink,
+            )
+        return
+
     if args.path:
         target = Path(args.path).expanduser()
     elif args.tool:
@@ -244,10 +347,11 @@ def main():
             rel_path = WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
             target = root / rel_path
     else:
-        print("Error: Either --tool or --path must be specified.", file=sys.stderr)
+        print(
+            "Error: one of --tool / --path / --all-detected / --all must be specified.",
+            file=sys.stderr,
+        )
         sys.exit(1)
-
-    skill_names = args.skills.split(",") if args.skills else None
 
     install_skills(
         target,

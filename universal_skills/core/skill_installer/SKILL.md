@@ -24,11 +24,22 @@ agent tools — by **copy** (default) or by **symlink** (`--symlink`).
 
 ## Supported Tools
 
-- **Windsurf**: `~/.codeium/windsurf/skills/`
+OS-aware; in parity with the `mcp-installer` tool set so one bootstrap can wire both
+skills and MCP config into every agent tool a host has.
+
 - **Claude Code**: `~/.claude/skills/`
-- **OpenClaw**: `~/.openclaw/skills/`
+- **Claude Desktop / agent-utilities / agent-terminal-ui**: `~/.config/agent-utilities/skills/`
+- **Windsurf**: `~/.codeium/windsurf/skills/`
 - **OpenCode**: `~/.config/opencode/skills/`
-- **Antigravity**: `~/.agents/skills/`
+- **OpenClaw**: `~/.openclaw/skills/`
+- **Antigravity**: `~/.gemini/antigravity/skills/`
+- **Codex**: `~/.codex/skills/`
+- **Devin**: `~/.devin/skills/`
+- **Cursor**: `~/.cursor/skills/`
+- **Zed**: `~/.config/zed/skills/`
+
+Use **`--all-detected`** to install into *every* tool present on the host in one shot
+(absent tools are skipped), or `--all` for every known path.
 
 ## Tools
 
@@ -43,7 +54,9 @@ pip install skill-graphs
 ```
 
 #### Arguments
-- `--tool`: The target tool to install into (windsurf, claude, openclaw, opencode, antigravity, or a custom path).
+- `--tool`: The target tool to install into (claude, claude-desktop, windsurf, opencode, openclaw, antigravity, codex, devin, cursor, zed, agent-utilities, agent-terminal-ui, or a custom path).
+- `--all-detected`: Install into every agent tool detected on this host (skips absent tools). Best for a one-command bootstrap.
+- `--all`: Install into every known tool path whether or not it is detected.
 - `--skills`: (Optional) Comma-separated list of skill names to install. Defaults to all.
 - `--force`: (Optional) Overwrite existing skills.
 - `--symlink` / `--link`: (Optional, **recommended**) Symlink skills to the installed package instead
@@ -54,6 +67,9 @@ pip install skill-graphs
 ```bash
 # symlink all skills into Claude Code (recommended)
 python install.py --tool claude --symlink
+
+# symlink all skills into EVERY agent tool present on the host (one-command bootstrap)
+python install.py --all-detected --symlink
 ```
 
 #### Examples

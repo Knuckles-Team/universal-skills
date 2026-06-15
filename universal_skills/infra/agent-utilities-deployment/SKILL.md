@@ -49,7 +49,28 @@ swarm bootstrap.
 | **single-node-prod** | one durable host | Postgres/pg-age, optional OpenBao/Langfuse |
 | **enterprise** | multi-node fleet | swarm, Postgres, Kafka, Keycloak, observability |
 
+## Data source
+
+The repo's **`genesis.yaml`** (root of agent-utilities) is the machine-readable
+manifest for this whole flow: the profiles below, the host preflight, the MCP
+`servers` fleet (with per-profile membership), the optional UI `components`, and the
+`ide_targets` for skill/MCP wiring. Loop it rather than hard-coding lists — it is
+generated from `deploy/mcp-fleet.registry.yml` + the config profiles, so it never
+drifts.
+
 ## Steps
+
+### Step 0 — Preflight the host (before installing anything)
+Confirm the host has the runtimes/tools for the chosen profile + any UI components:
+```
+agent-utilities-doctor --preflight --profile <tiny|single-node-prod|enterprise> [--component agent-webui|geniusbot|agent-terminal-ui]
+# or, remotely over MCP:  graph_configure(action="preflight", config_key="<profile>")
+```
+It returns ok/warn/fail per dependency with a remediation. Key facts: **no Rust is
+needed** (the epistemic-graph engine ships as a prebuilt wheel — Rust is only a
+fallback); Docker is only required above `tiny`; Node+pnpm only for `agent-webui`; a
+Qt display only for `geniusbot`. The one-command `scripts/install.sh` /
+`scripts/install.ps1` runs this step for you.
 
 ### Step 1 — Choose profile & install
 Ask the user (or infer from context) which profile. Install the matching extras:
