@@ -64,7 +64,7 @@ agent-utilities docs (linked in the matrix); this skill is the standard driver.
 | 2. Discover | metamodel → OWL (sources that expose one) | `ontology_leanix_sync` (LeanIX); others use the fixed ArchiMate crosswalk |
 | 3. Mirror | full ingest into the KG | `source_sync {"source":"<X>","mode":"full"}` |
 | 4. Sync | bite-sized delta + deletion reconcile | `source_sync {"source":"<X>","mode":"delta"\|"reconcile"}` + `deploy/schedules.yml` |
-| 5. Backfeed | push KG knowledge back (fail-closed) | `leanix_writeback` (LeanIX) / `graph_analyze process_writeback` (Camunda/ARIS) |
+| 5. Backfeed | push KG knowledge back (fail-closed) | `graph_writeback {"target":"<X>", ...}` (unified) — incl. `inventory:true` to create CMDB CIs / ERP items |
 
 `source_sync` is the **single entrypoint for every source**: LeanIX runs an incremental
 watermark delta; Camunda/ARIS/Egeria route through the materialize core; the rest hydrate
@@ -128,29 +128,40 @@ Schedule in `agent-utilities/deploy/schedules.yml` — `kind: skill`, `ref: <sou
 
 ## Step 5 — Backfeed (optional, fail-closed, dry-run-first)
 
-**LeanIX** — inferred relations / enrichment / new fact sheets:
+All backfeed flows through one tool — `graph_writeback {"target":"<X>", ...}` —
+fail-closed (the target's `*_ENABLE_WRITE` gate) and dry-run by default:
 ```
-graph-os call leanix_writeback {"inferences_json": "[...]", "dry_run": true}   # review proposals
-# set LEANIX_ENABLE_WRITE=true, then dry_run=false
-```
-**Camunda / ARIS** — process intelligence back onto instances/models:
-```
-# set KG_PROCESS_WRITEBACK=1 (and ARIS_ENABLE_WRITE=True for ARIS)
-graph-os call graph_analyze {"action": "process_writeback", "target": "both"}
+# inferred relations / enrichment / new records (preview, then dry_run=false)
+graph-os call graph_writeback {"target":"leanix","inferences_json":"[...]","dry_run":true}
+graph-os call graph_writeback {"target":"servicenow","enrichments_json":"[...]","dry_run":true}
+
+# create the reconciled inventory as CMDB CIs / ERP items
+graph-os call graph_writeback {"target":"servicenow","inventory":true,"dry_run":true}
+
+# Camunda/ARIS process intelligence (target=process)
+graph-os call graph_writeback {"target":"process","dry_run":false}   # needs KG_PROCESS_WRITEBACK
 ```
 
-All backfeed is gated and reversible (inferred links carry a provenance tag). Auto-creating
-records upstream is the highest-risk action — review the dry-run first.
+All backfeed is gated and reversible (inferred links carry a provenance tag). Creating
+records upstream and **retire/reconcile** are the highest-risk actions — review the
+dry-run first; the inventory-push schedule ships disabled.
 
 ## Per-source matrix (depth)
 
-| Source | Discover | Mirror/Sync | Backfeed | Deep doc |
+| Source | Discover | Mirror/Sync | Backfeed (`graph_writeback`) | Deep doc |
 |---|---|---|---|---|
-| **LeanIX** | `ontology_leanix_sync` | `source_sync source=leanix` (watermark delta + reconcile) | `leanix_writeback` (`LEANIX_ENABLE_WRITE`) | `docs/guides/leanix-integration.md` |
-| **Camunda** | crosswalk | `source_sync source=camunda` (materialize) | `graph_analyze process_writeback` (`KG_PROCESS_WRITEBACK`) | `docs/architecture/camunda_aris_kg_integration.md` |
-| **ARIS** | crosswalk | `source_sync source=aris` (materialize) | `process_writeback` (`ARIS_ENABLE_WRITE`) | `docs/architecture/camunda_aris_kg_integration.md` |
+| **LeanIX** | `ontology_leanix_sync` | `source_sync source=leanix` (watermark delta + reconcile) | `target=leanix` (`LEANIX_ENABLE_WRITE`) | `docs/guides/leanix-integration.md` |
+| **ServiceNow** | crosswalk + TRM (cmdb_model/alm_asset) + risk | `source_sync source=servicenow` (materialize) | `target=servicenow` create CIs/enrich/relate/retire + `inventory:true` (`SERVICENOW_ENABLE_WRITE`) | `docs/guides/cmdb-bidirectional-integration.md` |
+| **ERPNext** | crosswalk + Asset/Item/Warehouse + stock | `source_sync source=erpnext` (materialize) | `target=erpnext` create Items/Assets/enrich/retire + `inventory:true` (`ERPNEXT_ENABLE_WRITE`) | `docs/guides/cmdb-bidirectional-integration.md` |
+| **Camunda** | crosswalk | `source_sync source=camunda` (materialize) | `target=process` (`KG_PROCESS_WRITEBACK`) | `docs/architecture/camunda_aris_kg_integration.md` |
+| **ARIS** | crosswalk | `source_sync source=aris` (materialize) | `target=process` (`ARIS_ENABLE_WRITE`) | `docs/architecture/camunda_aris_kg_integration.md` |
 | **Egeria** | crosswalk | `source_sync source=egeria` (materialize) | governed-routing federation | `docs/architecture/...` |
-| **ServiceNow / Twenty / GitLab / Jira / DBs …** | crosswalk | `source_sync source=<X>` (hydration registry) | — | hydration `CAPABILITY_REGISTRY` |
+| **Twenty / GitLab / Jira / DBs …** | crosswalk | `source_sync source=<X>` (hydration registry) | — | hydration `CAPABILITY_REGISTRY` |
+
+**Technology Reference Model + risk.** ServiceNow (cmdb_model/alm_asset), LeanIX
+(ITComponent), and ERPNext (Asset) all map into one vendor-neutral TRM ontology
+(`TechnologyProduct`/`AssetInstance`/`TechnologyRisk`), so the portfolio + lifecycle/EOL
+risk reason together and the inventory push dedupes across them via `ALIGNED_WITH`.
 
 ## Verify end-to-end
 
