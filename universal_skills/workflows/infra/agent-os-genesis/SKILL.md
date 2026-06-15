@@ -105,7 +105,7 @@ the remaining steps so the same workflow scales from a laptop to a full swarm:
 |---|---|---|
 | **tiny** | One host, **zero external infra** — the KG runs in-process. | Step 0 → Step A1 only (collapses to `agent-utilities/scripts/bootstrap.sh`). |
 | **single-node-prod** | One host, durable: Postgres/pggraph KG + gateway + the `single-node-prod` connector slice + Caddy; optional OpenBao/Langfuse. No swarm. | Step 0, a Caddy/Portainer subset of Step 7, Step 8 (OpenBao optional), Steps A1–A4. |
-| **enterprise** | Full multi-node swarm + all integrations + the entire `*-mcp` fleet. | All steps (1–15 + A1–A4). |
+| **enterprise** | Full multi-node swarm + all integrations + the entire `*-mcp` fleet. | All steps (1–16 + A1–A6). |
 
 Each integration is an independent toggle gathered in Step 0 —
 `pggraph`, `kafka`, `openbao`, `keycloak`, `langfuse` — and any step that depends
@@ -216,15 +216,22 @@ stacks (`apache-jena`/Fuseki, `camunda`, `archimate`, `kafka`) as health-gated c
 - Requires: `portainer-mcp`, `container-manager-mcp`
 - Expected: `services-deployed, deferred-report`
 
-### Step 12: dns-record-manager
-[depends_on: Step 11]
+### Step 12: dns-migration-utility
+[depends_on: Step 11] (conditional: only when migrating from a legacy resolver — AdGuard Home, Pi-hole, bind9, dnsmasq)
+Extract, clean, and convert legacy resolver configurations into unified A/CNAME records before the
+authoritative cutover. Skip on greenfield installs with no legacy DNS to import.
+- Requires: `systems-manager-mcp`
+- Expected: `legacy-dns-normalized` (or `skipped-greenfield`)
+
+### Step 13: dns-record-manager
+[depends_on: Step 12]
 Apply the DNS policy in Technitium: wildcard `*.arpa` → `10.0.0.13`, explicit `portainer` → `10.0.0.13`,
 preserve intentional direct records (`adguard`→.199, `home-assistant`, per-node agents). Verify resolution.
 - Requires: `technitium-dns-mcp`
 - Expected: `dns-synced`
 
-### Step 13: keycloak-oidc-wiring
-[depends_on: Step 12]
+### Step 14: keycloak-oidc-wiring
+[depends_on: Step 13]
 Register OIDC SSO clients in Keycloak for SSO-enabled services; store their secrets in OpenBao KV2.
 **MCP fleet auth (CONCEPT:OS-5.32):** also create the **`mcp-multiplexer` confidential
 client** (audience `agent-services`) via `keycloak-client-onboarder` and store its secret
@@ -235,8 +242,8 @@ this MUST exist before any MCP enforces jwt.
 - Requires: `keycloak-mcp`, `openbao-mcp` (+ skills `keycloak-client-onboarder`, `eunomia-policy-manager`)
 - Expected: `sso-wired, mcp-multiplexer-client-created, eunomia-baseline-loaded`
 
-### Step 14: observability-and-backups
-[depends_on: Step 13]
+### Step 15: observability-and-backups
+[depends_on: Step 14]
 Stand up the full LGTM observability standard (CONCEPT:OS-5.23) + Borgmatic backups:
 - node-exporter + cAdvisor (global) already give every host + every container metrics.
 - Generate the MCP scrape/probe targets and dashboards from the fleet registry:
@@ -249,8 +256,8 @@ Stand up the full LGTM observability standard (CONCEPT:OS-5.23) + Borgmatic back
 - Requires: `systems-manager-mcp`, `portainer-mcp` (+ skill `service-observability-provisioner`)
 - Expected: `observability-up, mcp-fleet-scraped, dashboards-provisioned, alerts-loaded, backups-scheduled`
 
-### Step 15: graph-os
-[depends_on: Step 14]
+### Step 16: graph-os
+[depends_on: Step 15]
 Materialize the full topology in the Knowledge Graph (`HostNode`, `ContainerStackNode`,
 `PlatformService`, network + placement edges), including the **deferred/skipped report** so missing-image
 services are tracked for later push+validation.
@@ -400,9 +407,10 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 6:** Step 9 — gitlab-repository-seeder
 - **After level 7:** Step 10 — portainer-gitops-bind
 - **After level 8:** Step 11 — tiered-service-deploy
-- **After level 9:** Step 12 — dns-record-manager
-- **After level 10:** Step 13 — keycloak-oidc-wiring
-- **After level 11:** Step 14 — observability-and-backups
-- **After level 12:** Step 15 — graph-os
+- **After level 9:** Step 12 — dns-migration-utility (conditional: legacy-resolver migration only)
+- **After level 10:** Step 13 — dns-record-manager
+- **After level 11:** Step 14 — keycloak-oidc-wiring
+- **After level 12:** Step 15 — observability-and-backups
+- **After level 13:** Step 16 — graph-os
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

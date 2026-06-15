@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Collapsed the overlapping deployment skills into one canonical workflow.** `agent-os-deployment` and `infrastructure-orchestrator` were subsets of `agent-os-genesis` (the day0 superset) — folded `dns-migration-utility` into genesis as a conditional Step 12, preserved `migrate_dns.py` into the `dns-migration-utility` atomic skill, and deleted both redundant workflows (No-Legacy). Unified deployment = `agent-utilities-deployment` (tiny/single-node) + `agent-os-genesis` (enterprise), both composed from shared atomic skills.
+
 ### Added
 - **The Atomicity Edict (AGENTS.md / STANDARDS.md).** Governing rule: every skill is
   atomic (one purpose / trigger / capability); a skill-workflow is purely the
