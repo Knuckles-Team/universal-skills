@@ -167,11 +167,12 @@ def check(root: Path) -> tuple[list[str], list[str]]:
                     f"— candidate workflow-in-disguise (triage: split into atomic skills + a workflow)"
                 )
 
-        # --- name == directory ---
+        # --- name == directory (allow snake_case dir for importable-module skills) ---
         name = fm.get("name")
-        if name and name != skill_md.parent.name:
+        dname = skill_md.parent.name
+        if name and name != dname and name.replace("-", "_") != dname:
             warnings.append(
-                f"{rel}: frontmatter name `{name}` != directory `{skill_md.parent.name}`"
+                f"{rel}: frontmatter name `{name}` != directory `{dname}`"
             )
 
         # --- Workflow dual-mode (WARNINGS) ---
