@@ -37,3 +37,8 @@ Parse host names, domains, record types (A, AAAA, CNAME, TXT), and target IP add
 ### Step 3: Format Normalized Export Payload
 Convert the parsed DNS records into a unified, brand-agnostic format for authoritative Technitium zone import:
 - Output lists of type: `{"domain": "service.arpa", "type": "A", "value": "10.0.0.10", "ttl": 3600}`
+
+## Resources
+
+- `scripts/migrate_dns.py` — extracts and normalizes records from legacy resolver configs (AdGuard Home, Pi-hole, bind9, dnsmasq) into the unified A/CNAME export payload for authoritative Technitium import.
+
