@@ -115,6 +115,18 @@ def find_skills_root() -> Path:
     return Path.cwd() / "universal_skills"
 
 
+def _atomic_skill_names(root: Path) -> set[str]:
+    """Directory names of all atomic (non-workflow, non-asset) skills."""
+    names: set[str] = set()
+    wf = f"{root.name}/workflows/"
+    for skill_md in root.rglob("SKILL.md"):
+        s = str(skill_md).replace("\\", "/")
+        if wf in s or "/assets/" in s or "skill_graphs" in s:
+            continue
+        names.add(skill_md.parent.name)
+    return names
+
+
 def check(root: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -122,6 +134,9 @@ def check(root: Path) -> tuple[list[str], list[str]]:
     # directory name shared by two SKILL.md dirs (atomic skill vs workflow, or two
     # workflows) silently clobbers on install. Names must be globally unique.
     seen_names: dict[str, str] = {}
+    # An atomic skill whose steps invoke OTHER atomic skills is a workflow-in-disguise;
+    # an atomic skill whose steps are an internal procedure is fine (one capability).
+    atomic_names = _atomic_skill_names(root)
 
     for skill_md in sorted(root.rglob("SKILL.md")):
         rel = skill_md.relative_to(root.parent)
@@ -161,11 +176,22 @@ def check(root: Path) -> tuple[list[str], list[str]]:
                     f"{rel}: atomic skill contains workflow/swarm block ({', '.join(present)}) "
                     f"— move it to universal_skills/workflows/<domain>/"
                 )
-            elif STEP_DEP_RE.search(body):
-                warnings.append(
-                    f"{rel}: atomic skill uses `### Step N [depends_on]` DAG syntax "
-                    f"— candidate workflow-in-disguise (triage: split into atomic skills + a workflow)"
+            else:
+                # Workflow-in-disguise: an atomic skill whose steps invoke OTHER atomic
+                # skills. Internal-procedure steps (no cross-skill calls) are fine.
+                delegates = sorted(
+                    {
+                        m.group(2)
+                        for m in STEP_RE.finditer(body)
+                        if m.group(2) in atomic_names and m.group(2) != skill_md.parent.name
+                    }
                 )
+                if delegates:
+                    warnings.append(
+                        f"{rel}: atomic skill delegates to other skills "
+                        f"({', '.join(delegates)}) — convert to a skill-workflow "
+                        f"under universal_skills/workflows/<domain>/"
+                    )
 
         # --- name == directory (allow snake_case dir for importable-module skills) ---
         name = fm.get("name")

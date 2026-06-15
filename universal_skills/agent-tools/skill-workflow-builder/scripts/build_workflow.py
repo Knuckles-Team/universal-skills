@@ -178,17 +178,33 @@ def validate_steps_dag(steps: List[Dict]) -> Tuple[bool, List[str]]:
     # Build adjacency list
     adj = {s["step"]: [] for s in steps}
 
+    # Resolve name-based dependencies (e.g. "[depends_on: gitlab-repository-seeder]")
+    # to their step number by matching the slugified component name. This makes the
+    # validator accept the three dependency dialects used across the workflow corpus:
+    # numeric ("Step 2" / "2"), and atomic-skill-name references.
+    def _slug(s: str) -> str:
+        return re.sub(r"[-\s]+", "_", s.strip().lower())
+
+    comp_to_num = {_slug(s["component"]): s["step"] for s in steps}
+
     # Process dependencies
     for s in steps:
         step_num = s["step"]
         for dep in s["depends_on"]:
-            # Parse dependency number (e.g. "Step 0" or "0")
-            dep_match = re.search(r"(\d+)", dep)
-            if not dep_match:
-                errors.append(f"Invalid dependency format in Step {step_num}: '{dep}'")
-                continue
+            # Numeric form first ("Step 0" or "0").
+            dep_match = re.fullmatch(r"(?:step\s*)?(\d+)", dep.strip(), re.IGNORECASE)
+            if dep_match:
+                dep_num = int(dep_match.group(1))
+            else:
+                # Name-based form: match the slugified component name.
+                dep_num = comp_to_num.get(_slug(dep))
+                if dep_num is None:
+                    errors.append(
+                        f"Step {step_num} depends on unresolvable '{dep}' "
+                        f"(not a step number or known step component)"
+                    )
+                    continue
 
-            dep_num = int(dep_match.group(1))
             if dep_num not in step_nums:
                 errors.append(f"Step {step_num} depends on non-existent Step {dep_num}")
                 continue
