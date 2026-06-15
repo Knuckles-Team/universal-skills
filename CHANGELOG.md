@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`integration/agent-utilities-source-integration` skill.** One source-parameterized skill that
+  drives end-to-end source onboarding into the KG: unified `graph_writeback`, bidirectional
+  ServiceNow/ERPNext (CMDB/ERP) sync, and inventory push — replacing the prior per-source
+  integration skills.
+- **`integration/agent-utilities-process-integration` skill.** Sets up bidirectional
+  Camunda + ARIS ↔ Knowledge Graph process integration.
+- **`integration/leanix-integration` skill.** Drives the LeanIX KG mirror / delta / backfeed loop
+  end-to-end (CONCEPT:KG-2.9), delegating deployment to the database/genesis skills.
+- **`agent-os/agent-utilities-deployment` skill.** Full-deployment self-setup that leads with an
+  `agent-utilities-doctor` verify step and delegates to the db/vault/genesis skills.
+- **`agent-os/database-environment-setup` skill.** Stardog + Apache-AGE (pg-age) ontology→SPARQL→
+  consume + backfill provisioning.
+- **`core/code-enhancer` CE-039 baseline-aware gate.** "Fail only on new debt" — diffs findings
+  against a stored baseline so a build breaks only on newly introduced debt, not pre-existing.
+- **`core/code-enhancer` CE-040 minimalism / over-engineering audit domain.** Lazy-first
+  (ponytail-style) detection of speculative abstraction and over-engineering.
+- **`core/code-enhancer` CE-041 security false-positive filter.** Hard-exclusion rules plus an
+  opt-in LLM judge to cut security-scan false positives.
+- **`dev-workflows/c4-architecture` Architecture Decisions mode.** ADR authoring, service
+  decomposition, and a 4-lens decision-reasoning flow grounded in canonical references.
 - **`finance/market_microstructure_surveillance` workflow (CONCEPT:EE-042).** A
   defensive market-surveillance pipeline distilling arXiv:2605.27684: pull a
   trailing order-flow/book window → compute Kyle insider/stealth scores (engine
@@ -39,6 +59,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `core/code-enhancer/scripts/analyze_xdg_kg.py` — XDG Knowledge Graph analysis script for deep code quality integration.
 
 ### Changed
+- **`research/research-scanner`**: now also sweeps open-web & social sources (Hacker News, Reddit,
+  X, YouTube, news, web) via the **PulseLink** MCP alongside arXiv/scholarx (Phase 5).
+- **`core/code-enhancer`**: dependency-fix **apply** + migration intelligence, plus false-positive
+  / rubric tuning; CE-044 analyzer-accuracy fixes (honor gate config, respect `# nosec`, recognize
+  language idioms).
+- **Skill & MCP installers**: maximum IDE coverage with an `--all-detected` fan-out (install into
+  every detected agent tool directory at once).
+- **`agent-os` day-0 skill renamed to `agent-os-genesis`** (alias `day0` retained); skills now
+  reference `genesis.yaml` + a preflight step and document `--all-detected`.
 - **`research/research-scanner`**: Refactored from monolithic `relevance_scanner.py` to an agent-driven workflow. The skill now extracts focus topics from the KG, dynamically builds relevance taxonomies, and orchestrates `scholarx` MCP tools for paper discovery. Updated SKILL.md with step-by-step agentic execution workflow.
 - `core/code-enhancer`: Integrated architectural improvement capabilities (deepening opportunities, conversational review). Added `analyze_xdg_kg.py` script.
 - `core/session-handoff`: Added multi-session handoff management and KG persistence context.
