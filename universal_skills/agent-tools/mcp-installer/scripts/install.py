@@ -73,6 +73,31 @@ def get_tool_paths() -> Dict[str, Path]:
 TOOL_PATHS = get_tool_paths()
 
 
+def detect_present_tools() -> Dict[str, Path]:
+    """Return the subset of TOOL_PATHS whose tool is installed on this host.
+
+    A tool counts as present when the parent directory of its config file
+    exists (e.g. ``~/.codex`` for codex). Claude Code's config is ``~/.claude.json``
+    whose parent is ``$HOME`` (always present), so it is gated on ``~/.claude``.
+    Duplicate destinations (agent-utilities/agent-terminal-ui share a file) are
+    collapsed so the config is merged once.
+    """
+    present: Dict[str, Path] = {}
+    seen: set = set()
+    for tool, cfg in TOOL_PATHS.items():
+        if tool == "claude":
+            marker = Path("~/.claude").expanduser()
+            if not marker.exists() and not cfg.exists():
+                continue
+        elif not cfg.parent.exists():
+            continue
+        if str(cfg) in seen:
+            continue
+        seen.add(str(cfg))
+        present[tool] = cfg
+    return present
+
+
 def load_json(filepath: Path) -> Dict[str, Any]:
     """Load a JSON file, returning an empty dict if it doesn't exist or is empty."""
     if not filepath.exists():
@@ -175,6 +200,17 @@ def main():
         help="Target tool (windsurf, claude, claude-desktop, opencode, antigravity, devin, codex)",
     )
     parser.add_argument(
+        "--all-detected",
+        action="store_true",
+        help="Merge into every agent tool detected on this host (skips absent tools).",
+    )
+    parser.add_argument(
+        "--all",
+        dest="all_tools",
+        action="store_true",
+        help="Merge into every known tool config whether or not it is detected.",
+    )
+    parser.add_argument(
         "--path", help="Explicit custom path to the target configuration file"
     )
     parser.add_argument(
@@ -184,16 +220,36 @@ def main():
     )
 
     args = parser.parse_args()
+    source = Path(args.config).expanduser()
+
+    if args.all_detected or args.all_tools:
+        targets = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
+        if not targets:
+            logger.error(
+                "No agent tools detected on this host. Use --tool/--path, or --all."
+            )
+            sys.exit(1)
+        seen: set = set()
+        failures = 0
+        for tool, target in targets.items():
+            if str(target) in seen:
+                continue
+            seen.add(str(target))
+            logger.info(f"→ {tool}: {target}")
+            if install_mcp_config(source, target, args.force):
+                logger.info(f"Installed MCP configuration to {target}")
+            else:
+                logger.error(f"Failed for {tool} ({target})")
+                failures += 1
+        sys.exit(1 if failures else 0)
 
     if args.path:
         target = Path(args.path).expanduser()
     elif args.tool:
         target = TOOL_PATHS[args.tool.lower()]
     else:
-        logger.error("Either --tool or --path must be specified.")
+        logger.error("One of --tool / --path / --all-detected / --all must be specified.")
         sys.exit(1)
-
-    source = Path(args.config).expanduser()
 
     success = install_mcp_config(source, target, args.force)
     if success:
