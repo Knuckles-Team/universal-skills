@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`finance/market_microstructure_surveillance` workflow (CONCEPT:EE-042).** A
+  defensive market-surveillance pipeline distilling arXiv:2605.27684: pull a
+  trailing order-flow/book window → compute Kyle insider/stealth scores (engine
+  `surveillance_risk`, KG-2.20k) → register + backtest the self-weighting
+  `MicrostructureSignal` (EE-033) → evaluate the legal-risk quoting posture
+  (EE-043) → persist a `SurveillanceSignal` report (KG-2.81). Detection + maker
+  adverse-selection protection only; decision-only, never places orders.
 - **`research/comparative-analysis` — Lightweight Mode + CA→SDD inner loop.** Optimized the skill
   for repeated code-vs-code innovation extraction. New **Innovation Ledger** artifact bridges
   comparative analysis to SDD, plus six self-testing scripts: `pin_source.py` (CA-017, source
