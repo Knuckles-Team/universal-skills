@@ -31,6 +31,7 @@ try:
 except ImportError:
     skill_graph_utilities = None
 
+
 def get_tool_paths() -> dict:
     """Return per-tool skill-install directories, OS-aware.
 
@@ -217,11 +218,7 @@ def install_skills(
         src_abs = skill_src.resolve()
 
         # Idempotent: an already-correct symlink needs no work (even without --force).
-        if (
-            symlink
-            and skill_dst.is_symlink()
-            and skill_dst.resolve() == src_abs
-        ):
+        if symlink and skill_dst.is_symlink() and skill_dst.resolve() == src_abs:
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
@@ -261,9 +258,7 @@ def main():
     )
     parser.add_argument(
         "--tool",
-        help=(
-            "Target tool: " + ", ".join(sorted(TOOL_PATHS)) + "."
-        ),
+        help=("Target tool: " + ", ".join(sorted(TOOL_PATHS)) + "."),
     )
     parser.add_argument(
         "--all-detected",

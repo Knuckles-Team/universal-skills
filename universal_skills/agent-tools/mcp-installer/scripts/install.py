@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -248,7 +248,9 @@ def main():
     elif args.tool:
         target = TOOL_PATHS[args.tool.lower()]
     else:
-        logger.error("One of --tool / --path / --all-detected / --all must be specified.")
+        logger.error(
+            "One of --tool / --path / --all-detected / --all must be specified."
+        )
         sys.exit(1)
 
     success = install_mcp_config(source, target, args.force)
