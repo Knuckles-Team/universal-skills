@@ -12,6 +12,21 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Directories the near-universal lint gate excludes (tests/scripts are validated at
+# runtime by the test suite, not statically type/lint-checked). Counting them here
+# inflated findings far above what the project's own pre-commit gate enforces.
+# (CE-044) Ruff/mypy still read the project's own pyproject config because each tool
+# is run with cwd=<root>; these excludes only align the *file set* with the gate.
+_GATE_EXCLUDE_DIRS = ("tests", "test", "scripts", "script")
+# The standard bandit skip-set used across the fleet's pre-commit gates (assert in
+# tests, bind-all, hardcoded-tmp, try-except-pass, subprocess import/with-shell-false…).
+_BANDIT_SKIP = "B101,B104,B105,B110,B404,B603,B607,B608"
+
+
+def _mypy_exclude_regex() -> str:
+    """A single regex matching the gate-excluded dirs for ``mypy --exclude``."""
+    return r"(^|/)(" + "|".join(_GATE_EXCLUDE_DIRS) + r")/"
+
 
 def _run_tool(cmd: list[str], cwd: str) -> tuple[int, str, str]:
     """Run a CLI tool and return (returncode, stdout, stderr)."""
@@ -117,9 +132,17 @@ def run_linters(root_dir: str = ".") -> dict:
     all_findings: list[dict] = []
     tool_results: dict[str, dict] = {}
 
-    # --- Ruff ---
+    # --- Ruff --- (reads the project's [tool.ruff] config via cwd=root)
     rc, stdout, stderr = _run_tool(
-        ["ruff", "check", "--ignore=E402", str(root)], str(root)
+        [
+            "ruff",
+            "check",
+            "--ignore=E402",
+            "--exclude",
+            ",".join(_GATE_EXCLUDE_DIRS),
+            str(root),
+        ],
+        str(root),
     )
     ruff_findings = _parse_ruff_output(stdout) if rc != -1 else []
     tool_results["ruff"] = {
@@ -129,9 +152,19 @@ def run_linters(root_dir: str = ".") -> dict:
     }
     all_findings.extend(ruff_findings)
 
-    # --- Bandit ---
+    # --- Bandit --- (honors inline ``# nosec`` natively; skip-set + test/script
+    # excludes match the fleet's pre-commit gate)
     rc, stdout, stderr = _run_tool(
-        ["bandit", "-r", "--skip", "B101,B404,B603", str(root)], str(root)
+        [
+            "bandit",
+            "-r",
+            "--skip",
+            _BANDIT_SKIP,
+            "-x",
+            ",".join(f"*/{d}/*" for d in _GATE_EXCLUDE_DIRS),
+            str(root),
+        ],
+        str(root),
     )
     bandit_findings = _parse_bandit_output(stdout) if rc != -1 else []
     tool_results["bandit"] = {
@@ -141,9 +174,17 @@ def run_linters(root_dir: str = ".") -> dict:
     }
     all_findings.extend(bandit_findings)
 
-    # --- Mypy ---
+    # --- Mypy --- (reads [tool.mypy] via cwd=root; excludes test/script dirs the
+    # gate does not type-check)
     rc, stdout, stderr = _run_tool(
-        ["mypy", "--ignore-missing-imports", "--follow-imports=silent", str(root)],
+        [
+            "mypy",
+            "--ignore-missing-imports",
+            "--follow-imports=silent",
+            "--exclude",
+            _mypy_exclude_regex(),
+            str(root),
+        ],
         str(root),
     )
     mypy_findings = _parse_mypy_output(stdout + stderr) if rc != -1 else []

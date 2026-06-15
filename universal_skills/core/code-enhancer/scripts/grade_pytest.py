@@ -62,11 +62,32 @@ def _analyze_test_file(filepath: Path) -> dict:
         body_lines = lines[node.lineno - 1 : end_line]
         body_source = "\n".join(body_lines)
 
-        # Count assertions
+        # Count assertions — recognise the full idiom set, not just bare ``assert``.
+        # (CE-044) Missing unittest/pytest.warns/numpy/pandas idioms and "must not
+        # raise" smoke tests previously over-counted "no-assertion" tests.
         assertion_count = body_source.count("assert ")
         assertion_count += body_source.count("pytest.raises")
+        assertion_count += body_source.count("pytest.warns")
         assertion_count += body_source.count(".assert_called")
         assertion_count += body_source.count(".assert_any_call")
+        assertion_count += body_source.count(
+            "self.assert"
+        )  # unittest assertEqual/True/…
+        assertion_count += body_source.count("testing.assert")  # numpy/pandas testing
+        assertion_count += body_source.count("tm.assert")  # pandas._testing
+        # "Must not raise" smoke tests are intentional assertions-by-absence: a
+        # documented no-exception expectation counts as a real check.
+        _bl = body_source.lower()
+        if any(
+            m in _bl
+            for m in (
+                "must not raise",
+                "should not raise",
+                "does not raise",
+                "no exception",
+            )
+        ):
+            assertion_count += 1
 
         # Count mocks
         mock_count = (

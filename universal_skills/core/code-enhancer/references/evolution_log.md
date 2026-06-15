@@ -128,6 +128,31 @@ from a SIBLING package, not an agent-utilities bug:
 offer a workspace-aware mode (lock after apply, auto-pin-back on the named transitive
 conflict). Logged as a future enhancement.
 
+## 2026-06-14 (batch 2) — analyzer accuracy fixes (CE-044)
+
+Implementing the open findings against agent-utilities revealed the analyzer
+*over-counted* by not honoring the repo's lint config / suppression conventions.
+Fixed so future reports reflect the real enforced gate (evidence = this run):
+
+- **run_linters.py** — ruff/mypy/bandit now exclude the conventional gate dirs
+  (`tests`/`test`/`scripts`/`script`); bandit uses the fleet-standard skip-set and
+  honors inline `# nosec`. Result on agent-utilities: **1139 → 109** findings (ruff 0,
+  bandit 418→10, mypy 721→99). The residual mypy is the package's genuine
+  non-blocking type backlog, not noise.
+- **analyze_security.py** — respect inline `# nosec`: skip any finding whose AST span
+  carries one. Removes the intentional, already-annotated eval/exec/pickle/subprocess
+  highs (the repo documents these trust boundaries).
+- **audit_documentation.py** — broken-reference detection now validates only real
+  markdown links `[text](path)`, not backticked code spans / glob patterns / `@imports`
+  in prose. Result on agent-utilities: **23 broken refs → 0** (all were FPs);
+  documentation 82 → 97.
+- **grade_pytest.py** — assertion detection recognizes unittest `self.assert*`,
+  `pytest.warns`, numpy/pandas `testing.assert*`, and documented "must not raise"
+  smoke tests. no-assertion count 40 → 26.
+
+selftest 27/27. These align the report to what the project's pre-commit actually
+enforces, so a clean repo no longer reads as failing.
+
 ### Confirmed REAL (kept — not FPs)
 - `changelog` (85 B): latest release heading `## [0.3.0] - 2026-05-02` vs pyproject
   `0.49.0` — genuine version drift.

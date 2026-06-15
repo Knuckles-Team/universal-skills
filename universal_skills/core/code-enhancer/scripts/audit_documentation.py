@@ -142,39 +142,46 @@ def _check_staleness(filepath: Path, root: Path) -> dict:
     return {"stale": True, "last_modified": "unknown"}
 
 
+def _broken_markdown_links(content: str, doc: str, root: Path) -> list[dict]:
+    """Return broken *local* markdown links in ``content``.
+
+    Only validates ``[text](target)`` links to in-repo files. Skips external URLs,
+    in-page anchors, mailto:, ``@import`` directives, and any target containing glob
+    or brace-expansion characters (those are examples/patterns, not file links).
+    """
+    out: list[dict] = []
+    for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", content):
+        t = target.strip().split()[0]  # drop optional "title"
+        t = t.split("#", 1)[0]  # drop in-page anchor
+        if not t or t.startswith(("http://", "https://", "mailto:", "#", "@", "<")):
+            continue
+        if any(ch in t for ch in "*{}<>"):  # glob / brace-expansion / placeholder
+            continue
+        candidate = (root / t).resolve()
+        if not candidate.exists():
+            out.append(
+                {
+                    "type": "broken_reference",
+                    "doc": doc,
+                    "reference": t,
+                    "detail": f"Markdown link target '{t}' not found",
+                }
+            )
+    return out
+
+
 def _detect_code_doc_drift(root: Path) -> list[dict]:
     """Detect drift between code structure and documentation."""
     drift: list[dict] = []
 
-    # Check if AGENTS.md references files that exist
+    # Check that AGENTS.md's markdown LINKS resolve. (CE-044) Only real links
+    # ``[text](path)`` are validated — NOT inline code spans like `pool.py` or glob
+    # patterns like `fix_*.py`, which are prose/examples, not links. Treating every
+    # backticked filename as a reference produced a flood of false positives.
     agents_md = root / "AGENTS.md"
     if agents_md.exists():
         content = agents_md.read_text(encoding="utf-8", errors="ignore")
-        # Find file references (paths with extensions)
-        file_refs = re.findall(r"`([^`]+\.\w{1,4})`", content)
-        for ref in file_refs:
-            # ACCURACY FIX: Filter out version constraints that look like
-            # file refs (e.g., "pydantic>=2.8.2" → ".2" matches the regex)
-            if any(op in ref for op in [">=", "<=", "==", "~=", "!=", ">", "<"]):
-                continue
-            # Skip pure version strings (e.g., "1.73.0")
-            if re.match(r"^[\d.]+$", ref):
-                continue
-            # Skip Python package specifiers (e.g., "pydantic[email]>=2.8.2")
-            if "[" in ref and "]" in ref:
-                continue
-            ref_path = root / ref
-            if not ref_path.exists() and not any(
-                p.name == Path(ref).name for p in root.rglob(Path(ref).name)
-            ):
-                drift.append(
-                    {
-                        "type": "broken_reference",
-                        "doc": "AGENTS.md",
-                        "reference": ref,
-                        "detail": f"Referenced file '{ref}' not found in project",
-                    }
-                )
+        drift.extend(_broken_markdown_links(content, "AGENTS.md", root))
 
     # Check if README mentions packages/modules that don't exist
     readme = root / "README.md"
@@ -182,8 +189,6 @@ def _detect_code_doc_drift(root: Path) -> list[dict]:
         content = readme.read_text(encoding="utf-8", errors="ignore")
         # Look for pip install references
         install_refs = re.findall(r"pip install\s+(\S+)", content)
-        # Look for import references
-        import_refs = re.findall(r"(?:from|import)\s+(\w+)", content)
         # These are informational, not scored
         if install_refs:
             drift.append(

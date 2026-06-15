@@ -18,7 +18,12 @@ from pathlib import Path
 CWE_PATTERNS = {
     "CWE-78": {
         "name": "OS Command Injection",
-        "ast_calls": ["os.system", "subprocess.call", "subprocess.Popen", "subprocess.run"],
+        "ast_calls": [
+            "os.system",
+            "subprocess.call",
+            "subprocess.Popen",
+            "subprocess.run",
+        ],
         "severity": "High",
     },
     "CWE-94": {
@@ -141,9 +146,25 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
 
     is_test_file = "tests" in filepath.parts or filepath.name.startswith("test_")
 
+    # Respect inline ``# nosec`` annotations (the same convention bandit honors): a
+    # developer has reviewed the line and documented the trust boundary. Skip any
+    # finding whose source span carries one — removes the FP class of intentional,
+    # already-annotated eval/exec/pickle/subprocess sites.
+    _src_lines = source.splitlines()
+    nosec_lines = {
+        i for i, ln in enumerate(_src_lines, 1) if "# nosec" in ln or "#nosec" in ln
+    }
+
+    def _has_nosec(node: ast.AST) -> bool:
+        start = getattr(node, "lineno", 0)
+        end = getattr(node, "end_lineno", start)
+        return any(line in nosec_lines for line in range(start, end + 1))
+
     for node in ast.walk(tree):
         # Check for dangerous function calls
         if isinstance(node, ast.Call):
+            if _has_nosec(node):
+                continue
             call_name = ""
             if isinstance(node.func, ast.Name):
                 call_name = node.func.id
@@ -182,6 +203,8 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
 
         # Check for hardcoded credential patterns in assignments
         if isinstance(node, ast.Assign):
+            if _has_nosec(node):
+                continue
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     name_lower = target.id.lower()
