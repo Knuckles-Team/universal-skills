@@ -113,10 +113,29 @@ def detect_present_tools() -> dict:
     return present
 
 
+def _matches_layer(path: Path, layer: str) -> bool:
+    """Filter a skill source path by layer.
+
+    ``atomic`` = an atomic building-block skill (NOT under ``workflows/``) — these are
+    what an agent invokes directly, so they belong in Claude. ``workflows`` = a
+    skill-workflow (under ``workflows/``); these are meant for the graph-os
+    orchestrator (Claude fires them via the ``kg-delegation-router`` skill /
+    ``graph_orchestrate execute_workflow``) and usually should NOT be installed into
+    Claude — that would just bloat the always-loaded skill list. ``all`` = no filter.
+    """
+    is_workflow = f"{os.sep}workflows{os.sep}" in f"{path}{os.sep}"
+    if layer == "atomic":
+        return not is_workflow
+    if layer == "workflows":
+        return is_workflow
+    return True
+
+
 def get_source_paths(
     skill_names: Optional[List[str]] = None,
     group: Optional[str] = None,
     include_graphs: bool = False,
+    layer: str = "all",
 ) -> List[Path]:
     """Uses utility functions to locate source paths of skills and graphs."""
     sources = []
@@ -136,6 +155,9 @@ def get_source_paths(
         else:
             paths = skill_utilities.get_universal_skills_path()
             sources.extend([Path(p) for p in paths])
+        # Restrict to the requested layer (atomic skills vs graph-os workflows).
+        if layer != "all":
+            sources = [p for p in sources if _matches_layer(p, layer)]
     else:
         logger.error("Could not import skill_utilities.")
 
@@ -184,6 +206,7 @@ def install_skills(
     force: bool = False,
     include_graphs: bool = False,
     symlink: bool = False,
+    layer: str = "all",
 ):
     """Install skills to the target path by copy (default) or symlink.
 
@@ -198,7 +221,7 @@ def install_skills(
         logger.info(f"Creating target directory: {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
 
-    sources = get_source_paths(skill_names, group, include_graphs)
+    sources = get_source_paths(skill_names, group, include_graphs, layer=layer)
     if not sources:
         logger.error("No skill/graph sources found to install.")
         return False
@@ -301,6 +324,17 @@ def main():
         action="store_true",
         help="Also install skill-graphs from the skill-graphs repository",
     )
+    parser.add_argument(
+        "--layer",
+        choices=["all", "atomic", "workflows"],
+        default="all",
+        help=(
+            "Which layer to install. 'atomic' = atomic building-block skills only "
+            "(recommended for Claude — the agent invokes these directly). 'workflows' "
+            "= skill-workflows only (these run on the graph-os orchestrator; Claude "
+            "fires them via kg-delegation-router). 'all' = both (default)."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -330,6 +364,7 @@ def main():
                 args.force,
                 args.install_skill_graphs,
                 symlink=args.symlink,
+                layer=args.layer,
             )
         return
 
@@ -360,6 +395,7 @@ def main():
         args.force,
         args.install_skill_graphs,
         symlink=args.symlink,
+        layer=args.layer,
     )
 
 
