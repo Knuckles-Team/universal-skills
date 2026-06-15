@@ -99,3 +99,11 @@ Persist to KG: Contract node with hasClause edges to extracted clauses.
 
 ## Human Oversight Required
 ✅ All contract modifications and approvals require human review.
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — Parse Contract Document; Step 1 — Extract Clauses & Identify Risks; Step 2 — Check Precedent; Step 3 — Compliance Validation; Step 4 — Generate Review Report
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

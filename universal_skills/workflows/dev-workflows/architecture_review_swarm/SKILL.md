@@ -76,3 +76,13 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 - Architecture Review Swarm results persisted in KG
 - Structured report (MD/PDF)
 - Audit trail with timestamps and agent attributions
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — C4 Diagram; Step 2 — Dependency Graph; Step 3 — Coupling Analysis; Step 4 — Security
+- **After level 0:** Step 5 — Report
+- **After level 1:** Step 6 — KG Persistence
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

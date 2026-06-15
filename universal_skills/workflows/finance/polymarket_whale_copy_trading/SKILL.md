@@ -38,3 +38,15 @@ Expected: submitted_copy_order
 ### Step 4: database-tools [depends_on: Step 3]
 Update Supabase historical trade ledger with local execution prices and order status
 Expected: updated_ledger_record
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — mcp_signals
+- **After level 0:** Step 1 — database-tools
+- **After level 1:** Step 2 — mcp_risk
+- **After level 2:** Step 3 — mcp_orders
+- **After level 3:** Step 4 — database-tools
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

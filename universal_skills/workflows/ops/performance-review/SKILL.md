@@ -77,3 +77,11 @@ Create PerformanceReview node linked to:
 
 ## Human Oversight Required
 ✅ Final performance ratings and compensation changes require manager approval.
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — Gather OKR Progress; Step 1 — Compute Metrics & Trends; Step 2 — Generate Review Document; Step 3 — KG Persistence
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

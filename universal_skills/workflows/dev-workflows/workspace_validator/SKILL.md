@@ -49,3 +49,11 @@ Depends On: Step 3
 If bumping and pushing was approved, verify that every project is on the `main` branch, run a minor version bump via `rm_workspace` with `action="maintain"`, and push via `rm_git` with `action="phased_push"`.
 Expected: push_and_publish_results
 Depends On: Step 4
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 0 — user-interaction; Step 1 — repository-manager-mcp; Step 2 — repository-manager-mcp; Step 3 — repository-manager-mcp; Step 4 — repository-manager-mcp; Step 5 — repository-manager-mcp
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

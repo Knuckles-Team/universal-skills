@@ -118,6 +118,10 @@ def find_skills_root() -> Path:
 def check(root: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
+    # Claude Code installs skills into a FLAT ~/.claude/skills/<name>/ tree, so a
+    # directory name shared by two SKILL.md dirs (atomic skill vs workflow, or two
+    # workflows) silently clobbers on install. Names must be globally unique.
+    seen_names: dict[str, str] = {}
 
     for skill_md in sorted(root.rglob("SKILL.md")):
         rel = skill_md.relative_to(root.parent)
@@ -129,6 +133,16 @@ def check(root: Path) -> tuple[list[str], list[str]]:
         fm_text, body = _split_frontmatter(text)
         fm = _parse_frontmatter(fm_text)
         is_workflow = f"{root.name}/workflows/" in str(skill_md).replace("\\", "/")
+
+        # --- Global name uniqueness (flatten-to-Claude collision) ---
+        dir_name = skill_md.parent.name
+        if dir_name in seen_names:
+            warnings.append(
+                f"{rel}: directory name `{dir_name}` collides with "
+                f"{seen_names[dir_name]} (flattens to the same ~/.claude/skills/ entry)"
+            )
+        else:
+            seen_names[dir_name] = str(rel)
 
         # --- Claude-compatibility (ERRORS) ---
         desc = fm.get("description")

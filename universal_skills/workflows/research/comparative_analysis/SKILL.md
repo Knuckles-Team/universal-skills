@@ -113,3 +113,16 @@ Expected: `kg_persistence_cleanup_artifacts`
 - Graded comparative analysis report persisted in `.specify/`
 - Standardized 0-100 scorecards across all target domains with radar chart inputs
 - Nodes and edges persisted to Knowledge Graph representing cross-domain/cross-project mappings
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — Pre Flight Config
+- **After level 0:** Step 2 — Discovery Classification
+- **After level 1:** Step 3 — Codebase Audit; Step 4 — Architecture Discovery; Step 5 — Security Reliability Check; Step 6 — Documentation DX Review; Step 7 — Innovation Extraction; Step 8 — Concept Cross Reference
+- **After level 2:** Step 9 — Architecture Gap Analysis
+- **After level 3:** Step 10 — Generate Comparison Report
+- **After level 4:** Step 11 — KG Persistence Cleanup
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -162,3 +162,23 @@ Expected: `register_model_artifacts`
 - Per-stage artifacts: dataset version + fingerprint, training reports, gate decisions
 - A run summary linking corpus provenance → training config → reward/PPO → eval scores
   → checkpoint (queryable via the `was_derived_from` lineage chain)
+
+## Execution
+
+Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
+
+- **Run first (in parallel):** Step 1 — Pre Flight Config
+- **After level 0:** Step 2 — Prepare Corpus
+- **After level 1:** Step 3 — Curate Corpus
+- **After level 2:** Step 4 — Decontaminate Corpus
+- **After level 3:** Step 5 — Train Tokenizer
+- **After level 4:** Step 6 — Train Model
+- **After level 5:** Step 7 — Evaluate Base Training
+- **After level 6:** Step 8 — Align Preferences; Step 9 — Train Reward Model
+- **After level 7:** Step 10 — PPO Optimization
+- **After level 8:** Step 11 — Evaluate Alignment
+- **After level 9:** Step 12 — Merge Adapters
+- **After level 10:** Step 13 — Final Evaluation
+- **After level 11:** Step 14 — Register Model
+
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
