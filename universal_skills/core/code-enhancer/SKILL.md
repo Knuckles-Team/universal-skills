@@ -34,7 +34,7 @@ Can run against **multiple projects in parallel** for cross-repository integrati
 ## Capabilities
 
 1.  **Project Analysis** — Scan for architectural patterns, externalized prompts, and observability integrations.
-2.  **Dependency Audit** — Scan `pyproject.toml` and `requirements.txt`, check for latest versions on PyPI, flag outdated/deprecated/yanked packages.
+2.  **Dependency Audit, Update & Migration** — Scan `pyproject.toml` and `requirements.txt`, check for latest versions on PyPI, flag outdated/deprecated/yanked packages, **APPLY version bumps** (lossless rewrite of constraint floors/caps, `--level {patch,minor,major}`, dry-run by default) via `apply_dependency_updates.py` (CE-042), **and surface migration impact** — new features to adopt and deprecated/removed APIs our code must drop — via `analyze_dependency_migration.py` (CE-043), including a pytest-driven `DeprecationWarning` capture mode.
 3.  **Codebase Optimization** — Apply industry-proven methodologies: system discovery, structural smell identification, feature classification, duplication analysis, dependency boundary establishment, and incremental optimization patterns.
 4.  **Security Analysis** — Conduct defensive security analysis: attack surface discovery, dependency/CVE exposure assessment, CWE-centric codebase analysis, threat modeling, input flow analysis, authentication/authorization review, and operational security hardening.
 5.  **Test Coverage Analysis** — Perform pytest use-case coverage analysis: test inventory, use-case mapping, coverage dimension analysis (line, feature, risk), test intent classification, and drift detection between docs and tests.
@@ -119,7 +119,7 @@ Language ecosystem detection. Auto-detect primary/secondary languages, build sys
 
 ### Step 2: project_analysis [depends_on: detect_language]
 Project structure and pattern analysis. Identify if the project is an MCP server, Pydantic-AI agent, library, or web application. Scan for architectural patterns, externalized prompts, and dependencies:
-- Requires: primary script `scripts/analyze_project.py` and `scripts/audit_dependencies.py`
+- Requires: primary script `scripts/analyze_project.py` and `scripts/audit_dependencies.py` (write path: `scripts/apply_dependency_updates.py`)
 
 ### Step 3: run_linters [depends_on: detect_language]
 Language-aware linter orchestration. Execute language-appropriate linters (ruff, mypy, bandit for Python, go vet for Go, eslint for Node) and parse/categorize findings:
@@ -142,8 +142,8 @@ Documentation governance and drift detection. Validate README/AGENTS.md, check f
 - Requires: primary script `scripts/audit_documentation.py` and `scripts/audit_changelog.py`
 
 ### Step 8: concept_traceability_audit [depends_on: project_analysis]
-Concept traceability with drift detection. Scan for CONCEPT ID markers in code docstrings, docs, and pytest markers to cross-reference against AGENTS.md concepts:
-- Requires: primary script `scripts/trace_concepts.py` and `scripts/audit_concept_ids.py`
+Concept traceability with drift detection. Scan for CONCEPT ID markers in code docstrings, docs, and pytest markers, and cross-reference against the canonical concept registry (`docs/concepts.yaml`/`concepts.yml` or `AGENTS.md`). Concept-ID parity/collision detection is folded into this script:
+- Requires: primary script `scripts/trace_concepts.py`
 
 ### Step 9: user_interface_analysis [depends_on: project_analysis]
 UI/UX heuristic evaluation. Detect web/terminal UI, run Nielsen's 10 usability heuristic checks, and execute WCAG AA accessibility checks:
@@ -151,7 +151,7 @@ UI/UX heuristic evaluation. Detect web/terminal UI, run Nielsen's 10 usability h
 
 ### Step 10: generate_report [depends_on: run_linters, run_tests, deep_code_analysis, security_analysis, documentation_audit, concept_traceability_audit, user_interface_analysis]
 Consolidated graded report generation and SDD handoff. Compile findings, calculate 0-100 scores across 28 domains, and produce the final prettified code enhancement report and SDD-compatible TODOs:
-- Requires: primary script `scripts/generate_report.py`, `scripts/generate_sdd_handoff.py`, `scripts/grade_pytest.py`, `scripts/grade_skills.py`, `scripts/evaluate_heuristics.py`, `scripts/detect_circular_deps.py`, `scripts/audit_env_var_standard.py`
+- Requires: primary script `scripts/generate_report.py`, `scripts/generate_sdd_handoff.py`, `scripts/grade_pytest.py`, `scripts/grade_skills.py`, `scripts/evaluate_heuristics.py`
 
 ### Step 11: kg_persistence [depends_on: generate_report]
 Knowledge Graph double-write seeding and multi-project analysis. Ingest the report and spec files back into Graph-OS, and execute multi-project parallel cross-repository integration checks:
@@ -187,6 +187,8 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `scripts/detect_language.py` — Language ecosystem detection (CE-018)
 - `scripts/analyze_project.py` — Project structure and pattern analysis (FR-001)
 - `scripts/audit_dependencies.py` — PyPI dependency audit with version comparison (FR-002)
+- `scripts/apply_dependency_updates.py` — **Dependency update application** (CE-042): the *write* path to the audit. Bumps `pyproject.toml`/`requirements.txt` constraint floors/caps to PyPI-latest, losslessly (only version operands change; extras/markers/comments/order preserved). `--level {patch,minor,major}`, `--apply` (default dry-run diff), `--only/--skip`, `--self-test`. Excludes the project's own self-referential extras and never pins to a pre-release. Reuses `audit_dependencies._get_latest_version`. Opt-in via `enhance_repo.py --apply-deps LEVEL`.
+- `scripts/analyze_dependency_migration.py` — **Dependency migration intelligence** (CE-043): answers *what's new to adopt* and *what's deprecated to remove* after a bump. Per upgradable package it (a) mines the changelog Added/Deprecated/Removed across the crossed version range (reuses `audit_changelog` helpers) and intersects Deprecated/Removed with the symbols our code imports (via `importlib.metadata.packages_distributions`), and (b) **`--pytest PATH`** runs the suite under `DeprecationWarning` capture (the highest-yield signal — catches e.g. a dep's `'openai:'`→`'openai-chat:'` v2 rename that only fires at runtime), splitting our-code deprecations (fix) from forward-looking dependency ones (review before next major). `--run` for an import-only scan; `--self-test`.
 - `scripts/analyze_codebase.py` — Code quality, complexity, and duplication analysis (FR-003)
 - `scripts/analyze_security.py` — Security and vulnerability scanning (FR-004, FR-010)
 - `scripts/analyze_minimalism.py` — **Minimalism / over-engineering audit** (CE-040): deterministic ponytail "lazy senior dev" lens — flags commented-out code (`delete:`), trivial wrapper functions (`yagni:`), and shrinkable expressions (`shrink:`), ranked biggest-cut-first with a `net: -N lines possible` estimate, and counts `ponytail:`/`upgrade-path:` marked shortcuts. No LLM.
@@ -210,9 +212,12 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `scripts/scan_env_vars.py` — Environment variable scanning and documentation check (CE-025)
 - `scripts/grade_skills.py` — Agent skill quality grading with skill-check rule engine (CE-026)
 - `scripts/evaluate_heuristics.py` — Engineering heuristics evaluation from 13 books (CE-027)
-- `scripts/detect_circular_deps.py` — Circular dependency detection in pyproject.toml graphs (CE-028)
-- `scripts/audit_concept_ids.py` — CONCEPT ID parity and collision detection across projects (CE-029)
-- `scripts/audit_env_var_standard.py` — Env var naming standardization audit (CE-030)
+- `scripts/analyze_liveness.py` — Liveness / dead-pathway + facade detection (CE-038)
+- `scripts/analyze_opportunities.py` — Intent & opportunity discovery (CE-035)
+- `scripts/analyze_runtime_profile.py` / `scripts/analyze_scale_profile.py` — runtime & scale profiling (CE-036/CE-037, opt-in)
+- `scripts/findings_filter.py` — Deterministic security false-positive filter (CE-041)
+
+> CONCEPT-ID parity/collision detection (CE-028/CE-029) and env-var-standardization (CE-030) are folded into `trace_concepts.py` and `scan_env_vars.py` respectively — there are no separate `detect_circular_deps.py` / `audit_concept_ids.py` / `audit_env_var_standard.py` scripts.
 
 ### References
 - `references/grading_rubric.md` — Standardized scoring criteria and justification templates
@@ -231,3 +236,4 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 - `references/DEEPENING.md` — Strategies for creating deep modules
 - `references/INTERFACE-DESIGN.md` — Principles for designing testable, deep interfaces
 - `references/LANGUAGE.md` — Architectural domain language and terminology
+- `references/evolution_log.md` — **Skill feedback loop**: dated, evidence-anchored record of every rubric tuning / false-positive fix / new capability, citing the domain output that prompted it. When a run surfaces a false positive, a miss, or an over/under-harsh score, add an entry here AND make the corresponding fix — this is how the skill evolves from observation rather than guesswork.

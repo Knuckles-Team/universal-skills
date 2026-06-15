@@ -204,23 +204,44 @@ def _scan_function_docstrings(root: Path) -> list[dict]:
     return missing
 
 
+# A bare concept-ID token (e.g. "KG-2.79", "CE-038") as used in concepts.yaml.
+_BARE_ID_PATTERN = re.compile(r"\b([A-Z]{2,}-\d+(?:\.\d+)?)\b")
+
+
 def _load_concept_registry(root: Path) -> set[str]:
-    """Load known concept IDs from AGENTS.md <!-- CONCEPT:xxx --> comments."""
+    """Load known concept IDs from the project's canonical registry.
+
+    Recognises BOTH conventions:
+      - ``docs/concepts.yaml`` / ``concepts.yml`` — the agent-utilities standard,
+        an auto-generated single-source-of-truth registry of bare concept IDs; and
+      - ``AGENTS.md`` ``<!-- CONCEPT:xxx -->`` comments / inline ``CONCEPT:`` refs.
+
+    Treating the canonical YAML as a registry is essential: in a marker→yaml
+    discipline a concept lives in code + the generated registry, NOT necessarily
+    in a hand-written ``.md`` doc, so the registry is what "documented" means.
+    """
     registry: set[str] = set()
+
+    for rel in ("docs/concepts.yaml", "docs/concepts.yml", "concepts.yaml", "concepts.yml"):
+        p = root / rel
+        if p.exists():
+            try:
+                content = p.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            for match in _BARE_ID_PATTERN.finditer(content):
+                registry.add(match.group(1))
+
     agents_md = root / "AGENTS.md"
-    if not agents_md.exists():
-        return registry
-
-    try:
-        content = agents_md.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return registry
-
-    for match in re.finditer(r"<!--\s*CONCEPT:(\S+)\s*-->", content):
-        registry.add(match.group(1))
-    # Also match inline CONCEPT: references
-    for match in CONCEPT_PATTERN.finditer(content):
-        registry.add(match.group(1))
+    if agents_md.exists():
+        try:
+            content = agents_md.read_text(encoding="utf-8", errors="ignore")
+            for match in re.finditer(r"<!--\s*CONCEPT:(\S+)\s*-->", content):
+                registry.add(match.group(1))
+            for match in CONCEPT_PATTERN.finditer(content):
+                registry.add(match.group(1))
+        except Exception:
+            pass
 
     return registry
 
@@ -293,7 +314,13 @@ def trace_concepts(root_dir: str = ".") -> dict:
         elif source in ("test", "test_decorator", "test_docstring"):
             concept_map[cid]["test"].append(c)
 
-    # Detect orphans and drift
+    # Detect orphans and drift. The canonical registry (concepts.yaml/AGENTS.md)
+    # counts as a traceability source: a concept that lives in code + the
+    # generated registry is well-traced even without a hand-written .md or a test
+    # marker (that is the intended marker→yaml discipline). Requiring code+docs+
+    # tests for every concept is the wrong model for such repos and produced
+    # large false-positive orphan/drift counts.
+    has_registry_source = bool(registry)
     orphans: list[dict] = []
     drift: list[dict] = []
     well_traced = 0
@@ -306,42 +333,21 @@ def trace_concepts(root_dir: str = ".") -> dict:
             or len(sources.get("test_decorator", [])) > 0
             or len(sources.get("test_docstring", [])) > 0
         )
+        has_registry = cid in registry
 
-        coverage_count = sum([has_code, has_docs, has_test])
-        if coverage_count == 3:
+        coverage_count = sum([has_code, has_docs, has_test, has_registry])
+        present_in = [k for k, v in {
+            "code": has_code, "docs": has_docs, "test": has_test, "registry": has_registry,
+        }.items() if v]
+        if coverage_count >= 2:
             well_traced += 1
-        elif coverage_count == 1:
-            orphans.append(
-                {
-                    "concept_id": cid,
-                    "present_in": [k for k, v in sources.items() if v],
-                    "missing_from": [
-                        k
-                        for k, v in {
-                            "code": sources["code"],
-                            "docs": sources["docs"],
-                            "test": sources["test"],
-                        }.items()
-                        if not v
-                    ],
-                }
-            )
-        elif coverage_count == 2:
-            drift.append(
-                {
-                    "concept_id": cid,
-                    "present_in": [k for k, v in sources.items() if v],
-                    "missing_from": [
-                        k
-                        for k, v in {
-                            "code": sources["code"],
-                            "docs": sources["docs"],
-                            "test": sources["test"],
-                        }.items()
-                        if not v
-                    ],
-                }
-            )
+        else:
+            orphans.append({"concept_id": cid, "present_in": present_in})
+        # Genuine drift: a code marker that is NOT in the canonical registry,
+        # i.e. the generated registry is stale and needs a rebuild.
+        if has_registry_source and has_code and not has_registry:
+            drift.append({"concept_id": cid, "present_in": present_in,
+                          "missing_from": ["registry"]})
 
     # Registry cross-reference: concepts in registry but not in code
     unimplemented = []
@@ -385,22 +391,31 @@ def trace_concepts(root_dir: str = ".") -> dict:
         elif len(drift) > 0:
             score -= len(drift)
 
-    # Enhanced: penalty for tests missing concept markers
+    # Tests/functions missing concept markers. Requiring a marker on EVERY test
+    # and function is unrealistic for a large repo (it implied thousands of
+    # "missing" markers). When a canonical registry is in use the discipline is
+    # to mark KEY surfaces, not all — so this is INFORMATIONAL there. Only when
+    # no registry exists do we apply a small capped nudge.
     if tests_missing_markers:
-        penalty = min(20, len(tests_missing_markers) * 2)
-        score -= penalty
-        findings.append(
-            f"{len(tests_missing_markers)} test functions missing concept markers"
-        )
+        if has_registry_source:
+            findings.append(
+                f"{len(tests_missing_markers)} test functions without concept "
+                "markers (informational — mark key tests, not all)"
+            )
+        else:
+            score -= min(10, len(tests_missing_markers))
+            findings.append(
+                f"{len(tests_missing_markers)} test functions missing concept markers"
+            )
 
     # Enhanced: penalty for functions missing concept docstrings
-    if len(functions_missing) > 20:
+    if not has_registry_source and len(functions_missing) > 20:
         score -= 10
         findings.append(
             f"{len(functions_missing)} significant functions (>10 lines) "
             f"missing concept markers in docstrings"
         )
-    elif len(functions_missing) > 10:
+    elif not has_registry_source and len(functions_missing) > 10:
         score -= 5
 
     # Enhanced: unimplemented registry concepts

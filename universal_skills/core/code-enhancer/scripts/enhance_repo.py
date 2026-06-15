@@ -336,6 +336,12 @@ def main() -> int:
     p.add_argument(
         "--self-test", action="store_true", help="Run a dependency-free smoke test."
     )
+    p.add_argument(
+        "--apply-deps",
+        choices=["patch", "minor", "major"],
+        help="After the audit, APPLY dependency-version bumps to pyproject.toml/"
+        "requirements.txt at this level (write action; see apply_dependency_updates.py).",
+    )
     args = p.parse_args()
 
     if args.self_test:
@@ -363,6 +369,18 @@ def main() -> int:
                 json.dumps(payload, indent=2)
             )
         report["_kg_nodes"] = len(payload.get("nodes", []))
+
+    if args.apply_deps:
+        from apply_dependency_updates import apply_updates  # local module
+
+        dep_result = apply_updates(
+            str(args.repo), level=args.apply_deps, apply=True
+        )
+        report["_deps_applied"] = dep_result.get("change_count", 0)
+        if out_dir:
+            (out_dir / f"{report['repo']}.deps.json").write_text(
+                json.dumps({k: v for k, v in dep_result.items() if k != "diffs"}, indent=2)
+            )
 
     if args.markdown:
         print(to_markdown(report))

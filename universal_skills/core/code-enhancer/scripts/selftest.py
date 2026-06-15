@@ -53,6 +53,8 @@ SELFTEST_SCRIPTS = [
     "kg_query_runs.py",
     "analyze_baseline.py",
     "findings_filter.py",
+    "apply_dependency_updates.py",
+    "analyze_dependency_migration.py",
 ]
 
 

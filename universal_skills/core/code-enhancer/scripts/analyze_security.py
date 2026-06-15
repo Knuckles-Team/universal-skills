@@ -18,7 +18,7 @@ from pathlib import Path
 CWE_PATTERNS = {
     "CWE-78": {
         "name": "OS Command Injection",
-        "ast_calls": ["os.system", "subprocess.call", "subprocess.Popen"],
+        "ast_calls": ["os.system", "subprocess.call", "subprocess.Popen", "subprocess.run"],
         "severity": "High",
     },
     "CWE-94": {
@@ -49,6 +49,87 @@ CWE_PATTERNS = {
 }
 
 
+# Identifier-name suffixes that denote a NON-secret (id, count, budget, label…).
+_NONSECRET_NAME_SUFFIXES = (
+    "_id",
+    "_ids",
+    "_name",
+    "_names",
+    "_max",
+    "_min",
+    "_budget",
+    "_count",
+    "_tokens",
+    "_ttl",
+    "_type",
+    "_field",
+    "_var",
+    "_env",
+    "_path",
+    "_url",
+    "_prefix",
+    "_header",
+    "_engine_id",
+    "_level",
+    "_mode",
+)
+# Value words that are placeholders / enum labels, never real secrets.
+_PLACEHOLDER_VALUES = frozenset(
+    {
+        "secret",
+        "top_secret",
+        "top secret",
+        "confidential",
+        "unclassified",
+        "classified",
+        "public",
+        "private",
+        "password",
+        "changeme",
+        "change_me",
+        "example",
+        "dummy",
+        "test",
+        "none",
+        "null",
+        "redacted",
+        "xxxxxxxx",
+        "your_token_here",
+        "your_secret_here",
+    }
+)
+
+
+def _looks_like_real_secret(name: str, value: str) -> bool:
+    """Gate CWE-798 on the VALUE shape, not just the variable name.
+
+    Real hardcoded credentials are opaque high-entropy strings. We exclude:
+      - non-secret identifier names (``*_id``, ``*_max``, ``*_count``, …),
+      - placeholder / enum-label values (``SECRET``, ``TOP_SECRET``, ``changeme``),
+      - plain ``snake_case``/dotted config identifiers (e.g. ``secret_engine_id``),
+      - short values (< 8 chars).
+    This removes the dominant false-positive class (a constant *named* like a
+    secret but holding a label, budget, or config key).
+    """
+    name_l = name.lower()
+    if name_l.endswith(_NONSECRET_NAME_SUFFIXES):
+        return False
+    if not isinstance(value, str) or len(value) < 8:
+        return False
+    if value.strip().lower() in _PLACEHOLDER_VALUES:
+        return False
+    # All-lowercase snake_case / dotted / slug → a config identifier, not a secret.
+    import re as _re
+
+    if _re.fullmatch(r"[a-z0-9_.\-/]+", value) and not _re.search(r"\d{3,}", value):
+        return False
+    return True
+
+
+# CWE classes that are routinely intentional inside test fixtures.
+_TEST_SUPPRESSED_CWES = frozenset({"CWE-78", "CWE-94", "CWE-502", "CWE-798"})
+
+
 def _scan_file_for_patterns(filepath: Path) -> list[dict]:
     """Scan a Python file for CWE-related patterns using AST."""
     findings: list[dict] = []
@@ -71,16 +152,28 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
                     call_name = f"{node.func.value.id}.{node.func.attr}"
 
             for cwe_id, pattern in CWE_PATTERNS.items():
-                # Suppress CWE-78 for test files (subprocess usage is common)
-                if cwe_id == "CWE-78" and is_test_file:
+                # Suppress intentional-in-tests CWE classes (subprocess/eval/exec/
+                # pickle in fixtures) to avoid noise from the test suite.
+                if cwe_id in _TEST_SUPPRESSED_CWES and is_test_file:
                     continue
 
                 if call_name in pattern.get("ast_calls", []):
+                    severity = pattern["severity"]
+                    # subprocess.* without shell=True is bandit-Low/Medium, not
+                    # High — only a shell invocation is true command injection.
+                    if cwe_id == "CWE-78" and call_name.startswith("subprocess."):
+                        shell_true = any(
+                            kw.arg == "shell"
+                            and isinstance(kw.value, ast.Constant)
+                            and kw.value.value is True
+                            for kw in node.keywords
+                        )
+                        severity = "High" if shell_true else "Medium"
                     findings.append(
                         {
                             "cwe": cwe_id,
                             "name": pattern["name"],
-                            "severity": pattern["severity"],
+                            "severity": severity,
                             "file": str(filepath),
                             "line": node.lineno,
                             "detail": f"Dangerous call: {call_name}()",
@@ -98,14 +191,12 @@ def _scan_file_for_patterns(filepath: Path) -> list[dict]:
                         if keyword in name_lower and isinstance(
                             node.value, ast.Constant
                         ):
-                            if (
-                                isinstance(node.value.value, str)
-                                and len(node.value.value) > 3
-                            ):
-                                # Suppress CWE-798 for test files (dummy secrets are common)
-                                if is_test_file:
-                                    continue
-
+                            # Suppress CWE-798 for test files (dummy secrets are common)
+                            if is_test_file:
+                                continue
+                            # Gate on the VALUE shape, not just the name — removes
+                            # the dominant FP class (label/budget/config-id constants).
+                            if _looks_like_real_secret(target.id, node.value.value):
                                 findings.append(
                                     {
                                         "cwe": "CWE-798",
@@ -246,14 +337,17 @@ def analyze_security(root_dir: str = ".", *, filter_fp: bool = True) -> dict:
     med_count = sum(1 for v in all_vulns if v.get("severity") == "Medium")
     low_count = sum(1 for v in all_vulns if v.get("severity") == "Low")
 
+    # HIGH findings are serious and (after FP filtering) rare — keep per-finding.
+    # MEDIUM/LOW are dominated by "dangerous function" noise that scales with repo
+    # size; cap their contribution so a large mature codebase is graded on real
+    # high-severity exposure, not raw count (which previously floored every big
+    # repo to 0). See references/evolution_log.md (security density tuning).
     score -= high_count * 15
-    score -= med_count * 8
-    score -= low_count * 3
-    # Attack surface penalties
-    if attack_surface["eval_exec_usage"] > 0:
-        score -= 10
-    if attack_surface["subprocess_calls"] > 20:
-        score -= 5
+    score -= min(med_count * 8, 40)
+    score -= min(low_count * 3, 15)
+    # NOTE: eval/exec and subprocess are already scored per-finding above
+    # (CWE-94 / CWE-78); the attack_surface counters are reported as evidence
+    # only (no second deduction) to avoid double-penalising the same call.
 
     score = max(0, score)
     findings: list[str] = []

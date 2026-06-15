@@ -71,19 +71,24 @@ _SOURCE_EXTENSIONS = frozenset(
     }
 )
 
-# Rogue/throwaway script prefixes that should not be in the codebase
+# Rogue/throwaway script prefixes that should not be in the codebase.
+# NOTE: verb prefixes that name legitimate tooling (validate_/resolve_/debug_)
+# were removed — e.g. CI gates like ``validate_mcp_config.py`` are not throwaway.
+# Only retain prefixes that strongly signal a one-off left behind.
 _ROGUE_PREFIXES = (
     "fix_",
-    "validate_",
     "cleanup_",
     "patch_",
     "repair_",
-    "resolve_",
-    "debug_",
     "tmp_",
     "temp_",
     "hack_",
+    "scratch_",
 )
+
+# Directories that legitimately hold maintenance/CLI tooling — rogue-prefix files
+# here are expected (not throwaway pollution of the package source).
+_TOOLING_DIRS = frozenset({"scripts", "tools", "bin", "ci", "hack"})
 
 
 def _should_skip(path: Path) -> bool:
@@ -96,6 +101,9 @@ def _detect_rogue_scripts(root: Path) -> list[dict]:
     rogue_files: list[dict] = []
     for f in root.rglob("*.py"):
         if _should_skip(f):
+            continue
+        # Skip dedicated tooling directories — maintenance scripts belong there.
+        if any(part in _TOOLING_DIRS for part in f.parts):
             continue
         name = f.name.lower()
         for prefix in _ROGUE_PREFIXES:
@@ -190,11 +198,18 @@ def analyze_directory_density(root_dir: str = ".") -> dict:
         dir_files.items(), key=lambda x: len(x[1]), reverse=True
     ):
         count = len(files)
-        if count > 40:
+        # Test trees legitimately mirror the breadth of the source tree (≈one
+        # test module per source module), so apply a 2× threshold there rather
+        # than flagging a large suite as "crowded".
+        is_test = any(
+            part in ("tests", "test", "testing") for part in Path(dir_path).parts
+        )
+        sev_thresh, crowd_thresh = (80, 40) if is_test else (40, 20)
+        if count > sev_thresh:
             severely_crowded_dirs.append(
                 {"directory": dir_path, "file_count": count, "files": files[:10]}
             )
-        elif count > 20:
+        elif count > crowd_thresh:
             crowded_dirs.append(
                 {"directory": dir_path, "file_count": count, "files": files[:10]}
             )

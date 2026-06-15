@@ -225,28 +225,48 @@ def _scan_dotenv_files(root: Path) -> list[dict]:
 
 
 def _check_readme_docs(root: Path, all_vars: set[str]) -> dict:
-    """Check if environment variables are documented in README.md."""
-    readme = root / "README.md"
-    documented: set[str] = set()
-    undocumented: set[str] = set()
+    """Check if environment variables are documented anywhere a reader would look.
 
-    if readme.exists():
+    A var counts as documented if it appears in README.md, any markdown under
+    ``docs/``, an ``.env.example``-style template, or a config-reference file.
+    Large platforms document their env surface in ``docs/``/config references
+    rather than cramming hundreds of vars into the README, so crediting only the
+    README massively under-counts real coverage.
+    """
+    documented: set[str] = set()
+
+    doc_sources: list[Path] = []
+    for fname in ("README.md", "AGENTS.md", "llms.txt"):
+        p = root / fname
+        if p.exists():
+            doc_sources.append(p)
+    docs_dir = root / "docs"
+    if docs_dir.is_dir():
+        doc_sources.extend(docs_dir.rglob("*.md"))
+    # Templates and config references anywhere reasonably shallow.
+    for pattern in (".env.example", ".env.template", "*.env.example"):
+        doc_sources.extend(root.glob(pattern))
+    for cfg in root.rglob("*config*reference*"):
+        if cfg.is_file() and cfg.suffix in (".md", ".txt", ".json", ".yaml", ".yml"):
+            doc_sources.append(cfg)
+
+    blob = ""
+    for src in set(doc_sources):
         try:
-            content = readme.read_text(encoding="utf-8", errors="ignore")
-            for var in all_vars:
-                if var in content:
-                    documented.add(var)
-                else:
-                    undocumented.add(var)
+            blob += "\n" + src.read_text(encoding="utf-8", errors="ignore")
         except Exception:
-            undocumented = all_vars
-    else:
-        undocumented = all_vars
+            continue
+
+    for var in all_vars:
+        if var in blob:
+            documented.add(var)
+    undocumented = all_vars - documented
 
     return {
         "documented": sorted(documented),
         "undocumented": sorted(undocumented),
         "coverage": len(documented) / max(len(all_vars), 1),
+        "doc_sources_scanned": len(set(doc_sources)),
     }
 
 
