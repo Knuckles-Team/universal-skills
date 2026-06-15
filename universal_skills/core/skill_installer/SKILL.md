@@ -61,16 +61,34 @@ pip install skill-graphs
 - `--force`: (Optional) Overwrite existing skills.
 - `--symlink` / `--link`: (Optional, **recommended**) Symlink skills to the installed package instead
   of copying — no duplicate files; auto-updates on `pip install -U`. Idempotent (an already-correct
-  symlink is left untouched). Falls back to copy if symlinks are unavailable.
+  symlink is left untouched). Falls back to copy if symlinks are unavailable. Symlinking also keeps
+  the source repo as the single backed-up source of truth.
+- `--layer`: (Optional) Which layer to install: `atomic` (atomic building-block skills only —
+  **recommended for Claude**, since the agent invokes these directly), `workflows` (skill-workflows
+  only — these run on the **graph-os orchestrator**; Claude fires them via the `kg-delegation-router`
+  skill rather than holding all of them), or `all` (default).
 - `--install-skill-graphs`: (Optional) Also install skill-graphs from the skill-graphs repository.
 
-```bash
-# symlink all skills into Claude Code (recommended)
-python install.py --tool claude --symlink
+> **What to install into Claude (don't overwhelm it).** Claude loads *every* installed skill's
+> `description` into context, so installing all ~430 skills bloats and dilutes skill selection.
+> Recommended: symlink the **atomic layer only** into Claude (the building blocks + the
+> `kg-delegation-router`), and leave the skill-workflows on the **graph-os orchestrator** — Claude
+> discovers and fires those via `kg-delegation-router` / `graph_orchestrate execute_workflow` so the
+> heavy DAGs run locally on graph-os, not in the Claude Code context.
 
-# symlink all skills into EVERY agent tool present on the host (one-command bootstrap)
-python install.py --all-detected --symlink
+```bash
+# RECOMMENDED for Claude: symlink the atomic layer only (building blocks + router)
+install-skills --tool claude --symlink --layer atomic
+
+# symlink ALL skills (atomic + workflows) into Claude Code
+install-skills --tool claude --symlink
+
+# symlink the atomic layer into EVERY agent tool present on the host (one-command bootstrap)
+install-skills --all-detected --symlink --layer atomic
 ```
+
+> Invoke via the `install-skills` console entry point (installed with the package). Running the
+> script file directly (`python install.py`) is not supported — it mis-resolves the package path.
 
 #### Examples
 ```bash
