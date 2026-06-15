@@ -1,202 +1,147 @@
 #!/usr/bin/env python3
-import os
-import re
+"""Thin CLI over the unified skill-graph pipeline.
+
+CONCEPT:KG-2.7 — Every skill-graph is now built ONE way. This script is a thin
+front-end that:
+
+* translates the familiar CLI arg surface into :class:`SourceSpec` inputs, and
+* keeps this repo's crawl4ai ``web-crawler`` for JS-heavy sites by injecting it as
+  the pipeline's ``crawler_fn`` (so web acquisition quality is preserved),
+
+then delegates *all* standardization — markdown normalization, the standardized
+``SKILL.md`` + ``sources.json`` provenance/freshness manifest, hybrid-auto KG
+ingestion, large-file splitting and the hierarchical TOC — to the agent-utilities
+core (``agent_utilities.knowledge_graph.distillation.skill_graph_pipeline``).
+
+This keeps a single source of truth for the skill-graph format while letting the
+skill own the richer crawler. The builder runs in the agent-packages workspace
+where agent-utilities is importable; if it is not, it tells you how to install it.
+"""
+
 import argparse
-import hashlib
+import re
 import shutil
-import datetime
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
+
+try:
+    from agent_utilities.knowledge_graph.distillation import (
+        AcquiredDoc,
+        SkillGraphPipeline,
+        SourceSpec,
+    )
+except ImportError:
+    sys.stderr.write(
+        "skill-graph-builder requires agent-utilities to be importable.\n"
+        "Install it in this environment: pip install agent-utilities\n"
+    )
+    sys.exit(1)
 
 try:
     from universal_skills.skill_utilities import portable_name as _portable_name
 except Exception:  # pragma: no cover - standalone execution
-    _RESERVED = {
-        "CON",
-        "PRN",
-        "AUX",
-        "NUL",
-        *(f"COM{i}" for i in range(1, 10)),
-        *(f"LPT{i}" for i in range(1, 10)),
-    }
 
     def _portable_name(name: str, max_len: int = 80) -> str:
-        if not name:
-            return "_"
-        cleaned = (
-            re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name)
-            .rstrip(". ")
-            .lstrip(" ")
-            .replace("~", "-")
-        ) or "_"
-        stem, dot, ext = cleaned.rpartition(".")
-        base, suffix = (stem, dot + ext) if dot and stem else (cleaned, "")
-        if base.upper() in _RESERVED:
-            base = f"{base}_"
-        full = f"{base}{suffix}"
-        if len(full) > max_len:
-            digest = hashlib.sha1(name.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
-            keep = max(1, max_len - len(suffix) - 9)
-            full = f"{base[:keep]}-{digest}{suffix}"
-        return full or "_"
+        cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name or "").strip(". ") or "_"
+        return cleaned[:max_len]
 
 
-def sanitize_for_windows(name: str) -> str:
-    """Sanitize a string to a cross-platform-safe filename component.
-
-    Beyond stripping Windows-illegal characters, this now length-bounds the name and
-    guards reserved device names / trailing dots (delegating to the shared
-    ``portable_name``) so generated reference trees stay within Windows MAX_PATH and
-    macOS limits.
-    """
-    return _portable_name(name)
+_DOC_EXTS = (".pdf", ".docx", ".pptx", ".xlsx", ".csv")
 
 
-def extract_title(file_path: Path) -> str:
-    """Extract title from YAML frontmatter, then H1, then humanized filename."""
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read(4000)  # first chunk is enough
-
-        # YAML frontmatter
-        fm_match = re.search(
-            r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL | re.MULTILINE
-        )
-        if fm_match:
-            fm = fm_match.group(1)
-            title_match = re.search(
-                r"^\s*title\s*:\s*['\"]?(.*?)['\"]?\s*$",
-                fm,
-                re.MULTILINE | re.IGNORECASE,
-            )
-            if title_match:
-                title = title_match.group(1).strip()
-                # strip surrounding quotes if present
-                title = re.sub(r'^["\']|["\']$', "", title)
-                if title:
-                    return title
-
-        # First # header
-        h1_match = re.search(r"^#\s+(.+)", content, re.MULTILINE)
-        if h1_match:
-            return h1_match.group(1).strip()
-
-    except Exception:
-        pass
-
-    # Fallback: humanize filename
-    name = file_path.stem.replace("-", " ").replace("_", " ")
-    return name.title()
+def _crawl_script() -> Path:
+    """Resolve this repo's crawl4ai web-crawler script path."""
+    # .../universal_skills/agent-tools/skill-graph-builder/scripts/generate_skill.py
+    pkg_root = Path(__file__).resolve().parents[3]  # universal_skills/
+    return pkg_root / "research" / "web-crawler" / "scripts" / "crawl.py"
 
 
-def extract_source_url(skill_dir: Path) -> str | None:
-    """Look for source_url in an existing SKILL.md."""
-    skill_md = skill_dir / "SKILL.md"
-    if not skill_md.exists():
-        return None
-    try:
-        with open(skill_md, "r", encoding="utf-8") as f:
-            content = f.read()
-            match = re.search(r"source_url:\s*(.+)", content)
-            if match:
-                return match.group(1).strip()
-    except Exception:
-        pass
-    return None
+def _make_crawler_fn(crawl_opts: dict):
+    """Build a pipeline ``crawler_fn`` backed by the crawl4ai web-crawler subprocess."""
+    crawl_script = _crawl_script()
+
+    def crawler_fn(spec: SourceSpec) -> list[AcquiredDoc]:
+        if not crawl_script.exists():
+            raise RuntimeError(f"web-crawler not found at {crawl_script}")
+        tmp = Path(tempfile.mkdtemp(prefix="sg_crawl_"))
+        try:
+            cmd = [
+                sys.executable,
+                str(crawl_script),
+                "--urls",
+                spec.uri,
+                "--strategy",
+                "recursive",
+                "--output-dir",
+                str(tmp),
+                "--max-depth",
+                str(int(spec.options.get("max_depth", 2))),
+                "--max-pages",
+                str(int(spec.options.get("max_pages", 1000))),
+            ]
+            if crawl_opts.get("disable_magic_js"):
+                cmd.append("--disable-magic-js")
+            if crawl_opts.get("no_sitemap"):
+                cmd.append("--no-sitemap")
+            if crawl_opts.get("wait_for"):
+                cmd.extend(["--wait-for", crawl_opts["wait_for"]])
+            subprocess.run(cmd, check=True)
+            docs: list[AcquiredDoc] = []
+            for p in sorted(tmp.rglob("*.md")):
+                docs.append(
+                    AcquiredDoc(
+                        rel_path=p.relative_to(tmp).as_posix(),
+                        text=p.read_text(encoding="utf-8", errors="replace"),
+                        source_uri=spec.uri,
+                    )
+                )
+            return docs
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    return crawler_fn
 
 
-def build_doc_tree(reference_dir: Path) -> dict:
-    """Build nested dict tree of only .md files (dirs first, then files)."""
-    md_files = list(reference_dir.rglob("*.md"))
-    tree: dict = {}
-
-    for md_file in md_files:
-        rel = md_file.relative_to(reference_dir)
-        current = tree
-        for part in rel.parts[:-1]:
-            if part not in current:
-                current[part] = {}
-            current = current[part]
-        # leaf = (title, link)
-        title = extract_title(md_file)
-        link = f"reference/{rel.as_posix()}"
-        current[rel.name] = (title, link)
-
-    return tree
-
-
-def render_toc(tree: dict, indent: int = 0) -> list[str]:
-    """Recursively render beautiful hierarchical Markdown TOC."""
-    lines: list[str] = []
-
-    # Folders first, then files, alphabetical within each group
-    dirs = [k for k in tree if isinstance(tree[k], dict)]
-    files = [k for k in tree if not isinstance(tree[k], dict)]
-
-    for key in sorted(dirs) + sorted(files):
-        item = tree[key]
-        if isinstance(item, dict):
-            # Directory
-            lines.append("  " * indent + f"- 📁 **{key}/**")
-            lines.extend(render_toc(item, indent + 1))
+def _classify_sources(source_input: str, max_depth: int) -> list[SourceSpec]:
+    """Map the comma-separated source arg into typed :class:`SourceSpec` inputs."""
+    specs: list[SourceSpec] = []
+    for raw in (s.strip() for s in (source_input or "").split(",")):
+        if not raw:
+            continue
+        low = raw.lower().split("?")[0]
+        if raw.startswith("http"):
+            if low.endswith(_DOC_EXTS):
+                kind = "pdf" if low.endswith(".pdf") else "office"
+                specs.append(SourceSpec(kind, raw))
+            else:
+                specs.append(SourceSpec("web", raw, {"max_depth": max_depth}))
+            continue
+        path = Path(raw)
+        if path.is_file() and path.suffix.lower() in _DOC_EXTS:
+            kind = "pdf" if path.suffix.lower() == ".pdf" else "office"
+            specs.append(SourceSpec(kind, raw))
         else:
-            # File
-            title, link = item
-            lines.append("  " * indent + f"- [{title}]({link})")
-
-    return lines
+            specs.append(SourceSpec("dir", raw))
+    return specs
 
 
-def _distill_from_kg(
-    selector: str, skill_name: str, max_depth: int
-) -> tuple[Path | None, Path | None]:
-    """Distill a KG subgraph into a temp reference/ tree via the agent-utilities
-    distiller CLI (decoupled process-boundary shell-out). Returns
-    ``(reference_dir, manifest_path)`` or ``(None, None)`` on failure.
-
-    ``selector`` is treated as a seed node id when it looks like ``ns:id``
-    (a colon, no spaces), otherwise as a natural-language semantic query.
-    """
-    import subprocess
-    import sys
-    import tempfile
-
-    tmp = Path(tempfile.mkdtemp(prefix="kgdistill_"))
-    # A node id never contains whitespace; a natural-language query does. So treat
-    # a whitespace-free selector as a seed node id (works without an embedding
-    # model), and anything with spaces as a semantic query.
-    is_seed = not any(ch.isspace() for ch in selector.strip())
-    cmd = [
-        sys.executable,
-        "-m",
-        "agent_utilities.knowledge_graph.distillation.skill_graph_distiller",
-        "--seed" if is_seed else "--query",
-        selector,
-        "--depth",
-        str(max_depth),
-        "--out-dir",
-        str(tmp),
-    ]
-    mode = "seed" if is_seed else "query"
-    print(f"🧠 Distilling skill-graph from the Knowledge Graph ({mode}: {selector})…")
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-    except FileNotFoundError:
-        print("   ⚠️  Distiller unavailable: agent-utilities not importable.")
-        return None, None
-    except Exception as e:  # noqa: BLE001
-        print(f"   ⚠️  Distiller errored: {e}")
-        return None, None
-    if proc.returncode != 0:
-        print(
-            "   ⚠️  Distiller failed (is the graph daemon running?):\n"
-            f"{(proc.stderr or proc.stdout or '').strip()[:1500]}"
-        )
-        return None, None
-    ref = tmp / "reference"
-    manifest = tmp / "kg_manifest.json"
-    n = len(list(ref.rglob("*.md"))) if ref.exists() else 0
-    print(f"   ✅ Distilled {n} reference file(s) from the KG.")
-    return (ref if ref.exists() else None), (manifest if manifest.exists() else None)
+def _resolve_out_dir(target_type: str, output_dir: str | None) -> Path:
+    """Compute the PARENT directory the skill-graph <name>/ folder is written under."""
+    if output_dir:
+        return Path(output_dir)
+    pkg_root = Path(__file__).resolve().parents[3]  # universal_skills/
+    if target_type == "skills":
+        return pkg_root
+    # pkg_root.parent.parent → .../agent-packages/skills ; its sibling skill-graphs repo.
+    workspace_root = pkg_root.parent.parent
+    repo = workspace_root / "skill-graphs" / "skill_graphs"
+    if (workspace_root / "skill-graphs").exists() and repo.is_dir():
+        return repo
+    cache = Path.home() / ".cache" / "universal-skills" / "skill-graphs"
+    cache.mkdir(parents=True, exist_ok=True)
+    return cache
 
 
 def generate_skill(
@@ -212,553 +157,86 @@ def generate_skill(
     wait_for: str | None = None,
     no_sitemap: bool = False,
     append: bool = False,
-    ingest_kg: bool = False,
+    no_kg: bool = False,
     from_kg: str | None = None,
 ):
-    # Enforce -docs suffix
     if not skill_name.endswith("-docs"):
         skill_name = f"{skill_name}-docs"
-        print(f"🏷️  Enforcing naming convention: Renamed skill to **{skill_name}**")
+        print(f"🏷️  Enforcing naming convention: renamed skill to **{skill_name}**")
+    skill_name = _portable_name(skill_name)
 
-    skill_name = sanitize_for_windows(skill_name)
-
-    base_pkg_path = Path(__file__).resolve().parent.parent.parent.parent
-    # If --output-dir is provided, use it directly as the parent for the skill
-    if output_dir:
-        target_skill_dir = Path(output_dir) / skill_name
-    elif target_type == "skills":
-        skills_base = Path(__file__).resolve().parent.parent.parent
-        target_skill_dir = skills_base / skill_name
-    elif target_type == "skill-graphs":
-        # Check if skill-graphs repo exists in the same workspace (agent-packages/)
-        # base_pkg_path is .../universal-skills/universal_skills/
-        # base_pkg_path.parent is .../universal-skills/
-        # base_pkg_path.parent.parent is .../agent-packages/
-        workspace_root = base_pkg_path.parent.parent
-        skill_graphs_repo = workspace_root / "skill-graphs"
-
-        if skill_graphs_repo.exists() and (skill_graphs_repo / "skill_graphs").is_dir():
-            target_skill_dir = skill_graphs_repo / "skill_graphs" / skill_name
-        else:
-            # Fallback to local cache if repo not found
-            cache_base = os.environ.get(
-                "XDG_CACHE_HOME", os.path.expanduser("~/.cache")
-            )
-            target_skill_dir = (
-                Path(cache_base) / "universal-skills" / "skill-graphs" / skill_name
-            )
-    else:
-        target_skill_dir = base_pkg_path / target_type / skill_name
-
-    reference_dir = target_skill_dir / "reference"
-
-    sources = [s.strip() for s in (source_input or "").split(",") if s.strip()]
-    source_urls = []
-
-    # Create fresh target
-    target_skill_dir.mkdir(parents=True, exist_ok=True)
-    if not append:
-        if reference_dir.exists():
-            shutil.rmtree(reference_dir)
-        reference_dir.mkdir(parents=True, exist_ok=True)
-    else:
-        reference_dir.mkdir(parents=True, exist_ok=True)
-
-    # KG-native source: distill a coherent subgraph out of the Knowledge Graph
-    # into a temp reference/ tree (+ kg_manifest.json), then feed it through the
-    # SAME local-directory pipeline below. The KG becomes the source of truth and
-    # the skill-graph a versioned, round-trippable projection of it (CONCEPT:KG-2.7).
-    kg_manifest_path: Path | None = None
+    specs = _classify_sources(source_input, max_depth)
     if from_kg:
-        kg_tmp, kg_manifest_path = _distill_from_kg(from_kg, skill_name, max_depth)
-        if kg_tmp is not None:
-            sources.append(str(kg_tmp))  # merged as a local directory source
-
-    crawl_urls = []
-    local_sources = []
-    pdf_urls = []
-    local_pdfs = []
-
-    for source in sources:
-        if source.startswith("http"):
-            if source.lower().split("?")[0].endswith(".pdf"):
-                pdf_urls.append(source)
-            else:
-                crawl_urls.append(source)
-        else:
-            local_path = Path(source)
-            if local_path.is_file() and local_path.suffix.lower() in [
-                ".pdf",
-                ".docx",
-                ".pptx",
-                ".xlsx",
-                ".csv",
-            ]:
-                local_pdfs.append(local_path)
-            elif local_path.is_dir():
-                extracted_url = extract_source_url(local_path)
-                if extracted_url:
-                    print(f"🔄 Found source_url in existing skill: {extracted_url}")
-                    # If it's a list, split it
-                    for url in extracted_url.split(","):
-                        url_stripped = url.strip()
-                        if (
-                            url_stripped.lower().split("?")[0].endswith(".pdf")
-                            or url_stripped.lower().split("?")[0].endswith(".docx")
-                            or url_stripped.lower().split("?")[0].endswith(".pptx")
-                            or url_stripped.lower().split("?")[0].endswith(".xlsx")
-                            or url_stripped.lower().split("?")[0].endswith(".csv")
-                        ):
-                            pdf_urls.append(url_stripped)
-                        else:
-                            crawl_urls.append(url_stripped)
-                else:
-                    local_sources.append(local_path)
-            else:
-                local_sources.append(local_path)
-
-    # 1. Handle Documents (PDF, Office files) (Local and Remote)
-    if pdf_urls or local_pdfs:
-        markitdown_instance = None
-        try:
-            from markitdown import MarkItDown
-
-            markitdown_instance = MarkItDown()
-        except ImportError:
-            try:
-                import pymupdf4llm
-
-                print(
-                    "⚠️ markitdown not installed. Falling back to pymupdf4llm for PDF conversion (Office files may fail)."
-                )
-            except ImportError:
-                print(
-                    "❌ markitdown and pymupdf4llm not installed. Please install with `pip install 'universal-skills[skill-graph-builder]'`."
-                )
-                pymupdf4llm = None
-
-        if markitdown_instance or pymupdf4llm:
-            import tempfile
-            import requests
-
-            for doc_url in pdf_urls:
-                print(f"📄 Processing remote document: {doc_url}")
-                try:
-                    response = requests.get(doc_url, stream=True, timeout=60)
-                    response.raise_for_status()
-
-                    # Extract extension or default to .pdf
-                    ext = Path(doc_url.split("?")[0]).suffix.lower()
-                    if not ext:
-                        ext = ".pdf"
-
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            tmp.write(chunk)
-                        tmp_path = tmp.name
-
-                    if markitdown_instance:
-                        md_text = markitdown_instance.convert(tmp_path).text_content
-                    else:
-                        md_text = pymupdf4llm.to_markdown(tmp_path)
-
-                    os.unlink(tmp_path)
-
-                    filename = (
-                        sanitize_for_windows(Path(doc_url.split("?")[0]).stem) + ".md"
-                    )
-                    target_file = reference_dir / filename
-                    target_file.write_text(md_text, encoding="utf-8")
-                    source_urls.append(doc_url)
-                except Exception as e:
-                    print(f"❌ Failed to process remote document {doc_url}: {e}")
-
-            for local_doc in local_pdfs:
-                print(f"📄 Processing local document: {local_doc}")
-                try:
-                    if markitdown_instance:
-                        md_text = markitdown_instance.convert(
-                            str(local_doc)
-                        ).text_content
-                    else:
-                        md_text = pymupdf4llm.to_markdown(str(local_doc))
-
-                    filename = sanitize_for_windows(local_doc.stem) + ".md"
-                    target_file = reference_dir / filename
-                    target_file.write_text(md_text, encoding="utf-8")
-                except Exception as e:
-                    print(f"❌ Failed to process local document {local_doc}: {e}")
-
-    # 2. Handle all URLs in one crawl session if possible (faster for recursion)
-    if crawl_urls:
-        source_urls.extend(crawl_urls)
-        crawl_script = base_pkg_path / "skills" / "web-crawler" / "scripts" / "crawl.py"
-
-        # Determine strategy: if any are sitemaps, we might need a mix, but for simplicity
-        # we'll use recursive if most are standard URLs.
-        strategy = "recursive"
-        if len(crawl_urls) == 1 and crawl_urls[0].endswith(".xml"):
-            strategy = "sitemap-parallel"
-
+        specs.append(SourceSpec("kg_query", from_kg, {"max_depth": max_depth}))
+    if not specs:
+        raise SystemExit("provide a source (URL/dir/file) or --from-kg <seed-or-query>")
+    if append:
         print(
-            f"🌐 Crawling {len(crawl_urls)} URLs using {strategy} (depth={max_depth})..."
+            "⚠️  --append is deprecated; the unified pipeline always does a full, "
+            "provenance-tracked rebuild. Use the `rebuild` action for incremental refresh."
         )
 
-        # If recursive docs (especially complex SPAs like ServiceNow), we use isolated
-        # batch crawling (one process per URL) to ensure a fresh browser context per seed.
-        urls_to_process = (
-            crawl_urls if strategy == "recursive" else [",".join(crawl_urls)]
-        )
+    for s in specs:
+        if s.kind == "web":
+            s.options["max_pages"] = max_pages
 
-        import subprocess
-
-        for i, url_group in enumerate(urls_to_process):
-            active_urls = [u.strip() for u in url_group.split(",")]
-            # Print status without revealing absolute paths for cleaner terminal output
-            print(
-                f"   [{i + 1}/{len(urls_to_process)}] Processing: {', '.join(active_urls)}"
-            )
-
-            # Use a unique temporary directory per batch
-            temp_crawl_dir = Path(f"/tmp/crawl_{skill_name}_{i}")
-            if temp_crawl_dir.exists():
-                shutil.rmtree(temp_crawl_dir)
-            temp_crawl_dir.mkdir(parents=True, exist_ok=True)
-
-            cmd = (
-                [
-                    "python3",
-                    str(crawl_script),
-                    "--urls",
-                ]
-                + active_urls
-                + [
-                    "--strategy",
-                    strategy,
-                    "--output-dir",
-                    str(temp_crawl_dir),
-                ]
-            )
-            if strategy == "recursive":
-                cmd.extend(["--max-depth", str(max_depth)])
-                cmd.extend(["--max-pages", str(max_pages)])
-
-            if disable_magic_js:
-                cmd.append("--disable-magic-js")
-            if no_sitemap:
-                cmd.append("--no-sitemap")
-            if wait_for:
-                cmd.extend(["--wait-for", wait_for])
-
-            try:
-                subprocess.run(cmd, check=True)
-                print(f"   📂 Merging documentation into {reference_dir}...")
-                shutil.copytree(temp_crawl_dir, reference_dir, dirs_exist_ok=True)
-            except subprocess.CalledProcessError as e:
-                print(f"   ❌ Crawl failed for {url_group}: {e}")
-            finally:
-                if temp_crawl_dir.exists():
-                    shutil.rmtree(temp_crawl_dir)
-
-    # 2. Handle local sources
-    for i, source_path in enumerate(local_sources):
-        if source_path.is_dir():
-            # If user passed an existing skill folder, use its reference/ subfolder
-            skill_md = source_path / "SKILL.md"
-            ref_sub = source_path / "reference"
-            if skill_md.exists() and ref_sub.exists():
-                print(
-                    f"📁 Detected existing skill – using reference/ subfolder: {source_path}"
-                )
-                source_path = ref_sub
-
-            print(
-                f"📂 Merging local directory from {source_path} into {reference_dir}..."
-            )
-            shutil.copytree(source_path, reference_dir, dirs_exist_ok=True)
-        elif source_path.is_file():
-            print(f"📂 Merging local file {source_path} into {reference_dir}...")
-            shutil.copyfile(source_path, reference_dir / source_path.name)
-
-    # 3. Split overly large markdown files
-    if max_file_kb > 0:
-        import subprocess
-
-        max_bytes = max_file_kb * 1024
-        md_files = list(reference_dir.rglob("*.md"))
-        for md_file in md_files:
-            try:
-                if md_file.stat().st_size > max_bytes:
-                    print(
-                        f"✂️  Splitting large file: {md_file.name} ({md_file.stat().st_size // 1024} KB)"
-                    )
-                    output_folder = md_file.parent / md_file.stem
-                    if output_folder.exists():
-                        shutil.rmtree(output_folder)
-                    output_folder.mkdir(parents=True, exist_ok=True)
-
-                    cmd = [
-                        "mdsplit",
-                        str(md_file),
-                        "--max-level",
-                        "1",
-                        "--table-of-contents",
-                        "--output",
-                        str(output_folder),
-                        "--force",
-                    ]
-                    subprocess.run(
-                        cmd,
-                        check=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-
-                    # Check if any resulting split files are still too large
-                    needs_level_2 = False
-                    for split_file in output_folder.rglob("*.md"):
-                        if split_file.stat().st_size > max_bytes:
-                            needs_level_2 = True
-                            break
-
-                    if needs_level_2:
-                        print(
-                            "   ⚠️  Still too large after level 1 split, trying level 2 split..."
-                        )
-                        shutil.rmtree(output_folder)
-                        output_folder.mkdir(parents=True, exist_ok=True)
-                        cmd = [
-                            "mdsplit",
-                            str(md_file),
-                            "--max-level",
-                            "2",
-                            "--table-of-contents",
-                            "--output",
-                            str(output_folder),
-                            "--force",
-                        ]
-                        subprocess.run(
-                            cmd,
-                            check=True,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                        )
-
-                    # --- Emergency Fallback Split ---
-                    # If MarkItDown produced a PDF with NO markdown headers, mdsplit will fail
-                    # and leave a massive file in the output_folder (or just one file).
-                    for split_file in list(output_folder.rglob("*.md")):
-                        if (
-                            split_file.stat().st_size > max_bytes
-                            and split_file.name != "toc.md"
-                        ):
-                            print(
-                                f"   ⚠️  File {split_file.name} still too large ({split_file.stat().st_size // 1024} KB). Forcing chunk by lines."
-                            )
-                            with open(split_file, "r", encoding="utf-8") as f:
-                                lines = f.readlines()
-
-                            if not lines:
-                                continue
-
-                            # Target bytes per chunk (safely under max_bytes)
-                            target_chunk_bytes = (
-                                max_bytes - (50 * 1024)
-                                if max_bytes > (50 * 1024)
-                                else max_bytes // 2
-                            )
-                            if target_chunk_bytes <= 0:
-                                target_chunk_bytes = max_bytes
-
-                            current_chunk = []
-                            current_bytes = 0
-                            chunk_index = 1
-
-                            # Keep original name prefix
-                            base_name = split_file.stem
-
-                            for line in lines:
-                                current_chunk.append(line)
-                                current_bytes += len(line.encode("utf-8"))
-
-                                if current_bytes >= target_chunk_bytes:
-                                    chunk_file = (
-                                        output_folder
-                                        / f"{base_name}_pt{chunk_index}.md"
-                                    )
-                                    chunk_file.write_text(
-                                        "".join(current_chunk), encoding="utf-8"
-                                    )
-                                    chunk_index += 1
-                                    current_chunk = []
-                                    current_bytes = 0
-
-                            if current_chunk:
-                                chunk_file = (
-                                    output_folder / f"{base_name}_pt{chunk_index}.md"
-                                )
-                                chunk_file.write_text(
-                                    "".join(current_chunk), encoding="utf-8"
-                                )
-
-                            split_file.unlink()  # Delete the oversized un-splittable chunk
-
-                    md_file.unlink()  # Delete the original big file
-            except Exception as e:
-                print(f"❌ Failed to split {md_file.name}: {e}")
-
-    # --- Preserve or set description ---
-    if not description:
-        existing_md = target_skill_dir / "SKILL.md"
-        if existing_md.exists():
-            try:
-                with open(existing_md, "r", encoding="utf-8") as f:
-                    match = re.search(r"description:\s*(.+)", f.read())
-                    if match:
-                        description = match.group(1).strip()
-            except Exception:
-                pass
-        if not description:
-            description = f"Comprehensive reference documentation for {skill_name.replace('-', ' ').title()}."
-
-    # --- Build hierarchical TOC ---
-    doc_tree = build_doc_tree(reference_dir)
-    toc_lines = render_toc(doc_tree)
-    md_count = len(list(reference_dir.rglob("*.md")))
-
-    # If distilled from the KG, ship the provenance manifest alongside the docs
-    # so the package is round-trippable (another KG can re-ingest + dedup-merge).
-    kg_meta = None
-    if kg_manifest_path and kg_manifest_path.exists():
-        try:
-            import json as _json
-
-            shutil.copyfile(kg_manifest_path, target_skill_dir / "kg_manifest.json")
-            with open(kg_manifest_path, encoding="utf-8") as mf:
-                kg_meta = _json.load(mf)
-        except Exception:
-            kg_meta = None
-
-    # --- Write polished SKILL.md ---
-    skill_md_path = target_skill_dir / "SKILL.md"
-    with open(skill_md_path, "w", encoding="utf-8") as f:
-        f.write("---\n")
-        f.write(f"name: {skill_name}\n")
-        f.write(f"description: {description}\n")
-        f.write(f"crawl_depth: {max_depth}\n")
-        if source_urls:
-            f.write(f"source_url: {', '.join(source_urls)}\n")
-        f.write("categories: [Documentation, Knowledge Base, Reference]\n")
-        f.write(f"tags: [docs, reference, {skill_name}, knowledge-base]\n")
-        if kg_meta:
-            # Provenance for a KG-distilled skill-graph (CONCEPT:KG-2.7).
-            f.write("kg_manifest: kg_manifest.json\n")
-            f.write(f"kg_ontology: {kg_meta.get('ontology', 'agent-utilities')}\n")
-            if kg_meta.get("snapshot_ts"):
-                f.write(f"kg_snapshot: {kg_meta['snapshot_ts']}\n")
-            anchors = kg_meta.get("anchors") or []
-            if anchors:
-                rendered = ", ".join(repr(a) for a in anchors)
-                f.write(f"kg_anchors: [{rendered}]\n")
-        f.write("---\n\n")
-
-        f.write(
-            f"# {skill_name.replace('-', ' ').replace('Docs', '').strip().title()} Documentation\n\n"
-        )
-        f.write(f"{description}\n\n")
-
-        if source_urls:
-            f.write("**Original Sources**:\n")
-            for url in source_urls:
-                f.write(f"- [{url}]({url})\n")
-            f.write("\n")
-
-        f.write(
-            f"**Contains**: {md_count} markdown files with full folder structure (crawled at depth {max_depth}).\n"
-        )
-        f.write(f"*Last updated: {datetime.datetime.now().strftime('%B %d, %Y')}*\n\n")
-
-        f.write("## 📚 Table of Contents\n\n")
-        if toc_lines:
-            f.write("\n".join(toc_lines) + "\n\n")
-        else:
-            f.write("*No markdown files found.*\n\n")
-
-        f.write("## 🤖 Agent Usage Guide\n\n")
-        f.write(
-            f"- When the user asks anything about **{skill_name.replace('-', ' ').title()}**, consult the reference files.\n"
-        )
-        f.write(
-            "- Prefer exact quotes and direct links to the relevant file/section.\n"
-        )
-        f.write("- The hierarchical TOC above makes navigation fast and intuitive.\n")
-        f.write("- All images and assets are preserved so links work perfectly.\n\n")
-
-    print(
-        f"✅ Successfully created polished {target_type[:-1]}: **{skill_name}** at {target_skill_dir}"
+    crawl_opts = {
+        "disable_magic_js": disable_magic_js,
+        "no_sitemap": no_sitemap,
+        "wait_for": wait_for,
+    }
+    pipe = SkillGraphPipeline(
+        crawler_fn=_make_crawler_fn(crawl_opts), kg_enrich=not no_kg
     )
-    print(f"   📊 {md_count} documentation files • Hierarchical TOC ready")
-
-    # Optional: route the assembled reference/ docs into the Knowledge Graph so the
-    # KG becomes the canonical, distillable source of truth (CONCEPT:KG-2.7). The
-    # final merged + de-duplicated reference dir is ingested ONCE (not the per-URL
-    # crawl temp dirs). Decoupled process-boundary shell-out; best-effort.
-    if ingest_kg and md_count > 0:
-        import subprocess
-        import sys
-
-        cmd = [
-            sys.executable,
-            "-m",
-            "agent_utilities.knowledge_graph.ingestion",
-            str(reference_dir),
-            "--content-type",
-            "document",
-        ]
-        print(f"🧠 Routing {md_count} docs into the Knowledge Graph for distillation…")
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-            if proc.returncode == 0:
-                print("   ✅ Knowledge Graph ingestion complete.")
-            else:
-                print(
-                    "   ⚠️  KG ingestion failed (is agent-utilities installed and the "
-                    f"graph daemon running?):\n{(proc.stderr or proc.stdout or '').strip()[:1500]}"
-                )
-        except FileNotFoundError:
-            print(
-                "   ⚠️  KG ingestion skipped: agent-utilities not importable in this env."
-            )
-        except Exception as e:  # noqa: BLE001
-            print(f"   ⚠️  KG ingestion errored: {e}")
+    out_dir = _resolve_out_dir(target_type, output_dir)
+    print(
+        f"🛠️  Building skill-graph **{skill_name}** "
+        f"from {len(specs)} source(s) → {out_dir / skill_name}"
+    )
+    result = pipe.build(
+        name=skill_name,
+        specs=specs,
+        out_dir=out_dir,
+        description=description,
+        max_file_kb=max_file_kb,
+    )
+    kg = "yes" if result["kg_ingested"] else "no (offline)"
+    print(
+        f"✅ Built **{skill_name}**: {result['file_count']} files • "
+        f"KG-ingested: {kg} • v{result['version']}"
+    )
+    if result["validation_errors"]:
+        print("⚠️  validation issues:")
+        for err in result["validation_errors"]:
+            print(f"   - {err}")
+    return result
 
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate a beautiful, hierarchical agent skill / skill-graph from markdown docs or a URL."
+        description="Build a standardized agent skill-graph from any source "
+        "(website, PDF/Office, local dir, or a Knowledge-Graph distillation)."
     )
     parser.add_argument(
         "source",
         nargs="?",
         default="",
-        help="Comma-separated list of markdown directories or starting URLs. "
+        help="Comma-separated markdown dirs / files / starting URLs. "
         "Optional when --from-kg is given.",
     )
-    parser.add_argument(
-        "skill_name", help="Name of the skill (kebab-case recommended)."
-    )
+    parser.add_argument("skill_name", help="Name of the skill (kebab-case).")
     parser.add_argument("--description", help="Optional description for the skill.")
     parser.add_argument(
         "--max-depth",
         type=int,
         default=2,
-        help="Max depth for recursive web crawl (default: 2).",
+        help="Max depth for recursive web crawl / KG distillation.",
     )
     parser.add_argument(
         "--target-type",
         choices=["skills", "skill-graphs"],
         default="skill-graphs",
-        help="Target directory type (default: skill-graphs).",
+        help="Output directory type.",
     )
     parser.add_argument(
         "--max-file-kb",
@@ -769,16 +247,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-dir",
         default=None,
-        help="Custom output directory. If provided, the skill is created at <output-dir>/<skill-name>/ instead of the default location.",
+        help="Custom output parent dir (<output-dir>/<skill-name>/).",
     )
     parser.add_argument(
-        "--no-sitemap", action="store_true", help="Disable sitemap auto-discovery"
+        "--no-sitemap",
+        action="store_true",
+        help="Disable sitemap auto-discovery in the crawler.",
     )
     parser.add_argument(
         "--max-pages",
         type=int,
         default=1000,
-        help="Limit the total number of pages crawled in recursive mode.",
+        help="Limit total pages crawled in recursive mode.",
     )
     parser.add_argument(
         "--disable-magic-js",
@@ -788,20 +268,27 @@ if __name__ == "__main__":
     parser.add_argument(
         "--wait-for",
         type=str,
-        help="Custom CSS selector or JS expression to wait for in web-crawler.",
+        help="CSS selector / JS expression to wait for in web-crawler.",
     )
     parser.add_argument(
         "--append",
         action="store_true",
-        help="Append to existing reference files instead of wiping them.",
+        help="Deprecated (no-op): the pipeline always full-rebuilds.",
+    )
+    parser.add_argument(
+        "--no-kg",
+        action="store_true",
+        help="Skip the hybrid-auto Knowledge-Graph ingestion (offline corpus only). "
+        "By default the corpus is ALSO ingested into the KG when the daemon is "
+        "reachable, degrading cleanly to offline-only when it is not.",
     )
     parser.add_argument(
         "--ingest-kg",
         "--ingest_kg",
         action="store_true",
-        help="After building, route the reference docs into the Knowledge Graph "
-        "(standardized ingestion) so the skill-graph can later be distilled FROM "
-        "the KG. Requires agent-utilities + a running graph daemon.",
+        dest="ingest_kg",
+        help="Deprecated: KG ingestion is now hybrid-auto by default (use --no-kg to "
+        "disable). Accepted for backward compatibility.",
     )
     parser.add_argument(
         "--from-kg",
@@ -809,14 +296,13 @@ if __name__ == "__main__":
         type=str,
         default=None,
         metavar="SEED_OR_QUERY",
-        help="Distill the skill-graph FROM the Knowledge Graph instead of (or in "
-        "addition to) crawling: a seed node id (e.g. 'concept:servicenow') or a "
-        "natural-language query. Emits a kg_manifest.json provenance record.",
+        help="Distill the skill-graph FROM the Knowledge Graph: a seed node id "
+        "(e.g. 'concept:servicenow') or a natural-language query.",
     )
 
     args = parser.parse_args()
     if not args.source and not args.from_kg:
-        parser.error("provide a source (URL/dir) or --from-kg <seed-or-query>")
+        parser.error("provide a source (URL/dir/file) or --from-kg <seed-or-query>")
     generate_skill(
         args.source,
         args.skill_name,
@@ -830,6 +316,10 @@ if __name__ == "__main__":
         args.wait_for,
         args.no_sitemap,
         args.append,
-        args.ingest_kg,
+        args.no_kg,
         args.from_kg,
     )
+
+
+if __name__ == "__main__":
+    main()
