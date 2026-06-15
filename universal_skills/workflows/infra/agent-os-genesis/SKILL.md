@@ -1,15 +1,23 @@
 ---
-name: day0_bootstrap_orchestrator
+name: agent-os-genesis
+aliases:
+  - day0
+  - day0_bootstrap_orchestrator
 description: >
-  Day 0 (re)install orchestrator: agent-first unfolding of the homelab / Agent OS
-  from bare hosts to a fully wired Docker Swarm — SSH mesh, hardware-driven placement,
-  swarm + overlay networks + custom ingress, Caddy/Technitium edge, GitLab/Portainer
-  GitOps, tiered service deploy with missing-image tolerance and first-time canaries,
-  cross-service wiring, and Knowledge-Graph materialization. Idempotent and re-runnable.
+  Day 0 genesis of the entire Agent OS — agent-first, idempotent unfolding of the
+  homelab from bare hosts to a fully wired Docker Swarm. (Formerly
+  day0_bootstrap_orchestrator; invoke as "day0" or "agent-os-genesis".) Steps: SSH
+  mesh, hardware-driven placement, swarm + overlay networks + custom ingress,
+  Caddy/Technitium edge, GitLab/Portainer GitOps, tiered service deploy with
+  missing-image tolerance and first-time canaries, cross-service wiring, and
+  Knowledge-Graph materialization. Idempotent and re-runnable. Triggers on "day0",
+  "day 0 install", "bootstrap the homelab", "stand up the whole Agent OS", "genesis",
+  "unfold the fleet from bare hosts".
 domain: infrastructure
 tags:
-  - bootstrap
   - day0
+  - genesis
+  - bootstrap
   - infrastructure
   - orchestration
   - swarm
@@ -29,7 +37,9 @@ requires:
   - graph-os
 ---
 
-# Day 0 Bootstrap & Multi-Service Wiring Orchestrator
+# Agent OS Genesis — Day 0 Bootstrap & Multi-Service Wiring Orchestrator
+
+> Renamed from `day0_bootstrap_orchestrator`; the **`day0`** alias still applies.
 
 Agent-first, idempotent unfolding of the homelab from bare hosts to a fully wired
 Docker Swarm. This is the repeatable "day-0 (re)install" entrypoint for the Agent OS
