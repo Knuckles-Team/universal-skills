@@ -95,11 +95,15 @@ does NOT reimplement swarm bootstrap — it generates the config and validates t
 state around it.
 
 ### Step 8 — Verify the deployment
-1. **Config health:** `setup-config doctor --profile <profile>` (or
-   `graph_configure(action="config_doctor", config_key="<profile>")`) — checks
-   required keys, durability rules, and secret-ref resolvability.
-2. **MCP reachability:** `python scripts/validate_mcp_config.py --live` (catches 502s).
-3. **KG smoke test:** a `graph_write` + `graph_query` round-trip, and (if databases
+1. **Holistic doctor (run this first):** `agent-utilities-doctor` (or
+   `graph_configure(action="system_doctor")`) — one sweep across config, engine,
+   backend, secrets, auth, MCP fleet, hooks, and observability; each finding carries
+   a remediation + the skill that fixes it. `--live` also probes MCP endpoints;
+   `--fix` runs safe auto-remediations. This composes the focused checks below.
+2. **Config health (focused):** `setup-config doctor --profile <profile>` — required
+   keys, durability rules, secret-ref resolvability.
+3. **MCP reachability:** `python scripts/validate_mcp_config.py --live` (catches 502s).
+4. **KG smoke test:** a `graph_write` + `graph_query` round-trip, and (if databases
    were set up) confirm backfill consistency via the database skill's report.
 
 Report the final state: profile, config path, SPARQL URL, gateway URL, and any doctor
