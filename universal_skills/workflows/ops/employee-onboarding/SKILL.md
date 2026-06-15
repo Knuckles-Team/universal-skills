@@ -1,5 +1,7 @@
 ---
-name: employee_onboarding
+name: employee-onboarding
+description: 'Onboard a new employee: generate onboarding documents, set up payroll and benefits,
+  and provision systems access. Use when onboarding or provisioning a new hire.'
 domain: ops
 agent: hr_operations_coordinator
 team_config:

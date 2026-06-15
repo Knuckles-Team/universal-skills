@@ -1,5 +1,7 @@
 ---
-name: payroll_processing
+name: payroll-processing
+description: 'Process a payroll cycle: compute pay and taxes, check compliance, and disburse payments.
+  Use when running payroll or computing employee compensation and deductions.'
 domain: ops
 agent: finance_operations_coordinator
 team_config:

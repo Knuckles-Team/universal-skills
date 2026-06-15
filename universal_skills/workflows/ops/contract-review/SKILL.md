@@ -1,5 +1,8 @@
 ---
-name: contract_review
+name: contract-review
+description: 'Review a contract for risk and compliance: parse the document, extract and assess
+  clauses, research legal context, check compliance, and produce a risk report. Use
+  when reviewing contracts or assessing contractual risk.'
 domain: ops
 agent: legal_compliance_coordinator
 team_config:

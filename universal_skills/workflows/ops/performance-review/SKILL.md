@@ -1,5 +1,8 @@
 ---
-name: performance_review
+name: performance-review
+description: 'Run an employee performance review: gather OKRs and metrics, analyze performance
+  against targets, and generate a review report. Use for periodic or annual performance
+  evaluations and OKR tracking.'
 domain: ops
 agent: hr_operations_coordinator
 team_config:

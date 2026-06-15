@@ -15,19 +15,16 @@ aliases:
 description: >
   One standardized, config-complete path to connect ANY external source to the
   agent-utilities Knowledge Graph — OWL/RDF-natively and bidirectionally. Covers the
-  whole source fleet behind one uniform model: LeanIX (EA fact sheets), Camunda + ARIS
-  (BPMN/EPC processes), ServiceNow/GLPI (ITSM), Egeria (governance), GitLab/GitHub,
-  Twenty (CRM), Jira/Plane, databases, and the rest of the hydration capability
-  registry. The same five steps every time — configure credentials, discover (for
-  sources with a queryable metamodel, e.g. LeanIX), mirror/ingest, keep in sync with
-  bite-sized deltas, and (optionally) backfeed KG-derived knowledge — driven by the
-  single `source_sync` entrypoint plus per-source ingest/backfeed tools. Use when the
-  user says "connect <X> to the KG", "ingest LeanIX/Camunda/ARIS/ServiceNow", "mirror
-  our EA/process tools", "sync <source>", "set up the <source> integration", "backfeed
-  to <source>". Composes `agent-utilities-deployment` (base platform) and
-  `agent-os-genesis` (multi-node swarm) rather than duplicating them; this skill
-  assumes a running graph-os. Do NOT use to deploy the platform from scratch (use
-  agent-utilities-deployment) or for bare-host bootstrap (use agent-os-genesis).
+  whole source fleet under one model: LeanIX (EA fact sheets), Camunda + ARIS (BPMN/EPC
+  processes), ServiceNow/GLPI (ITSM), Egeria (governance), GitLab/GitHub, Twenty (CRM),
+  Jira/Plane, and databases. The same flow every time — configure credentials, discover
+  (for sources with a queryable metamodel), mirror/ingest, sync with bite-sized deltas,
+  and optionally backfeed KG-derived knowledge — via the single `source_sync` entrypoint
+  plus per-source ingest/backfeed tools. Use when the user says "connect <X> to the KG",
+  "ingest LeanIX/Camunda/ARIS/ServiceNow", "mirror our EA/process tools", "sync
+  <source>", or "backfeed to <source>". Assumes a running graph-os. Do NOT use to deploy
+  the platform from scratch (use agent-utilities-deployment) or for bare-host bootstrap
+  (use agent-os-genesis).
 domain: infrastructure
 tags:
   - knowledge-graph

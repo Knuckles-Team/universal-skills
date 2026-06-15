@@ -1,5 +1,8 @@
 ---
-name: legal_compliance_review
+name: legal-compliance
+description: 'Review legal and regulatory compliance: research applicable regulations, analyze
+  contracts and policies, and check compliance. Use for legal compliance and regulatory
+  review tasks.'
 domain: ops
 agent: legal_compliance_coordinator
 team_config:
