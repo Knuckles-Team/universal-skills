@@ -1,0 +1,14 @@
+name: MCP Service Secret Onboarding Team
+task_pattern: Provision, store, inject, and verify a service-account secret for an MCP fleet service
+specialist_ids:
+  - identity-agent
+  - vault-agent
+  - deployer-agent
+capability_overrides:
+  identity-agent:
+    - checkpointing
+  vault-agent:
+    - checkpointing
+  deployer-agent:
+    - stuck_loop_detection
+    - checkpointing
