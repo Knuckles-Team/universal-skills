@@ -212,9 +212,15 @@ stacks (`apache-jena`/Fuseki, `camunda`, `archimate`, `kafka`) as health-gated c
 - T4 AI/ML (vLLM→GB10, Ollama, XTTS, Faster-Whisper) → GPU nodes
 - T5 Agent MCP servers (stateless) — **tolerate missing images**
 - T6 Media/NAS-bound (arr-suite, Jellyfin, Immich) → R510
+  - **arr-suite VPN hardening (REQUIRED):** deploy the arr-suite with the **gluetun-namespace +
+    fail-closed kill-switch** pattern (every app `network_mode: service:gluetun`, `FIREWALL=on`),
+    **not** the legacy `add-vpn-gateway` route-override (which leaks the host IP on the startup race
+    and when the tunnel drops). Because Swarm can't do `network_mode: service:`, the arr-suite runs
+    as a **standalone compose on R510** with Caddy repointed to its published ports. Full recipe +
+    NordVPN/credential + arr-MCP gotchas: [`references/arr-stack-vpn-hardening.md`](references/arr-stack-vpn-hardening.md).
 - Data platform (**Kafka**, **Apache-Jena**/Fuseki) → highest-RAM node, canary-gated
 - Requires: `portainer-mcp`, `container-manager-mcp`
-- Expected: `services-deployed, deferred-report`
+- Expected: `services-deployed, deferred-report` (arr-suite: `vpn-egress-enforced, kill-switch-verified`)
 
 ### Step 12: dns-migration-utility
 [depends_on: Step 11] (conditional: only when migrating from a legacy resolver — AdGuard Home, Pi-hole, bind9, dnsmasq)
