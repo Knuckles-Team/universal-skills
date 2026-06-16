@@ -1,0 +1,49 @@
+{
+  "secrets": [
+    {
+      "name": "github-pat",
+      "type": "token",
+      "provider": "github",
+      "bao_path": "vcs/github/pat",
+      "cadence_days": 182,
+      "consumers": [
+        {"kind": "portainer_stack_env", "ref": "github-runner", "env": "GITHUB_TOKEN"},
+        {"kind": "portainer_stack_env", "ref": "github-mcp", "env": "GITHUB_TOKEN"}
+      ],
+      "verify": "github whoami via the rotated token"
+    },
+    {
+      "name": "keycloak-multiplexer-client",
+      "type": "token",
+      "provider": "keycloak",
+      "bao_path": "keycloak/client/mcp-multiplexer",
+      "cadence_days": 182,
+      "consumers": [
+        {"kind": "portainer_stack_env", "ref": "mcp-multiplexer", "env": "OIDC_CLIENT_SECRET"}
+      ],
+      "verify": "multiplexer mints a bearer token for a child MCP"
+    },
+    {
+      "name": "langfuse-otel-keys",
+      "type": "token",
+      "provider": "langfuse",
+      "bao_path": "observability/langfuse",
+      "cadence_days": 182,
+      "consumers": [
+        {"kind": "portainer_stack_env", "ref": "github-mcp", "env": "OTEL_EXPORTER_OTLP_SECRET_KEY"}
+      ],
+      "verify": "an OTLP export is accepted by langfuse"
+    },
+    {
+      "name": "postgres-password",
+      "type": "password",
+      "provider": "postgres",
+      "bao_path": "db/postgres/password",
+      "cadence_days": 182,
+      "consumers": [
+        {"kind": "agent_utilities_config", "ref": "graph-os", "env": "GRAPH_DB_URI"}
+      ],
+      "verify": "pg-age connectivity check"
+    }
+  ]
+}
