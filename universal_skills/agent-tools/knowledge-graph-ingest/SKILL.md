@@ -141,6 +141,12 @@ sources is a no-op.
 
 ## 9. Skill-graph packages — distill OUT / import back (KG-2.7 / AHE-3.9)
 
+> **Auto-ingested by default.** When the KG is reachable, the `knowledge_base`
+> pipeline phase auto-ingests **all** packaged skill-graphs (`get_skill_graphs_path(
+> default_enabled=True)`) and the universal-skills workflow corpus — delta-skipped, so
+> only the first run is heavy. Disable on constrained installs via
+> `KG_AUTO_INGEST_SKILLS=false`. The actions below are for explicit, on-demand control.
+
 The KG is the source of truth; a **skill-graph is a versioned, round-trippable
 projection of a KG subgraph**. Two symmetric `graph_ingest` actions:
 
