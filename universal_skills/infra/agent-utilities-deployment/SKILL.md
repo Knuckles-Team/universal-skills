@@ -91,6 +91,10 @@ To see every option grouped by subsystem: `setup-config reference`.
 For single-node/enterprise, store credentials in OpenBao/Vault (reuse
 **secret-vault-manager** to unseal/seed) and reference them with `vault://` in config;
 otherwise a local `.env`. Never commit real secrets — generated config blanks them.
+Once secrets are seeded, register them with the **`automated-credential-rotation`**
+skill (same OpenBao paths) so they rotate on policy (6-month baseline) — that skill is
+the rotation counterpart to this provisioning step, and agent-os-genesis arms it as
+Step 14b.
 
 ### Step 4 — Databases (single-node-prod / enterprise)
 Run the **database-environment-setup** skill: provisions Stardog (prod) or local
