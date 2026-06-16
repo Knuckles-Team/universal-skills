@@ -14,7 +14,7 @@ license: MIT
 tags: [github, issues, pull-requests, backlog, triage, planning, ops]
 metadata:
   author: Genius
-  version: '0.45.0'
+  version: '0.46.0'
 ---
 
 # GitHub Backlog Planner
