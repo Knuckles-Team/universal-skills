@@ -17,6 +17,7 @@ tags:
   - placement
   - capacity-planning
   - swarm
+  - kubernetes
   - optimization
   - blueprint
 requires:
@@ -346,6 +347,67 @@ registry:
   tls: internal
   mirror: true
 ```
+
+---
+
+### Step 7b: Kubernetes Manifest Emission
+
+The placement decisions from Steps 1–6 are **orchestrator-agnostic** — only the
+Step 7 rendering differs by target. To emit Kubernetes manifests instead of the
+Swarm blueprint, run the companion script:
+
+```bash
+# native emitter — turns the blueprint's placements into k8s manifests
+python scripts/emit_manifests.py --blueprint golden-deployment.yaml \
+  --target kubernetes --out k8s/
+```
+
+Add a `target:` and `k8s:` block to the blueprint to drive it:
+
+```yaml
+target: kubernetes          # swarm | kubernetes
+k8s:
+  namespace: homelab
+  storageClass: local-path  # RKE2/k3s default node-local provisioner
+  ingressClass: nginx
+```
+
+**Native emitter mapping** (consumes the same `placements`, enriched from the
+Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
+
+| Blueprint signal | Kubernetes output |
+|---|---|
+| placement `node` (`node.labels.name == X`) | `nodeAffinity` required match on label `name=<node>` |
+| default placement | **Deployment** (`replicas` from catalog, default 1) |
+| `volumes` present, or tier T2/T6 | **StatefulSet** + `volumeClaimTemplates` on `local-path` |
+| `mode: global` | **DaemonSet** |
+| `ports` published | **ClusterIP Service** (`published:target`) |
+| every workload | placed in the blueprint `k8s.namespace` |
+
+**Two emission paths:**
+
+1. **Native** (above) — deterministic, no external tools; best for
+   planner-owned catalog services. Matches the in-repo golden reference
+   `agent-utilities/deploy/k8s/graphos.yaml`.
+2. **kompose transform** — for the ~60 existing compose stacks, start from
+   `kompose convert -f compose.yml -o k8s/`, then apply the deterministic
+   post-fixups kompose drops:
+
+   | Swarm/compose feature | kompose drops | Post-fixup |
+   |---|---|---|
+   | `deploy.placement.constraints` | dropped | inject `nodeAffinity` on `name=<host>` |
+   | overlay networks (`caddy`, `internet`) | NetworkPolicy noise | replace with ClusterIP Service; cross-svc DNS `<svc>.<ns>.svc` |
+   | named/bind volumes | hostPath/emptyDir | rewrite to `local-path` PVC pinned to the data's node |
+   | `deploy.mode: global` | Deployment replicas:1 | convert to DaemonSet |
+   | `depends_on` | dropped | initContainer wait + readiness probe |
+   | host-mode ports (Caddy 80/443) | NodePort guess | `hostPort` on the edge node or `Service type: LoadBalancer` |
+
+   For services that ship an upstream Helm chart (e.g. graph-os), prefer
+   `helm upgrade --install` with a values file rendered from the placement.
+
+The emitted `k8s/` dir is what the GitLab `k8s-deploy` CI job applies
+(`kubectl apply -f k8s/`), and what the `portainer-agent` MCP can deploy as a
+GitOps Kubernetes stack.
 
 ---
 
