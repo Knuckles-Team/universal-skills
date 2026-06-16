@@ -242,6 +242,24 @@ this MUST exist before any MCP enforces jwt.
 - Requires: `keycloak-mcp`, `openbao-mcp` (+ skills `keycloak-client-onboarder`, `eunomia-policy-manager`)
 - Expected: `sso-wired, mcp-multiplexer-client-created, eunomia-baseline-loaded`
 
+### Step 14b: credential-rotation-policy
+[depends_on: Step 14] (profiles: single-node-prod, enterprise — skipped for tiny)
+Establish recurring, policy-driven secret rotation via the
+`automated-credential-rotation` skill, now that secrets exist in OpenBao (Step 8/14):
+- Build the rotation **catalog** (each secret's OpenBao path, provider, consumers, and
+  `cadence_days` — 6-month baseline) from the secrets provisioned in Step 14 (Keycloak
+  client secrets, GitLab/GitHub PATs, DB/LLM/OTEL keys).
+- **Validate dry-run first**: `rotation_lib.py plan --catalog …` renders a value-free
+  plan; confirm no secret material appears in any output.
+- Schedule the recurring rotation (off-peak, 6-month cadence) via the `schedule` skill;
+  high-stakes secrets (Keycloak client, DB, registry) require an approval window before
+  `execute`. Rotation uses Keycloak `regenerate_client_secret_by_client_id`, writes new
+  values to OpenBao, propagates to consumers via Portainer `update_stack`, verifies, and
+  revokes the old — never echoing a value.
+- Requires: `openbao-mcp`, `keycloak-mcp`, `portainer-mcp` (+ skills
+  `automated-credential-rotation`, `schedule`)
+- Expected: `rotation-catalog-registered, rotation-schedule-armed, dry-run-validated`
+
 ### Step 15: observability-and-backups
 [depends_on: Step 14]
 Stand up the full LGTM observability standard (CONCEPT:OS-5.23) + Borgmatic backups:
@@ -410,7 +428,7 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 9:** Step 12 — dns-migration-utility (conditional: legacy-resolver migration only)
 - **After level 10:** Step 13 — dns-record-manager
 - **After level 11:** Step 14 — keycloak-oidc-wiring
-- **After level 12:** Step 15 — observability-and-backups
+- **After level 12 (in parallel):** Step 14b — credential-rotation-policy; Step 15 — observability-and-backups
 - **After level 13:** Step 16 — graph-os
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
