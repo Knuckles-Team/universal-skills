@@ -159,6 +159,7 @@ def generate_skill(
     append: bool = False,
     no_kg: bool = False,
     from_kg: str | None = None,
+    distill: bool = False,
 ):
     if not skill_name.endswith("-docs"):
         skill_name = f"{skill_name}-docs"
@@ -209,6 +210,13 @@ def generate_skill(
         print("⚠️  validation issues:")
         for err in result["validation_errors"]:
             print(f"   - {err}")
+
+    if distill:
+        print("📖 Distilling an OVERVIEW.md (essence + cheatsheet)…")
+        d = pipe.distill_one(out_dir / skill_name)
+        print(
+            f"   {'✅ distilled' if d.get('status') == 'distilled' else '⚠️ ' + str(d)}"
+        )
     return result
 
 
@@ -299,6 +307,12 @@ def main() -> None:
         help="Distill the skill-graph FROM the Knowledge Graph: a seed node id "
         "(e.g. 'concept:servicenow') or a natural-language query.",
     )
+    parser.add_argument(
+        "--distill",
+        action="store_true",
+        help="After building, LLM-distill an OVERVIEW.md (essence + cheatsheet) so the "
+        "agent reads the distilled knowledge first and drills into reference/ for detail.",
+    )
 
     args = parser.parse_args()
     if not args.source and not args.from_kg:
@@ -318,6 +332,7 @@ def main() -> None:
         args.append,
         args.no_kg,
         args.from_kg,
+        args.distill,
     )
 
 
