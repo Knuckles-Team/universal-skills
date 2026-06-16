@@ -68,9 +68,41 @@ buys nothing here.
 - **chaptarr** runs as uid **99:100** with auth=Basic on **port 8789**; keep its `/config` owned by
   99:100 or it crash-loops on the PID-file write.
 
+## Intra-namespace wiring (REQUIRED — collapsing to one netns breaks every swarm-name ref)
+Once all services share gluetun's namespace, the swarm service names (`sonarr`, `qbittorrent`,
+`flaresolverr`, `jellyfin`, …) stop resolving (NordVPN DNS can't see them). Re-point every
+cross-reference:
+- **Intra-stack → `localhost`**: *arr download client → `localhost:8080`; prowlarr Applications
+  `baseUrl`+`prowlarrUrl` → `http://localhost:<port>`; prowlarr FlareSolverr proxy →
+  `http://localhost:8191`; seerr Sonarr/Radarr → `localhost`; unpackerr → `http://localhost:<port>`.
+- **External-but-internal dep → LAN IP** (never `*.arpa`): seerr→Jellyfin uses `10.0.0.13:8096`,
+  and Jellyfin (separate stack) must **publish host port 8096** so namespaced apps reach it by IP
+  (gluetun `FIREWALL_OUTBOUND_SUBNETS` permits the LAN hop; the app's external traffic still
+  egresses via VPN). Apps that need *many* internal services (e.g. homarr) should stay OUT of the VPN.
+
+## ⭐ Bind the BitTorrent client to the VPN interface (`tun0`)
+Set qBittorrent → Network Interface = **`tun0`** (`current_network_interface=tun0`). **Mandatory** —
+without it, libtorrent's UDP (DHT/UDP-trackers/peers) takes the default `eth0` route and gluetun's
+`OUTPUT DROP` kill-switch rejects it (**"Operation not permitted"**, DHT 0 nodes, torrents
+`stalledDL`/0 peers) while HTTPS trackers still work — a confusing half-broken state. Binding to
+`tun0` routes all client traffic through the tunnel (`-A OUTPUT -o tun0 -j ACCEPT`).
+
+## Download path mapping
+qBittorrent saves to `/downloads/complete` but the *arr apps mount the same downloads volume at
+`/data`. Add a Remote Path Mapping in each *arr: host=download-client host (`localhost`),
+remote=`/downloads/`, local=`/data/` — else *"directory does not appear to exist inside the
+container."*
+
+## qBittorrent-agent (MCP) gotchas (supersedes the qbittorrent-mcp note above)
+- Reads **`QBITTORRENT_URL`** (e.g. `http://qbittorrent.arpa`), NOT `QBITTORRENT_HOST`/`PORT`.
+- qBittorrent **5.x** endpoints: `torrents/start`|`stop` (not `resume`|`pause`).
+- Tool return annotations must be `-> Any` (not `-> dict`) or non-dict results trip FastMCP's
+  `structured_content must be a dict`.
+
 ## Verify
 ```
 ssh genius@10.0.0.10 'docker exec gluetun wget -qO- http://localhost:8000/v1/publicip/ip'  # VPN IP
 ssh genius@10.0.0.10 'docker exec gluetun wget -qO- ifconfig.me'   # must NOT equal host public IP
 # kill-switch: stop gluetun -> dependent apps have NO network (fail-closed), recover on start
+# downloads working: docker exec <qbit> ... transfer/info -> connection_status=connected, dht_nodes>0
 ```
