@@ -21,6 +21,8 @@ tags:
   - infrastructure
   - orchestration
   - swarm
+  - kubernetes
+  - rke2
   - dns
   - gitops
   - backups
@@ -123,8 +125,14 @@ fleet (it references `deploy/mcp-fleet.registry.yml`), UI `components`, and
 preflight: `agent-utilities-doctor --preflight --profile enterprise` (or MCP
 `graph_configure action=preflight config_key=enterprise`) — **no Rust needed** (the
 engine ships as a wheel); Docker/Swarm are required at this tier.
-- Outputs: `deployment_profile` ∈ {tiny, single-node-prod, enterprise}; integration toggles {pggraph, kafka, openbao, keycloak, langfuse}
+- Outputs: `deployment_profile` ∈ {tiny, single-node-prod, enterprise}; `orchestrator` ∈ {swarm (default), kubernetes}; integration toggles {pggraph, kafka, openbao, keycloak, langfuse}
 - Expected: `profile-selected` — gates every subsequent step.
+
+> **Orchestrator choice** (independent of profile): `swarm` (default) drives
+> Steps 5/6/11 down the Docker Swarm path; `kubernetes` drives them down the
+> RKE2 + Cilium path (`kubernetes-mesh-provisioner`, k8s node labels, and
+> planner-emitted manifests). The two are mutually exclusive per node (RKE2 uses
+> containerd, Swarm uses dockerd), so a node is one or the other.
 
 ### Step 1: ssh-bootstrap
 [depends_on: Step 0] (profiles: single-node-prod, enterprise — skipped for tiny)
@@ -157,20 +165,36 @@ highest-free-RAM node, manager/edge (Caddy)→R820. This manifest drives node la
 - Requires: `systems-manager-mcp`, `tunnel-manager-mcp`, `container-manager-mcp`
 - Expected: `placement-manifest`
 
-### Step 5: swarm-mesh-provisioner
+### Step 5: mesh-provisioner (swarm | kubernetes)
 [depends_on: Step 4]
+Stand up the cluster substrate. Branch on the Step 0 `orchestrator` choice — both paths are idempotent and re-runnable.
+
+**`orchestrator == swarm` (default) → `swarm-mesh-provisioner`.**
 Converge the swarm + networks via the **Ansible bootstrap playbook** (`networks/bootstrap/swarm.yml`,
-driven by `inventory.yaml`; `-e reset_swarm=true` for a destructive clean rebuild) — idempotent and re-runnable:
+driven by `inventory.yaml`; `-e reset_swarm=true` for a destructive clean rebuild):
 - `docker swarm init` on **R820 (10.0.0.13)**; join workers `R510`, `R710`, `RW710`, `GR1080`, `GB10`.
 - Remove Swarm's auto-created default ingress and create the **custom ingress** `172.20.0.0/16`.
 - Create overlay networks per the networking contract: `internet`, `caddy` (internal), `vpn` (mtu 1380), `cloudflare` (internal).
-- Requires: `container-manager-mcp`, `tunnel-manager-mcp`
 - Expected: `swarm-ready, networks-created`
+
+**`orchestrator == kubernetes` → `kubernetes-mesh-provisioner`.**
+Stand up RKE2 + Cilium (the Swarm parallel; **requires NIC bonds applied first** so Cilium's tunnel
+egress is deterministic):
+- RKE2 **server** on **R820 (10.0.0.13)** with `cni: cilium`; join **agents** `R710`, `R510`, `RW710`, `GR1080` (and `GB10` as a tainted arm64 GPU agent once its throttled-vLLM soak passes).
+- Cilium runs **kube-proxy-free** (eBPF) — this removes the IPVS kernel path that hard-reset GB10 under Swarm; expose the ingress via a `CiliumLoadBalancerIPPool` + `L2Announcement` VIP (reuse `10.0.0.13` so Technitium needs no change).
+- NVIDIA device-plugin on the GPU nodes; configure `registries.yaml` → `registry.arpa` + internal CA on every node.
+- Expected: `cluster-ready, cilium-healthy, gpu-advertised`
+
+- Requires: `container-manager-mcp`, `tunnel-manager-mcp`
 
 ### Step 6: node-labeling
 [depends_on: Step 5]
-Apply `docker node update --label-add name=<HOST>` for every node (so `node.labels.name == ${SERVER}`
-constraints resolve), plus role labels from the planner (`gpu=true`, `storage=true`, `edge=true`, etc.).
+Apply the `name=<HOST>` label to every node plus role labels from the planner (`gpu=true`, `storage=true`,
+`edge=true`, etc.). The label keys are identical across orchestrators so the planner's placement
+(`node.labels.name==X` → Swarm constraint **or** k8s `nodeAffinity`) resolves either way.
+- **swarm:** `docker node update --label-add name=<HOST>` (via `container-manager-mcp update_node`).
+- **kubernetes:** `kubectl label node <HOST> name=<HOST>` (or `container-manager-mcp update_node` with
+  `CONTAINER_MANAGER_TYPE=kubernetes`), plus the `gpu=true:NoSchedule` taint on GPU nodes.
 - Requires: `container-manager-mcp`, `tunnel-manager-mcp`
 - Expected: `nodes-labeled`
 
@@ -205,6 +229,14 @@ Bind Portainer stacks to their GitLab repositories using the PATs (GitOps auto-s
 Deploy all stacks per the placement manifest in dependency tiers (T0→T6), applying the failure-handling policy:
 **pre-scan each stack's `image:` for availability → skip+report missing-image `*-mcp` stacks; deploy first-time
 stacks (`apache-jena`/Fuseki, `camunda`, `archimate`, `kafka`) as health-gated canaries**.
+
+The T0→T6 tiering, missing-image tolerance, and canary policy are
+**orchestrator-agnostic**. On `orchestrator == kubernetes`, render each stack
+with the deployment-planner emitter (`emit_manifests.py --target kubernetes`,
+SKILL Step 7b) and deploy the resulting `k8s/` manifests via the
+`portainer-agent` MCP Kubernetes GitOps stack (`create_kubernetes_stack_from_repository`)
+or `kubectl apply`. The arr-suite gluetun pattern below becomes a native
+**shared-netns Pod** (gluetun + apps in one Pod) rather than a standalone compose.
 - T0 Critical edge (DNS, Caddy, VPN, registry) → already up (Step 7), verify
 - T1 Core platform (Portainer, GitLab, Keycloak, OpenBao, LGTM)
 - T2 Business apps (Twenty, ERPNext, Plane, Mattermost, Firefly, **Camunda**, **Archi**)
