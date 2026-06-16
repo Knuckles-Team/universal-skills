@@ -41,4 +41,3 @@ Convert the parsed DNS records into a unified, brand-agnostic format for authori
 ## Resources
 
 - `scripts/migrate_dns.py` — extracts and normalizes records from legacy resolver configs (AdGuard Home, Pi-hole, bind9, dnsmasq) into the unified A/CNAME export payload for authoritative Technitium import.
-

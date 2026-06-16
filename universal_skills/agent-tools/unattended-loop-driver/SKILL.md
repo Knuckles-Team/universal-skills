@@ -91,7 +91,7 @@ or two `ask`-list items the gate halted.
 ## Guarantees
 
 - **deny > allow > ask** — safety rules can never be overridden by a broad allow.
-- **Fail-closed gate** — the PreToolUse gate denies on any error/unparseable input
+- **Fail-closed gate** — the PreToolUse gate denies on any error/unparsable input
   and protects secrets even when the graph-os daemon is down.
 - **Propose-only loop** — `graph_loops(action="run")` writes proposals (specs,
   skill candidates, team proposals); it never auto-merges or executes high-stakes
