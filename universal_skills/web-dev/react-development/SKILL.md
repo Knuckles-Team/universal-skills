@@ -12,7 +12,7 @@ license: MIT
 tags: [react, typescript, hooks, components, server-components, frontend, react-19, performance, architecture, nextjs]
 metadata:
   author: Genius
-  version: '0.45.0'
+  version: '0.46.0'
 ---
 # React Development (TypeScript)
 

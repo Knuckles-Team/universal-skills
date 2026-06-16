@@ -10,7 +10,7 @@ license: MIT
 tags: [tdd, testing, red-green-refactor, quality, python]
 metadata:
   author: Genius
-  version: '0.45.0'
+  version: '0.46.0'
 ---
 # TDD Methodology Expert
 
