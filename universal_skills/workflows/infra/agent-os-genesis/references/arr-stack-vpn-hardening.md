@@ -31,14 +31,18 @@ buys nothing here.
   single-homed on the compose default bridge for a **deterministic WAN route** (do NOT attach it to
   multiple overlays — multi-homing reintroduces the default-route ambiguity that caused the leak).
 - `FIREWALL=on` — the **fail-closed kill-switch**: no egress unless the tunnel is up.
-- `FIREWALL_INPUT_PORTS=<all WebUI ports>` and `FIREWALL_OUTBOUND_SUBNETS=10.0.0.0/24,172.16.0.0/16`
-  keep the WebUIs reachable and LAN/overlay management working even when the tunnel is down.
+- `FIREWALL_INPUT_PORTS=<all WebUI ports>` and `FIREWALL_OUTBOUND_SUBNETS=<LAN CIDR>,<swarm overlay CIDRs>`
+  (take the LAN CIDR from the operator's network / `inventory.yaml`; overlay CIDRs from the
+  networking contract) keep the WebUIs reachable and LAN/overlay management working even when the
+  tunnel is down.
 - `DNS_ADDRESS=<VPN DNS>` kills the DNS leak.
 - **Every other arr service** uses `network_mode: "service:gluetun"` (no own `networks:`/`ports:`),
   `depends_on: { gluetun: { condition: service_started } }` (NOT `service_healthy` — else the apps
   never start while the tunnel is down and you lose management access).
-- **gluetun publishes every WebUI port** on the R510 host; **Caddy** reverse-proxies each `*.arpa`
-  host to `10.0.0.10:<port>` (replacing the old `arr-stack_<svc>:<port>` swarm-service upstreams).
+- **gluetun publishes every WebUI port** on its node's host; **Caddy** reverse-proxies each `*.arpa`
+  host to `<arr-stack-node-ip>:<port>` — resolve that node's IP from `inventory.yaml` (the node the
+  arr-stack is pinned to) rather than hardcoding — replacing the old `arr-stack_<svc>:<port>`
+  swarm-service upstreams.
 - Drop `add-vpn-gateway` and the `gluetun-launcher` — obsolete under namespace sharing.
 - In the shared namespace the apps reach each other on `localhost`; the VPN DNS won't resolve
   internal `*.arpa`, so cross-app URLs (e.g. unpackerr → sonarr/radarr) must use `http://localhost:<port>`.
@@ -75,7 +79,8 @@ cross-reference:
 - **Intra-stack → `localhost`**: *arr download client → `localhost:8080`; prowlarr Applications
   `baseUrl`+`prowlarrUrl` → `http://localhost:<port>`; prowlarr FlareSolverr proxy →
   `http://localhost:8191`; seerr Sonarr/Radarr → `localhost`; unpackerr → `http://localhost:<port>`.
-- **External-but-internal dep → LAN IP** (never `*.arpa`): seerr→Jellyfin uses `10.0.0.13:8096`,
+- **External-but-internal dep → LAN IP** (never `*.arpa`): seerr→Jellyfin uses the Jellyfin node's
+  LAN IP (from `inventory.yaml`)`:8096`,
   and Jellyfin (separate stack) must **publish host port 8096** so namespaced apps reach it by IP
   (gluetun `FIREWALL_OUTBOUND_SUBNETS` permits the LAN hop; the app's external traffic still
   egresses via VPN). Apps that need *many* internal services (e.g. homarr) should stay OUT of the VPN.
@@ -100,9 +105,10 @@ container."*
   `structured_content must be a dict`.
 
 ## Verify
+Resolve `$NODE` (the arr-stack node) and `$USER` from `inventory.yaml` — never hardcode:
 ```
-ssh genius@10.0.0.10 'docker exec gluetun wget -qO- http://localhost:8000/v1/publicip/ip'  # VPN IP
-ssh genius@10.0.0.10 'docker exec gluetun wget -qO- ifconfig.me'   # must NOT equal host public IP
+ssh $USER@$NODE 'docker exec gluetun wget -qO- http://localhost:8000/v1/publicip/ip'  # VPN IP
+ssh $USER@$NODE 'docker exec gluetun wget -qO- ifconfig.me'   # must NOT equal host public IP
 # kill-switch: stop gluetun -> dependent apps have NO network (fail-closed), recover on start
 # downloads working: docker exec <qbit> ... transfer/info -> connection_status=connected, dht_nodes>0
 ```
