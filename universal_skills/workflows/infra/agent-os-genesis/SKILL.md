@@ -298,6 +298,25 @@ Establish recurring, policy-driven secret rotation via the
   `automated-credential-rotation`, `schedule`)
 - Expected: `rotation-catalog-registered, rotation-schedule-armed, dry-run-validated`
 
+### Step 14c: ciso-assistant-bootstrap
+[depends_on: Step 11] (conditional: only when the `ciso-assistant` stack is in the manifest)
+Bootstrap the deployed **CISO Assistant** GRC stack so its API is usable headlessly —
+**no SMTP required** (the superuser email is only a login identifier, never mailed):
+- Run `services/ciso-assistant/bootstrap.sh` from a swarm manager. It waits for the
+  backend `/api/health/`, sets the superuser (`CISO_ADMIN_EMAIL`, default
+  `admin@ciso.arpa`) password (reused from OpenBao if already present), mints a
+  **long-lived (10-year) Knox API token**, and persists `DJANGO_SECRET_KEY` + admin
+  creds + `CISO_ASSISTANT_TOKEN` to **OpenBao** (`secret/services/ciso-assistant`, via
+  the write-capable `OPENBAO_TOKEN` from Step 8/14) **and** the stack `.env`. Idempotent.
+- Capture the emitted `CISO_ASSISTANT_URL` / `CISO_ASSISTANT_TOKEN` and inject them into
+  the **graph-os** environment (Step A2/A4) so the agent-utilities `ciso_assistant` KG
+  connector (KG-2.110 extractor / KG-2.111 writeback) can sync the GRC estate into the KG
+  and reconcile it with Egeria + Camunda via the `ALIGNED_WITH` crosswalk.
+- The stack's `compose.yml` already puts the backend on the `caddy` overlay and the repo
+  carries the `ciso.arpa` Caddyfile route; ensure the central Caddy is reloaded (Step 7/13).
+- Requires: `portainer-mcp`/`container-manager-mcp` (docker exec), `openbao-mcp`, `caddy-mcp`
+- Expected: `ciso-superuser-set, ciso-token-minted, ciso-token-in-openbao, ciso-connector-wired`
+
 ### Step 15: observability-and-backups
 [depends_on: Step 14]
 Stand up the full LGTM observability standard (CONCEPT:OS-5.23) + Borgmatic backups:
