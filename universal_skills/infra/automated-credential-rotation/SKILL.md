@@ -16,7 +16,7 @@ license: MIT
 tags: [infra, security, credentials, secrets, rotation, openbao, keycloak, portainer, policy]
 metadata:
   author: Genius
-  version: '0.46.0'
+  version: '0.47.0'
 ---
 
 # Automated Credential Rotation

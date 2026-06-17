@@ -9,7 +9,7 @@ license: MIT
 tags: [user-research, discovery, personas, jtbd, journey-mapping, qualitative]
 metadata:
   author: Genius
-  version: '0.46.0'
+  version: '0.47.0'
 ---
 # User Research & Discovery
 
