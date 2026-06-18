@@ -120,7 +120,36 @@ To use a manually built graph, set its corresponding enable flag to `True`:
 export PYDANTIC_AI_DOCS_ENABLE=True
 ```
 
-## Installation
+## Quick start — one-click install
+
+Install the package **and** deploy every skill (incl. `skill-installer` and
+`agent-os-genesis`, alias `agent-utilities-genesis`) into all detected AI tools
+(Claude Code, Antigravity, Windsurf, OpenCode, Cursor, Zed, Codex, Devin) and the
+agent-utilities XDG space (`~/.config/agent-utilities/skills`), preferring **symlinks**
+to the installed package (Windows uses a directory junction, then a copy):
+
+```bash
+# one-click (clone, then run)
+sh install.sh                       # PyPI install + symlink-deploy into all detected tools
+sh install.sh --editable            # dev: editable install, skills symlink to your working tree
+sh install.sh --skills agent-os-genesis   # only the genesis skill
+sh install.sh --mcp ./mcp_config.json     # also wire MCP servers into detected tools
+# Windows:  ./install.ps1  [-Editable] [-Skills agent-os-genesis] [-Mcp .\mcp_config.json]
+```
+
+Or the equivalent one-liner (no clone) — a **persistent** install is required so the
+symlinks resolve:
+
+```bash
+uv tool install universal-skills && install-skills --all-detected --symlink
+```
+
+Once installed, the `skill-installer` skill (and the `install-skills` CLI) are present,
+so any other skill can be deployed; **`agent-os-genesis`** is loadable in your tools —
+invoke it (or `day0`) to stand up the Agent OS, or *"deploy `<package>` with
+agent-os-genesis"* to provision a single connector.
+
+## Installation (manual / specific extras)
 
 ```bash
 # Install with all standard skills
@@ -128,6 +157,9 @@ pip install universal-skills[all]
 
 # Or install specific skill categories
 pip install universal-skills[systems-manager,web-crawler,web-search]
+
+# Then deploy skills into your tools (symlink preferred):
+install-skills --all-detected --symlink
 ```
 
 ## Usage
