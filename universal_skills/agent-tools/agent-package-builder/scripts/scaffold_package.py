@@ -610,6 +610,7 @@ asyncio_mode = auto
 testpaths = tests
 markers =
     integration: Integration tests
+    concept(id): associate a test with a CONCEPT id
 addopts = -m "not integration"
 filterwarnings =
     ignore:.*exclude_args.*
@@ -881,6 +882,18 @@ README_MD = """\
 
 ---
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Available MCP Tools](#available-mcp-tools)
+- [Installation](#installation)
+- [Usage](#usage)
+- [MCP](#mcp)
+- [Documentation](#documentation)
+
+---
+
 ## Overview
 
 **{display_name} MCP Server + A2A Agent**
@@ -888,6 +901,87 @@ README_MD = """\
 {description}
 
 This repository is actively maintained - Contributions are welcome!
+
+## Key Features
+
+- **Action-routed MCP tools** — each domain is exposed as a single MCP tool that routes
+  to many underlying operations via an `action` argument, keeping the tool surface small.
+- **Three interfaces, one package** — use it as a Python **API client**, an **MCP server**
+  (`stdio` / `streamable-http` / `sse`), or a Pydantic-AI **A2A agent**.
+- **`agent-utilities` native** — built on the shared framework (auth, action router,
+  telemetry, governance) for fleet consistency.
+- **Per-tool toggles** — enable or disable each tool domain with environment switches.
+- **Enterprise-ready** — OTEL/Langfuse telemetry and optional Eunomia access governance.
+
+## Available MCP Tools
+
+Each tool is **action-routed**: pass an `action` and a JSON `params_json` payload. Tool
+domains can be toggled on or off with the listed environment variable.
+
+| Tool | Toggle env var | Default | Actions |
+|------|----------------|:-------:|---------|
+| `system_operations` | `SYSTEMTOOL` | `True` | `status`, `info` |
+
+## Installation
+
+### Install with `uvx` (no install — run on demand)
+
+```bash
+uvx --from {package_name} {mcp_cmd}      # MCP server
+uvx --from {package_name} {agent_cmd}    # A2A agent server
+```
+
+### Install with `pip`
+
+```bash
+python -m pip install {package_name}            # core (API client)
+python -m pip install "{package_name}[all]"     # + MCP server + A2A agent + telemetry
+```
+
+### Console scripts
+
+After installation the following entry points are available on your `PATH`:
+
+| Command | Description |
+|---------|-------------|
+| `{mcp_cmd}` | Launch the MCP server |
+| `{agent_cmd}` | Launch the A2A agent server |
+
+## Usage
+
+### As a Python API client
+
+```python
+from {pkg_dir}.auth import get_client
+
+client = get_client()
+status = client.get_system_status()
+print(status)
+```
+
+### As an MCP server (CLI)
+
+```bash
+# Local stdio (for IDEs)
+{mcp_cmd}
+
+# Networked streamable-http
+{mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+### Calling an MCP tool
+
+Tools are action-routed — pass an `action` plus a JSON `params_json` string:
+
+```json
+{{
+  "tool": "system_operations",
+  "arguments": {{
+    "action": "status",
+    "params_json": "{{}}"
+  }}
+}}
+```
 
 ## MCP
 
@@ -958,6 +1052,18 @@ copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable
 ```bash
 python -m pip install {package_name}
 ```
+
+## Documentation
+
+Full documentation is published to the GitHub Pages site and mirrored under `docs/`:
+
+- [Documentation site](https://knuckles-team.github.io/{package_name}/)
+- [Overview](docs/overview.md)
+- [Installation](docs/installation.md)
+- [Usage](docs/usage.md)
+- [Deployment](docs/deployment.md)
+- [Platform](docs/platform.md)
+- [Concept Registry](docs/concepts.md)
 """
 
 CHANGELOG_MD = """\
@@ -2306,8 +2412,9 @@ DOCS_CONCEPTS_MD = """\
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
 TESTS_CONFTEST = """\
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture
@@ -2318,14 +2425,17 @@ def mock_api_client():
 """
 
 TESTS_AUTH = """\
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 import {pkg_dir}.auth as auth_module
 from {pkg_dir}.auth import get_client
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_get_client_auth_error():
+    \"\"\"Auth failure surfaces a clear error. CONCEPT:{concept_prefix}-001\"\"\"
     auth_module._client = None
     with patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls:
         mock_client_cls.side_effect = Exception("Auth Failure")
@@ -2338,10 +2448,14 @@ def test_get_client_auth_error():
 TESTS_API_WRAPPER = """\
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from {pkg_dir}.api import ApiClientBase
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_request_returns_json():
+    \"\"\"API client returns parsed JSON. CONCEPT:{concept_prefix}-001\"\"\"
     client = ApiClientBase(base_url="http://localhost", token="t")
     response = MagicMock()
     response.json.return_value = {{"ok": True}}
@@ -2350,10 +2464,17 @@ def test_request_returns_json():
 """
 
 TESTS_MCP_VALIDATION = """\
+import pytest
+
 from {pkg_dir}.mcp_server import get_mcp_instance
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_mcp_instance_registration(monkeypatch):
+    \"\"\"MCP server instantiates with its tool domains registered.
+
+    CONCEPT:{concept_prefix}-001
+    \"\"\"
     monkeypatch.setattr("sys.argv", ["{mcp_cmd}"])
     mcp, args, middlewares = get_mcp_instance()
     assert mcp is not None
@@ -2362,8 +2483,12 @@ def test_mcp_instance_registration(monkeypatch):
 TESTS_INIT_DYNAMICS = """\
 import importlib
 
+import pytest
 
+
+@pytest.mark.concept("{concept_prefix}-001")
 def test_package_imports():
+    \"\"\"Top-level package exposes its public API. CONCEPT:{concept_prefix}-001\"\"\"
     module = importlib.import_module("{pkg_dir}")
     assert hasattr(module, "__all__")
 """
@@ -2371,26 +2496,38 @@ def test_package_imports():
 TESTS_STARTUP = """\
 import importlib
 
+import pytest
 
+
+@pytest.mark.concept("{concept_prefix}-001")
 def test_mcp_server_module_importable():
+    \"\"\"MCP server module imports cleanly at startup. CONCEPT:{concept_prefix}-001\"\"\"
     assert importlib.import_module("{pkg_dir}.mcp_server") is not None
 """
 
 TESTS_CONCEPT_PARITY = """\
 from pathlib import Path
 
+import pytest
+
 CONCEPTS_DOC = Path(__file__).resolve().parents[1] / "docs" / "concepts.md"
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_concepts_doc_exists():
+    \"\"\"Concept registry doc exists. CONCEPT:{concept_prefix}-001\"\"\"
     assert CONCEPTS_DOC.is_file()
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_eco_bridge_present():
+    \"\"\"ECO-4.0 bridge concept is referenced. CONCEPT:{concept_prefix}-001\"\"\"
     assert "ECO-4.0" in CONCEPTS_DOC.read_text(encoding="utf-8")
 
 
+@pytest.mark.concept("{concept_prefix}-001")
 def test_prefix_registered():
+    \"\"\"Project concept prefix is registered. CONCEPT:{concept_prefix}-001\"\"\"
     assert "CONCEPT:{concept_prefix}-" in CONCEPTS_DOC.read_text(encoding="utf-8")
 """
 

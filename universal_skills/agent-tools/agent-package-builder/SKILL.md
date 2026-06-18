@@ -118,7 +118,7 @@ Run `scripts/scaffold_package.py` (or generate the same set manually). The stand
 │   ├── verify_api_integration.py    # pre-commit hook (bundled golden copy)
 │   ├── validate_a2a_agent.py        # A2A endpoint smoke validator
 │   └── validate_agent.py            # agent entry-point import smoke test
-├── tests/
+├── tests/                    # every test carries @pytest.mark.concept + a CONCEPT: docstring
 │   ├── __init__.py
 │   ├── conftest.py
 │   ├── test_api_wrapper.py
@@ -338,9 +338,14 @@ The scaffold emits both marker blocks. The ecosystem sweep
 `agent-packages/scripts/standardize_deployment_docs.py` re-renders the marked regions
 from the authoritative `agent-utilities/deploy/mcp-fleet.registry.yml` (package →
 console-script → image → `*-mcp.arpa` host), so the markers must be preserved verbatim.
-Generated docs must satisfy the **code-enhancer** documentation-governance domain: a
-published docs site, a `deployment.md` covering every transport, and a README that links
-to it.
+Generated docs must satisfy the **code-enhancer** documentation-governance domain (A-grade
+baseline): a published docs site, a `deployment.md` covering every transport, and a README
+that carries a **Table of Contents**, a **## Key Features** section, an **## Available MCP
+Tools** table (one row per MCP domain: tool, toggle env var, default, actions), a **## Usage**
+section with Python / CLI / tool-call code blocks, expanded **## Installation** (uvx, pip,
+console scripts), and a **## Documentation** section linking the Pages site and `docs/`. The
+scaffold's README template emits all of these; preserve the `additional-deployment-options`
+marker block and the `*Version: {version}*` bumpversion line when editing.
 
 #### docs/concepts.md (REQUIRED)
 Every project must have a CONCEPT ID registry:
@@ -369,6 +374,16 @@ Every project must have a CONCEPT ID registry:
 Also keep `CHANGELOG.md` (Keep a Changelog) and the `AGENTS.md` + `CLAUDE.md` stub
 pattern current: `CLAUDE.md` contains only the `@AGENTS.md` import; all guidance —
 including the **Quality Bar** and **Git Worktrees** sections — lives in `AGENTS.md`.
+
+#### Concept traceability in tests (REQUIRED)
+
+To satisfy the **code-enhancer** concept-traceability domain at the A-grade baseline,
+**every generated test function carries a concept marker**: it is decorated with
+`@pytest.mark.concept("{PREFIX}-001")` and references `CONCEPT:{PREFIX}-001` in its
+docstring, with the `concept(id)` marker registered in `pytest.ini` (so the marker raises
+no unknown-marker warning under `--strict-markers` / `-W error`). When a package grows
+additional MCP tool domains, mark the tests that exercise each domain with its own concept
+id (`-002`, `-003`, …) so traceability stays complete.
 
 ### Step 7: verify-build [depends_on: docs-generation]
 
