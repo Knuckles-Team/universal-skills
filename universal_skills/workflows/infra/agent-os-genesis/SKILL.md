@@ -190,6 +190,27 @@ tiny. Drives the ontology-host step (Step A4b).
 - Expected: `run-plan-resolved` — gates every subsequent step (each step honors the
   deploy/reuse/skip action for the capabilities it touches).
 
+```mermaid
+flowchart TD
+    P["0a Profile: tiny / single-node / enterprise"] --> Q["0b Per-capability + per-connector: deploy-container / deploy-baremetal / use-existing / skip"]
+    Q --> RP[("run_plan: deploy_set / reuse_set / skip_set")]
+    P -. seeds defaults .-> Q
+    RP --> O["0c Orchestrator: compose / swarm / podman / podman-compose / k8s"]
+    RP --> ID["0d IdP: Keycloak deploy or existing Okta/OIDC"]
+    RP --> S["0e Secrets: OpenBao/Vault read+seed or .env"]
+    RP --> CA["0f Root-CA bundle (optional)"]
+    RP --> ON["0g Ontology host: Stardog / Jena / local"]
+    O --> M{"Step 5 provisioner"}
+    M --> SW["swarm-mesh-provisioner"]
+    M --> K8["kubernetes-mesh-provisioner"]
+    M --> PD["podman-mesh-provisioner"]
+    M --> CO["docker-compose-operator"]
+    CA --> CT["Step 1b ca-trust-provisioner"]
+    S --> V["Step 8 vault_sync"]
+    ON --> OH["Step A4b ontology-host upload"]
+    RP --> CFG["Step A1b config.json walkthrough"]
+```
+
 ### Step 1: ssh-bootstrap
 [depends_on: Step 0] (profiles: single-node-prod, enterprise — skipped for tiny)
 Verify connectivity across inventory hosts and establish passwordless **full-mesh** SSH keys
