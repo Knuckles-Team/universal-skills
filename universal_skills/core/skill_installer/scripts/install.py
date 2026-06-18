@@ -199,6 +199,25 @@ def _remove_dest(skill_dst: Path) -> None:
         shutil.rmtree(skill_dst)
 
 
+def _try_windows_junction(dst: Path, src: Path) -> bool:
+    """On Windows, create a directory JUNCTION (the symlink equivalent that needs no
+    admin / Developer Mode). Returns True on success. ``mklink /J`` is a cmd builtin,
+    so it must run through ``cmd /c``."""
+    if os.name != "nt":
+        return False
+    import subprocess
+
+    try:
+        subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(dst), str(src)],
+            check=True,
+            capture_output=True,
+        )
+        return True
+    except Exception:
+        return False
+
+
 def install_skills(
     target_path: Path,
     skill_names: Optional[List[str]] = None,
@@ -260,10 +279,18 @@ def install_skills(
                 try:
                     os.symlink(src_abs, skill_dst, target_is_directory=True)
                 except OSError as link_err:
-                    logger.warning(
-                        f"Symlink unavailable for {skill_src.name} ({link_err}); copying instead."
-                    )
-                    shutil.copytree(src_abs, skill_dst)
+                    # Windows symlinks need admin/Developer Mode; a directory
+                    # junction is the no-privilege equivalent. Try it before copying.
+                    if _try_windows_junction(skill_dst, src_abs):
+                        logger.info(
+                            f"Symlink unavailable for {skill_src.name} ({link_err}); "
+                            "used a Windows directory junction instead."
+                        )
+                    else:
+                        logger.warning(
+                            f"Symlink unavailable for {skill_src.name} ({link_err}); copying instead."
+                        )
+                        shutil.copytree(src_abs, skill_dst)
             else:
                 shutil.copytree(src_abs, skill_dst)
             installed_count += 1

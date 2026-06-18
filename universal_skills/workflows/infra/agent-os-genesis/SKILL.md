@@ -3,6 +3,7 @@ name: agent-os-genesis
 aliases:
   - day0
   - day0_bootstrap_orchestrator
+  - agent-utilities-genesis
 description: >
   Day 0 genesis of the entire Agent OS — agent-first, idempotent, and ADAPTIVE: fits
   any environment from a laptop to an enterprise already running its own
