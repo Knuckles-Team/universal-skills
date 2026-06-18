@@ -4,15 +4,19 @@ aliases:
   - day0
   - day0_bootstrap_orchestrator
 description: >
-  Day 0 genesis of the entire Agent OS — agent-first, idempotent unfolding of the
-  homelab from bare hosts to a fully wired Docker Swarm. (Formerly
-  day0_bootstrap_orchestrator; invoke as "day0" or "agent-os-genesis".) Steps: SSH
-  mesh, hardware-driven placement, swarm + overlay networks + custom ingress,
-  Caddy/Technitium edge, GitLab/Portainer GitOps, tiered service deploy with
-  missing-image tolerance and first-time canaries, cross-service wiring, and
-  Knowledge-Graph materialization. Idempotent and re-runnable. Triggers on "day0",
-  "day 0 install", "bootstrap the homelab", "stand up the whole Agent OS", "genesis",
-  "unfold the fleet from bare hosts".
+  Day 0 genesis of the entire Agent OS — agent-first, idempotent, and ADAPTIVE: fits
+  any environment from a laptop to an enterprise already running its own
+  Postgres/Vault/ingress/IdP. (Formerly day0_bootstrap_orchestrator; invoke as "day0"
+  or "agent-os-genesis".) Step 0 resolves a granular run plan — per platform-dep and
+  connector: deploy-container / deploy-baremetal (pypi/uvx) / use-existing / skip —
+  plus orchestrator (docker-compose, docker-swarm, podman rootful/rootless,
+  podman-compose, kubernetes), IdP (deploy Keycloak OR wire existing Okta/OIDC),
+  secrets store (OpenBao/HashiCorp Vault, vault-first read+seed), optional enterprise
+  root-CA baking, and ontology host (Stardog/Jena/local + upload). Then SSH mesh, cert
+  trust, hardware placement, the chosen orchestrator + ingress, GitOps, tiered deploy,
+  config.json walkthrough, and KG materialization. Triggers on "day0", "bootstrap the
+  homelab", "stand up the Agent OS", "genesis", "deploy into enterprise", "connect to
+  existing services".
 domain: infrastructure
 tags:
   - day0
@@ -23,6 +27,14 @@ tags:
   - swarm
   - kubernetes
   - rke2
+  - podman
+  - compose
+  - okta
+  - keycloak
+  - vault
+  - certificates
+  - ontology
+  - enterprise
   - dns
   - gitops
   - backups
@@ -115,24 +127,68 @@ on a disabled integration is skipped and reported.
 
 ## Steps
 
-### Step 0: deployment-profile
-Present the profile + integration questionnaire and resolve the run plan. Read a
-default from `~/.config/agent-utilities/inventory.yaml` (`deployment_profile`) if
-present, else ask. The repo's **`genesis.yaml`** (root of agent-utilities) is the
-machine-readable manifest for this run — profiles, host preflight, the MCP `servers`
-fleet (it references `deploy/mcp-fleet.registry.yml`), UI `components`, and
-`ide_targets`. Loop it rather than hard-coding. Before touching hosts, run the host
-preflight: `agent-utilities-doctor --preflight --profile enterprise` (or MCP
-`graph_configure action=preflight config_key=enterprise`) — **no Rust needed** (the
-engine ships as a wheel); Docker/Swarm are required at this tier.
-- Outputs: `deployment_profile` ∈ {tiny, single-node-prod, enterprise}; `orchestrator` ∈ {swarm (default), kubernetes}; integration toggles {pggraph, kafka, openbao, keycloak, langfuse}
-- Expected: `profile-selected` — gates every subsequent step.
+### Step 0: deployment-profile + adaptive run plan
+Resolve **what to deploy vs. reuse vs. skip** — interactive for *preferences*,
+automated for *provisioning*. The operator answers a small set of plain questions;
+genesis derives the detailed plan. Read defaults from
+`~/.config/agent-utilities/inventory.yaml` (`deployment_profile`) when present. The
+repo's **`genesis.yaml`** (root of agent-utilities) is the machine-readable manifest —
+profiles, host preflight, the platform deps + MCP `servers` fleet (it references
+`deploy/mcp-fleet.registry.yml`), UI `components`, and `ide_targets`; each carries
+`install_modes` and a per-profile `default_action`. **Loop it rather than hard-coding.**
 
-> **Orchestrator choice** (independent of profile): `swarm` (default) drives
-> Steps 5/6/11 down the Docker Swarm path; `kubernetes` drives them down the
-> RKE2 + Cilium path (`kubernetes-mesh-provisioner`, k8s node labels, and
-> planner-emitted manifests). The two are mutually exclusive per node (RKE2 uses
-> containerd, Swarm uses dockerd), so a node is one or the other.
+**0a. Profile** — `tiny` · `single-node-prod` · `enterprise` (the coarse default that
+pre-fills everything below). Then run the host preflight before touching anything:
+`agent-utilities-doctor --preflight --profile <p>` (or MCP `graph_configure
+action=preflight config_key=<p>`) — **no Rust needed** (engine ships as a wheel);
+Docker/Podman/k8s only above tiny.
+
+**0b. Per-capability deploy/reuse/skip matrix** — for each **platform dependency**
+(Postgres/pg-age, ontology store, secrets vault, IdP, ingress proxy, DNS,
+observability, event bus) and each **connector** (the `agents/*` fleet, see
+`references/connector-catalog.md`), pick exactly one **action**:
+`deploy-container` · `deploy-baremetal` (pypi/uvx) · `use-existing` (operator supplies
+endpoint/creds) · `skip`. Defaults come from the profile's `default_action`, so the
+operator only overrides the exceptions. This is what makes genesis fit *any*
+environment: an enterprise that already runs Postgres + an ingress proxy marks those
+`use-existing` (→ genesis skips pg-age and Caddy, just wires the endpoints); a homelab
+leaves them `deploy-container`. The resolved **run plan** (`deploy_set` / `reuse_set`
+/ `skip_set`) gates every later step — a `skip`/`use-existing` capability's deploy
+sub-step is bypassed and only its wiring runs.
+
+**0c. Orchestrator** (for `deploy-container` items) — first-class choice of
+`docker-compose` · `docker-swarm` · `podman` · `podman-compose` · `kubernetes`
+(**default kubernetes for enterprise**, swarm for single-node, compose/podman for
+tiny). Drives Steps 5/6/11 to the matching provisioner
+(`swarm-mesh-provisioner` | `kubernetes-mesh-provisioner` | `podman-mesh-provisioner`
+| `docker-compose-operator`). Podman supports **rootful or rootless** (asked when
+podman is chosen). Mutually exclusive per node.
+
+**0d. Identity provider** — `keycloak (deploy-if-absent)` · `okta (existing org)` ·
+`other-oidc (existing)`. Okta/other-OIDC are SaaS/already-run, so genesis only wires
+to them (sets `AUTH_JWT_JWKS_URI` to their JWKS, provisions the fleet OIDC client);
+keycloak is deployed only when no IdP exists. See Step 8/14.
+
+**0e. Secrets store** — OpenBao/HashiCorp Vault (same Vault API, both first-class) vs
+`.env` fallback. If a Vault is reachable, genesis prefers it and **reads existing
+secrets** before prompting (Step 8, `vault_sync`).
+
+**0f. Enterprise root-CA bundle** (optional) — a PEM path/content for a corporate /
+self-signed CA. If supplied, the cert-trust step (Step 1b) bakes it in everywhere so
+no self-signed errors occur.
+
+**0g. Ontology host** — where the OWL ontology is hosted: `stardog` · `apache-jena`
+(Fuseki) · `local` (in-process SPARQL). Default stardog for enterprise, local for
+tiny. Drives the ontology-host step (Step A4b).
+
+- Outputs: `deployment_profile`; `run_plan` {deploy_set, reuse_set, skip_set} with a
+  per-item `install_mode`; `orchestrator` ∈ {docker-compose, docker-swarm, podman,
+  podman-compose, kubernetes} (+ `podman_rootless` bool); `idp` ∈ {keycloak, okta,
+  other-oidc} (+ existing JWKS/issuer when not keycloak); `secrets_store` ∈ {vault, env};
+  `ca_bundle` (optional path); `ontology_host` ∈ {stardog, apache-jena, local};
+  integration toggles {pggraph, kafka, openbao, keycloak, langfuse} (derived from the run plan).
+- Expected: `run-plan-resolved` — gates every subsequent step (each step honors the
+  deploy/reuse/skip action for the capabilities it touches).
 
 ### Step 1: ssh-bootstrap
 [depends_on: Step 0] (profiles: single-node-prod, enterprise — skipped for tiny)
@@ -141,6 +197,18 @@ Verify connectivity across inventory hosts and establish passwordless **full-mes
 - Target hosts: `R510`, `R710`, `RW710`, `R820`, `GR1080`, `GB10`
 - Requires: `tunnel-manager-mcp`, `systems-manager-mcp`
 - Expected: `mesh-reachable`
+
+### Step 1b: ca-trust-provisioner
+[depends_on: Step 1] (conditional: only when Step 0 supplied a `ca_bundle`)
+Bake the enterprise / self-signed **root-CA bundle** into every host trust store and
+emit the CA env contract (`REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` / `NODE_EXTRA_CA_CERTS`
+/ `GIT_SSL_CAINFO`) + the private-registry trust, via the **`ca-trust-provisioner`**
+skill — so subsequent steps (registry/GitLab/Vault/IdP pulls, connector HTTPS calls)
+never fail with self-signed-cert errors. The emitted env contract is handed to the
+deploy steps (7/11/A2/A3) so each service stack injects it. If no bundle was supplied,
+auto-detect the system bundle and skip host changes.
+- Requires: `tunnel-manager-mcp` (+ skill `ca-trust-provisioner`)
+- Expected: `ca-trusted, ca-env-contract` (skipped → `ca-default`)
 
 ### Step 2: network-topology-sweep
 [depends_on: Step 1]
@@ -165,9 +233,9 @@ highest-free-RAM node, manager/edge (Caddy)→R820. This manifest drives node la
 - Requires: `systems-manager-mcp`, `tunnel-manager-mcp`, `container-manager-mcp`
 - Expected: `placement-manifest`
 
-### Step 5: mesh-provisioner (swarm | kubernetes)
+### Step 5: mesh-provisioner (swarm | kubernetes | podman | compose)
 [depends_on: Step 4]
-Stand up the cluster substrate. Branch on the Step 0 `orchestrator` choice — both paths are idempotent and re-runnable.
+Stand up the cluster substrate. Branch on the Step 0 `orchestrator` choice — all paths are idempotent and re-runnable.
 
 **`orchestrator == swarm` (default) → `swarm-mesh-provisioner`.**
 Converge the swarm + networks via the **Ansible bootstrap playbook** (`networks/bootstrap/swarm.yml`,
@@ -184,6 +252,19 @@ egress is deterministic):
 - Cilium runs **kube-proxy-free** (eBPF) — this removes the IPVS kernel path that hard-reset GB10 under Swarm; expose the ingress via a `CiliumLoadBalancerIPPool` + `L2Announcement` VIP (reuse `10.0.0.13` so Technitium needs no change).
 - NVIDIA device-plugin on the GPU nodes; configure `registries.yaml` → `registry.arpa` + internal CA on every node.
 - Expected: `cluster-ready, cilium-healthy, gpu-advertised`
+
+**`orchestrator == podman` / `podman-compose` → `podman-mesh-provisioner`.**
+Provision a Podman control plane (rootful or rootless per `podman_rootless`): enable
+the Podman API socket, wire `podman-compose` (`COMPOSE_TOOL=podman-compose`), and
+register remote hosts as Podman **system connections over SSH** (same shared inventory,
+no exposed daemon). Steps 6/11 then target Podman via `container-manager-mcp`
+(`CONTAINER_MANAGER_TYPE=podman`).
+- Expected: `podman-ready, hosts-connected`
+
+**`orchestrator == docker-compose` → `docker-compose-operator`.**
+Single-host (or compose-over-SSH) path: no clustering — deploy stacks directly with
+the compose operator. Steps 6 (labels) is a no-op; Step 11 deploys via compose.
+- Expected: `compose-ready`
 
 - Requires: `container-manager-mcp`, `tunnel-manager-mcp`
 
@@ -206,11 +287,23 @@ Bring up the bootstrap-critical core **in dependency order**, resolving the regi
 - Requires: `portainer-mcp`, `container-manager-mcp`, `technitium-dns-mcp`, `caddy-mcp`
 - Expected: `core-edge-up`
 
-### Step 8: secret-vault-manager
+### Step 8: secret-vault-manager + seed-initial-secrets
 [depends_on: Step 7]
-Deploy, initialize, and unseal **OpenBao** (KV2 engine) and bring up **Keycloak** (OIDC/SAML).
-- Requires: `openbao-mcp`, `keycloak-mcp`
-- Expected: `vault-sso-up`
+Stand up the secrets store and **seed the initial secrets so Claude can self-provision
+the rest of the run** (honor the Step 0 `secrets_store` + `idp` choices):
+- **Vault (OpenBao / HashiCorp Vault — first-class, same API):** when `secrets_store=vault`,
+  deploy/init/unseal OpenBao (KV2 at `apps/`) **or** wire to an existing Vault
+  (`use-existing`). Mint the write-capable `agent-apps-rw` token.
+- **Seed the bootstrap secrets first** (so later automated steps can authenticate):
+  the Vault token, private-registry creds, the IdP client secret, and the DB password.
+  Use `graph_configure action=vault_sync` (CONCEPT:OS-5.43) per service — it **reads
+  existing** `apps/<service>` secrets to skip re-prompting and **seeds** only what's
+  missing, returning `vault://apps/<service>/<KEY>` refs to drop into config.json
+  (Step A1b). When `secrets_store=env`, the same reconcile writes the service `.env`.
+- **IdP:** when `idp=keycloak`, deploy Keycloak (OIDC/SAML); when `idp=okta`/`other-oidc`,
+  skip the deploy — only capture the existing issuer/JWKS for Step 14/A4.
+- Requires: `openbao-mcp`, `keycloak-mcp` (keycloak deploy only), `graph-os` (vault_sync)
+- Expected: `secrets-store-up, initial-secrets-seeded, idp-resolved`
 
 ### Step 9: gitlab-repository-seeder
 [depends_on: Step 8]
@@ -353,8 +446,28 @@ Install agent-utilities dependencies on the target host(s): `uv sync` (or
 `pip install -e ".[all]"`). For **tiny**, write the zero-infra `.env`
 (`GRAPH_BACKEND=tiered`) and run `agent-utilities/scripts/bootstrap.sh` (which
 also runs a KG smoke test) — the tiny profile **stops here**.
+- **Install mode is per Step 0 `install_mode`:** `deploy-baremetal` → `uv tool install
+  agent-utilities` (prod) or `pip/uv install -e ".[all]"` (dev/test, editable);
+  `deploy-container` → pull the pre-built `graph-os` image (Step A2). Prefer **pypi for
+  production**, editable installs for development.
 - Requires: `systems-manager-mcp`
 - Expected: `agent-utilities-installed` (tiny: `bootstrap-verified`)
+
+### Step A1b: config-walkthrough
+[depends_on: Step A1]
+Generate and tune the complete **`config.json`** (XDG path) for the resolved run plan —
+auto-tuned by default, every item overridable. Uses the existing config machinery:
+- `graph_configure action=generate_config config_key=<profile>` writes a COMPLETE
+  config.json (every ~261 fields defaulted/auto-sized) seeded by the profile + run plan.
+- Present `graph_configure action=config_reference` (every option grouped by subsystem)
+  so the operator can **override any value**; apply overrides live with
+  `action=set_config` (honoring `restart_required` for engine-rebuild keys).
+- Drop in the `vault://apps/<service>/<KEY>` refs from Step 8 (`vault_sync`) for every
+  secret-bearing field instead of inline values.
+- Finish with `graph_configure action=config_doctor` + `agent-utilities doctor` → green
+  (config complete, secret refs resolvable, durability rules hold, IdP detected).
+- Requires: `graph-os`
+- Expected: `config-generated, config-validated`
 
 ### Step A2: graph-os-and-multiplexer
 [depends_on: Step A1] (profiles: single-node-prod, enterprise)
@@ -425,11 +538,31 @@ verifying multiplexer reachability after each wave.
 [depends_on: Step A3] (toggle-gated)
 Wire **only the enabled** integrations into the agent-utilities config: `pggraph`
 (`GRAPH_DB_URI`), `kafka` (`QUEUE_BACKEND=kafka` + `KAFKA_BOOTSTRAP_SERVERS`),
-`openbao` (`SECRETS_VAULT_URL` + `VAULT_AUTH_METHOD`), `keycloak`
-(`AUTH_JWT_JWKS_URI` / OIDC), `langfuse` (`LANGFUSE_*` + `ENABLE_OTEL`). Disabled
-toggles are skipped and reported.
-- Requires: `openbao-mcp`, `keycloak-mcp`
+`openbao`/vault (`SECRETS_VAULT_URL` + `VAULT_AUTH_METHOD`), **IdP**
+(`AUTH_JWT_JWKS_URI` + `KG_AUTH_REQUIRED` — set to the resolved issuer's JWKS, whether
+**Keycloak** (deployed) or an existing **Okta** org (`…/oauth2/<server>/v1/keys`) /
+other OIDC; provision the fleet OIDC client against that issuer), `langfuse`
+(`LANGFUSE_*` + `ENABLE_OTEL`). `agent-utilities doctor` is IdP-agnostic and names the
+detected IdP. Disabled toggles are skipped and reported.
+- Requires: `openbao-mcp`, `keycloak-mcp` (keycloak only) / `okta-agent` (okta)
 - Expected: `integrations-wired`
+
+### Step A4b: ontology-host
+[depends_on: Step A4]
+Configure **where the OWL ontology is hosted** (Step 0 `ontology_host`) and **upload
+the canonical ontology** there, via the **`database-environment-setup`** skill +
+`OntologyPublisher`:
+- `stardog` (default enterprise) → `graph_configure action=push_to_stardog` for the
+  TBox + register Stardog as a `role="mirror"` connection so the platform hosts/consumes it.
+- `apache-jena` (Fuseki) → `OntologyPublisher.push_to_jena_fuseki` (Graph Store Protocol).
+- `local` (default tiny) → in-process SPARQL; no external upload.
+An operator may supply an **existing** Stardog/Postgres URI+creds (`use-existing`) and
+this step configures everything — including the ontology upload — automatically
+(`graph_configure action=setup_databases`). The single canonical ontology
+(`ontology.ttl` + all imported domain modules) is the validated, connected library
+(see agent-utilities `docs/architecture/ontology_library.md`).
+- Requires: `graph-os` (+ skill `database-environment-setup`)
+- Expected: `ontology-hosted, ontology-uploaded`
 
 ### Step A5: mcp-config-rewire (streamable-http, no stdio)
 [depends_on: Step A3] (profiles: single-node-prod, enterprise)
@@ -472,13 +605,13 @@ Assert the realized end-state (CONCEPT:OS-5.32 / OS-5.23):
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — deployment-profile; Step 1 — ssh-bootstrap
-- **After level 0:** Step 2 — network-topology-sweep; Step 3 — hardware-profile-sweep
+- **Run first (in parallel):** Step 0 — deployment-profile + adaptive run plan; Step 1 — ssh-bootstrap
+- **After level 0:** Step 1b — ca-trust-provisioner (conditional: `ca_bundle` supplied); Step 2 — network-topology-sweep; Step 3 — hardware-profile-sweep
 - **After level 1:** Step 4 — deployment-planner
-- **After level 2:** Step 5 — swarm-mesh-provisioner
+- **After level 2:** Step 5 — mesh-provisioner (per `orchestrator`: swarm | kubernetes | podman | compose)
 - **After level 3:** Step 6 — node-labeling
 - **After level 4:** Step 7 — core-edge-deploy
-- **After level 5:** Step 8 — secret-vault-manager
+- **After level 5:** Step 8 — secret-vault-manager + seed-initial-secrets
 - **After level 6:** Step 9 — gitlab-repository-seeder
 - **After level 7:** Step 10 — portainer-gitops-bind
 - **After level 8:** Step 11 — tiered-service-deploy
@@ -487,5 +620,10 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 11:** Step 14 — keycloak-oidc-wiring
 - **After level 12 (in parallel):** Step 14b — credential-rotation-policy; Step 15 — observability-and-backups
 - **After level 13:** Step 16 — graph-os
+- **agent-utilities core (A-series), after Step 0 / once hosts are ready:** A1 — install → A1b — config-walkthrough → A2 — graph-os+multiplexer → A3 — mcp-fleet-deploy → A4 — integrations-wiring → A4b — ontology-host → A5 — mcp-config-rewire → A6 — verify (tiny stops after A1).
+
+Every step honors the Step 0 **run plan**: a capability marked `use-existing` skips
+its deploy sub-step and runs only wiring; `skip` is omitted entirely; the
+`orchestrator` selects the Step 5 provisioner branch.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
