@@ -55,7 +55,7 @@ description = "{description}"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.11, <3.15"
-dependencies = [ "agent-utilities>=0.47.0", "python-dotenv>=1.0.0",{gql_core_dep}]
+dependencies = [ "agent-utilities>=0.51.0", "python-dotenv>=1.0.0",{gql_core_dep}]
 [[project.authors]]
 name = "{author}"
 email = "{email}"
@@ -64,8 +64,8 @@ email = "{email}"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-utilities[mcp]>=0.47.0",]
-agent = [ "agent-utilities[agent,logfire]>=0.47.0",]
+mcp = [ "agent-utilities[mcp]>=0.51.0",]
+agent = [ "agent-utilities[agent,logfire]>=0.51.0",]
 {gql_extra}all = [ "{package_name}[{all_extras}]>=0.1.0",]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
@@ -1338,40 +1338,93 @@ AUTH_PY = """\
 #!/usr/bin/python
 # coding: utf-8
 
+\"\"\"Authentication.
+
+Priority:
+1. **OIDC Delegation** (RFC 8693 Token Exchange) — when ``ENABLE_DELEGATION`` is
+   active, exchanges the IdP-issued user token for a downstream access token via the
+   shared ``agent_utilities.mcp.delegated_auth`` helper.
+2. **Fixed credentials** — falls back to the ``{auth_env}`` env var.
+
+For a multi-tenant service, add an ``instances.py`` that resolves a configured
+instance NAME (from ``<service>_instances`` in ``~/.config/agent-utilities/config.json``)
+to ``(url, token, verify)`` and call it here before the delegation/fixed paths — see
+``gitlab_api.instances`` (CONCEPT:KG-2.9g) for the golden pattern.
+\"\"\"
+
 import os
 
+from agent_utilities.base_utilities import get_logger, to_boolean
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
 
 from .api import ApiClientSystem
 
+logger = get_logger(__name__)
 _client = None
 
 
-def get_client() -> ApiClientSystem:
-    \"\"\"Get or create a singleton API client instance.\"\"\"
+def get_client(
+    url: str | None = None,
+    token: str | None = None,
+    verify: bool | None = None,
+    config: dict | None = None,
+) -> ApiClientSystem:
+    \"\"\"Get or create a singleton API client (OIDC delegation or fixed credentials).\"\"\"
     global _client
-    if _client is None:
-        base_url = os.getenv("{service_url_env}", "http://localhost:8080")
-        token = os.getenv("{auth_env}", "")
-        verify = os.getenv("{ssl_verify_env}", "True").lower() in ("true", "1", "yes")
+    if _client is not None:
+        return _client
 
+    base_url = url or os.getenv("{service_url_env}", "http://localhost:8080")
+    token = token or os.getenv("{auth_env}", "")
+    if verify is None:
+        verify = to_boolean(string=os.getenv("{ssl_verify_env}", "True"))
+
+    from agent_utilities.mcp.delegated_auth import (
+        get_delegated_token,
+        get_user_identity,
+        is_delegation_enabled,
+    )
+
+    # --- Path 1: OIDC Delegation (RFC 8693 Token Exchange) ---
+    if is_delegation_enabled(config):
         try:
-            _client = ApiClientSystem(
-                base_url=base_url,
-                token=token,
+            delegated_token = get_delegated_token(
+                config=config,
+                audience=(config or {{}}).get("audience", base_url),
+                scopes=(config or {{}}).get("delegated_scopes", "api"),
                 verify=verify,
             )
-        except (AuthError, UnauthorizedError) as e:
-            raise RuntimeError(
-                f"AUTHENTICATION ERROR: The credentials provided are not valid for '{{base_url}}'. "
-                f"Please check your {auth_env} and {service_url_env} environment variables. "
-                f"Error details: {{str(e)}}"
-            ) from e
+            identity = get_user_identity()
+            logger.info(
+                "Using OIDC delegated token",
+                extra={{"user_email": identity.get("email"), "url": base_url}},
+            )
+            _client = ApiClientSystem(
+                base_url=base_url, token=delegated_token, verify=verify
+            )
+            return _client
         except Exception as e:
-            raise RuntimeError(
-                f"AUTHENTICATION ERROR: Failed to instantiate client. "
-                f"Error details: {{str(e)}}"
-            ) from e
+            logger.error(
+                "OIDC delegation failed",
+                extra={{"error_type": type(e).__name__, "error_message": str(e)}},
+            )
+            raise RuntimeError(f"Token exchange failed: {{str(e)}}") from e
+
+    # --- Path 2: Fixed Credentials ({auth_env}) ---
+    logger.info("Using fixed credentials")
+    try:
+        _client = ApiClientSystem(base_url=base_url, token=token, verify=verify)
+    except (AuthError, UnauthorizedError) as e:
+        raise RuntimeError(
+            f"AUTHENTICATION ERROR: The credentials provided are not valid for '{{base_url}}'. "
+            f"Please check your {auth_env} and {service_url_env} environment variables. "
+            f"Error details: {{str(e)}}"
+        ) from e
+    except Exception as e:
+        raise RuntimeError(
+            f"AUTHENTICATION ERROR: Failed to instantiate client. "
+            f"Error details: {{str(e)}}"
+        ) from e
 
     return _client
 """
@@ -1623,6 +1676,7 @@ class SystemStatusResponse(BaseModel):
 MCP_SYSTEM_PY = """\
 import json
 
+from agent_utilities.mcp_utilities import resolve_action, run_blocking
 from fastmcp import Context, FastMCP
 from fastmcp.dependencies import Depends
 from pydantic import Field
@@ -1636,7 +1690,7 @@ def register_system_tools(mcp: FastMCP):
     @mcp.tool(tags={{"system"}})
     async def system_operations(
         action: str = Field(
-            description="Action to perform. Must be 'status' or 'info'."
+            description="Action to perform. Must be one of: 'status', 'info'."
         ),
         params_json: str = Field(
             default="{{}}", description="JSON string of parameters to pass to the action."
@@ -1648,17 +1702,26 @@ def register_system_tools(mcp: FastMCP):
     ) -> dict:
         \"\"\"Manage system tag operations. CONCEPT:{concept_prefix}-001\"\"\"
         if ctx:
-            ctx.info("Executing system tool...")
+            await ctx.info("Executing system tool...")
+
         try:
             kwargs = json.loads(params_json)
         except Exception as e:
             return {{"error": f"Invalid params_json: {{e}}"}}
 
+        kwargs = {{k: v for k, v in kwargs.items() if v is not None}}
+
+        # Action-router trio: resolve_action validates/canonicalizes (and serves the
+        # discovery payload), run_blocking runs the sync client call off the event loop.
+        resolved = resolve_action(
+            action, {{"status", "info"}}, service="{package_name}"
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
+
         if action == "status":
-            try:
-                return client.get_system_status(**kwargs)
-            except Exception as e:
-                return {{"error": str(e)}}
+            return await run_blocking(client.get_system_status, **kwargs)
         return {{"info": "System operations dynamic placeholder."}}
 """
 

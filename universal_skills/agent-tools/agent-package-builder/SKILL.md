@@ -169,11 +169,11 @@ but reds the pipeline:
    [project]
    # name/version/description/readme/classifiers …
    requires-python = ">=3.11, <3.15"
-   dependencies = [ "agent-utilities>=0.47.0", "python-dotenv>=1.0.0",]
+   dependencies = [ "agent-utilities>=0.51.0", "python-dotenv>=1.0.0",]
 
    [project.optional-dependencies]
-   mcp = [ "agent-utilities[mcp]>=0.47.0",]
-   agent = [ "agent-utilities[agent,logfire]>=0.47.0",]
+   mcp = [ "agent-utilities[mcp]>=0.51.0",]
+   agent = [ "agent-utilities[agent,logfire]>=0.51.0",]
    all = [ "{name}[mcp,agent,logfire]>=…",]   # self-referencing, bumpversion keeps in sync
    test = [ "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
@@ -254,6 +254,22 @@ Read the `api-client-builder` skill and follow its instructions to:
    - `{SERVICE}_SSL_VERIFY` — TLS verification (NOT `_VERIFY` or `_AGENT_VERIFY`)
    - `{SERVICE}_USERNAME` / `{SERVICE}_PASSWORD` — For basic auth
 
+   **Auth pattern (two-tier, matches the golden `gitlab_api/auth.py`):** the scaffolded
+   `get_client(url=None, token=None, verify=None, config=None)` resolves auth in this order:
+   1. **OIDC Delegation (RFC 8693 Token Exchange)** — when delegation is active
+      (`is_delegation_enabled(config)` / `ENABLE_DELEGATION`), exchange the IdP-issued
+      user token for a downstream access token via the shared
+      `agent_utilities.mcp.delegated_auth` helpers (`get_delegated_token`,
+      `get_user_identity`, `is_delegation_enabled`).
+   2. **Fixed credentials** — fall back to the `{SERVICE}_TOKEN` env var.
+   On a credential failure, raise `RuntimeError("AUTHENTICATION ERROR: …")` from
+   `AuthError`/`UnauthorizedError` (imported from `agent_utilities.core.exceptions` — NOT a
+   bare `RuntimeError`). The scaffolder emits this pattern by default.
+   - **Multi-tenant (optional, CONCEPT:KG-2.9g):** for a service with many instances, add an
+     `instances.py` that resolves a configured instance NAME (from `<service>_instances` in
+     `~/.config/agent-utilities/config.json`) to `(url, token, verify)` and call it inside
+     `get_client` before the delegation/fixed paths — see `gitlab_api/instances.py`.
+
 ### Step 4: mcp-server [depends_on: scaffold-tree]
 
 Read the `mcp-builder` skill and follow its instructions to:
@@ -268,6 +284,16 @@ Read the `mcp-builder` skill and follow its instructions to:
 3. **Tag Rules**: All MCP tool tags MUST be strictly lowercase with hyphens (e.g. `tag="user-management"`). No camelCase or underscores.
 4. **Action-Routed Dynamic Generation**: ALL new agents use dynamic runtime generation. No monolithic static `@mcp.tool` files.
 5. **Field Optimization**: All parameters use `pydantic.Field(default=..., description=...)`. No positional args in Field().
+6. **Action-router trio (canonical body, matches golden `gitlab_api/mcp/mcp_*.py`):** each
+   per-domain tool takes `client=Depends(get_client)` (`fastmcp.dependencies.Depends`),
+   parses+null-strips `params_json`, then dispatches via the trio:
+   - `resolve_action(action, {"act1", "act2", …}, service="{name}")` from
+     `agent_utilities.mcp_utilities` — validates/canonicalizes the action and returns a
+     discovery payload dict for discovery keywords (`if isinstance(resolved, dict): return resolved`).
+   - an `if action == …:` ladder dispatching to the client method.
+   - `await run_blocking(client.method, **kwargs)` (from `agent_utilities.mcp_utilities`) to
+     run the sync client call off the event loop.
+   The scaffolder emits this trio in the generated `mcp_{domain}.py`.
 
 ### Step 5: agent-server [depends_on: scaffold-tree]
 
@@ -348,7 +374,10 @@ including the **Quality Bar** and **Git Worktrees** sections — lives in `AGENT
 
 Validate build syntax and entry points:
 - **Validate syntax**: Run syntax checking `python -c "import tomllib; ..."`
-- **Lock**: `uv lock`
+- **Lock**: `uv lock` — then **`git add uv.lock` and COMMIT it**. `uv.lock` is a REQUIRED,
+  git-tracked parity file (PARITY_MANIFEST §1); the `uv-lock` and `pytest` pre-commit hooks
+  both expect it. Recent scaffolds (onetrust-api, pulselink-mcp) shipped without a committed
+  lockfile — do not repeat that. Confirm it is tracked: `git ls-files --error-unmatch uv.lock`.
 - **Test entry points**: `pip install -e . && {short}-mcp --help && python -m {pkg_dir} --help`
 
 ### Step 8: run-pre-commit [depends_on: verify-build]
