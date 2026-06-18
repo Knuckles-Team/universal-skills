@@ -9,7 +9,7 @@
 > no install. Secrets are injected from OpenBao/Vault (or `.env`) at deploy —
 > never committed (see Step 8 `vault_sync`).
 
-**54 connectors.**
+**55 connectors.**
 
 | Connector | Package | Bare-metal (uvx) | Container image | Profiles | Key secrets/env |
 |---|---|---|---|---|---|
@@ -30,6 +30,7 @@
 | `emerald-exchange-mcp` | `emerald-exchange` | `uvx emerald-exchange-mcp` | `knucklessg1/emerald-exchange:latest` | enterprise | — |
 | `erpnext-mcp` | `erpnext-agent` | `uvx erpnext-mcp` | `knucklessg1/erpnext-agent:latest` | enterprise | — |
 | `fan-manager-mcp` | `fan-manager` | `uvx fan-manager-mcp` | `knucklessg1/fan-manager:latest` | enterprise | — |
+| `freshrss-mcp` | `freshrss-agent` | `uvx freshrss-mcp` | `knucklessg1/freshrss-agent:latest` | single-node-prod, enterprise | — |
 | `github-mcp` | `github-agent` | `uvx github-mcp` | `knucklessg1/github-agent:latest` | enterprise | — |
 | `gitlab-mcp` | `gitlab-api` | `uvx gitlab-mcp` | `knucklessg1/gitlab-api:latest` | enterprise | — |
 | `home-assistant-mcp` | `home-assistant-agent` | `uvx home-assistant-mcp` | `knucklessg1/home-assistant-agent:latest` | enterprise | — |
