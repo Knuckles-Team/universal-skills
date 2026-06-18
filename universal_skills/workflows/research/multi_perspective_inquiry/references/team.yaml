@@ -1,0 +1,8 @@
+name: Perspectival Inquiry Team
+task_pattern: Run a multi-perspective (STORM) inquiry by delegating to the native engine
+specialist_ids:
+  - inquiry-agent
+capability_overrides:
+  inquiry-agent:
+    - stuck_loop_detection
+    - checkpointing
