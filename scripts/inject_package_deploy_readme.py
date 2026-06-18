@@ -92,7 +92,13 @@ def main() -> int:
 
     agents = args.agents_dir
     if not agents.exists():
-        print(f"inject_package_deploy_readme: agents dir not found: {agents}")
+        # As a gate, skip-pass when the agents sibling isn't present (e.g. the
+        # universal-skills repo built in isolation); only error in write mode.
+        msg = f"inject_package_deploy_readme: agents dir not found: {agents}"
+        if args.check:
+            print(msg + " — skipped.")
+            return 0
+        print(msg)
         return 1
 
     changed: list[str] = []

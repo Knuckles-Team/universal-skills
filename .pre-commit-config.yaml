@@ -77,6 +77,12 @@ repos:
     types: [markdown]
     pass_filenames: true
     exclude: .*universal_skills/research/comparative-analysis/references/report_template\.md$
+  - id: readme-deploy-block
+    name: agents/* README reference the agent-os-genesis deploy block
+    entry: python3 scripts/inject_package_deploy_readme.py --check
+    language: system
+    pass_filenames: false
+    always_run: true
   - id: check-agent-standards
     name: check agent standards
     entry: |-
