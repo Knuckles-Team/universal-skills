@@ -664,11 +664,24 @@ CONCEPT:ECO-4.0) — this step only **provisions** it; it adds no engine code:
   > (`agent_utilities/messaging/*`); this step writes the agreed `MESSAGING_REACH_MODE`
   > contract. If the engine fan-out is not yet present, `last-active` is the working
   > default and `broadcast` activates as soon as that lands. Do not edit `messaging/*` here.
+- **Instant push via webhook + ZERO open ports (CONCEPT:ECO-4.66, recommended).** Inbound
+  defaults to long-polling (near-real-time, no ingress). For true push with **no inbound
+  port opened**, use an **outbound tunnel** — **Cloudflare Tunnel is the default and needs
+  NO edge-ingress node**: run `cloudflared` on this host (it dials out; Cloudflare is the
+  edge), map a hostname → `http://127.0.0.1:${MESSAGING_WEBHOOK_PORT:-8443}`, then set
+  `MESSAGING_WEBHOOK_BASE_URL=https://hooks.<domain>` (+ `MESSAGING_WEBHOOK_SECRET` via
+  `vault_sync`). The bot then registers a `setWebhook` receiver on the LOCAL port with
+  `secret_token` validation. Alternatives (same code path): self-hosted **pangolin** tunnel,
+  or **public Caddy** + Keycloak `forward_auth` (webhook path exempt, locked by
+  signature + Telegram IP allowlist + CrowdSec). Gate human routes with **Cloudflare Access
+  / Keycloak**; keep secrets in **OpenBao**. See `agent-utilities` docs/architecture/
+  messaging_security.md. Empty `MESSAGING_WEBHOOK_BASE_URL` ⇒ polling (no ingress).
 - **Verify:** `graph_reach action=status` lists every configured channel as connected;
   a test `graph_reach action=reach_user text="genesis: messaging online"` reaches the
   operator (last-active/default), or — in broadcast mode — all configured channels.
 - Requires: `graph-os`
-- Expected: `messaging-configured, channels-connected` (broadcast: `+broadcast-mode-set`)
+- Expected: `messaging-configured, channels-connected` (broadcast: `+broadcast-mode-set`;
+  webhook: `+webhook-push-via-tunnel`)
 
 ### Step A5: mcp-config-rewire (streamable-http, no stdio)
 [depends_on: Step A3] (profiles: single-node-prod, enterprise)
