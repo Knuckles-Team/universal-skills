@@ -125,6 +125,41 @@ Each integration is an independent toggle gathered in Step 0 —
 `pggraph`, `kafka`, `openbao`, `keycloak`, `langfuse` — and any step that depends
 on a disabled integration is skipped and reported.
 
+## Single-package deploy mode (skill-guided, per connector)
+
+This skill also deploys **one** `agents/*` package on its own — the entry point every
+connector's `README.md` references so an operator who lands on (say) `gitlab-api`,
+`servicenow-api`, or `mattermost-mcp` can stand **just that MCP/agent server** up,
+skill-guided, without the whole fleet. It is a **subset of the same machinery**: the
+full genesis already does the heavy lifting (run plan, install modes, secrets, certs,
+messaging), so a single-package deploy is genesis with a one-item run plan.
+
+**Invoke:** "deploy `<package>` with agent-os-genesis" (or `--package <name>`). The flow:
+
+1. **Resolve the package** from `references/connector-catalog.md` (package, console
+   script `<name>-mcp` / `<name>-agent`, image, required secret env keys, profiles).
+2. **Pick the install method** (the per-item run-plan action + variant from Step 0):
+   - **bare-metal, prod** — `uvx <name>-mcp` (ephemeral) or `uv tool install <package>`.
+   - **bare-metal, dev** — `uv pip install -e ".[all]"` / `pip install -e` against the
+     cloned package (editable working tree, for development/testing).
+   - **container, prod** — pull `knucklessg1/<name>:latest`, deploy via the chosen
+     orchestrator (compose / swarm / podman / podman-compose / k8s).
+   - **container, dev** — deploy the package's **`compose.dev.yml`** (source-mounted at
+     `/src`, pip-install-at-start, pinned to the source node — edits go live on restart).
+3. **Seed its secrets** — `graph_configure action=vault_sync config_key=<package>` with
+   the catalog's secret env keys: reads existing, prompts only for the missing, returns
+   `vault://apps/<package>/<KEY>` refs for the env/config.
+4. **Apply cert trust** (Step 1b) if a `ca_bundle` was given, and **register the MCP
+   server** (`graph_configure action=register_mcp`) so the multiplexer/IDE can reach it.
+5. **(Optional) messaging** — wire the agent→user channels (Step A4c) if the operator
+   wants this single agent to reach them.
+6. **Verify** — `agent-utilities doctor` + a live `tools/list`/`tools/call` against the
+   deployed endpoint.
+
+The orchestrator, IdP, secrets-store, CA, and dev/prod variant choices are exactly the
+Step 0 axes — only the run plan is narrowed to the one package. This is what the
+per-package README block (see `references/package-deploy-readme.md`) points operators to.
+
 ## Steps
 
 ### Step 0: deployment-profile + adaptive run plan
@@ -181,14 +216,33 @@ no self-signed errors occur.
 (Fuseki) · `local` (in-process SPARQL). Default stardog for enterprise, local for
 tiny. Drives the ontology-host step (Step A4b).
 
+**0h. Messaging channels** — which channel(s) the agent uses to reach the end user
+(agent-utilities has a native multi-channel messaging subsystem, CONCEPT:ECO-4.0):
+`slack` · `teams` · `telegram` · `mattermost` · `discord` · `whatsapp` · `matrix` ·
+`signal` · … (17 backends). Pick **one or more**; each picked channel's token is seeded
+to the secrets store and added to `MESSAGING_ENABLED_BACKENDS` so all configured
+channels connect. Also pick a **reach mode**: `last-active` (default — the agent
+replies on the user's most-recent channel, others stay available) or **`broadcast`**
+(opt-in — a message fans out to *all* configured channels at once). Drives the
+messaging-setup step (Step A4c).
+
+> **Install-mode variants (prod vs. dev) — applies to every `deploy-*` item in 0b.**
+> `deploy-container` → **prod** (pre-built registry image) or **dev** (`compose.dev.yml`,
+> source-mounted at `/src`, pip-install-at-start, edits live on container restart).
+> `deploy-baremetal` → **prod** (`uvx` / `uv tool install <pkg>` from PyPI) or **dev**
+> (`uv pip install -e` / `pip install -e ".[all]"`, editable working tree). Production
+> defaults to prod variants; pass `--dev` (or set the item's `install_variant: dev`) to
+> select the editable path for development/testing.
+
 - Outputs: `deployment_profile`; `run_plan` {deploy_set, reuse_set, skip_set} with a
-  per-item `install_mode`; `orchestrator` ∈ {docker-compose, docker-swarm, podman,
-  podman-compose, kubernetes} (+ `podman_rootless` bool); `idp` ∈ {keycloak, okta,
-  other-oidc} (+ existing JWKS/issuer when not keycloak); `secrets_store` ∈ {vault, env};
-  `ca_bundle` (optional path); `ontology_host` ∈ {stardog, apache-jena, local};
+  per-item `install_mode` + `install_variant` ∈ {prod, dev}; `orchestrator` ∈
+  {docker-compose, docker-swarm, podman, podman-compose, kubernetes} (+ `podman_rootless`
+  bool); `idp` ∈ {keycloak, okta, other-oidc} (+ existing JWKS/issuer when not keycloak);
+  `secrets_store` ∈ {vault, env}; `ca_bundle` (optional path); `ontology_host` ∈ {stardog,
+  apache-jena, local}; `messaging` {channels: [...], reach_mode ∈ {last-active, broadcast}};
   integration toggles {pggraph, kafka, openbao, keycloak, langfuse} (derived from the run plan).
 - Expected: `run-plan-resolved` — gates every subsequent step (each step honors the
-  deploy/reuse/skip action for the capabilities it touches).
+  deploy/reuse/skip action + install variant for the capabilities it touches).
 
 ```mermaid
 flowchart TD
@@ -585,6 +639,36 @@ this step configures everything — including the ontology upload — automatica
 - Requires: `graph-os` (+ skill `database-environment-setup`)
 - Expected: `ontology-hosted, ontology-uploaded`
 
+### Step A4c: messaging-channels
+[depends_on: Step A4] (conditional: only when Step 0 picked ≥1 messaging channel)
+Configure the agent→user **messaging** channels (Step 0 `messaging`) so the agent can
+reach the operator. agent-utilities already ships the multi-channel send core
+(`MessagingService.reach_user` / MCP `graph_reach` / REST `/graph/reach`,
+CONCEPT:ECO-4.0) — this step only **provisions** it; it adds no engine code:
+- For each picked channel, **seed its token** via `graph_configure action=vault_sync`
+  (CONCEPT:OS-5.43) into `apps/messaging` (or the service `.env`), reusing read-existing
+  so a re-run never re-prompts. Channel keys: `MESSAGING_SLACK_TOKEN`
+  (+`MESSAGING_SLACK_APP_TOKEN`), `MESSAGING_TEAMS_APP_ID`+`MESSAGING_TEAMS_APP_SECRET`,
+  `MESSAGING_TELEGRAM_TOKEN`, `MESSAGING_MATTERMOST_TOKEN`+`MESSAGING_MATTERMOST_URL`,
+  `MESSAGING_DISCORD_TOKEN`, … (see the messaging config guide).
+- Set **`MESSAGING_ENABLED_BACKENDS`** to the full picked list (`set_config`) so **every**
+  configured channel auto-connects — having Teams, Slack, and Telegram all set means all
+  three come up and are usable.
+- **Reach mode:** `last-active` (default) needs only `MESSAGING_DEFAULT_PLATFORM` +
+  `MESSAGING_DEFAULT_CHANNEL` (the fallback when no last-active channel is recorded) —
+  fully functional today. **`broadcast`** (opt-in) sets `MESSAGING_REACH_MODE=broadcast`
+  so a single `reach_user` fans out to all `MESSAGING_ENABLED_BACKENDS` at once; this is
+  honored by the messaging engine's fan-out (the `MessagingService` reach-mode behavior).
+  > **Dependency note:** broadcast fan-out is delivered in the messaging subsystem
+  > (`agent_utilities/messaging/*`); this step writes the agreed `MESSAGING_REACH_MODE`
+  > contract. If the engine fan-out is not yet present, `last-active` is the working
+  > default and `broadcast` activates as soon as that lands. Do not edit `messaging/*` here.
+- **Verify:** `graph_reach action=status` lists every configured channel as connected;
+  a test `graph_reach action=reach_user text="genesis: messaging online"` reaches the
+  operator (last-active/default), or — in broadcast mode — all configured channels.
+- Requires: `graph-os`
+- Expected: `messaging-configured, channels-connected` (broadcast: `+broadcast-mode-set`)
+
 ### Step A5: mcp-config-rewire (streamable-http, no stdio)
 [depends_on: Step A3] (profiles: single-node-prod, enterprise)
 Once the fleet is deployed, **back up** every `mcp_config*.json` (workspace +
@@ -641,7 +725,7 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 11:** Step 14 — keycloak-oidc-wiring
 - **After level 12 (in parallel):** Step 14b — credential-rotation-policy; Step 15 — observability-and-backups
 - **After level 13:** Step 16 — graph-os
-- **agent-utilities core (A-series), after Step 0 / once hosts are ready:** A1 — install → A1b — config-walkthrough → A2 — graph-os+multiplexer → A3 — mcp-fleet-deploy → A4 — integrations-wiring → A4b — ontology-host → A5 — mcp-config-rewire → A6 — verify (tiny stops after A1).
+- **agent-utilities core (A-series), after Step 0 / once hosts are ready:** A1 — install → A1b — config-walkthrough → A2 — graph-os+multiplexer → A3 — mcp-fleet-deploy → A4 — integrations-wiring → A4b — ontology-host → A4c — messaging-channels → A5 — mcp-config-rewire → A6 — verify (tiny stops after A1).
 
 Every step honors the Step 0 **run plan**: a capability marked `use-existing` skips
 its deploy sub-step and runs only wiring; `skip` is omitted entirely; the
