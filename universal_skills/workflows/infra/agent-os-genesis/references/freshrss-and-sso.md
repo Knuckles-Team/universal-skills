@@ -98,7 +98,11 @@ A single confidential client `caddy-authp` (standard flow) with redirect
     order authorize before reverse_proxy
     security {
         oauth identity provider keycloak {
-            realm master
+            # ⚠️ caddy-security uses `realm` as the OAuth URL path segment
+            # (/oauth2/<realm>) AND the `transform match realm <realm>` key — it must
+            # equal the name in the policy's `set auth url …/oauth2/<realm>` and the
+            # transform below (NOT the Keycloak realm, which lives in metadata_url).
+            realm keycloak
             driver generic
             client_id caddy-authp
             client_secret <SECRET>
