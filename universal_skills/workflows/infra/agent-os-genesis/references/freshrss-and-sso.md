@@ -76,19 +76,26 @@ Recovery if it goes down: the old image is still local on the node — revert wi
 `docker service update --image registry.arpa/caddy:cloudflare caddy_caddy` (falls back
 to the cached local image).
 
+### 3b.5 ⭐ ONE realm — `homelab` (no realm sprawl)
+**All SSO/OIDC — human web apps AND the MCP/agent fleet — uses the single `homelab` realm**
+(`http://keycloak.arpa/realms/homelab`); `master` is Keycloak super-admin only. Do NOT create
+extra realms unless the end user explicitly asks for multi-realm isolation. See the keycloak
+service `AGENTS.md` realm policy. (SSO users must have an `email` — caddy-security requires the
+`email` claim, else "Unauthorized" after login.)
+
 ### 3c. ⚠️ Keycloak: remove the RSA-OAEP encryption key
 caddy-security cannot parse Keycloak's default **`rsa-enc-generated`** key (algorithm
 `RSA-OAEP`) in the realm JWKS → `jwks unsupported key algorithm RSA-OAEP`, provisioning
-fails. Delete that **encryption** KeyProvider (the RS256 **signing** key the fleet's JWT
-auth uses is separate and untouched; encryption keys are only used for JWE, which the
-fleet does not request):
+fails. Delete that **encryption** KeyProvider from the `homelab` realm (the RS256 **signing**
+key all token validation uses is separate and untouched; encryption keys are only used for JWE,
+which the fleet does not request):
 ```
-keycloak-mcp keyc__agent_components delete_components_by_id {realm:master, id:<rsa-enc-generated id>}
+keycloak-mcp keyc__agent_components delete_components_by_id {realm:homelab, id:<rsa-enc-generated id>}
 ```
 
 ### 3d. Keycloak client (one portal client, reusable for all apps)
-A single confidential client `caddy-authp` (standard flow) with redirect
-`http://auth.arpa/oauth2/keycloak/authorization-code-callback` + `http://auth.arpa/*`.
+A single confidential client `caddy-authp` in the **`homelab`** realm (standard flow) with
+redirect `http://auth.arpa/*` (covers the `/oauth2/<realm>/authorization-code-callback`).
 
 ### 3e. Caddyfile (global `security` block + portal + per-app gate)
 ```caddyfile
@@ -107,7 +114,7 @@ A single confidential client `caddy-authp` (standard flow) with redirect
             client_id caddy-authp
             client_secret <SECRET>
             scopes openid email profile
-            metadata_url http://keycloak.arpa/realms/master/.well-known/openid-configuration
+            metadata_url http://keycloak.arpa/realms/homelab/.well-known/openid-configuration
         }
         authentication portal authp {
             crypto key sign-verify <RANDOM_64_HEX>
