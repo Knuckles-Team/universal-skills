@@ -141,6 +141,11 @@ authorization policy** whose `set auth url` is on that app's host.
             set auth url http://freshrss.arpa/oauth2/keycloak   # the app's OWN host
             allow roles authp/user authp/admin
             inject headers with claims
+            # ⚠️ caddy-security's session user object carries ONLY sub/name/email/given_name/
+            # family_name/roles — it DROPS preferred_username. {http.auth.user.id} resolves to
+            # the EMAIL. Source the upstream username header from a claim that IS present AND is a
+            # valid app username. given_name works once set to the app's exact login (see 3f).
+            inject header "X-WebAuth-User" from given_name
         }
     }
 }
@@ -148,28 +153,60 @@ authorization policy** whose `set auth url` is on that app's host.
 http://freshrss.arpa {
     handle /api/* { reverse_proxy freshrss_freshrss:80 }   # API: token auth — BYPASS the portal
     handle /oauth2/* { authenticate with authp }           # OIDC endpoints ON this host → host-only cookie
+    # ⚠️ after login caddy-security lands on /portal (its default) which a per-app host has no
+    # route for → app 404. Bounce it to the app root. Use an ABSOLUTE target: `redir / 302`
+    # (leading slash) is mis-parsed as a matcher and yields an empty 200.
+    handle /portal* { redir http://freshrss.arpa/ 302 }
     handle {                                                # Web UI: Keycloak SSO
         authorize with freshrss_policy
-        reverse_proxy freshrss_freshrss:80 {
-            header_up X-WebAuth-User {http.auth.user.id}
-        }
+        reverse_proxy freshrss_freshrss:80               # NO header_up — the policy injects X-WebAuth-User
     }
 }
 ```
-*(Each additional app repeats the `handle /oauth2/* … authorize` blocks on its own host with its
-own `<app>_policy`; the one `caddy-authp` client + `*.arpa/*` redirect covers them all.)*
+*(Each additional app repeats the `handle /oauth2/* … /portal … authorize` blocks on its own host
+with its own `<app>_policy`; the one `caddy-authp` client + `*.arpa/*` redirect covers them all.)*
 The **live** runtime Caddyfile is `/home/apps/caddy/<…>/Caddyfile` (NOT the
 `services/caddy/Caddyfile` GitOps source). Edit live, `caddy validate` (rejects a bad
 config — the running config persists), then `caddy reload`.
 
-### 3f. App side — FreshRSS `http_auth`
+### 3f. App side — FreshRSS `http_auth` (TWO non-obvious requirements)
 ```bash
 docker exec $cid php cli/reconfigure.php --auth-type http_auth   # trust X-WebAuth-User
 docker exec $cid ./cli/access-permissions.sh
 ```
-FreshRSS reads the `X-WebAuth-User` header; its value must equal a FreshRSS username
-(map the OIDC `preferred_username` claim → `admin`). The GReader API password keeps
-working under any web `auth_type` (the bypass + token auth), so ingestion is unaffected.
+**(a) The header value must equal an existing FreshRSS username.** FreshRSS usernames are
+`[0-9a-zA-Z_]` only (NO `@`/`.`) so the email can't be used. caddy drops `preferred_username`,
+so we feed `given_name` (3e) — and it must match the FreshRSS account **exactly** (case-sensitive).
+Set the Keycloak user's `firstName` to the lowercase login (e.g. `admin`) so `given_name=admin`.
+⚠️ do NOT clear `lastName` (empty → Keycloak "Account is not fully set up" → login blocked).
+
+**(b) FreshRSS only honors the header from a TRUSTED proxy IP.** `httpAuthUser(onlyTrusted:true)`
+checks `config.php` `trusted_sources`; if the Caddy container's source IP isn't listed, FreshRSS
+**ignores the header and 403s** — the error page shows the (untrusted) value, e.g.
+`Remote-User=admin`, which looks like it should work. Add the Docker/overlay proxy subnet:
+```php
+// data/config.php → 'trusted_sources' => [ '127.0.0.0/8', '::1/128', '172.16.0.0/12' ],
+```
+(edit via `docker cp` out → patch → `docker cp` in → `cli/access-permissions.sh`).
+
+The GReader API password keeps working under any web `auth_type` (the `/api/*` bypass + token
+auth), so ingestion is unaffected throughout.
+
+### 3g. End-to-end ordered checklist (every gate that must line up)
+A 403/loop means ONE of these is off — they were each a separate failure mode in the live build:
+1. **Realm path** — `set auth url …/oauth2/<realm>` matches the provider's `realm` label (not the
+   provider name) and the `transform match realm <realm>` — else 400 "identity provider not found".
+2. **One realm = `homelab`** — provider `metadata_url` → `realms/homelab`; remove that realm's
+   `rsa-enc-generated` RSA-OAEP key.
+3. **Host-only cookie** — auth hosted on the app's host, NO `cookie domain` (`.arpa` public-suffix
+   → `Domain=arpa` cookie rejected → redirect loop).
+4. **Policy verify key** — `crypto key verify` on the policy == the portal's `sign-verify` (else
+   "keystore: failed to parse token" → loop).
+5. **email claim** — the SSO user has an `email` (else "Unauthorized" after a successful login).
+6. **/portal → /** — bounce caddy-security's post-login landing to the app root.
+7. **Username header** — inject `X-WebAuth-User` from a present+valid claim (`given_name` set to
+   the exact app login); NOT `{http.auth.user.id}` (=email) and NOT `preferred_username` (dropped).
+8. **trusted_sources** — the app trusts the Caddy proxy subnet.
 
 **To add another app:** add an `<app>_policy` (auth url on that app's host) to the global
 `security` block, then an `http://<app>.arpa { handle /api/* … ; handle /oauth2/* {
