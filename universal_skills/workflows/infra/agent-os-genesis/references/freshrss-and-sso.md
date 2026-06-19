@@ -93,11 +93,19 @@ which the fleet does not request):
 keycloak-mcp keyc__agent_components delete_components_by_id {realm:homelab, id:<rsa-enc-generated id>}
 ```
 
-### 3d. Keycloak client (one portal client, reusable for all apps)
+### 3d. Keycloak client (one client, reusable for all apps)
 A single confidential client `caddy-authp` in the **`homelab`** realm (standard flow) with
-redirect `http://auth.arpa/*` (covers the `/oauth2/<realm>/authorization-code-callback`).
+redirect URIs **`http://*.arpa/*`** — the wildcard makes EVERY app host a valid callback, so each
+app hosts its own `/oauth2/<realm>/authorization-code-callback` (see 3e).
 
-### 3e. Caddyfile (global `security` block + portal + per-app gate)
+### 3e. ⚠️ `.arpa` is a PUBLIC SUFFIX → host the auth PER-APP (host-only cookie)
+**Do NOT use a central `auth.arpa` portal with `cookie domain arpa`.** Browsers reject a
+`Domain=arpa` cookie (`arpa` is on the Public Suffix List), so the session cookie never sticks —
+caddy-security logs a "Successful login" but the user **loops back to the login screen**. Instead
+mount the caddy-security OIDC endpoints **on each app's own host** so the cookie is **host-only**
+(no `Domain`). This is also how the other homelab apps' OIDC sessions work. Use a **per-app
+authorization policy** whose `set auth url` is on that app's host.
+
 ```caddyfile
 {
     # …email, acme_dns…
@@ -118,34 +126,34 @@ redirect `http://auth.arpa/*` (covers the `/oauth2/<realm>/authorization-code-ca
         }
         authentication portal authp {
             crypto key sign-verify <RANDOM_64_HEX>
-            cookie domain arpa
-            cookie insecure on              # .arpa is plain http (no TLS)
+            cookie insecure on              # .arpa is plain http (no TLS); NO `cookie domain` (host-only)
             enable identity provider keycloak
             transform user {
                 match realm keycloak
                 action add role authp/user  # grant every keycloak user the app role
             }
         }
-        authorization policy apps_policy {
-            set auth url http://auth.arpa/oauth2/keycloak
+        authorization policy freshrss_policy {
+            set auth url http://freshrss.arpa/oauth2/keycloak   # the app's OWN host
             allow roles authp/user authp/admin
             inject headers with claims
         }
     }
 }
 
-http://auth.arpa { authenticate with authp }     # the portal (all *.arpa resolve to Caddy)
-
 http://freshrss.arpa {
     handle /api/* { reverse_proxy freshrss_freshrss:80 }   # API: token auth — BYPASS the portal
+    handle /oauth2/* { authenticate with authp }           # OIDC endpoints ON this host → host-only cookie
     handle {                                                # Web UI: Keycloak SSO
-        authorize with apps_policy
+        authorize with freshrss_policy
         reverse_proxy freshrss_freshrss:80 {
             header_up X-WebAuth-User {http.auth.user.id}
         }
     }
 }
 ```
+*(Each additional app repeats the `handle /oauth2/* … authorize` blocks on its own host with its
+own `<app>_policy`; the one `caddy-authp` client + `*.arpa/*` redirect covers them all.)*
 The **live** runtime Caddyfile is `/home/apps/caddy/<…>/Caddyfile` (NOT the
 `services/caddy/Caddyfile` GitOps source). Edit live, `caddy validate` (rejects a bad
 config — the running config persists), then `caddy reload`.
@@ -159,6 +167,9 @@ FreshRSS reads the `X-WebAuth-User` header; its value must equal a FreshRSS user
 (map the OIDC `preferred_username` claim → `admin`). The GReader API password keeps
 working under any web `auth_type` (the bypass + token auth), so ingestion is unaffected.
 
-**To add another app:** add an `http://<app>.arpa { handle … authorize with apps_policy
-… }` block (bypass any token/API subpaths), set the app to trust the proxy header. No
-new Keycloak client — the one `caddy-authp` portal serves all apps.
+**To add another app:** add an `<app>_policy` (auth url on that app's host) to the global
+`security` block, then an `http://<app>.arpa { handle /api/* … ; handle /oauth2/* {
+authenticate with authp } ; handle { authorize with <app>_policy ; reverse_proxy … } }` block
+(bypass any token/API subpaths; host `/oauth2/*` on the app so the cookie is host-only), and set
+the app to trust the proxy header. **No** new Keycloak client/realm — the one `caddy-authp` client
+(`*.arpa/*` redirect) + `homelab` realm serve all apps.
