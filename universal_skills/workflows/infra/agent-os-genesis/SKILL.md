@@ -685,12 +685,36 @@ CONCEPT:ECO-4.0) — this step only **provisions** it; it adds no engine code:
   signature + Telegram IP allowlist + CrowdSec). Gate human routes with **Cloudflare Access
   / Keycloak**; keep secrets in **OpenBao**. See `agent-utilities` docs/architecture/
   messaging_security.md. Empty `MESSAGING_WEBHOOK_BASE_URL` ⇒ polling (no ingress).
+- **Fleet delegation via graph-os + multiplexer (CONCEPT:ECO-4.75).** Wire the chat agent
+  to reach the WHOLE fleet by delegating through graph-os — the agent never carries per-
+  connector tools. Set TWO MCP servers on the messaging agent (the same surface Claude
+  uses): **graph-os** for `graph_orchestrate` + KG, and the **mcp-multiplexer** for dynamic
+  `find_tools`/`load_tools` over every connector (github/gitlab/…):
+  - `MESSAGING_MCP_URL=http://<served-graph-os>/sse` (the served graph-os MCP, e.g. the
+    local `kg_server --transport sse` on `127.0.0.1:8100`).
+  - `MESSAGING_MCP_CONFIG=<a config file>` whose single `mcp-multiplexer` server runs
+    `python -m agent_utilities.mcp.multiplexer --config <fleet mcp_config.json>`
+    (`MCP_MULTIPLEXER_MODE=dynamic`). **No secrets in this file** — OIDC is inherited from
+    the daemon's process env.
+  - **Fleet auth (jwt-protected fleet):** the messaging daemon loads OIDC client-credentials
+    into its env at startup (`MCP_CLIENT_AUTH=oidc-client-credentials` + `OIDC_CLIENT_ID/
+    SECRET/AUDIENCE/TOKEN_URL`), sourced **env → OpenBao `apps/mcp-multiplexer` → local
+    Claude MCP config**. **Inject them from OpenBao** (`graph_configure action=vault_sync
+    config_key=mcp-multiplexer` into the messaging unit env) so the spawned multiplexer AND
+    every nested `graph_orchestrate`-spawned agent (via `_spawn_auth_headers`) authenticate.
+    Never put these in a plaintext file — OpenBao is the source of truth.
+  - **Chat tool policy:** the agent auto-runs the delegation surface (`graph_orchestrate`,
+    `graph_search`, `find_tools`, `load_tools`) and read-only fleet tools from a chat message;
+    mutating tools stay gated and the spawned specialist's own actions remain governed by the
+    ActionPolicy gate (OS-5.24). No extra config — it's the default policy.
 - **Verify:** `graph_reach action=status` lists every configured channel as connected;
   a test `graph_reach action=reach_user text="genesis: messaging online"` reaches the
-  operator (last-active/default), or — in broadcast mode — all configured channels.
-- Requires: `graph-os`
+  operator (last-active/default), or — in broadcast mode — all configured channels. For
+  delegation, the daemon log shows `[ECO-4.75] fleet auth: loaded …` and the chat agent can
+  fetch e.g. GitHub issues via `graph_orchestrate`/the multiplexer.
+- Requires: `graph-os`, `mcp-multiplexer` (+ OpenBao for fleet OIDC)
 - Expected: `messaging-configured, channels-connected` (broadcast: `+broadcast-mode-set`;
-  webhook: `+webhook-push-via-tunnel`)
+  webhook: `+webhook-push-via-tunnel`; delegation: `+graphos-fleet-delegation`)
 
 ### Step A5: mcp-config-rewire (streamable-http, no stdio)
 [depends_on: Step A3] (profiles: single-node-prod, enterprise)
