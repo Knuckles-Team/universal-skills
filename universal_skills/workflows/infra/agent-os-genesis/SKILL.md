@@ -419,6 +419,15 @@ or `kubectl apply`. The arr-suite gluetun pattern below becomes a native
     and when the tunnel drops). Because Swarm can't do `network_mode: service:`, the arr-suite runs
     as a **standalone compose on R510** with Caddy repointed to its published ports. Full recipe +
     NordVPN/credential + arr-MCP gotchas: [`references/arr-stack-vpn-hardening.md`](references/arr-stack-vpn-hardening.md).
+  - **FreshRSS world-model intake + Caddy/Keycloak SSO (REQUIRED for the RSS source + any
+    `*.arpa` web SSO):** install/enable the FreshRSS API + seed curated feeds + deploy the
+    `freshrss-mcp` connector, and stand up the reusable **`caddy-security` (greenpau) OIDC
+    portal** (`auth.arpa`) that gates app web UIs via Keycloak — keep token/API paths
+    (`/api/*`) bypassed so ingestion is never redirected. Includes the two hard gotchas:
+    `registry.arpa` routes through Caddy (pre-pull the new Caddy image on the node before
+    cutover) and Keycloak's `rsa-enc-generated` RSA-OAEP key must be removed (caddy-security
+    can't parse it; the RS256 signing key stays). Full recipe:
+    [`references/freshrss-and-sso.md`](references/freshrss-and-sso.md).
 - Data platform (**Kafka**, **Apache-Jena**/Fuseki) → highest-RAM node, canary-gated
 - Requires: `portainer-mcp`, `container-manager-mcp`
 - Expected: `services-deployed, deferred-report` (arr-suite: `vpn-egress-enforced, kill-switch-verified`)
