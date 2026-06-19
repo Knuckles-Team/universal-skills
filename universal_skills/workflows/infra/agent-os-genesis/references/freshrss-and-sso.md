@@ -125,7 +125,7 @@ authorization policy** whose `set auth url` is on that app's host.
             metadata_url http://keycloak.arpa/realms/homelab/.well-known/openid-configuration
         }
         authentication portal authp {
-            crypto key sign-verify <RANDOM_64_HEX>
+            crypto key sign-verify <RANDOM_64_HEX>   # the portal SIGNS the session JWT with this
             cookie insecure on              # .arpa is plain http (no TLS); NO `cookie domain` (host-only)
             enable identity provider keycloak
             transform user {
@@ -134,6 +134,10 @@ authorization policy** whose `set auth url` is on that app's host.
             }
         }
         authorization policy freshrss_policy {
+            # ⚠️ the policy MUST carry the SAME key to VERIFY the portal's JWT — without it the
+            # policy auto-generates a different (ES512) key, fails with "keystore: failed to parse
+            # token" on every request, and the browser loops (ERR_TOO_MANY_REDIRECTS).
+            crypto key verify <RANDOM_64_HEX>
             set auth url http://freshrss.arpa/oauth2/keycloak   # the app's OWN host
             allow roles authp/user authp/admin
             inject headers with claims
