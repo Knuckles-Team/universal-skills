@@ -247,6 +247,13 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+  - id: mcp-readme-table
+    name: sync MCP tools table in README
+    entry: |-
+      bash -c 'if [ -f uv.lock ]; then uv run python -m agent_utilities.mcp.readme_tools; else python -m agent_utilities.mcp.readme_tools; fi'
+    language: system
+    files: ^(README\\.md|.*/mcp_server\\.py|.*/mcp/.*\\.py)$
+    pass_filenames: false
   - id: check-bumpversion
     name: validate bumpversion config
     entry: |-
@@ -916,11 +923,12 @@ This repository is actively maintained - Contributions are welcome!
 ## Available MCP Tools
 
 Each tool is **action-routed**: pass an `action` and a JSON `params_json` payload. Tool
-domains can be toggled on or off with the listed environment variable.
+domains can be toggled on or off with the listed environment variable. The table below is
+**auto-generated from the live server** by the `mcp-readme-table` pre-commit hook
+(`python -m agent_utilities.mcp.readme_tools`) — do not edit it by hand.
 
-| Tool | Toggle env var | Default | Actions |
-|------|----------------|:-------:|---------|
-| `system_operations` | `SYSTEMTOOL` | `True` | `status`, `info` |
+<!-- MCP-TOOLS-TABLE:START -->
+<!-- MCP-TOOLS-TABLE:END -->
 
 ## Installation
 
