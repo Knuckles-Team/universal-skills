@@ -1442,7 +1442,6 @@ __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
 
 AUTH_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 
 \"\"\"Authentication.
 
@@ -1540,24 +1539,21 @@ def get_client(
 
 MCP_SERVER_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 
 import logging
 import sys
 from typing import Any
 
-from agent_utilities.core.config import setting
+from agent_utilities.base_utilities import get_logger
 from agent_utilities.mcp_utilities import (
     create_mcp_server,
     load_config,
-    register_verbose_tools,
-    tool_mode,
+    register_tool_surface,
 )
-from agent_utilities.utilities import get_logger
 
+from . import mcp as tool_modules
 from .api import ApiClientSystem
 from .auth import get_client
-from .mcp import register_system_tools
 
 __version__ = "0.1.0"
 
@@ -1568,13 +1564,16 @@ logger.setLevel(logging.INFO)
 def get_mcp_instance() -> tuple[Any, Any, Any]:
     \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.
 
-    The tool surface follows ``MCP_TOOL_MODE`` (read from the shared XDG config):
-    ``condensed`` (default, action-routed tools), ``verbose`` (one named 1:1 tool
-    per API method), or ``both``. Verbose tools are typed when an OpenAPI manifest
-    is available, else take a ``params_json`` arg; all are tagged ``verbose``.
+    The whole tool surface is wired by the shared ``register_tool_surface`` helper
+    per ``MCP_TOOL_MODE`` (read from the XDG config): ``condensed`` (default,
+    action-routed tools), ``verbose`` (one named 1:1 tool per API method), or
+    ``both``. To add a domain, drop a ``register_<domain>_tools(mcp)`` into the
+    ``mcp/`` package and re-export it from ``mcp/__init__.py`` — it is auto-discovered
+    and gated by ``setting("<DOMAIN>TOOL", True)``; no edit here is needed. For
+    fully-typed verbose tools, vendor an OpenAPI/Swagger spec under ``specs/`` and
+    generate ``api/_operation_manifest.py``, then pass ``manifest=OPERATIONS`` below.
     \"\"\"
     load_config()
-    mode = tool_mode()
 
     args, mcp, middlewares = create_mcp_server(
         name="{display_name} MCP",
@@ -1582,16 +1581,13 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
         instructions="{display_name} MCP Server — condensed and verbose tool surfaces.",
     )
 
-    if mode in ("condensed", "both"):
-        if setting("SYSTEMTOOL", True):
-            register_system_tools(mcp)
-
-    if mode in ("verbose", "both"):
-        # Pass ``manifest=OPERATIONS`` once an OpenAPI spec + generator produce
-        # ``api/_operation_manifest.py`` to get fully-typed 1:1 tools.
-        register_verbose_tools(
-            mcp, ApiClientSystem, get_client, service="{package_name}"
-        )
+    register_tool_surface(
+        mcp,
+        service="{package_name}",
+        client_cls=ApiClientSystem,
+        get_client=get_client,
+        tools_module=tool_modules,
+    )
 
     for mw in middlewares:
         mcp.add_middleware(mw)
@@ -1623,7 +1619,6 @@ if __name__ == "__main__":
 
 AGENT_SERVER_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 import logging
 import os
 import sys
@@ -1699,7 +1694,6 @@ if __name__ == "__main__":
 
 MAIN_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 from {pkg_dir}.agent_server import agent_server
 
 if __name__ == "__main__":
@@ -1708,7 +1702,6 @@ if __name__ == "__main__":
 
 API_CLIENT_FACADE = """\
 #!/usr/bin/python
-# coding: utf-8
 \"\"\"Facade re-export of the modular api/ sub-package (backward compatibility).\"\"\"
 
 from .api import *  # noqa: F401,F403
@@ -1766,7 +1759,6 @@ __all__ = ["ApiClientBase", "ApiClientSystem"]
 
 INPUT_MODELS_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 \"\"\"Pydantic input models for {display_name} API request parameters.\"\"\"
 
 from typing import Optional
@@ -1784,7 +1776,6 @@ class SystemStatusInput(BaseModel):
 
 RESPONSE_MODELS_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 \"\"\"Pydantic response models for {display_name} API payloads.\"\"\"
 
 from typing import Any, Dict, Optional
@@ -1922,7 +1913,6 @@ IDENTITY_MD = """\
 
 GQL_PY = """\
 #!/usr/bin/python
-# coding: utf-8
 \"\"\"GraphQL API Wrapper for {display_name}.
 
 Provides a GraphQL interface using the `gql` library that mirrors
