@@ -162,15 +162,22 @@ Scaffolded packages follow two fleet standards out of the box — do not regress
   `setting(...)` at call time. So `~/.config/agent-utilities/config.json` (or
   `$AGENT_UTILITIES_CONFIG_DIR`) configures the whole fleet; never add bare
   `os.getenv` reads.
-- **`MCP_TOOL_MODE` surface.** `get_mcp_instance()` honors `condensed` (default,
-  action-routed tools), `verbose` (one named 1:1 tool per API method via the shared
-  `register_verbose_tools`), or `both`. New packages get the introspection
-  (`params_json`) verbose tier automatically; once an OpenAPI/Swagger spec is
-  vendored under `<pkg>/specs/` and a generator emits `api/_operation_manifest.py`,
-  pass `manifest=OPERATIONS` to `register_verbose_tools` for **fully-typed** verbose
-  tools. **Always try to source an OpenAPI/Swagger doc first** (richest); fall back
-  to crawling the API docs site, then a PDF spec — all normalized to the manifest.
-  See the agent-utilities *MCP Tool Modes* guide.
+- **One-call tool surface (`register_tool_surface`).** `get_mcp_instance()` wires its
+  ENTIRE surface with a single shared call —
+  `register_tool_surface(mcp, service="<name>", client_cls=ApiClientSystem,
+  get_client=get_client, tools_module=<pkg>.mcp)` — never per-domain `if mode in (...)`
+  branching. The helper owns `MCP_TOOL_MODE` (`condensed` default / `verbose` / `both`):
+  it **auto-discovers** every `register_<domain>_tools` in the `mcp/` package, gates each
+  via `setting("<DOMAIN>TOOL", True)`, and adds the verbose 1:1 surface. **Adding a domain
+  needs no edit to `get_mcp_instance`** — just drop `register_<domain>_tools` into `mcp/`
+  and re-export it from `mcp/__init__.py`. New packages get the introspection
+  (`params_json`) verbose tier automatically; once an OpenAPI/Swagger spec is vendored
+  under `<pkg>/specs/` and the generator emits `api/_operation_manifest.py`, pass
+  `manifest=OPERATIONS` for **fully-typed** verbose tools. Multi-client agents (e.g.
+  arr-mcp) pass `verbose_targets=[{client_cls,get_client,tool_prefix},…]`; codegen'd
+  agents pass `tool_registry=TOOL_REGISTRY`. **Always source an OpenAPI/Swagger doc
+  first** (richest); else crawl the API docs site, then a PDF spec — all normalized to
+  the manifest. See the agent-utilities *MCP Tool Modes* guide.
 
 #### Critical packaging requirements (these prevent real CI failures)
 
