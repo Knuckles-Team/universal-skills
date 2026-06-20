@@ -1458,9 +1458,8 @@ to ``(url, token, verify)`` and call it here before the delegation/fixed paths �
 ``gitlab_api.instances`` (CONCEPT:KG-2.9g) for the golden pattern.
 \"\"\"
 
-import os
-
-from agent_utilities.base_utilities import get_logger, to_boolean
+from agent_utilities.base_utilities import get_logger
+from agent_utilities.core.config import setting
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
 
 from .api import ApiClientSystem
@@ -1475,15 +1474,19 @@ def get_client(
     verify: bool | None = None,
     config: dict | None = None,
 ) -> ApiClientSystem:
-    \"\"\"Get or create a singleton API client (OIDC delegation or fixed credentials).\"\"\"
+    \"\"\"Get or create a singleton API client (OIDC delegation or fixed credentials).
+
+    Credentials resolve through the shared config layer (the one XDG
+    ``config.json`` / env) at call time, not frozen at import.
+    \"\"\"
     global _client
     if _client is not None:
         return _client
 
-    base_url = url or os.getenv("{service_url_env}", "http://localhost:8080")
-    token = token or os.getenv("{auth_env}", "")
+    base_url = url or setting("{service_url_env}", "http://localhost:8080")
+    token = token or setting("{auth_env}", "")
     if verify is None:
-        verify = to_boolean(string=os.getenv("{ssl_verify_env}", "True"))
+        verify = setting("{ssl_verify_env}", True)
 
     from agent_utilities.mcp.delegated_auth import (
         get_delegated_token,
@@ -1540,15 +1543,20 @@ MCP_SERVER_PY = """\
 # coding: utf-8
 
 import logging
-import os
 import sys
 from typing import Any
 
-from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server
+from agent_utilities.core.config import setting
+from agent_utilities.mcp_utilities import (
+    create_mcp_server,
+    load_config,
+    register_verbose_tools,
+    tool_mode,
+)
 from agent_utilities.utilities import get_logger
-from dotenv import find_dotenv, load_dotenv
 
+from .api import ApiClientSystem
+from .auth import get_client
 from .mcp import register_system_tools
 
 __version__ = "0.1.0"
@@ -1558,18 +1566,32 @@ logger.setLevel(logging.INFO)
 
 
 def get_mcp_instance() -> tuple[Any, Any, Any]:
-    \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.\"\"\"
-    load_dotenv(find_dotenv())
+    \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.
+
+    The tool surface follows ``MCP_TOOL_MODE`` (read from the shared XDG config):
+    ``condensed`` (default, action-routed tools), ``verbose`` (one named 1:1 tool
+    per API method), or ``both``. Verbose tools are typed when an OpenAPI manifest
+    is available, else take a ``params_json`` arg; all are tagged ``verbose``.
+    \"\"\"
+    load_config()
+    mode = tool_mode()
 
     args, mcp, middlewares = create_mcp_server(
         name="{display_name} MCP",
         version=__version__,
-        instructions="{display_name} MCP Server — Condensed Action-Routed Tools.",
+        instructions="{display_name} MCP Server — condensed and verbose tool surfaces.",
     )
 
-    DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
-    if DEFAULT_SYSTEMTOOL:
-        register_system_tools(mcp)
+    if mode in ("condensed", "both"):
+        if setting("SYSTEMTOOL", True):
+            register_system_tools(mcp)
+
+    if mode in ("verbose", "both"):
+        # Pass ``manifest=OPERATIONS`` once an OpenAPI spec + generator produce
+        # ``api/_operation_manifest.py`` to get fully-typed 1:1 tools.
+        register_verbose_tools(
+            mcp, ApiClientSystem, get_client, service="{package_name}"
+        )
 
     for mw in middlewares:
         mcp.add_middleware(mw)

@@ -132,10 +132,10 @@ Run `scripts/scaffold_package.py` (or generate the same set manually). The stand
     ├── __main__.py           # invokes agent_server()
     ├── agent_server.py
     ├── api_client.py         # facade re-export from api/
-    ├── auth.py               # get_client() singleton, std env var names
+    ├── auth.py               # get_client(); creds via config.setting() at call time
     ├── main_agent.json       # main-agent prompt definition
     ├── mcp_config.json       # package-level: {"mcpServers": {}}
-    ├── mcp_server.py         # entrypoint (imports from mcp/)
+    ├── mcp_server.py         # entrypoint; load_config() + MCP_TOOL_MODE surface
     ├── {short}_gql.py        # GraphQL wrapper (graphql type only)
     ├── {short}_input_models.py
     ├── {short}_response_models.py
@@ -151,6 +151,26 @@ Run `scripts/scaffold_package.py` (or generate the same set manually). The stand
 ```
 
 After scaffolding, run `uv lock` in the project — the pre-commit `uv-lock` hook and the `pytest` hook (`uv run --all-extras pytest …`) both expect `uv.lock` to exist.
+
+#### Config & tool-surface standard (baked into the templates, ECO-4.82)
+
+Scaffolded packages follow two fleet standards out of the box — do not regress them:
+
+- **One XDG config source of truth.** `mcp_server.py` calls `load_config()` (not
+  `load_dotenv(find_dotenv())`) and reads every setting via
+  `agent_utilities.core.config.setting(...)`; `auth.py` resolves credentials via
+  `setting(...)` at call time. So `~/.config/agent-utilities/config.json` (or
+  `$AGENT_UTILITIES_CONFIG_DIR`) configures the whole fleet; never add bare
+  `os.getenv` reads.
+- **`MCP_TOOL_MODE` surface.** `get_mcp_instance()` honors `condensed` (default,
+  action-routed tools), `verbose` (one named 1:1 tool per API method via the shared
+  `register_verbose_tools`), or `both`. New packages get the introspection
+  (`params_json`) verbose tier automatically; once an OpenAPI/Swagger spec is
+  vendored under `<pkg>/specs/` and a generator emits `api/_operation_manifest.py`,
+  pass `manifest=OPERATIONS` to `register_verbose_tools` for **fully-typed** verbose
+  tools. **Always try to source an OpenAPI/Swagger doc first** (richest); fall back
+  to crawling the API docs site, then a PDF spec — all normalized to the manifest.
+  See the agent-utilities *MCP Tool Modes* guide.
 
 #### Critical packaging requirements (these prevent real CI failures)
 
