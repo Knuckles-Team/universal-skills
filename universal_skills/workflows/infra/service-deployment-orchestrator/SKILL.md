@@ -12,7 +12,12 @@ tags:
 - dns
 - caddy
 - sso
-requires: []
+requires:
+  - caddy-mcp
+  - keycloak-agent
+  - portainer-agent
+  - technitium-dns-mcp
+  - uptime-kuma-agent
 ---
 
 # service-deployment-orchestrator Workflow

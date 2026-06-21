@@ -32,6 +32,44 @@ except ImportError:
     skill_graph_utilities = None
 
 
+# Entry-point group through which any installed agent-package contributes its
+# own skills. Kept as a standalone local copy (not imported from agent-utilities)
+# so the installer still runs when agent-utilities is absent — same rationale as
+# the ImportError fallbacks above. CONCEPT:OS-5.52.
+SKILL_PROVIDER_GROUP = "agent_utilities.skill_providers"
+
+
+def _iter_skill_providers() -> List[tuple]:
+    """Resolve every ``agent_utilities.skill_providers`` entry-point to a dir.
+
+    Returns ``(provider_name, asset_dir)`` tuples. Resolves each contributor's
+    data directory via ``importlib.resources`` without importing the agent's
+    business logic. Unresolvable/uninstalled providers are skipped, not fatal.
+    """
+    from importlib.metadata import entry_points
+    from importlib.resources import as_file, files
+
+    out: List[tuple] = []
+    seen: set = set()
+    try:
+        eps = entry_points(group=SKILL_PROVIDER_GROUP)
+    except TypeError:  # pragma: no cover - very old importlib.metadata
+        eps = entry_points().get(SKILL_PROVIDER_GROUP, [])
+    for ep in sorted(eps, key=lambda e: e.name):
+        if ep.name in seen:
+            continue
+        try:
+            with as_file(files(ep.value)) as resolved:
+                path = Path(resolved)
+            if path.is_dir():
+                out.append((ep.name, path))
+                seen.add(ep.name)
+        except (ModuleNotFoundError, TypeError, FileNotFoundError, ValueError) as e:
+            logger.debug("Could not resolve skill provider %s: %s", ep.name, e)
+            continue
+    return out
+
+
 def get_tool_paths() -> dict:
     """Return per-tool skill-install directories, OS-aware.
 
@@ -176,7 +214,36 @@ def get_source_paths(
     elif include_graphs:
         logger.warning("Could not import skill_graph_utilities.")
 
-    return sources
+    # Package-contributed skills (entry-point providers, CONCEPT:OS-5.52).
+    # Any installed agent-package that declares an ``agent_utilities.skill_providers``
+    # entry-point contributes the ``SKILL.md`` dirs under its asset directory.
+    wanted = {n.strip() for n in skill_names} if skill_names else None
+    for _provider_name, asset_dir in _iter_skill_providers():
+        for skill_md in sorted(asset_dir.rglob("SKILL.md")):
+            skill_dir = skill_md.parent
+            parts = skill_dir.parts
+            is_graph = "skill_graphs" in parts or "skill-graphs" in parts
+            # Honour the same gates as the universal-skills branch.
+            if is_graph and not include_graphs:
+                continue
+            if wanted is not None and skill_dir.name not in wanted:
+                continue
+            if group and group not in parts:
+                continue
+            if layer != "all" and not _matches_layer(skill_dir, layer):
+                continue
+            sources.append(skill_dir)
+
+    # De-dup by resolved path so a skill is never installed twice.
+    seen: set = set()
+    deduped: List[Path] = []
+    for src in sources:
+        key = str(src.resolve())
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(src)
+    return deduped
 
 
 # Removed get_skill_graphs_source_path as it's merged into get_source_paths
@@ -248,8 +315,11 @@ def install_skills(
     installed_count = 0
     for skill_src in sources:
         # Determine destination
-        # Documentation graphs go into a sub-folder if they came from skill-graphs
-        is_graph = "skill_graphs" in str(skill_src)
+        # Documentation graphs go into a sub-folder, whether they came from the
+        # canonical skill_graphs package or a provider's ``skill-graphs/`` subdir.
+        is_graph = (
+            "skill_graphs" in skill_src.parts or "skill-graphs" in skill_src.parts
+        )
         if is_graph:
             dest_root = target_path / "skill-graphs"
             dest_root.mkdir(parents=True, exist_ok=True)
