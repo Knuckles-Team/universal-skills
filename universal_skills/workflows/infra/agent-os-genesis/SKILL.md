@@ -50,6 +50,8 @@ requires:
   - caddy-mcp
   - openbao-mcp
   - graph-os
+  - keycloak-agent
+  - portainer-agent
 ---
 
 # Agent OS Genesis — Day 0 Bootstrap & Multi-Service Wiring Orchestrator

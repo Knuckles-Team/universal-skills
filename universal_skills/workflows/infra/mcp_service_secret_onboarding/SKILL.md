@@ -22,6 +22,10 @@ team_config:
     deployer-agent: [pt_stack, pt_docker]
 tags: ['keycloak', 'openbao', 'portainer', 'secret-rotation', 'service-account', 'mcp']
 concept: CONCEPT:INFRA-002
+requires:
+  - keycloak-agent
+  - openbao-mcp
+  - portainer-agent
 ---
 
 # MCP Service Secret Onboarding Workflow
