@@ -93,7 +93,10 @@ Legend: **R** = required, **O** = optional (justified omission allowed), **G** =
 | `{short}_response_models.py` | R | Pydantic response models. |
 | `{short}_gql.py` | O | GraphQL wrapper (only for services with a GraphQL API; pairs with `gql` extra). |
 | `mcp_config.json` | R | Package-level: `{"mcpServers": {}}` (shipped via package-data). |
-| `main_agent.json` | R | Main-agent prompt definition (task/input/type/description/tools/topic/tone/style/goal). |
+| `main_agent.json` | R | Canonical StructuredPrompt (schema_version/task/type/source/instructions.core_directive/extends/tools). Validated by `prompt-builder/validate_prompt.py --strict` and `check_prompt_schema`. |
+| `prompts/main_agent.json` + `prompts/__init__.py` | R | Same canonical prompt in the `prompts/` data subpackage = the `agent_utilities.prompt_providers` entry-point target (KG prompt-library discovery). Mirrors `main_agent.json` from ONE renderer (no drift). `__init__.py` makes it importlib-resolvable. |
+| `skills/<short>-starter/SKILL.md` + `skills/__init__.py` | R | At least one atomic skill = the `agent_utilities.skill_providers` entry-point target (XDG skill-library contribution, CONCEPT:OS-5.52). Passes `check_atomicity`. |
+| `pyproject.toml` entry-points | R | `[project.entry-points."agent_utilities.skill_providers"]` + `…prompt_providers` + `prompts/**`,`skills/**` in `[tool.setuptools.package-data]`. |
 | `agent_data/` | O | Identity/workspace files (`IDENTITY.md`). Golden repo omits the directory but keeps the `agent_data/**` package-data glob — keep the glob either way. |
 
 ## 7. tests/ (flat pytest layout)

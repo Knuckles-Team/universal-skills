@@ -74,6 +74,15 @@ test = [
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
 {agent_cmd} = "{pkg_dir}.agent_server:agent_server"
 
+# Fleet contribution (CONCEPT:OS-5.52): advertise this package's skills and
+# system-prompt blueprints so agent-utilities' skill-installer and KG prompt
+# library discover them without importing this package's agent code.
+[project.entry-points."agent_utilities.skill_providers"]
+{package_name} = "{pkg_dir}.skills"
+
+[project.entry-points."agent_utilities.prompt_providers"]
+{package_name} = "{pkg_dir}.prompts"
+
 [tool.setuptools]
 include-package-data = true
 
@@ -92,7 +101,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-{pkg_dir} = [ "mcp_config.json", "agent_data/**",]
+{pkg_dir} = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
@@ -737,7 +746,7 @@ MANIFEST_IN = """\
 include LICENSE
 include README.md
 include requirements.txt
-recursive-include {pkg_dir} *.py *.json
+recursive-include {pkg_dir} *.py *.json *.md *.yaml *.yml
 """
 
 GITIGNORE = """\
@@ -1884,21 +1893,81 @@ ROOT_MCP_CONFIG_JSON = """\
 }}
 """
 
-MAIN_AGENT_JSON = """\
-{
-  "task": "main-agent",
-  "input": "# main-agent\\n\\nYou are the primary orchestrator for this workspace. Your goal is to help the user manage their projects and coordinate specialized agents.\\n\\n### Core Principles\\n* Be concise and efficient.\\n* Use the knowledge graph to discover tools and experts.\\n* Verify your work before concluding.\\n\\nYour personality:\\n* **Emoji:** 🤖\\n* **Vibe:** Professional, efficient, helpful",
-  "type": "prompt",
-  "description": "The primary orchestrator agent for this workspace.",
-  "tools": [
-    "workspace-manager",
-    "agent-workflows"
-  ],
-  "topic": "General Expertise",
-  "tone": "technical and precise",
-  "style": "professional assistant",
-  "goal": "Coordinate specialized agents and manage the workspace."
-}
+def render_main_agent_json(display_name: str, description: str, source: str) -> str:
+    """Render the package's canonical main-agent prompt (CONCEPT:ORCH-1.80).
+
+    Emits the StructuredPrompt shape — body in ``instructions.core_directive``,
+    ``schema_version``/``source`` stamped, composed onto the agent-utilities base
+    via ``extends`` — so it passes ``validate_canonical`` / ``check_prompt_schema``.
+    """
+    import json as _json
+
+    blueprint = {
+        "schema_version": "1.0",
+        "task": "main-agent",
+        "type": "prompt",
+        "source": source,
+        "description": description,
+        "extends": "agent-utilities:base",
+        "compose": "append",
+        "metadata": {
+            "topic": "General Expertise",
+            "tone": "technical and precise",
+            "style": "professional assistant",
+        },
+        "identity": {"role": f"{display_name} Agent", "goal": description},
+        "instructions": {
+            "core_directive": (
+                f"# {display_name} Agent\n\n"
+                f"You are the {display_name} Agent. {description}\n\n"
+                "Use the `mcp-client` universal skill and the reference docs to "
+                "discover the exact tags and tools available for your "
+                "capabilities.\n\n"
+                "### Core Principles\n"
+                "* Be concise and efficient.\n"
+                "* Use the knowledge graph to discover tools and experts.\n"
+                "* Verify your work before concluding."
+            )
+        },
+        "tools": ["workspace-manager", "agent-workflows"],
+    }
+    return _json.dumps(blueprint, indent=2, ensure_ascii=False) + "\n"
+
+
+def render_starter_skill(display_name: str, slug: str, description: str) -> str:
+    """Render a minimal atomic starter SKILL.md for the package (CONCEPT:OS-5.52).
+
+    Every package ships at least one skill so it contributes to the XDG skills
+    library via its ``agent_utilities.skill_providers`` entry-point. Authored to
+    the skill-builder atomic standard (kebab name == dir, trigger-oriented
+    description, no multi-step DAG) so it passes ``check_atomicity``.
+    """
+    return f"""---
+name: {slug}
+description: >-
+  {description} Use when working with {display_name} via this package's MCP
+  server/agent — discover its tools, run an operation, or check its reference
+  docs. Replace this starter skill with real, trigger-oriented capabilities.
+license: MIT
+tags: [{slug}, starter, mcp]
+metadata:
+  author: Genius
+  version: '0.1.0'
+---
+
+# {display_name} Starter Skill
+
+Starter skill for the **{display_name}** package. Use the `mcp-client` universal
+skill to connect to this package's MCP server and invoke its tools.
+
+## Usage
+
+1. Discover available tools on the package's MCP server.
+2. Invoke the relevant tool with the required arguments.
+3. Verify the result before concluding.
+
+> Replace this with concrete, trigger-oriented capabilities for {display_name}
+> (one capability per skill — keep it atomic).
 """
 
 IDENTITY_MD = """\
@@ -2693,7 +2762,25 @@ def scaffold(
         True,
     )
     files[pkg / "mcp_config.json"] = (PKG_MCP_CONFIG_JSON, False)
-    files[pkg / "main_agent.json"] = (MAIN_AGENT_JSON, False)
+
+    # Canonical system prompt (CONCEPT:ORCH-1.80) + fleet contribution
+    # (CONCEPT:OS-5.52). The prompt lives in a `prompts/` data subpackage (the
+    # agent_utilities.prompt_providers entry-point target) and is mirrored at the
+    # package root where the runtime workspace loader reads it. Both render from
+    # ONE helper so they cannot drift.
+    main_agent_content = render_main_agent_json(display_name, description, package_name)
+    files[pkg / "main_agent.json"] = (main_agent_content, False)
+    files[pkg / "prompts" / "__init__.py"] = ("", False)
+    files[pkg / "prompts" / "main_agent.json"] = (main_agent_content, False)
+
+    # Starter skill (CONCEPT:OS-5.52): every package ships >=1 skill so it
+    # contributes to the XDG skills library via its skill_providers entry-point.
+    starter_slug = f"{short_name}-starter"
+    files[pkg / "skills" / "__init__.py"] = ("", False)
+    files[pkg / "skills" / starter_slug / "SKILL.md"] = (
+        render_starter_skill(display_name, starter_slug, description),
+        False,
+    )
 
     # API modular directory scaffolding
     files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)

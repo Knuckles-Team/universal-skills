@@ -333,6 +333,28 @@ Read the `agent-builder` skill and follow its instructions to:
 3. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
 4. Update `a2a.json` with the agent's real capabilities.
 
+#### Prompts & Skills (MANDATORY — CONCEPT:ORCH-1.80 / OS-5.52)
+
+Every package is a **fleet contributor**: it ships its own canonical system
+prompt and at least one skill, discovered by agent-utilities via entry-points.
+The scaffolder emits all of this; do not remove it:
+
+- **`{pkg_dir}/prompts/main_agent.json`** (+ `prompts/__init__.py`) — the
+  **canonical StructuredPrompt** (body in `instructions.core_directive`,
+  `schema_version`/`source`/`extends: agent-utilities:base`). Author/edit it with
+  the **`prompt-builder`** skill and validate with
+  `prompt-builder/scripts/validate_prompt.py --strict`. It mirrors the root
+  `main_agent.json` from one renderer. This is the package's contribution to the
+  KG prompt library via the `agent_utilities.prompt_providers` entry-point.
+- **`{pkg_dir}/skills/<short>-starter/SKILL.md`** (+ `skills/__init__.py`) — at
+  least one **atomic** skill (author real ones with the **`skill-builder`** skill;
+  passes `check_atomicity`). Contributed to the XDG skills library via the
+  `agent_utilities.skill_providers` entry-point.
+- **`pyproject.toml`** — declares both entry-point groups and the `prompts/**` +
+  `skills/**` package-data globs. The installed package is then auto-discovered by
+  `install-skills` (skills) and `ingest_prompts_to_graph` (prompts) — no per-package
+  wiring in the hub.
+
 ### Step 6: docs-generation [depends_on: api-client, mcp-server, agent-server]
 
 Generate the full 7-page docs site (`mkdocs.yml` nav order is canonical):
