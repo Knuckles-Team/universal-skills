@@ -48,6 +48,26 @@ application of it.
   new skills with `skill-builder` (atomic) and new workflows with
   `skill-workflow-builder` (which scaffolds both layers).
 
+## Modular contribution — skills & prompts ship in their owning package (CONCEPT:OS-5.52)
+
+universal-skills is no longer the only home for skills. **Any agent-package can ship
+its own skills and system prompts inside its own wheel** and have them discovered by
+the hub via two setuptools entry-point groups it declares in `pyproject.toml`:
+`agent_utilities.skill_providers` (→ `<module>.skills`) and
+`agent_utilities.prompt_providers` (→ `<module>.prompts`). The `skill-installer`'s
+`get_source_paths()` walks every `skill_providers` entry-point (honouring
+`--skills`/`--group`/`--layer`), and `agent-utilities` ingests every
+`prompt_providers` prompt into the KG prompt library. So:
+
+- **Package-owned skills live in the package**, not here — relocate clearly-owned
+  skills to their agent-package's `<module>/skills/` (they still install into the same
+  XDG skills dir, so workflow step references resolve by name at runtime). A workflow
+  that invokes a package-owned skill should list the owning package in its `requires:`
+  frontmatter.
+- **System prompts** use the canonical `StructuredPrompt` format — author them with the
+  **`prompt-builder`** skill (CONCEPT:ORCH-1.80). `agent-package-builder` scaffolds the
+  prompt + a starter skill + the entry-points automatically.
+
 ## Tech Stack & Architecture
 - **Language**: Python 3.10+
 - **Architecture**: A modular library of "Universal Skills". Each skill is a self-contained directory containing instructions (`SKILL.md`) and implementation scripts (`scripts/`).
