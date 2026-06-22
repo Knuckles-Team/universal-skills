@@ -6,13 +6,14 @@ description: >-
   user wants to rotate/unify/change login passwords across a fleet, set a shared recovery
   credential, onboard hosts to a common password, or rotate BMC passwords. Triggers:
   "rotate passwords", "unified password across hosts", "change my password everywhere",
-  "set a shared console password". Do NOT use for SSH key distribution (use ssh-bootstrap),
-  app/secret-store secrets (use secret-vault-manager), or single-host one-off passwd.
+  "set a shared console password", "rotate the OpenBao agent-apps-rw token". Do NOT use for
+  SSH key distribution (use ssh-bootstrap), arbitrary app/secret-store secrets (use
+  secret-vault-manager), or single-host one-off passwd.
 license: MIT
-tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation]
+tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation, openbao, vault, token]
 metadata:
   author: Genius
-  version: '0.1.21'
+  version: '0.1.22'
 ---
 
 # Rotate Credentials
@@ -72,3 +73,110 @@ fix it, and re-run targeting just that host with the same `--password`.
 - iDRAC IPMI user passwords cap at 16 bytes; use a 16-char password if `--idrac` and you
   need the full BMC password to match.
 - Never commit the creds file. Add `.env`/secrets to `.gitignore`.
+
+## OpenBao agent-apps-rw token rotation (6-month runbook)
+
+A separate credential from the OS passwords above, but the **same rotation discipline**:
+a single secret that, if it expires, takes the whole MCP fleet down. The homelab OpenBao
+(`http://openbao.arpa`, KV v2) stores per-service secrets at `apps/<service>`; every
+`*-mcp` service is injected with a shared **`agent-apps-rw`** token (policy `agent-apps-rw`:
+`crud apps/data/*`, `list apps/metadata/*`) so connectors can read/write their secrets.
+**CONCEPT:OS-ROT-OPENBAO** — rotate this token on a fixed 6-month cadence.
+
+### Why it expired, and why a periodic token is the fix
+The original token had a **finite TTL** (a fixed max lifetime). Service tokens default to
+expiring; nothing renewed it, so when the TTL elapsed the token was revoked automatically.
+Every `openbao-mcp` read and every connector write then failed (403/permission-denied),
+which is the recent outage. A **periodic token** removes the absolute max-TTL: it can be
+renewed indefinitely as long as it is renewed at least once within each `period` window
+(`768h` ≈ 32 days here). So the fleet token never hits a hard expiry — it only needs a
+heartbeat renewal inside the period (see cadence below), and you re-mint cleanly every
+6 months for hygiene.
+
+### Mint a fresh periodic token (break-glass)
+Use the **root token** as break-glass only — `BAO_ROOT_TOKEN` lives in
+`services/openbao/.env`. Mint a renewable periodic token scoped to the `agent-apps-rw`
+policy:
+
+```bash
+# Break-glass: read the root token from the openbao service env (do NOT echo/commit it)
+export BAO_ADDR=http://openbao.arpa
+export BAO_ROOT_TOKEN="$(grep -E '^BAO_ROOT_TOKEN=' services/openbao/.env | cut -d= -f2-)"
+
+# Mint a periodic, renewable token bound to the agent-apps-rw policy
+NEW_TOKEN="$(curl -sf -X POST \
+  -H "X-Vault-Token: ${BAO_ROOT_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{"policies":["agent-apps-rw"],"period":"768h","renewable":true,"display_name":"agent-apps-rw","no_default_policy":true}' \
+  "${BAO_ADDR}/v1/auth/token/create" | python3 -c 'import sys,json;print(json.load(sys.stdin)["auth"]["client_token"])')"
+```
+
+`period=768h` makes it periodic (no max-TTL); `renewable=true` lets the heartbeat extend it;
+`no_default_policy=true` keeps it least-privilege (only `agent-apps-rw`).
+
+### Stash + distribute the new token
+Persist a copy of the new token in OpenBao itself so the next operator can find it
+without break-glass, then push it to every consumer and redeploy:
+
+```bash
+# 1. Stash the current token at apps/_meta-agent-apps-rw (KV v2 → /data/ path)
+curl -sf -X POST -H "X-Vault-Token: ${BAO_ROOT_TOKEN}" \
+  -d "{\"data\":{\"token\":\"${NEW_TOKEN}\",\"period\":\"768h\",\"minted\":\"$(date -u +%FT%TZ)\"}}" \
+  "${BAO_ADDR}/v1/secret/data/apps/_meta-agent-apps-rw"
+```
+
+- **Distribute to `apps/*`:** the token IS the read/write credential for the `apps/<service>`
+  tree — nothing per-secret to rewrite; the new token simply replaces the old one wherever
+  it is injected.
+- **Distribute to each `*-mcp` service env:** update the injected token value (the
+  `OPENBAO_TOKEN` / `BAO_TOKEN` / `VAULT_TOKEN` env var, whichever each compose file uses)
+  for every `*-mcp` service so connectors and `openbao-mcp` pick up the new token.
+- **Redeploy:** restart/redeploy the affected services so the new env takes effect
+  (`docker compose up -d` / swarm `service update --force` on the manager node). Confirm
+  `openbao-mcp` comes back healthy first, then the connectors.
+
+### Renewal cadence (the heartbeat that prevents another expiry)
+A periodic token must be renewed at least once per `period` (768h ≈ 32 days). Pick one:
+
+```bash
+# Self-renew using the token itself (run well inside the 768h window, e.g. weekly)
+curl -sf -X POST -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/auth/token/renew-self"
+```
+
+- **Heartbeat:** schedule `renew-self` weekly (cron / scheduled rotation job) so the token
+  is always far from its period boundary — a single missed renewal then has weeks of slack.
+- **Full re-mint:** re-run the *Mint* + *Distribute* steps every **6 months** for hygiene
+  (fresh secret material), even though the periodic token would survive on heartbeats alone.
+- Set a calendar reminder for both: weekly renew check, 6-month re-mint.
+
+### Verify read/write on `apps/*`
+Prove the new token actually has `agent-apps-rw` before declaring the rotation done:
+
+```bash
+# Token is valid + periodic (period shown, no hard expiry surprise)
+curl -sf -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/auth/token/lookup-self" \
+  | python3 -c 'import sys,json;d=json.load(sys.stdin)["data"];print("policies",d["policies"],"period",d.get("period"),"renewable",d["renewable"])'
+
+# WRITE then READ a canary under apps/* (then delete it)
+curl -sf -X POST -H "X-Vault-Token: ${NEW_TOKEN}" \
+  -d '{"data":{"canary":"ok"}}' "${BAO_ADDR}/v1/secret/data/apps/_rotation-canary"
+curl -sf -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/secret/data/apps/_rotation-canary" \
+  | python3 -c 'import sys,json;print("read-back:",json.load(sys.stdin)["data"]["data"]["canary"])'
+curl -sf -X DELETE -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/secret/metadata/apps/_rotation-canary"
+```
+
+Expect `policies ['agent-apps-rw']`, a non-empty `period`, `renewable True`, and
+`read-back: ok`. Finally, hit one live `*-mcp` service (e.g. `openbao-mcp`) end-to-end to
+confirm connectors read their real secrets. **Revoke the OLD token** once all services
+are confirmed on the new one (`POST /v1/auth/token/revoke` with the old accessor).
+
+### Operator checklist
+- [ ] Read `BAO_ROOT_TOKEN` from `services/openbao/.env` (break-glass; never echo/commit).
+- [ ] Mint periodic token: `POST /v1/auth/token/create` `policies=[agent-apps-rw] period=768h renewable=true`.
+- [ ] Stash new token at `apps/_meta-agent-apps-rw` (KV v2).
+- [ ] Replace the injected token in **every `*-mcp` service env**.
+- [ ] Redeploy affected services; confirm `openbao-mcp` healthy, then connectors.
+- [ ] Schedule weekly `renew-self` heartbeat (within the 768h period).
+- [ ] Verify: `lookup-self` shows `agent-apps-rw`/period/renewable, and the `apps/*` canary write+read+delete passes.
+- [ ] Revoke the OLD token.
+- [ ] Set the 6-month re-mint calendar reminder.
