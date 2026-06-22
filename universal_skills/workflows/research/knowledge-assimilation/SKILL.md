@@ -19,7 +19,7 @@ metadata:
   concepts:
     - CONCEPT:KG-2.7
     - CONCEPT:ECO-4.6
-requires: ['graph-os']
+requires: ['graph-os', 'agent-utilities']
 ---
 
 # Universal Knowledge Assimilation Engine

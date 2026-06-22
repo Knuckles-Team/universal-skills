@@ -11,6 +11,7 @@ domain: finance
 agent: quant_analyst
 tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensive]
 concept: CONCEPT:EE-042
+requires: ['agent-utilities']
 ---
 
 # Market Microstructure Surveillance

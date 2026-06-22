@@ -112,7 +112,13 @@ def get_tool_paths() -> dict:
             home / "Library" / "Application Support" / "agent-utilities" / "skills"
         )
     else:
-        agent_utils_path = home / ".config" / "agent-utilities" / "skills"
+        # XDG *data* dir (platformdirs user_data_dir), matching agent-utilities'
+        # ``core.paths.skills_dir()`` which the agent factory auto-loads — NOT the
+        # config dir. (macOS/Windows above already use their data dir.)
+        xdg_data = Path(
+            os.environ.get("XDG_DATA_HOME") or (home / ".local" / "share")
+        ).expanduser()
+        agent_utils_path = xdg_data / "agent-utilities" / "skills"
     paths["agent-utilities"] = agent_utils_path
     paths["agent-terminal-ui"] = agent_utils_path
 
