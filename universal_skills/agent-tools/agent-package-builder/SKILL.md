@@ -513,12 +513,24 @@ once per session before the first creation call.
    settings (Actions enabled) — the github-project-provisioner skill covers
    defaults. Note the residual first-deploy race: even with Pages pre-enabled,
    the very first pages deploy may need a rerun-failed-jobs.
+   - **GitHub Actions secrets (REQUIRED — the container pipeline fails without
+     them).** Set the **per-repo** secret **`DOCKER_REPOSITORY`** =
+     `{DOCKER_HUB_USER}/{package-name}` — the DockerHub slug the build job pushes
+     to (e.g. `knucklessg1/gitlab-api`) — via the **github-agent** secret tool
+     (`actions`/`create_or_update_repo_secret`; it GETs the repo Actions public
+     key and libsodium-seals the value, then PUTs it). `DOCKER_REPOSITORY` is
+     per-repo because it differs per package; the shared `DOCKER_USERNAME` /
+     `DOCKER_PASSWORD` / `DOCKER_REGISTRY` / `PYPI_API_TOKEN` are **Knuckles-Team
+     org-level** secrets (inherited automatically — do not re-set per repo).
+     Without `DOCKER_REPOSITORY` the image build+push job has no target and fails.
 2. **DockerHub image repository** — via the **dockerhub-api** MCP server tools
    (`hub_repos` action `create`; credentials use the OFFICIAL hub-tool env
    names: `DOCKER_HUB_USER` / `DOCKER_HUB_TOKEN`). Image path =
    `{DOCKER_HUB_USER}/{package-name}`, matching the `image:` references in
-   `docker/agent.compose.yml` + `docker/mcp.compose.yml` and the container
-   pipeline's push target.
+   `docker/agent.compose.yml` + `docker/mcp.compose.yml`, the `DOCKER_REPOSITORY`
+   secret above, and the container pipeline's push target. (Creating the repo is
+   optional — the first CI push auto-creates it — but create it explicitly so the
+   description/visibility are set.)
 3. **Wire-up** — `git remote add origin <github-url>`; verify the
    `docker/*.compose.yml` image paths and workflow registry references match
    the created DockerHub repo; register the project in the workspace.yml set
