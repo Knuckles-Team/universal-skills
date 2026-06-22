@@ -72,3 +72,13 @@ fix it, and re-run targeting just that host with the same `--password`.
 - iDRAC IPMI user passwords cap at 16 bytes; use a 16-char password if `--idrac` and you
   need the full BMC password to match.
 - Never commit the creds file. Add `.env`/secrets to `.gitignore`.
+
+## See also — OIDC / service-account secret rotation
+This skill rotates **host/OS (and iDRAC) passwords**. Rotating an **OIDC client secret**
+(e.g. the `mcp-multiplexer` Keycloak client used for fleet service-account auth) is a
+different runbook: the new secret — with the correct **`homelab`** realm in `OIDC_TOKEN_URL`,
+not `master` — must fan to **every** consumer in one pass or you get a confusing partial
+outage (a fleet-wide child 401 while the deployed mux looks fine): the swarm
+`mcp-multiplexer` + `graph-os` (server+host) service envs, OpenBao `apps/mcp-multiplexer`,
+and **every local `~/.claude.json`**. Full procedure + diagnosis: the agent-os-genesis
+`references/homelab-ops-learnings.md` playbook ("Multiplexer → child service-account auth").
