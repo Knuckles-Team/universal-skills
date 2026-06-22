@@ -81,7 +81,7 @@ a single secret that, if it expires, takes the whole MCP fleet down. The homelab
 (`http://openbao.arpa`, KV v2) stores per-service secrets at `apps/<service>`; every
 `*-mcp` service is injected with a shared **`agent-apps-rw`** token (policy `agent-apps-rw`:
 `crud apps/data/*`, `list apps/metadata/*`) so connectors can read/write their secrets.
-**CONCEPT:OS-ROT-OPENBAO** — rotate this token on a fixed 6-month cadence.
+Rotate this token on a fixed 6-month cadence.
 
 ### Why it expired, and why a periodic token is the fix
 The original token had a **finite TTL** (a fixed max lifetime). Service tokens default to
@@ -119,10 +119,12 @@ Persist a copy of the new token in OpenBao itself so the next operator can find 
 without break-glass, then push it to every consumer and redeploy:
 
 ```bash
-# 1. Stash the current token at apps/_meta-agent-apps-rw (KV v2 → /data/ path)
+# 1. Stash the new token at apps/_meta-agent-apps-rw on the `apps` KV v2 mount.
+#    The policy grants `apps/data/*` and `apps/metadata/*` — the mount is `apps`,
+#    NOT the default `secret`, so the API path is /v1/apps/data/<path>.
 curl -sf -X POST -H "X-Vault-Token: ${BAO_ROOT_TOKEN}" \
   -d "{\"data\":{\"token\":\"${NEW_TOKEN}\",\"period\":\"768h\",\"minted\":\"$(date -u +%FT%TZ)\"}}" \
-  "${BAO_ADDR}/v1/secret/data/apps/_meta-agent-apps-rw"
+  "${BAO_ADDR}/v1/apps/data/_meta-agent-apps-rw"
 ```
 
 - **Distribute to `apps/*`:** the token IS the read/write credential for the `apps/<service>`
@@ -157,18 +159,29 @@ Prove the new token actually has `agent-apps-rw` before declaring the rotation d
 curl -sf -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/auth/token/lookup-self" \
   | python3 -c 'import sys,json;d=json.load(sys.stdin)["data"];print("policies",d["policies"],"period",d.get("period"),"renewable",d["renewable"])'
 
-# WRITE then READ a canary under apps/* (then delete it)
+# WRITE then READ a canary on the `apps` KV v2 mount (then delete it). Paths are
+# apps/data/* (read/write) and apps/metadata/* (delete) — the mount granted by the
+# `agent-apps-rw` policy, not the default `secret` mount.
 curl -sf -X POST -H "X-Vault-Token: ${NEW_TOKEN}" \
-  -d '{"data":{"canary":"ok"}}' "${BAO_ADDR}/v1/secret/data/apps/_rotation-canary"
-curl -sf -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/secret/data/apps/_rotation-canary" \
+  -d '{"data":{"canary":"ok"}}' "${BAO_ADDR}/v1/apps/data/_rotation-canary"
+curl -sf -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/apps/data/_rotation-canary" \
   | python3 -c 'import sys,json;print("read-back:",json.load(sys.stdin)["data"]["data"]["canary"])'
-curl -sf -X DELETE -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/secret/metadata/apps/_rotation-canary"
+curl -sf -X DELETE -H "X-Vault-Token: ${NEW_TOKEN}" "${BAO_ADDR}/v1/apps/metadata/_rotation-canary"
 ```
 
 Expect `policies ['agent-apps-rw']`, a non-empty `period`, `renewable True`, and
 `read-back: ok`. Finally, hit one live `*-mcp` service (e.g. `openbao-mcp`) end-to-end to
 confirm connectors read their real secrets. **Revoke the OLD token** once all services
-are confirmed on the new one (`POST /v1/auth/token/revoke` with the old accessor).
+are confirmed on the new one — revoke it **by its accessor** (you don't need the old
+token's plaintext) via the root token:
+
+```bash
+# Revoke the OLD token by accessor. Find the accessor with `auth/token/lookup`
+# (accessors are also listed under `auth/token/accessors`), then revoke it.
+curl -sf -X POST -H "X-Vault-Token: ${BAO_ROOT_TOKEN}" \
+  -d "{\"accessor\":\"${OLD_TOKEN_ACCESSOR}\"}" \
+  "${BAO_ADDR}/v1/auth/token/revoke-accessor"
+```
 
 ### Operator checklist
 - [ ] Read `BAO_ROOT_TOKEN` from `services/openbao/.env` (break-glass; never echo/commit).
@@ -178,5 +191,5 @@ are confirmed on the new one (`POST /v1/auth/token/revoke` with the old accessor
 - [ ] Redeploy affected services; confirm `openbao-mcp` healthy, then connectors.
 - [ ] Schedule weekly `renew-self` heartbeat (within the 768h period).
 - [ ] Verify: `lookup-self` shows `agent-apps-rw`/period/renewable, and the `apps/*` canary write+read+delete passes.
-- [ ] Revoke the OLD token.
+- [ ] Revoke the OLD token **by accessor** (`POST /v1/auth/token/revoke-accessor`).
 - [ ] Set the 6-month re-mint calendar reminder.
