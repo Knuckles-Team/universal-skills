@@ -540,6 +540,16 @@ once per session before the first creation call.
 
 Push only when the user asks (releases go through the phased auto_push flow).
 
+> [!NOTE]
+> **First-run `startup_failure` is a GitHub transient, not a real failure.** The very first
+> pipeline run on a brand-new repo frequently reports `conclusion: startup_failure` (empty
+> `name`, `path: "BuildFailed"`) even though the workflow is valid and identical to a working
+> repo, Actions are enabled (`allowed_actions: all`), and the reusable `Knuckles-Team/pipelines`
+> workflows are public/accessible. **Fix: re-trigger with an empty commit**
+> (`git commit --allow-empty -m "ci: re-trigger" && git push`) — the new run goes `in_progress`
+> and builds normally. Verify via the github-agent `actions` tool (`list_runs`). (Same class as
+> the first Pages-deploy race above.)
+
 > [!IMPORTANT]
 > A new package is not complete until it passes the drift check with 0 missing items. This is a hard gate.
 
