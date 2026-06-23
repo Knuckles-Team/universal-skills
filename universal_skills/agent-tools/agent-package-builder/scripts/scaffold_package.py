@@ -101,7 +101,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-{pkg_dir} = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
+{pkg_dir} = [ "mcp_config.json", "prompts/**", "skills/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
@@ -136,9 +136,13 @@ replace = "version": "{{new_version}}"
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
 
-[bumpversion:file:docker/Dockerfile]
-search = {package_name}[all]>={{current_version}}
-replace = {package_name}[all]>={{new_version}}
+[bumpversion:file(mcp-img):docker/Dockerfile]
+search = {package_name}[mcp]>={{current_version}}
+replace = {package_name}[mcp]>={{new_version}}
+
+[bumpversion:file(agent-img):docker/Dockerfile]
+search = {package_name}[agent]>={{current_version}}
+replace = {package_name}[agent]>={{new_version}}
 
 [bumpversion:file:{pkg_dir}/agent_server.py]
 search = __version__ = "{{current_version}}"
@@ -314,31 +318,50 @@ repos:
 
 DOCKERFILE = """\
 # syntax=docker/dockerfile:1
-# Slim multi-stage build: install in a builder, ship only /usr/local. Cuts the
-# pushed image ~43% (no default-jre/dev-tools/source) so layer pushes finish well
-# inside the registry's blob-upload window even under concurrency.
-FROM python:3.11-slim AS builder
+# Two right-sized images from ONE Dockerfile, selected by build --target. Both are
+# slim multi-stage (build in a builder, ship only /usr/local — no dev-tools/source):
+#
+#   --target agent  (DEFAULT)  installs {package_name}[agent] = the FULL runtime
+#                              (agent-utilities[agent]: engine + pydantic-ai + dspy +
+#                              skills). Because [agent] also includes [mcp], this image
+#                              can run EITHER the agent OR the mcp server. Push as the
+#                              default tags: latest / main / <version>.
+#
+#   --target mcp               installs {package_name}[mcp]   = MCP-server tooling ONLY
+#                              (agent-utilities[mcp]: fastmcp/fastapi — NO engine,
+#                              pydantic-ai, dspy, llama-index, tree-sitter). The slim
+#                              variant. Push as the :mcp / :mcp-<version> tag.
+#
+#   docker build --target agent -t {package_name}:latest .
+#   docker build --target mcp   -t {package_name}:mcp    .
+# See agent-packages/CLAUDE.md "Connector recipe" for the tag contract.
+FROM python:3.11-slim AS builder-base
 COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
     UV_SYSTEM_PYTHON=1 \\
     UV_HTTP_TIMEOUT=3600
-# Some [all] deps (e.g. hnswlib, an agent-utilities transitive) ship no manylinux
-# wheel and build from sdist, needing a C++ toolchain. Install it in the builder
-# only — the final stage copies just /usr/local, so no compiler ships.
+# A few transitive deps ship no manylinux wheel and build from sdist, needing a C++
+# toolchain. Install it in the builder only — final stages copy just /usr/local.
 RUN apt-get update \\
     && apt-get install -y --no-install-recommends build-essential \\
     && rm -rf /var/lib/apt/lists/*
+
+# Slim MCP-only dependency closure.
+FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[all]>=0.1.0
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[mcp]>=0.1.0
 
-FROM python:3.11-slim
+# Full agent runtime dependency closure.
+FROM builder-base AS builder-agent
+RUN --mount=type=cache,target=/root/.cache/uv \\
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[agent]>=0.1.0
 
+FROM python:3.11-slim AS runtime-base
 ARG HOST=0.0.0.0
 ARG PORT=8000
 ARG TRANSPORT="stdio"
 ARG AUTH_TYPE="none"
-
 ENV HOST=${{HOST}} \\
     PORT=${{PORT}} \\
     TRANSPORT=${{TRANSPORT}} \\
@@ -350,10 +373,15 @@ ENV HOST=${{HOST}} \\
     UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy
 
-# Install base dependencies, uv, and starship shell prompt
-COPY --from=builder /usr/local /usr/local
-
+# Slim image: MCP server only.
+FROM runtime-base AS mcp
+COPY --from=builder-mcp /usr/local /usr/local
 CMD ["{mcp_cmd}"]
+
+# Full image (DEFAULT target): agent runtime; can also run the mcp server.
+FROM runtime-base AS agent
+COPY --from=builder-agent /usr/local /usr/local
+CMD ["{agent_cmd}"]
 """
 
 DEBUG_DOCKERFILE = """\
@@ -390,8 +418,9 @@ RUN apt-get update \\
 WORKDIR /app
 COPY . /app
 
-# Compile and install package in-place
-RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[all]
+# Compile and install package in-place. Dev image carries the FULL agent runtime
+# (.[agent], which includes .[mcp]) so it can run either server while debugging.
+RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[agent]
 
 COPY docker/starship.toml /root/.config/starship.toml
 
@@ -403,7 +432,8 @@ version: '3.8'
 
 services:
   {package_name}-mcp:
-    image: knucklessg1/{package_name}:latest
+    # Slim MCP-only image (built `--target mcp`, pushed as the :mcp tag).
+    image: knucklessg1/{package_name}:mcp
     container_name: {package_name}-mcp
     hostname: {package_name}-mcp
     restart: always
@@ -429,6 +459,7 @@ services:
         max-file: "3"
 
   {package_name}-agent:
+    # Full agent runtime image (default target, pushed as :latest).
     image: knucklessg1/{package_name}:latest
     container_name: {package_name}-agent
     hostname: {package_name}-agent
@@ -467,7 +498,8 @@ version: '3.8'
 
 services:
   {package_name}-mcp:
-    image: knucklessg1/{package_name}:latest
+    # Slim MCP-only image (built `--target mcp`, pushed as the :mcp tag).
+    image: knucklessg1/{package_name}:mcp
     container_name: {package_name}-mcp
     hostname: {package_name}-mcp
     restart: always
@@ -1970,24 +2002,6 @@ skill to connect to this package's MCP server and invoke its tools.
 > (one capability per skill — keep it atomic).
 """
 
-IDENTITY_MD = """\
-# IDENTITY.md - {display_name} Agent Identity
-
-## [default]
- * **Name:** {display_name} Agent
- * **Role:** {description}
- * **Emoji:** 🤖
-
- ### System Prompt
- You are the {display_name} Agent.
- Use the `mcp-client` universal skill and check the reference documentation for
- `{package_name}.md` to discover the exact tags and tools available for your capabilities.
-
- ### Capabilities
- - **MCP Operations**: Leverage the `mcp-client` skill to interact with the target MCP server.
- - **Custom Agent**: Handle custom tasks or general tasks.
-"""
-
 GQL_PY = """\
 #!/usr/bin/python
 \"\"\"GraphQL API Wrapper for {display_name}.
@@ -2797,7 +2811,6 @@ def scaffold(
     if "agent" in types:
         files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
         files[pkg / "__main__.py"] = (MAIN_PY, True)
-        files[pkg / "agent_data" / "IDENTITY.md"] = (IDENTITY_MD, True)
 
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
