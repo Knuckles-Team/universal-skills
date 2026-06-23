@@ -101,7 +101,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-{pkg_dir} = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
+{pkg_dir} = [ "mcp_config.json", "prompts/**", "skills/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
@@ -2002,24 +2002,6 @@ skill to connect to this package's MCP server and invoke its tools.
 > (one capability per skill — keep it atomic).
 """
 
-IDENTITY_MD = """\
-# IDENTITY.md - {display_name} Agent Identity
-
-## [default]
- * **Name:** {display_name} Agent
- * **Role:** {description}
- * **Emoji:** 🤖
-
- ### System Prompt
- You are the {display_name} Agent.
- Use the `mcp-client` universal skill and check the reference documentation for
- `{package_name}.md` to discover the exact tags and tools available for your capabilities.
-
- ### Capabilities
- - **MCP Operations**: Leverage the `mcp-client` skill to interact with the target MCP server.
- - **Custom Agent**: Handle custom tasks or general tasks.
-"""
-
 GQL_PY = """\
 #!/usr/bin/python
 \"\"\"GraphQL API Wrapper for {display_name}.
@@ -2829,7 +2811,6 @@ def scaffold(
     if "agent" in types:
         files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
         files[pkg / "__main__.py"] = (MAIN_PY, True)
-        files[pkg / "agent_data" / "IDENTITY.md"] = (IDENTITY_MD, True)
 
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
