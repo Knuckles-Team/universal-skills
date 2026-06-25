@@ -976,9 +976,14 @@ domains can be toggled on or off with the listed environment variable. The table
 ### Install with `uvx` (no install — run on demand)
 
 ```bash
-uvx --from {package_name} {mcp_cmd}      # MCP server
-uvx --from {package_name} {agent_cmd}    # A2A agent server
+uvx --from "{package_name}[mcp]" {mcp_cmd}      # MCP server (slim deps)
+uvx --from "{package_name}[agent]" {agent_cmd}  # A2A agent server (full runtime)
 ```
+
+> The `[mcp]` extra installs only the FastMCP/FastAPI MCP-server tooling
+> (`agent-utilities[mcp]`) — it excludes the heavy agent runtime (the
+> epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`), so it is far
+> smaller. Use `[agent]` only when you run the integrated agent.
 
 ### Install with `pip`
 
@@ -1051,7 +1056,7 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
   "mcpServers": {{
     "{mcp_cmd}": {{
       "command": "uvx",
-      "args": ["--from", "{package_name}", "{mcp_cmd}"],
+      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}"],
       "env": {{
         "{service_url_env}": "https://service.example.com",
         "{auth_env}": "your_token"
@@ -1068,7 +1073,7 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
   "mcpServers": {{
     "{mcp_cmd}": {{
       "command": "uvx",
-      "args": ["--from", "{package_name}", "{mcp_cmd}", "--transport", "streamable-http", "--port", "8000"],
+      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}", "--transport", "streamable-http", "--port", "8000"],
       "env": {{
         "TRANSPORT": "streamable-http",
         "HOST": "0.0.0.0",
@@ -1096,11 +1101,29 @@ copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable
   `http://{mcp_cmd}.arpa/mcp` using the `"url"` key.
 <!-- END GENERATED: additional-deployment-options -->
 
-## Install Python Package
+## Container images (`:mcp` vs `:agent`)
+
+One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+
+| Image tag | Build target | Contents | Entrypoint |
+|-----------|--------------|----------|------------|
+| `knucklessg1/{package_name}:mcp` | `--target mcp` | `{package_name}[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index` | `{mcp_cmd}` |
+| `knucklessg1/{package_name}:latest` | `--target agent` (default) | `{package_name}[agent]` — **full** agent runtime + epistemic-graph engine | `{agent_cmd}` |
 
 ```bash
-python -m pip install {package_name}
+docker build --target mcp   -t knucklessg1/{package_name}:mcp    docker/   # slim MCP server
+docker build --target agent -t knucklessg1/{package_name}:latest docker/   # full agent
 ```
+
+## Knowledge-graph database (`epistemic-graph`)
+
+The full agent (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in via
+`agent-utilities[agent]`). For production — or to share one knowledge graph across multiple
+agents — run **epistemic-graph as its own database container** and point the agent at it.
+Deployment recipes (single-node + Raft HA), connection config, and the full database
+architecture (with diagrams) are in the
+[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+The slim `[mcp]` server does **not** require the database.
 
 ## Documentation
 
@@ -2338,7 +2361,7 @@ matching `mcp_config.json` below.
   "mcpServers": {{
     "{mcp_cmd}": {{
       "command": "uvx",
-      "args": ["--from", "{package_name}", "{mcp_cmd}"],
+      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}"],
       "env": {{
         "{service_url_env}": "https://service.example.com",
         "{auth_env}": "your_token"
@@ -2351,7 +2374,7 @@ matching `mcp_config.json` below.
 ### 2. Streamable-HTTP (local process)
 
 ```bash
-uvx --from {package_name} {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
+uvx --from "{package_name}[mcp]" {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
 curl -s http://localhost:8000/health        # {{"status":"OK"}}
 ```
 

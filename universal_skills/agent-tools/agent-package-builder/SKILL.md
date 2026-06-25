@@ -139,8 +139,6 @@ Run `scripts/scaffold_package.py` (or generate the same set manually). The stand
     ├── {short}_gql.py        # GraphQL wrapper (graphql type only)
     ├── {short}_input_models.py
     ├── {short}_response_models.py
-    ├── agent_data/
-    │   └── IDENTITY.md       # optional — golden repo omits it; keep glob in package-data
     ├── api/
     │   ├── __init__.py
     │   ├── api_client_base.py
