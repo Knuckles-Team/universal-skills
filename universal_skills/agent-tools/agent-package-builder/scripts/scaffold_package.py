@@ -274,6 +274,12 @@ repos:
     language: system
     files: ^(README\\.md|\\.env\\.example)$
     pass_filenames: false
+  - id: env-var-drift
+    name: check env-var/config drift
+    entry: bash -c 'if [ -f uv.lock ]; then uv run python -m agent_utilities.mcp.check_env_var_drift --check; else python -m agent_utilities.mcp.check_env_var_drift --check; fi'
+    language: system
+    pass_filenames: false
+    files: ^(\\.env\\.example|mcp_config.*\\.json|.*/mcp_config.*\\.json|docker/.*compose.*\\.ya?ml|.*/auth\\.py|.*/mcp_server\\.py)$
   - id: check-bumpversion
     name: validate bumpversion config
     entry: |-
@@ -1948,6 +1954,7 @@ ROOT_MCP_CONFIG_JSON = """\
         "{service_url_env}": "<YOUR_{service_url_env}>",
         "{auth_env}": "<YOUR_{auth_env}>",
         "{ssl_verify_env}": "<YOUR_{ssl_verify_env}>",
+        "MCP_TOOL_MODE": "condensed",
         "SYSTEMTOOL": "True"
       }}
     }}

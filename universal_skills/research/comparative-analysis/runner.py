@@ -138,8 +138,7 @@ def run_report(results_dir: Path, report: Path) -> int:
     result_files = sorted(glob.glob(str(results_dir / "*_ca00*.json")))
     result_files += sorted(glob.glob(str(results_dir / "*innov*.json")))
     # De-dup while preserving order.
-    seen: set[str] = set()
-    ordered = [f for f in result_files if not (f in seen or seen.add(f))]
+    ordered = list(dict.fromkeys(result_files))
     if not ordered:
         print("No result JSON produced; skipping report.", file=sys.stderr)
         return 1
