@@ -1,0 +1,13 @@
+name: Host Doctor Swarm
+task_pattern: Diagnose host OS, resource utilization, and process/zombie/swap health concurrently, then remediate under gate
+specialist_ids:
+  - systems-manager
+  - devops-engineer
+capability_overrides:
+  systems-manager:
+    - zombie_detection
+    - runaway_process_detection
+    - swap_pressure_analysis
+  devops-engineer:
+    - gated_remediation
+    - checkpointing
