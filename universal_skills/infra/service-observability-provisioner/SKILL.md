@@ -51,7 +51,29 @@ Set up metrics discovery:
   ```
 - Hot-reload the Prometheus configuration via REST endpoint POST `/sys/reload` or container restart.
 
+### Step 2b: Register Service Dashboard
+Surface the new service's metrics in Grafana (datasources + a dashboard provider are already
+provisioned-as-code under `services/lgtm/grafana/provisioning/`; the Prometheus datasource
+`uid` is `prometheus`):
+- **MCP / fleet services** need **no new dashboard** — the templated **MCP Per-Service**
+  dashboard (`$stack` variable, `label_values(up{job="mcp-fleet"}, stack)`) and the
+  **MCP Fleet Overview** pick it up automatically once it scrapes. Just confirm the new
+  service appears in the `$stack` picker and the **Container Resources** dashboard (it groups
+  by `container_label_com_docker_swarm_service_name`, kept by the cAdvisor label whitelist).
+- **Bespoke platform services** (own `/metrics`, e.g. keycloak/immich/langfuse): add a panel
+  set by **extending the generator** `agent-utilities/scripts/gen_grafana_dashboards.py` (a new
+  `*()` builder + an entry in `main()`), then re-run it — dashboards are generated as code, so a
+  hand-edited JSON in `dashboards/json/` is clobbered on the next run. Reference panels as:
+  ```json
+  { "datasource": { "type": "prometheus", "uid": "prometheus" },
+    "targets": [ { "expr": "<your_service_metric>" } ] }
+  ```
+- The dashboard provider auto-loads new JSON from `dashboards/json/` within
+  `updateIntervalSeconds` (30s) — no Grafana restart needed.
+
 ### Step 3: Verify Telemetry Flows
 Confirm log shipping and metric collection:
 - Verify logs are queryable in Grafana Loki.
 - Confirm metrics show as `UP` in Prometheus target status.
+- Confirm the service's panels render in Grafana (its `$stack` row in MCP Per-Service, or its
+  bespoke dashboard) with live data.
