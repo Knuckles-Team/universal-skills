@@ -177,6 +177,23 @@ Scaffolded packages follow two fleet standards out of the box — do not regress
   first** (richest); else crawl the API docs site, then a PDF spec — all normalized to
   the manifest. See the agent-utilities *MCP Tool Modes* guide.
 
+#### Env-var canon — code is the single source of truth (CONCEPT:OS-5.72)
+
+The **code** decides which env vars exist; everything else must mirror it, never lead it.
+The authoritative set is what the code reads — `setting("X")` calls plus the derived
+`<TAG>TOOL` toggles from each `register_<tag>_tools` and the inherited agent-utilities
+surface. `.env.example`, **every** `mcp_config*.json` `env` block, `docker/*compose*.yml`,
+and the README env-var table must contain exactly that set — no more, no less.
+
+- **MCP_TOOL_MODE** (`condensed` default / `verbose` / `both`) belongs in every
+  `mcp_config*.json` `env` block (the scaffold bakes `"MCP_TOOL_MODE": "condensed"` in).
+- The guard flags three drift types: **DEAD** (declared but never read), **UNDOCUMENTED**
+  (read but missing from `.env.example`), **MISSING_TOOL_MODE** (an mcp_config `env` block
+  with no `MCP_TOOL_MODE`).
+- Run `python -m agent_utilities.mcp.check_env_var_drift --check` and drive it to **0**
+  before finishing. The scaffolded `.pre-commit-config.yaml` ships this as the
+  `env-var-drift` hook, so a drifted package reds its own pre-commit gate.
+
 #### Critical packaging requirements (these prevent real CI failures)
 
 These were the exact causes of build/publish failures in the jena/kafka/camunda/archi
