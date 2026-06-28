@@ -27,6 +27,7 @@
 | `SERVICETOOL` | `True` | disable_service, enable_service, get_service_status, list_services, restart_service, start_service, stop_service |
 | `SHELLTOOL` | `True` | add_shell_alias |
 | `SSH_MANAGEMENTTOOL` | `True` | add_authorized_key, generate_ssh_key, list_ssh_keys |
+| `STORAGE_HEALTHTOOL` | `True` | sm_storage_health (report\|smart\|faults\|raid: physical SMART incl. RAID megaraid passthrough, BMC/IPMI drive-slot faults, PERC PD state, correlated; local or remote host; OOB BMC creds from OpenBao apps/idrac) |
 | `SYSTEMTOOL` | `True` | clean, clean_package_cache, clean_temp_files, get_env_var, get_hardware_statistics, get_os_statistics, get_package_info, get_uptime, install_applications, install_fonts, install_python_modules, list_env_vars, list_installed_packages, list_upgradable_packages, optimize, search_package, system_health_check, update |
 | `SYSTEM_MANAGEMENTTOOL` | `True` | add_repository, disable_windows_features, enable_windows_features, install_local_package, list_windows_features, run_command |
 | `TEXT_EDITORTOOL` | `True` | text_editor |

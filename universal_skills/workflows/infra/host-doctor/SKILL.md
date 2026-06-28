@@ -2,14 +2,17 @@
 name: host-doctor
 description: >-
   Onboard-diagnose a host (or a whole fleet) and remediate under gate. Validates the
-  OS/kernel/arch, samples CPU/mem/disk/load utilization, and inspects processes for
-  zombies, runaway/orphaned hogs, and swap exhaustion — then, only after presenting the
-  findings and getting explicit per-host confirmation, remediates by delegating to the
+  OS/kernel/arch, samples CPU/mem/disk/load utilization, inspects processes for
+  zombies, runaway/orphaned hogs, and swap exhaustion, and checks PHYSICAL storage +
+  BMC health (SMART incl. RAID megaraid passthrough, drive-slot/IPMI faults, predicted
+  failures) that the filesystem checks miss — then, only after presenting the findings
+  and getting explicit per-host confirmation, remediates by delegating to the
   systems_issue_troubleshooter workflow (kill rogue PIDs, reclaim swap/temp), and
-  re-verifies. Use when a machine is hot, sluggish, or newly onboarded and you want a
-  single "how is this host doing, and make it run cool" pass. Composes hardware-profile-sweep,
-  host-resource-sampler, and host-process-inspector over tunnel-manager SSH. Diagnosis is
-  read-only; every change is gated on user approval.
+  re-verifies. Use when a machine is hot, sluggish, throwing a drive fault, or newly
+  onboarded and you want a single "how is this host doing, and make it run cool" pass.
+  Composes hardware-profile-sweep, host-resource-sampler, and host-process-inspector
+  over tunnel-manager SSH, plus sm_storage_health (systems-manager) and the fan-manager
+  IPMI/BMC tools. Diagnosis is read-only; every change is gated on user approval.
 domain: infra
 agent: infrastructure_operator
 team_config:
@@ -22,9 +25,9 @@ team_config:
     - remediation-agent
   tool_assignments:
     discovery-agent: [tun_tm_system, tun_tm_hosts]
-    inspector-agent: [tun_tm_remote, sm_process_operations]
+    inspector-agent: [tun_tm_remote, sm_process_operations, sm_storage_health, fan_manager_sel, fan_manager_sensors]
     remediation-agent: [sm_process_operations, sm_system_operations]
-tags: [infra, host, diagnostics, onboarding, process, zombie, swap, remediation]
+tags: [infra, host, diagnostics, onboarding, process, zombie, swap, storage, smart, bmc, ipmi, drive-fault, remediation]
 concept: CONCEPT:INFRA-001
 ---
 
@@ -33,9 +36,11 @@ concept: CONCEPT:INFRA-001
 **CONCEPT:INFRA-001**
 
 Onboard-diagnose a host (or fleet) — OS validation + resource utilization + process /
-zombie / runaway / swap inspection — and remediate **only under explicit per-host
-approval**. The three diagnostic steps are read-only and run in parallel; remediation
-delegates to `systems_issue_troubleshooter` and is gated behind a user decision.
+zombie / runaway / swap inspection + physical-storage/BMC health — and remediate **only
+under explicit per-host approval**. The four diagnostic steps are read-only and run in
+parallel; remediation delegates to `systems_issue_troubleshooter` and is gated behind a
+user decision (drive faults are surfaced as hardware replace candidates, never
+auto-remediated).
 
 ## Steps
 
@@ -66,12 +71,30 @@ exhaustion + top swap holders and D-state blockers, and attribute culprit PIDs t
 tmux session where possible. Produces the prioritized **kill/reap/tune candidate** list.
 Expected: `runaways, zombies, swap, candidates`
 
-### Step 3: present_and_gate [depends_on: 0, 1, 2]
+### Step 2b: storage_bmc_health
+**Agent**: `inspector-agent`
+**Tools**: `sm_storage_health, fan_manager_sel, fan_manager_sensors`
+
+Run `sm_storage_health` (action `report`) to check **physical** disk health that the
+filesystem/process steps miss: SMART for every drive incl. RAID `megaraid` passthrough,
+in-band PERC/LSI PD state, and BMC/IPMI **drive-slot faults** — correlated, so a
+BMC-flagged disk with clean SMART media is classified as a **link/aging fault**
+(reseat/replace), not media wear. For a remote host pass `host=<inventory-key>`; for
+out-of-band BMC pass `params_json={"oob":true}` (the iDRAC credential is read from
+OpenBao `apps/idrac` at runtime). For deeper BMC detail use the fan-manager IPMI tools
+(`fan_manager_sel` for the System Event Log history, `fan_manager_sensors` action `type`
+sensor_type `Drive Slot`). Flags failed/predicted-fail/faulted drives as **replace
+candidates** (hardware action — never auto-remediated).
+Expected: `disks, bmc_drive_faults, faults`
+
+### Step 3: present_and_gate [depends_on: 0, 1, 2, 2b]
 **Agent**: `inspector-agent`
 **Tools**: `tun_tm_remote`
 
 Present the consolidated dashboard (OS validation + utilization + the ranked hog/zombie/
-swap findings + load-vs-cores verdict). Ask the user which candidates to act on. **No
+swap findings + drive/BMC faults + load-vs-cores verdict). Ask the user which candidates
+to act on. Drive faults are surfaced as **hardware replace candidates** (physical action,
+not auto-remediated). **No
 change proceeds without an explicit, per-host choice.** Safest-first ordering: orphaned
 runaways → reclaim swap → reap zombies (via parents) → wind down stale sessions.
 
@@ -103,7 +126,7 @@ taken, before/after metrics) to the Knowledge Graph via `graph_write`.
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in
 parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — hardware_profile_sweep; Step 1 — host_resource_sampler; Step 2 — host_process_inspector
+- **Run first (in parallel):** Step 0 — hardware_profile_sweep; Step 1 — host_resource_sampler; Step 2 — host_process_inspector; Step 2b — storage_bmc_health
 - **After level 0:** Step 3 — present_and_gate (user decision)
 - **After Step 3:** Step 4 — remediate (only approved actions, via systems_issue_troubleshooter)
 - **After Step 4:** Step 5 — verify_and_persist

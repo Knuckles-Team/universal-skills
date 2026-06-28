@@ -31,6 +31,11 @@ Query core system resources on each host via `systems_manager`:
 - CPU specs (model, cores, threads, clock speed)
 - Physical Memory (total RAM, active/free space)
 - Disk Storage (disk devices, partitions, mounting locations, free capacity)
+- Physical disk health via `sm_storage_health` (action `report`): SMART per drive incl.
+  RAID `megaraid` passthrough (model/serial/power-on-hours/reallocated/predicted-fail),
+  PERC/LSI physical-disk state, and BMC/IPMI drive-slot faults — correlated so a
+  BMC-flagged disk with clean SMART media reads as a link/aging fault. Surfaces failing
+  or fault-asserted drives the free-capacity check alone never sees.
 
 ### Step 2: Detect Accelerator Hardware
 Identify and probe any connected GPU or AI accelerator devices (e.g., using `nvidia-smi`, `lspci | grep -i vga`):
