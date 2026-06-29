@@ -8,7 +8,7 @@ license: MIT
 tags: [frontend, ui, react, tailwind, figma, brand, design, web-builder]
 metadata:
   author: Genius
-  version: '0.47.0'
+  version: '1.0.0'
 ---
 # Web & UI Artifacts
 

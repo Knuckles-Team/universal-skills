@@ -10,7 +10,7 @@ license: MIT
 tags: [planning, design, ideation, requirements, architecture]
 metadata:
   author: Genius
-  version: '0.47.0'
+  version: '1.0.0'
 ---
 # Brainstorming & Design Workflow
 

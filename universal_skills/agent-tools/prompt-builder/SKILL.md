@@ -13,7 +13,7 @@ license: MIT
 tags: [prompts, system-prompt, agent, builder, structured-prompt, json]
 metadata:
   author: Genius
-  version: '0.47.0'
+  version: '1.0.0'
 ---
 
 # Prompt Builder

@@ -8,7 +8,7 @@ license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
   author: Genius
-  version: '0.47.0'
+  version: '1.0.0'
 ---
 # Web Search
 
