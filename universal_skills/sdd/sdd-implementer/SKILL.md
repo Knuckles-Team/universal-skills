@@ -5,7 +5,7 @@ license: MIT
 tags: [sdd implementer]
 metadata:
   author: Genius
-  version: '1.0.0'
+  version: '1.0.1'
 ---
 
 # SDD Implementer

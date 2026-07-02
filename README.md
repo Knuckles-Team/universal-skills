@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
 
-*Version: 1.0.0*
+*Version: 1.0.1*
 
 > **Documentation** — The complete catalog of universal skills, skill-graph
 > authoring guidance, security and SSL configuration, and installation and

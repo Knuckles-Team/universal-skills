@@ -13,7 +13,7 @@ license: MIT
 tags: [github, ci, actions, pipelines, workflows, ops]
 metadata:
   author: Genius
-  version: '1.0.0'
+  version: '1.0.1'
 ---
 
 # GitHub CI Failure Sweep
