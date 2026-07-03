@@ -8,7 +8,7 @@ license: MIT
 tags: [cloudflare, deployment, edge, infrastructure]
 metadata:
   author: Genius
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 # Cloudflare Deploy
 

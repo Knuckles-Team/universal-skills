@@ -10,7 +10,7 @@ license: MIT
 tags: [skills, installer, deployment, agent-tools]
 metadata:
   author: Genius
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 # Skill Installer Skill
 

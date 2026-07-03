@@ -11,7 +11,7 @@ license: MIT
 tags: [research, scanner, scholarx, pulselink, automation, agent-workflow]
 metadata:
   author: Genius
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 
 # Research Scanner Skill

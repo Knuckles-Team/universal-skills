@@ -5,7 +5,7 @@ license: MIT
 tags: [sdd, bootstrap]
 metadata:
   author: Genius
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 
 You are the Workspace Manager agent.

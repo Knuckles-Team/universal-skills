@@ -12,7 +12,7 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   author: Genius
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 # Skill-Graph-Builder (Any Source → Standardized Skill-Graph)
 
