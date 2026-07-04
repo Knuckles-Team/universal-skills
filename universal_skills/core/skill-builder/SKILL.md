@@ -196,6 +196,18 @@ Write the YAML frontmatter following the universal-skills standard:
 
 Do not include any other fields in YAML frontmatter unless instructed.
 
+**`kg-*` skill suite only (CONCEPT:OS-5.80).** Skills in the graph-os `kg-*` suite carry
+two extra fields so the `kg-coverage-doctor` gate can diff them 1:1 against the MCP verb
+surface:
+
+- `tier`: one of `core | modality | meta | surface`. `core`/`modality` skills wrap a
+  graph-os verb; `meta`/`surface` skills (routers, builders, webui) are exempt from the
+  verb-mapping check.
+- `wraps`: (optional) a list of MCP verbs this skill fronts, when it is not a simple 1:1
+  `kg-<x>`→`graph_<x>` slug match — e.g. `wraps: [graph_ingest, source_sync, source_drain,
+  source_connector, document_process]` on `kg-ingest`. Omit it when the slug already implies
+  the verb (`kg-query` → `graph_query`).
+
 ##### Body
 
 Write instructions for using the skill and its bundled resources.
