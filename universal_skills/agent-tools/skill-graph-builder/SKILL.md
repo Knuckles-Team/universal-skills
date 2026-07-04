@@ -144,3 +144,14 @@ If graph-os is reachable, drive the same pipeline through `graph_ingest`:
 3. **Enrich (hybrid-auto)**: when reachable, the corpus is ingested into the KG and
    linked to the `SkillGraph` ontology interface; a `kg_manifest.json` round-trips a
    `kg_query` graph back into another KG.
+
+## OKF conformance (Open Knowledge Format)
+
+Every skill-graph this builder produces is a valid **OKF bundle** (Google Cloud Open
+Knowledge Format): each `reference/*.md` carries YAML frontmatter with a required
+`type` (+ title/description/resource/timestamp), each directory gets an `index.md`
+(progressive disclosure), and the root gets a `log.md` (history) — alongside the machine
+`index.json`/`sources.json` twins. This is emitted automatically by
+`skill_graph_pipeline` (`distillation/okf_bundle.py`). The agent-utilities concept
+skill-graph additionally stamps each file with its OKF-CIS `id:`, making it the canonical
+concept bundle. See agent-utilities `docs/okf-cis.md`.
