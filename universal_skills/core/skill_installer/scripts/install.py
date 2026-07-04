@@ -163,7 +163,7 @@ def _matches_layer(path: Path, layer: str) -> bool:
     ``atomic`` = an atomic building-block skill (NOT under ``workflows/``) — these are
     what an agent invokes directly, so they belong in Claude. ``workflows`` = a
     skill-workflow (under ``workflows/``); these are meant for the graph-os
-    orchestrator (Claude fires them via the ``kg-delegation-router`` skill /
+    orchestrator (Claude fires them via the ``kg-delegate`` skill /
     ``graph_orchestrate execute_workflow``) and usually should NOT be installed into
     Claude — that would just bloat the always-loaded skill list. ``all`` = no filter.
     """
@@ -435,7 +435,7 @@ def main():
             "Which layer to install. 'atomic' = atomic building-block skills only "
             "(recommended for Claude — the agent invokes these directly). 'workflows' "
             "= skill-workflows only (these run on the graph-os orchestrator; Claude "
-            "fires them via kg-delegation-router). 'all' = both (default)."
+            "fires them via kg-delegate). 'all' = both (default)."
         ),
     )
 

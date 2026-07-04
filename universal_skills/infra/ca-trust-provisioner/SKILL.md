@@ -82,5 +82,5 @@ env contract (Step 3) is handed back to the deploy step so each service stack in
 it (sourced alongside the service's other env from OpenBao/.env). Re-runnable.
 
 > **Execution:** If graph-os is reachable, offload the per-host fan-out via
-> `graph_orchestrate action=execute_agent` (or `kg-delegation-router`); otherwise run
+> `graph_orchestrate action=execute_agent` (or `kg-delegate`); otherwise run
 > the steps natively across the inventory hosts.

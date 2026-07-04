@@ -65,15 +65,15 @@ pip install skill-graphs
   the source repo as the single backed-up source of truth.
 - `--layer`: (Optional) Which layer to install: `atomic` (atomic building-block skills only —
   **recommended for Claude**, since the agent invokes these directly), `workflows` (skill-workflows
-  only — these run on the **graph-os orchestrator**; Claude fires them via the `kg-delegation-router`
+  only — these run on the **graph-os orchestrator**; Claude fires them via the `kg-delegate`
   skill rather than holding all of them), or `all` (default).
 - `--install-skill-graphs`: (Optional) Also install skill-graphs from the skill-graphs repository.
 
 > **What to install into Claude (don't overwhelm it).** Claude loads *every* installed skill's
 > `description` into context, so installing all ~430 skills bloats and dilutes skill selection.
 > Recommended: symlink the **atomic layer only** into Claude (the building blocks + the
-> `kg-delegation-router`), and leave the skill-workflows on the **graph-os orchestrator** — Claude
-> discovers and fires those via `kg-delegation-router` / `graph_orchestrate execute_workflow` so the
+> `kg-delegate`), and leave the skill-workflows on the **graph-os orchestrator** — Claude
+> discovers and fires those via `kg-delegate` / `graph_orchestrate execute_workflow` so the
 > heavy DAGs run locally on graph-os, not in the Claude Code context.
 
 ```bash

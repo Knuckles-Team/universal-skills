@@ -1,5 +1,6 @@
 ---
-name: kg-delegation-router
+name: kg-delegate
+tier: meta
 description: >
   KG-driven agent skill delegation router. Queries the Knowledge Graph for available
   MCP servers and tools, auto-hydrates the KG from mcp_config*.json files if cold,
