@@ -94,6 +94,9 @@ def get_tool_paths() -> dict:
         "codex": home / ".codex" / "skills",
         "devin": home / ".devin" / "skills",
         "cursor": home / ".cursor" / "skills",
+        # xAI Grok Code CLI — `grok` and `grok-code` are aliases for the same dir.
+        "grok": home / ".grok" / "skills",
+        "grok-code": home / ".grok" / "skills",
     }
 
     # OpenCode
@@ -489,6 +492,17 @@ def main():
         ),
     )
     parser.add_argument(
+        "--no-xdg",
+        dest="no_xdg",
+        action="store_true",
+        help=(
+            "Do NOT also update the canonical agent-utilities XDG skills store. By "
+            "default every global install ALSO writes there (it is the dir the "
+            "agent-utilities factory + agent-terminal-ui auto-load), so it stays current "
+            "whichever external tool you target."
+        ),
+    )
+    parser.add_argument(
         "--layer",
         choices=["all", "atomic", "workflows"],
         default="all",
@@ -504,65 +518,66 @@ def main():
 
     skill_names = args.skills.split(",") if args.skills else None
 
-    # Fan-out modes: install into many tool dirs in one shot.
+    # ── Resolve destinations ────────────────────────────────────────────────
+    # Build the set of skill dirs to write to. The agent-utilities XDG store is
+    # ALWAYS included (unless --no-xdg, global scope) because it is the canonical dir
+    # the agent-utilities factory + agent-terminal-ui auto-load — we keep it current on
+    # every run, whichever external tool you also target. A bare ``install-skills``
+    # (no --tool/--path) therefore updates exactly that store.
+    targets: dict = {}
     if args.all_detected or args.all_tools:
-        targets = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
-        if not targets:
+        found = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
+        if not found:
             print(
                 "No agent tools detected on this host. Use --tool/--path to target one "
                 "explicitly, or --all to install into every known path.",
                 file=sys.stderr,
             )
             sys.exit(1)
-        # Collapse duplicate destinations (e.g. agent-utilities/agent-terminal-ui).
-        seen: set = set()
-        for tool, target in targets.items():
-            if str(target) in seen:
-                continue
-            seen.add(str(target))
-            logger.info(f"→ {tool}: {target}")
-            install_skills(
-                target,
-                skill_names,
-                args.group,
-                args.force,
-                args.install_skill_graphs,
-                symlink=args.symlink,
-                layer=args.layer,
-                prune=args.prune,
-            )
-        return
-
-    if args.path:
-        target = Path(args.path).expanduser()
+        targets.update(found)
+    elif args.path:
+        targets[args.path] = Path(args.path).expanduser()
     elif args.tool:
         tool_key = args.tool.lower()
         if args.scope == "global":
-            target = TOOL_PATHS.get(tool_key)
-            if not target:
-                # Fallback to treating tool as a path if not found in TOOL_PATHS
-                target = Path(args.tool).expanduser()
+            # Fallback to treating an unknown tool as a literal path.
+            target = TOOL_PATHS.get(tool_key) or Path(args.tool).expanduser()
         else:  # workspace scope
             root = get_workspace_root()
-            rel_path = WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
-            target = root / rel_path
-    else:
+            target = root / WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
+        targets[tool_key] = target
+
+    # Always keep the canonical agent-utilities XDG store in sync (global scope only).
+    if not args.no_xdg and args.scope == "global":
+        targets.setdefault("agent-utilities (xdg)", TOOL_PATHS["agent-utilities"])
+
+    if not targets:
         print(
-            "Error: one of --tool / --path / --all-detected / --all must be specified.",
+            "Error: nothing to do — pass --tool / --path / --all-detected / --all, or "
+            "omit them to update just the agent-utilities XDG store (don't combine that "
+            "with --no-xdg).",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    install_skills(
-        target,
-        skill_names,
-        args.group,
-        args.force,
-        args.install_skill_graphs,
-        symlink=args.symlink,
-        layer=args.layer,
-        prune=args.prune,
-    )
+    # Collapse duplicate destinations (e.g. agent-utilities/agent-terminal-ui, or the
+    # XDG store when it is also the explicit target), then install into each.
+    seen: set = set()
+    for label, target in targets.items():
+        if str(target) in seen:
+            continue
+        seen.add(str(target))
+        logger.info(f"→ {label}: {target}")
+        install_skills(
+            target,
+            skill_names,
+            args.group,
+            args.force,
+            args.install_skill_graphs,
+            symlink=args.symlink,
+            layer=args.layer,
+            prune=args.prune,
+        )
 
 
 if __name__ == "__main__":

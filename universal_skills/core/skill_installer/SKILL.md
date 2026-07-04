@@ -40,7 +40,6 @@ OS-aware; in parity with the `mcp-installer` tool set so one bootstrap can wire 
 skills and MCP config into every agent tool a host has.
 
 - **Claude Code**: `~/.claude/skills/`
-- **Claude Desktop / agent-utilities / agent-terminal-ui**: `~/.config/agent-utilities/skills/`
 - **Windsurf**: `~/.codeium/windsurf/skills/`
 - **OpenCode**: `~/.config/opencode/skills/`
 - **OpenClaw**: `~/.openclaw/skills/`
@@ -48,10 +47,20 @@ skills and MCP config into every agent tool a host has.
 - **Codex**: `~/.codex/skills/`
 - **Devin**: `~/.devin/skills/`
 - **Cursor**: `~/.cursor/skills/`
+- **Grok Code** (`grok` / `grok-code`): `~/.grok/skills/`
 - **Zed**: `~/.config/zed/skills/`
+- **agent-utilities / agent-terminal-ui** (the canonical XDG store): `$XDG_DATA_HOME/agent-utilities/skills/`
+  (default `~/.local/share/agent-utilities/skills/`; macOS `~/Library/Application Support/…`,
+  Windows `%LOCALAPPDATA%\agent-utilities\skills`). This is the dir the agent-utilities agent
+  factory and agent-terminal-ui **auto-load** — matching `agent_utilities.core.paths.skills_dir()`.
+
+> **The agent-utilities XDG store is ALWAYS kept current.** Every global install writes to the
+> XDG store **in addition to** whatever external tool you target — so agent-utilities itself never
+> falls behind. A bare `install-skills` (no `--tool`/`--path`) updates *just* that store. Opt out
+> with `--no-xdg`.
 
 Use **`--all-detected`** to install into *every* tool present on the host in one shot
-(absent tools are skipped), or `--all` for every known path.
+(absent tools are skipped), or `--all` for every known path. (Both still also update the XDG store.)
 
 ## Tools
 
