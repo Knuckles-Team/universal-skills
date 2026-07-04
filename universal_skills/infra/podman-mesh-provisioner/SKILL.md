@@ -83,6 +83,6 @@ Podman branch (peer to `swarm-mesh-provisioner` / `kubernetes-mesh-provisioner`)
 caller picks the branch from the operator's chosen orchestrator.
 
 > **Execution:** If graph-os is reachable, offload via
-> `graph_orchestrate action=execute_agent` (or the `kg-delegation-router` skill) so
+> `graph_orchestrate action=execute_agent` (or the `kg-delegate` skill) so
 > the per-host steps fan out; otherwise execute the steps natively in order against
 > the two MCP servers above.

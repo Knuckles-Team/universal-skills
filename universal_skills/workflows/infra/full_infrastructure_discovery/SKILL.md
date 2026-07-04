@@ -43,4 +43,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — tunnel-manager-mcp; Step 1 — container-manager-mcp; Step 2 — portainer-mcp; Step 3 — tunnel-manager-mcp; Step 4 — technitium-dns-mcp; Step 5 — graph-os
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

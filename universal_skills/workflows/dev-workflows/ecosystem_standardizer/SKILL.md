@@ -293,4 +293,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — user-interaction; Step 1 — audit-ecosystem; Step 2 — review-report; Step 3 — generate-concepts; Step 4 — migrate-env-vars; Step 5 — create-mcp-subdirs; Step 6 — generate-standard-tests; Step 7 — generate-changelogs; Step 8 — cleanup-deprecated; Step 9 — re-audit; Step 10 — workspace-validation (optional)
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

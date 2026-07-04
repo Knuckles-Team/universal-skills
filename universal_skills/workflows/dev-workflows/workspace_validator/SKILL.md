@@ -56,4 +56,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — user-interaction; Step 1 — repository-manager-mcp; Step 2 — repository-manager-mcp; Step 3 — repository-manager-mcp; Step 4 — repository-manager-mcp; Step 5 — repository-manager-mcp
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

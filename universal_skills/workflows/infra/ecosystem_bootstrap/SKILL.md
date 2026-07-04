@@ -151,4 +151,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — user-interaction; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — portainer-mcp; Step 4 — technitium-dns-mcp; Step 5 — portainer-mcp; Step 6 — portainer-mcp; Step 7 — technitium-dns-mcp; Step 8 — graph-os; Step 9 — user-interaction
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegation-router` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
