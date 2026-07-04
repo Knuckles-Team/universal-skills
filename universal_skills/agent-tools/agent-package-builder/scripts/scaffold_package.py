@@ -74,14 +74,20 @@ test = [
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
 {agent_cmd} = "{pkg_dir}.agent_server:agent_server"
 
-# Fleet contribution (CONCEPT:OS-5.52): advertise this package's skills and
-# system-prompt blueprints so agent-utilities' skill-installer and KG prompt
-# library discover them without importing this package's agent code.
+# Fleet contribution (CONCEPT:OS-5.52 / AU-KG.ontology.federation-provider-leg): advertise this
+# package's skills, prompts, OWL/RDF ontology, and source-connector presets so
+# agent-utilities discovers + federates them without importing this package's agent code.
 [project.entry-points."agent_utilities.skill_providers"]
 {package_name} = "{pkg_dir}.skills"
 
 [project.entry-points."agent_utilities.prompt_providers"]
 {package_name} = "{pkg_dir}.prompts"
+
+[project.entry-points."agent_utilities.ontology_providers"]
+{package_name} = "{pkg_dir}.ontology"
+
+[project.entry-points."agent_utilities.source_connector_providers"]
+{package_name} = "{pkg_dir}.connectors"
 
 [tool.setuptools]
 include-package-data = true
@@ -101,7 +107,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-{pkg_dir} = [ "mcp_config.json", "prompts/**", "skills/**",]
+{pkg_dir} = [ "mcp_config.json", "prompts/**", "skills/**", "ontology/**", "connectors/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
@@ -2062,6 +2068,233 @@ skill to connect to this package's MCP server and invoke its tools.
 > (one capability per skill — keep it atomic).
 """
 
+def render_ontology_init(display_name: str, domain: str) -> str:
+    """Data-only ontology subpackage docstring (CONCEPT:AU-KG.ontology.federation-provider-leg)."""
+    return (
+        f'"""{display_name} ontology contribution '
+        "(CONCEPT:AU-KG.ontology.federation-provider-leg).\n\n"
+        f"Data-only subpackage carrying ``{domain}.ttl`` (the ``owl:Ontology``\n"
+        f"``http://knuckles.team/kg/{domain}`` module) which the agent-utilities hub\n"
+        "federates via the ``agent_utilities.ontology_providers`` entry-point.\n"
+        '"""\n'
+    )
+
+
+def render_ontology_ttl(display_name: str, domain: str) -> str:
+    """Per-package OWL/RDF stub in the shared kg# namespace — hand-expand it."""
+    cap = "".join(w.capitalize() for w in domain.replace("-", " ").split())
+    t = """@prefix : <http://knuckles.team/kg#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# TODO: replace this stub with the real domain model. Classes/properties live in the
+# SHARED : (kg#) namespace; only the owl:Ontology node gets the per-package IRI. Do NOT
+# redefine classes another package owns (:MediaAsset/:Blob/:Document/:Person) — reuse them.
+
+:__CAP__Resource a owl:Class ;
+    rdfs:label "__DISPLAY__ Resource" ;
+    rdfs:comment "A primary object managed by __DISPLAY__ (STUB — rename/expand)." .
+
+:managedBy a owl:ObjectProperty ;
+    rdfs:label "managed by" ;
+    rdfs:comment "Links a __DISPLAY__ resource to the Person responsible (STUB)." ;
+    rdfs:domain :__CAP__Resource ;
+    rdfs:range :Person .
+
+:__DOMAIN__Id a owl:DatatypeProperty ;
+    rdfs:label "__DOMAIN__ id" ;
+    rdfs:comment "External identifier of the __DISPLAY__ resource (STUB)." ;
+    rdfs:domain :__CAP__Resource ;
+    rdfs:range xsd:string .
+
+<http://knuckles.team/kg/__DOMAIN__> a owl:Ontology ;
+    rdfs:label "__DISPLAY__ Ontology" ;
+    rdfs:comment "__DISPLAY__ domain extensions federated into the KG hub. STUB." ;
+    owl:imports <http://knuckles.team/kg> .
+"""
+    return (
+        t.replace("__CAP__", cap)
+        .replace("__DISPLAY__", display_name)
+        .replace("__DOMAIN__", domain.replace("-", ""))
+    )
+
+
+def render_kg_ingest(display_name: str, pkg_dir: str, source: str, domain: str) -> str:
+    """Native epistemic-graph ingestion mapper (thin wrapper on the shared primitive)."""
+    t = '''"""Native epistemic-graph ingestion for __DISPLAY__ records.
+
+CONCEPT:AU-KG.ingest.enterprise-source-extractor. The package natively pushes its OWN data
+into the ONE engine, in every modality that applies (the "maximum ingestion" bar): typed OWL
+nodes (:Class), documents (:Document), and raw blobs (:Blob/:MediaAsset). Thin mapper over the
+shared primitive ``agent_utilities.knowledge_graph.memory.native_ingest`` — imported GUARDED so
+it no-ops with no KG stack / no reachable engine (never raises). Node ids: ``__SOURCE__:<class>:<id>``;
+``type`` values must match the classes in ``ontology/__DOMAIN__.ttl``.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+logger = logging.getLogger("__PKG__.kg")
+
+_SOURCE = "__SOURCE__"
+_DOMAIN = "__DOMAIN__"
+
+
+def _primitive():
+    """The shared native_ingest module, or None when unavailable."""
+    try:
+        from agent_utilities.knowledge_graph.memory import native_ingest
+    except Exception as e:  # noqa: BLE001 — KG stack absent
+        logger.debug("native ingest unavailable: %s", e)
+        return None
+    return native_ingest
+
+
+def ingest_records(records: list[dict[str, Any]]) -> dict[str, int] | None:
+    """Map __DISPLAY__ records -> typed OWL nodes and push them into the KG.
+
+    TODO: replace the mapping below with real fields + the classes/links from your .ttl.
+    Returns ``{"nodes":n, "edges":m}`` or ``None`` (no engine). Never raises.
+    """
+    ni = _primitive()
+    if ni is None:
+        return None
+    entities, relationships = [], []
+    for rec in records or []:
+        rid = rec.get("id") or rec.get("name")
+        if rid is None:
+            continue
+        entities.append({
+            "id": f"{_DOMAIN}:resource:{rid}",
+            "type": "__CAP__Resource",   # TODO: use the real OWL class
+            "name": rec.get("name") or rec.get("title"),
+        })
+    return ni.ingest_entities(
+        entities, relationships, source=_SOURCE, domain=_DOMAIN
+    )
+
+
+def ingest_documents(docs: list[dict[str, Any]]) -> dict[str, int] | None:
+    """Push text records ({id,text,title?,source_uri?}) as :Document nodes."""
+    ni = _primitive()
+    if ni is None:
+        return None
+    return ni.ingest_documents(docs, source=_SOURCE, domain=_DOMAIN)
+
+
+def ingest_blob(data: bytes, *, name: str = "", mime_type: str = "", media_type: str = "file",
+                extra: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Store raw bytes (attachment/file/media) as a :Blob + :MediaAsset."""
+    ni = _primitive()
+    if ni is None:
+        return None
+    store = ni.media_store()
+    if store is None or not data:
+        return None
+    stored = store.store_media(data, media_type=media_type, mime_type=mime_type,
+                               source=_SOURCE, name=name, extra=extra or {})
+    return None if stored is None else {"asset_id": stored.asset_id, "digest": stored.digest}
+'''
+    cap = "".join(w.capitalize() for w in domain.replace("-", " ").split())
+    return (
+        t.replace("__DISPLAY__", display_name)
+        .replace("__PKG__", pkg_dir)
+        .replace("__SOURCE__", source)
+        .replace("__DOMAIN__", domain.replace("-", ""))
+        .replace("__CAP__", cap)
+    )
+
+
+def render_specialist_prompt(display_name: str, source: str, domain: str) -> str:
+    """A domain-specialist StructuredPrompt template (beyond the generic main-agent)."""
+    import json as _json
+
+    blueprint = {
+        "task": f"{domain.replace('-', '_')}_specialist",
+        "type": "prompt",
+        "schema_version": "1.0",
+        "prompt_version": "0.1.0",
+        "source": source,
+        "extends": "agent-utilities:base",
+        "compose": "append",
+        "description": f"{display_name} domain specialist. TODO: scope to a tool-category.",
+        "metadata": {"topic": display_name, "tone": "technical and precise",
+                     "style": f"{display_name} specialist"},
+        "identity": {
+            "role": f"{display_name} Specialist",
+            "goal": f"Operate {display_name} and map its data into the knowledge graph.",
+            "personality": ["methodical", "provenance-aware"],
+        },
+        "instructions": {
+            "core_directive": (
+                f"You are a {display_name} specialist. Prefer the domain-typed tools/skills; "
+                "natively ingest the data you touch (typed nodes / documents / blobs). "
+                "TODO: tailor to a specific tool-category."
+            ),
+            "quality_checklist": ["used the domain-typed tool", "ingested touched data into the KG"],
+        },
+        "skills": [],
+        "tools": [],
+    }
+    return _json.dumps(blueprint, indent=2, ensure_ascii=False) + "\n"
+
+
+def render_source_presets(package_name: str, domain: str) -> str:
+    """In-repo Tier-1 mcp_tool source-preset stub (hub-side pull; complements native push)."""
+    import json as _json
+
+    data = {
+        "_comment": (
+            "Tier-1 mcp_tool source preset(s) (AU-KG.ingest.mcp-tool-connector). Hand-fill: "
+            "tool, action, records_path, id/title/text/updated fields, pagination. "
+            "Contributed presets win over the central MCP_TOOL_PRESETS."
+        ),
+        f"{domain}-records": {
+            "server": package_name,
+            "tool": f"TODO_{domain.replace('-', '_')}_list_tool",
+            "action": "list",
+            "records_path": "data",
+            "id_field": "id",
+            "title_field": "name",
+            "text_field": "description",
+            "updated_field": "updated_at",
+            "doc_type": domain,
+        },
+    }
+    return _json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+
+
+def render_kg_ingest_test(pkg_dir: str) -> str:
+    """Fakes-based Wire-First coverage for the native ingestion mapper."""
+    return (
+        '"""Native epistemic-graph ingestion — Wire-First coverage (fakes; no engine)."""\n\n'
+        "from __future__ import annotations\n\n"
+        f"from {pkg_dir} import kg_ingest\n\n\n"
+        "class _FakeNI:\n"
+        "    def __init__(self):\n"
+        "        self.entities = None\n"
+        "    def ingest_entities(self, entities, relationships, *, source, domain):\n"
+        "        self.entities = entities\n"
+        "        return {\"nodes\": len(entities), \"edges\": len(relationships or [])}\n"
+        "    def ingest_documents(self, docs, *, source, domain):\n"
+        "        return {\"nodes\": len(docs), \"edges\": 0}\n"
+        "    def media_store(self):\n"
+        "        return None\n\n\n"
+        "def test_ingest_records_maps_and_pushes(monkeypatch):\n"
+        "    fake = _FakeNI()\n"
+        "    monkeypatch.setattr(kg_ingest, \"_primitive\", lambda: fake)\n"
+        "    res = kg_ingest.ingest_records([{\"id\": \"1\", \"name\": \"x\"}])\n"
+        "    assert res == {\"nodes\": 1, \"edges\": 0}\n"
+        "    assert fake.entities[0][\"id\"].endswith(\":resource:1\")\n\n\n"
+        "def test_ingest_noops_without_engine(monkeypatch):\n"
+        "    monkeypatch.setattr(kg_ingest, \"_primitive\", lambda: None)\n"
+        "    assert kg_ingest.ingest_records([{\"id\": \"1\"}]) is None\n"
+    )
+
+
 GQL_PY = """\
 #!/usr/bin/python
 \"\"\"GraphQL API Wrapper for {display_name}.
@@ -2849,12 +3082,34 @@ def scaffold(
 
     # Starter skill (CONCEPT:OS-5.52): every package ships >=1 skill so it
     # contributes to the XDG skills library via its skill_providers entry-point.
+    # NOTE: replace this starter with REAL per-tool-category skills (`{short}-<category>`,
+    # globally unique) before shipping — see PARITY_MANIFEST §6.
     starter_slug = f"{short_name}-starter"
     files[pkg / "skills" / "__init__.py"] = ("", False)
     files[pkg / "skills" / starter_slug / "SKILL.md"] = (
         render_starter_skill(display_name, starter_slug, description),
         False,
     )
+
+    # KG enrichment legs (CONCEPT:AU-KG.ontology.federation-provider-leg /
+    # AU-KG.ingest.enterprise-source-extractor): the ontology, native "maximum ingestion"
+    # (typed nodes + documents + blobs) via the shared native_ingest primitive, a
+    # domain-specialist prompt, and an in-repo source-connector preset. Hand-expand the
+    # STUBS — see PARITY_MANIFEST §6 and the gitlab-api / media-downloader reference impls.
+    ontology_domain = short_name
+    files[pkg / "ontology" / "__init__.py"] = (
+        render_ontology_init(display_name, ontology_domain), False)
+    files[pkg / "ontology" / f"{ontology_domain}.ttl"] = (
+        render_ontology_ttl(display_name, ontology_domain), False)
+    files[pkg / "kg_ingest.py"] = (
+        render_kg_ingest(display_name, pkg.name, package_name, ontology_domain), False)
+    files[pkg / "prompts" / f"{ontology_domain.replace('-', '_')}_specialist.json"] = (
+        render_specialist_prompt(display_name, package_name, ontology_domain), False)
+    files[pkg / "connectors" / "__init__.py"] = ("", False)
+    files[pkg / "connectors" / "mcp_source_presets.json"] = (
+        render_source_presets(package_name, ontology_domain), False)
+    files[root / "tests" / "test_kg_ingest.py"] = (
+        render_kg_ingest_test(pkg.name), False)
 
     # API modular directory scaffolding
     files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)

@@ -370,6 +370,38 @@ The scaffolder emits all of this; do not remove it:
   `install-skills` (skills) and `ingest_prompts_to_graph` (prompts) — no per-package
   wiring in the hub.
 
+### Step 5b: kg-enrichment [depends_on: mcp-server]
+
+Every package is a first-class contributor to the ontology-driven Knowledge Graph. The
+scaffolder now emits STUBS for four KG-enrichment legs (PARITY_MANIFEST §6) — **hand-expand
+them** using the reference impls `gitlab-api` (record source) and `media-downloader` (producer):
+
+1. **Real skills (replace the starter).** Author one **`{short}-<category>`** skill per MCP
+   tool-category to the house template (`servicenow-api/.../servicenow-incident-management`):
+   *When to use / When NOT / Prerequisites / Tools & actions / Recipes / Gotchas / Related*.
+   **Every skill `name:` MUST be globally unique + `{short}-`-prefixed** — run
+   `check_skill_name_collision.py` (0 collisions).
+2. **Ontology (`{pkg}/ontology/{domain}.ttl`).** Model the domain in the SHARED `:` (kg#)
+   namespace with a per-package `owl:Ontology` IRI; **reuse** classes another package owns
+   (`:MediaAsset`/`:Blob`/`:Document`/`:Person`), never redefine them. Scaffold/refresh with
+   `scaffold_ontology_leg.py`; validate with `check_ontology.py`.
+3. **Native "maximum ingestion" (`{pkg}/kg_ingest.py` / `kg_media.py`).** The package pushes
+   its OWN data into epistemic-graph in every modality that applies — **typed OWL nodes**
+   (`native_ingest.ingest_entities`), **documents** (`ingest_documents` → `:Document`), and
+   **raw blobs** (`media_store().store_media` → `:Blob`+`:MediaAsset`). Thin mapper over the
+   shared `agent_utilities.knowledge_graph.memory.native_ingest` primitive (guarded → no-op
+   without an engine). Wire it default-on into the fetch/download flow + expose a **Wire-First**
+   `{short}_ingest_*` MCP tool. Cover it with `tests/test_kg_ingest.py` (fakes). This is the
+   fleet's nativeness bar (see the `kg-ingest` skill §8c).
+4. **Specialist prompt(s) (`{pkg}/prompts/<category>_specialist.json`).** ≥1 domain-specialist
+   StructuredPrompt beyond the generic `main_agent` (`extends: agent-utilities:base`, scoped to
+   that category's skills/tools). Validate with `validate_canonical(strict)`.
+5. **Connector preset (`{pkg}/connectors/mcp_source_presets.json`).** Fill the Tier-1 `mcp_tool`
+   preset for hub-side pull (complements the native push).
+
+All four `agent_utilities.*_providers` entry-points + the `ontology/**`,`connectors/**`
+package-data globs are emitted by the scaffolder — do not remove them.
+
 ### Step 6: docs-generation [depends_on: api-client, mcp-server, agent-server]
 
 Generate the full 7-page docs site (`mkdocs.yml` nav order is canonical):
