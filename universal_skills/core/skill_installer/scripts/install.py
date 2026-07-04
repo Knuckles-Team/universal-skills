@@ -64,7 +64,11 @@ def _iter_skill_providers() -> List[tuple]:
             if path.is_dir():
                 out.append((ep.name, path))
                 seen.add(ep.name)
-        except (ModuleNotFoundError, TypeError, FileNotFoundError, ValueError) as e:
+        except Exception as e:  # noqa: BLE001
+            # Failure-isolated by contract: a provider that can't be resolved — not
+            # installed, bad value, or whose package raises on import (e.g. a heavy
+            # connector __init__ with a circular import) — is SKIPPED, never fatal, so
+            # one broken package can't abort discovery for the rest of the fleet.
             logger.debug("Could not resolve skill provider %s: %s", ep.name, e)
             continue
     return out
@@ -272,6 +276,38 @@ def _remove_dest(skill_dst: Path) -> None:
         shutil.rmtree(skill_dst)
 
 
+def _prune_broken_symlinks(target_path: Path) -> int:
+    """Remove dead symlinks (target no longer exists) from an install dir.
+
+    Refactors leave cruft: a **renamed** skill (``kg-delegation-router`` → ``kg-delegate``)
+    or a **removed** one leaves behind a symlink pointing at a source path that is gone.
+    The capability is already unavailable, and a dead link confuses skill discovery, so
+    we prune it. Only *broken* links are touched — valid links (including a moved skill
+    that was just repointed to its new source) are left alone. Also sweeps the
+    ``skill-graphs/`` subdir. Returns the number pruned.
+    """
+    pruned = 0
+    for root in (target_path, target_path / "skill-graphs"):
+        if not root.is_dir():
+            continue
+        for entry in root.iterdir():
+            # ``exists()`` follows the link, so a symlink that is *also* not exists()
+            # is precisely a dangling/broken link.
+            if entry.is_symlink() and not entry.exists():
+                try:
+                    dead_target = os.readlink(entry)
+                    entry.unlink()
+                    logger.info(f"Pruned broken symlink: {entry.name} → {dead_target}")
+                    pruned += 1
+                except OSError as e:
+                    logger.warning(f"Could not prune broken symlink {entry.name}: {e}")
+    if pruned:
+        logger.info(
+            f"Pruned {pruned} broken symlink(s) left by renamed/removed skills."
+        )
+    return pruned
+
+
 def _try_windows_junction(dst: Path, src: Path) -> bool:
     """On Windows, create a directory JUNCTION (the symlink equivalent that needs no
     admin / Developer Mode). Returns True on success. ``mklink /J`` is a cmd builtin,
@@ -299,6 +335,7 @@ def install_skills(
     include_graphs: bool = False,
     symlink: bool = False,
     layer: str = "all",
+    prune: bool = True,
 ):
     """Install skills to the target path by copy (default) or symlink.
 
@@ -340,7 +377,15 @@ def install_skills(
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
-        if skill_dst.exists() and not force:
+        # Repoint a stale symlink — broken (dead target) or pointing at a MOVED source
+        # (same skill name, refactored to a new package/path) — freely in symlink mode:
+        # correcting a link to its authoritative current source is always safe and is
+        # exactly how a refactor should propagate. Only a real copied dir/file still
+        # needs --force to overwrite.
+        stale_symlink = skill_dst.is_symlink() and skill_dst.resolve() != src_abs
+        if symlink and stale_symlink:
+            logger.info(f"Repointing {skill_src.name} → moved/updated source.")
+        elif skill_dst.exists() and not force:
             logger.info(
                 f"Skipping {skill_src.name} (already exists). Use --force to overwrite."
             )
@@ -372,6 +417,12 @@ def install_skills(
             installed_count += 1
         except Exception as e:
             logger.error(f"Failed to install {skill_src.name}: {e}")
+
+    # After (re)installing, sweep away dead links from renamed/removed skills so a
+    # refactor leaves no orphaned stubs. Only on a FULL install — a targeted
+    # --skills/--group run must not touch links outside its scope.
+    if prune and not skill_names and not group:
+        _prune_broken_symlinks(target_path)
 
     mode = "symlinked" if symlink else "installed"
     logger.info(f"Successfully {mode} {installed_count} items.")
@@ -428,6 +479,16 @@ def main():
         help="Also install skill-graphs from the skill-graphs repository",
     )
     parser.add_argument(
+        "--no-prune",
+        dest="prune",
+        action="store_false",
+        help=(
+            "Do NOT remove broken symlinks left by renamed/removed skills. Pruning is "
+            "on by default for a full install (skipped automatically for a targeted "
+            "--skills/--group run)."
+        ),
+    )
+    parser.add_argument(
         "--layer",
         choices=["all", "atomic", "workflows"],
         default="all",
@@ -468,6 +529,7 @@ def main():
                 args.install_skill_graphs,
                 symlink=args.symlink,
                 layer=args.layer,
+                prune=args.prune,
             )
         return
 
@@ -499,6 +561,7 @@ def main():
         args.install_skill_graphs,
         symlink=args.symlink,
         layer=args.layer,
+        prune=args.prune,
     )
 
 

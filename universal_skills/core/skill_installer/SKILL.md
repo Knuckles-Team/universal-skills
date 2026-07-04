@@ -22,6 +22,18 @@ agent tools — by **copy** (default) or by **symlink** (`--symlink`).
 > `pip install -U universal-skills` (no stale copy to re-sync). It falls back to a copy if the
 > filesystem refuses symlinks. This is the pattern the bundled skills already use.
 
+> **Refactor-safe (symlink mode).** Skills get renamed and relocated between packages over
+> time. A `--symlink` install now heals stale links automatically:
+> - **Repoint moved skills** — if a skill still has the same name but its **source moved** to a
+>   new path (e.g. relocated from `universal-skills` into its owning agent-package), the existing
+>   symlink is repointed to the new source. No `--force` needed — correcting a link to its
+>   authoritative source is always safe (only a real *copied* dir still needs `--force`).
+> - **Prune broken links** — a **full** install then removes any **broken** symlink (dead target)
+>   left behind by a renamed or removed skill (e.g. `kg-delegation-router` → `kg-delegate` leaves a
+>   dangling `kg-delegation-router` link; installing `kg-delegate` + the prune sweep resolves both).
+>   Only dangling links are touched; pruning is skipped for a targeted `--skills`/`--group` run so
+>   it never touches links outside its scope. Disable with `--no-prune`.
+
 ## Supported Tools
 
 OS-aware; in parity with the `mcp-installer` tool set so one bootstrap can wire both
@@ -68,6 +80,9 @@ pip install skill-graphs
   only — these run on the **graph-os orchestrator**; Claude fires them via the `kg-delegate`
   skill rather than holding all of them), or `all` (default).
 - `--install-skill-graphs`: (Optional) Also install skill-graphs from the skill-graphs repository.
+- `--no-prune`: (Optional) Do NOT remove broken symlinks left by renamed/removed skills. Pruning is
+  **on by default** for a full install and is automatically skipped for a targeted
+  `--skills`/`--group` run (so it only ever cleans links it's authoritative over).
 
 > **What to install into Claude (don't overwhelm it).** Claude loads *every* installed skill's
 > `description` into context, so installing all ~430 skills bloats and dilutes skill selection.
