@@ -196,7 +196,7 @@ Write the YAML frontmatter following the universal-skills standard:
 
 Do not include any other fields in YAML frontmatter unless instructed.
 
-**`kg-*` skill suite only (CONCEPT:OS-5.80).** Skills in the graph-os `kg-*` suite carry
+**`kg-*` skill suite only (CONCEPT:AU-ECO.mcp.kg-skill-verb-coverage).** Skills in the graph-os `kg-*` suite carry
 two extra fields so the `kg-coverage-doctor` gate can diff them 1:1 against the MCP verb
 surface:
 
