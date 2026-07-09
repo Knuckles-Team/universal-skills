@@ -419,6 +419,19 @@ def install_skills(
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
+        # Never install a skill into itself or its own subtree. If the resolved
+        # destination equals the source, or either is an ancestor of the other, a copy
+        # would recurse and a symlink would create a self-referential loop
+        # (`kg-ingest/kg-ingest -> kg-ingest`) — and `_remove_dest` below would first
+        # delete the real source. Skip such degenerate targets outright.
+        dst_abs = skill_dst.resolve()
+        if src_abs == dst_abs or src_abs in dst_abs.parents or dst_abs in src_abs.parents:
+            logger.warning(
+                f"Skipping {skill_src.name}: destination {dst_abs} is the source itself "
+                f"or shares its subtree — would create a self-referential link."
+            )
+            continue
+
         # Repoint a stale symlink — broken (dead target) or pointing at a MOVED source
         # (same skill name, refactored to a new package/path) — freely in symlink mode:
         # correcting a link to its authoritative current source is always safe and is
