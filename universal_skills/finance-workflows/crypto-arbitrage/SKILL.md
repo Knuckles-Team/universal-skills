@@ -2,7 +2,7 @@
 name: crypto-arbitrage
 skill_type: workflow
 description: >-
-  >-
+  Parallel execution workflow for crypto arbitrage using the Unified Parallel Engine
 domain: finance-workflows
 agent: quant_analyst
 team_config:

@@ -19,6 +19,8 @@ where agent-utilities is importable; if it is not, it tells you how to install i
 """
 
 import argparse
+import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -41,11 +43,102 @@ except ImportError:
 
 try:
     from universal_skills.skill_utilities import portable_name as _portable_name
+    from universal_skills.skill_utilities import portable_relpath as _portable_relpath
 except Exception:  # pragma: no cover - standalone execution
 
     def _portable_name(name: str, max_len: int = 80) -> str:
         cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name or "").strip(". ") or "_"
         return cleaned[:max_len]
+
+    def _portable_relpath(parts, max_total: int = 140) -> str:
+        return "/".join(_portable_name(p) for p in parts if p not in ("", "."))[
+            :max_total
+        ]
+
+
+def _flatten_reference_tree(skill_dir: Path) -> None:
+    """Rewrite a just-built skill-graph's ``reference/`` into a FLAT, portable
+    layout: ``reference/<hash>.md``, so on-disk names stay short and
+    Windows/macOS-safe for FUTURE crawls (existing skill-graphs are migrated
+    separately, not by this function).
+
+    The pipeline (``SkillGraphPipeline.build``) lays ``reference/`` out in
+    nested, title-derived directories. This runs immediately after ``build()``
+    and:
+    * moves every ``reference/**/*.md`` to ``reference/<hash>.md`` where
+      ``hash = sha1(seed)[:8]`` (extended to ``[:12]``/``[:16]`` on collision),
+      seeded on the section's source URL when known, else its title/path;
+    * keeps the human ``title``/``group``/``url`` in ``index.json``'s
+      ``sections[]`` entries (the file reference becomes the hashed name);
+    * keeps ``sources.json``'s ``files[].path`` and the ``SKILL.md`` Table of
+      Contents links in sync with the renamed files.
+    """
+    ref = skill_dir / "reference"
+    index_path = skill_dir / "index.json"
+    if not ref.is_dir() or not index_path.exists():
+        return
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    top_source_url = index.get("source_url") or ""
+    single_url = top_source_url if top_source_url and "," not in top_source_url else ""
+
+    used_hashes: set[str] = set()
+    path_map: dict[str, str] = {}
+    sections = index.get("sections") or []
+    for section in sections:
+        old_rel = section.get("path", "")
+        old_file = skill_dir / old_rel
+        if not old_file.is_file():
+            continue
+        seed = section.get("url") or section.get("title") or old_rel
+        digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()
+        chosen = digest[:8]
+        for length in (8, 12, 16):
+            candidate = digest[:length]
+            if candidate not in used_hashes:
+                chosen = candidate
+                break
+        else:
+            chosen = digest[:16]
+        used_hashes.add(chosen)
+        new_rel = _portable_relpath(["reference", f"{chosen}.md"], max_total=140)
+        new_file = skill_dir / new_rel
+        new_file.parent.mkdir(parents=True, exist_ok=True)
+        if old_file.resolve() != new_file.resolve():
+            shutil.move(str(old_file), str(new_file))
+        path_map[old_rel] = new_rel
+        section["path"] = new_rel
+        if not section.get("url"):
+            section["url"] = single_url
+
+    index["sections"] = sections
+    groups: dict[str, int] = {}
+    for s in sections:
+        groups[s.get("group", ".")] = groups.get(s.get("group", "."), 0) + 1
+    index["groups"] = dict(sorted(groups.items()))
+    index_path.write_text(json.dumps(index, indent=2), encoding="utf-8")
+
+    # Remove now-empty subdirectories left under reference/ by the flatten.
+    for d in sorted((p for p in ref.rglob("*") if p.is_dir()), reverse=True):
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+
+    # Keep sources.json's file listing (content unchanged; only the path moved).
+    sources_path = skill_dir / "sources.json"
+    if sources_path.exists():
+        manifest = json.loads(sources_path.read_text(encoding="utf-8"))
+        for f in manifest.get("files", []):
+            f["path"] = path_map.get(f["path"], f["path"])
+        sources_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    # Repoint reference/ links inside SKILL.md's rendered Table of Contents.
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.exists() and path_map:
+        text = skill_md.read_text(encoding="utf-8")
+        for old_rel, new_rel in path_map.items():
+            text = text.replace(f"]({old_rel})", f"]({new_rel})")
+        skill_md.write_text(text, encoding="utf-8")
 
 
 _DOC_EXTS = (".pdf", ".docx", ".pptx", ".xlsx", ".csv")
@@ -201,6 +294,7 @@ def generate_skill(
         description=description,
         max_file_kb=max_file_kb,
     )
+    _flatten_reference_tree(Path(result["skill_dir"]))
     kg = "yes" if result["kg_ingested"] else "no (offline)"
     print(
         f"✅ Built **{skill_name}**: {result['file_count']} files • "

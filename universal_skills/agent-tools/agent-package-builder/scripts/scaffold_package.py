@@ -346,6 +346,28 @@ repos:
     language: python
     pass_filenames: false
     always_run: true
+- repo: local
+  hooks:
+  - id: check-atomicity
+    name: atomicity edict (atomic skills + dual-mode workflows)
+    entry: |-
+      bash -c 'd=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_atomicity.py --root "$d"; fi'
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: check-frontmatter-portability
+    name: cross-agent frontmatter portability (Codex + fleet)
+    entry: |-
+      bash -c 'd=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_frontmatter_portability.py "$d" --max-violations 0; fi'
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: check-path-portability
+    name: cross-platform path portability
+    entry: python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_path_portability.py . --max-path 200 --max-name 100 --max-violations 0
+    language: system
+    pass_filenames: false
+    always_run: true
 """
 
 DOCKERFILE = """\
@@ -1992,7 +2014,7 @@ ROOT_MCP_CONFIG_JSON = """\
 """
 
 def render_main_agent_json(display_name: str, description: str, source: str) -> str:
-    """Render the package's canonical main-agent prompt (CONCEPT:ORCH-1.80).
+    """Render the package's canonical main-agent prompt (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical).
 
     Emits the StructuredPrompt shape — body in ``instructions.core_directive``,
     ``schema_version``/``source`` stamped, composed onto the agent-utilities base
@@ -3070,7 +3092,7 @@ def scaffold(
     )
     files[pkg / "mcp_config.json"] = (PKG_MCP_CONFIG_JSON, False)
 
-    # Canonical system prompt (CONCEPT:ORCH-1.80) + fleet contribution
+    # Canonical system prompt (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical) + fleet contribution
     # (CONCEPT:OS-5.52). The prompt lives in a `prompts/` data subpackage (the
     # agent_utilities.prompt_providers entry-point target) and is mirrored at the
     # package root where the runtime workspace loader reads it. Both render from

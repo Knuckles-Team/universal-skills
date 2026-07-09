@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 SCRIPTS = Path(__file__).resolve().parent.parent / (
-    "universal_skills/infra/mcp-client-onboarder/scripts"
+    "universal_skills/infrastructure/mcp-client-onboarder/scripts"
 )
 
 

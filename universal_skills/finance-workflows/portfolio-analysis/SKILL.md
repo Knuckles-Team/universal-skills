@@ -2,7 +2,7 @@
 name: portfolio-analysis
 skill_type: workflow
 description: >-
-  >-
+  Parallel execution workflow for portfolio analysis using the Unified Parallel Engine
 domain: finance-workflows
 agent: quant_analyst
 team_config:

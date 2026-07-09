@@ -61,6 +61,40 @@ skills and MCP config into every agent tool a host has.
 > falls behind. A bare `install-skills` (no `--tool`/`--path`) updates *just* that store. Opt out
 > with `--no-xdg`.
 
+**Per-agent frontmatter adaptation (Codex).** The canonical `SKILL.md` stays
+Claude-native — full frontmatter, unrestricted `description`. Codex's
+`~/.codex/skills` rejects our extra top-level keys (`tags`, `categories`, `domain`,
+`requires`, `tier`, `wraps`, `concept`, `team_config`, `agent`, `cron`, `skill_type`,
+`aliases`, `source_url`, …) and `<`/`>` inside `description`, so installing **into
+Codex** automatically:
+- **Demotes** every non-Codex-recognized top-level key into a nested `metadata`
+  mapping (never overwriting an existing `metadata` sub-key).
+- **Sanitizes** `description` (`<`→`[`, `>`→`]`).
+- **Forces a copy, never a symlink** — the emitted `SKILL.md` diverges from the
+  source file, so `--symlink` is ignored for Codex (logged once).
+- **Promotes nested sub-skills to the top level** — Codex has no nested discovery,
+  so a genuine sub-skill bundled inside a parent skill (a nested dir with its own
+  `SKILL.md`, outside `assets/`/`resources/`/`references/`/`scripts/`) installs
+  alongside its parent instead of underneath it.
+- **Places skill-graphs at the target's top level** (not under a `skill-graphs/`
+  subfolder) — same nested-discovery reason.
+- **Renames `skill-installer` → `universal-skill-installer`** — Codex reserves the
+  bare `skill-installer` name for its own built-in skill of the same name.
+
+Every other target tool (Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor,
+Grok/Grok Code, OpenCode, Zed, agent-utilities, agent-terminal-ui) has a **permissive**
+contract — verbatim copy/symlink, exactly as before this adapter existed. The
+per-target contracts live in `scripts/adapters.py` (`AGENT_CONTRACTS`); see
+`STANDARDS.md` §5 for the full table and the `SKILL_DIR` convention a skill's own
+scripts should use instead of hardcoding an agent's install root.
+
+Use `--validate` after installing into a transform-requiring target to immediately
+run the fleet-wide frontmatter-portability gate against the emitted skills and log
+any violations (a non-fatal warning; no-op outside a repo checkout):
+```bash
+install-skills --tool codex --path /tmp/codex-skills --force --validate
+```
+
 Use **`--all-detected`** to install into *every* tool present on the host in one shot
 (absent tools are skipped), or `--all` for every known path. (Both still also update the XDG store.)
 
@@ -111,6 +145,9 @@ pip install skill-graphs
 - `--no-prune`: (Optional) Do NOT remove broken symlinks left by renamed/removed skills. Pruning is
   **on by default** for a full install and is automatically skipped for a targeted
   `--skills`/`--group` run (so it only ever cleans links it's authoritative over).
+- `--validate`: (Optional) After installing into a target whose contract required a
+  frontmatter transform (e.g. Codex), run the frontmatter-portability gate against the
+  emitted skills and log the result (a non-fatal warning on violations).
 
 > **What to install into Claude (don't overwhelm it).** Claude loads *every* installed skill's
 > `description` into context, so installing all ~430 skills bloats and dilutes skill selection.

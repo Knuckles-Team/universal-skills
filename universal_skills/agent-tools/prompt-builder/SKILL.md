@@ -21,7 +21,7 @@ metadata:
 # Prompt Builder
 
 Authors and validates **canonical system-prompt JSON blueprints** — the
-`StructuredPrompt` format (CONCEPT:ORCH-1.80) that agent-utilities ingests into
+`StructuredPrompt` format (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical) that agent-utilities ingests into
 the Knowledge Graph prompt library and that every agent-package ships as its
 `prompts/main_agent.json`.
 

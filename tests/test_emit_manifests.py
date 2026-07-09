@@ -7,7 +7,7 @@ from pathlib import Path
 
 _MOD = (
     Path(__file__).resolve().parents[1]
-    / "universal_skills/infra/deployment-planner/scripts/emit_manifests.py"
+    / "universal_skills/infrastructure/deployment-planner/scripts/emit_manifests.py"
 )
 _spec = importlib.util.spec_from_file_location("emit_manifests", _MOD)
 emit_manifests = importlib.util.module_from_spec(_spec)

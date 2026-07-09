@@ -8,7 +8,7 @@ description: >-
   from a profile template (full-access / read-only / server-scoped / role-based),
   merges it into the multiplexer's zero-trust policy, and supports ephemeral
   (TTL) clients with an automatic reaper. Use when the user says "onboard an MCP
-  client", "give <agent> access to the multiplexer", "scope a client to servers
+  client", "give an agent access to the multiplexer", "scope a client to servers
   X,Y", "create a read-only MCP client", "revoke/expire an MCP client", or
   "mcp access control". Do NOT use for remote per-service Eunomia policies
   (use eunomia-policy-manager) or general Keycloak SSO (use the Keycloak skill).

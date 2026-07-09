@@ -8,7 +8,7 @@ from pathlib import Path
 
 _LIB = (
     Path(__file__).resolve().parents[1]
-    / "universal_skills/infra/automated-credential-rotation/scripts/rotation_lib.py"
+    / "universal_skills/infrastructure/automated-credential-rotation/scripts/rotation_lib.py"
 )
 _spec = importlib.util.spec_from_file_location("rotation_lib", _LIB)
 rotation_lib = importlib.util.module_from_spec(_spec)
