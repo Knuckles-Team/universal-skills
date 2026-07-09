@@ -1,8 +1,9 @@
 ---
 name: deploy-platform-stack
+skill_type: workflow
 description: >-
   End-to-end deployment of an infrastructure platform using docker-compose files and Portainer MCP.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -16,6 +17,8 @@ team_config:
     deployer-agent: [pt_stack, cnt_cm_compose_operations]
 tags: ['deployment', 'portainer', 'docker', 'stack', 'infrastructure']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Deploy Platform Stack Workflow

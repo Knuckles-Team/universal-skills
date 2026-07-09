@@ -1,18 +1,19 @@
 ---
 name: quant-career-roadmap
+skill_type: workflow
 description: >-
   Zero-to-hired quant career roadmap as an executable DAG. Sequences the seven
   phases — math + Python foundations, finance fundamentals, first backtested
   strategy, ML for finance, the five-project GitHub portfolio, certifications,
   and the remote job search — with the month-overlap dependencies from the
   roadmap. Use to onboard and mentor a learner toward a quant role with no PhD.
-domain: finance
+domain: finance-workflows
 agent: quant_career_mentor
 team_config: quantitative_trading_team
 tags: [quant, career, roadmap, finance, mentoring, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

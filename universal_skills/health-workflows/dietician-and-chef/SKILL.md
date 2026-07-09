@@ -1,8 +1,9 @@
 ---
 name: dietician-and-chef
+skill_type: workflow
 description: >-
   Generates a customized healthy meal plan, adds selected recipes, and compiles an organized, scaled household shopping list in Mealie using mealie-mcp tools.
-domain: health
+domain: health-workflows
 agent: health_wellness_coordinator
 team_config:
   name: health_wellness_team
@@ -16,6 +17,8 @@ team_config:
     analyzer-agent: [graph_analyze]
 tags: ['health', 'diet', 'recipes', 'mealie-mcp']
 concept: CONCEPT:HEALTH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Dietician And Chef Workflow

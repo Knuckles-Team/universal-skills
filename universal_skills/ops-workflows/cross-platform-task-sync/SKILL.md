@@ -1,8 +1,9 @@
 ---
 name: cross-platform-task-sync
+skill_type: workflow
 description: >-
   Parallel execution workflow for cross platform task sync using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, cross-platform-task-sync]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Cross Platform Task Sync Workflow

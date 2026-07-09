@@ -1,9 +1,10 @@
 ---
 name: performance-review
+skill_type: workflow
 description: 'Run an employee performance review: gather OKRs and metrics, analyze performance
   against targets, and generate a review report. Use for periodic or annual performance
   evaluations and OKR tracking.'
-domain: ops
+domain: ops-workflows
 agent: hr_operations_coordinator
 team_config:
   name: performance_review_team
@@ -18,6 +19,8 @@ team_config:
     analytics-agent: [graph_query, data_science_mcp]
     report-generator: [graph_write, document_tools]
 concept: KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Performance Review Workflow

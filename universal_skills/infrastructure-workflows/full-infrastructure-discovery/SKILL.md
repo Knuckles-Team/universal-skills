@@ -1,9 +1,12 @@
 ---
 name: full-infrastructure-discovery
+skill_type: workflow
 description: Full homelab/enterprise discovery pipeline. Scans inventory via tunnel-manager, discovers containers via container-manager and portainer, maps networking and DNS, and ingests everything into the Knowledge Graph as a topology snapshot.
-domain: infrastructure
+domain: infrastructure-workflows
 tags: ['discovery', 'topology', 'inventory', 'homelab', 'enterprise']
 requires: ['tunnel-manager-mcp', 'container-manager-mcp', 'portainer-mcp', 'technitium-dns-mcp']
+metadata:
+  version: '1.0.2'
 ---
 
 # full-infrastructure-discovery Workflow

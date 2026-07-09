@@ -1,8 +1,9 @@
 ---
 name: dividend-reinvestment
+skill_type: workflow
 description: >-
   Audits cash dividend payouts, fits target weight deficits, sizes reinvestment lots, and executes trades.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [dividend, reinvestment, allocation, accounting]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Dividend Reinvestment Workflow

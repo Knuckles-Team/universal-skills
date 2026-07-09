@@ -1,6 +1,10 @@
 ---
 name: quant-data-ingest
+domain: finance
+skill_type: skill
 description: Ingest quantitative trading data via akshare into the Timeseries Memory backend.
+metadata:
+  version: '1.0.2'
 ---
 
 # Quant Data Ingest Skill

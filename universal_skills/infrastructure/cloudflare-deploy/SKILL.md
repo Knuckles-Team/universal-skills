@@ -1,5 +1,7 @@
 ---
 name: cloudflare-deploy
+domain: infrastructure
+skill_type: skill
 description: >-
   Deploy applications and infrastructure to Cloudflare using Workers, Pages, and
   related platform services. Use when the user asks to deploy, host, publish, or
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [cloudflare, deployment, edge, infrastructure]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Cloudflare Deploy
 

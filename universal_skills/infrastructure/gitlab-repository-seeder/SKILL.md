@@ -1,5 +1,6 @@
 ---
 name: gitlab-repository-seeder
+skill_type: skill
 description: >
   GitLab Repository Seeder atomic skill. Creates GitOps project repositories,
   generates scoped Personal Access Tokens, and seeds initial repository file structures using gitlab-mcp.
@@ -11,6 +12,8 @@ tags:
   - provisioning
 requires:
   - gitlab-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # GitLab Repository Seeder Skill

@@ -1,5 +1,7 @@
 ---
 name: overnight-research
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Unattended overnight research loop: Generate → Backtest → Debate → Report.
 tags: [finance, research, overnight, automation]
@@ -11,8 +13,8 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 # Overnight Research Workflow (Cron: 10PM ET daily)

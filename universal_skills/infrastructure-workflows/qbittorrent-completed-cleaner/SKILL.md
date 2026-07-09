@@ -1,8 +1,9 @@
 ---
 name: qbittorrent-completed-cleaner
+skill_type: workflow
 description: >-
   Discovers completed downloads, prompts the user to select torrents to remove, and securely prunes the active dashboard list (optionally deleting files).
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['qbittorrent', 'torrents', 'cleaner', 'pruning', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Qbittorrent Completed Cleaner Workflow

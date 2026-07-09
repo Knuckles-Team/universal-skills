@@ -1,11 +1,13 @@
 ---
 name: interactive-explain
+domain: development
+skill_type: skill
 description: Interactive codebase explanations
 license: MIT
 tags: []
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Interactive Explain

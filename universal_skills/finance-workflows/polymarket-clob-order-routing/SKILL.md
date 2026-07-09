@@ -1,8 +1,9 @@
 ---
 name: polymarket-clob-order-routing
+skill_type: workflow
 description: Automated Polymarket CLOB v2 order creation, signature signing, and REST
   API routing
-domain: finance
+domain: finance-workflows
 tags:
 - polymarket
 - orders
@@ -13,6 +14,8 @@ requires:
 - mcp_market_data
 - mcp_orders
 - mcp_portfolio
+metadata:
+  version: '1.0.2'
 ---
 
 # polymarket-clob-order-routing Workflow

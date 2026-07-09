@@ -1,8 +1,9 @@
 ---
 name: comparative-analysis-workflow
+skill_type: workflow
 description: >-
   Parallel execution workflow for comparative analysis and innovation extraction using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: researcher
 team_config:
   name: comparative_analysis_team
@@ -22,6 +23,8 @@ team_config:
     synthesis-agent: [graph_write, rep_rm_git]
 tags: [research, comparative-analysis]
 concept: CONCEPT:RES-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Comparative Analysis Workflow

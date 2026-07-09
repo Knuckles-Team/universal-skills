@@ -1,5 +1,7 @@
 ---
 name: automated-credential-rotation
+domain: infrastructure
+skill_type: skill
 description: >-
   Holistically and safely rotate fleet secrets (GitHub/GitLab PATs, Keycloak
   OIDC client secrets, database passwords, LLM/API keys, OTEL/Langfuse keys,
@@ -15,8 +17,8 @@ description: >-
 license: MIT
 tags: [infra, security, credentials, secrets, rotation, openbao, keycloak, portainer, policy]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Automated Credential Rotation

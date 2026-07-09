@@ -1,11 +1,13 @@
 ---
 name: code-walkthrough
+domain: development
+skill_type: skill
 description: Generates code walkthroughs
 license: MIT
 tags: []
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Code Walkthrough

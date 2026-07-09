@@ -1,8 +1,9 @@
 ---
 name: smart-home-automation-orchestrator
+skill_type: workflow
 description: >-
   Interacts with Home Assistant using home-assistant-agent to read device states, query calendar schedules, and trigger specific smart home services, scenes, scripts, or events.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -16,6 +17,8 @@ team_config:
     deployer-agent: [pt_stack, cnt_cm_compose_operations]
 tags: ['home-assistant', 'iot', 'automation', 'scene-management', 'home-assistant-agent']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Smart Home Automation Orchestrator Workflow

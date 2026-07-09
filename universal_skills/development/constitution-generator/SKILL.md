@@ -1,11 +1,13 @@
 ---
 name: constitution-generator
+domain: development
+skill_type: skill
 description: Creates or updates constitution.md with project governance rules and principles.
 license: MIT
 tags: [constitution generator]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # SDD Constitution Generator

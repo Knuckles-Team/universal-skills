@@ -1,11 +1,13 @@
 ---
 name: sdd-implementer
+domain: development
+skill_type: skill
 description: Executes tasks and tracks progress natively with Tasks Pydantic models.
 license: MIT
 tags: [sdd implementer]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # SDD Implementer

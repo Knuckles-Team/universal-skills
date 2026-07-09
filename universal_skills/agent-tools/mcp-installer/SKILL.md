@@ -1,5 +1,7 @@
 ---
 name: mcp-installer
+domain: agent-tools
+skill_type: skill
 description: >-
   Install a pre-configured MCP config file into various agent tool directories.
   Use when the user wants to install an mcp_config.json into Windsurf, Claude Code,
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [mcp, installer, deployment, agent-tools, config]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 ---
 # MCP Installer Skill
 

@@ -1,11 +1,13 @@
 ---
 name: host-process-inspector
+domain: system
+skill_type: skill
 description: Read-only host process inspector for a hot, slow, or swap-thrashing machine. Over SSH via tunnel-manager (or systems-manager) it ranks the worst CPU/RAM offenders, finds zombie/defunct processes and names their non-reaping parent, flags orphaned-to-PID1 runaways (a search or job whose launching session exited and got reparented to init), detects swap exhaustion and which processes hold the most swap, lists uninterruptible D-state processes, and — best effort — maps a culprit PID back to its owning tmux session. Produces a ranked hog report with kill/reap candidates and a load-vs-cores verdict. Use when a host's load is high, a box feels sluggish, or leaked/zombie processes are suspected. Read-only — it NEVER kills, reaps, or tunes anything; pair it with the systems-issue-troubleshooter workflow or host-doctor for gated remediation. Not for disk cleanup (use host-disk-reclaimer) or plain resource sampling (use host-resource-sampler).
 license: MIT
 tags: [system, host, process, zombie, runaway, swap, cpu, diagnostics, ops, ssh]
 metadata:
+  version: '1.0.2'
   author: Knuckles-Team
-  version: '0.1.0'
 requires:
   - tunnel-manager-mcp
   - systems-manager-mcp

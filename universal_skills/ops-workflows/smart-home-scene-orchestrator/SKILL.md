@@ -1,8 +1,9 @@
 ---
 name: smart-home-scene-orchestrator
+skill_type: workflow
 description: >-
   Parallel execution workflow for smart home scene orchestrator using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, smart-home-scene-orchestrator]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Smart Home Scene Orchestrator Workflow

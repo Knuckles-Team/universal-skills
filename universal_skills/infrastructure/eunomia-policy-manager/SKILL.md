@@ -1,5 +1,7 @@
 ---
 name: eunomia-policy-manager
+domain: infrastructure
+skill_type: skill
 description: >-
   Manage Eunomia authorization policies for the MCP server fleet. Lists,
   creates, pushes, and deletes policies on the centralized Eunomia remote
@@ -12,8 +14,8 @@ description: >-
 license: MIT
 tags: [eunomia, authorization, policies, mcp, security, governance]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.17.0'
 ---
 
 # Eunomia Policy Manager Skill

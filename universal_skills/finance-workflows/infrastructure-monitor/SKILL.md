@@ -1,5 +1,7 @@
 ---
 name: infrastructure-monitor
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Continuous infrastructure health monitoring for trading services.
   Discovers new metrics and alerts proactively.
@@ -12,8 +14,8 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:ECO-4.7'
 ---
 # Infrastructure Monitor Workflow (Cron: every 15 minutes)

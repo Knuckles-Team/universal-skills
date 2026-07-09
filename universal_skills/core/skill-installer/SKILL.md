@@ -1,5 +1,7 @@
 ---
 name: skill-installer
+domain: core
+skill_type: skill
 description: >-
   Install and deploy universal-skills and skill-graphs into various agent tool
   directories. Use when the user wants to install skills into Windsurf, Claude
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [skills, installer, deployment, agent-tools]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Skill Installer Skill
 

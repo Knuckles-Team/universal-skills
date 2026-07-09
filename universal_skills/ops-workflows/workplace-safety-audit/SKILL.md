@@ -1,8 +1,9 @@
 ---
 name: workplace-safety-audit
+skill_type: workflow
 description: >-
   Parallel execution workflow for workplace safety audit using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, workplace-safety-audit]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Workplace Safety Audit Workflow

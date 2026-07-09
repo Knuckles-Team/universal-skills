@@ -1,8 +1,9 @@
 ---
 name: parameter-sweep-optimizer
+skill_type: workflow
 description: >-
   Spawns 25 parallel parameter sweep configurations, extracts performance curves, plots response surfaces, and designates optimal param configs.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [parameter-sweep, optimization, grid-search, visualization]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Parameter Sweep Optimizer Workflow

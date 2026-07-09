@@ -1,16 +1,17 @@
 ---
 name: ml-classification-project
+skill_type: workflow
 description: >-
   Build the ML-classification portfolio project: engineer technical-indicator
   features, train an XGBoost model to predict whether the S&P 500 will be up or
   down tomorrow, benchmark it against a coin flip, and publish a GitHub repo.
-domain: finance
+domain: finance-workflows
 agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, machine-learning, xgboost, classification, portfolio, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

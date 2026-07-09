@@ -1,8 +1,9 @@
 ---
 name: org-restructure-simulation
+skill_type: workflow
 description: >-
   Parallel execution workflow for org restructure simulation using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: [ops, org-restructure-simulation]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Org Restructure Simulation Workflow

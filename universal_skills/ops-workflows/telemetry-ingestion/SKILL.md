@@ -1,8 +1,9 @@
 ---
 name: telemetry-ingestion
+skill_type: workflow
 description: >-
   Extracts anomalous execution traces and success rates from Langfuse, then ingests them into the Knowledge Graph as ExecutionSummary and PerformanceAnomaly nodes.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: ['telemetry', 'observability', 'langfuse', 'graph-os']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Telemetry Ingestion Workflow

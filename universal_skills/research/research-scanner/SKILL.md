@@ -1,5 +1,7 @@
 ---
 name: research-scanner
+domain: research
+skill_type: skill
 description: >-
   Agentic research paper discovery pipeline. Extracts focus topics from the Knowledge Graph,
   dynamically builds a relevance taxonomy, fetches daily papers via the scholarx MCP,
@@ -10,8 +12,8 @@ description: >-
 license: MIT
 tags: [research, scanner, scholarx, pulselink, automation, agent-workflow]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Research Scanner Skill

@@ -1,5 +1,7 @@
 ---
 name: rotate-credentials
+domain: infrastructure
+skill_type: skill
 description: >-
   Set one unified OS-account password across many hosts over SSH (and optionally the
   in-band iDRAC/BMC user), verifying each and reporting a per-host summary. Use when the
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.21'
 ---
 
 # Rotate Credentials

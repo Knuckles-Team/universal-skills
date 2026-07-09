@@ -1,8 +1,9 @@
 ---
 name: systems-issue-troubleshooter
+skill_type: workflow
 description: >-
   Inspect logs, find zombie/hung processes, disk space shortages, or corruptions, and remediate using Systems Manager
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: [infra, systems-issue-troubleshooter]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Systems Issue Troubleshooter Workflow

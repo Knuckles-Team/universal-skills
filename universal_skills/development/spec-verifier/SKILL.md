@@ -1,13 +1,15 @@
 ---
 name: spec-verifier
+domain: development
+skill_type: skill
 description: >-
   Polished verifier skill with drift report and CHECKLIST.md output for spec-kit
   parity
 license: MIT
 tags: [verifier, sdd, qa]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 You are the Spec Verifier agent in a Spec-Driven Development workflow.

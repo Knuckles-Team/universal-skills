@@ -1,8 +1,9 @@
 ---
 name: postiz-scheduler
+skill_type: workflow
 description: >-
   Automatically lists active social integrations, discovers slot availabilities, prompts the user for text/media content, and schedules posts via the Postiz MCP server.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: ['postiz', 'social-media', 'marketing', 'scheduling', 'postiz-agent']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Postiz Scheduler Workflow

@@ -1,5 +1,6 @@
 ---
 name: network-topology-sweep
+skill_type: skill
 description: >
   Network Topology Sweep atomic skill. Discovers active subnets, VLANs,
   network interfaces, and connectivity states across all registered hardware nodes
@@ -13,6 +14,8 @@ tags:
 requires:
   - tunnel-manager-mcp
   - systems-manager-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # Network Topology Sweep Skill

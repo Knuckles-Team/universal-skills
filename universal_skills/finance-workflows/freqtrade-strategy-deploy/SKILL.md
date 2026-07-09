@@ -1,8 +1,9 @@
 ---
 name: freqtrade-strategy-deploy
+skill_type: workflow
 description: >-
   Scaffolds standard-compliant Python strategy files for Freqtrade, runs parallel hyperparameter optimizations, dry-runs them, and elevates to live webhook monitoring.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [freqtrade, deploy, hyperopt, automation]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Freqtrade Strategy Deploy Workflow

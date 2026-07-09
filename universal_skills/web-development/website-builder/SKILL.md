@@ -1,5 +1,7 @@
 ---
 name: website-builder
+domain: web-development
+skill_type: skill
 description: >-
   Act as a World-Class Senior Creative Technologist and Lead Frontend Engineer to
   build high-fidelity, cinematic '1:1 Pixel Perfect' landing pages. Use when
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [frontend, website, react, tailwind, gsap, cinematic]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Website Builder
 

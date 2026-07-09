@@ -1,13 +1,15 @@
 ---
 name: pre-mortem
+domain: product
+skill_type: skill
 description: >-
   Gary Klein's and Daniel Kahneman's 30-year-old prospective hindsight technique to stress-test high-stakes decisions by time-traveling 6 months into the future when the plan is dead, reverse-engineering failure modes, spawning parallel investigators, and synthesizing revised plans/checklists.
 categories: [Productivity]
 tags: [pre-mortem, planning, risk-analysis, decision-making, strategy]
 license: MIT
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Pre-Mortem Skill (pre-mortem)
 

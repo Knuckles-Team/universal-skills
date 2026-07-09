@@ -1,8 +1,9 @@
 ---
 name: brand-identity-generator
+skill_type: workflow
 description: >-
   Parallel execution workflow for brand identity generator using the Unified Parallel Engine
-domain: social
+domain: social-workflows
 agent: content_strategist
 team_config:
   name: content_creation_team
@@ -20,6 +21,8 @@ team_config:
     analytics-agent: [graph_query, graph_analyze]
 tags: [social, brand-identity-generator]
 concept: CONCEPT:SOCIAL-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Brand Identity Generator Workflow

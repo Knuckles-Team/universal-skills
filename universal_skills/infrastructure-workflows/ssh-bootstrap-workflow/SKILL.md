@@ -1,8 +1,9 @@
 ---
 name: ssh-bootstrap-workflow
+skill_type: workflow
 description: >-
   Interactive SSH key bootstrap for new infrastructure hosts. Checks existing connectivity, generates RSA keys if missing, and distributes them via tunnel-manager to establish passwordless SSH access for future discovery scans.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: ['ssh', 'bootstrap', 'keys', 'onboarding', 'security']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Ssh Bootstrap Workflow

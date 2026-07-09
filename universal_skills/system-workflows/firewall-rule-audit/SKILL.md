@@ -1,8 +1,9 @@
 ---
 name: firewall-rule-audit
+skill_type: workflow
 description: >-
   Parallel execution workflow for firewall rule audit using the Unified Parallel Engine
-domain: system
+domain: system-workflows
 agent: systems_engineer
 team_config:
   name: systems_operations_team
@@ -18,6 +19,8 @@ team_config:
     remediator-agent: [tun_tm_remote, tun_tm_inventory]
 tags: [system, firewall-rule-audit]
 concept: CONCEPT:SYS-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Firewall Rule Audit Workflow

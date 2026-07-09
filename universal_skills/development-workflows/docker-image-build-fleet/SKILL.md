@@ -1,8 +1,9 @@
 ---
 name: docker-image-build-fleet
+skill_type: workflow
 description: >-
   Parallel execution workflow for docker image build fleet using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -20,6 +21,8 @@ team_config:
     publisher-agent: [rep_rm_git, gl_merge_requests]
 tags: [dev-workflows, docker-image-build-fleet]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Docker Image Build Fleet Workflow

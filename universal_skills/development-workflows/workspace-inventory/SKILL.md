@@ -1,8 +1,9 @@
 ---
 name: workspace-inventory
+skill_type: workflow
 description: >-
   Full workspace discovery — list available workspace actions, repositories, and validate project structure.
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -16,6 +17,8 @@ team_config:
     builder-agent: [rep_rm_projects]
 tags: ['workspace', 'git', 'validation', 'repositories']
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Workspace Inventory Workflow

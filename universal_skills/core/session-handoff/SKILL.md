@@ -1,5 +1,7 @@
 ---
 name: session-handoff
+domain: core
+skill_type: skill
 description: >-
   Create and restore comprehensive context handoff documents for agent session
   transfers. Use when context is getting full, a major task milestone is complete,
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [handoff, context, session, resumption, continuity, memory]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Session Handoff
 

@@ -1,8 +1,9 @@
 ---
 name: train-model
+skill_type: workflow
 description: >-
   Agent-driven LLM training workflow: curate a corpus, train (fine-tune or pretrain from scratch), align, evaluate-gate, and register the checkpoint.
-domain: ml
+domain: machine-learning-workflows
 agent: ml_orchestrator
 team_config:
   name: model_training_team
@@ -20,6 +21,8 @@ team_config:
     ml_orchestrator: [graph_orchestrate]
 tags: [ml, training, fine-tuning, pretraining, rlhf]
 concept: CONCEPT:ML-007
+metadata:
+  version: '1.0.2'
 ---
 
 # Train Model Workflow

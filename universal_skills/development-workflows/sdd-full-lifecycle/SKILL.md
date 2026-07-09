@@ -1,8 +1,9 @@
 ---
 name: sdd-full-lifecycle
+skill_type: workflow
 description: >-
   End-to-end Spec-Driven Development: requirements parsing, concurrent implementation, QA test generation, and walkthrough verification.
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -20,6 +21,8 @@ team_config:
     publisher-agent: [rep_rm_git, gl_merge_requests]
 tags: [sdd, backend, frontend, qa, devops, verification]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Sdd Full Lifecycle Workflow

@@ -1,5 +1,7 @@
 ---
 name: efficient-mode
+domain: core
+skill_type: skill
 description: >-
   Ultra-compressed communication mode. Cuts token usage ~75% by dropping filler,
   articles, and pleasantries while keeping full technical accuracy. Use when user
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [efficient, tokens, brief, mode]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 Respond terse like smart engineer. All technical substance stay. Only fluff die.

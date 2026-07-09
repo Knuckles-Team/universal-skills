@@ -1,8 +1,9 @@
 ---
 name: code-walkthrough-library
+skill_type: workflow
 description: >-
   Parallel execution workflow for code walkthrough library using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [rep_rm_projects, gl_pipelines]
 tags: [dev-workflows, code-walkthrough-library]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Code Walkthrough Library Workflow

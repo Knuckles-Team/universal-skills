@@ -1,8 +1,9 @@
 ---
 name: strategy-tournament
+skill_type: workflow
 description: >-
   Performs concurrent backtests across 10 distinct algorithmic strategies, evaluates risk-adjusted metrics, ranks return profiles, and selects the top models.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [tournament, evaluation, metrics, selection]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Strategy Tournament Workflow

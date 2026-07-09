@@ -1,8 +1,9 @@
 ---
 name: sentiment-alpha-pipeline
+skill_type: workflow
 description: >-
   Crawls web news, evaluates social posts sentiment spikes, fuses sentiment signals, and backtests correlation results.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [sentiment, crawler, social, nlp]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Sentiment Alpha Pipeline Workflow

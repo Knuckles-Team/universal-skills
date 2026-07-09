@@ -1,5 +1,7 @@
 ---
 name: browser-tools
+domain: web-development
+skill_type: skill
 description: >-
   Use when interacting with web pages, automating browser actions, performing E2E
   web application testing, navigating visually, scraping dynamic content, or
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Browser Tools
 

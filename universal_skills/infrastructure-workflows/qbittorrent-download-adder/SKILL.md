@@ -1,8 +1,9 @@
 ---
 name: qbittorrent-download-adder
+skill_type: workflow
 description: >-
   Prompts the user for a torrent/magnet download link and custom save parameters, then schedules and starts the download on qBittorrent.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -16,6 +17,8 @@ team_config:
     deployer-agent: [pt_stack, cnt_cm_compose_operations]
 tags: ['qbittorrent', 'torrents', 'adder', 'downloads', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Qbittorrent Download Adder Workflow

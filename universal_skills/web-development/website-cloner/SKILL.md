@@ -1,5 +1,7 @@
 ---
 name: website-cloner
+domain: web-development
+skill_type: skill
 description: >-
   High-fidelity website reverse-engineering and cloning into a Next.js/Tailwind
   v4/shadcn codebase. Extracts assets, CSS, and behavior section-by-section and
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [frontend, website, cloner, nextjs, tailwind, shadcn, reverse-engineering]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Website Cloner

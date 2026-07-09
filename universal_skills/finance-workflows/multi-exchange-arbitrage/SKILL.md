@@ -1,8 +1,9 @@
 ---
 name: multi-exchange-arbitrage
+skill_type: workflow
 description: >-
   Scans feeds across spot and derivative exchanges concurrently, computes fee-adjusted spread funding margins, and executes both legs.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [arbitrage, multi-exchange, derivatives, spot]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Multi Exchange Arbitrage Workflow

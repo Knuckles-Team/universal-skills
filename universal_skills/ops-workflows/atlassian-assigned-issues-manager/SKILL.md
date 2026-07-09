@@ -1,8 +1,9 @@
 ---
 name: atlassian-assigned-issues-manager
+skill_type: workflow
 description: >-
   Automatically retrieves issues assigned to the current user, flags tickets older than 7 days, and maps current coding progress to suggest new ticket backlogs.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: ['atlassian', 'jira', 'tasks', 'agile', 'atlassian-agent']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Atlassian Assigned Issues Manager Workflow

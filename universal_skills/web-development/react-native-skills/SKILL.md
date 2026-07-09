@@ -1,5 +1,7 @@
 ---
 name: react-native-skills
+domain: web-development
+skill_type: skill
 description: >-
   React Native and Expo best practices for building performant mobile apps. Use
   when building React Native components, optimizing list performance, implementing
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [react-native, mobile, expo, ui, performance]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # React Native Skills
 

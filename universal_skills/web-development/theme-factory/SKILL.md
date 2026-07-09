@@ -1,5 +1,7 @@
 ---
 name: theme-factory
+domain: web-development
+skill_type: skill
 description: >-
   Creates design themes and token systems for applications, websites, and UI
   components. Use when the user requests a new visual theme, dark/light mode
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [theming, design-tokens, design-system, css-variables, color-schemes, dark-mode]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Theme Factory
 

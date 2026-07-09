@@ -1,8 +1,9 @@
 ---
 name: grocery-inventory-tracker
+skill_type: workflow
 description: >-
   Parallel execution workflow for grocery inventory tracker using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, grocery-inventory-tracker]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Grocery Inventory Tracker Workflow

@@ -1,8 +1,9 @@
 ---
 name: exchange-health-monitor
+skill_type: workflow
 description: >-
   Parallel execution workflow for exchange health monitor using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [finance, exchange-health-monitor]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Exchange Health Monitor Workflow

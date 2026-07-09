@@ -1,5 +1,7 @@
 ---
 name: agent-browser
+domain: agent-tools
+skill_type: skill
 description: >-
   Browser automation CLI for AI agents using the agent-browser tool. Use when the
   user needs to interact with websites including navigating pages, filling forms,
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [browser, automation, playwright, web-scraping, testing, screenshots]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Browser Automation with agent-browser
 

@@ -1,5 +1,6 @@
 ---
 name: hardware-profile-sweep
+skill_type: skill
 description: >
   Hardware Profile Sweep atomic skill. Collects CPU, memory, disk, OS info,
   and GPU/accelerator details across reachable hardware nodes using systems-manager-mcp.
@@ -12,6 +13,8 @@ tags:
 requires:
   - systems-manager-mcp
   - tunnel-manager-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # Hardware Profile Sweep Skill

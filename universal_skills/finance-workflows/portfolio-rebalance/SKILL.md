@@ -1,5 +1,7 @@
 ---
 name: portfolio-rebalance
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Periodic portfolio rebalancing: Optimize → Compare → Execute.
   Supports MVO, Risk Parity, and Black-Litterman optimization.
@@ -12,8 +14,8 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 # Portfolio Rebalance Workflow (Cron: Monday 9AM ET)

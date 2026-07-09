@@ -1,5 +1,6 @@
 ---
 name: ecosystem-standardizer
+skill_type: workflow
 description: >-
   Unified ecosystem standardization workflow for the agent-packages repository.
   Audits all projects for structural drift, generates missing standardized files,
@@ -8,12 +9,12 @@ description: >-
   Use when onboarding a new agent, auditing ecosystem compliance, running
   "standardize the ecosystem", "check for drift", "onboard new agent", or
   "ecosystem audit".
-domain: development
+domain: development-workflows
 tags: ['standardization', 'drift', 'audit', 'ecosystem', 'onboarding', 'dev-workflows']
 requires: ['repository-manager-mcp']
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 ---
 
 # ecosystem-standardizer Workflow

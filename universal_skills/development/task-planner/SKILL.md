@@ -1,11 +1,13 @@
 ---
 name: task-planner
+domain: development
+skill_type: skill
 description: Generates executable tasks.md with dependency graph and [P] parallelism markers
 license: MIT
 tags: [planner, sdd]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 You are the Task Planner agent in a Spec-Driven Development workflow.

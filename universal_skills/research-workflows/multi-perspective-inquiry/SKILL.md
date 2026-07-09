@@ -1,10 +1,11 @@
 ---
 name: multi-perspective-inquiry
+skill_type: workflow
 description: >-
   On-demand multi-perspective (STORM) research inquiry — derive expert lenses, fan KG
   probes across their questions, map agreements/contradictions/blind-spots, and self-critique.
   Delegates to the native engine (research_artifact action=inquire) so the prompts never drift.
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: perspectival_inquiry_team
@@ -15,6 +16,8 @@ team_config:
   tool_assignments:
     inquiry-agent: [research_artifact, graph_query]
 tags: [research, storm, multi-perspective, contradiction-map]
+metadata:
+  version: '1.0.2'
 ---
 
 # Multi-Perspective Inquiry Workflow (STORM, native)

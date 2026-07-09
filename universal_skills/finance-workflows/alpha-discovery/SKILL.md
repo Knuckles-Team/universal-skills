@@ -1,13 +1,15 @@
 ---
 name: alpha-discovery
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Automated alpha mining: Scan market data → Generate factors → Score → Fuse signals.
 tags: [finance, alpha, signals, research]
 team_config: trading_department
 agent: quant_research_analyst
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 # Alpha Discovery Workflow

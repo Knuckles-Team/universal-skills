@@ -1,5 +1,7 @@
 ---
 name: creative-media
+domain: creative
+skill_type: skill
 description: >-
   Creates and manipulates creative media assets including animated GIFs, social
   media videos, image format conversions, and basic video editing workflows. Use
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [media, gif, video, image-processing, ffmpeg, pillow, conversion]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Creative Media Tools
 

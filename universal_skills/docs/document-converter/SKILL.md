@@ -1,5 +1,7 @@
 ---
 name: document-converter
+domain: docs
+skill_type: skill
 description: >-
   Bulk convert office documents (.doc, .docx, .pdf) to Markdown format with high-
   fidelity formatting preservation. Use when preparing documents for LLM
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [pdf, docx, markdown, conversion, document-processing]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Document Converter Skill
 

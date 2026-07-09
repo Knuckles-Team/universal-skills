@@ -1,12 +1,13 @@
 ---
 name: microstructure-trading-loop
+skill_type: workflow
 description: >-
   Orchestrates the KG-driven microstructure trading loop end-to-end: curate
   trading books/research into the knowledge graph, backtest microstructure
   signals and write priors back, seed Bayesian signal fusion from those priors,
   run paper-first trading decisions via the curated trading team, journal each
   decision, and evaluate (human-gated) stage graduation.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: trading_paper_v1
@@ -28,6 +29,8 @@ team_config:
     attribution-analyst: [graph_write, emerald_portfolio]
 tags: [microstructure, knowledge-graph, signal-fusion, paper-first, lifecycle]
 concept: CONCEPT:EE-040
+metadata:
+  version: '1.0.2'
 ---
 
 # Microstructure Trading Loop

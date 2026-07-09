@@ -1,8 +1,9 @@
 ---
 name: observability-and-research
+skill_type: workflow
 description: >-
   Combined observability check with research discovery. Validates Langfuse is healthy while concurrently searching for papers on agent observability.
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -18,6 +19,8 @@ team_config:
     synthesizer-agent: [graph_analyze, document_tools]
 tags: ['observability', 'research', 'langfuse', 'cross-domain']
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Observability And Research Workflow

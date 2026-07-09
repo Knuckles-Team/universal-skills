@@ -1,8 +1,9 @@
 ---
 name: operational-risk-audit
+skill_type: workflow
 description: >-
   Parallel execution workflow for operational risk audit using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [finance, operational-risk-audit]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Operational Risk Audit Workflow

@@ -1,5 +1,7 @@
 ---
 name: canvas-design
+domain: creative
+skill_type: skill
 description: >-
   Creates visual designs using HTML Canvas or SVG APIs for banners, social media
   assets, posters, or UI components. Use when the user requests programmatic
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [canvas, svg, graphic-design, programmatic-design, composition]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Canvas & SVG Design
 

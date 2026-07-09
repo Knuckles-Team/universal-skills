@@ -1,8 +1,9 @@
 ---
 name: esg-screening-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -18,6 +19,8 @@ team_config:
     risk-assessor: [graph_query, graph_analyze]
 tags: [finance, esg-screening-pipeline]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Esg Screening Pipeline Workflow

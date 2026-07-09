@@ -1,5 +1,7 @@
 ---
 name: agent-package-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Scaffold a complete agent-package project with all config files, Docker
   infrastructure, MCP server, A2A agent, and API client stubs. Use when creating a
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Agent Package Builder

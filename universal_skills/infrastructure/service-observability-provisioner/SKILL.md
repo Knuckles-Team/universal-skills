@@ -1,5 +1,6 @@
 ---
 name: service-observability-provisioner
+skill_type: skill
 description: >
   Service Observability Provisioner atomic skill. Integrates new container log targets
   with Promtail and registers dynamic metrics scraping endpoints with Prometheus.
@@ -14,6 +15,8 @@ tags:
 requires:
   - systems-manager-mcp
   - portainer-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # Service Observability Provisioner Skill

@@ -1,8 +1,9 @@
 ---
 name: deploy-observability-stack
+skill_type: workflow
 description: >-
   Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard integrations.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: [prometheus, grafana, loki, docker, portainer, observability]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Deploy Observability Stack Workflow

@@ -1,8 +1,9 @@
 ---
 name: code-enhancer-workflow
+skill_type: workflow
 description: >-
   Parallel execution workflow for code enhancement and multi-domain deep-dive auditing using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: code_enhancement_team
@@ -22,6 +23,8 @@ team_config:
     synthesis-agent: [graph_write, rep_rm_git]
 tags: [dev-workflows, code-enhancer]
 concept: CONCEPT:DEV-002
+metadata:
+  version: '1.0.2'
 ---
 
 # Code Enhancer Workflow

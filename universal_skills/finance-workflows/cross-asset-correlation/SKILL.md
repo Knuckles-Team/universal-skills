@@ -1,8 +1,9 @@
 ---
 name: cross-asset-correlation
+skill_type: workflow
 description: >-
   Collects multi-ticker price data, constructs rolling correlation matrices, flags eigen anomalies, and adjusts portfolio scale limits.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [correlation, cross-asset, matrix, risk]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Cross Asset Correlation Workflow

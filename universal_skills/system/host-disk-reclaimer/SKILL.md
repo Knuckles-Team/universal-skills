@@ -1,11 +1,13 @@
 ---
 name: host-disk-reclaimer
+domain: system
+skill_type: skill
 description: 'Discover what is consuming disk on a host and safely reclaim space. Use when a filesystem is full or nearly full ("no space left on device", df shows 90%+), when /home or / is ballooning, or when the user asks to free up space, clean caches, prune stale git worktrees, garbage-collect a Docker registry, or consolidate per-repo virtualenvs. Runs read-only discovery (df + du breakdown) first, then gated reclamation in safety order: regenerable caches, merged+clean git worktrees, Docker registry GC, docker system prune, and redundant venv consolidation — always preserving in-flight work, live service data, and application databases. Works on the local host or, for a remote host, via tunnel-manager (SSH) and container-manager-mcp (Docker over SSH). Do NOT use to delete application data, dump databases, or migrate/rotate live services to other hosts (that is a deployment-planner + tunnel-manager job).'
 license: MIT
 tags: [system, disk, cleanup, docker, registry, git-worktree, cache, venv, ops]
 metadata:
+  version: '1.0.2'
   author: Knuckles-Team
-  version: '0.1.21'
 ---
 
 # Host Disk Reclaimer

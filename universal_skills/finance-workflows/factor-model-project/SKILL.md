@@ -1,16 +1,17 @@
 ---
 name: factor-model-project
+skill_type: workflow
 description: >-
   Build the Fama-French 3-factor portfolio project: download the free factor data
   from Kenneth French's website, regress a portfolio's returns against market,
   size, and value factors, interpret the loadings, and publish a GitHub repo.
-domain: finance
+domain: finance-workflows
 agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, factor-model, fama-french, regression, portfolio, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

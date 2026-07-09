@@ -1,5 +1,6 @@
 ---
 name: x-posts-to-kg-ingestion
+skill_type: workflow
 description: >-
   Search X (formerly Twitter) posts and ingest content into the Knowledge Graph
   with automatic classification, tiered memory, and self-evolution awareness.
@@ -8,12 +9,12 @@ description: >-
   tweets, threads, and X Articles (long-form content).
   Triggers on "search X", "ingest X posts", "browse X", "x to kg",
   "x research", "social media ingestion".
-domain: social
+domain: social-workflows
 tags: ['social', 'x', 'ingestion', 'graph-os', 'knowledge-graph', 'evolution']
 requires: ['graph-os']
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '2.0.0'
   concepts:
     - CONCEPT:ECO-4.6
     - CONCEPT:KG-2.7

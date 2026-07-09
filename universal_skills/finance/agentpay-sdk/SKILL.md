@@ -1,5 +1,7 @@
 ---
 name: agentpay-sdk
+domain: finance
+skill_type: skill
 description: >-
   Install and operate the AgentPay SDK. Trigger this when an agent needs to
   install `agentpay`, explain AgentPay SDK capabilities without probing the
@@ -12,8 +14,8 @@ description: >-
 license: MIT
 tags: [agentpay sdk]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # AgentPay SDK

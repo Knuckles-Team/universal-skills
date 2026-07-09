@@ -1,13 +1,15 @@
 ---
 name: spec-generator
+domain: development
+skill_type: skill
 description: >-
   Generates spec.md with user stories and acceptance criteria. Replaces product-
   management.
 license: MIT
 tags: [spec generator]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # SDD Spec Generator

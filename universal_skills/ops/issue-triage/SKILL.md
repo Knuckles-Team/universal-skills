@@ -1,5 +1,7 @@
 ---
 name: issue-triage
+domain: ops
+skill_type: skill
 description: >-
   Triage issues through a state machine driven by triage roles. Use when user
   wants to create an issue, triage issues, review incoming bugs or feature
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [github, issues, triage, bug tracking]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Triage

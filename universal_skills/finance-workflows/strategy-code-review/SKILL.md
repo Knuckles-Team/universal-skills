@@ -1,8 +1,9 @@
 ---
 name: strategy-code-review
+skill_type: workflow
 description: >-
   Loads strategy script files, audits logic for lookahead bias, checks index variables leaks, and generates quality reviews.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [code-review, static-analysis, leakage-bias, qa]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Strategy Code Review Workflow

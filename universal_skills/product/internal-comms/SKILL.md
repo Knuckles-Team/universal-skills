@@ -1,5 +1,7 @@
 ---
 name: internal-comms
+domain: product
+skill_type: skill
 description: >-
   Creates internal communications including all-hands presentations, team
   announcements, project status updates, async memos, meeting agendas, and
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [communications, announcements, memos, all-hands, status-updates, async]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Internal Communications
 

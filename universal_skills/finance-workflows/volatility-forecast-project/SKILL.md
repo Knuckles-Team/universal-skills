@@ -1,16 +1,17 @@
 ---
 name: volatility-forecast-project
+skill_type: workflow
 description: >-
   Build the volatility-forecasting portfolio project: fit GARCH models to forecast
   daily volatility, compare the forecast against realized volatility, evaluate the
   fit, and publish a GitHub repo. This is literally what risk desks do.
-domain: finance
+domain: finance-workflows
 agent: risk_analyst
 team_config: trading_department
 tags: [quant, volatility, garch, risk, forecasting, portfolio, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

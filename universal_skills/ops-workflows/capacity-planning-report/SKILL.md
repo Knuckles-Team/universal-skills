@@ -1,8 +1,9 @@
 ---
 name: capacity-planning-report
+skill_type: workflow
 description: >-
   Parallel execution workflow for capacity planning report using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, capacity-planning-report]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Capacity Planning Report Workflow

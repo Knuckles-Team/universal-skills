@@ -1,8 +1,9 @@
 ---
 name: cross-department-project
+skill_type: workflow
 description: >-
   Parallel execution workflow for cross department project using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: [ops, cross-department-project]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Cross Department Project Workflow

@@ -1,8 +1,9 @@
 ---
 name: service-dependency-map
+skill_type: workflow
 description: >-
   Maps the full service dependency chain from MCP server to agent package to container to stack to host, creating a queryable dependency graph in the Knowledge Graph.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['services', 'dependencies', 'mapping', 'mcp', 'topology']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Service Dependency Map Workflow

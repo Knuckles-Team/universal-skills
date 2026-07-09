@@ -1,8 +1,9 @@
 ---
 name: local-container-troubleshooter
+skill_type: workflow
 description: >-
   Automatically scans local containers, pulls crash logs, and designs remediation steps to resolve failures using container-manager-mcp.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: ['docker', 'podman', 'local-deploy', 'troubleshooting', 'container-manager-mcp']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Local Container Troubleshooter Workflow

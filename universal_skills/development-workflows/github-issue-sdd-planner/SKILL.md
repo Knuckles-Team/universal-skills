@@ -1,8 +1,9 @@
 ---
 name: github-issue-sdd-planner
+skill_type: workflow
 description: >-
   Retrieves reported issues for a repository from GitHub, validates their correctness, investigates their root cause, and generates high-fidelity Spec-Driven Development (SDD) specifications and implementation plans within the project's .specify/ workspace directory.
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -20,6 +21,8 @@ team_config:
     publisher-agent: [rep_rm_git, gl_merge_requests]
 tags: ['github', 'sdd', 'planning', 'spec-generator', 'github-agent']
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Github Issue Sdd Planner Workflow

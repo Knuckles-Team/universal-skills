@@ -1,8 +1,9 @@
 ---
 name: knowledge-graph-enrichment
+skill_type: workflow
 description: >-
   Parallel execution workflow for knowledge graph enrichment using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -20,6 +21,8 @@ team_config:
     ingestor-agent: [graph_write, kg_graph_ingest]
 tags: [research, knowledge-graph-enrichment]
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Knowledge Graph Enrichment Workflow

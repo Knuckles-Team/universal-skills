@@ -1,5 +1,6 @@
 ---
 name: docker-compose-drift-detector
+skill_type: skill
 description: >
   Docker Compose and Swarm configuration drift detection atomic skill.
   Compares running state against git configuration.
@@ -7,8 +8,8 @@ domain: system
 license: MIT
 tags: [docker, swarm, infrastructure, drift]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - container-manager-mcp
 ---

@@ -1,8 +1,9 @@
 ---
 name: margin-utilization-monitor
+skill_type: workflow
 description: >-
   Parallel execution workflow for margin utilization monitor using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -18,6 +19,8 @@ team_config:
     risk-assessor: [graph_query, graph_analyze]
 tags: [finance, margin-utilization-monitor]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Margin Utilization Monitor Workflow

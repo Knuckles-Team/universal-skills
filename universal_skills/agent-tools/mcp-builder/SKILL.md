@@ -1,5 +1,7 @@
 ---
 name: mcp-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Guide for creating high-quality MCP (Model Context Protocol) servers that enable
   LLMs to interact with external services through well-designed tools. Use when
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # MCP Server Development Guide
 

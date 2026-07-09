@@ -1,8 +1,9 @@
 ---
 name: container-resource-limits
+skill_type: workflow
 description: >-
   Parallel execution workflow for container resource limits using the Unified Parallel Engine
-domain: system
+domain: system-workflows
 agent: systems_engineer
 team_config:
   name: systems_operations_team
@@ -20,6 +21,8 @@ team_config:
     reporter-agent: [graph_write, document_tools]
 tags: [system, container-resource-limits]
 concept: CONCEPT:SYS-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Container Resource Limits Workflow

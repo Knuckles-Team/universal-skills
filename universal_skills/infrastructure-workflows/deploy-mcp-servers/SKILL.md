@@ -1,8 +1,9 @@
 ---
 name: deploy-mcp-servers
+skill_type: workflow
 description: >-
   Parallel execution workflow for deploy mcp servers using the Unified Parallel Engine
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -14,6 +15,8 @@ team_config:
     discovery-agent: [tun_tm_system, tun_tm_hosts]
 tags: [infra, deploy-mcp-servers]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Deploy Mcp Servers Workflow

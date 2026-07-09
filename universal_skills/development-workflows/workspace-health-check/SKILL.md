@@ -1,8 +1,9 @@
 ---
 name: workspace-health-check
+skill_type: workflow
 description: >-
   Combined workspace + system health validation. Checks repository state alongside system resources.
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [rep_rm_projects, gl_pipelines]
 tags: ['workspace', 'health', 'systems', 'cross-domain']
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Workspace Health Check Workflow

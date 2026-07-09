@@ -1,8 +1,9 @@
 ---
 name: hardware-sweep
+skill_type: workflow
 description: >-
   OS and hardware information sweep across all inventory hosts. Collects CPU, memory, disk, GPU, and OS details for each machine and ingests them into the Knowledge Graph for troubleshooting and service designation decisions.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: ['hardware', 'sweep', 'discovery', 'os', 'system-info']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Hardware Sweep Workflow

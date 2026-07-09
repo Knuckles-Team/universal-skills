@@ -1,8 +1,9 @@
 ---
 name: cross-reference-builder
+skill_type: workflow
 description: >-
   Parallel execution workflow for cross reference builder using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -18,6 +19,8 @@ team_config:
     synthesizer-agent: [graph_analyze, document_tools]
 tags: [research, cross-reference-builder]
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Cross Reference Builder Workflow

@@ -1,8 +1,9 @@
 ---
 name: model-retraining-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for model retraining pipeline using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [finance, model-retraining-pipeline]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Model Retraining Pipeline Workflow

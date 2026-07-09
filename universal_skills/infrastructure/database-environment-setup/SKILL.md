@@ -1,5 +1,6 @@
 ---
 name: database-environment-setup
+skill_type: skill
 description: >
   Provision the agent-utilities database environment end-to-end from credentials:
   push the ontology to Stardog (prod) or a local SPARQL endpoint (dev), stand up a
@@ -23,6 +24,8 @@ tags:
   - knowledge-graph
 requires:
   - graph-os
+metadata:
+  version: '1.0.2'
 ---
 
 # Database Environment Setup (Stardog + pg-age)

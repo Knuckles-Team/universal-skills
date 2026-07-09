@@ -1,8 +1,9 @@
 ---
 name: performance-benchmark-suite
+skill_type: workflow
 description: >-
   Parallel execution workflow for performance benchmark suite using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -20,6 +21,8 @@ team_config:
     publisher-agent: [rep_rm_git, gl_merge_requests]
 tags: [dev-workflows, performance-benchmark-suite]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Performance Benchmark Suite Workflow

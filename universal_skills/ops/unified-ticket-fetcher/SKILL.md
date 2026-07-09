@@ -1,5 +1,6 @@
 ---
 name: unified-ticket-fetcher
+skill_type: skill
 description: >
   Unified Ticket Fetcher atomic skill. Connects to Jira, Plane, and ServiceNow,
   aggregates assigned tickets, and outputs standardized tasks.
@@ -7,8 +8,8 @@ domain: ops
 license: MIT
 tags: [tickets, jira, plane, servicenow, management]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - unified-task-tracker
 ---

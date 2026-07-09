@@ -1,5 +1,7 @@
 ---
 name: web-crawler
+domain: research
+skill_type: skill
 description: >-
   Comprehensive tool for crawling websites, single pages, and sitemaps to yield
   markdown content. Use when the agent needs to read or extract knowledge from
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Web Crawler Skill
 

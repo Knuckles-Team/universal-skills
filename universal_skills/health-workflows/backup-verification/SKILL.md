@@ -1,8 +1,9 @@
 ---
 name: backup-verification
+skill_type: workflow
 description: >-
   Parallel execution workflow for backup verification using the Unified Parallel Engine
-domain: health
+domain: health-workflows
 agent: health_wellness_coordinator
 team_config:
   name: health_wellness_team
@@ -18,6 +19,8 @@ team_config:
     planner-agent: [graph_write]
 tags: [health, backup-verification]
 concept: CONCEPT:HEALTH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Backup Verification Workflow

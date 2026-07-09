@@ -1,5 +1,7 @@
 ---
 name: tdd-methodology
+domain: development
+skill_type: skill
 description: >-
   Strict Test-Driven Development (TDD) methodology guide using the Red-Green-
   Refactor cycle. Use when implementing features or fixing bugs with TDD, or when
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [tdd, testing, red-green-refactor, quality, python]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # TDD Methodology Expert
 

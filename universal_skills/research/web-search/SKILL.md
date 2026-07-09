@@ -1,5 +1,7 @@
 ---
 name: web-search
+domain: research
+skill_type: skill
 description: >-
   Search the web using various providers (DuckDuckGo, Google, Bing, Searxng) to
   find current information, news, and links. Use when the agent needs up-to-date
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Web Search
 

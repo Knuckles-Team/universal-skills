@@ -1,8 +1,9 @@
 ---
 name: deploy-log-aggregation
+skill_type: workflow
 description: >-
   Parallel execution workflow for deploy log aggregation using the Unified Parallel Engine
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: [infra, deploy-log-aggregation]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Deploy Log Aggregation Workflow

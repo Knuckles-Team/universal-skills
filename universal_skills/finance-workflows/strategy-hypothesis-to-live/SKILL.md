@@ -1,8 +1,9 @@
 ---
 name: strategy-hypothesis-to-live
+skill_type: workflow
 description: >-
   Formulates new trading strategies, runs a swarm debate to vet them, backtests them, and rolls out from paper trade to live capital endpoints.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [lifecycle, backtest, debate, live]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Strategy Hypothesis To Live Workflow

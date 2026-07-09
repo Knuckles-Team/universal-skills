@@ -1,8 +1,9 @@
 ---
 name: walk-forward-validation
+skill_type: workflow
 description: >-
   Divides historical feeds into overlapping walk-forward segments, runs parallel window fits, tests out-of-sample stability, and aggregates validation statistics.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [walk-forward, validation, oversitting, backtest]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Walk Forward Validation Workflow

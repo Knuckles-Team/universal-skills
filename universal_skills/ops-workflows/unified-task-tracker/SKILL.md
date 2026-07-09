@@ -1,8 +1,9 @@
 ---
 name: unified-task-tracker
+skill_type: workflow
 description: >-
   Automatically discovers and queries configured trackers (Jira/atlassian-agent, Plane/plane-agent, or both) to retrieve assigned and stale issues, present a unified schedule dashboard, and push synced updates.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: ['atlassian', 'jira', 'plane', 'tasks', 'agile', 'atlassian-agent', 'plane-agent']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Unified Task Tracker Workflow

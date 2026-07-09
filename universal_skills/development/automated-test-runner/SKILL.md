@@ -1,14 +1,15 @@
 ---
 name: automated-test-runner
+skill_type: skill
 description: >
   Universal automated testing atomic skill. Discovers environment, executes
   test suite with timeouts, and compiles execution outcomes.
-domain: dev-workflows
+domain: development
 license: MIT
 tags: [testing, verification, quality, CI, automation]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - rep_rm_projects
 ---

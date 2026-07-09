@@ -1,8 +1,9 @@
 ---
 name: alpha-factor-mining
+skill_type: workflow
 description: >-
   Compute momentum, fundamental quality, and news sentiment factor signals in parallel to generate a fused target portfolio.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [quant, alpha, momentum, sentiment, fundamental, optimization]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Alpha Factor Mining Workflow

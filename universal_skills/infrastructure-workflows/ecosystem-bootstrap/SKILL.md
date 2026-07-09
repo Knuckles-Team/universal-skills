@@ -1,5 +1,6 @@
 ---
 name: ecosystem-bootstrap
+skill_type: workflow
 description: >
   Self-deploying bootstrap workflow that unfolds the complete agent-utilities
   ecosystem on a fresh machine. Queries the user for deployment profile
@@ -9,7 +10,7 @@ description: >
   containers as streamable-http Docker deployments. Transitions from
   container-manager-mcp to Portainer once deployed. Registers the full
   deployment topology in the Knowledge Graph.
-domain: infrastructure
+domain: infrastructure-workflows
 tags:
   - bootstrap
   - deployment
@@ -28,6 +29,8 @@ requires:
   - technitium-dns-mcp
   - tunnel-manager-mcp
   - graph-os
+metadata:
+  version: '1.0.2'
 ---
 
 # Ecosystem Bootstrap Workflow

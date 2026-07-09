@@ -1,8 +1,9 @@
 ---
 name: market-microstructure-analysis
+skill_type: workflow
 description: >-
   Audits millisecond order book snapshot logs, computes VPIN metrics, decomposes spreads, and aggregates impact reports.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [microstructure, order-book, vpin, slippage]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Market Microstructure Analysis Workflow

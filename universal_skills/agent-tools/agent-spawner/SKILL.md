@@ -1,5 +1,7 @@
 ---
 name: agent-spawner
+domain: agent-tools
+skill_type: skill
 description: >-
   The `agent-spawner` skill provides the ability to dynamically create a new
   Pydantic AI agent configured with an external MCP server toolkit. This is
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [agent, sub-agent, mcp, dynamic, spawner, pydantic-ai, orchestration]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Agent Spawner Skill
 

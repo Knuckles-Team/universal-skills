@@ -1,5 +1,7 @@
 ---
 name: rustdesk-client
+domain: infrastructure
+skill_type: skill
 description: >
   Installs and configures the self-hosted RustDesk client on Debian/Ubuntu hosts.
   Downloads the correct architecture-specific .deb package (supporting x86_64 and aarch64),
@@ -8,6 +10,8 @@ description: >
   starts and registers the rustdesk service, and returns the machine's unique RustDesk ID.
   Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk",
   "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
+metadata:
+  version: '1.0.2'
 ---
 
 # RustDesk Client Installation Skill

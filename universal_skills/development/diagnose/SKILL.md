@@ -1,5 +1,7 @@
 ---
 name: diagnose
+domain: development
+skill_type: skill
 description: >-
   Disciplined diagnosis loop for hard bugs and performance regressions. Reproduce
   → minimise → hypothesise → instrument → fix → regression-test. Use when user
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [debugging, diagnose, troubleshooting, bugfix]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Diagnose

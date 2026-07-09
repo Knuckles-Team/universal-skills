@@ -1,8 +1,9 @@
 ---
 name: portfolio-rebalance-cycle
+skill_type: workflow
 description: >-
   Audits current portfolio position ledger weights, calculates MVO targets, sizers trades, and routes rebalances.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [rebalance, portfolio, mvo, execution]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Portfolio Rebalance Cycle Workflow

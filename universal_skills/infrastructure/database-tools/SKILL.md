@@ -1,5 +1,7 @@
 ---
 name: database-tools
+domain: infrastructure
+skill_type: skill
 description: >-
   Use this skill whenever the user wants to connect to, query, or manage
   databases, including PostgreSQL, MySQL, and MS SQL Server (MSSQL). Requires
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [database, sql, postgresql, mysql, mssql, querying, schema, data-extraction]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Database Tools
 

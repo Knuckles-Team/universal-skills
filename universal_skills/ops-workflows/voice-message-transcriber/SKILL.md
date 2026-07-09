@@ -1,8 +1,9 @@
 ---
 name: voice-message-transcriber
+skill_type: workflow
 description: >-
   Detects new local voice notes or audio files, triggers Whisper transcriptions, and prepares structured text outputs for conversational agent consumption.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -16,6 +17,8 @@ team_config:
     processor-agent: [graph_analyze, document_tools]
 tags: ['voice', 'audio', 'transcription', 'whisper', 'speech-to-text', 'audio-transcriber-mcp']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Voice Message Transcriber Workflow

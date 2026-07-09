@@ -1,5 +1,7 @@
 ---
 name: security-tools
+domain: infrastructure
+skill_type: skill
 description: >-
   Security analysis tools including checking Sentry error logs, conducting threat
   models, analyzing source code git repositories for security ownership and bus
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Security Tools
 

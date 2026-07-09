@@ -1,8 +1,9 @@
 ---
 name: email-campaign-builder
+skill_type: workflow
 description: >-
   Parallel execution workflow for email campaign builder using the Unified Parallel Engine
-domain: social
+domain: social-workflows
 agent: content_strategist
 team_config:
   name: content_creation_team
@@ -20,6 +21,8 @@ team_config:
     analytics-agent: [graph_query, graph_analyze]
 tags: [social, email-campaign-builder]
 concept: CONCEPT:SOCIAL-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Email Campaign Builder Workflow

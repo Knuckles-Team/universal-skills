@@ -1,8 +1,9 @@
 ---
 name: polymarket-liquidity-mm
+skill_type: workflow
 description: Dual-sided market making with automated inventory skew balancing and
   capital recycling via position merging
-domain: finance
+domain: finance-workflows
 tags:
 - polymarket
 - market-making
@@ -13,6 +14,8 @@ requires:
 - mcp_portfolio
 - mcp_risk
 - mcp_orders
+metadata:
+  version: '1.0.2'
 ---
 
 # polymarket-liquidity-mm Workflow

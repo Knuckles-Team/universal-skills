@@ -1,8 +1,9 @@
 ---
 name: offboarding-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for offboarding pipeline using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, offboarding-pipeline]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Offboarding Pipeline Workflow

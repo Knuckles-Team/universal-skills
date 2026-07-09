@@ -1,5 +1,7 @@
 ---
 name: c4-architecture
+domain: development
+skill_type: skill
 description: >-
   Model AND decide software architecture. (1) Generate C4 documentation with
   Mermaid (Context/Container/Component/Deployment) — triggers "architecture
@@ -14,8 +16,8 @@ description: >-
 license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # C4 Architecture Documentation
 

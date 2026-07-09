@@ -1,5 +1,7 @@
 ---
 name: code-enhancer
+domain: core
+skill_type: skill
 description: >-
   Comprehensive code analysis and enhancement skill that performs 31-domain deep-
   dive reviews of any codebase. Covers project analysis, dependency audit,
@@ -17,8 +19,8 @@ description: >-
 license: MIT
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars, profiling]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Code Enhancer

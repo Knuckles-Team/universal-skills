@@ -1,8 +1,9 @@
 ---
 name: nextcloud-time-manager
+skill_type: workflow
 description: >-
   Connects to Nextcloud using nextcloud-agent, retrieves latest calendar events and task files, interacts with the user to discover scheduling modifications, and applies updates/adds/removes to synchronize their personal schedule.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: ['nextcloud', 'calendar', 'tasks', 'personal-assistant', 'nextcloud-agent']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Nextcloud Time Manager Workflow

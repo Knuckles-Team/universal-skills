@@ -1,8 +1,9 @@
 ---
 name: personal-fitness-trainer
+skill_type: workflow
 description: >-
   Assesses user fitness goals, queries appropriate strength training exercises, constructs a custom workout routine, and registers it using wger-agent tools.
-domain: health
+domain: health-workflows
 agent: health_wellness_coordinator
 team_config:
   name: health_wellness_team
@@ -16,6 +17,8 @@ team_config:
     analyzer-agent: [graph_analyze]
 tags: ['health', 'workout', 'fitness', 'wger-agent']
 concept: CONCEPT:HEALTH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Personal Fitness Trainer Workflow

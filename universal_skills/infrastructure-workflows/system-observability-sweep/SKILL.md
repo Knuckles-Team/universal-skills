@@ -1,8 +1,9 @@
 ---
 name: system-observability-sweep
+skill_type: workflow
 description: >-
   Cross-system health and resource check combining system metrics with Langfuse observability status.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['monitoring', 'health', 'cross-system', 'observability']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # System Observability Sweep Workflow

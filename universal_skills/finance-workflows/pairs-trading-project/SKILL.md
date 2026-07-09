@@ -1,18 +1,19 @@
 ---
 name: pairs-trading-project
+skill_type: workflow
 description: >-
   Build the pairs-trading portfolio project end-to-end: find two correlated
   stocks, test for cointegration, trade the z-score of their spread, backtest it
   leak-free, report full stats, and publish a GitHub repo. The best single
   learning project in quant finance — teaches hypothesis testing, z-scores,
   position sizing, and risk management at once.
-domain: finance
+domain: finance-workflows
 agent: quant_developer
 team_config: quantitative_trading_team
 tags: [quant, pairs-trading, cointegration, mean-reversion, portfolio, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

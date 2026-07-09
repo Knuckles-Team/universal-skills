@@ -1,8 +1,9 @@
 ---
 name: container-health-check
+skill_type: workflow
 description: >-
   Full Docker infrastructure health assessment. Lists containers, images, volumes, and networks, then retrieves logs from a running container.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -20,6 +21,8 @@ team_config:
     dns-configurator: [adg_rewrites, td_zones]
 tags: ['docker', 'health', 'monitoring', 'containers']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Container Health Check Workflow

@@ -1,8 +1,9 @@
 ---
 name: security-patch-sweep
+skill_type: workflow
 description: >-
   Parallel execution workflow for security patch sweep using the Unified Parallel Engine
-domain: health
+domain: health-workflows
 agent: health_wellness_coordinator
 team_config:
   name: health_wellness_team
@@ -20,6 +21,8 @@ team_config:
     tracker-agent: [nc_calendar, graph_write]
 tags: [health, security-patch-sweep]
 concept: CONCEPT:HEALTH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Security Patch Sweep Workflow

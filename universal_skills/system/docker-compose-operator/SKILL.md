@@ -1,5 +1,6 @@
 ---
 name: docker-compose-operator
+skill_type: skill
 description: >
   Universal Docker Compose and Swarm operation and deployment atomic skill.
   Compiles environment templates, triggers service deploys, and monitors operational health.
@@ -7,8 +8,8 @@ domain: system
 license: MIT
 tags: [docker, compose, swarm, deployment, system]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - container-manager-mcp
 ---

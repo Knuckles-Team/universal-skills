@@ -1,8 +1,9 @@
 ---
 name: deploy-identity-provider
+skill_type: workflow
 description: >-
   Parallel execution workflow for deploy identity provider using the Unified Parallel Engine
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: [infra, deploy-identity-provider]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Deploy Identity Provider Workflow

@@ -1,8 +1,9 @@
 ---
 name: options-volatility-surface
+skill_type: workflow
 description: >-
   Fetches multi-expiry options chain price metrics, fits implied volatility surface curves, and identifies skew arbitrage.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [options, volatility, iv, skew]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Options Volatility Surface Workflow

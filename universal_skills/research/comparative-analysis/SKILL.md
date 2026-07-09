@@ -1,5 +1,7 @@
 ---
 name: comparative-analysis
+domain: research
+skill_type: skill
 description: >-
   Comprehensive multi-modal comparative analysis engine for codebases, research papers,
   and cross-domain innovation extraction. Evaluates governance, architecture, quality,
@@ -10,8 +12,8 @@ description: >-
 license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Comparative Analysis

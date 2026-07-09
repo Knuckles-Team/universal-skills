@@ -1,8 +1,9 @@
 ---
 name: ai-research-survey
+skill_type: workflow
 description: >-
   Comprehensive AI research survey combining paper search with data science capabilities for analysis.
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -18,6 +19,8 @@ team_config:
     synthesizer-agent: [graph_analyze, document_tools]
 tags: ['ai', 'survey', 'papers', 'data-science']
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Ai Research Survey Workflow

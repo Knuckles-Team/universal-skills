@@ -1,8 +1,9 @@
 ---
 name: polymarket-multi-strategy-arb
+skill_type: workflow
 description: Execute multiple Polymarket prediction strategies covering arbitrage,
   news sentiment, and traditional odds differences
-domain: finance
+domain: finance-workflows
 tags:
 - polymarket
 - arbitrage
@@ -14,6 +15,8 @@ requires:
 - mcp_signals
 - mcp_strategy
 - mcp_orders
+metadata:
+  version: '1.0.2'
 ---
 
 # polymarket-multi-strategy-arb Workflow

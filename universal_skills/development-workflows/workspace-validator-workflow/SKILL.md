@@ -1,9 +1,12 @@
 ---
 name: workspace-validator-workflow
+skill_type: workflow
 description: Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, or ensure all projects are valid.
-domain: development
+domain: development-workflows
 tags: ['validation', 'workspace', 'repository-manager', 'bugfix', 'workflow', 'dev-workflows']
 requires: ['repository-manager-mcp']
+metadata:
+  version: '1.0.2'
 ---
 
 # workspace-validator-workflow Workflow

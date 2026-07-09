@@ -1,8 +1,9 @@
 ---
 name: polymarket-btc-15m-scheduler
+skill_type: workflow
 description: Run 7-phase predicative up/down BTC trend prediction strategies on 15m
   contracts
-domain: finance
+domain: finance-workflows
 tags:
 - polymarket
 - nautilus
@@ -15,6 +16,8 @@ requires:
 - mcp_risk
 - mcp_orders
 - infrastructure-orchestrator
+metadata:
+  version: '1.0.2'
 ---
 
 # polymarket-btc-15m-scheduler Workflow

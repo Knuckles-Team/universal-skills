@@ -1,5 +1,7 @@
 ---
 name: skill-builder
+domain: core
+skill_type: skill
 description: >-
   Guide for creating effective skills for the universal-skills package. Use this
   when users want to create a new skill or update an existing skill according to
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [skills, development, guide, builder, creator]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Skill Builder
 

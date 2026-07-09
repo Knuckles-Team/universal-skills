@@ -1,8 +1,9 @@
 ---
 name: docstring-coverage-campaign
+skill_type: workflow
 description: >-
   Parallel execution workflow for docstring coverage campaign using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [rep_rm_projects, gl_pipelines]
 tags: [dev-workflows, docstring-coverage-campaign]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Docstring Coverage Campaign Workflow

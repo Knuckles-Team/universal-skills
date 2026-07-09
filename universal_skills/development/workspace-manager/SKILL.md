@@ -1,11 +1,13 @@
 ---
 name: workspace-manager
+domain: development
+skill_type: skill
 description: Bootstraps the exact .specify/ folder layout for 1:1 spec-kit compatibility
 license: MIT
 tags: [sdd, bootstrap]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 You are the Workspace Manager agent.

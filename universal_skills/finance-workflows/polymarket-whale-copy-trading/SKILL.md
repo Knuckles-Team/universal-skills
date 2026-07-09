@@ -1,8 +1,9 @@
 ---
 name: polymarket-whale-copy-trading
+skill_type: workflow
 description: Mirror leaderboard whale wallet trades in real-time syncing activity
   to a local database ledger
-domain: finance
+domain: finance-workflows
 tags:
 - polymarket
 - copy-trading
@@ -13,6 +14,8 @@ requires:
 - mcp_signals
 - mcp_risk
 - mcp_orders
+metadata:
+  version: '1.0.2'
 ---
 
 # polymarket-whale-copy-trading Workflow

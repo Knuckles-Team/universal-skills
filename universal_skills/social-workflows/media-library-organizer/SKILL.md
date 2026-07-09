@@ -1,8 +1,9 @@
 ---
 name: media-library-organizer
+skill_type: workflow
 description: >-
   Parallel execution workflow for media library organizer using the Unified Parallel Engine
-domain: social
+domain: social-workflows
 agent: content_strategist
 team_config:
   name: content_creation_team
@@ -20,6 +21,8 @@ team_config:
     analytics-agent: [graph_query, graph_analyze]
 tags: [social, media-library-organizer]
 concept: CONCEPT:SOCIAL-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Media Library Organizer Workflow

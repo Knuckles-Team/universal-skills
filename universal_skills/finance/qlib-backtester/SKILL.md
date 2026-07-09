@@ -1,6 +1,10 @@
 ---
 name: qlib-backtester
+domain: finance
+skill_type: skill
 description: Execute rigorous backtesting on alpha factors using Qlib.
+metadata:
+  version: '1.0.2'
 ---
 
 # Qlib Backtester Skill

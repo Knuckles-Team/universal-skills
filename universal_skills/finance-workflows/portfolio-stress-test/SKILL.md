@@ -1,8 +1,9 @@
 ---
 name: portfolio-stress-test
+skill_type: workflow
 description: >-
   Aggregates return curves, runs historical crash scenarios, computes rate shock exposures, and compiles risk audits.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [stress-test, crash, scenario-analysis, risk]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Portfolio Stress Test Workflow

@@ -1,8 +1,9 @@
 ---
 name: agent-utilities-evolution
+skill_type: workflow
 description: >-
   Parallel execution workflow for agent utilities evolution using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -20,6 +21,8 @@ team_config:
     publisher-agent: [rep_rm_git, gl_merge_requests]
 tags: [dev-workflows, agent-utilities-evolution]
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Agent Utilities Evolution Workflow

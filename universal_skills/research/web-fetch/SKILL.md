@@ -1,5 +1,7 @@
 ---
 name: web-fetch
+domain: research
+skill_type: skill
 description: >-
   Fetch and extract high-fidelity markdown content from a single URL. Supports
   JavaScript rendering and optional LLM-based information extraction. Use when you
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [web, fetch, markdown, crawl4ai, extraction]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Web Fetch

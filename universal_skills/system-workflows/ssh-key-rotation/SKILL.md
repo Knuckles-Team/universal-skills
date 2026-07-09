@@ -1,8 +1,9 @@
 ---
 name: ssh-key-rotation
+skill_type: workflow
 description: >-
   Parallel execution workflow for ssh key rotation using the Unified Parallel Engine
-domain: system
+domain: system-workflows
 agent: systems_engineer
 team_config:
   name: systems_operations_team
@@ -20,6 +21,8 @@ team_config:
     reporter-agent: [graph_write, document_tools]
 tags: [system, ssh-key-rotation]
 concept: CONCEPT:SYS-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Ssh Key Rotation Workflow

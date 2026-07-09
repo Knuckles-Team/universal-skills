@@ -1,8 +1,9 @@
 ---
 name: full-workspace-kg-ingest
+skill_type: workflow
 description: >-
   Parallel execution workflow for full workspace kg ingest using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -20,6 +21,8 @@ team_config:
     ingestor-agent: [graph_write, kg_graph_ingest]
 tags: [research, full-workspace-kg-ingest]
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Full Workspace Kg Ingest Workflow

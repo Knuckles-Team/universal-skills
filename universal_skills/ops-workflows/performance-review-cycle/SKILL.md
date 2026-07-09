@@ -1,8 +1,9 @@
 ---
 name: performance-review-cycle
+skill_type: workflow
 description: >-
   Parallel execution workflow for performance review cycle using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, performance-review-cycle]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Performance Review Cycle Workflow

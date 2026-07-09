@@ -1,5 +1,7 @@
 ---
 name: strategy-lifecycle
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Master trading pipeline: Hypothesis → Debate → Backtest → Paper → Live.
   Orchestrates the full strategy lifecycle with human approval gates.
@@ -7,8 +9,8 @@ tags: [finance, trading, strategy, lifecycle]
 team_config: trading_department
 agent: chief_trading_officer
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 infrastructure:
   required:

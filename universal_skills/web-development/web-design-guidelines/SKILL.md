@@ -1,5 +1,7 @@
 ---
 name: web-design-guidelines
+domain: web-development
+skill_type: skill
 description: >-
   Review UI code for Web Interface Guidelines compliance. Use when asked to
   "review my UI", "check accessibility", "audit design", "review UX", or "check my
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [ui, design, guidelines, accessibility, audit]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Web Interface Guidelines
 

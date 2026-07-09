@@ -1,8 +1,9 @@
 ---
 name: benchmark-tracking-error
+skill_type: workflow
 description: >-
   Pulls daily benchmark indices, calculates active share tracking error, decomposes performance style, and dispatches drift alerts.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [tracking-error, active-share, style-attribution, drift]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Benchmark Tracking Error Workflow

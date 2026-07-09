@@ -1,8 +1,9 @@
 ---
 name: earnings-calendar-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [finance, earnings-calendar-pipeline]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Earnings Calendar Pipeline Workflow

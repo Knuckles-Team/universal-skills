@@ -1,16 +1,17 @@
 ---
 name: sentiment-alpha-project
+skill_type: workflow
 description: >-
   Build the sentiment-alpha portfolio project: scrape financial news headlines
   (NewsAPI free tier), score them with FinBERT, construct a sentiment signal,
   backtest it leak-free, and publish a GitHub repo.
-domain: finance
+domain: finance-workflows
 agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, sentiment, finbert, nlp, alpha, portfolio, workflow]
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:KG-2.6'
 ---
 

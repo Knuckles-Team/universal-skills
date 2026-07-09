@@ -1,8 +1,9 @@
 ---
 name: portainer-stack-troubleshooter
+skill_type: workflow
 description: >-
   Identifies stopped or unhealthy containers inside Portainer stacks, aggregates logs, and creates a step-by-step resolution plan using portainer-agent and tunnel-manager.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['portainer', 'stacks', 'docker', 'troubleshooting', 'portainer-agent', 'tunnel-manager']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Portainer Stack Troubleshooter Workflow

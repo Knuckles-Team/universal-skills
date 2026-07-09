@@ -1,9 +1,10 @@
 ---
 name: contract-review
+skill_type: workflow
 description: 'Review a contract for risk and compliance: parse the document, extract and assess
   clauses, research legal context, check compliance, and produce a risk report. Use
   when reviewing contracts or assessing contractual risk.'
-domain: ops
+domain: ops-workflows
 agent: legal_compliance_coordinator
 team_config:
   name: contract_review_team
@@ -22,6 +23,8 @@ team_config:
     compliance-checker: [graph_query]
     report-generator: [graph_write, document_tools]
 concept: KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Contract Review Workflow

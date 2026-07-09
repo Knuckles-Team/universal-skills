@@ -1,5 +1,7 @@
 ---
 name: brand-guidelines
+domain: creative
+skill_type: skill
 description: >-
   Creates comprehensive brand identity systems including logo concepts, color
   palettes, typography scales, imagery direction, and voice/tone guidelines. Use
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [branding, identity, design-system, typography, color, voice-tone]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Brand Guidelines Creation
 

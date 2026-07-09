@@ -1,11 +1,14 @@
 ---
 name: feature-development-pipeline
+skill_type: workflow
 description: Parallel execution workflow for feature development pipeline using the Unified Parallel Engine
-domain: dev-workflows
+domain: development-workflows
 tags:
   - parallel-workflow
   - dev-workflows
   - mcp-github-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # Parallel Workflow: Feature Development Pipeline

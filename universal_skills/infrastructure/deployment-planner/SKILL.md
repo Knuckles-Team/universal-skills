@@ -1,5 +1,6 @@
 ---
 name: deployment-planner
+skill_type: skill
 description: >
   Intelligent service placement and deployment strategy engine for Docker Swarm,
   Kubernetes, or standalone container clusters. Performs hardware discovery,
@@ -25,6 +26,8 @@ requires:
   - tunnel-manager-mcp
   - container-manager-mcp
   - portainer-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # Deployment Planner Skill

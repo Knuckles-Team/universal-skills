@@ -1,8 +1,9 @@
 ---
 name: conversation-knowledge-extract
+skill_type: workflow
 description: >-
   Parallel execution workflow for conversation knowledge extract using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -18,6 +19,8 @@ team_config:
     synthesizer-agent: [graph_analyze, document_tools]
 tags: [research, conversation-knowledge-extract]
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Conversation Knowledge Extract Workflow

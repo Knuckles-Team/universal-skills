@@ -1,9 +1,10 @@
 ---
 name: service-deployment-orchestrator
+skill_type: workflow
 description: Stateless parallel orchestrator workflow to deploy containerized swarm
   services with native Caddy routing, Keycloak OIDC SSO, Technitium DNS, GitLab GitOps
   seeding, Portainer deployment, Grafana observability, and Uptime Kuma monitoring.
-domain: infra
+domain: infrastructure-workflows
 tags:
 - infra
 - orchestrator
@@ -18,6 +19,8 @@ requires:
   - portainer-agent
   - technitium-dns-mcp
   - uptime-kuma-agent
+metadata:
+  version: '1.0.2'
 ---
 
 # service-deployment-orchestrator Workflow

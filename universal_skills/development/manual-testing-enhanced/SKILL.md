@@ -1,11 +1,13 @@
 ---
 name: manual-testing-enhanced
+domain: development
+skill_type: skill
 description: Enhanced manual testing workflows
 license: MIT
 tags: []
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Manual Testing Enhanced

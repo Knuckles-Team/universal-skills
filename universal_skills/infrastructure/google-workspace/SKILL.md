@@ -1,5 +1,7 @@
 ---
 name: google-workspace
+domain: infrastructure
+skill_type: skill
 description: >-
   Use this skill to interact with the Google Workspace ecosystem, including Gmail,
   Google Calendar, Google Chat, Google Docs, Google Drive, Google Sheets, and
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [google, workspace, gmail, calendar, chat, docs, drive, sheets, slides, api]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Google Workspace
 

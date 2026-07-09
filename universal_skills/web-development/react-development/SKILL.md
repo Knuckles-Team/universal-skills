@@ -1,5 +1,7 @@
 ---
 name: react-development
+domain: web-development
+skill_type: skill
 description: >-
   Type-safe React development with TypeScript covering components, hooks, events,
   Server Components, routing, performance optimization, and architectural best
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [react, typescript, hooks, components, server-components, frontend, react-19, performance, architecture, nextjs]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # React Development (TypeScript)
 

@@ -1,8 +1,9 @@
 ---
 name: tax-lot-optimization
+skill_type: workflow
 description: >-
   Parses lot ledger dates, computes unrealized holding gains, harvests short/long term losses, and synthesizes lot trades.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [tax-harvest, lot-ledger, unrealized-gains, accounting]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Tax Lot Optimization Workflow

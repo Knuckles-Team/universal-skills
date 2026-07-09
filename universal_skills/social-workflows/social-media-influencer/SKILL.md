@@ -1,8 +1,9 @@
 ---
 name: social-media-influencer
+skill_type: workflow
 description: >-
   Prepares a live stream broadcast title, updates style details, announces the live stream, and engages the audience using owncast-agent tools.
-domain: social
+domain: social-workflows
 agent: content_strategist
 team_config:
   name: content_creation_team
@@ -16,6 +17,8 @@ team_config:
     media-processor: [graph_analyze]
 tags: ['social', 'streaming', 'broadcast', 'owncast-agent']
 concept: CONCEPT:SOCIAL-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Social Media Influencer Workflow

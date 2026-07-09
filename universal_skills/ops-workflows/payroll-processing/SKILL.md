@@ -1,8 +1,9 @@
 ---
 name: payroll-processing
+skill_type: workflow
 description: 'Process a payroll cycle: compute pay and taxes, check compliance, and disburse payments.
   Use when running payroll or computing employee compensation and deductions.'
-domain: ops
+domain: ops-workflows
 agent: finance_operations_coordinator
 team_config:
   name: payroll_processing_team
@@ -19,6 +20,8 @@ team_config:
     compliance-checker: [graph_query]
     payment-processor: [graph_write]
 concept: KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Payroll Processing Workflow

@@ -1,5 +1,6 @@
 ---
 name: market-microstructure-surveillance
+skill_type: workflow
 description: >-
   Defensive market-surveillance pipeline: pull a trailing order-flow/book window
   for a symbol, compute Kyle insider/stealth-trading scores (informed-flow share,
@@ -7,11 +8,13 @@ description: >-
   and backtest the signal so it self-weights, evaluate the adverse-selection
   quoting posture, and persist a SurveillanceSignal report into the knowledge
   graph. Detection + maker protection only — never trade concealment.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensive]
 concept: CONCEPT:EE-042
 requires: ['agent-utilities']
+metadata:
+  version: '1.0.2'
 ---
 
 # Market Microstructure Surveillance

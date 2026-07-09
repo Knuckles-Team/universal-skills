@@ -1,5 +1,6 @@
 ---
 name: ssl-expiry-checker
+skill_type: skill
 description: >
   Network SSL/TLS expiry checker atomic skill. Connects to targets, parses TLS certs,
   and returns expiration days and security grades.
@@ -7,8 +8,8 @@ domain: system
 license: MIT
 tags: [security, network, ssl, monitoring, tls]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - systems-manager-mcp
 ---

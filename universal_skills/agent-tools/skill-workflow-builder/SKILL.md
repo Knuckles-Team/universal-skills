@@ -1,5 +1,7 @@
 ---
 name: skill-workflow-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Tool and instructions to interactively brainstorm, structure, verify, and scaffold structured workflow-based skills.
   Use when the user or agent needs to create a new workflow skill under `universal_skills/workflows/`, define topological step lists,
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [workflow, builder, dev-workflows, scaffolding, dag, topological]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.17.0'
 ---
 # Skill Workflow Builder
 

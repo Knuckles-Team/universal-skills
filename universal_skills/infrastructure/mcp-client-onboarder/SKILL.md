@@ -1,5 +1,7 @@
 ---
 name: mcp-client-onboarder
+domain: infrastructure
+skill_type: skill
 description: >-
   Onboard, scope, and revoke clients for the central MCP multiplexer. Creates a
   Keycloak client_credentials identity, generates an Eunomia authorization policy
@@ -13,8 +15,8 @@ description: >-
 license: MIT
 tags: [mcp, multiplexer, authorization, eunomia, keycloak, zero-trust, onboarding, security]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # MCP Client Onboarder

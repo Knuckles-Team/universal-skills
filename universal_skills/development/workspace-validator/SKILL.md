@@ -1,12 +1,14 @@
 ---
 name: workspace-validator
+domain: development
+skill_type: skill
 description: >-
   Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Also audits worktree and git state — classifying which worktrees are merged (safe to prune), in-flight (do not disturb), or dangling, and which projects have unmerged/unpushed changes. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, ensure all projects are valid, or check which worktrees/projects are dangling, in flight, or safe to prune.
 license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow, worktree, git-state]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.7.0'
 ---
 # Workspace Validator
 

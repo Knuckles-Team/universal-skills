@@ -1,8 +1,9 @@
 ---
 name: host-hardware-inventory
+skill_type: workflow
 description: >-
   Parallel execution workflow for host hardware inventory using the Unified Parallel Engine
-domain: health
+domain: health-workflows
 agent: health_wellness_coordinator
 team_config:
   name: health_wellness_team
@@ -20,6 +21,8 @@ team_config:
     tracker-agent: [nc_calendar, graph_write]
 tags: [health, host-hardware-inventory]
 concept: CONCEPT:HEALTH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Host Hardware Inventory Workflow

@@ -1,14 +1,15 @@
 ---
 name: spec-intake-wizard
+skill_type: skill
 description: >
   Interactive Spec Intake Wizard atomic skill. Prompts the user with structured
   fields, clarifies ambiguity, validates inputs, and outputs parsed JSON parameters.
-domain: sdd
+domain: development
 license: MIT
 tags: [sdd, user-interaction, wizard, specification, planning]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires: []
 ---
 

@@ -1,6 +1,10 @@
 ---
 name: freqtrade-executor
+domain: finance
+skill_type: skill
 description: Execute paper-trading algorithms via freqtrader.
+metadata:
+  version: '1.0.2'
 ---
 
 # Freqtrade Executor Skill

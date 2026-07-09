@@ -1,8 +1,9 @@
 ---
 name: langfuse-agent-tracer
+skill_type: workflow
 description: >-
   Automatically queries Langfuse sessions and traces to isolate agent-utilities execution runs and diagnose spawned agent orchestration errors or performance drops.
-domain: dev-workflows
+domain: development-workflows
 agent: dev_ops_engineer
 team_config:
   name: development_operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [rep_rm_projects, gl_pipelines]
 tags: ['langfuse', 'telemetry', 'tracing', 'monitoring', 'debugging', 'langfuse-mcp']
 concept: CONCEPT:DEV-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Langfuse Agent Tracer Workflow

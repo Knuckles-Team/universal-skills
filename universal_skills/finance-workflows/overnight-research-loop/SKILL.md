@@ -1,8 +1,9 @@
 ---
 name: overnight-research-loop
+skill_type: workflow
 description: >-
   Runs overnight crawling of news/publications to generate factor hypotheses, runs backtests in parallel, debates findings, and generates a morning briefing.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [overnight, research, backtest, factor]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Overnight Research Loop Workflow

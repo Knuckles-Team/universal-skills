@@ -1,8 +1,9 @@
 ---
 name: contract-review-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for contract review pipeline using the Unified Parallel Engine
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: [ops, contract-review-pipeline]
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Contract Review Pipeline Workflow

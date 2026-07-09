@@ -1,5 +1,6 @@
 ---
 name: host-resource-sampler
+skill_type: skill
 description: >
   System resource sampling atomic skill. Gathers CPU, memory, disk, and load
   average utilization metrics across multiple remote hosts via SSH.
@@ -7,8 +8,8 @@ domain: system
 license: MIT
 tags: [metrics, host, monitoring, system, telemetry]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '0.1.0'
 requires:
   - systems-manager-mcp
   - tunnel-manager-mcp

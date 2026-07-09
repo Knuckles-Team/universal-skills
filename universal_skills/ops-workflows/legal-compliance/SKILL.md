@@ -1,9 +1,10 @@
 ---
 name: legal-compliance
+skill_type: workflow
 description: 'Review legal and regulatory compliance: research applicable regulations, analyze
   contracts and policies, and check compliance. Use for legal compliance and regulatory
   review tasks.'
-domain: ops
+domain: ops-workflows
 agent: legal_compliance_coordinator
 team_config:
   name: legal_compliance_team
@@ -18,6 +19,8 @@ team_config:
     contract-analyzer: [graph_analyze, document_tools]
     compliance-checker: [graph_query, graph_write]
 concept: KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Legal Compliance Review Workflow

@@ -1,5 +1,7 @@
 ---
 name: security-threat-model
+domain: infrastructure
+skill_type: skill
 description: >-
   Repository-grounded threat modeling that enumerates trust boundaries, assets,
   attacker capabilities, abuse paths, and mitigations, and writes a concise
@@ -10,8 +12,8 @@ description: >-
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
-  author: Audel Rouhi
   version: '1.0.2'
+  author: Audel Rouhi
 ---
 # Threat Model Source Code Repo
 

@@ -1,5 +1,7 @@
 ---
 name: uptime-self-healer
+domain: infrastructure-workflows
+skill_type: workflow
 description: Detect down services in Uptime Kuma and automatically restore them using Container Manager or Portainer
 tags:
   - infra
@@ -10,6 +12,8 @@ requires:
   - container-manager-mcp
   - portainer-agent
   - tunnel-manager
+metadata:
+  version: '1.0.2'
 ---
 
 # Uptime Kuma Self-Healer Workflow

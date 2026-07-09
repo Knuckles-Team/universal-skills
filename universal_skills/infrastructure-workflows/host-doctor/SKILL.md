@@ -1,5 +1,6 @@
 ---
 name: host-doctor
+skill_type: workflow
 description: >-
   Onboard-diagnose a host (or a whole fleet) and remediate under gate. Validates the
   OS/kernel/arch, samples CPU/mem/disk/load utilization, inspects processes for
@@ -13,7 +14,7 @@ description: >-
   Composes hardware-profile-sweep, host-resource-sampler, and host-process-inspector
   over tunnel-manager SSH, plus sm_storage_health (systems-manager) and the fan-manager
   IPMI/BMC tools. Diagnosis is read-only; every change is gated on user approval.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -29,6 +30,8 @@ team_config:
     remediation-agent: [sm_process_operations, sm_system_operations]
 tags: [infra, host, diagnostics, onboarding, process, zombie, swap, storage, smart, bmc, ipmi, drive-fault, remediation]
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Host Doctor Workflow

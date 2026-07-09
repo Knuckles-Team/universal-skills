@@ -1,5 +1,7 @@
 ---
 name: ssh-bootstrap
+domain: infrastructure
+skill_type: skill
 description: >
   Interactive SSH key bootstrap for new infrastructure hosts. Checks existing
   connectivity, generates RSA keys if missing, and distributes them via
@@ -9,6 +11,8 @@ description: >
   preparing machines for infrastructure discovery. Triggers on "setup ssh",
   "bootstrap keys", "onboard host", "passwordless ssh", "prepare machines".
   Do NOT use for ongoing SSH session management — use tunnel-manager directly.
+metadata:
+  version: '1.0.2'
 ---
 
 # SSH Bootstrap Skill

@@ -1,8 +1,9 @@
 ---
 name: tunnel-and-network-audit
+skill_type: workflow
 description: >-
   Audit active SSH tunnels and network connectivity alongside system network interface status.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['tunnels', 'network', 'security', 'audit']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Tunnel And Network Audit Workflow

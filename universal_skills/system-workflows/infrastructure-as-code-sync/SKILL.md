@@ -1,8 +1,9 @@
 ---
 name: infrastructure-as-code-sync
+skill_type: workflow
 description: >-
   Parallel execution workflow for infrastructure as code sync using the Unified Parallel Engine
-domain: system
+domain: system-workflows
 agent: systems_engineer
 team_config:
   name: systems_operations_team
@@ -20,6 +21,8 @@ team_config:
     reporter-agent: [graph_write, document_tools]
 tags: [system, infrastructure-as-code-sync]
 concept: CONCEPT:SYS-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Infrastructure As Code Sync Workflow

@@ -1,8 +1,9 @@
 ---
 name: x-social-intelligence-pipeline
+skill_type: workflow
 description: >-
   Parallel execution workflow for x social intelligence pipeline using the Unified Parallel Engine
-domain: research
+domain: research-workflows
 agent: research_coordinator
 team_config:
   name: research_discovery_team
@@ -20,6 +21,8 @@ team_config:
     ingestor-agent: [graph_write, kg_graph_ingest]
 tags: [research, x-social-intelligence-pipeline]
 concept: CONCEPT:RESEARCH-001
+metadata:
+  version: '1.0.2'
 ---
 
 # X Social Intelligence Pipeline Workflow

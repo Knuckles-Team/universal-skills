@@ -1,5 +1,7 @@
 ---
 name: skill-graph-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Transform any documentation source — a website, a PDF/Office file, a local
   directory, a single URL, a REST/DB/MCP connector, freshly generated text, or a
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # Skill-Graph-Builder (Any Source → Standardized Skill-Graph)
 

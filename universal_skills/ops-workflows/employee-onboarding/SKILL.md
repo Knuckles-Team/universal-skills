@@ -1,8 +1,9 @@
 ---
 name: employee-onboarding
+skill_type: workflow
 description: 'Onboard a new employee: generate onboarding documents, set up payroll and benefits,
   and provision systems access. Use when onboarding or provisioning a new hire.'
-domain: ops
+domain: ops-workflows
 agent: hr_operations_coordinator
 team_config:
   name: hr_onboarding_team
@@ -21,6 +22,8 @@ team_config:
     benefits-agent: [graph_query, graph_write]
     systems-provisioner: [systems_manager]
 concept: KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Employee Onboarding Workflow

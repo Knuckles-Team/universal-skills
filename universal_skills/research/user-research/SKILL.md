@@ -1,5 +1,7 @@
 ---
 name: user-research
+domain: research
+skill_type: skill
 description: >-
   Conducting user discovery, qualitative research, and persona development to
   understand customer needs and pain points. Use when preparing for discovery
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [user-research, discovery, personas, jtbd, journey-mapping, qualitative]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 # User Research & Discovery
 

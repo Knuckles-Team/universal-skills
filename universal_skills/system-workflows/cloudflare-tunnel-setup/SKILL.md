@@ -1,8 +1,9 @@
 ---
 name: cloudflare-tunnel-setup
+skill_type: workflow
 description: >-
   Parallel execution workflow for cloudflare tunnel setup using the Unified Parallel Engine
-domain: system
+domain: system-workflows
 agent: systems_engineer
 team_config:
   name: systems_operations_team
@@ -20,6 +21,8 @@ team_config:
     reporter-agent: [graph_write, document_tools]
 tags: [system, cloudflare-tunnel-setup]
 concept: CONCEPT:SYS-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Cloudflare Tunnel Setup Workflow

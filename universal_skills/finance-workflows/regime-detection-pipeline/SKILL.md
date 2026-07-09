@@ -1,8 +1,9 @@
 ---
 name: regime-detection-pipeline
+skill_type: workflow
 description: >-
   Collects pricing indicators, extracts structural features, fits Hidden Markov Model classifiers, and adapts strategy params to structural shifts.
-domain: finance
+domain: finance-workflows
 agent: quant_analyst
 team_config:
   name: quantitative_trading_team
@@ -20,6 +21,8 @@ team_config:
     report-generator: [graph_write, document_tools]
 tags: [regime, hmm, volatility, classification]
 concept: CONCEPT:EE-011
+metadata:
+  version: '1.0.2'
 ---
 
 # Regime Detection Pipeline Workflow

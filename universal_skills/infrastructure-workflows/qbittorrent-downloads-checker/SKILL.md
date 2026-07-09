@@ -1,8 +1,9 @@
 ---
 name: qbittorrent-downloads-checker
+skill_type: workflow
 description: >-
   Connects to your qBittorrent server, lists active and completed torrents, and displays a comprehensive download progress dashboard.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -18,6 +19,8 @@ team_config:
     verifier-agent: [pt_docker, cnt_cm_container_operations]
 tags: ['qbittorrent', 'torrents', 'downloads', 'media', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
+metadata:
+  version: '1.0.2'
 ---
 
 # Qbittorrent Downloads Checker Workflow

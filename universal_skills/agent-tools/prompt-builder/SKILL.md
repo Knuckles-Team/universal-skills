@@ -1,5 +1,7 @@
 ---
 name: prompt-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Author and validate canonical system-prompt JSON blueprints for agent-utilities
   agents and agent-packages. Use when creating or fixing a main_agent.json / a
@@ -12,8 +14,8 @@ description: >-
 license: MIT
 tags: [prompts, system-prompt, agent, builder, structured-prompt, json]
 metadata:
-  author: Genius
   version: '1.0.2'
+  author: Genius
 ---
 
 # Prompt Builder

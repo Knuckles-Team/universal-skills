@@ -1,8 +1,9 @@
 ---
 name: full-ecosystem-health
+skill_type: workflow
 description: >-
   End-to-end ecosystem health check across containers, system resources, workspace, and observability stack. This is the "canary" workflow that validates all infrastructure layers are operational.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -20,6 +21,8 @@ team_config:
     report-agent: [graph_write, document_tools]
 tags: ['ecosystem', 'health', 'canary', 'full-stack']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Full Ecosystem Health Workflow

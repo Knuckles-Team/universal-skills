@@ -1,12 +1,13 @@
 ---
 name: mcp-service-secret-onboarding
+skill_type: workflow
 description: >-
   Onboard or rotate a fleet MCP service's auth secret end-to-end: provision a Keycloak
   service-account client, store the secret in OpenBao, inject it into the service's
   Portainer stack (reconciling the drifted stored compose) and redeploy, then verify the
   served call works. Use when an MCP service 401s on missing/stale admin credentials, when
   rotating a client secret, or when wiring a new service-account into the fleet.
-domain: infra
+domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
   name: infrastructure_ops_team
@@ -26,6 +27,8 @@ requires:
   - keycloak-agent
   - openbao-mcp
   - portainer-agent
+metadata:
+  version: '1.0.2'
 ---
 
 # MCP Service Secret Onboarding Workflow

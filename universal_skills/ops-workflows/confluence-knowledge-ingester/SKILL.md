@@ -1,8 +1,9 @@
 ---
 name: confluence-knowledge-ingester
+skill_type: workflow
 description: >-
   Fetches a Confluence wiki page, saves it locally as a standard markdown file, and pre-stages the artifact for seamless Knowledge Graph ingestion.
-domain: ops
+domain: ops-workflows
 agent: operations_coordinator
 team_config:
   name: operations_team
@@ -18,6 +19,8 @@ team_config:
     validator-agent: [graph_query]
 tags: ['atlassian', 'confluence', 'wiki', 'knowledge-base', 'atlassian-agent', 'graph-os']
 concept: CONCEPT:KG-2.12
+metadata:
+  version: '1.0.2'
 ---
 
 # Confluence Knowledge Ingester Workflow

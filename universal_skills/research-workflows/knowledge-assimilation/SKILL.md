@@ -1,5 +1,6 @@
 ---
 name: knowledge-assimilation
+skill_type: workflow
 description: >-
   Universal Knowledge Assimilation Engine — the "Master Control Program" for
   autonomous self-evolution. Discovers content from X, ScholarX, and GitHub,
@@ -10,12 +11,12 @@ description: >-
   Triggers on "assimilate knowledge", "knowledge assimilation", "ingest and evolve",
   "push-based evolution", "discover and ingest", "x research pipeline",
   "self-evolve from X", "run assimilation".
-domain: research
+domain: research-workflows
 license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
 metadata:
+  version: '1.0.2'
   author: Genius
-  version: '1.0.0'
   concepts:
     - CONCEPT:KG-2.7
     - CONCEPT:ECO-4.6

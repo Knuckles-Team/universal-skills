@@ -1,5 +1,7 @@
 ---
 name: risk-monitoring
+domain: finance-workflows
+skill_type: workflow
 description: >-
   Continuous risk surveillance on cron schedule.
   Checks drawdown, daily loss, regime shifts, and circuit breakers.
@@ -12,8 +14,8 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
+  version: '1.0.2'
   author: agent-utilities
-  version: '1.0.0'
   concept: 'CONCEPT:EE-011'
 ---
 # Risk Monitoring Workflow (Cron: every 5 minutes)

@@ -1,5 +1,6 @@
 ---
 name: ca-trust-provisioner
+skill_type: skill
 description: >
   CA Trust Provisioner atomic skill. Bakes an enterprise / self-signed root-CA
   bundle into every touched system so deployments stop hitting self-signed-cert
@@ -17,6 +18,8 @@ tags:
   - trust
 requires:
   - tunnel-manager-mcp
+metadata:
+  version: '1.0.2'
 ---
 
 # CA Trust Provisioner Skill
