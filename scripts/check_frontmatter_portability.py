@@ -119,15 +119,6 @@ def _check_skill_md(skill_md: Path, root: Path) -> list[str]:
         if "<" in desc_s or ">" in desc_s:
             violations.append(f"{rel}: `description` still contains `<`/`>` after sanitization")
 
-    name = data.get("name")
-    dir_name = skill_md.parent.name
-    if not name:
-        violations.append(f"{rel}: missing `name` after transform")
-    elif name != dir_name:
-        violations.append(f"{rel}: `name` ({name!r}) != directory ({dir_name!r})")
-    elif not _KEBAB_RE.match(str(name)):
-        violations.append(f"{rel}: `name` ({name!r}) is not kebab-case")
-
     orig_fm_text, _ = _split_frontmatter(text)
     try:
         orig_data = yaml.safe_load(orig_fm_text) or {}
@@ -138,6 +129,18 @@ def _check_skill_md(skill_md: Path, root: Path) -> list[str]:
         violations.append(
             f"{rel}: `skill_type` ({skill_type!r}) not one of {_SKILL_TYPES}"
         )
+
+    name = data.get("name")
+    dir_name = skill_md.parent.name
+    if not name:
+        violations.append(f"{rel}: missing `name` after transform")
+    elif not _KEBAB_RE.match(str(name)):
+        violations.append(f"{rel}: `name` ({name!r}) is not kebab-case")
+    elif skill_type != "graph" and name != dir_name:
+        # Skill-graph bundles/sub-nodes use qualified names (e.g. `trading-execution`
+        # in dir `execution`): namespaced reference content, not top-level atomic/
+        # workflow skills that agents route on, so name==dir is not required for them.
+        violations.append(f"{rel}: `name` ({name!r}) != directory ({dir_name!r})")
 
     return violations
 
