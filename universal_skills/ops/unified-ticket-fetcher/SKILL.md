@@ -10,7 +10,7 @@ metadata:
   author: Genius
   version: '0.1.0'
 requires:
-  - unified_task_tracker
+  - unified-task-tracker
 ---
 
 # Unified Ticket Fetcher Skill
@@ -19,7 +19,7 @@ Stateless atomic operation to securely query multiple project management and ent
 
 ## Prerequisites
 
-- `unified_task_tracker` — for orchestrating multi-provider authentication and issuing high-fidelity API requests to ticketing backends.
+- `unified-task-tracker` — for orchestrating multi-provider authentication and issuing high-fidelity API requests to ticketing backends.
 
 ## Steps
 

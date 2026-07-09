@@ -7,7 +7,7 @@ description: >-
   BMC health (SMART incl. RAID megaraid passthrough, drive-slot/IPMI faults, predicted
   failures) that the filesystem checks miss — then, only after presenting the findings
   and getting explicit per-host confirmation, remediates by delegating to the
-  systems_issue_troubleshooter workflow (kill rogue PIDs, reclaim swap/temp), and
+  systems-issue-troubleshooter workflow (kill rogue PIDs, reclaim swap/temp), and
   re-verifies. Use when a machine is hot, sluggish, throwing a drive fault, or newly
   onboarded and you want a single "how is this host doing, and make it run cool" pass.
   Composes hardware-profile-sweep, host-resource-sampler, and host-process-inspector
@@ -38,7 +38,7 @@ concept: CONCEPT:INFRA-001
 Onboard-diagnose a host (or fleet) — OS validation + resource utilization + process /
 zombie / runaway / swap inspection + physical-storage/BMC health — and remediate **only
 under explicit per-host approval**. The four diagnostic steps are read-only and run in
-parallel; remediation delegates to `systems_issue_troubleshooter` and is gated behind a
+parallel; remediation delegates to `systems-issue-troubleshooter` and is gated behind a
 user decision (drive faults are surfaced as hardware replace candidates, never
 auto-remediated).
 
@@ -102,7 +102,7 @@ runaways → reclaim swap → reap zombies (via parents) → wind down stale ses
 **Agent**: `remediation-agent`
 **Tools**: `sm_process_operations, sm_system_operations`
 
-Execute only the approved actions by delegating to the **`systems_issue_troubleshooter`**
+Execute only the approved actions by delegating to the **`systems-issue-troubleshooter`**
 workflow (`kill_process` for confirmed rogue/orphan PIDs, `clean_temp_files` /
 `clean_package_cache`, swap reset). Verify each PID's identity (re-read cmdline) before
 killing — PIDs recycle. Never kill a process still owned by a live interactive session
@@ -128,7 +128,7 @@ parallel; dependents run after their prerequisites complete.
 
 - **Run first (in parallel):** Step 0 — hardware_profile_sweep; Step 1 — host_resource_sampler; Step 2 — host_process_inspector; Step 2b — storage_bmc_health
 - **After level 0:** Step 3 — present_and_gate (user decision)
-- **After Step 3:** Step 4 — remediate (only approved actions, via systems_issue_troubleshooter)
+- **After Step 3:** Step 4 — remediate (only approved actions, via systems-issue-troubleshooter)
 - **After Step 4:** Step 5 — verify_and_persist
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

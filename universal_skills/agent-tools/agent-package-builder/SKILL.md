@@ -537,7 +537,7 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     || echo "❌ pipeline not pinned @main"
 ```
 
-If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring.
+If ANY item shows ❌, fix it before completing the build. The `ecosystem-standardizer` workflow can also be run for a deeper audit with scoring.
 ```
 Trigger: "run ecosystem standardizer" with scope={package-name}
 ```

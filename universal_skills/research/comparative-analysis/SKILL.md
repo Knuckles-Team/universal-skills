@@ -305,7 +305,7 @@ rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
 
 ## Output Location Rules
 
-1. **Codebase analysis** involving a primary project → `.specify/reports/comparative_analysis.md`
+1. **Codebase analysis** involving a primary project → `.specify/reports/comparative-analysis-workflow.md`
    inside that project directory
 2. **Multi-codebase** with no primary → output to the workspace root or user-specified path
 3. **Research-only analysis** → ask user for preferred output location (suggest `~/Documents/`)

@@ -128,7 +128,7 @@ If all hosts are now reachable, offer to run a hardware sweep:
 PROMPT THE USER: "All hosts reachable. Run hardware sweep to collect
 OS and system info for the Knowledge Graph? (y/n)"
 
-If approved, run the hardware_sweep workflow from catalog.yaml
+If approved, run the hardware-sweep workflow from catalog.yaml
 ```
 
 ## Password Handling
@@ -144,10 +144,10 @@ Supported methods (in priority order):
 
 ## Catalog Workflow
 
-This skill maps to the `ssh_bootstrap` workflow in `catalog.yaml`:
+This skill maps to the `ssh-bootstrap-workflow` workflow in `catalog.yaml`:
 
 ```yaml
-- name: ssh_bootstrap
+- name: ssh-bootstrap-workflow
   domain: infrastructure
   requires: [tunnel-manager-mcp, systems-manager-mcp]
   steps:
@@ -162,7 +162,7 @@ This skill maps to the `ssh_bootstrap` workflow in `catalog.yaml`:
 
 The `infrastructure-orchestrator` skill invokes this skill as a prerequisite
 before running discovery. If hosts are unreachable during
-`full_infrastructure_discovery`, suggest running `ssh_bootstrap` first.
+`full-infrastructure-discovery`, suggest running `ssh-bootstrap-workflow` first.
 
 ## KG Node Updates
 

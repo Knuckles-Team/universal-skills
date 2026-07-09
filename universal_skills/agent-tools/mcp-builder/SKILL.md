@@ -275,7 +275,7 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     || echo "❌ ECO-4.0 bridge MISSING"
 ```
 
-If ANY item shows ❌, fix it before marking the build as complete. For a deeper audit with scoring, use the `ecosystem_standardizer` workflow.
+If ANY item shows ❌, fix it before marking the build as complete. For a deeper audit with scoring, use the `ecosystem-standardizer` workflow.
 
 > [!IMPORTANT]
 > A new package is not complete until it passes the drift check with 0 missing items.
