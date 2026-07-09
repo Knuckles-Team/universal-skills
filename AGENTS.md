@@ -13,10 +13,19 @@ application of it.
   a skill-workflow.**
 
 - **A skill-workflow is PURELY the grouping of atomic skills.** It lives in
-  `universal_skills/workflows/<domain>/<name>/` and is a topological DAG whose every
-  step **references an existing atomic skill** (or a single MCP tool) by name, declares
-  its `depends_on`, and carries **no inline business logic of its own**. The workflow
-  decides *ordering and composition*; the atomic skills it names do the *work*.
+  `universal_skills/<domain>-workflows/<name>/` (e.g. `finance-workflows/`,
+  `development-workflows/`) and is a topological DAG whose every step **references an
+  existing atomic skill** (or a single MCP tool) by name, declares its `depends_on`, and
+  carries **no inline business logic of its own**. The workflow decides *ordering and
+  composition*; the atomic skills it names do the *work*.
+
+- **Every SKILL.md declares `skill_type` + `domain`.** `skill_type` is `skill`
+  (atomic), `workflow`, or `graph` (skill-graph) — this frontmatter field, **not the
+  directory path**, is what the installer's `--layer` filter and the atomicity gate
+  classify on, so a package can ship a workflow anywhere under its `skills/` tree.
+  `domain` equals the containing top-level directory name (`finance-workflows`,
+  `infrastructure`, …). Both are seeded by the `skill-builder` / `skill-workflow-builder`
+  scaffolders and enforced by `check_atomicity.py`.
 
 - **Claude-compatible is mandatory** (for both skills and workflows). Each is a
   `SKILL.md` directory with valid frontmatter — `name` kebab-case **== directory

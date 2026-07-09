@@ -7,7 +7,7 @@ Enforces the governing rule (see AGENTS.md / STANDARDS.md):
     SKILL.md must NOT be a workflow-in-disguise (no swarm orchestration block).
   * Every SKILL.md is Claude-compatible — a non-empty ``description`` of at most
     1024 chars (agents route on the description alone).
-  * A skill-workflow (under ``universal_skills/workflows/``) is the dual-mode
+  * A skill-workflow (skill_type: workflow, under ``universal_skills/<domain>-workflows/``) is the dual-mode
     grouping of atomic skills: a ``depends_on`` DAG (machine layer) PLUS a
     rendered Claude-executable ``## Execution`` layer ending in the graph-os
     delegation footer.
