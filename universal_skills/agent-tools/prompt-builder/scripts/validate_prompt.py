@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a system-prompt JSON blueprint against the canonical contract.
 
-CONCEPT:ORCH-1.80. Wraps the single shared validator
+CONCEPT:AU-ORCH.routing.resolve-body-single-canonical. Wraps the single shared validator
 ``agent_utilities.prompting.structured.validate_canonical`` so authoring,
 CI (``check_prompt_schema.py``), and per-package ``test_prompt_parity`` all
 agree. Exit code 0 == conformant, 1 == violations (in the chosen mode).

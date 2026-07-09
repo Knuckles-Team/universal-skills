@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Author a canonical system-prompt JSON blueprint.
 
-CONCEPT:ORCH-1.80. Thin front-end over
+CONCEPT:AU-ORCH.routing.resolve-body-single-canonical. Thin front-end over
 ``agent_utilities.prompting.structured.StructuredPrompt`` — the single source of
 truth for the canonical prompt schema. Writes the body to
 ``instructions.core_directive`` and stamps ``schema_version``/``source`` so the

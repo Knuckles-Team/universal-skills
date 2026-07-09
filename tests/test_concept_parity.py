@@ -10,6 +10,18 @@ WORKSPACE_DIR = os.path.dirname(os.path.dirname(ROOT_DIR))
 MASTER_OVERVIEW_PATH = os.path.join(
     WORKSPACE_DIR, "agent-utilities", "docs", "overview.md"
 )
+if not os.path.exists(MASTER_OVERVIEW_PATH):
+    # A git worktree (the mandated workflow — see AGENTS.md "Working with Git
+    # Worktrees") doesn't sit at the canonical
+    # workspace/agent-packages/skills/<repo> depth this relative computation
+    # assumes (it lives under /home/apps/worktrees/<repo>/<branch> instead) —
+    # fall back to the canonical checkout so the gate still resolves real
+    # registered concepts instead of silently treating everything as unregistered.
+    _CANONICAL_OVERVIEW = (
+        "/home/apps/workspace/agent-packages/agent-utilities/docs/overview.md"
+    )
+    if os.path.exists(_CANONICAL_OVERVIEW):
+        MASTER_OVERVIEW_PATH = _CANONICAL_OVERVIEW
 
 
 def extract_concepts_from_overview(filepath):

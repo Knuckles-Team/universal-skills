@@ -74,7 +74,7 @@ the hub via two setuptools entry-point groups it declares in `pyproject.toml`:
   that invokes a package-owned skill should list the owning package in its `requires:`
   frontmatter.
 - **System prompts** use the canonical `StructuredPrompt` format — author them with the
-  **`prompt-builder`** skill (CONCEPT:ORCH-1.80). `agent-package-builder` scaffolds the
+  **`prompt-builder`** skill (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical). `agent-package-builder` scaffolds the
   prompt + a starter skill + the entry-points automatically.
 
 ## Tech Stack & Architecture

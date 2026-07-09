@@ -1,5 +1,5 @@
 """Parity tests: the scaffold prompt template + prompt-builder never drift from
-the canonical StructuredPrompt schema (CONCEPT:ORCH-1.80).
+the canonical StructuredPrompt schema (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical).
 
 These guard the exact gap that produced the original drift: a hand-edited
 template diverging from the model. Both the agent-package-builder's

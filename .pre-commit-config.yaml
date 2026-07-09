@@ -143,3 +143,12 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+- repo: local
+  hooks:
+  - id: check-frontmatter-portability
+    name: cross-agent frontmatter portability (Codex + fleet)
+    entry: |-
+      bash -c 'roots="universal_skills"; for d in ../skill-graphs/skill_graphs ../../agent-utilities/agent_utilities/skills ../../agents; do [ -d "$d" ] && roots="$roots $d"; done; python3 scripts/check_frontmatter_portability.py $roots --max-violations 0'
+    language: system
+    pass_filenames: false
+    always_run: true

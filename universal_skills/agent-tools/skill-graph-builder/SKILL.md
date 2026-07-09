@@ -37,7 +37,12 @@ provenance + freshness tracking.
   * `sources.json` — provenance/freshness manifest (per source kind/uri/options,
     content-hash, fetch time + per-file integrity fingerprints);
   * `index.json` — a machine-readable navigation map (per-file path/title/group/bytes/
-    headings) for programmatic jump-to;
+    headings/url) for programmatic jump-to. Reference files are stored FLAT and
+    portable: `reference/<hash>.md` where `hash` is a short SHA-1 of the section's
+    source URL (falling back to its title), not a nested title-derived path — so
+    generated trees stay short and Windows/macOS-safe (no MAX_PATH, illegal-char, or
+    case-collision risk). The human `title`/`group`/`url` live in the matching
+    `index.json` section entry, not the filename.
   * optionally `OVERVIEW.md` — an **LLM-distilled essence + cheatsheet** (`--distill`),
     so the agent reads the distilled knowledge first and drills into `reference/` only
     for detail (three tiers: map → essence → full manual).

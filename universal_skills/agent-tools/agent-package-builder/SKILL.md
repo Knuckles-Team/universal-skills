@@ -350,7 +350,7 @@ Read the `agent-builder` skill and follow its instructions to:
 3. Create `{pkg_dir}/__main__.py` invoking `agent_server()`.
 4. Update `a2a.json` with the agent's real capabilities.
 
-#### Prompts & Skills (MANDATORY — CONCEPT:ORCH-1.80 / OS-5.52)
+#### Prompts & Skills (MANDATORY — CONCEPT:AU-ORCH.routing.resolve-body-single-canonical / OS-5.52)
 
 Every package is a **fleet contributor**: it ships its own canonical system
 prompt and at least one skill, discovered by agent-utilities via entry-points.

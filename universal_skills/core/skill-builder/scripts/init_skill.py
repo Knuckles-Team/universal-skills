@@ -16,6 +16,8 @@ from pathlib import Path
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
+domain: {domain}
+skill_type: skill
 description: [ACTION REQUIRED: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
 license: MIT
 tags: [ACTION REQUIRED: Add relevant keywords like agent, documentation, workflow, etc.]
@@ -222,10 +224,13 @@ def init_skill(skill_name, path):
         print(f"❌ Error creating directory: {e}")
         return None
 
-    # Create SKILL.md from template
+    # Create SKILL.md from template. `domain` is the containing top-level directory
+    # name (STANDARDS.md §2.1) — the basename of `--path`, e.g. `--path
+    # universal_skills/finance-workflows` -> domain "finance-workflows".
     skill_title = title_case_skill_name(skill_name)
+    domain = Path(path).resolve().name
     skill_content = SKILL_TEMPLATE.format(
-        skill_name=skill_name, skill_title=skill_title
+        skill_name=skill_name, skill_title=skill_title, domain=domain
     )
 
     skill_md_path = skill_dir / "SKILL.md"

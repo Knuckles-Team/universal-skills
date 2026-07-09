@@ -3,6 +3,7 @@ import argparse
 import os
 import re
 import shutil
+import subprocess
 import sys
 import logging
 from pathlib import Path
@@ -31,6 +32,21 @@ try:
     from skill_graphs import skill_graph_utilities
 except ImportError:
     skill_graph_utilities = None
+
+# Per-agent frontmatter adapter (Codex et al. reject our top-level keys). Try the
+# relative import (normal package context) first, then fall back to an absolute
+# import off this file's own directory — covers direct script execution
+# (`python install.py`) AND the `install-skills` console-script shim, neither of
+# which give this module a real dotted package (its parent dir is hyphenated:
+# `core/skill-installer/`, not a valid Python identifier).
+try:
+    from . import adapters
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import adapters
+    except ImportError:
+        adapters = None
 
 
 # Entry-point group through which any installed agent-package contributes its
@@ -366,6 +382,37 @@ def _try_windows_junction(dst: Path, src: Path) -> bool:
         return False
 
 
+def _transform_skill_md(skill_dst: Path, contract) -> None:
+    """Overwrite ``<skill_dst>/SKILL.md`` with its per-agent-adapted frontmatter."""
+    skill_md = skill_dst / "SKILL.md"
+    if adapters is None or not skill_md.is_file():
+        return
+    original = skill_md.read_text(encoding="utf-8", errors="replace")
+    transformed = adapters.transform_frontmatter(original, contract)
+    if transformed != original:
+        skill_md.write_text(transformed, encoding="utf-8")
+
+
+def _install_transformed_copy(
+    skill_src: Path, skill_dst: Path, force: bool, contract
+) -> bool:
+    """Copy ``skill_src`` → ``skill_dst`` and rewrite its SKILL.md for ``contract``.
+
+    Shared by the top-level skill install and (for ``flat_discovery`` targets) each
+    promoted nested sub-skill. Returns True if a copy was performed.
+    """
+    if skill_dst.exists() and not force:
+        logger.info(
+            f"Skipping {skill_dst.name} (already exists). Use --force to overwrite."
+        )
+        return False
+    if skill_dst.exists() or skill_dst.is_symlink():
+        _remove_dest(skill_dst)
+    shutil.copytree(skill_src.resolve(), skill_dst)
+    _transform_skill_md(skill_dst, contract)
+    return True
+
+
 def install_skills(
     target_path: Path,
     skill_names: Optional[List[str]] = None,
@@ -376,6 +423,7 @@ def install_skills(
     layer: str = "all",
     prune: bool = True,
     providers: Optional[set] = None,
+    contract=None,
 ):
     """Install skills to the target path by copy (default) or symlink.
 
@@ -385,7 +433,16 @@ def install_skills(
     stale copy to re-sync. Falls back to a copy if the filesystem refuses the symlink (e.g. Windows
     without privileges). This is the same pattern the bundled skills already use (e.g. the
     ``code-enhancer`` skill is a symlink into this package).
+
+    ``contract`` is the target tool's :class:`adapters.AgentContract` (default:
+    permissive, i.e. no behavior change). When it ``requires_transform`` (e.g.
+    Codex), skills are always COPIED (never symlinked) and each installed
+    ``SKILL.md`` has its frontmatter adapted to the target's rules.
     """
+    if contract is None and adapters is not None:
+        contract = adapters.get_contract("")
+    requires_transform = bool(contract is not None and contract.requires_transform)
+
     if not target_path.exists():
         logger.info(f"Creating target directory: {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
@@ -397,25 +454,43 @@ def install_skills(
         logger.error("No skill/graph sources found to install.")
         return False
 
+    # A transform-requiring target (frontmatter must be rewritten per skill) can
+    # never be symlinked — the installed copy must diverge from the source file.
+    effective_symlink = symlink and not requires_transform
+    if symlink and requires_transform:
+        logger.info(
+            "Target requires a frontmatter transform → copying, not symlinking."
+        )
+
     installed_count = 0
     for skill_src in sources:
         # Determine destination
         # Documentation graphs go into a sub-folder, whether they came from the
-        # canonical skill_graphs package or a provider's ``skill-graphs/`` subdir.
+        # canonical skill_graphs package or a provider's ``skill-graphs/`` subdir —
+        # UNLESS the target is flat-discovery (e.g. Codex), which has no nested
+        # lookup, so the graph goes at the target's top level instead.
         is_graph = (
             "skill_graphs" in skill_src.parts or "skill-graphs" in skill_src.parts
         )
+        dest_name = (
+            adapters.resolve_dest_name(skill_src.name, contract)
+            if requires_transform
+            else skill_src.name
+        )
         if is_graph:
-            dest_root = target_path / "skill-graphs"
-            dest_root.mkdir(parents=True, exist_ok=True)
-            skill_dst = dest_root / skill_src.name
+            if requires_transform and contract.flat_discovery:
+                dest_root = target_path
+            else:
+                dest_root = target_path / "skill-graphs"
+                dest_root.mkdir(parents=True, exist_ok=True)
+            skill_dst = dest_root / dest_name
         else:
-            skill_dst = target_path / skill_src.name
+            skill_dst = target_path / dest_name
 
         src_abs = skill_src.resolve()
 
         # Idempotent: an already-correct symlink needs no work (even without --force).
-        if symlink and skill_dst.is_symlink() and skill_dst.resolve() == src_abs:
+        if effective_symlink and skill_dst.is_symlink() and skill_dst.resolve() == src_abs:
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
@@ -432,13 +507,27 @@ def install_skills(
             )
             continue
 
+        if requires_transform:
+            if _install_transformed_copy(skill_src, skill_dst, force, contract):
+                installed_count += 1
+                if contract.flat_discovery and not is_graph:
+                    for nested_src in adapters.iter_promotable_nested(skill_src):
+                        nested_dst = target_path / adapters.resolve_dest_name(
+                            nested_src.name, contract
+                        )
+                        if _install_transformed_copy(
+                            nested_src, nested_dst, force, contract
+                        ):
+                            installed_count += 1
+            continue
+
         # Repoint a stale symlink — broken (dead target) or pointing at a MOVED source
         # (same skill name, refactored to a new package/path) — freely in symlink mode:
         # correcting a link to its authoritative current source is always safe and is
         # exactly how a refactor should propagate. Only a real copied dir/file still
         # needs --force to overwrite.
         stale_symlink = skill_dst.is_symlink() and skill_dst.resolve() != src_abs
-        if symlink and stale_symlink:
+        if effective_symlink and stale_symlink:
             logger.info(f"Repointing {skill_src.name} → moved/updated source.")
         elif skill_dst.exists() and not force:
             logger.info(
@@ -446,12 +535,12 @@ def install_skills(
             )
             continue
 
-        verb = "Symlinking" if symlink else "Installing"
+        verb = "Symlinking" if effective_symlink else "Installing"
         logger.info(f"{verb} {skill_src.name} to {skill_dst}...")
         try:
             if skill_dst.exists() or skill_dst.is_symlink():
                 _remove_dest(skill_dst)
-            if symlink:
+            if effective_symlink:
                 try:
                     os.symlink(src_abs, skill_dst, target_is_directory=True)
                 except OSError as link_err:
@@ -482,6 +571,50 @@ def install_skills(
     mode = "symlinked" if symlink else "installed"
     logger.info(f"Successfully {mode} {installed_count} items.")
     return True
+
+
+def _find_portability_checker() -> Optional[Path]:
+    """Locate ``scripts/check_frontmatter_portability.py`` from a repo checkout.
+
+    Dev-only tooling (not shipped inside the installed ``universal_skills``
+    package), so this is only found when running against a checkout — e.g. via
+    ``pip install -e .`` from this repo. Absent otherwise, in which case
+    ``--validate`` no-ops rather than failing the install.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        cand = parent / "scripts" / "check_frontmatter_portability.py"
+        if cand.is_file():
+            return cand
+    return None
+
+
+def _run_validate(target_path: Path) -> None:
+    """Run the frontmatter portability gate against an emitted target dir."""
+    checker = _find_portability_checker()
+    if checker is None:
+        logger.debug(
+            "check_frontmatter_portability.py not found (not a repo checkout); "
+            "skipping --validate."
+        )
+        return
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(checker), str(target_path), "--max-violations", "0"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"--validate could not run the portability checker: {e}")
+        return
+    if proc.returncode != 0:
+        logger.warning(
+            f"--validate: frontmatter portability issues in {target_path}:\n"
+            f"{proc.stdout}{proc.stderr}"
+        )
+    else:
+        logger.info(f"--validate: {target_path} passed the frontmatter portability gate.")
 
 
 def _available_providers() -> List[str]:
@@ -647,6 +780,16 @@ def main():
             "fires them via kg-delegate). 'all' = both (default)."
         ),
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help=(
+            "After installing into a target whose agent contract required a frontmatter "
+            "transform (e.g. Codex), run the frontmatter-portability gate against the "
+            "emitted skills and log the result (a non-fatal warning on violations). "
+            "No-op against a plain pip install (the checker is repo-checkout-only)."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -694,6 +837,12 @@ def main():
             )
             sys.exit(1)
         targets.update(found)
+    elif args.path and args.tool:
+        # Both given: install to a CUSTOM directory but still apply --tool's
+        # frontmatter contract (e.g. dry-running what Codex would receive without
+        # touching the real ~/.codex/skills). Label by tool so adapters.get_contract
+        # resolves the right contract; the destination is still --path.
+        targets[args.tool.lower()] = Path(args.path).expanduser()
     elif args.path:
         targets[args.path] = Path(args.path).expanduser()
     elif args.tool:
@@ -727,6 +876,7 @@ def main():
             continue
         seen.add(str(target))
         logger.info(f"→ {label}: {target}")
+        contract = adapters.get_contract(label) if adapters is not None else None
         install_skills(
             target,
             skill_names,
@@ -737,7 +887,10 @@ def main():
             layer=args.layer,
             prune=args.prune,
             providers=provider_filter,
+            contract=contract,
         )
+        if args.validate and contract is not None and contract.requires_transform:
+            _run_validate(target)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 name: paper-scan
 skill_type: workflow
 description: >-
-  >-
+  Parallel execution workflow for paper scan using the Unified Parallel Engine
 domain: research-workflows
 agent: research_coordinator
 team_config:
