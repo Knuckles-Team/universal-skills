@@ -10,17 +10,16 @@ Usage:
 
 Examples:
     python build_workflow.py list
-    python build_workflow.py scaffold check-disk-capacity --domain infra --description "Check server disk space"
+    python build_workflow.py scaffold check-disk-capacity --domain infrastructure-workflows --description "Check server disk space"
 """
 
 import sys
-import os
 import re
 import argparse
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 
 try:
     import yaml
@@ -42,15 +41,19 @@ def print_premium(text: str, color: str = ""):
 
 
 def get_default_workflows_root() -> Path:
-    """Determine the default location of the workflows directory."""
-    # Find universal_skills root
+    """Determine the universal_skills root that holds the <domain>-workflows/ dirs.
+
+    Skill-workflows live at ``universal_skills/<domain>-workflows/<name>/`` (the
+    ``--domain`` arg already carries the ``-workflows`` suffix), so the root is the
+    ``universal_skills`` package dir itself.
+    """
     current = Path(__file__).resolve()
     for parent in current.parents:
         if parent.name == "universal_skills":
-            return parent / "workflows"
+            return parent
     # Fallback to local workspace assumptions
     return Path(
-        "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/workflows"
+        "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills"
     )
 
 
@@ -143,6 +146,7 @@ def parse_workflow_skill(skill_md_path: Path) -> Optional[Dict]:
     return {
         "path": skill_md_path,
         "name": frontmatter.get("name", skill_md_path.parent.name),
+        "skill_type": frontmatter.get("skill_type", ""),
         "description": frontmatter.get("description", ""),
         "domain": frontmatter.get("domain", ""),
         "tags": frontmatter.get("tags", []),
@@ -159,8 +163,15 @@ def index_all_workflows(root_path: Path) -> List[Dict]:
         return workflows
 
     for p in root_path.rglob("SKILL.md"):
+        s = str(p).replace("\\", "/")
+        if "/assets/" in s:
+            continue
         parsed = parse_workflow_skill(p)
-        if parsed:
+        # Only surface skill-workflows: skill_type == workflow, or a *-workflows domain.
+        if parsed and (
+            parsed.get("skill_type") == "workflow"
+            or str(parsed.get("domain", "")).endswith("-workflows")
+        ):
             workflows.append(parsed)
 
     return workflows
@@ -256,13 +267,17 @@ def scaffold_workflow_files(
         print_premium(f"❌ Error creating directory: {e}", RED)
         return None
 
-    # Generate SKILL.md content
+    # Generate SKILL.md content. Every skill-workflow carries skill_type: workflow
+    # (the taxonomy field the installer + atomicity gate classify on) and a
+    # metadata.version tracked in .bumpversion.cfg.
     frontmatter = {
         "name": workflow_name,
+        "skill_type": "workflow",
         "description": description,
         "domain": domain,
         "tags": tags,
         "requires": requires,
+        "metadata": {"version": "0.1.0"},
     }
 
     frontmatter_str = "---\n"
@@ -271,10 +286,12 @@ def scaffold_workflow_files(
     else:
         # Simple fallback serializer
         frontmatter_str += f"name: {workflow_name}\n"
+        frontmatter_str += "skill_type: workflow\n"
         frontmatter_str += f"description: {description}\n"
         frontmatter_str += f"domain: {domain}\n"
         frontmatter_str += f"tags: {json.dumps(tags)}\n"
         frontmatter_str += f"requires: {json.dumps(requires)}\n"
+        frontmatter_str += "metadata:\n  version: '0.1.0'\n"
     frontmatter_str += "---\n\n"
 
     body_str = f"# {workflow_name} Workflow\n\n{description}\n\n"

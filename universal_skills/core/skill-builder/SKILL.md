@@ -41,7 +41,7 @@ universal_skills/skills/skill-name/
 
 Every SKILL.md consists of:
 
-- **Frontmatter** (YAML): Contains `name`, `description`, `license`, `tags`, and `metadata` (`author`, `version`). This tells the system when to load the skill and pass it as a tool to the agent.
+- **Frontmatter** (YAML): Contains `name`, `skill_type` (`skill` for an atomic skill — use `workflow` only via the `skill-workflow-builder`), `description`, `license`, `tags`, and `metadata` (`author`, `version`). This tells the system when to load the skill and pass it as a tool to the agent. `skill_type` is how the installer and the atomicity gate classify the capability.
 - **Body** (Markdown): The actual prompt instructions dictating how the agent should utilize the skill's bundled scripts or documentation. Keep it concise.
 
 #### Bundled Resources (optional)

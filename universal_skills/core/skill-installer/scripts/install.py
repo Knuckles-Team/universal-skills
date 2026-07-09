@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import re
 import shutil
 import sys
 import logging
@@ -164,17 +165,40 @@ def detect_present_tools() -> dict:
     return present
 
 
+def _skill_type(path: Path) -> Optional[str]:
+    """Read the ``skill_type`` frontmatter (skill|workflow|graph) from a skill dir."""
+    skill_md = path / "SKILL.md"
+    try:
+        text = skill_md.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    if not text.startswith("---"):
+        return None
+    fm = text.split("---", 2)[1] if text.count("---") >= 2 else ""
+    m = re.search(r"^skill_type:\s*([A-Za-z]+)\s*$", fm, re.MULTILINE)
+    return m.group(1).lower() if m else None
+
+
 def _matches_layer(path: Path, layer: str) -> bool:
     """Filter a skill source path by layer.
 
-    ``atomic`` = an atomic building-block skill (NOT under ``workflows/``) — these are
-    what an agent invokes directly, so they belong in Claude. ``workflows`` = a
-    skill-workflow (under ``workflows/``); these are meant for the graph-os
-    orchestrator (Claude fires them via the ``kg-delegate`` skill /
-    ``graph_orchestrate execute_workflow``) and usually should NOT be installed into
-    Claude — that would just bloat the always-loaded skill list. ``all`` = no filter.
+    ``atomic`` = an atomic building-block skill — what an agent invokes directly, so
+    it belongs in Claude. ``workflows`` = a skill-workflow, meant for the graph-os
+    orchestrator (Claude fires them via ``kg-delegate`` / ``graph_orchestrate
+    execute_workflow``) and usually NOT installed into Claude — that would bloat the
+    always-loaded skill list. ``all`` = no filter.
+
+    Classification is by the authoritative ``skill_type`` frontmatter; the path
+    (``/workflows/`` segment or a ``*-workflows`` parent) is a back-compat fallback.
     """
-    is_workflow = f"{os.sep}workflows{os.sep}" in f"{path}{os.sep}"
+    st = _skill_type(path)
+    if st in ("skill", "workflow", "graph"):
+        is_workflow = st == "workflow"
+    else:
+        is_workflow = (
+            f"{os.sep}workflows{os.sep}" in f"{path}{os.sep}"
+            or path.parent.name.endswith("-workflows")
+        )
     if layer == "atomic":
         return not is_workflow
     if layer == "workflows":

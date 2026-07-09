@@ -1,7 +1,7 @@
 ---
 name: agent-workflows
 domain: agent-tools
-skill_type: workflow
+skill_type: skill
 description: >-
   Consolidated skill for managing, dispatching, and orchestrating other agents via
   the agent-manager CLI, as well as workflows for A2A communication,

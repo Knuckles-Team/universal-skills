@@ -115,13 +115,37 @@ def find_skills_root() -> Path:
     return Path.cwd() / "universal_skills"
 
 
+SKILL_TYPES = ("skill", "workflow", "graph")
+
+
+def _is_workflow(fm: dict, path_str: str) -> bool:
+    """Classify a SKILL.md as a workflow.
+
+    The authoritative signal is the ``skill_type`` frontmatter field; the path
+    (``*-workflows/`` domain or a ``/workflows/`` segment) is a back-compat fallback
+    for any file that predates the field.
+    """
+    st = fm.get("skill_type")
+    if st in SKILL_TYPES:
+        return st == "workflow"
+    # Back-compat fallback: only the top-level domain segment under universal_skills/
+    # carries the `-workflows` signal (an atomic dir like agent-tools/agent-workflows
+    # must not match); a nested workflows/ segment also counts.
+    p = path_str.replace("\\", "/")
+    m = re.search(r"/universal_skills/([^/]+)/", p)
+    domain = m.group(1) if m else ""
+    return domain.endswith("-workflows") or "/workflows/" in p
+
+
 def _atomic_skill_names(root: Path) -> set[str]:
     """Directory names of all atomic (non-workflow, non-asset) skills."""
     names: set[str] = set()
-    wf = f"{root.name}/workflows/"
     for skill_md in root.rglob("SKILL.md"):
         s = str(skill_md).replace("\\", "/")
-        if wf in s or "/assets/" in s or "skill_graphs" in s:
+        if "/assets/" in s or "skill_graphs" in s:
+            continue
+        fm = _parse_frontmatter(_split_frontmatter(skill_md.read_text(encoding="utf-8", errors="replace"))[0])
+        if _is_workflow(fm, s):
             continue
         names.add(skill_md.parent.name)
     return names
@@ -147,7 +171,15 @@ def check(root: Path) -> tuple[list[str], list[str]]:
         text = skill_md.read_text(encoding="utf-8", errors="replace")
         fm_text, body = _split_frontmatter(text)
         fm = _parse_frontmatter(fm_text)
-        is_workflow = f"{root.name}/workflows/" in str(skill_md).replace("\\", "/")
+        is_workflow = _is_workflow(fm, str(skill_md))
+
+        # --- skill_type presence/validity (WARNING) ---
+        st = fm.get("skill_type")
+        if st not in SKILL_TYPES:
+            warnings.append(
+                f"{rel}: missing/invalid `skill_type` (want one of {SKILL_TYPES}); "
+                f"classified as {'workflow' if is_workflow else 'skill'} by path fallback"
+            )
 
         # --- Global name uniqueness (flatten-to-Claude collision) ---
         dir_name = skill_md.parent.name
@@ -174,7 +206,7 @@ def check(root: Path) -> tuple[list[str], list[str]]:
             if present:
                 errors.append(
                     f"{rel}: atomic skill contains workflow/swarm block ({', '.join(present)}) "
-                    f"— move it to universal_skills/workflows/<domain>/"
+                    f"— set skill_type: workflow and move it under universal_skills/<domain>-workflows/"
                 )
             else:
                 # Workflow-in-disguise: an atomic skill whose steps invoke OTHER atomic
@@ -190,7 +222,7 @@ def check(root: Path) -> tuple[list[str], list[str]]:
                     warnings.append(
                         f"{rel}: atomic skill delegates to other skills "
                         f"({', '.join(delegates)}) — convert to a skill-workflow "
-                        f"under universal_skills/workflows/<domain>/"
+                        f"(skill_type: workflow) under universal_skills/<domain>-workflows/"
                     )
 
         # --- name == directory (allow snake_case dir for importable-module skills) ---

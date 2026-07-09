@@ -1,7 +1,7 @@
 ---
 name: subagent-driven-development
 domain: agent-tools
-skill_type: workflow
+skill_type: skill
 description: >-
   Use when executing implementation plans with independent tasks in the current
   session
