@@ -6,7 +6,7 @@ description: Generates executable tasks.md with dependency graph and [P] paralle
 license: MIT
 tags: [planner, sdd]
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: Genius
 ---
 

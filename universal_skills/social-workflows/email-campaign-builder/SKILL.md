@@ -22,7 +22,7 @@ team_config:
 tags: [social, email-campaign-builder]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Email Campaign Builder Workflow

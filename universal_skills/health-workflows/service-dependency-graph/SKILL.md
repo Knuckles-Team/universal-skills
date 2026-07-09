@@ -22,7 +22,7 @@ team_config:
 tags: [health, service-dependency-graph]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Service Dependency Graph Workflow

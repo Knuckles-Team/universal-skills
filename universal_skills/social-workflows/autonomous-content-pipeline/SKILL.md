@@ -22,7 +22,7 @@ team_config:
 tags: [social, autonomous-content-pipeline]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Autonomous Content Pipeline Workflow

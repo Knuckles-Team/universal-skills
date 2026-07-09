@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: Audel Rouhi
 ---
 # Threat Model Source Code Repo

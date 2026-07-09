@@ -6,7 +6,7 @@ description: Bootstraps the exact .specify/ folder layout for 1:1 spec-kit compa
 license: MIT
 tags: [sdd, bootstrap]
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: Genius
 ---
 

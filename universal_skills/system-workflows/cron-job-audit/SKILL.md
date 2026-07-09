@@ -22,7 +22,7 @@ team_config:
 tags: [system, cron-job-audit]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Cron Job Audit Workflow

@@ -20,7 +20,7 @@ team_config:
 tags: ['nextcloud', 'calendar', 'tasks', 'personal-assistant', 'nextcloud-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Nextcloud Time Manager Workflow

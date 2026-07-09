@@ -22,7 +22,7 @@ team_config:
 tags: [parameter-sweep, optimization, grid-search, visualization]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Parameter Sweep Optimizer Workflow

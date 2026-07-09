@@ -22,7 +22,7 @@ team_config:
 tags: [research, second-brain-sync]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Second Brain Sync Workflow

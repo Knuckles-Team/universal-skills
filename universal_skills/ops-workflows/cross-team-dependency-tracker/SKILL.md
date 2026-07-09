@@ -20,7 +20,7 @@ team_config:
 tags: [ops, cross-team-dependency-tracker]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Cross Team Dependency Tracker Workflow

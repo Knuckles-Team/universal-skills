@@ -20,7 +20,7 @@ team_config:
 tags: [ops, sla-compliance-monitor]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Sla Compliance Monitor Workflow

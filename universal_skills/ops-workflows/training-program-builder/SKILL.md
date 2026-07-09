@@ -22,7 +22,7 @@ team_config:
 tags: [ops, training-program-builder]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Training Program Builder Workflow

@@ -22,7 +22,7 @@ team_config:
 tags: [finance, finrl-training-pipeline]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Finrl Training Pipeline Workflow

@@ -20,7 +20,7 @@ team_config:
 tags: ['qbittorrent', 'torrents', 'downloads', 'media', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Qbittorrent Downloads Checker Workflow

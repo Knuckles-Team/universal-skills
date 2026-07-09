@@ -8,7 +8,7 @@ tags: [finance, alpha, signals, research]
 team_config: trading_department
 agent: quant_research_analyst
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

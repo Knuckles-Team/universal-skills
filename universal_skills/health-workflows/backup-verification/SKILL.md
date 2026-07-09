@@ -20,7 +20,7 @@ team_config:
 tags: [health, backup-verification]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Backup Verification Workflow

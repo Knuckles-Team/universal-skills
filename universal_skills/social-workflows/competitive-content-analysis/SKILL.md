@@ -20,7 +20,7 @@ team_config:
 tags: [social, competitive-content-analysis]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Competitive Content Analysis Workflow

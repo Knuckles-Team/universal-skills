@@ -16,7 +16,7 @@ team_config:
 tags: [infra, deploy-mcp-servers]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Deploy Mcp Servers Workflow

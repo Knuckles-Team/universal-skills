@@ -22,7 +22,7 @@ team_config:
 tags: [system, network-topology-mapper]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Network Topology Mapper Workflow

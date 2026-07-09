@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [claude-code, unattended, permission-fence, knowledge-graph, golden-loop, self-evolution, safety, orchestration]
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: Genius
   concepts: [OS-5.40, OS-5.41, ECO-4.47, SAFE-1.8]
 ---

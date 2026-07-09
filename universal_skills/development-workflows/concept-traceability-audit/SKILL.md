@@ -20,7 +20,7 @@ team_config:
 tags: [dev-workflows, concept-traceability-audit]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Concept Traceability Audit Workflow

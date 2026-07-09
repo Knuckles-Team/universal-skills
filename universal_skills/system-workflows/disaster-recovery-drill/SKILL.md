@@ -22,7 +22,7 @@ team_config:
 tags: [system, disaster-recovery-drill]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Disaster Recovery Drill Workflow

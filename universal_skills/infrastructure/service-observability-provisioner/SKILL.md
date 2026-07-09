@@ -16,7 +16,7 @@ requires:
   - systems-manager-mcp
   - portainer-mcp
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Service Observability Provisioner Skill

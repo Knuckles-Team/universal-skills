@@ -22,7 +22,7 @@ team_config:
 tags: [research, knowledge-decay-audit]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Knowledge Decay Audit Workflow

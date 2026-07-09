@@ -6,7 +6,7 @@ description: Generates code walkthroughs
 license: MIT
 tags: []
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: Genius
 ---
 

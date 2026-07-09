@@ -20,7 +20,7 @@ team_config:
 tags: [ops, knowledge-base-builder]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Knowledge Base Builder Workflow

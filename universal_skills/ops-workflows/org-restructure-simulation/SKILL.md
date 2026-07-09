@@ -20,7 +20,7 @@ team_config:
 tags: [ops, org-restructure-simulation]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Org Restructure Simulation Workflow

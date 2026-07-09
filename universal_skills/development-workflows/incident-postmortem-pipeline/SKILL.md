@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, incident-postmortem-pipeline]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Incident Postmortem Pipeline Workflow

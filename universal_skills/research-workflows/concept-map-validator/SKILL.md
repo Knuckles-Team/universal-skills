@@ -22,7 +22,7 @@ team_config:
 tags: [research, concept-map-validator]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Concept Map Validator Workflow

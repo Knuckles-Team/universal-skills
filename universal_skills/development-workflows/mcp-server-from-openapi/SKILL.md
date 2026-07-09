@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, mcp-server-from-openapi]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Mcp Server From Openapi Workflow

@@ -20,7 +20,7 @@ team_config:
 tags: [system, log-rotation-setup]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Log Rotation Setup Workflow

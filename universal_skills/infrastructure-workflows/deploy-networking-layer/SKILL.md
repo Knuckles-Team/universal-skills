@@ -22,7 +22,7 @@ team_config:
 tags: [infra, deploy-networking-layer]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Deploy Networking Layer Workflow

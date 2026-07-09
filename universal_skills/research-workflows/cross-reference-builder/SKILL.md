@@ -20,7 +20,7 @@ team_config:
 tags: [research, cross-reference-builder]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Cross Reference Builder Workflow

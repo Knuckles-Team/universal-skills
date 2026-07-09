@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, monorepo-release-pipeline]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Monorepo Release Pipeline Workflow

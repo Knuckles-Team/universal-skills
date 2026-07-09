@@ -10,7 +10,7 @@ agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, sentiment, finbert, nlp, alpha, portfolio, workflow]
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

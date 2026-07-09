@@ -22,7 +22,7 @@ team_config:
 tags: [finance, alternative-data-pipeline]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.0.2'
+  version: '1.1.0'
 ---
 
 # Alternative Data Pipeline Workflow
