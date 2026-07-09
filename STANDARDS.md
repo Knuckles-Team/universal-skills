@@ -11,8 +11,14 @@ Every standard below is an application of one rule (see `AGENTS.md` for the full
   numbered `### Step N:` sequence, no `depends_on`). Ordered/parallel stages mean it is
   a **skill-workflow**, not a skill.
 - **A skill-workflow is purely the grouping of atomic skills** — it lives in
-  `universal_skills/workflows/<domain>/<name>/`, and each step references an existing
-  **atomic skill** (or a single MCP tool) with `depends_on`; it adds no inline logic.
+  `universal_skills/<domain>-workflows/<name>/` (e.g. `finance-workflows/`,
+  `infrastructure-workflows/`), and each step references an existing **atomic skill**
+  (or a single MCP tool) with `depends_on`; it adds no inline logic.
+- **Every SKILL.md declares a `skill_type`** — `skill` (atomic), `workflow`
+  (skill-workflow), or `graph` (skill-graph). This frontmatter field — NOT the directory
+  path — is how the installer (`--layer`) and the atomicity gate classify a capability,
+  and it must equal the top-level `domain`'s kind. The `domain` field equals the
+  containing top-level directory name.
 - **Skill-workflows are dual-mode** — the `depends_on` DAG (+ `references/team.yaml`)
   is the single source of truth, and the body also renders a Claude-executable
   `## Execution` section (parallel-vs-after) plus the standard graph-os delegation

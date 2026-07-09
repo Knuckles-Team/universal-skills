@@ -1,5 +1,7 @@
 ---
 name: mcp-installer
+domain: agent-tools
+skill_type: skill
 description: >-
   Install a pre-configured MCP config file into various agent tool directories.
   Use when the user wants to install an mcp_config.json into Windsurf, Claude Code,
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [mcp, installer, deployment, agent-tools, config]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '0.1.0'
 ---
 # MCP Installer Skill
 
@@ -23,7 +25,7 @@ This skill allows you to install and merge a pre-configured `mcp_config.json` in
 - **opencode**: `~/.config/opencode/mcp.json`
 - **antigravity**: `~/.gemini/antigravity/mcp_config.json`
 - **agent-utilities** / **agent-terminal-ui**: `~/.config/agent-utilities/mcp_config.json`
-- **devin**: `~/.devin/mcp_config.json`
+- **devin**: `~/.config/devin/mcp_config.json`
 - **codex**: `~/.codex/mcp_config.json`
 
 ## Tools

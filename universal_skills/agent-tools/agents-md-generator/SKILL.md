@@ -1,5 +1,7 @@
 ---
 name: agents-md-generator
+domain: agent-tools
+skill_type: skill
 description: >-
   Generate or update a robust AGENTS.md file (the "README for AI coding agents")
   for a project. This skill ensures your repository is optimized for AI tools
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [agent, agents.md, documentation, ai-optimization, mcp, architecture]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 
 # AGENTS.md Generator

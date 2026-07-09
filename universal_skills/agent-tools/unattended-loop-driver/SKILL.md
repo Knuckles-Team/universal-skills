@@ -1,5 +1,7 @@
 ---
 name: unattended-loop-driver
+domain: agent-tools
+skill_type: skill
 description: >-
   Run Claude Code unattended ("while you sleep") to drive the graph-os Loop engine — feature
   extraction + innovation distillation — behind a governance-derived permission fence. Use when the
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [claude-code, unattended, permission-fence, knowledge-graph, golden-loop, self-evolution, safety, orchestration]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.0'
   concepts: [OS-5.40, OS-5.41, ECO-4.47, SAFE-1.8]
 ---
 

@@ -1,5 +1,7 @@
 ---
 name: jupyter-notebook
+domain: system
+skill_type: skill
 description: >-
   Use when the user asks to create, scaffold, or edit Jupyter notebooks (`.ipynb`)
   for experiments, explorations, or tutorials; prefer the bundled templates and
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [jupyter, notebook, python, data-science, research]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Jupyter Notebook
 

@@ -1,5 +1,7 @@
 ---
 name: skill-builder
+domain: core
+skill_type: skill
 description: >-
   Guide for creating effective skills for the universal-skills package. Use this
   when users want to create a new skill or update an existing skill according to
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [skills, development, guide, builder, creator]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Skill Builder
 
@@ -39,7 +41,7 @@ universal_skills/skills/skill-name/
 
 Every SKILL.md consists of:
 
-- **Frontmatter** (YAML): Contains `name`, `description`, `license`, `tags`, and `metadata` (`author`, `version`). This tells the system when to load the skill and pass it as a tool to the agent.
+- **Frontmatter** (YAML): Contains `name`, `skill_type` (`skill` for an atomic skill — use `workflow` only via the `skill-workflow-builder`), `description`, `license`, `tags`, and `metadata` (`author`, `version`). This tells the system when to load the skill and pass it as a tool to the agent. `skill_type` is how the installer and the atomicity gate classify the capability.
 - **Body** (Markdown): The actual prompt instructions dictating how the agent should utilize the skill's bundled scripts or documentation. Keep it concise.
 
 #### Bundled Resources (optional)

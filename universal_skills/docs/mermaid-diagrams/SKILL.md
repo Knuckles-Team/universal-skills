@@ -1,5 +1,7 @@
 ---
 name: mermaid-diagrams
+domain: docs
+skill_type: skill
 description: >-
   Comprehensive guide for creating software diagrams using Mermaid syntax. Use
   when users need to create, visualize, or document software through diagrams
@@ -12,8 +14,8 @@ description: >-
 license: MIT
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Mermaid Diagramming
 

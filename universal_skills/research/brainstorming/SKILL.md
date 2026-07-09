@@ -1,5 +1,7 @@
 ---
 name: brainstorming
+domain: research
+skill_type: skill
 description: >-
   Structured ideation and design workflow for clarifying requirements before
   implementation. Use when starting any new feature, component, or significant
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [planning, design, ideation, requirements, architecture]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Brainstorming & Design Workflow
 

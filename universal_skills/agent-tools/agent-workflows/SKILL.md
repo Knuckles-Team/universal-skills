@@ -1,5 +1,7 @@
 ---
 name: agent-workflows
+domain: agent-tools
+skill_type: skill
 description: >-
   Consolidated skill for managing, dispatching, and orchestrating other agents via
   the agent-manager CLI, as well as workflows for A2A communication,
@@ -7,8 +9,8 @@ description: >-
 license: MIT
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Agent Workflows & Orchestration
 

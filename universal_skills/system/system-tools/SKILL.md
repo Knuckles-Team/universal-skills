@@ -1,13 +1,15 @@
 ---
 name: system-tools
+domain: system
+skill_type: skill
 description: >-
   Hardware and OS-level operations including capturing screenshots, webcam photos,
   Bluetooth management, and remote-controlling tmux sessions.
 license: MIT
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # System Tools
 

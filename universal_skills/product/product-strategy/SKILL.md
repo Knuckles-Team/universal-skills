@@ -1,5 +1,7 @@
 ---
 name: product-strategy
+domain: product
+skill_type: skill
 description: >-
   Developing product vision, market positioning, and financial modeling for
   product initiatives. Use when performing PESTEL/SWOT analysis, calculating
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [strategy, market-analysis, positioning, financial-modeling, saas-metrics]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Product Strategy & Market Analysis
 

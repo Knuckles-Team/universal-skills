@@ -1,5 +1,7 @@
 ---
 name: comparative-analysis
+domain: research
+skill_type: skill
 description: >-
   Comprehensive multi-modal comparative analysis engine for codebases, research papers,
   and cross-domain innovation extraction. Evaluates governance, architecture, quality,
@@ -10,8 +12,8 @@ description: >-
 license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 
 # Comparative Analysis
@@ -305,7 +307,7 @@ rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
 
 ## Output Location Rules
 
-1. **Codebase analysis** involving a primary project → `.specify/reports/comparative_analysis.md`
+1. **Codebase analysis** involving a primary project → `.specify/reports/comparative-analysis-workflow.md`
    inside that project directory
 2. **Multi-codebase** with no primary → output to the workspace root or user-specified path
 3. **Research-only analysis** → ask user for preferred output location (suggest `~/Documents/`)

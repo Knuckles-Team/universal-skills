@@ -1,5 +1,7 @@
 ---
 name: api-client-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Guide for creating API clients using the established patterns in the agent-
   packages repository (like servicenow-api and gitlab-api). Use this when tasked
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [api, client, integration, development, python, pydantic, graphql, gql]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # API Client Builder
 

@@ -1,5 +1,7 @@
 ---
 name: algorithmic-art
+domain: creative
+skill_type: skill
 description: >-
   Creates generative algorithmic art using p5.js with seeded randomness and
   interactive HTML artifacts. Use when the user requests generative art,
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [generative-art, p5js, creative-coding, algorithmic, canvas, interactive]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Algorithmic Art Creation
 

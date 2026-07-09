@@ -1,5 +1,7 @@
 ---
 name: marp-presentations
+domain: docs
+skill_type: skill
 description: >-
   Create professional Marp presentation slides using Markdown. Use when the user
   requests slide creation, presentations, pitch decks, lecture materials, or Marp
@@ -9,8 +11,8 @@ description: >-
 license: MIT
 tags: [marp, presentations, slides, markdown, design]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Marp Presentation Creator
 

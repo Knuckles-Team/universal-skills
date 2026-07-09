@@ -1,5 +1,7 @@
 ---
 name: mcp-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Guide for creating high-quality MCP (Model Context Protocol) servers that enable
   LLMs to interact with external services through well-designed tools. Use when
@@ -8,8 +10,8 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # MCP Server Development Guide
 
@@ -275,7 +277,7 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     || echo "❌ ECO-4.0 bridge MISSING"
 ```
 
-If ANY item shows ❌, fix it before marking the build as complete. For a deeper audit with scoring, use the `ecosystem_standardizer` workflow.
+If ANY item shows ❌, fix it before marking the build as complete. For a deeper audit with scoring, use the `ecosystem-standardizer` workflow.
 
 > [!IMPORTANT]
 > A new package is not complete until it passes the drift check with 0 missing items.

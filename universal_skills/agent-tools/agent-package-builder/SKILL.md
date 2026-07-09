@@ -1,5 +1,7 @@
 ---
 name: agent-package-builder
+domain: agent-tools
+skill_type: skill
 description: >-
   Scaffold a complete agent-package project with all config files, Docker
   infrastructure, MCP server, A2A agent, and API client stubs. Use when creating a
@@ -11,8 +13,8 @@ description: >-
 license: MIT
 tags: [agent, package, scaffold, bootstrap, project, mcp, api-client, builder]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 
 # Agent Package Builder
@@ -537,7 +539,7 @@ cd {project_dir} && echo "=== Drift Audit ===" \
     || echo "❌ pipeline not pinned @main"
 ```
 
-If ANY item shows ❌, fix it before completing the build. The `ecosystem_standardizer` workflow can also be run for a deeper audit with scoring.
+If ANY item shows ❌, fix it before completing the build. The `ecosystem-standardizer` workflow can also be run for a deeper audit with scoring.
 ```
 Trigger: "run ecosystem standardizer" with scope={package-name}
 ```

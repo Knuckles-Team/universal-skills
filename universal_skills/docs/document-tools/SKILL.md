@@ -1,5 +1,7 @@
 ---
 name: document-tools
+domain: docs
+skill_type: skill
 description: >-
   Use this skill whenever the user wants to read, edit, analyze, or create
   document files. This includes PDFs (reading, merging, splitting, OCR, forms,
@@ -10,8 +12,8 @@ description: >-
 license: MIT
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Document Tools
 

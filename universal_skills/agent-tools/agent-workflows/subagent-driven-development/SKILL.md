@@ -1,13 +1,15 @@
 ---
 name: subagent-driven-development
+domain: agent-tools
+skill_type: skill
 description: >-
   Use when executing implementation plans with independent tasks in the current
   session
 license: MIT
 tags: [workflows, agents, orchestration, docs]
 metadata:
+  version: '1.1.0'
   author: Audel Rouhi
-  version: '1.0.2'
 ---
 # Subagent-Driven Development
 

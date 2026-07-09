@@ -1,13 +1,15 @@
 ---
 name: developer-utilities
+domain: system
+skill_type: skill
 description: >-
   A consolidated suite of developer utilities including formatting, conversion,
   generation, cryptographic, and networking tools.
 license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
 metadata:
+  version: '1.1.0'
   author: Genius
-  version: '1.0.2'
 ---
 # Developer Utilities
 

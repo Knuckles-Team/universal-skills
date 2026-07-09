@@ -27,7 +27,7 @@ def get_tool_paths() -> Dict[str, Path]:
         "windsurf": Path("~/.codeium/windsurf/mcp_config.json").expanduser(),
         "claude": Path("~/.claude.json").expanduser(),
         "antigravity": Path("~/.gemini/antigravity/mcp_config.json").expanduser(),
-        "devin": Path("~/.devin/mcp_config.json").expanduser(),
+        "devin": Path("~/.config/devin/mcp_config.json").expanduser(),
         "codex": Path("~/.codex/mcp_config.json").expanduser(),
     }
 
