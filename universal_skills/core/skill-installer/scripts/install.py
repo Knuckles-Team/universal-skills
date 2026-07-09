@@ -93,7 +93,7 @@ def get_tool_paths() -> dict:
         "openclaw": home / ".openclaw" / "skills",
         "antigravity": home / ".gemini" / "antigravity" / "skills",
         "codex": home / ".codex" / "skills",
-        "devin": home / ".devin" / "skills",
+        "devin": home / ".config" / "devin" / "skills",
         "cursor": home / ".cursor" / "skills",
         # xAI Grok Code CLI — `grok` and `grok-code` are aliases for the same dir.
         "grok": home / ".grok" / "skills",
@@ -206,17 +206,29 @@ def _matches_layer(path: Path, layer: str) -> bool:
     return True
 
 
+UNIVERSAL_PROVIDER = "universal-skills"
+
+
 def get_source_paths(
     skill_names: Optional[List[str]] = None,
     group: Optional[str] = None,
     include_graphs: bool = False,
     layer: str = "all",
+    providers: Optional[set] = None,
 ) -> List[Path]:
-    """Uses utility functions to locate source paths of skills and graphs."""
+    """Uses utility functions to locate source paths of skills and graphs.
+
+    ``providers`` optionally restricts which contributors are installed: the built-in
+    ``universal-skills`` and/or specific agent-package ``skill_providers`` names. When
+    ``None`` (default) every available provider is installed.
+    """
     sources = []
+    want_universal = providers is None or UNIVERSAL_PROVIDER in providers
 
     # Universal Skills
-    if skill_utilities:
+    if want_universal and not skill_utilities:
+        logger.error("Could not import skill_utilities.")
+    elif want_universal:
         # If specific skill names provided, search for them individually
         if skill_names:
             for name in skill_names:
@@ -233,8 +245,6 @@ def get_source_paths(
         # Restrict to the requested layer (atomic skills vs graph-os workflows).
         if layer != "all":
             sources = [p for p in sources if _matches_layer(p, layer)]
-    else:
-        logger.error("Could not import skill_utilities.")
 
     # Skill Graphs
     if include_graphs and skill_graph_utilities:
@@ -256,6 +266,8 @@ def get_source_paths(
     # entry-point contributes the ``SKILL.md`` dirs under its asset directory.
     wanted = {n.strip() for n in skill_names} if skill_names else None
     for _provider_name, asset_dir in _iter_skill_providers():
+        if providers is not None and _provider_name not in providers:
+            continue
         for skill_md in sorted(asset_dir.rglob("SKILL.md")):
             skill_dir = skill_md.parent
             parts = skill_dir.parts
@@ -363,6 +375,7 @@ def install_skills(
     symlink: bool = False,
     layer: str = "all",
     prune: bool = True,
+    providers: Optional[set] = None,
 ):
     """Install skills to the target path by copy (default) or symlink.
 
@@ -377,7 +390,9 @@ def install_skills(
         logger.info(f"Creating target directory: {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
 
-    sources = get_source_paths(skill_names, group, include_graphs, layer=layer)
+    sources = get_source_paths(
+        skill_names, group, include_graphs, layer=layer, providers=providers
+    )
     if not sources:
         logger.error("No skill/graph sources found to install.")
         return False
@@ -456,6 +471,70 @@ def install_skills(
     return True
 
 
+def _available_providers() -> List[str]:
+    """All installable skill providers: universal-skills + agent-package contributors."""
+    provs = [UNIVERSAL_PROVIDER]
+    for name, _ in _iter_skill_providers():
+        if name not in provs:
+            provs.append(name)
+    return provs
+
+
+def _prompt_choice(title: str, items: List[tuple]) -> List[str]:
+    """Numbered multi-select prompt with an 'all' shortcut. Returns selected keys.
+
+    ``items`` is a list of ``(key, display)`` tuples. Empty input or 'a'/'all'
+    selects everything; otherwise comma/space-separated indices pick a subset.
+    """
+    print(f"\n{title}")
+    for i, (_, disp) in enumerate(items, 1):
+        print(f"  {i}) {disp}")
+    print("  a) all")
+    raw = input("Select (numbers, comma/space separated, or 'a' for all): ").strip().lower()
+    if raw in ("", "a", "all"):
+        return [k for k, _ in items]
+    picks = [
+        items[int(tok) - 1][0]
+        for tok in re.split(r"[,\s]+", raw)
+        if tok.isdigit() and 1 <= int(tok) <= len(items)
+    ]
+    return picks or [k for k, _ in items]
+
+
+def _run_interactive(detected: dict) -> tuple:
+    """Interactively choose target tools and source providers.
+
+    Returns ``(selected_tools: dict, providers: set | None)`` where ``providers`` is
+    ``None`` when every provider was selected (install-all).
+    """
+    if detected:
+        tool_items = [(k, f"{k}  →  {v}") for k, v in detected.items()]
+        tool_keys = _prompt_choice(
+            "Install skills into which detected AI tools?", tool_items
+        )
+        selected_tools = {k: detected[k] for k in tool_keys}
+    else:
+        print("\nNo agent tools detected on this host — skipping tool selection.")
+        selected_tools = {}
+
+    all_provs = _available_providers()
+    prov_items = [
+        (
+            p,
+            "universal-skills (built-in library)"
+            if p == UNIVERSAL_PROVIDER
+            else f"{p} (agent-package)",
+        )
+        for p in all_provs
+    ]
+    prov_keys = _prompt_choice(
+        "Install skills from which packages? (agent-packages ship their own skills)",
+        prov_items,
+    )
+    providers = None if set(prov_keys) == set(all_provs) else set(prov_keys)
+    return selected_tools, providers
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Install universal-skills into agent tools"
@@ -474,6 +553,24 @@ def main():
         dest="all_tools",
         action="store_true",
         help="Install into every known tool path whether or not it is detected.",
+    )
+    parser.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help=(
+            "Interactively choose which DETECTED AI tools to install into (with an "
+            "'all' option) AND which skill-provider packages to install from "
+            "(universal-skills + every pip-installed agent-package that ships skills). "
+            "Auto-enabled on a bare invocation when a TTY is present; skipped without a TTY."
+        ),
+    )
+    parser.add_argument(
+        "--providers",
+        help=(
+            "Comma-separated skill providers to install from: 'universal-skills' "
+            "and/or agent-package names (default: all installed providers)."
+        ),
     )
     parser.add_argument("--path", help="Explicit custom path to install skills into")
     parser.add_argument(
@@ -541,6 +638,30 @@ def main():
     args = parser.parse_args()
 
     skill_names = args.skills.split(",") if args.skills else None
+    provider_filter: Optional[set] = (
+        {p.strip() for p in args.providers.split(",") if p.strip()}
+        if args.providers
+        else None
+    )
+
+    # ── Interactive picker (tools + providers) ──────────────────────────────
+    # Runs when explicitly requested, or on a bare invocation (no target flag) with a
+    # TTY. Without a TTY, --interactive degrades to --all-detected so automation
+    # (install.sh --all-detected) is never blocked on a prompt.
+    no_target_flag = not (
+        args.all_detected or args.all_tools or args.path or args.tool
+    )
+    interactive_targets: dict = {}
+    if args.interactive and not sys.stdin.isatty():
+        logger.warning(
+            "--interactive requested but no TTY; installing into all detected tools "
+            "from all providers instead."
+        )
+        args.all_detected = True
+    elif (args.interactive or no_target_flag) and sys.stdin.isatty():
+        interactive_targets, sel_providers = _run_interactive(detect_present_tools())
+        if provider_filter is None:
+            provider_filter = sel_providers
 
     # ── Resolve destinations ────────────────────────────────────────────────
     # Build the set of skill dirs to write to. The agent-utilities XDG store is
@@ -549,6 +670,7 @@ def main():
     # every run, whichever external tool you also target. A bare ``install-skills``
     # (no --tool/--path) therefore updates exactly that store.
     targets: dict = {}
+    targets.update(interactive_targets)
     if args.all_detected or args.all_tools:
         found = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
         if not found:
@@ -601,6 +723,7 @@ def main():
             symlink=args.symlink,
             layer=args.layer,
             prune=args.prune,
+            providers=provider_filter,
         )
 
 

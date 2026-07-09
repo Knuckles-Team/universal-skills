@@ -47,7 +47,7 @@ skills and MCP config into every agent tool a host has.
 - **OpenClaw**: `~/.openclaw/skills/`
 - **Antigravity**: `~/.gemini/antigravity/skills/`
 - **Codex**: `~/.codex/skills/`
-- **Devin**: `~/.devin/skills/`
+- **Devin**: `~/.config/devin/skills/`
 - **Cursor**: `~/.cursor/skills/`
 - **Grok Code** (`grok` / `grok-code`): `~/.grok/skills/`
 - **Zed**: `~/.config/zed/skills/`
@@ -63,6 +63,18 @@ skills and MCP config into every agent tool a host has.
 
 Use **`--all-detected`** to install into *every* tool present on the host in one shot
 (absent tools are skipped), or `--all` for every known path. (Both still also update the XDG store.)
+
+**Interactive picker (`--interactive` / `-i`).** Prefer not to guess? Run `install-skills -i`
+(also auto-enabled on a bare `install-skills` when a terminal is attached). It asks two questions,
+each with an **`all`** shortcut:
+1. **Which detected AI tools** to install into (only tools actually present on the host).
+2. **Which skill-provider packages** to install *from* — `universal-skills` **plus every
+   pip-installed `agent-packages/agents/*` that ships its own skills** (each declares an
+   `agent_utilities.skill_providers` entry-point; 60+ packages contribute skills this way). So
+   "install everything" pulls the whole fleet's skills, not just the universal library.
+
+Without a terminal (CI, `install.sh`), the picker is skipped and `-i` degrades to
+`--all-detected` from all providers, so automation never blocks on a prompt.
 
 ## Tools
 
@@ -80,6 +92,11 @@ pip install skill-graphs
 - `--tool`: The target tool to install into (claude, claude-desktop, windsurf, opencode, openclaw, antigravity, codex, devin, cursor, zed, agent-utilities, agent-terminal-ui, or a custom path).
 - `--all-detected`: Install into every agent tool detected on this host (skips absent tools). Best for a one-command bootstrap.
 - `--all`: Install into every known tool path whether or not it is detected.
+- `--interactive` / `-i`: Interactively choose which **detected tools** to install into and which
+  **skill-provider packages** to install from (both with an `all` option). Auto-enabled on a bare,
+  TTY-attached invocation; degrades to `--all-detected` when no terminal is present.
+- `--providers`: (Optional) Comma-separated skill providers to install from — `universal-skills`
+  and/or agent-package names (e.g. `gitlab-api`). Defaults to every installed provider.
 - `--skills`: (Optional) Comma-separated list of skill names to install. Defaults to all.
 - `--force`: (Optional) Overwrite existing skills.
 - `--symlink` / `--link`: (Optional, **recommended**) Symlink skills to the installed package instead

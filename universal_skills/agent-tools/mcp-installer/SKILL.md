@@ -25,7 +25,7 @@ This skill allows you to install and merge a pre-configured `mcp_config.json` in
 - **opencode**: `~/.config/opencode/mcp.json`
 - **antigravity**: `~/.gemini/antigravity/mcp_config.json`
 - **agent-utilities** / **agent-terminal-ui**: `~/.config/agent-utilities/mcp_config.json`
-- **devin**: `~/.devin/mcp_config.json`
+- **devin**: `~/.config/devin/mcp_config.json`
 - **codex**: `~/.codex/mcp_config.json`
 
 ## Tools
