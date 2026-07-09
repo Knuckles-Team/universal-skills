@@ -35,8 +35,9 @@ def _classify(skill_md: Path, root: Path, default: str) -> str:
     segs = rel.split("/")
     # Only the TOP-LEVEL domain segment carries the `-workflows` signal (so an atomic
     # skill dir that merely ends in `-workflows`, e.g. `agent-tools/agent-workflows`,
-    # is NOT misclassified). A literal `workflows/` subdir (the hub layout) also counts.
-    if segs[0].endswith("-workflows") or "workflows" in segs[1:]:
+    # is NOT misclassified). A literal `workflows` path segment — the hub/agent-package
+    # layout `skills/workflows/<name>/` — always counts as a workflow.
+    if segs[0].endswith("-workflows") or "workflows" in segs:
         return "workflow"
     text = skill_md.read_text(encoding="utf-8")
     fm = text.split("---", 2)[1] if text.startswith("---") else ""
