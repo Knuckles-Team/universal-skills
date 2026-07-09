@@ -20,7 +20,7 @@ team_config:
 tags: [dev-workflows, cross-agent-integration-test]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Cross Agent Integration Test Workflow

@@ -6,7 +6,7 @@ description: Creates or updates constitution.md with project governance rules an
 license: MIT
 tags: [constitution generator]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

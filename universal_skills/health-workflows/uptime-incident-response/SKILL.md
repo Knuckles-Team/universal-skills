@@ -22,7 +22,7 @@ team_config:
 tags: [health, uptime-incident-response]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Uptime Incident Response Workflow

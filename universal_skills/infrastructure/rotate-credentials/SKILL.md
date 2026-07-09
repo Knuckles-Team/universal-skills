@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

@@ -17,7 +17,7 @@ description: >-
 license: MIT
 tags: [infra, security, credentials, secrets, rotation, openbao, keycloak, portainer, policy]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, research-scanner]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Research Scanner Workflow

@@ -12,7 +12,7 @@ description: >
   "bootstrap keys", "onboard host", "passwordless ssh", "prepare machines".
   Do NOT use for ongoing SSH session management — use tunnel-manager directly.
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # SSH Bootstrap Skill

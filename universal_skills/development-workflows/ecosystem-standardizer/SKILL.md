@@ -13,7 +13,7 @@ domain: development-workflows
 tags: ['standardization', 'drift', 'audit', 'ecosystem', 'onboarding', 'dev-workflows']
 requires: ['repository-manager-mcp']
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

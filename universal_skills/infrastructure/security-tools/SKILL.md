@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 # Security Tools

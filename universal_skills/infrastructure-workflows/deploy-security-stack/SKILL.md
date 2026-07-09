@@ -22,7 +22,7 @@ team_config:
 tags: [infra, deploy-security-stack]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Deploy Security Stack Workflow

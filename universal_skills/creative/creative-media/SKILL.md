@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [media, gif, video, image-processing, ffmpeg, pillow, conversion]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 # Creative Media Tools

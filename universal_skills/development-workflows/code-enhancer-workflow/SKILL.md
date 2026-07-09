@@ -24,7 +24,7 @@ team_config:
 tags: [dev-workflows, code-enhancer]
 concept: CONCEPT:DEV-002
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Code Enhancer Workflow

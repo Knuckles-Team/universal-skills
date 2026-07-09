@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [efficient, tokens, brief, mode]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

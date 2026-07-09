@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [browser, automation, playwright, web-scraping, testing, screenshots]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 # Browser Automation with agent-browser

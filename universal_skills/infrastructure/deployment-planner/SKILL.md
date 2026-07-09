@@ -27,7 +27,7 @@ requires:
   - container-manager-mcp
   - portainer-mcp
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Deployment Planner Skill

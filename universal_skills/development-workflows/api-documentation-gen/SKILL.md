@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, api-documentation-gen]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Api Documentation Gen Workflow

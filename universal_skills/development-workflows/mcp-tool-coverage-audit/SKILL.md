@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, mcp-tool-coverage-audit]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Mcp Tool Coverage Audit Workflow

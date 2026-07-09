@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [generative-art, p5js, creative-coding, algorithmic, canvas, interactive]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 # Algorithmic Art Creation

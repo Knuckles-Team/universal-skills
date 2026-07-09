@@ -22,7 +22,7 @@ team_config:
 tags: [finance, feature-store-builder]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Feature Store Builder Workflow

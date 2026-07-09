@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, license-compliance-scan]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # License Compliance Scan Workflow

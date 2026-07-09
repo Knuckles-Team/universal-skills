@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, architecture-review-swarm]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Architecture Review Swarm Workflow

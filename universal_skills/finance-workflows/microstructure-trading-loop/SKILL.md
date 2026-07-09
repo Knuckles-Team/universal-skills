@@ -30,7 +30,7 @@ team_config:
 tags: [microstructure, knowledge-graph, signal-fusion, paper-first, lifecycle]
 concept: CONCEPT:EE-040
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Microstructure Trading Loop

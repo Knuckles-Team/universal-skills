@@ -6,7 +6,7 @@ domain: infrastructure-workflows
 tags: ['discovery', 'topology', 'inventory', 'homelab', 'enterprise']
 requires: ['tunnel-manager-mcp', 'container-manager-mcp', 'portainer-mcp', 'technitium-dns-mcp']
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # full-infrastructure-discovery Workflow

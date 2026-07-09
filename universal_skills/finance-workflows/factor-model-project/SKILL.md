@@ -10,7 +10,7 @@ agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, factor-model, fama-french, regression, portfolio, workflow]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

@@ -6,7 +6,7 @@ description: Executes tasks and tracks progress natively with Tasks Pydantic mod
 license: MIT
 tags: [sdd implementer]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 

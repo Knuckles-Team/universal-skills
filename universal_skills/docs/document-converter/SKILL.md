@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [pdf, docx, markdown, conversion, document-processing]
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   author: Genius
 ---
 # Document Converter Skill

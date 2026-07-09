@@ -22,7 +22,7 @@ team_config:
 tags: [code-review, static-analysis, leakage-bias, qa]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Strategy Code Review Workflow

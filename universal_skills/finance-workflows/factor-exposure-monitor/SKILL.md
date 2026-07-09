@@ -22,7 +22,7 @@ team_config:
 tags: [finance, factor-exposure-monitor]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Factor Exposure Monitor Workflow

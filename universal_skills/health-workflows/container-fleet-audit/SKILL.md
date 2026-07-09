@@ -22,7 +22,7 @@ team_config:
 tags: [health, container-fleet-audit]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Container Fleet Audit Workflow
