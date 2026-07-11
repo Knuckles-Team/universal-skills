@@ -22,7 +22,7 @@ team_config:
 tags: [system, rolling-update-fleet]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Rolling Update Fleet Workflow

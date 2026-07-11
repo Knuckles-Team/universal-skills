@@ -22,7 +22,7 @@ team_config:
 tags: [system, container-resource-limits]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Container Resource Limits Workflow

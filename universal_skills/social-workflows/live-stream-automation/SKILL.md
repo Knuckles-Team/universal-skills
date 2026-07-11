@@ -22,7 +22,7 @@ team_config:
 tags: [social, live-stream-automation]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Live Stream Automation Workflow

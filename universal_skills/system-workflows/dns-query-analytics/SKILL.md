@@ -22,7 +22,7 @@ team_config:
 tags: [system, dns-query-analytics]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Dns Query Analytics Workflow

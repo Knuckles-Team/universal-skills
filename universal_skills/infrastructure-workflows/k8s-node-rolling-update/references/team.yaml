@@ -1,0 +1,13 @@
+name: K8s Node Rolling Update Swarm
+task_pattern: Roll OS patches across the RKE2 cluster one node at a time — cordon, drain, patch, conditional reboot, verify, uncordon — before advancing to the next node
+specialist_ids:
+  - systems-manager
+  - devops-engineer
+capability_overrides:
+  systems-manager:
+    - ssh_patch_execution
+    - reboot_required_check
+  devops-engineer:
+    - node_drain_orchestration
+    - rolling_sequence_gating
+    - checkpointing

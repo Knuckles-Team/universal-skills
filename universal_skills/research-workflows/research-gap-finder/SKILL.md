@@ -22,7 +22,7 @@ team_config:
 tags: [research, research-gap-finder]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Research Gap Finder Workflow

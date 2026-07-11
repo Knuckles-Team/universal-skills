@@ -22,7 +22,7 @@ team_config:
 tags: [ops, m-and-a-due-diligence]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # M And A Due Diligence Workflow

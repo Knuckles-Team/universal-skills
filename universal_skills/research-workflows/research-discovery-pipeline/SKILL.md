@@ -20,7 +20,7 @@ team_config:
 tags: ['arxiv', 'papers', 'discovery', 'summarization']
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Research Discovery Pipeline Workflow

@@ -22,7 +22,7 @@ team_config:
 tags: [ops, customer-feedback-analysis]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Customer Feedback Analysis Workflow

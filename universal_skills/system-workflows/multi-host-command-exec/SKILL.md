@@ -20,7 +20,7 @@ team_config:
 tags: [system, multi-host-command-exec]
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Multi Host Command Exec Workflow

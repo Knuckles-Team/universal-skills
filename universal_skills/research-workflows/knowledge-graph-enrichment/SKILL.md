@@ -22,7 +22,7 @@ team_config:
 tags: [research, knowledge-graph-enrichment]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Knowledge Graph Enrichment Workflow

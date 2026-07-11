@@ -22,7 +22,7 @@ team_config:
 tags: [research, citation-graph-explorer]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Citation Graph Explorer Workflow

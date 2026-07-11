@@ -22,7 +22,7 @@ team_config:
 tags: [ops, sprint-planning-automation]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Sprint Planning Automation Workflow

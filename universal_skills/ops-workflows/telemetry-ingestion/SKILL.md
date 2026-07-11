@@ -20,7 +20,7 @@ team_config:
 tags: ['telemetry', 'observability', 'langfuse', 'graph-os']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # Telemetry Ingestion Workflow
