@@ -10,7 +10,7 @@ that target: only allowed top-level keys, a sane ``description``, a kebab-case
 Also scans skill bodies/scripts for hardcoded agent skill-root paths
 (``~/.config/devin/skills``, ``~/.codex/skills``, ``~/.claude/skills``) — a skill
 should never hardcode where IT ITSELF (or another skill) gets installed; that is
-the installer's job. ``install.py`` (both ``skill-installer`` and
+the installer's job. ``install.py`` (both ``universal-installer`` and
 ``mcp-installer``, which legitimately define the per-tool path maps) is
 allow-listed.
 
@@ -34,7 +34,7 @@ sys.path.insert(
         Path(__file__).resolve().parent.parent
         / "universal_skills"
         / "core"
-        / "skill-installer"
+        / "universal-installer"
         / "scripts"
     ),
 )
@@ -62,10 +62,12 @@ _HARDCODED_ROOT_RES = [
     re.compile(r"\.config[/\\]devin[/\\]skills"),
 ]
 _ALLOWLISTED_SUFFIXES = (
-    "skill-installer/scripts/install.py",
+    "universal-installer/scripts/install.py",
     "mcp-installer/scripts/install.py",
     # Explains the Codex contract's rationale in prose (not a hardcoded default).
-    "skill-installer/scripts/adapters.py",
+    "universal-installer/scripts/adapters.py",
+    # Legitimately define per-tool MCP-config path maps for the new MCP-wiring leg.
+    "universal-installer/scripts/mcp_setup.py",
     # A cross-tool skill-DISCOVERY glob list (searches many tools' dirs to find
     # already-installed skills to grade) — not a hardcoded install default.
     "code-enhancer/scripts/grade_skills.py",
@@ -173,7 +175,7 @@ def scan(root: str) -> dict[str, list[str]]:
         out["frontmatter"].extend(_check_skill_md(skill_md, root_path))
 
     # Scoped to scripts, not docs: a doc legitimately DOCUMENTS these paths (e.g.
-    # the skill-installer's own "Supported Tools" table); the real bug pattern is a
+    # the universal-installer's own "Supported Tools" table); the real bug pattern is a
     # SCRIPT hardcoding its own install-root default instead of using SKILL_DIR.
     for path in sorted(root_path.rglob("*")):
         if not path.is_file():

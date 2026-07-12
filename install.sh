@@ -2,15 +2,15 @@
 # universal-skills — one-click install / easy setup.
 #
 # Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and then
-# deploys the skills — including skill-installer and agent-os-genesis (alias
+# deploys the skills — including universal-installer and agent-os-genesis (alias
 # agent-utilities-genesis) — into EVERY detected AI tool (Claude Code, Antigravity,
 # Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the agent-utilities XDG space
 # (~/.config/agent-utilities/skills), preferring SYMLINKS to the installed package
 # (Windows falls back to a directory junction, then a copy).
 #
 # This is the technical starting point for agent-os-genesis: once installed, the
-# `skill-installer` skill (and the `install-skills` CLI) are present and can deploy any
-# other skill. agent-os-genesis is then loadable/invocable in your tools.
+# `universal-installer` skill (and the `install-skills` CLI) are present and can deploy
+# any other skill. agent-os-genesis is then loadable/invocable in your tools.
 #
 # Usage:
 #   curl -fsSL https://knuckles-team.github.io/universal-skills/install.sh | sh
@@ -89,6 +89,6 @@ if [ -n "$MCP_CONFIG" ]; then
   fi
 fi
 
-info "Done. agent-os-genesis (alias agent-utilities-genesis) + skill-installer are deployed."
+info "Done. agent-os-genesis (alias agent-utilities-genesis) + universal-installer are deployed."
 info "Next: open your AI tool and invoke \"agent-os-genesis\" (or \"day0\") to deploy the Agent OS,"
 info "or \"deploy <package> with agent-os-genesis\" to stand up a single connector."

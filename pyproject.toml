@@ -56,7 +56,7 @@ react-native-skills = []
 security-tools = ["networkx", "requests"]
 session-handoff = []
 skill-builder = ["PyYAML"]
-skill-installer = []
+universal-installer = []
 skill-graph-builder = ["crawl4ai", "playwright", "psutil", "requests", "pymupdf4llm>=0.0.17", "pyyaml>=6.0"]
 skill-workflow-builder = ["PyYAML"]
 system-tools = ["psutil"]
@@ -106,7 +106,7 @@ all = [
     "universal-skills[skill-builder]>=1.0.0",
     "universal-skills[skill-graph-builder]>=1.0.0",
     "universal-skills[skill-workflow-builder]>=1.0.0",
-    "universal-skills[skill-installer]>=1.0.0",
+    "universal-skills[universal-installer]>=1.0.0",
     "universal-skills[system-tools]>=1.0.0",
     "universal-skills[tdd-methodology]>=1.0.0",
     "universal-skills[theme-factory]>=1.0.0",
@@ -124,6 +124,7 @@ all = [
 
 
 [project.scripts]
+install-universal = "universal_skills.core.universal_installer:main"
 install-skills = "universal_skills.core.skill_installer:main"
 
 [[project.authors]]

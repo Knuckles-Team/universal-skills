@@ -36,9 +36,9 @@ except ImportError:
 # Per-agent frontmatter adapter (Codex et al. reject our top-level keys). Try the
 # relative import (normal package context) first, then fall back to an absolute
 # import off this file's own directory — covers direct script execution
-# (`python install.py`) AND the `install-skills` console-script shim, neither of
-# which give this module a real dotted package (its parent dir is hyphenated:
-# `core/skill-installer/`, not a valid Python identifier).
+# (`python install.py`) AND the `install-universal`/`install-skills` console-script
+# shims, neither of which give this module a real dotted package (its parent dir is
+# hyphenated: `core/universal-installer/`, not a valid Python identifier).
 try:
     from . import adapters
 except ImportError:
@@ -47,6 +47,37 @@ except ImportError:
         import adapters
     except ImportError:
         adapters = None
+
+# Sibling modules for the capabilities added on top of the original
+# skill-installer: ontology/prompt provider legs, graph-os + fleet MCP config
+# wiring, and installing directly from an unreleased agents/* checkout. Same
+# import fallback as `adapters` above (hyphenated parent dir, dev-only tooling).
+try:
+    from . import providers as ontology_prompt_providers
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import providers as ontology_prompt_providers
+    except ImportError:
+        ontology_prompt_providers = None
+
+try:
+    from . import mcp_setup
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import mcp_setup
+    except ImportError:
+        mcp_setup = None
+
+try:
+    from . import from_package as from_package_mod
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import from_package as from_package_mod
+    except ImportError:
+        from_package_mod = None
 
 
 # Entry-point group through which any installed agent-package contributes its
@@ -424,8 +455,15 @@ def install_skills(
     prune: bool = True,
     providers: Optional[set] = None,
     contract=None,
+    sources: Optional[List[Path]] = None,
 ):
     """Install skills to the target path by copy (default) or symlink.
+
+    ``sources``, when given, is installed VERBATIM instead of resolving via
+    ``get_source_paths()`` — used by ``--from-package`` to install straight from
+    an unreleased ``agents/*`` checkout's own skills directory, bypassing the
+    entry-point-based provider discovery (which only resolves *installed*
+    packages).
 
     When ``symlink=True``, each skill is symlinked to its source in the installed
     ``universal_skills`` package instead of copied. This avoids duplicating files on disk and means
@@ -447,9 +485,10 @@ def install_skills(
         logger.info(f"Creating target directory: {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
 
-    sources = get_source_paths(
-        skill_names, group, include_graphs, layer=layer, providers=providers
-    )
+    if sources is None:
+        sources = get_source_paths(
+            skill_names, group, include_graphs, layer=layer, providers=providers
+        )
     if not sources:
         logger.error("No skill/graph sources found to install.")
         return False
@@ -647,11 +686,29 @@ def _prompt_choice(title: str, items: List[tuple]) -> List[str]:
     return picks or [k for k, _ in items]
 
 
-def _run_interactive(detected: dict) -> tuple:
-    """Interactively choose target tools and source providers.
+def _prompt_graph_os_mode() -> tuple:
+    """Ask how to wire graph-os into the target tool(s)' MCP config.
 
-    Returns ``(selected_tools: dict, providers: set | None)`` where ``providers`` is
-    ``None`` when every provider was selected (install-all).
+    Returns ``(mode, remote_url)`` — ``mode`` is one of ``stdio``/``remote``/``skip``.
+    """
+    print("\nWire graph-os into the target tool(s)' MCP config?")
+    print("  1) local stdio (uvx / an already-installed graph-os console script)")
+    print("  2) remote — connect to an existing graph-os/instances deployment")
+    print("  3) skip — don't touch MCP config")
+    raw = input("Select [1]: ").strip() or "1"
+    if raw == "2":
+        url = input("Remote graph-os URL: ").strip()
+        return ("remote", url) if url else ("stdio", None)
+    if raw == "3":
+        return "skip", None
+    return "stdio", None
+
+
+def _run_interactive(detected: dict) -> tuple:
+    """Interactively choose target tools, source providers, and graph-os wiring.
+
+    Returns ``(selected_tools, providers, graph_os_mode, graph_os_url)`` where
+    ``providers`` is ``None`` when every provider was selected (install-all).
     """
     if detected:
         tool_items = [(k, f"{k}  →  {v}") for k, v in detected.items()]
@@ -678,12 +735,19 @@ def _run_interactive(detected: dict) -> tuple:
         prov_items,
     )
     providers = None if set(prov_keys) == set(all_provs) else set(prov_keys)
-    return selected_tools, providers
+
+    graph_os_mode, graph_os_url = (
+        _prompt_graph_os_mode() if selected_tools else ("skip", None)
+    )
+    return selected_tools, providers, graph_os_mode, graph_os_url
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Install universal-skills into agent tools"
+        description=(
+            "Install skills, skill-graphs, ontologies, and system prompts into "
+            "agent tools, and wire graph-os + fleet MCP servers into their MCP config."
+        )
     )
     parser.add_argument(
         "--tool",
@@ -790,6 +854,53 @@ def main():
             "No-op against a plain pip install (the checker is repo-checkout-only)."
         ),
     )
+    parser.add_argument(
+        "--from-package",
+        metavar="PATH",
+        help=(
+            "Install skills/prompts/ontology directly from an agents/* project "
+            "checkout that is NOT YET pip-installed, by parsing its own "
+            "pyproject.toml entry-points (no network/pip involved). Combine with "
+            "--tool/--all-detected as usual."
+        ),
+    )
+    parser.add_argument(
+        "--no-ontologies",
+        dest="install_ontologies",
+        action="store_false",
+        help=(
+            "Skip the ontology install leg (agent_utilities.ontology_providers, "
+            "materialized into the agent-utilities XDG ontologies/ tree). On by default."
+        ),
+    )
+    parser.add_argument(
+        "--no-prompts",
+        dest="install_prompts",
+        action="store_false",
+        help=(
+            "Skip the system-prompt install leg (agent_utilities.prompt_providers, "
+            "materialized into the agent-utilities XDG prompts/ tree). On by default."
+        ),
+    )
+    parser.add_argument(
+        "--graph-os",
+        choices=["stdio", "remote", "skip"],
+        default=None,
+        help=(
+            "How to wire graph-os into each target tool's MCP config: 'stdio' "
+            "(default — local uvx or an already-installed graph-os console script), "
+            "'remote' (requires --graph-os-url), or 'skip'."
+        ),
+    )
+    parser.add_argument(
+        "--graph-os-url",
+        help="Remote graph-os/instances URL, required with --graph-os remote.",
+    )
+    parser.add_argument(
+        "--no-mcp",
+        action="store_true",
+        help="Skip MCP config wiring entirely (skills/ontologies/prompts only).",
+    )
 
     args = parser.parse_args()
 
@@ -800,7 +911,30 @@ def main():
         else None
     )
 
-    # ── Interactive picker (tools + providers) ──────────────────────────────
+    # ── from-package: parse an unreleased agents/* checkout directly ────────
+    package_manifest = None
+    from_package_sources: Optional[List[Path]] = None
+    from_package_scripts: dict = {}
+    if args.from_package:
+        if from_package_mod is None:
+            logger.error("--from-package: from_package.py could not be loaded.")
+            sys.exit(1)
+        package_manifest = from_package_mod.load_manifest(Path(args.from_package))
+        if package_manifest is None:
+            sys.exit(1)
+        from_package_sources = from_package_mod.discover_skill_sources(package_manifest)
+        scripts = package_manifest.mcp_console_scripts()
+        if scripts:
+            from_package_scripts[package_manifest.name] = scripts
+        logger.info(
+            f"--from-package {package_manifest.name}: "
+            f"{len(from_package_sources)} skill(s), "
+            f"prompts_dir={package_manifest.prompts_dir()}, "
+            f"ontology_dir={package_manifest.ontology_dir()}, "
+            f"mcp_scripts={scripts}"
+        )
+
+    # ── Interactive picker (tools + providers + graph-os wiring) ────────────
     # Runs when explicitly requested, or on a bare invocation (no target flag) with a
     # TTY. Without a TTY, --interactive degrades to --all-detected so automation
     # (install.sh --all-detected) is never blocked on a prompt.
@@ -808,6 +942,8 @@ def main():
         args.all_detected or args.all_tools or args.path or args.tool
     )
     interactive_targets: dict = {}
+    interactive_graph_os_mode: Optional[str] = None
+    interactive_graph_os_url: Optional[str] = None
     if args.interactive and not sys.stdin.isatty():
         logger.warning(
             "--interactive requested but no TTY; installing into all detected tools "
@@ -815,7 +951,12 @@ def main():
         )
         args.all_detected = True
     elif (args.interactive or no_target_flag) and sys.stdin.isatty():
-        interactive_targets, sel_providers = _run_interactive(detect_present_tools())
+        (
+            interactive_targets,
+            sel_providers,
+            interactive_graph_os_mode,
+            interactive_graph_os_url,
+        ) = _run_interactive(detect_present_tools())
         if provider_filter is None:
             provider_filter = sel_providers
 
@@ -888,9 +1029,106 @@ def main():
             prune=args.prune,
             providers=provider_filter,
             contract=contract,
+            sources=from_package_sources,
         )
         if args.validate and contract is not None and contract.requires_transform:
             _run_validate(target)
+
+    # ── Ontology + prompt legs ───────────────────────────────────────────────
+    # Always XDG-scoped (agent-utilities/epistemic-graph consume these directly;
+    # they are not per-tool artifacts like skills). Prefers agent_utilities'
+    # own install_unified() when importable, falls back to local resolution.
+    manifest_report: dict = {}
+    if ontology_prompt_providers is not None:
+        manifest_report = ontology_prompt_providers.install_ontologies_and_prompts(
+            force=True,
+            providers=provider_filter,
+            install_prompts=args.install_prompts,
+            install_ontologies=args.install_ontologies,
+        )
+        if package_manifest is not None:
+            if args.install_prompts and package_manifest.prompts_dir():
+                n = ontology_prompt_providers._copy_tree(
+                    package_manifest.prompts_dir(),
+                    ontology_prompt_providers.unified_prompts_dir()
+                    / package_manifest.name,
+                    force=True,
+                )
+                manifest_report.setdefault("prompts", {})[package_manifest.name] = n
+            if args.install_ontologies and package_manifest.ontology_dir():
+                n = ontology_prompt_providers._copy_ontology(
+                    package_manifest.ontology_dir(),
+                    ontology_prompt_providers.unified_ontologies_dir()
+                    / package_manifest.name,
+                    force=True,
+                )
+                manifest_report.setdefault("ontologies", {})[package_manifest.name] = n
+
+    # ── graph-os + fleet MCP config wiring ───────────────────────────────────
+    if not args.no_mcp and mcp_setup is not None:
+        graph_os_mode = (
+            interactive_graph_os_mode
+            if interactive_graph_os_mode is not None
+            else (args.graph_os or "stdio")
+        )
+        graph_os_url = interactive_graph_os_url or args.graph_os_url
+        provider_names = [
+            p for p in _available_providers() if p != UNIVERSAL_PROVIDER
+        ]
+        if provider_filter is not None:
+            provider_names = [p for p in provider_names if p in provider_filter]
+        mcp_seen: set = set()
+        for label in targets:
+            tool_key = re.sub(r"\s*\([^)]*\)\s*$", "", label.strip().lower())
+            dest = mcp_setup.MCP_CONFIG_PATHS.get(tool_key)
+            if dest is None or str(dest) in mcp_seen:
+                continue
+            mcp_seen.add(str(dest))
+            mcp_setup.wire_mcp_config(
+                tool_key,
+                None,
+                graph_os_mode,
+                graph_os_url,
+                provider_names,
+                from_package_scripts=from_package_scripts,
+            )
+
+    # ── KG auto-extension registration hook ──────────────────────────────────
+    # Makes newly-installed provider content DISCOVERABLE for KG ingestion; does
+    # NOT ingest it itself (see SKILL.md "Ontology / skill / prompt auto-extension
+    # hook for the KG" — that is graph-os/epistemic-graph's job, over source_sync).
+    if manifest_report and ontology_prompt_providers is not None:
+        changed = any(v for leg in manifest_report.values() for v in leg.values())
+        if changed:
+            manifest_path = (
+                ontology_prompt_providers._xdg_data_dir() / "install-manifest.json"
+            )
+            try:
+                import datetime
+                import json
+
+                manifest_path.parent.mkdir(parents=True, exist_ok=True)
+                manifest_path.write_text(
+                    json.dumps(
+                        {
+                            "generated_at": datetime.datetime.now(
+                                datetime.timezone.utc
+                            ).isoformat(),
+                            **manifest_report,
+                        },
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                logger.info(f"Wrote install manifest: {manifest_path}")
+            except OSError as e:  # noqa: BLE001
+                logger.warning(f"Could not write install manifest: {e}")
+            logger.info(
+                "Provider prompts/ontologies changed — to refresh the KG, run "
+                "`source_sync source=all mode=delta` via the graph-os MCP "
+                "connection (or the agent-utilities-source-integration skill)."
+            )
 
 
 if __name__ == "__main__":

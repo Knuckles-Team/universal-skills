@@ -122,10 +122,10 @@ The body of the `SKILL.md` should follow this general hierarchy:
 
 ## 5. Portability & the per-agent adapter
 
-`skill-installer` is the **only** thing that emits a target agent's copy of a skill —
+`universal-installer` is the **only** thing that emits a target agent's copy of a skill —
 authors never hand-write a per-tool variant. The canonical `SKILL.md` under
 `universal_skills/` stays **Claude-native** (full frontmatter, unrestricted
-`description`); at install time, `universal_skills/core/skill-installer/scripts/
+`description`); at install time, `universal_skills/core/universal-installer/scripts/
 adapters.py` adapts a COPY for targets whose frontmatter contract is stricter.
 
 **Per-agent allowed-top-level table.** Every target tool has an `AgentContract`
@@ -133,7 +133,7 @@ adapters.py` adapts a COPY for targets whose frontmatter contract is stricter.
 
 | Target | Allowed top-level keys | Notes |
 |---|---|---|
-| Codex (`~/.codex/skills`) | `name`, `description`, `license`, `allowed-tools`, `metadata` | Everything else is demoted **into** `metadata` (existing `metadata` sub-keys win on conflict); `description` is sanitized (`<`→`[`, `>`→`]`); discovery is **flat** — nested sub-skills are promoted to the top level and skill-graphs install at the target's top level (not under `skill-graphs/`); `skill-installer` itself is renamed to `universal-skill-installer` on install (Codex reserves the bare name for its own built-in). |
+| Codex (`~/.codex/skills`) | `name`, `description`, `license`, `allowed-tools`, `metadata` | Everything else is demoted **into** `metadata` (existing `metadata` sub-keys win on conflict); `description` is sanitized (`<`→`[`, `>`→`]`); discovery is **flat** — nested sub-skills are promoted to the top level and skill-graphs install at the target's top level (not under `skill-graphs/`). (`builtin_skills`/`rename_map` are a general name-collision mechanism, currently empty — no active collision.) |
 | Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor, Grok/Grok Code, OpenCode, Zed, agent-utilities, agent-terminal-ui | unrestricted | Permissive contract — verbatim copy/symlink, unchanged from before this adapter existed. |
 
 A contract with every flag off (`demote_to_metadata=False`, `sanitize_description=False`,
