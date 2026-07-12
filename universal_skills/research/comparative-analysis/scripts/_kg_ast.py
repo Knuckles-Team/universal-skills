@@ -25,6 +25,14 @@ this file have" prefers, in this order:
    interpreter. Every result from this tier is tagged ``"tier": "stdlib_ast_fallback"``
    so callers/reports can surface that they got a degraded answer.
 
+Tier 1 is two-way: ``kg_code_context()`` reads from the KG, and
+``kg_write_analysis()`` writes each analysis run BACK into it as a
+``ComparativeAnalysisRun`` node — so running these scripts against a fleet of
+targets over time builds a queryable, growing library of every comparative
+analysis ever run (score trends, cross-project comparisons via Cypher), not just
+a pile of local JSON files. Both are best-effort and silently no-op without
+``GRAPH_OS_URL`` configured.
+
 ``RustASTParser`` itself already implements the engine-first/local-fallback split
 internally (service unavailable -> local ``ast``); this module adds the KG tier on
 top and guards the ``epistemic_graph`` import entirely, since comparative-analysis
@@ -38,6 +46,7 @@ import asyncio
 import hashlib
 import json
 import os
+import time
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -85,6 +94,63 @@ def kg_code_context(
         return None
     result = payload.get("result")
     return result if isinstance(result, dict) else None
+
+
+def kg_write_analysis(
+    domain: str,
+    project: str,
+    report: dict[str, Any],
+    *,
+    endpoint: str | None = None,
+    timeout: float = 15.0,
+) -> str | None:
+    """Best-effort persist of one analysis result as a ``ComparativeAnalysisRun``
+    node (``graph_write action=add_node`` REST twin, ``POST /api/graph/write``),
+    building a queryable, growing library of every comparative-analysis run
+    instead of leaving results only as local JSON files.
+
+    Each call writes a NEW, timestamped node (never overwrites a prior run for the
+    same project/domain) so the KG accumulates a real history — "how has this
+    project's CA-004 score trended" becomes a Cypher query, not a diff of files on
+    disk. ``endpoint`` defaults to ``GRAPH_OS_URL``, matching ``kg_code_context``.
+    Returns the written node id, or ``None`` — never raises — when no gateway is
+    configured or the write fails, so callers can treat this as a pure side effect
+    that never blocks the primary (local JSON) report output.
+    """
+    url = (endpoint or os.environ.get("GRAPH_OS_URL", "")).rstrip("/")
+    if not url:
+        return None
+    ts = report.get("timestamp") or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    node_id = f"ca_run:{domain}:{project}:{content_fingerprint(f'{project}{ts}')}"
+    body = json.dumps(
+        {
+            "action": "add_node",
+            "node_id": node_id,
+            "node_type": "ComparativeAnalysisRun",
+            "properties": {
+                "domain": domain,
+                "project": project,
+                "timestamp": ts,
+                # Bound the payload — the KG stores the structured score/summary,
+                # not a second copy of the full local JSON report.
+                "report": json.dumps(report, default=str)[:8000],
+            },
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        url + "/api/graph/write",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - operator-configured URL
+            payload = json.loads(resp.read().decode("utf-8") or "{}")
+    except Exception:  # noqa: BLE001 - best-effort; a write failure never blocks the report
+        return None
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        return None
+    return node_id
 
 
 # ---------------------------------------------------------------------------
