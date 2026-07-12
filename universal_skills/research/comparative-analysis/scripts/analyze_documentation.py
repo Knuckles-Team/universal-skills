@@ -11,6 +11,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _kg_ast import has_docstring_near, parse_symbols  # noqa: E402
+
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", ".tox", "dist", "build"}
 
 README_CRITERIA = [
@@ -75,10 +78,20 @@ def grade_readme(project_path: Path) -> dict:
     }
 
 
-def analyze_docstrings(project_path: Path) -> dict:
-    """Analyze docstring coverage in Python files."""
-    import ast
+_DEF_KINDS = {"function", "class", "method"}
 
+
+def analyze_docstrings(project_path: Path) -> dict:
+    """Analyze docstring coverage in Python files.
+
+    Symbol discovery prefers the epistemic-graph AST parser (``_kg_ast.parse_symbols``
+    — engine tree-sitter service, or its own version-independent local ``ast``
+    fallback when the service is unreachable) over hand-walking stdlib ``ast``
+    here. Docstring presence is then a parser-agnostic line-based heuristic
+    (``has_docstring_near``), so this function never touches ``ast.Constant``/
+    ``ast.Str``-class nodes directly — that logic lives once, in ``_kg_ast.py``'s
+    tier-3 fallback, guarded to the modern (post-3.12) ``ast.Constant`` API.
+    """
     total_defs = 0
     documented = 0
 
@@ -86,21 +99,23 @@ def analyze_docstrings(project_path: Path) -> dict:
         rel = f.relative_to(project_path)
         if any(p in str(rel) for p in SKIP_DIRS):
             continue
-        try:
-            tree = ast.parse(f.read_text(errors="ignore"))
-            for node in ast.walk(tree):
-                if isinstance(
-                    node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-                ):
-                    total_defs += 1
-                    if (
-                        node.body
-                        and isinstance(node.body[0], ast.Expr)
-                        and isinstance(node.body[0].value, (ast.Constant, ast.Str))
-                    ):
-                        documented += 1
-        except (SyntaxError, UnicodeDecodeError):
-            pass
+        parsed = parse_symbols(f)
+        for node in parsed.get("nodes", []):
+            if node.get("node_type") != "SYMBOL":
+                continue
+            props = node.get("properties", {})
+            kind = str(props.get("kind") or props.get("symbol_type") or "").lower()
+            if kind not in _DEF_KINDS:
+                continue
+            total_defs += 1
+            # Trust an engine-supplied has_docstring flag when present (the local
+            # fallback tier sets it); otherwise fall back to the line-based
+            # heuristic against the real symbol line.
+            if "has_docstring" in props:
+                if props["has_docstring"]:
+                    documented += 1
+            elif props.get("line") and has_docstring_near(f, int(props["line"])):
+                documented += 1
 
     return {
         "total_definitions": total_defs,
