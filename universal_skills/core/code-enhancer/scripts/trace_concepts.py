@@ -2,37 +2,51 @@
 """FR-008: Concept traceability for code-enhancer skill.
 
 Scans for CONCEPT:CE-XXX markers in code docstrings, docs, and pytest
-markers. Enhanced to also detect @pytest.mark.concept("xxx") decorators
-via AST, identify tests/functions missing concept markers, and cross-reference
+markers. Enhanced to also detect @pytest.mark.concept("xxx") decorators,
+identify tests/functions missing concept markers, and cross-reference
 against a concept registry from AGENTS.md.
+
+KG-native (CE-045): decorator/pytest-marker + function scanning goes through the
+graph-os code KG first (a repo already ingested has this for free), then the
+engine tree-sitter AST (``kg_native.parse_file_symbols`` — multi-language,
+version-independent), and only falls back to a local stdlib ``ast`` parse when
+neither is reachable. See ``kg_native.py`` for the tier hierarchy.
 
 CONCEPT:CE-008 — Concept Traceability
 """
 
-import ast
 import json
 import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from kg_native import (  # noqa: E402 - needs the sys.path insert above
+    SKIP_DIRS as _SKIP_DIRS,
+)
+from kg_native import (  # noqa: E402
+    body_span,
+    file_symbols_by_line,
+    kg_repo_concepts,
+)
+
 CONCEPT_PATTERN = re.compile(r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)")
 MARKER_PATTERN = re.compile(
     r'@pytest\.mark\.concept\(\s*["\']([A-Z]+-\d+(?:\.\d+)?)["\']\s*\)'
 )
-
-_SKIP_DIRS = frozenset(
-    {
-        ".venv",
-        "venv",
-        "__pycache__",
-        "node_modules",
-        ".git",
-        "build",
-        "dist",
-        ".tox",
-        ".mypy_cache",
-    }
+_DECORATOR_CONCEPT_RE = re.compile(
+    r'mark\.concept\(\s*["\']([A-Z]+-\d+(?:\.\d+)?)["\']\s*\)'
 )
+
+
+def _decorator_concept_ids(decorators: str) -> list[str]:
+    """Extract concept IDs from a symbol's decorator source (e.g.
+    ``@pytest.mark.concept("AU-001")``) — replaces the old ast.Call/ast.Attribute
+    walk in ``_extract_concept_from_decorator`` with a regex over the engine/local
+    tier's already-extracted decorator text."""
+    if not decorators:
+        return []
+    return _DECORATOR_CONCEPT_RE.findall(decorators)
 
 
 def _scan_concepts_in_files(
@@ -61,7 +75,11 @@ def _scan_concepts_in_files(
 
 
 def _scan_pytest_decorators(root: Path) -> tuple[list[dict], list[dict]]:
-    """Scan test files for @pytest.mark.concept decorators using AST.
+    """Scan test files for @pytest.mark.concept decorators + CONCEPT: markers.
+
+    KG-native (CE-045): per test file, symbols come from the graph-os code KG when
+    ingested, else the engine tree-sitter AST, else a local stdlib ``ast`` parse
+    (``kg_native.file_symbols_by_line``) — replacing the old whole-file ast.walk.
 
     Returns:
         (concepts_found, tests_missing_markers)
@@ -83,123 +101,95 @@ def _scan_pytest_decorators(root: Path) -> tuple[list[dict], list[dict]]:
             continue
         try:
             source = tf.read_text(encoding="utf-8", errors="ignore")
-            tree = ast.parse(source, filename=str(tf))
-        except (SyntaxError, UnicodeDecodeError):
+        except (OSError, UnicodeDecodeError):
             continue
+        source_lines = source.splitlines()
 
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                if not node.name.startswith("test_"):
-                    continue
+        symbols = [
+            s
+            for s in file_symbols_by_line(tf)
+            if s.get("kind_detail", "").lower() in ("function", "method")
+            and str(s.get("name", "")).startswith("test_")
+        ]
+        for i, sym in enumerate(symbols):
+            name = str(sym.get("name", ""))
+            line = int(sym.get("line") or 1)
+            start, end = body_span(source_lines, symbols, i)
+            body_source = "\n".join(source_lines[start - 1 : end])
 
-                # Check decorators for @pytest.mark.concept(...)
-                has_concept = False
-                for dec in node.decorator_list:
-                    concept_id = _extract_concept_from_decorator(dec)
-                    if concept_id:
-                        has_concept = True
-                        concepts.append(
-                            {
-                                "concept_id": concept_id,
-                                "file": str(tf),
-                                "line": node.lineno,
-                                "source_type": "test_decorator",
-                                "test_name": node.name,
-                            }
-                        )
+            has_concept = False
+            for concept_id in _decorator_concept_ids(str(sym.get("decorators", ""))):
+                has_concept = True
+                concepts.append(
+                    {
+                        "concept_id": concept_id,
+                        "file": str(tf),
+                        "line": line,
+                        "source_type": "test_decorator",
+                        "test_name": name,
+                    }
+                )
 
-                # Also check docstring and body for CONCEPT: pattern
-                end_line = getattr(node, "end_lineno", node.lineno + 1)
-                body_lines = source.splitlines()[node.lineno - 1 : end_line]
-                body_source = "\n".join(body_lines)
-                for match in CONCEPT_PATTERN.finditer(body_source):
-                    has_concept = True
-                    concepts.append(
-                        {
-                            "concept_id": match.group(1),
-                            "file": str(tf),
-                            "line": node.lineno,
-                            "source_type": "test_docstring",
-                            "test_name": node.name,
-                        }
-                    )
+            for match in CONCEPT_PATTERN.finditer(body_source):
+                has_concept = True
+                concepts.append(
+                    {
+                        "concept_id": match.group(1),
+                        "file": str(tf),
+                        "line": line,
+                        "source_type": "test_docstring",
+                        "test_name": name,
+                    }
+                )
 
-                if not has_concept:
-                    missing.append(
-                        {
-                            "test_name": node.name,
-                            "file": str(tf),
-                            "line": node.lineno,
-                        }
-                    )
+            if not has_concept:
+                missing.append({"test_name": name, "file": str(tf), "line": line})
 
     return concepts, missing
 
 
-def _extract_concept_from_decorator(dec: ast.AST) -> str | None:
-    """Extract concept ID from a @pytest.mark.concept("xxx") decorator."""
-    # Pattern: @pytest.mark.concept("AU-001")
-    if isinstance(dec, ast.Call):
-        func = dec.func
-        # Check for pytest.mark.concept(...) pattern
-        if (
-            isinstance(func, ast.Attribute)
-            and func.attr == "concept"
-            and isinstance(func.value, ast.Attribute)
-            and func.value.attr == "mark"
-        ):
-            # Extract string argument
-            if dec.args and isinstance(dec.args[0], ast.Constant):
-                return str(dec.args[0].value)
-    return None
-
-
 def _scan_function_docstrings(root: Path) -> list[dict]:
-    """Scan Python functions >10 lines for missing CONCEPT markers in docstrings."""
+    """Scan Python functions >10 lines for missing CONCEPT markers in docstrings.
+
+    KG-native (CE-045): symbols come from the graph-os code KG (Tier 1) when the
+    repo is ingested, else the tiered engine/local parse per file.
+    """
     missing: list[dict] = []
+    py_files = [
+        f
+        for f in root.rglob("*.py")
+        if not any(skip in f.parts for skip in _SKIP_DIRS)
+        and "test_" not in f.name
+        and not f.name.endswith("_test.py")
+    ]
 
-    for f in root.rglob("*.py"):
-        if any(skip in f.parts for skip in _SKIP_DIRS):
-            continue
-        # Skip test files — they're handled by _scan_pytest_decorators
-        if "test_" in f.name or f.name.endswith("_test.py"):
-            continue
-
+    for f in py_files:
         try:
-            source = f.read_text(encoding="utf-8", errors="ignore")
-            tree = ast.parse(source, filename=str(f))
-        except (SyntaxError, UnicodeDecodeError):
+            source_lines = f.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except (OSError, UnicodeDecodeError):
             continue
 
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                end_line = getattr(node, "end_lineno", node.lineno + 1)
-                length = end_line - node.lineno + 1
+        symbols = [
+            s
+            for s in file_symbols_by_line(f)
+            if s.get("kind_detail", "").lower() == "function"
+        ]
+        for i, sym in enumerate(symbols):
+            name = str(sym.get("name", ""))
+            line = int(sym.get("line") or 1)
+            if name.startswith("_") and not name.startswith("__"):
+                continue
 
-                # Only check functions >10 lines (significant functions)
-                if length < 10:
-                    continue
+            start, end = body_span(source_lines, symbols, i)
+            length = end - start + 1
+            if length < 10:
+                continue
 
-                # Skip private/dunder methods
-                if node.name.startswith("_") and not node.name.startswith("__"):
-                    continue
-
-                # Check docstring for CONCEPT marker
-                docstring = ast.get_docstring(node) or ""
-                body_lines = source.splitlines()[node.lineno - 1 : end_line]
-                body_text = "\n".join(body_lines)
-
-                if not CONCEPT_PATTERN.search(docstring) and not CONCEPT_PATTERN.search(
-                    body_text
-                ):
-                    missing.append(
-                        {
-                            "function": node.name,
-                            "file": str(f),
-                            "line": node.lineno,
-                            "length": length,
-                        }
-                    )
+            body_text = "\n".join(source_lines[start - 1 : end])
+            if not CONCEPT_PATTERN.search(body_text):
+                missing.append(
+                    {"function": name, "file": str(f), "line": line, "length": length}
+                )
 
     return missing
 
@@ -262,15 +252,30 @@ def trace_concepts(root_dir: str = ".") -> dict:
     """Trace concept IDs across code, docs, and tests. Detect drift.
 
     Enhanced with:
-    - AST-based @pytest.mark.concept() decorator scanning
+    - KG-native (else engine/local-AST) @pytest.mark.concept() decorator scanning
     - Tests-without-concept-markers detection
     - Functions-without-concept-docstrings detection (>10 lines)
     - Concept registry cross-reference from AGENTS.md
     """
     root = Path(root_dir).resolve()
 
-    # Scan all three sources via regex
-    code_concepts = _scan_concepts_in_files(root, "*.py", "code")
+    # KG-native (CE-045): if this repo is already ingested, its CONCEPT markers are
+    # a free Cypher query (MENTIONED_IN edges) instead of a full-tree regex re-scan.
+    # Falls back to the regex file scan when the KG has no anchor for this repo.
+    kg_concepts = kg_repo_concepts(root)
+    if kg_concepts:
+        code_concepts = [
+            {
+                "concept_id": r["concept_id"],
+                "file": r.get("file_path") or r.get("path") or "",
+                "line": 0,
+                "source_type": "code",
+            }
+            for r in kg_concepts
+            if r.get("concept_id")
+        ]
+    else:
+        code_concepts = _scan_concepts_in_files(root, "*.py", "code")
     doc_concepts = _scan_concepts_in_files(root, "*.md", "docs")
     test_concepts = []
     for td in [root / "tests", root / "test"]:

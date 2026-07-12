@@ -5,16 +5,29 @@ Grades pytest suites against industry best practices using the F.I.R.S.T.
 rubric (Fast, Independent, Repeatable, Self-validating, Timely), AAA pattern
 compliance, fixture/parametrize usage, organization, and AI slop detection.
 
+KG-native (CE-045): test symbol discovery goes through the graph-os code KG first
+(``kg_native.repo_symbols``), then the engine tree-sitter AST, and only falls back
+to a local stdlib ``ast`` parse when neither is reachable — replacing the direct
+``ast.walk``/``ast.dump`` use. The actual quality metrics (assertion/mock/weak-
+assertion counts, duplication hashing) were already text-based, not ast-derived,
+and are unchanged.
+
 CONCEPT:CE-024 — Pytest Quality Grading
 """
 
-import ast
 import hashlib
 import json
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from kg_native import (  # noqa: E402 - needs the sys.path insert above
+    body_span,
+    file_symbols_by_line,
+    split_decorators,
+)
 
 
 # Patterns that indicate generic/AI-generated test names
@@ -45,21 +58,23 @@ def _analyze_test_file(filepath: Path) -> dict:
     """Analyze a single test file for quality metrics."""
     try:
         source = filepath.read_text(encoding="utf-8", errors="ignore")
-        tree = ast.parse(source, filename=str(filepath))
-    except (SyntaxError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError):
         return {"error": f"Cannot parse {filepath}", "tests": []}
 
     lines = source.splitlines()
     tests: list[dict] = []
 
-    for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            continue
-        if not node.name.startswith("test_"):
-            continue
+    symbols = [
+        s
+        for s in file_symbols_by_line(filepath)
+        if s.get("kind_detail", "").lower() in ("function", "method")
+        and str(s.get("name", "")).startswith("test_")
+    ]
 
-        end_line = getattr(node, "end_lineno", node.lineno + 1)
-        body_lines = lines[node.lineno - 1 : end_line]
+    for i, sym in enumerate(symbols):
+        name = str(sym.get("name", ""))
+        line, end_line = body_span(lines, symbols, i)
+        body_lines = lines[line - 1 : end_line]
         body_source = "\n".join(body_lines)
 
         # Count assertions — recognise the full idiom set, not just bare ``assert``.
@@ -98,16 +113,22 @@ def _analyze_test_file(filepath: Path) -> dict:
             + body_source.count("monkeypatch.")
         )
 
-        # Check for parametrize decorator
-        has_parametrize = any("parametrize" in ast.dump(d) for d in node.decorator_list)
+        # Check for parametrize decorator — a regex over the already-extracted
+        # decorator source (engine/local tier) replaces the ast.dump(d) scan.
+        decorators = split_decorators(str(sym.get("decorators", "")))
+        has_parametrize = any("parametrize" in d for d in decorators)
 
-        # Check for fixture usage (arguments beyond self/cls)
-        fixture_args = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
+        # Check for fixture usage (arguments beyond self/cls). ``params`` is only
+        # populated by the local ``ast`` tier (the engine only reports an arity
+        # count, no names) — degrade to an empty list when unavailable; scoring
+        # only depends on count/ratio, not the literal names.
+        params_raw = str(sym.get("params", ""))
+        fixture_args = [p for p in params_raw.split(",") if p] if params_raw else []
 
         # Name quality
-        name_len = len(node.name)
-        is_generic = any(re.match(p, node.name) for p in GENERIC_NAME_PATTERNS)
-        is_descriptive = name_len > 15 and "_" in node.name[5:]
+        name_len = len(name)
+        is_generic = any(re.match(p, name) for p in GENERIC_NAME_PATTERNS)
+        is_descriptive = name_len > 15 and "_" in name[5:]
 
         # Weak assertions
         weak_assert_count = sum(1 for wa in WEAK_ASSERTIONS if wa in body_source)
@@ -115,18 +136,18 @@ def _analyze_test_file(filepath: Path) -> dict:
         # Body hash for duplication detection
         # Normalize: strip whitespace, remove function name line
         normalized = "\n".join(
-            line.strip()
-            for line in body_lines[1:]
-            if line.strip() and not line.strip().startswith("#")
+            ln.strip()
+            for ln in body_lines[1:]
+            if ln.strip() and not ln.strip().startswith("#")
         )
         body_hash = hashlib.md5(normalized.encode()).hexdigest()
 
         tests.append(
             {
-                "name": node.name,
+                "name": name,
                 "file": str(filepath),
-                "line": node.lineno,
-                "length": end_line - node.lineno + 1,
+                "line": line,
+                "length": end_line - line + 1,
                 "assertion_count": assertion_count,
                 "mock_count": mock_count,
                 "has_parametrize": has_parametrize,
