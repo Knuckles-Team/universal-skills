@@ -15,6 +15,20 @@ Usage:
     python rank_relevance.py /path/to/target --kg-enabled --top 10
 
 CONCEPT:KG-2.5 — Per-Item Relevance Ranking
+
+Layered KG/engine-native design (see ``_kg_ast.py``): ``--kg-enabled`` mode
+already IS tier 1 — it queries the ingested KG directly for pre-profiled
+Codebase/Article/Document nodes instead of re-walking the filesystem. Filesystem
+mode's ``_extract_codebase_profile`` stays on local stdlib ``ast`` deliberately
+(not a fallback of convenience): entry-point detection needs decorator info
+(``node.decorator_list``), pattern detection needs base-class names
+(``node.bases``), and keyword extraction needs full docstring TEXT — none of
+which the engine's ``RustASTParser`` wire protocol carries today (its SYMBOL
+nodes expose only ``name``/``kind``/``line``, not decorators/bases/doc text; see
+``_kg_ast.py``'s module docstring for the exact gap). This module's ``ast`` usage
+is all modern (``FunctionDef``/``ClassDef``/``Attribute``/``Name``/
+``get_docstring``) — none of the Python-3.12-removed node types
+(``ast.Str``/``ast.Num``/``ast.NameConstant``/``ast.Ellipsis``) appear here.
 """
 
 from __future__ import annotations
