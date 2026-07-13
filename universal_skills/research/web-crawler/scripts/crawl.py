@@ -8,6 +8,8 @@ try:
         CrawlerRunConfig,
         CacheMode,
         MemoryAdaptiveDispatcher,
+        DefaultMarkdownGenerator,
+        PruningContentFilter,
     )
 except ImportError:
     print("Error: Missing required dependencies for the 'web-crawler' skill.")
@@ -85,6 +87,8 @@ try:
         CrawlerRunConfig,
         CacheMode,
         MemoryAdaptiveDispatcher,
+        DefaultMarkdownGenerator,
+        PruningContentFilter,
     )
 except ImportError:
     logger.error("Missing required dependencies for the 'web-crawler' skill.")
@@ -103,22 +107,80 @@ def log_memory(process, peak_memory, prefix: str = ""):
     )
 
 
+def _prefer_fit(markdown_obj) -> str:
+    """Prefer crawl4ai's readability-filtered ``fit_markdown`` over ``raw_markdown``.
+
+    ``fit_markdown`` (populated by the ``PruningContentFilter`` wired into
+    ``CrawlerRunConfig`` below) is crawl4ai's boilerplate-stripped rendering —
+    nav/sidebar/cookie-banner/footer chrome scored out. ``raw_markdown`` is the
+    unfiltered HTML→markdown conversion and still carries that chrome. Fall back
+    to ``raw_markdown`` only when no filtered rendering was produced (e.g. the
+    content filter judged nothing prunable, or an older crawl4ai without the
+    filter wired).
+    """
+    fit = getattr(markdown_obj, "fit_markdown", "") or ""
+    if fit.strip():
+        return fit
+    return getattr(markdown_obj, "raw_markdown", "") or str(markdown_obj)
+
+
 def extract_markdown(result):
     md = ""
     if hasattr(result, "markdown_v2") and result.markdown_v2:
-        md = getattr(
-            result.markdown_v2,
-            "raw_markdown",
-            getattr(result.markdown_v2, "fit_markdown", str(result.markdown_v2)),
-        )
+        md = _prefer_fit(result.markdown_v2)
     elif hasattr(result, "markdown") and hasattr(result.markdown, "raw_markdown"):
-        md = result.markdown.raw_markdown
+        md = _prefer_fit(result.markdown)
     elif hasattr(result, "markdown") and isinstance(result.markdown, str):
         md = result.markdown
     else:
         md = str(getattr(result, "markdown", ""))
 
+    return clean_markdown(md.strip())
+
+
+_MULTI_BLANK_RE = re.compile(r"\n{3,}")
+_TRAILING_WS_RE = re.compile(r"[ \t]+\n")
+_FINGERPRINT_WS_RE = re.compile(r"\s+")
+
+
+def clean_markdown(md: str) -> str:
+    """Collapse incidental whitespace crawl4ai/the content filter leaves behind.
+
+    Strips trailing whitespace on each line and collapses 3+ consecutive blank
+    lines to a single blank line, without touching the actual content — this
+    runs on every page regardless of dedup so saved/ingested markdown is tidy.
+    """
+    if not md:
+        return md
+    md = _TRAILING_WS_RE.sub("\n", md)
+    md = _MULTI_BLANK_RE.sub("\n\n", md)
     return md.strip()
+
+
+def content_fingerprint(md: str) -> str:
+    """A normalized content hash for near-duplicate detection across a crawl.
+
+    Lowercases and collapses all whitespace before hashing so two pages that
+    differ only by incidental formatting (or a trailing timestamp/whitespace)
+    still fingerprint identically.
+    """
+    normalized = _FINGERPRINT_WS_RE.sub(" ", md.strip().lower())
+    return hashlib.sha256(normalized.encode("utf-8", "surrogatepass")).hexdigest()
+
+
+def is_duplicate_content(md: str, seen_fingerprints: set, *, min_chars: int = 40) -> bool:
+    """True (and records the fingerprint) if ``md`` duplicates an already-seen page.
+
+    Short/empty pages (below ``min_chars``) are never deduped by content — they're
+    dropped for emptiness elsewhere, not flagged as duplicates of each other.
+    """
+    if len(md) < min_chars:
+        return False
+    fp = content_fingerprint(md)
+    if fp in seen_fingerprints:
+        return True
+    seen_fingerprints.add(fp)
+    return False
 
 
 def save_markdown(content: str, url: str, output_dir: str, prefix: str = ""):
@@ -210,17 +272,85 @@ def cleanup_filenames(output_dir: str):
                 logger.error(f"Failed to rename {f} to {new_name}: {e}")
 
 
-async def crawl_single(crawler, url: str, crawl_config, output_dir: str):
+class KGIngestor:
+    """Submits crawled URLs to graph-os's unified ``ingest_url`` pipeline.
+
+    CONCEPT:AU-KG.ingest.web-fetch-front-door — a thin REST client over
+    ``POST {endpoint}/api/graph/ingest {"action": "ingest_url", "target_path": <url>}``,
+    the SAME action-routed surface the ``graph_ingest`` MCP tool exposes
+    (``mcp/kg_server.py`` ``ACTION_TOOL_ROUTES["graph_ingest"] = "/graph/ingest"``).
+    graph-os fetches the URL itself through the unified resolver (ArchiveBox→
+    crawl4ai→requests) and materializes Document + Concept (+ opt-in Chunk)
+    objects with provenance — there is deliberately no separate content-push
+    path here; the web-crawler skill is a thin entrypoint over that ONE pipeline
+    (the recursive/sitemap crawl above exists to *discover* URLs — including
+    ones a plain sitemap/single-page fetch would miss — not to re-implement
+    ingestion). Sticky-disables itself after the first unreachable/failed call
+    so a downed gateway degrades once (loud) rather than retrying every page.
+    """
+
+    def __init__(
+        self,
+        endpoint: str,
+        token: str = "",
+        timeout: float = 15.0,
+        ssl_verify: bool = True,
+    ):
+        self.endpoint = endpoint.rstrip("/")
+        self.token = token
+        self.timeout = timeout
+        self.ssl_verify = ssl_verify
+        self.submitted: list[str] = []
+        self.errors: list[str] = []
+        self.reachable = True
+
+    def submit(self, url: str) -> None:
+        if not self.reachable:
+            return
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        try:
+            resp = requests.post(
+                f"{self.endpoint}/api/graph/ingest",
+                json={"action": "ingest_url", "target_path": url},
+                headers=headers,
+                timeout=self.timeout,
+                verify=self.ssl_verify,
+            )
+            resp.raise_for_status()
+            self.submitted.append(url)
+            logger.info(f"KG ingest submitted for {url}: {resp.json()}")
+        except Exception as e:  # noqa: BLE001 - best-effort, must not abort the crawl
+            self.reachable = False
+            self.errors.append(f"{url}: {e}")
+            logger.warning(
+                f"KG ingestion unreachable at {self.endpoint} ({e}); falling back "
+                "to file-only output for the remainder of this crawl."
+            )
+
+    def summary(self) -> str:
+        if not self.submitted and not self.errors:
+            return "KG ingestion: no pages submitted."
+        parts = [f"KG ingestion: {len(self.submitted)} page(s) submitted to {self.endpoint}"]
+        if self.errors:
+            parts.append(f"{len(self.errors)} submission(s) failed (first: {self.errors[0]})")
+        return "; ".join(parts)
+
+
+async def crawl_single(crawler, url: str, crawl_config, output_dir: str, kg_ingestor=None):
     logger.info(f"Crawling single page: {url}")
     result = await crawler.arun(url=url, config=crawl_config)
     if result.success:
         md = extract_markdown(result)
         save_markdown(md, url, output_dir)
+        if kg_ingestor and md.strip():
+            kg_ingestor.submit(url)
     else:
         logger.error(f"Failed to crawl {url}: {result.error_message}")
 
 
-async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str):
+async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str, kg_ingestor=None):
     logger.info(f"Crawling and chunking: {url}")
     result = await crawler.arun(url=url, config=crawl_config)
     if not result.success:
@@ -228,6 +358,10 @@ async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str):
         return
 
     markdown = extract_markdown(result)
+    if kg_ingestor and markdown.strip():
+        # The chunking below is a local file-splitting convenience; graph-os
+        # ingests the whole page as one Document (it does its own chunking).
+        kg_ingestor.submit(url)
     header_pattern = re.compile(r"^(# .+|## .+)$", re.MULTILINE)
     headers = [m.start() for m in header_pattern.finditer(markdown)] + [len(markdown)]
     chunks = []
@@ -318,6 +452,8 @@ async def crawl_sitemap_sequential(
     output_dir: str,
     ssl_verify: bool = True,
     allowed_prefixes: List[str] = None,
+    kg_ingestor=None,
+    seen_fingerprints: set = None,
 ):
     urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
@@ -340,12 +476,21 @@ async def crawl_sitemap_sequential(
 
     logger.info(f"Found {len(urls)} URLs to crawl sequentially.")
     session_id = "sitemap_session"
+    seen = seen_fingerprints if seen_fingerprints is not None else set()
     for url in urls:
         result = await crawler.arun(url=url, config=crawl_config, session_id=session_id)
         if result.success:
-            logger.info(f"Successfully crawled: {url}")
             md = extract_markdown(result)
+            if not md.strip():
+                logger.warning(f"Empty content, skipping: {url}")
+                continue
+            if is_duplicate_content(md, seen):
+                logger.info(f"Skipping near-duplicate page: {url}")
+                continue
+            logger.info(f"Successfully crawled: {url}")
             save_markdown(md, url, output_dir)
+            if kg_ingestor:
+                kg_ingestor.submit(url)
         else:
             logger.error(f"Failed: {url} - Error: {result.error_message}")
 
@@ -360,6 +505,8 @@ async def crawl_sitemap_parallel(
     peak_memory,
     ssl_verify: bool = True,
     allowed_prefixes: List[str] = None,
+    kg_ingestor=None,
+    seen_fingerprints: set = None,
 ):
     urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
     if not urls:
@@ -387,19 +534,31 @@ async def crawl_sitemap_parallel(
         urls=urls, config=crawl_config, dispatcher=dispatcher
     )
 
+    seen = seen_fingerprints if seen_fingerprints is not None else set()
     success_count = 0
     fail_count = 0
+    duplicate_count = 0
     for result in results:
         if result.success:
-            success_count += 1
             md = extract_markdown(result)
+            if not md.strip():
+                fail_count += 1
+                continue
+            if is_duplicate_content(md, seen):
+                duplicate_count += 1
+                logger.info(f"Skipping near-duplicate page: {result.url}")
+                continue
+            success_count += 1
             save_markdown(md, result.url, output_dir)
+            if kg_ingestor:
+                kg_ingestor.submit(result.url)
         else:
             logger.error(f"Error crawling {result.url}: {result.error_message}")
             fail_count += 1
 
     logger.info("\nSummary:")
     logger.info(f"  - Successfully crawled: {success_count}")
+    logger.info(f"  - Duplicates skipped: {duplicate_count}")
     logger.info(f"  - Failed: {fail_count}")
     log_memory(process, peak_memory, "After crawl:")
 
@@ -418,7 +577,10 @@ async def crawl_recursive_high_speed(
     max_pages: int = 1000,
     ignore_prefix_restriction: bool = False,
     ssl_verify: bool = True,
+    kg_ingestor=None,
 ):
+    seen_fingerprints: set = set()
+    duplicate_count = 0
     visited = set()
     current_urls = {normalize_url(u) for u in start_urls}
     allowed_domains = {urlparse(u).netloc for u in start_urls}
@@ -471,8 +633,13 @@ async def crawl_recursive_high_speed(
                     and "Access Denied" not in md
                     and "permission to access" not in md
                 ):
-                    if save_markdown(md, norm_url, output_dir):
+                    if is_duplicate_content(md, seen_fingerprints):
+                        duplicate_count += 1
+                        logger.info(f"Skipping near-duplicate page: {norm_url}")
+                    elif save_markdown(md, norm_url, output_dir):
                         total_saved += 1
+                        if kg_ingestor:
+                            kg_ingestor.submit(norm_url)
                 else:
                     logger.warning(
                         f"Skipping {norm_url}: Access Denied or content blocked"
@@ -507,7 +674,10 @@ async def crawl_recursive_high_speed(
         )
         current_urls = next_level_urls
 
-    logger.info(f"Crawl complete. Total files saved: {total_saved}")
+    logger.info(
+        f"Crawl complete. Total files saved: {total_saved} "
+        f"(duplicates skipped: {duplicate_count})"
+    )
 
 
 async def main():
@@ -582,12 +752,22 @@ async def main():
         help="Custom CSS selector or JS expression to wait for.",
     )
     parser.add_argument(
-        "--ingest-kg",
-        "--ingest_kg",
+        "--no-kg-ingest",
+        "--no_kg_ingest",
         action="store_true",
-        help="After crawling, route the output directory into the Knowledge Graph "
-        "via the standardized ingestion engine (so it can be distilled back into "
-        "skill-graphs). Requires agent-utilities + a running graph daemon.",
+        help="Disable native Knowledge Graph ingestion (default: ON). Every "
+        "successfully crawled, deduped page is submitted to graph-os's "
+        "'ingest_url' pipeline (Document+Chunk+Concept with provenance) as it "
+        "is crawled; pass this to get file-only output. Degrades automatically "
+        "(with a warning) if graph-os is unreachable.",
+    )
+    parser.add_argument(
+        "--kg-endpoint",
+        "--kg_endpoint",
+        type=str,
+        default="",
+        help="graph-os gateway base URL for KG ingestion (else $GRAPH_OS_URL, "
+        "default http://graph-os.arpa).",
     )
 
     args = parser.parse_args()
@@ -738,6 +918,13 @@ async def main():
 
     crawl_config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
+        # Clean & refined markdown (CONCEPT:AU-KG.ingest.web-fetch-front-door): score out nav/sidebar/
+        # cookie-banner/footer chrome via crawl4ai's pruning content filter so
+        # ``result.markdown.fit_markdown`` (preferred by extract_markdown()) is
+        # substantive content, not raw HTML→markdown of the whole page.
+        markdown_generator=DefaultMarkdownGenerator(
+            content_filter=PruningContentFilter()
+        ),
         # Enable basic anti-bot evasion techniques (simulates human, sets headers, hides webdriver flags)
         magic=True,
         wait_until="networkidle",
@@ -761,14 +948,39 @@ async def main():
         max_session_permit=args.max_concurrent,
     )
 
+    # Native Knowledge Graph ingestion (CONCEPT:AU-KG.ingest.web-fetch-front-door) — default ON. Every
+    # crawled, deduped page is submitted to graph-os's unified 'ingest_url'
+    # pipeline as it's found; disabled with --no-kg-ingest, and this internal
+    # crawl subprocess (invoked by agent-utilities as ITS OWN crawl4ai fetch
+    # backend, e.g. web_fetch._fetch_via_crawl4ai / skill_graph_pipeline) always
+    # passes --no-kg-ingest to avoid recursing back into ingest_url or
+    # double-ingesting a corpus that pipeline already ingests itself.
+    kg_ingestor = None
+    if not args.no_kg_ingest:
+        kg_endpoint = (
+            args.kg_endpoint
+            or os.getenv("GRAPH_OS_URL", "").strip()
+            or "http://graph-os.arpa"
+        )
+        kg_ingestor = KGIngestor(
+            kg_endpoint,
+            token=os.getenv("GRAPH_OS_TOKEN", "").strip(),
+            ssl_verify=ssl_verify,
+        )
+    seen_fingerprints: set = set()
+
     try:
         async with AsyncWebCrawler(config=browser_config) as crawler:
             if args.strategy == "single":
                 for url in args.urls:
-                    await crawl_single(crawler, url, crawl_config, args.output_dir)
+                    await crawl_single(
+                        crawler, url, crawl_config, args.output_dir, kg_ingestor=kg_ingestor
+                    )
             elif args.strategy == "chunked":
                 for url in args.urls:
-                    await crawl_chunked(crawler, url, crawl_config, args.output_dir)
+                    await crawl_chunked(
+                        crawler, url, crawl_config, args.output_dir, kg_ingestor=kg_ingestor
+                    )
             elif args.strategy == "sitemap-sequential":
                 for url in args.urls:
                     await crawl_sitemap_sequential(
@@ -780,6 +992,8 @@ async def main():
                         allowed_prefixes=allowed_prefixes
                         if discovered_sitemap
                         else None,
+                        kg_ingestor=kg_ingestor,
+                        seen_fingerprints=seen_fingerprints,
                     )
             elif args.strategy == "sitemap-parallel":
                 for url in args.urls:
@@ -795,6 +1009,8 @@ async def main():
                         allowed_prefixes=allowed_prefixes
                         if discovered_sitemap
                         else None,
+                        kg_ingestor=kg_ingestor,
+                        seen_fingerprints=seen_fingerprints,
                     )
             elif args.strategy == "recursive":
                 await crawl_recursive_high_speed(
@@ -807,6 +1023,7 @@ async def main():
                     max_pages=args.max_pages,
                     ignore_prefix_restriction=args.ignore_prefix_restriction,
                     ssl_verify=ssl_verify,
+                    kg_ingestor=kg_ingestor,
                 )
     except Exception as e:
         logger.warning(f"crawl4ai/Playwright execution failed: {e}")
@@ -833,6 +1050,12 @@ async def main():
                         pass
 
                     save_markdown(content, url, args.output_dir)
+                    if kg_ingestor and content.strip():
+                        # Our local fetch degraded to plain HTTP; still hand the
+                        # URL to graph-os's own resolver chain (which may reach
+                        # ArchiveBox/crawl4ai server-side) rather than pushing
+                        # this low-quality extraction into the KG ourselves.
+                        kg_ingestor.submit(url)
                 except Exception as ex:
                     logger.error(f"Fallback fetch failed for {url}: {ex}")
         else:
@@ -843,45 +1066,8 @@ async def main():
     if args.output_dir:
         cleanup_filenames(args.output_dir)
 
-    # Optional: route the freshly-crawled markdown into the Knowledge Graph so it
-    # becomes the canonical, distillable source of truth (CONCEPT:KG-2.7). Done as
-    # a process-boundary shell-out (no agent-utilities import here) — best-effort.
-    if getattr(args, "ingest_kg", False) and args.output_dir:
-        _ingest_into_kg(args.output_dir)
-
-
-def _ingest_into_kg(output_dir: str) -> None:
-    """Shell out to the agent-utilities ingestion CLI (decoupled, best-effort)."""
-    import subprocess
-    import sys
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "agent_utilities.knowledge_graph.ingestion",
-        output_dir,
-        "--content-type",
-        "document",
-    ]
-    logger.info("Routing crawl output into the Knowledge Graph: %s", output_dir)
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
-        if proc.returncode == 0:
-            logger.info("KG ingestion complete for %s", output_dir)
-        else:
-            logger.warning(
-                "KG ingestion failed (rc=%s). Is agent-utilities installed and the "
-                "graph daemon running?\n%s",
-                proc.returncode,
-                (proc.stderr or proc.stdout or "").strip()[:2000],
-            )
-    except FileNotFoundError:
-        logger.warning(
-            "KG ingestion skipped: agent-utilities not importable in this "
-            "environment (python -m agent_utilities.knowledge_graph.ingestion)."
-        )
-    except Exception as e:  # noqa: BLE001
-        logger.warning("KG ingestion errored: %s", e)
+    if kg_ingestor:
+        logger.info(kg_ingestor.summary())
 
 
 if __name__ == "__main__":
