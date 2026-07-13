@@ -4,6 +4,19 @@
 Usage: python analyze_architecture.py /path/to/project
 
 CONCEPT:CA-003 — Architecture & Design Quality
+
+Layered KG/engine-native design (see ``_kg_ast.py``): architecture-pattern and
+SOLID-principle detection here needs full class/base/decorator/control-flow
+structure (``ast.dump``-level detail) that the engine's ``RustASTParser`` wire
+protocol does not carry (its SYMBOL nodes expose only ``name``/``kind``/``line``;
+see ``_kg_ast.py``'s module docstring for the exact gap), so this module stays on
+local stdlib ``ast`` deliberately. When the target has already been ingested,
+prefer ``graph_analyze action=arch_report`` (``GET /api/graph/analyze/
+arch-report``) or the KG-backed C4 discovery already documented in this skill's
+SKILL.md over re-deriving architecture facts here. This module's ``ast`` usage is
+fully modern (``ClassDef``/``FunctionDef``/``If``/``Import``/``ImportFrom``/
+``Name``/``dump``) — none of the Python-3.12-removed node types (``ast.Str``/
+``ast.Num``/``ast.NameConstant``/``ast.Ellipsis``) appear here.
 """
 
 import ast

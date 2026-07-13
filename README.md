@@ -77,7 +77,7 @@ The following universal skills are available. You can disable specific skills by
 | `core/skill-builder`| Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
 | `agent-tools/skill-graph-builder`| Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
 | `agent-tools/skill-workflow-builder`| Brainstorm, structure, verify, and scaffold workflow-based skills.   | `SKILL_WORKFLOW_BUILDER_ENABLE=True` (D)| `universal-skills[skill-workflow-builder]` |
-| `skill-installer`     | Install skills into Windsurf, Claude Code, Antigravity, etc.          | `SKILL_INSTALLER_ENABLE=False`        | `universal-skills[skill-installer]`     |
+| `core/universal-installer`| Install skills, ontologies, prompts + wire graph-os/fleet MCP servers into Windsurf, Claude Code, Antigravity, etc. | `UNIVERSAL_INSTALLER_ENABLE=False` | `universal-skills[universal-installer]` |
 | `core/session-handoff`| Create and restore agent session handoff documents.                   | `SESSION_HANDOFF_ENABLE=False`        | `universal-skills[session-handoff]`     |
 | `system/system-tools`| Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
 | `systems-manager`     | Fast codebase search, file navigation, and structural code analysis.  | `SYSTEMS_MANAGER_ENABLE=False`        | `universal-skills[systems-manager]`     |
@@ -122,7 +122,7 @@ export PYDANTIC_AI_DOCS_ENABLE=True
 
 ## Quick start — one-click install
 
-Install the package **and** deploy every skill (incl. `skill-installer` and
+Install the package **and** deploy every skill (incl. `universal-installer` and
 `agent-os-genesis`, alias `agent-utilities-genesis`) into all detected AI tools
 (Claude Code, Antigravity, Windsurf, OpenCode, Cursor, Zed, Codex, Devin) and the
 agent-utilities XDG space (`~/.config/agent-utilities/skills`), preferring **symlinks**
@@ -144,8 +144,8 @@ symlinks resolve:
 uv tool install universal-skills && install-skills --all-detected --symlink
 ```
 
-Once installed, the `skill-installer` skill (and the `install-skills` CLI) are present,
-so any other skill can be deployed; **`agent-os-genesis`** is loadable in your tools —
+Once installed, the `universal-installer` skill (and the `install-skills` CLI) are
+present, so any other skill can be deployed; **`agent-os-genesis`** is loadable in your tools —
 invoke it (or `day0`) to stand up the Agent OS, or *"deploy `<package>` with
 agent-os-genesis"* to provision a single connector.
 

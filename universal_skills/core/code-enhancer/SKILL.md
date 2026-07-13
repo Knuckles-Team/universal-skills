@@ -113,6 +113,46 @@ python scripts/kg_query_runs.py deltas --current reports/ --prior reports_prev/ 
 - Every new script supports `--self-test`; `selftest.py` aggregates them plus a fixture run of every
   analyzer.
 
+### Analysis mechanism: KG-native → engine AST → local fallback (CE-045)
+
+Four analyzers — `trace_concepts.py` (concept traceability), `analyze_tests.py` (test discovery),
+`grade_pytest.py` (pytest quality), and `analyze_opportunities.py` (intent/opportunity discovery) —
+no longer hand-roll Python's stdlib `ast` (fragile — e.g. `ast.Str` broke on 3.12) to walk a
+project's functions/classes/decorators. They go through the shared `kg_native.py` helper, which
+tries three mechanisms **in this order** for every symbol/concept lookup:
+
+1. **The ingested code KG (graph-os)** — a read-only Cypher query over the already-ingested
+   `:Code` graph (`kg_native.kg_repo_symbols`/`kg_repo_concepts`, `POST /graph/query`) or the
+   composed `code_context` answer (`POST /graph/code`, action=`code_context` — definition,
+   callers, blast-radius, CONCEPT markers, docs — CONCEPT:AU-KG.retrieval.synthesized-cited-answer).
+   Zero re-parsing when the target repo is already ingested (`source_sync`/`kg_ingest_run.py`).
+2. **The engine AST** (`epistemic_graph.parser.RustASTParser`) — on-demand tree-sitter parsing via
+   the Rust engine's out-of-process socket for a file/repo the KG doesn't hold yet. Multi-language,
+   version-independent (the fix for the `ast.Str`-on-3.12 class of breakage).
+3. **Local stdlib `ast`** — the final fallback, used only when neither the KG nor the engine socket
+   answers (`epistemic_graph` not installed, no `GRAPH_OS_MCP_URL`, or the engine erroring). Keeps
+   every script working completely standalone, with zero platform dependencies.
+
+Every `kg_native` helper is **best-effort and never raises** — an unreachable KG or engine degrades
+silently to the next tier, and the tier actually used is reported back (`"kg"` / `"engine"` /
+`"local"`) so a caller can note it was degraded. Set `GRAPH_OS_MCP_URL` (and optionally
+`GRAPH_OS_MCP_TOKEN` for an authenticated deployment) to enable Tier 1; Tier 2 activates
+automatically whenever `epistemic_graph` is installed and its engine socket is reachable — no
+configuration needed for either. **This degradation is real, not theoretical**: even a live
+graph-os deployment may be on a protocol/tool surface that predates the REST contract above (fleet
+version drift) — the tiering means that never breaks the skill, it just quietly falls back.
+
+The remaining `ast`-heavy analyzers (`analyze_codebase.py`, `analyze_security.py`,
+`analyze_liveness.py`, `evaluate_heuristics.py`, `analyze_architecture.py`,
+`analyze_dependency_migration.py`, `analyze_minimalism.py`) stay on a direct local `ast` parse:
+their scoring depends on fine-grained control-flow/expression-level structure (cyclomatic
+complexity via `If`/`While`/`For`/`BoolOp` counts, broad-`except` and canned-literal-return
+detection, import-graph extraction, decorator-argument inspection) that the engine's SYMBOL schema
+does not carry (it exposes `name`/`kind_detail`/`line`/`decorators`/call/assert-count-class
+properties — not branch counts, docstrings, or full expression trees). Porting those to a coarser
+schema would silently change their grades, which the KG-native conversion is explicitly not meant
+to do — see `kg_native.py`'s module docstring for the full rationale.
+
 ## Steps
 
 ### Step 1: detect_language

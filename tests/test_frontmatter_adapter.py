@@ -1,7 +1,7 @@
 """Tests for the per-agent SKILL.md frontmatter adapter (adapters.py).
 
 Loaded by file path (like test_mcp_client_onboarder.py) since its containing
-directory is hyphenated (``core/skill-installer/scripts/``) and cannot be
+directory is hyphenated (``core/universal-installer/scripts/``) and cannot be
 `import`ed by a normal dotted path.
 """
 
@@ -14,7 +14,7 @@ import pytest
 yaml = pytest.importorskip("yaml")
 
 SCRIPTS = Path(__file__).resolve().parent.parent / (
-    "universal_skills/core/skill-installer/scripts"
+    "universal_skills/core/universal-installer/scripts"
 )
 
 
@@ -97,16 +97,22 @@ def test_description_sanitization_strips_angle_brackets():
     assert "[a thing]" in data["description"]
 
 
-def test_rename_map_applies_to_skill_installer():
-    assert adapters.resolve_dest_name("skill-installer", CODEX) == "universal-skill-installer"
+def test_rename_map_is_a_general_mechanism_currently_empty_for_codex():
+    # No current name collision with a Codex built-in — universal-installer (the
+    # renamed skill-installer) installs under its own name unchanged. The
+    # `rename_map`/`resolve_dest_name` mechanism itself still applies generically.
+    assert adapters.resolve_dest_name("universal-installer", CODEX) == "universal-installer"
     assert adapters.resolve_dest_name("web-search", CODEX) == "web-search"
+    # A synthetic contract still exercises the rename mechanism itself.
+    synthetic = adapters.AgentContract(rename_map={"web-search": "renamed-web-search"})
+    assert adapters.resolve_dest_name("web-search", synthetic) == "renamed-web-search"
 
 
 def test_permissive_contract_is_a_noop():
     assert CLAUDE.requires_transform is False
     out = adapters.transform_frontmatter(SAMPLE_SKILL_MD, CLAUDE)
     assert out == SAMPLE_SKILL_MD
-    assert adapters.resolve_dest_name("skill-installer", CLAUDE) == "skill-installer"
+    assert adapters.resolve_dest_name("universal-installer", CLAUDE) == "universal-installer"
 
 
 def test_transform_is_noop_without_frontmatter():

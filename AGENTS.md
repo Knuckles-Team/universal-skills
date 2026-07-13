@@ -31,7 +31,7 @@ application of it.
   `SKILL.md` directory with valid frontmatter — `name` kebab-case **== directory
   name**; `description` ≤ 1024 chars, trigger-oriented, and **self-sufficient without
   the body** (agents route on the description alone). It must install cleanly to
-  `~/.claude/skills/` via `skill-installer`.
+  `~/.claude/skills/` via `universal-installer`.
 
 - **Skill-workflows are dual-mode: one DAG, two executors.** The `depends_on` DAG (+
   `references/team.yaml`) is the single source of truth. From it, a workflow's
@@ -60,13 +60,17 @@ application of it.
 ## Modular contribution — skills & prompts ship in their owning package (CONCEPT:OS-5.52)
 
 universal-skills is no longer the only home for skills. **Any agent-package can ship
-its own skills and system prompts inside its own wheel** and have them discovered by
-the hub via two setuptools entry-point groups it declares in `pyproject.toml`:
-`agent_utilities.skill_providers` (→ `<module>.skills`) and
-`agent_utilities.prompt_providers` (→ `<module>.prompts`). The `skill-installer`'s
-`get_source_paths()` walks every `skill_providers` entry-point (honouring
-`--skills`/`--group`/`--layer`), and `agent-utilities` ingests every
-`prompt_providers` prompt into the KG prompt library. So:
+its own skills, system prompts, and ontology inside its own wheel** and have them
+discovered by the hub via three setuptools entry-point groups it declares in
+`pyproject.toml`: `agent_utilities.skill_providers` (→ `<module>.skills`),
+`agent_utilities.prompt_providers` (→ `<module>.prompts`), and
+`agent_utilities.ontology_providers` (→ `<module>.ontology`). The `universal-installer`
+skill's `get_source_paths()` walks every `skill_providers` entry-point (honouring
+`--skills`/`--group`/`--layer`) and, on the same run, materializes the
+`prompt_providers`/`ontology_providers` legs into the agent-utilities XDG tree
+(preferring `agent_utilities.core.unified_install.install_unified()` when importable);
+`agent-utilities` ingests every `prompt_providers` prompt into the KG prompt library
+and every `ontology_providers` `.ttl` into the federated ontology. So:
 
 - **Package-owned skills live in the package**, not here — relocate clearly-owned
   skills to their agent-package's `<module>/skills/` (they still install into the same

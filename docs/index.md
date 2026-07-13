@@ -72,7 +72,7 @@ The following universal skills are available. You can disable specific skills by
 | `infra/security-tools`| Threat modeling, Sentry error logs, and security code analysis.       | `SECURITY_TOOLS_ENABLE=False`         | `universal-skills[security-tools]`      |
 | `core/skill-builder`| Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
 | `agent-tools/skill-graph-builder`| Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
-| `skill-installer`     | Install skills into Windsurf, Claude Code, Antigravity, etc.          | `SKILL_INSTALLER_ENABLE=False`        | `universal-skills[skill-installer]`     |
+| `core/universal-installer`| Install skills, ontologies, prompts + wire graph-os/fleet MCP servers into Windsurf, Claude Code, Antigravity, etc. | `UNIVERSAL_INSTALLER_ENABLE=False` | `universal-skills[universal-installer]` |
 | `core/session-handoff`| Create and restore agent session handoff documents.                   | `SESSION_HANDOFF_ENABLE=False`        | `universal-skills[session-handoff]`     |
 | `system/system-tools`| Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
 | `systems-manager`     | Fast codebase search, file navigation, and structural code analysis.  | `SYSTEMS_MANAGER_ENABLE=False`        | `universal-skills[systems-manager]`     |

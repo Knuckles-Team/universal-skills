@@ -78,13 +78,15 @@ _PERMISSIVE = AgentContract(
 # Every OTHER tool key in install.py's get_tool_paths() is permissive — Codex is
 # currently the only target with a restrictive frontmatter contract.
 AGENT_CONTRACTS: dict = {
+    # `builtin_skills`/`rename_map` are a general name-collision-avoidance
+    # mechanism (kept for any future clash) — currently empty: the installer's
+    # own skill is named `universal-installer`, which no longer collides with
+    # Codex's built-in `skill-installer` the way the old `skill-installer` name did.
     "codex": AgentContract(
         allowed_top_level={"name", "description", "license", "allowed-tools", "metadata"},
         demote_to_metadata=True,
         sanitize_description=True,
         flat_discovery=True,
-        builtin_skills=frozenset({"skill-installer"}),
-        rename_map={"skill-installer": "universal-skill-installer"},
     ),
     "claude": _PERMISSIVE,
     "windsurf": _PERMISSIVE,
