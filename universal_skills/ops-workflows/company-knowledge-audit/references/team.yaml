@@ -1,7 +1,0 @@
-name: Company Knowledge Audit Swarm
-task_pattern: Perform Company Knowledge Audit operations concurrently across all target layers
-specialist_ids:
-  - knowledge-graph
-capability_overrides:
-  knowledge-graph:
-    - stuck_loop_detection

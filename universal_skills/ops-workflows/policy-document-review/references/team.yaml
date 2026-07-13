@@ -1,7 +1,0 @@
-name: Policy Document Review Swarm
-task_pattern: Perform Policy Document Review operations concurrently across all target layers
-specialist_ids:
-  - hr-coordinator
-capability_overrides:
-  hr-coordinator:
-    - stuck_loop_detection

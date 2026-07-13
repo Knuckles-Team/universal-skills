@@ -1,8 +1,0 @@
-name: Architecture Review Swarm Swarm
-task_pattern: Perform Architecture Review Swarm operations concurrently across all target layers
-specialist_ids:
-  - agent-engineer
-capability_overrides:
-  agent-engineer:
-    - stuck_loop_detection
-    - checkpointing

@@ -1,7 +1,0 @@
-name: Tunnel Health Monitor Swarm
-task_pattern: Perform Tunnel Health Monitor operations concurrently across all target layers
-specialist_ids:
-  - tunnel-specialist
-capability_overrides:
-  tunnel-specialist:
-    - stuck_loop_detection

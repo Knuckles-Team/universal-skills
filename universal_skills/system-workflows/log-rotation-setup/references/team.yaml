@@ -1,7 +1,0 @@
-name: Log Rotation Setup Swarm
-task_pattern: Perform Log Rotation Setup operations concurrently across all target layers
-specialist_ids:
-  - systems-manager
-capability_overrides:
-  systems-manager:
-    - stuck_loop_detection

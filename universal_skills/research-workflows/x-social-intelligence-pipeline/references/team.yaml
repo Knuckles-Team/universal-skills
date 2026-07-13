@@ -1,7 +1,0 @@
-name: X Social Intelligence Pipeline Swarm
-task_pattern: Perform X Social Intelligence Pipeline operations concurrently across all target layers
-specialist_ids:
-  - knowledge-graph
-capability_overrides:
-  knowledge-graph:
-    - stuck_loop_detection

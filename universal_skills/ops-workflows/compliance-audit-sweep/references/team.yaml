@@ -1,7 +1,0 @@
-name: Compliance Audit Sweep Swarm
-task_pattern: Perform Compliance Audit Sweep operations concurrently across all target layers
-specialist_ids:
-  - legal-compliance
-capability_overrides:
-  legal-compliance:
-    - stuck_loop_detection

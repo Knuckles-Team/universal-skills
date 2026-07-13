@@ -1,7 +1,0 @@
-name: Ontology Evolution Cycle Swarm
-task_pattern: Perform Ontology Evolution Cycle operations concurrently across all target layers
-specialist_ids:
-  - knowledge-graph
-capability_overrides:
-  knowledge-graph:
-    - stuck_loop_detection

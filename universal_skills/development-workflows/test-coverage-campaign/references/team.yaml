@@ -1,7 +1,0 @@
-name: Test Coverage Campaign Swarm
-task_pattern: Perform Test Coverage Campaign operations concurrently across all target layers
-specialist_ids:
-  - python-programmer
-capability_overrides:
-  python-programmer:
-    - stuck_loop_detection

@@ -1,7 +1,0 @@
-name: Grocery Inventory Tracker Swarm
-task_pattern: Perform Grocery Inventory Tracker operations concurrently across all target layers
-specialist_ids:
-  - dietician-chef
-capability_overrides:
-  dietician-chef:
-    - stuck_loop_detection

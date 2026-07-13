@@ -1,7 +1,0 @@
-name: Sprint Planning Automation Swarm
-task_pattern: Perform Sprint Planning Automation operations concurrently across all target layers
-specialist_ids:
-  - project-manager
-capability_overrides:
-  project-manager:
-    - stuck_loop_detection

@@ -1,7 +1,0 @@
-name: Config Schema Documentation Swarm
-task_pattern: Perform Config Schema Documentation operations concurrently across all target layers
-specialist_ids:
-  - python-programmer
-capability_overrides:
-  python-programmer:
-    - stuck_loop_detection

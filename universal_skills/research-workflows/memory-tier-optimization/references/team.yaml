@@ -1,7 +1,0 @@
-name: Memory Tier Optimization Swarm
-task_pattern: Perform Memory Tier Optimization operations concurrently across all target layers
-specialist_ids:
-  - knowledge-graph
-capability_overrides:
-  knowledge-graph:
-    - stuck_loop_detection

@@ -1,7 +1,0 @@
-name: Business Continuity Plan Swarm
-task_pattern: Perform Business Continuity Plan operations concurrently across all target layers
-specialist_ids:
-  - legal-compliance
-capability_overrides:
-  legal-compliance:
-    - stuck_loop_detection

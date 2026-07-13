@@ -1,8 +1,0 @@
-name: Api Documentation Gen Swarm
-task_pattern: Perform Api Documentation Gen operations concurrently across all target layers
-specialist_ids:
-  - agent-engineer
-capability_overrides:
-  agent-engineer:
-    - stuck_loop_detection
-    - checkpointing

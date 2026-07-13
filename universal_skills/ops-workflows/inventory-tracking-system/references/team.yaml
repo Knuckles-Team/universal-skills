@@ -1,7 +1,0 @@
-name: Inventory Tracking System Swarm
-task_pattern: Perform Inventory Tracking System operations concurrently across all target layers
-specialist_ids:
-  - legal-compliance
-capability_overrides:
-  legal-compliance:
-    - stuck_loop_detection

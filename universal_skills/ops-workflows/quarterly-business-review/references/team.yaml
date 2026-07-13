@@ -1,8 +1,0 @@
-name: Quarterly Business Review Swarm
-task_pattern: Perform Quarterly Business Review operations concurrently across all target layers
-specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing

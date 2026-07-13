@@ -1,7 +1,0 @@
-name: Process Optimization Audit Swarm
-task_pattern: Perform Process Optimization Audit operations concurrently across all target layers
-specialist_ids:
-  - legal-compliance
-capability_overrides:
-  legal-compliance:
-    - stuck_loop_detection
