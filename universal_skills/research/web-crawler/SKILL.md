@@ -55,29 +55,42 @@ python scripts/crawl.py --urls <url> --strategy <strategy> [options]
 * `--wait-for`: Custom CSS selector or JS expression to wait for (e.g., `"css:.my-content"`).
 * `--insecure`: Disable SSL verification (use with caution).
 * `--no-kg-ingest`: Disable native Knowledge Graph ingestion (see below). File output (`--output-dir`) is unaffected either way.
-* `--kg-endpoint`: graph-os gateway base URL for ingestion (else `$GRAPH_OS_URL`, default `http://graph-os.arpa`).
+* `--kg-mode`: `content` (default) or `url` — how each page is ingested (see below).
+* `--kg-endpoint`: graph-os base URL for ingestion (else `$GRAPH_OS_URL`, default `http://graph-os.arpa`); `/mcp` is appended automatically. `$GRAPH_OS_TOKEN` supplies a bearer token if the gateway requires auth.
 
 ## Knowledge Graph Ingestion (native, default ON)
 
 **Every crawl ends in the epistemic-graph, not just files.** As each page is
-successfully crawled and cleaned, the skill submits it to graph-os's unified
-`ingest_url` pipeline — the same `graph_ingest action=ingest_url` MCP tool /
-`POST /api/graph/ingest {"action":"ingest_url","target_path":<url>}` REST call
-an agent would use directly. graph-os re-resolves the URL through its own
-fetch chain (ArchiveBox → crawl4ai → requests) and materializes:
+successfully crawled, cleaned, and deduped, the skill ingests it into graph-os /
+epistemic-graph **over graph-os's MCP streamable-http surface** (`<endpoint>/mcp`
+— a JSON-RPC `tools/call` after an `initialize` handshake, mounting the tool with
+`load_tools` since graph-os is a dynamic multiplexer). This is exactly how the
+platform reaches the fleet — no REST gateway required, stdlib `urllib` only.
+There are two native modes:
 
-* a **`:Document`** node — verbatim content, `source_url`, `content_hash`
-  (`ast_hash`), `fetch_backend` (which resolver served it), `fetched_at`
-  (crawl timestamp), and `source_system`/`domain` stamped `"web"`;
-* **`:Concept`** nodes + linking edges — LLM-extracted, context-derived
-  entities/topics from the page (on by default, not just flat text);
-* **`:Chunk`** objects with embeddings + contextual-retrieval enrichment
-  (default ON for `ingest_url`, at parity with connector ingestion), for
-  semantic search over the page.
+**`content` mode (default) — push the crawler's own cleaned markdown.** The
+skill calls the `document_process` tool with the page's refined `fit_markdown`
+(`document=<md>`, `source=<url>`). graph-os chunks, embeds, and contextually
+enriches **our cleaned content** into a `:Document` + `:Chunk` objects with a
+`content_hash`, `source` = the page URL, and the title taken from the page's
+first `#` heading. This is the mode that **guarantees the clean, refined
+markdown is what lands in the KG** — the content is fixed by *this* crawler's
+crawl4ai `fit_markdown`, independent of whatever fetch backend the graph-os pod
+itself has. This directly fulfills "ingest a clean and refined set of markdown
+scraped documents".
 
-Re-ingesting the same URL is idempotent/delta — the Document id is derived
-from `source_url` + a content hash, so an unchanged page is a no-op and a
-changed one updates in place.
+**`url` mode (`--kg-mode url`) — delegate the fetch.** The skill calls the
+`graph_ingest` tool with `action='ingest_url', target_path=<url>`. graph-os
+**re-fetches** through its own resolver chain (ArchiveBox → crawl4ai → requests)
+and materializes a `:Document` (`source_url`/`ast_hash`) **plus `:Concept` nodes**
+(LLM entity/topic extraction) and chunks. Prefer this when you want graph-os's
+ArchiveBox snapshot / server-side fetch and its concept graph — but note the KG
+content is only as clean as the gateway pod's fetch backend (if that pod lacks
+crawl4ai it falls back to `requests+markitdown`, which keeps more page chrome).
+
+Re-ingesting the same page is idempotent — the Document id / `content_hash`
+is derived from the content, so an unchanged page is a no-op and a changed one
+updates in place.
 
 ### Clean & refined markdown (what actually lands in the KG)
 
@@ -88,14 +101,19 @@ then collapses incidental whitespace. Across a multi-page crawl
 (`sitemap-*`/`recursive`), a normalized content fingerprint dedups
 near-identical pages (e.g. print views, redirects landing on the same
 content) — a duplicate is logged and skipped, never saved or ingested twice.
+In the default `content` mode this cleaned markdown is exactly what is pushed
+to the KG.
 
 ### Degradation
 
 If graph-os is unreachable (network error, gateway down), the first failed
 submission logs a clear warning and the run **falls back to file-only
 output** for the remainder of the crawl — it never blocks or fails the crawl
-itself. Check the final `KG ingestion: N page(s) submitted to <endpoint>`
-summary line to confirm ingestion happened.
+itself. (If a page reaches only the plain-HTTP fallback fetch and thus has no
+clean markdown, `content` mode transparently degrades to `url` mode for that
+page so graph-os can still fetch it server-side.) Check the final
+`KG ingestion (<mode>): N page(s) submitted to <endpoint>` summary line to
+confirm ingestion happened.
 
 ### Internal use as an acquisition backend
 
@@ -110,5 +128,7 @@ paths — a single-page fetch backend (`web_fetch._fetch_via_crawl4ai`, behind
 
 ```
 graph_search query="<topic from the crawled page>"
-graph_query cypher="MATCH (d:Document {source_url: '<url>'}) RETURN d"
+# content mode stamps the page URL on d.source; url mode on d.source_url:
+graph_query cypher="MATCH (d:Document) WHERE d.source = '<url>' OR d.source_url = '<url>' RETURN d"
+graph_query cypher="MATCH (c:Chunk)-[:CHUNK_OF]->(d:Document) WHERE d.source = '<url>' RETURN c"
 ```
