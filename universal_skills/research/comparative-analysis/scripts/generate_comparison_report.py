@@ -11,12 +11,21 @@ Usage:
     python generate_comparison_report.py --output /path/to/report.md result1.json
 
 CONCEPT:CA-009 — Comparative Report Generation
+
+Building the analysis library (see ``_kg_ast.py``): after assembling the report,
+every per-project/per-domain result is best-effort persisted into the KG as a
+``ComparativeAnalysisRun`` node (``kg_write_analysis``) — a growing, queryable
+history of every comparative-analysis run, not just this run's local JSON/MD
+files. No-ops silently without ``GRAPH_OS_URL`` configured.
 """
 
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _kg_ast import kg_write_analysis  # noqa: E402
 
 DOMAIN_WEIGHTS = {
     "CA-001": 0.08,
@@ -81,6 +90,21 @@ def load_results(paths: list[str]) -> dict[str, dict[str, dict]]:
                 print(f"Warning: Failed to load {f}: {e}", file=sys.stderr)
 
     return projects
+
+
+def persist_to_kg(projects: dict[str, dict[str, dict]]) -> int:
+    """Best-effort persist every per-project/per-domain result into the KG.
+
+    Returns the count of runs actually written (0 when ``GRAPH_OS_URL`` isn't
+    configured or the gateway is unreachable) — never raises, so a KG outage
+    never blocks report generation.
+    """
+    written = 0
+    for project, domains in projects.items():
+        for domain, data in domains.items():
+            if kg_write_analysis(domain, project, data):
+                written += 1
+    return written
 
 
 def compute_gpa(domain_scores: dict[str, float]) -> float:
@@ -365,6 +389,7 @@ def main():
         sys.exit(1)
 
     generate_report(projects, output_path)
+    persist_to_kg(projects)  # best-effort; builds the cross-run analysis library
 
 
 if __name__ == "__main__":

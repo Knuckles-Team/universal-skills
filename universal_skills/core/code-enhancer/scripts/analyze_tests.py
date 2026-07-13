@@ -4,14 +4,26 @@
 Inventories pytest tests, maps to use-cases, classifies intent,
 and detects drift between docs and tests.
 
+KG-native (CE-045): test symbol discovery goes through the graph-os code KG first
+(``kg_native.repo_symbols`` — a repo already ingested has ``is_test``/decorator/
+assert-count data for free), then the engine tree-sitter AST, and only falls back
+to a local stdlib ``ast`` parse when neither is reachable.
+
 CONCEPT:CE-005 — Test Coverage Analysis
 """
 
-import ast
 import json
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from kg_native import (  # noqa: E402 - needs the sys.path insert above
+    body_span,
+    file_symbols_by_line,
+    kg_repo_symbols,
+    split_decorators,
+)
 
 
 def _classify_test_intent(name: str, body_source: str) -> str:
@@ -32,75 +44,94 @@ def _classify_test_intent(name: str, body_source: str) -> str:
     return "unit"
 
 
-def _extract_tests_from_file(filepath: Path) -> list[dict]:
-    """Extract test function metadata from a Python test file."""
+def _decorator_markers(decorators: str) -> list[str]:
+    """Marker names from a symbol's joined ``decorators`` — the last dotted segment
+    of each (``pytest.mark.parametrize(...)`` -> ``parametrize``, ``pytest.fixture``
+    -> ``fixture``). Informational only (not scored), so a lightweight regex over
+    the already-extracted decorator text replaces the old nested ast.Call/Attribute
+    walk."""
+    markers: list[str] = []
+    for d in split_decorators(decorators):
+        d = d.lstrip("@").strip()
+        name = re.split(r"\(", d, maxsplit=1)[0]
+        if name:
+            markers.append(name.rsplit(".", 1)[-1])
+    return markers
+
+
+def _extract_tests_from_file(
+    filepath: Path, kg_symbols: list[dict] | None = None
+) -> list[dict]:
+    """Extract test function metadata from a Python test file.
+
+    KG-native (CE-045): ``kg_symbols`` — when the caller already bulk-fetched them
+    from the graph-os code KG (Tier 1) for the whole repo — is used as-is; otherwise
+    falls back to the tiered per-file ``kg_native`` retrieval (engine AST, then a
+    local ``ast`` parse) instead of a direct ``ast.walk`` here.
+    """
     tests: list[dict] = []
     try:
         source = filepath.read_text(encoding="utf-8", errors="ignore")
-        tree = ast.parse(source, filename=str(filepath))
-    except (SyntaxError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError):
         return tests
+    source_lines = source.splitlines()
 
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if node.name.startswith("test_"):
-                end_line = getattr(node, "end_lineno", node.lineno + 1)
-                body_lines = source.splitlines()[node.lineno - 1 : end_line]
-                body_source = "\n".join(body_lines)
+    raw_symbols = (
+        sorted(kg_symbols, key=lambda s: int(s.get("line") or 0))
+        if kg_symbols is not None
+        else file_symbols_by_line(filepath)
+    )
+    symbols = [
+        s
+        for s in raw_symbols
+        if s.get("kind_detail", "").lower() in ("function", "method")
+        and str(s.get("name", "")).startswith("test_")
+    ]
+    for i, sym in enumerate(symbols):
+        name = str(sym.get("name", ""))
+        line, end_line = body_span(source_lines, symbols, i)
+        body_source = "\n".join(source_lines[line - 1 : end_line])
 
-                # Extract markers
-                markers: list[str] = []
-                for dec in node.decorator_list:
-                    if isinstance(dec, ast.Call) and isinstance(
-                        dec.func, ast.Attribute
-                    ):
-                        if dec.func.attr == "mark":
-                            markers.append("mark")
-                        elif isinstance(dec.func.value, ast.Attribute):
-                            markers.append(dec.func.attr)
-                    elif isinstance(dec, ast.Attribute):
-                        markers.append(dec.attr)
+        markers = _decorator_markers(str(sym.get("decorators", "")))
 
-                # Check for concept markers
-                concept_id = ""
-                concept_match = re.search(
-                    r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)", body_source
-                )
-                if concept_match:
-                    concept_id = concept_match.group(1)
+        concept_id = ""
+        concept_match = re.search(r"CONCEPT:([A-Z]+-\d+(?:\.\d+)?)", body_source)
+        if concept_match:
+            concept_id = concept_match.group(1)
 
-                intent = _classify_test_intent(node.name, body_source)
+        intent = _classify_test_intent(name, body_source)
 
-                # ACCURACY FIX: Use precise assertion detection instead of
-                # naive `"assert" in body_source` which matches comments,
-                # docstrings, and variable names.
+        # ACCURACY FIX: precise assertion detection (engine/local assert_count is
+        # real `ast.Assert` node counting, not a naive "assert" in body_source
+        # substring match, which matches comments/docstrings/variable names).
+        try:
+            has_assertions = int(sym.get("assert_count") or 0) > 0
+        except (TypeError, ValueError):
+            has_assertions = False
+        if not has_assertions:
+            try:
+                has_assertions = int(sym.get("raises_count") or 0) > 0
+            except (TypeError, ValueError):
                 has_assertions = False
-                # Check for actual assert statements in the AST
-                for child in ast.walk(node):
-                    if isinstance(child, ast.Assert):
-                        has_assertions = True
-                        break
-                # Also check for pytest.raises and mock assertions
-                if not has_assertions:
-                    if (
-                        "pytest.raises" in body_source
-                        or ".assert_called" in body_source
-                        or ".assert_any_call" in body_source
-                    ):
-                        has_assertions = True
+        if not has_assertions:
+            has_assertions = (
+                "pytest.raises" in body_source
+                or ".assert_called" in body_source
+                or ".assert_any_call" in body_source
+            )
 
-                tests.append(
-                    {
-                        "name": node.name,
-                        "file": str(filepath),
-                        "line": node.lineno,
-                        "length": end_line - node.lineno + 1,
-                        "intent": intent,
-                        "markers": markers,
-                        "concept_id": concept_id,
-                        "has_assertions": has_assertions,
-                    }
-                )
+        tests.append(
+            {
+                "name": name,
+                "file": str(filepath),
+                "line": line,
+                "length": end_line - line + 1,
+                "intent": intent,
+                "markers": markers,
+                "concept_id": concept_id,
+                "has_assertions": has_assertions,
+            }
+        )
     return tests
 
 
@@ -175,10 +206,20 @@ def analyze_tests(root_dir: str = ".") -> dict:
             "tests": [],
         }
 
+    # KG-native (CE-045): one bulk repo-scoped Cypher query (Tier 1) beats N
+    # per-file engine/local parses when this repo is already ingested.
+    kg_symbols = kg_repo_symbols(root)
+    kg_by_file: dict[str, list[dict]] = {}
+    if kg_symbols:
+        for s in kg_symbols:
+            kg_by_file.setdefault(str(s.get("file_path", "")), []).append(s)
+
     # Extract all tests
     all_tests: list[dict] = []
     for tf in test_files:
-        all_tests.extend(_extract_tests_from_file(tf))
+        all_tests.extend(
+            _extract_tests_from_file(tf, kg_symbols=kg_by_file.get(str(tf)))
+        )
 
     # Classify
     intent_counts: dict[str, int] = {}

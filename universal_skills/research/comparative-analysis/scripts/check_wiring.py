@@ -19,6 +19,20 @@ Usage:
     python check_wiring.py --self-test
 
 CONCEPT:CA-016 — Wiring Audit (Import-Graph Reachability)
+
+Layered KG/engine-native design (see ``_kg_ast.py``): this check is deliberately
+kept on local stdlib ``ast`` for two reasons, not convenience. (1) It is designed
+to run standalone against ANY local checkout — including un-ingested third-party
+comparison targets — with zero graph-os/KG dependency, which is the whole point
+of a lightweight, offline Wire-First gate. (2) Even against an ingested target,
+the exact hop-count this CI gate pass/fails on needs precise relative-import
+dot-level resolution (``ast.ImportFrom.level``) that the engine's
+``RustASTParser`` wire protocol does not carry — its import edges are raw,
+unresolved module strings (see ``_kg_ast.py``'s module docstring); silently
+swapping to an approximate KG substitute risks changing PASS/FAIL results on a
+gate builds rely on. This module's ``ast`` usage (``Import``/``ImportFrom``) is
+fully modern — none of the Python-3.12-removed node types (``ast.Str``/
+``ast.Num``/``ast.NameConstant``/``ast.Ellipsis``) appear here.
 """
 
 from __future__ import annotations

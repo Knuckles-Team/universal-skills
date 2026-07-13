@@ -33,6 +33,40 @@ This skill operates in **4 modes** depending on the inputs:
 | **Codebase vs Research** | Project dir + paper files | Innovation integration potential |
 | **Research vs Research** | 2+ paper/document files | Novelty and approach comparison |
 | **Innovation Extraction** | Any source + target codebase | Hidden value-add discovery |
+| **Vendor / Third-Party Analysis** | Vendor product websites/docs (no local clone) | Competitive/build-vs-buy comparison |
+
+### Vendor / Third-Party Documentation Discovery (no local clone needed)
+
+Not every comparison target is a repo you can clone — a commercial vendor's product is
+usually only a marketing site + hosted docs. Treat that as another **Research** input,
+sourced live instead of from a static paper file:
+
+1. **Discover** — use the `web-search` skill (searxng) to find the vendor's product/docs
+   pages: `site:<vendor>.com docs`, `"<vendor>" API reference`, `"<vendor>" architecture`.
+2. **Scrape** — use the `web-crawler` (or `web-fetch`) skill to pull each page to Markdown;
+   save under `~/.scholarx/analysis/vendor/<vendor-slug>/<page-slug>.md` (mirrors the
+   `~/.scholarx/analysis/` KG-materialization convention Phase -1 already uses for
+   KG-sourced items, so vendor docs and KG-ingested papers land in the same tree).
+3. **Score & rank** — feed the saved pages straight into the existing filesystem-mode
+   pipeline exactly like any other document; no new tooling needed, since
+   `rank_relevance.py`'s `_extract_paper_profile` already treats any markdown/text file
+   generically (keyword frequency + concept-pattern extraction):
+   ```bash
+   python scripts/rank_relevance.py /path/to/our/codebase \
+       ~/.scholarx/analysis/vendor/<vendor-slug>/*.md
+   ```
+4. **Extract innovations / cross-reference** — run the normal Step 7/8 pipeline
+   (`extract_innovations.py --source <vendor-page>.md --target <our-codebase>`,
+   `concept_cross_reference.py`) against the scraped pages the same as any research source.
+5. **Ingest into the KG (optional, for reuse across sessions)** — once scraped, the vendor
+   pages are just markdown; run the standard `kg_ingest` MCP tool over the
+   `~/.scholarx/analysis/vendor/` tree so future sessions discover them via
+   `kg_search`/`discover_projects.py --kg-query` (Phase -1) instead of re-scraping.
+
+This keeps the scraping itself at the agent-tool layer (`web-search`/`web-crawler`, which
+have their own rate-limiting/robots.txt/session handling) rather than reimplementing HTTP
+fetching inside a CA script — the CA scripts only ever consume already-fetched text/markdown,
+exactly as they do for any other paper/document input.
 
 ## Workflow
 
@@ -283,14 +317,14 @@ python scripts/analyze_architecture_diff.py /path/to/source /path/to/target > re
 ```
 
 ### Step 10: generate_comparison_report [depends_on: security_reliability_check, documentation_dx_review, concept_cross_reference, architecture_gap_analysis]
-Compile intermediate JSON results across all domains and modes into a single, cohesive comparative markdown report:
+Compile intermediate JSON results across all domains and modes into a single, cohesive comparative markdown report. This step ALSO best-effort persists every per-project/per-domain result into the KG as a `ComparativeAnalysisRun` node (`_kg_ast.kg_write_analysis`, native — no extra flag needed) whenever `GRAPH_OS_URL` is configured, building a growing, queryable **library of every comparative-analysis run** (score trends over time, cross-project Cypher queries) rather than leaving results only as local JSON/MD files. It silently no-ops without a configured gateway, so this step never depends on the KG being up:
 - Requires: `scripts/generate_comparison_report.py`
 ```bash
 python scripts/generate_comparison_report.py results/*.json --output report.md
 ```
 
 ### Step 11: kg_persistence_cleanup [depends_on: generate_comparison_report]
-Persist generated comparative reports to the Graph-OS Knowledge Graph, verify that each recommended feature passes the Wiring Audit Checklist, and clean up temporary cloned repository directories:
+Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this step is the human/MCP-driven audit + cleanup backstop: verify that each recommended feature passes the Wiring Audit Checklist, ingest anything Step 10 could not reach (e.g. the full report Markdown itself, or a session that ran with no `GRAPH_OS_URL` configured) via `kg_ingest`, and clean up temporary cloned repository directories:
 - Requires: `kg_ingest` MCP tool and standard cleanup commands.
 ```bash
 # Verify Wiring Audit Checklist:
@@ -361,6 +395,13 @@ research paper scoring dimensions and innovation extraction scoring.
   Phase 9 between codebases to discover hidden synergies and emergent value.
 - **Ask before expensive operations**: If a project is very large (>100k LOC), warn the
   user that analysis may take longer and offer to skip heavy domains.
+- **Prefer the KG over re-parsing at scale**: `_kg_ast.py`'s layered design (KG →
+  `RustASTParser` → local `ast`, see its module docstring) means an already-ingested
+  target is answered from the KG instead of re-walking every file — running the same
+  corpus repeatedly gets cheaper, not more expensive, as the KG's `ComparativeAnalysisRun`
+  library (Step 10) and ingested code/vendor-doc graphs grow. For a fleet-scale sweep
+  (many projects), ingest once via `kg_ingest`, then prefer Phase -1's MCP tools over the
+  filesystem-mode scripts for every subsequent run.
 
 ## Bundled Resources
 
@@ -378,7 +419,8 @@ research paper scoring dimensions and innovation extraction scoring.
 - `scripts/analyze_performance.py` — CA-008: Benchmarks, deps, async, containers
 - `scripts/extract_innovations.py` — CA-010: Biomimicry, analogical reasoning, synergies (+ `--concept-id`, `--kg-source`)
 - `scripts/concept_cross_reference.py` — CA-011: Concept-seeded cross-reference engine
-- `scripts/generate_comparison_report.py` — CA-009: Unified report with radar charts
+- `scripts/generate_comparison_report.py` — CA-009: Unified report with radar charts + best-effort KG persistence of every result (`ComparativeAnalysisRun` library)
+- `scripts/_kg_ast.py` — shared internal module (not a standalone CA step): the layered KG → `RustASTParser` → local `ast` symbol-extraction helper every script above can use, plus `kg_write_analysis`/`kg_code_context` for the KG read/write tier. See its module docstring.
 
 **Lightweight-Mode inner loop (the fast CA→SDD pipeline):**
 - `scripts/pin_source.py` — CA-017: Source pinning (repo@sha), incremental diff vs prior ledger, analysis cache (`~/.scholarx/analysis/`)

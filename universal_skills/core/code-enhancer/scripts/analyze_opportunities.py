@@ -26,13 +26,19 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import ast
 import json
 import re
+import sys
 import tempfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from kg_native import body_span, repo_symbols  # noqa: E402 - needs the sys.path insert
+
+_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_STUB_RAISE_RE = re.compile(r"^\s*raise\s+NotImplementedError\b")
 
 _SKIP_DIRS = {
     ".git",
@@ -156,53 +162,83 @@ def infer_intent(root: Path) -> dict[str, Any]:
 
 
 def find_opportunities(root: Path) -> dict[str, list[dict[str, Any]]]:
-    """Static scan for the three opportunity tiers."""
+    """Static scan for the three opportunity tiers.
+
+    KG-native (CE-045): symbol enumeration (public defs, stub bodies) comes from
+    the tiered ``kg_native.repo_symbols`` (graph-os code KG, else the engine
+    tree-sitter AST, else a local ``ast`` parse) instead of a per-file ``ast.walk``.
+    "Referenced anywhere" is a whole-corpus identifier token scan — the same signal
+    an ast.Name/ast.Attribute walk gives (does this identifier occur anywhere?),
+    without needing a full parse tree.
+    """
     low: list[dict[str, Any]] = []
     implied: list[dict[str, Any]] = []
     files = _py_files(root)
     full_text = ""
-    public_defs: dict[str, str] = {}  # name -> file
-    referenced: set[str] = set()
+    file_text: dict[Path, str] = {}
     exposed_files: set[str] = set()
-    nouns_verbs: dict[str, set[str]] = defaultdict(set)
     backlog = 0
-    stubs = 0
 
     for f in files:
         text = _read(f)
         full_text += text
+        file_text[f] = text
         rel = str(f.relative_to(root))
         backlog += len(_BACKLOG_RE.findall(text))
         if any(m in text for m in _EXPOSURE_MARKERS):
             exposed_files.add(rel)
-        try:
-            tree = ast.parse(text)
-        except (SyntaxError, ValueError):
-            continue
+
+    # A name's own `def foo(`/`class Foo:` site is itself one token occurrence, so
+    # "referenced" means the token appears MORE than once — i.e. somewhere beyond
+    # its own definition (mirrors the old ast.Name/ast.Attribute walk, which never
+    # counted a FunctionDef/ClassDef's own name as a "use").
+    _token_counts = Counter(_TOKEN_RE.findall(full_text))
+    referenced: set[str] = {name for name, count in _token_counts.items() if count > 1}
+
+    symbols, _tier = repo_symbols(root)
+    public_defs: dict[str, str] = {}  # name -> file
+    nouns_verbs: dict[str, set[str]] = defaultdict(set)
+    stubs = 0
+
+    by_file: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for sym in symbols:
+        fp = str(sym.get("file_path", ""))
+        by_file[fp].append(sym)
+
+    for f in files:
+        fp = str(f)
+        rel = str(f.relative_to(root))
         is_test = rel.startswith("test") or "/test" in rel or "tests/" in rel
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                name = node.name
-                if not name.startswith("_") and not is_test:
-                    public_defs.setdefault(name, rel)
-                    # CRUD verb/noun extraction
-                    m = re.match(rf"({'|'.join(_CRUD_VERBS)})_(\w+)", name)
-                    if m:
-                        nouns_verbs[m.group(2)].add(m.group(1))
-                # stub detection
-                body = node.body
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    if len(body) == 1 and isinstance(body[0], ast.Raise):
-                        exc = body[0].exc
-                        if (
-                            isinstance(exc, ast.Call)
-                            and getattr(exc.func, "id", "") == "NotImplementedError"
-                        ):
-                            stubs += 1
-            elif isinstance(node, ast.Name):
-                referenced.add(node.id)
-            elif isinstance(node, ast.Attribute):
-                referenced.add(node.attr)
+        file_syms = sorted(by_file.get(fp, []), key=lambda s: int(s.get("line") or 0))
+        text_lines = file_text.get(f, "").splitlines()
+
+        for i, sym in enumerate(file_syms):
+            kind = sym.get("kind_detail", "").lower()
+            if kind not in ("function", "method", "class"):
+                continue
+            name = str(sym.get("name", ""))
+            if not name:
+                continue
+            if not name.startswith("_") and not is_test:
+                public_defs.setdefault(name, rel)
+                # CRUD verb/noun extraction
+                m = re.match(rf"({'|'.join(_CRUD_VERBS)})_(\w+)", name)
+                if m:
+                    nouns_verbs[m.group(2)].add(m.group(1))
+
+            # Stub detection: a function whose body is a single
+            # `raise NotImplementedError` statement (blank/comment/docstring
+            # lines aside) — approximated via the symbol's line span instead of an
+            # ast.Raise/ast.Call body-shape check.
+            if kind in ("function", "method"):
+                line, end_line = body_span(text_lines, file_syms, i)
+                body_lines = [
+                    ln.strip()
+                    for ln in text_lines[line : max(end_line, line)]
+                    if ln.strip() and not ln.strip().startswith(("#", '"""', "'''"))
+                ]
+                if len(body_lines) == 1 and _STUB_RAISE_RE.match(body_lines[0]):
+                    stubs += 1
 
     # Tier 1 — low-hanging: public capabilities never referenced anywhere (built, not wired/exposed)
     unexposed = [
