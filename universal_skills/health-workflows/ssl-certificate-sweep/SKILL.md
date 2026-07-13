@@ -20,7 +20,7 @@ team_config:
 tags: [health, ssl-certificate-sweep]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Ssl Certificate Sweep Workflow

@@ -22,7 +22,7 @@ team_config:
 tags: [finance, counterparty-risk-audit]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Counterparty Risk Audit Workflow

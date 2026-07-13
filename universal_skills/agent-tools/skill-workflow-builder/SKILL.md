@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [workflow, builder, dev-workflows, scaffolding, dag, topological]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Skill Workflow Builder

@@ -22,7 +22,7 @@ team_config:
 tags: [finance, continuous-risk-monitor]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Continuous Risk Monitor Workflow

@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Agent Workflows & Orchestration

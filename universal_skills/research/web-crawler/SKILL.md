@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap, knowledge-graph, graph-os, ingest]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Web Crawler Skill

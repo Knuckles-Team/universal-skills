@@ -22,7 +22,7 @@ team_config:
 tags: [social, blog-post-generator]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Blog Post Generator Workflow

@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Document Tools

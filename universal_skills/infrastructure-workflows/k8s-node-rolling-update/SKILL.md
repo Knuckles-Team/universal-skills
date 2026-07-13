@@ -30,7 +30,7 @@ team_config:
 tags: [infra, kubernetes, rke2, rolling-update, patching, drain, cordon, homelab, node-maintenance]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # K8s Node Rolling Update Workflow

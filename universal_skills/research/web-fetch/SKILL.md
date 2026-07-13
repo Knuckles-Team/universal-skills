@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [web, fetch, markdown, crawl4ai, extraction]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 

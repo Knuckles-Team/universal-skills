@@ -15,7 +15,7 @@ requires:
 - mcp_orders
 - mcp_portfolio
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # polymarket-clob-order-routing Workflow

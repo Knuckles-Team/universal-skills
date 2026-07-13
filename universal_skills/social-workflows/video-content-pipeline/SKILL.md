@@ -22,7 +22,7 @@ team_config:
 tags: [social, video-content-pipeline]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Video Content Pipeline Workflow

@@ -22,7 +22,7 @@ team_config:
 tags: [sdd, backend, frontend, qa, devops, verification]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Sdd Full Lifecycle Workflow

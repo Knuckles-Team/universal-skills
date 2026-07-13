@@ -8,7 +8,7 @@ domain: ops
 license: MIT
 tags: [tickets, jira, plane, servicenow, management]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 requires:
   - unified-task-tracker

@@ -18,7 +18,7 @@ team_config:
 tags: ['home-assistant', 'iot', 'automation', 'scene-management', 'home-assistant-agent']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Smart Home Automation Orchestrator Workflow

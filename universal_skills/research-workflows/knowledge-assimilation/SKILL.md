@@ -15,7 +15,7 @@ domain: research-workflows
 license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
   concepts:
     - CONCEPT:KG-2.7

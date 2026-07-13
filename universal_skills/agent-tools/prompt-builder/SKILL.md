@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [prompts, system-prompt, agent, builder, structured-prompt, json]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 

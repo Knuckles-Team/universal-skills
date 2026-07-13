@@ -20,7 +20,7 @@ team_config:
     report-generator: [graph_write, document_tools]
 concept: KG-2.12
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Performance Review Workflow

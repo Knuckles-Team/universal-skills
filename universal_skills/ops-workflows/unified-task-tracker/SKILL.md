@@ -22,7 +22,7 @@ team_config:
 tags: ['atlassian', 'jira', 'plane', 'tasks', 'agile', 'atlassian-agent', 'plane-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Unified Task Tracker Workflow

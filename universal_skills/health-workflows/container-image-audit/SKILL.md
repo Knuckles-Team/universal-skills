@@ -22,7 +22,7 @@ team_config:
 tags: [health, container-image-audit]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Container Image Audit Workflow

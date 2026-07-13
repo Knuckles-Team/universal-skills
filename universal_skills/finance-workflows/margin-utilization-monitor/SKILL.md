@@ -20,7 +20,7 @@ team_config:
 tags: [finance, margin-utilization-monitor]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Margin Utilization Monitor Workflow
