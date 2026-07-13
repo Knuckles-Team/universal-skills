@@ -54,6 +54,7 @@ def extract_concepts_from_codebase(directory):
             or ".venv" in root
             or ".git" in root
             or "__pycache__" in root
+            or f"{os.sep}build{os.sep}" in f"{os.sep}{root}{os.sep}"
         ):
             continue
 
