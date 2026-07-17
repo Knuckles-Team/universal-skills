@@ -244,7 +244,7 @@ but reds the pipeline:
 2. **Naming MUST be consistent across all three identifiers — no deviations.**
    repo name (kebab) == distribution `name` (kebab) == package dir (snake_case).
    e.g. repo `jena-mcp` → `name = "jena-mcp"` → package `jena_mcp/`.
-   NOT `apache-jena-mcp`/`apache_jena_mcp`; NOT `archimate_mcp` for repo `archi-mcp`.
+   NOT `apache-jena-mcp`/`apache_jena_mcp`; NOT `archi_mcp` for repo `archimate-mcp`.
    Console scripts strip the `-mcp`/`-agent`/`-api` suffix:
    `{short}-mcp = "{pkg_dir}.mcp_server:mcp_server"` and
    `{short}-agent = "{pkg_dir}.agent_server:agent_server"`
