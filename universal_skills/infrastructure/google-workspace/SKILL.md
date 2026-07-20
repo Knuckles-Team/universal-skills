@@ -1,5 +1,6 @@
 ---
 name: google-workspace
+skill_type: skill
 description: >-
   Interact with Gmail, Google Calendar, Google Chat, Google Docs, Google Drive,
   Google Sheets, and Google Slides. Use for searching or managing Workspace
