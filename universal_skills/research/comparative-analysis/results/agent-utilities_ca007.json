@@ -1,7 +1,7 @@
 {
   "domain": "CA-007",
   "domain_name": "Documentation",
-  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
   "readme": {
     "score": 105,
     "found": true,

@@ -1,7 +1,7 @@
 {
   "domain": "CA-006",
   "domain_name": "Testing",
-  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
   "test_discovery": {
     "test_files": {
       "unit": 158,

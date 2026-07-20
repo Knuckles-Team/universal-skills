@@ -1,7 +1,7 @@
 {
   "domain": "CA-003",
   "domain_name": "Architecture",
-  "project": "/home/apps/workspace/open-source-libraries/TradingAgents",
+  "project": "${WORKSPACE_ROOT}/open-source-libraries/TradingAgents",
   "protocols": {},
   "type_coverage": {
     "total_functions": 487,

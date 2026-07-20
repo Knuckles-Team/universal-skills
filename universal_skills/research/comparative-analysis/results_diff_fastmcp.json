@@ -1,8 +1,8 @@
 {
   "domain": "CA-003b",
   "domain_name": "Architecture Differential",
-  "source": "/home/apps/workspace/agent-packages/agent-utilities",
-  "target": "/home/apps/workspace/open-source-libraries/fastmcp",
+  "source": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "target": "${WORKSPACE_ROOT}/open-source-libraries/fastmcp",
   "component_topology_diff": {
     "source_only": [
       ".specify/",
