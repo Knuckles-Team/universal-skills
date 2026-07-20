@@ -55,7 +55,7 @@ def fingerprint(domain: str, label: str, file: str | None = None) -> str:
     """
     base = os.path.basename(file) if file else ""
     payload = f"{domain}\x1f{_normalize(label)}\x1f{base.lower()}"
-    return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
 
 
 def _iter_domain_results(report: Any) -> Iterable[dict[str, Any]]:

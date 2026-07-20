@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [agent, development, pydantic-ai, architecture]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Agent Builder Guide
@@ -62,7 +62,9 @@ After implementation:
 - Verify the agent starts correctly by running `python -m my_package.agent --help`.
 - Run `run_pre_commits.sh` (or `pre-commit run --all-files`) in the workspace to ensure styling and syntax compliance.
 
-## Reference Documents
+## Identity API compatibility
 
-The following references are provided alongside this skill:
-- [Agent Identity Pattern](reference/identity.md)
+The identity contract is owned by `agent-utilities`, not bundled with this skill.
+Before implementing the entry point, verify the installed version's
+`load_identity()` signature and returned fields; treat that installed API as the
+source of truth when it differs from this guide.

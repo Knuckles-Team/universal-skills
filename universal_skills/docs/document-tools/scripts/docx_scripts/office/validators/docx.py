@@ -18,8 +18,12 @@ import re
 import tempfile
 import zipfile
 
+from safe_lxml import secure_lxml_defaults
+from safe_zip import safe_extract_zip
 
 from .base import BaseSchemaValidator
+
+secure_lxml_defaults(lxml.etree)
 
 
 class DOCXSchemaValidator(BaseSchemaValidator):
@@ -104,7 +108,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -155,7 +159,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -180,7 +184,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
                 paragraphs = root.findall(f".//{{{self.WORD_2006_NAMESPACE}}}p")
                 count = len(paragraphs)
             except Exception as e:
-                print(f"Error counting paragraphs in unpacked document: {e}")
+                print(f"Error counting paragraphs in unpacked document: {type(e).__name__}")
 
         return count
 
@@ -194,7 +198,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 with zipfile.ZipFile(original, "r") as zip_ref:
-                    zip_ref.extractall(temp_dir)
+                    safe_extract_zip(zip_ref, temp_dir)
 
                 doc_xml_path = temp_dir + "/word/document.xml"
                 root = lxml.etree.parse(doc_xml_path).getroot()
@@ -203,7 +207,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
                 count = len(paragraphs)
 
         except Exception as e:
-            print(f"Error counting paragraphs in original document: {e}")
+            print(f"Error counting paragraphs in original document: {type(e).__name__}")
 
         return count
 
@@ -235,7 +239,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -379,7 +383,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
                         )
 
         except (lxml.etree.XMLSyntaxError, Exception) as e:
-            errors.append(f"  Error parsing XML: {e}")
+            errors.append(f"  Error parsing XML: {type(e).__name__}")
 
         if errors:
             print(f"FAILED - {len(errors)} comment marker violations:")

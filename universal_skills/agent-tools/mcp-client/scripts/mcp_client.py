@@ -109,7 +109,7 @@ async def create_mcp_client(
                 "mcp_config.json",
             }:
                 if not path.exists():
-                    raise FileNotFoundError(f"Config file not found: {path}")
+                    raise FileNotFoundError("Configured MCP file was not found")
 
                 config_dict = json.loads(path.read_text(encoding="utf-8"))
 
@@ -481,7 +481,7 @@ async def run_cli(args):
                                 tool_args = json.load(f)
                         except Exception as e:
                             logger.error(
-                                f"Error reading JSON from file {args.tool_args}: {e}"
+                                f"Error reading JSON from file {args.tool_args}: {type(e).__name__}"
                             )
                             sys.exit(1)
                     else:
@@ -489,7 +489,7 @@ async def run_cli(args):
                         try:
                             tool_args = json.loads(args.tool_args)
                         except Exception as e:
-                            logger.error(f"Error parsing JSON string: {e}")
+                            logger.error(f"Error parsing JSON string: {type(e).__name__}")
                             sys.exit(1)
 
                 logger.debug(f"Calling tool '{args.tool_name}' with args: {tool_args}")
@@ -535,9 +535,9 @@ async def run_cli(args):
             )
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Error: {e}", exc_info=args.debug)
+        logger.error(f"Error: {type(e).__name__}", exc_info=args.debug)
         if args.action == "call-mcp-tool":
-            print(json.dumps({"status": "error", "message": str(e)}))
+            print(json.dumps({"status": "error", "message": type(e).__name__}))
         sys.exit(1)
 
 

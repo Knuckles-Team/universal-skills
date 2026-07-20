@@ -11,7 +11,7 @@ description: >
   Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk",
   "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # RustDesk Client Installation Skill
@@ -245,11 +245,11 @@ echo "RUSTDESK_ID_RESULT:\$RUSTDESK_ID"
 - **Rendezvous Logs**: If the client cannot connect, verify network connectivity to the self-hosted rendezvous server by running `ping <your_rendezvous_server>`.
 - **Config Override**: Verify configuration contents match the expected key signature.
 - **Split-Brain DNS / LAN Resolution Mismatch**:
-  - **Symptom**: Client logs "Connection Error, ID does not exist". Pinging the rendezvous domain (e.g., `rustdesk.example.com`) on an internal node resolves to a public WAN IP rather than the local IP (e.g., `10.0.0.10`), meaning hbbs/hbbr ports are unreachable.
-  - **Diagnosis**: The host's resolver/link config bypasses the local DNS (e.g., local DNS server at `10.0.0.100`) in favor of external providers like `1.1.1.1`.
-  - **Remediation**: Add a static hostname entry to `/etc/hosts` to force the correct internal routing:
+  - **Symptom**: The configured rendezvous hostname resolves to a public address on an internal node, leaving the self-hosted rendezvous and relay ports unreachable.
+  - **Diagnosis**: Compare resolution through the AgentConfig-referenced internal DNS profile with the host's active resolver. Retain only the result and profile digest, not addresses or resolver configuration.
+  - **Remediation**: Correct the authoritative DNS profile. If policy permits a temporary host override, resolve both values from the deployment profile rather than embedding them:
     ```bash
-    echo "10.0.0.10 rustdesk.example.com" | sudo tee -a /etc/hosts
+    printf '%s %s\n' "$RUSTDESK_INTERNAL_ADDRESS" "$RUSTDESK_RENDEZVOUS_HOST" | sudo tee -a /etc/hosts
     ```
 - **Wayland "Please select the screen to be shared" / Greeter Session Hangs**:
   - **Symptom**: Connecting to a Linux client triggers a modal popup reading *"Please select the screen to be shared (Operate on the peer side)"*, which hangs unattended connections indefinitely. On GDM login screens, the remote screen remains blank or refuses connection.
@@ -298,11 +298,11 @@ echo "RUSTDESK_ID_RESULT:\$RUSTDESK_ID"
            ```bash
            echo -e "[Seat:*]\nuser-session=ubuntu-xorg" | sudo tee /etc/lightdm/lightdm.conf.d/50-default-xorg.conf
            ```
-         * **Per-User Configuration**: Update the AccountsService user definition for the remote user (e.g., `<username>` = `genius`):
-           ```bash
-           # Update or insert Session and XSession keys in /var/lib/AccountsService/users/<username>
-           sudo python3 -c "import sys; filepath='/var/lib/AccountsService/users/genius'; f=open(filepath,'r'); content=f.read(); f.close(); lines=content.splitlines(); out=[]; [out.append('Session=ubuntu-xorg') if l.startswith('Session=') else (out.append('XSession=ubuntu-xorg') if l.startswith('XSession=') else out.append(l)) for l in lines]; [out.insert(out.index('[User]')+1, 'XSession=ubuntu-xorg') if not any(x.startswith('XSession=') for x in out) else None]; [out.insert(out.index('[User]')+1, 'Session=ubuntu-xorg') if not any(x.startswith('Session=') for x in out) else None]; f=open(filepath,'w'); f.write('\n'.join(out)+'\n'); f.close()"
-           ```
+         * **Per-User Configuration**: Resolve the desktop account from the
+           AgentConfig remote-access profile and update that account's
+           AccountsService record through the configured systems-management
+           provider. Do not place an account name or AccountsService path in the
+           skill payload or retained output.
          * **Restart Display Manager to Apply**:
            ```bash
            sudo systemctl restart lightdm

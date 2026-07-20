@@ -610,7 +610,7 @@ def main():
     if args.concept_map:
         path = Path(args.concept_map)
         if not path.exists():
-            print(json.dumps({"error": f"Concept map not found: {path}"}))
+            print(json.dumps({"error": "Configured concept map was not found"}))
             sys.exit(1)
         concepts = parse_concept_map_file(path)
         print(f"Loaded {len(concepts)} concepts from {path}", file=sys.stderr)
@@ -640,28 +640,28 @@ def main():
                 )
         except Exception as e:
             print(
-                f"KG query failed ({e}), falling back to concept_map.md search...",
+                f"KG query failed ({type(e).__name__}), falling back to concept_map.md search...",
                 file=sys.stderr,
             )
 
         # Fallback: find concept_map.md in common locations
         if not concepts:
+            workspace_root = Path(
+                os.environ.get("AGENT_UTILITIES_WORKSPACE_ROOT", Path.cwd())
+            ).expanduser()
+            package_root = Path(
+                os.environ.get(
+                    "AGENT_PACKAGES_ROOT", workspace_root / "agent-packages"
+                )
+            ).expanduser()
             for candidate in [
                 Path.cwd() / "docs" / "concept_map.md",
-                Path.home()
-                / "workspace"
-                / "agent-packages"
-                / "agent-utilities"
-                / "docs"
-                / "concept_map.md",
-                Path(
-                    "/home/apps/workspace/agent-packages/agent-utilities/docs/concept_map.md"
-                ),
+                package_root / "agent-utilities" / "docs" / "concept_map.md",
             ]:
                 if candidate.exists():
                     concepts = parse_concept_map_file(candidate)
                     print(
-                        f"Loaded {len(concepts)} concepts from {candidate}",
+                        f"Loaded {len(concepts)} concepts from a configured source",
                         file=sys.stderr,
                     )
                     break
@@ -696,7 +696,7 @@ def main():
                     file=sys.stderr,
                 )
             except Exception as e:
-                print(f"Failed to load resume file: {e}", file=sys.stderr)
+                print(f"Failed to load resume file: {type(e).__name__}", file=sys.stderr)
 
     # Filter out already-completed concepts
     remaining = [c for c in concepts if c["concept_id"] not in completed_ids]
@@ -737,14 +737,14 @@ def main():
                 )
             except Exception as e:
                 print(
-                    f"    ⚠ Search failed for {concept['concept_id']}: {e}",
+                    f"    ⚠ Search failed for {concept['concept_id']}: {type(e).__name__}",
                     file=sys.stderr,
                 )
                 result = {
                     **concept,
                     "match_count": 0,
                     "paper_matches": [],
-                    "error": str(e),
+                    "error": type(e).__name__,
                 }
 
             cross_ref_results.append(result)

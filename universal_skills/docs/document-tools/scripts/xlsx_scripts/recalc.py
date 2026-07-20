@@ -166,7 +166,7 @@ def recalc(filename, timeout=30):
         return result
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def main():

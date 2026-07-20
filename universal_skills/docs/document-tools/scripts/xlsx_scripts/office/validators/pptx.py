@@ -14,7 +14,11 @@ except ImportError:
     sys.exit(1)
 import re
 
+from safe_lxml import secure_lxml_defaults
+
 from .base import BaseSchemaValidator
+
+secure_lxml_defaults(lxml.etree)
 
 
 class PPTXSchemaValidator(BaseSchemaValidator):
@@ -92,7 +96,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -160,7 +164,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {slide_master.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {slide_master.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -200,7 +204,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
             except Exception as e:
                 errors.append(
-                    f"  {rels_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {rels_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -248,7 +252,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {rels_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {rels_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         for target, references in notes_slide_references.items():

@@ -22,7 +22,7 @@ team_config:
 tags: ['docker', 'health', 'monitoring', 'containers']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Container Health Check Workflow
@@ -33,35 +33,35 @@ Full Docker infrastructure health assessment. Lists containers, images, volumes,
 
 ## Steps
 
-### Step 0: Container Manager Mcp
+### Step 0: list-containers [skill: container-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
 List all running containers and their current status
 Expected: `container, running, status`
 
-### Step 1: Container Manager Mcp
+### Step 1: list-images [skill: container-manager-mcp]
 **Agent**: `deployer-agent`
 **Tools**: `pt_stack, cnt_cm_compose_operations`
 
 List all Docker images with their sizes and tags
 Expected: `image, tag`
 
-### Step 2: Container Manager Mcp
+### Step 2: list-storage-and-networks [skill: container-manager-mcp]
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
 Show all Docker volumes and networks
 Expected: `volume, network`
 
-### Step 3: Container Manager Mcp
+### Step 3: fetch-container-logs [skill: container-manager-mcp]
 **Agent**: `dns-configurator`
 **Tools**: `adg_rewrites, td_zones`
 
 Get the logs for one of the running containers
 Expected: `log`
 
-### Step 4: KG Persistence [depends_on: container-manager-mcp]
+### Step 4: KG Persistence [depends_on: Step 0, Step 1, Step 2, Step 3]
 **Agent**: `dns-configurator`
 **Tools**: `graph_write`
 
@@ -77,7 +77,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Container Manager Mcp; Step 1 — Container Manager Mcp; Step 2 — Container Manager Mcp; Step 3 — Container Manager Mcp
+- **Run first (in parallel):** Step 0 — list-containers; Step 1 — list-images; Step 2 — list-storage-and-networks; Step 3 — fetch-container-logs
 - **After level 0:** Step 4 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

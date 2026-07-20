@@ -87,7 +87,7 @@ def load_results(paths: list[str]) -> dict[str, dict[str, dict]]:
                     projects[project] = {}
                 projects[project][domain] = data
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"Warning: Failed to load {f}: {e}", file=sys.stderr)
+                print(f"Warning: Failed to load {f}: {type(e).__name__}", file=sys.stderr)
 
     return projects
 

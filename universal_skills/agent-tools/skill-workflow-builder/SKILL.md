@@ -3,83 +3,92 @@ name: skill-workflow-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Tool and instructions to interactively brainstorm, structure, verify, and scaffold structured workflow-based skills.
-  Use when the user or agent needs to create a new workflow skill under `universal_skills/workflows/`, define topological step lists,
-  or analyze dependencies of a complex agent process. Do NOT use for standard non-workflow skills or simple file updates.
+  Scaffold and validate a dependency-ordered workflow that only groups existing
+  atomic skills or explicitly named MCP tools. Use when creating or repairing a
+  dual-mode workflow in a universal_skills domain ending in -workflows, with a
+  matching DAG, team configuration, native execution waves, and graph-os delegation.
+  Do not use to author an atomic skill or to embed business logic in workflow steps.
 license: MIT
-tags: [workflow, builder, dev-workflows, scaffolding, dag, topological]
+tags: [workflow, scaffolding, dag, validation, atomicity]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
+
 # Skill Workflow Builder
 
-This skill provides an interactive utility script and guidelines for creating structured, multi-step workflow skills.
+Create pure compositions under
+`universal_skills/<domain>-workflows/<workflow-name>/`. Implement business logic
+inside atomic skills; each workflow node may bind to exactly one existing atomic
+skill or one explicit MCP tool.
 
-## About Workflows
+## Define the DAG
 
-Workflow skills are structured step-by-step procedural prompt instructions that guide agents through complex, multi-tool operations. Workflows reside in:
-`universal_skills/workflows/{domain}/{workflow_name}/`
+Supply steps as a JSON list. Use `skill` for a catalog skill or `mcp_tool` for a
+single MCP tool. Never provide both. `id` is optional and gives the node a unique
+kebab-case identifier; otherwise the builder derives it from the binding.
+Dependencies may name an earlier node or use `Step N`.
 
-### Step Schema
+For a package-owned skill that is not present in the local universal catalog, add
+`package` to that node and name the same distribution in the workflow's `requires`
+frontmatter through `--requires`. This preserves exact ownership without treating an
+arbitrary unresolved name as an atomic skill.
 
-Each step in a workflow skill must follow a strict topological definition:
-
-```markdown
-### Step N: <component-name>[depends_on: Step A, Step B]
-<Detailed instruction detailing the tool action or phase>
-Expected: <expected outcomes or variable names>
+```json
+[
+  {
+    "step": 1,
+    "skill": "spec-intake-wizard",
+    "agent": "planning-specialist",
+    "depends_on": []
+  },
+  {
+    "step": 2,
+    "skill": "scholarx-operations",
+    "package": "scholarx",
+    "agent": "research-specialist",
+    "depends_on": ["spec-intake-wizard"]
+  }
+]
 ```
 
-Where:
-- **`Step N`**: Unique 0-indexed integer (e.g. `Step 0`, `Step 1`).
-- **`<component-name>`**: The MCP tool or agent capability utilized (e.g., `portainer-mcp`, `github-tools`, `systems-manager`, `user-interaction`).
-- **`depends_on`** (Optional): A list of steps that must complete before this step is executed.
+Do not add descriptions, prompts, expected-output prose, shell commands, or other
+inline logic to a step. Make every node identifier and specialist identifier unique
+and kebab-case. The builder rejects missing or unowned skills, ambiguous bindings,
+multiple MCP tools in one node, broken dependencies, and cycles.
 
----
+## Scaffold
 
-## Interactive Workflow Builder Process
+Run from the repository root and pass a trigger-complete description:
 
-When building a new workflow skill, follow these sequential phases interactively with the user:
+```bash
+python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py \
+  scaffold issue-planning \
+  --domain development-workflows \
+  --description "Plan a repository issue through specification and task decomposition. Use when the user asks to turn an existing issue into an implementation-ready plan." \
+  --steps-json '[{"step":1,"skill":"spec-generator","agent":"planning-specialist","depends_on":[]},{"step":2,"skill":"task-planner","agent":"planning-specialist","depends_on":["spec-generator"]}]'
+```
 
-### Phase 1: Review & Discover
-1. Index existing workflows to find similar structures using the CLI tool:
-   ```bash
-   python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py list
-   ```
-2. Verify available MCP tools and databases using `query-kg` or inspecting configurations.
+The builder writes:
 
-### Phase 2: Topological Brainstorming
-1. Design the step-by-step procedure interactively with the user.
-2. Ask:
-   - What is the domain/category (e.g., `infra`, `dev-workflows`, `ops`, `finance`, `health`, `social`, `system`, `research`)?
-   - What components/tools are needed for each step?
-   - What are the dependencies?
-3. Draw a Mermaid diagram of the workflow DAG for the user to visually inspect and approve the flow.
+- workflow frontmatter with `skill_type: workflow` and a complete `team_config`;
+- a pure `### Step N:` dependency DAG;
+- `references/team.yaml` matching the frontmatter team configuration exactly;
+- a generated `## Execution` section whose waves match the DAG; and
+- the standard graph-os delegation footer.
 
-### Phase 3: Scaffolding
-1. Run the scaffolding script in interactive mode to register the steps, tags, and description:
-   ```bash
-   python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py scaffold <workflow_name> --domain <domain> --description "<description>" --interactive
-   ```
-2. The script will automatically:
-   - Check the steps topological structure for circular dependencies.
-   - Create the directory at `universal_skills/workflows/{domain}/{workflow_name}/`.
-   - Write a compliant `SKILL.md` file.
-   - Generate a default swarm orchestration `references/team.yaml`.
+Use `--root <path-to-universal_skills>` for another checkout. Use `--interactive`
+instead of `--steps-json` to collect bindings without inline step prose.
 
-### Phase 4: Validation
-1. Verify the workflow skill compiles perfectly using:
-   ```bash
-   python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py validate universal_skills/workflows/{domain}/{workflow_name}/SKILL.md
-   ```
-2. Save the final files in the user's source repository!
+## Validate
 
----
+Validate both generated layers and every binding:
 
-## Topological Reference
+```bash
+python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py \
+  validate universal_skills/development-workflows/issue-planning/SKILL.md
+```
 
-Workflows are executed by a Parallel Orchestration Engine that parses the steps into a Directed Acyclic Graph (DAG). It is critical that:
-- Step numbers do not duplicate.
-- Dependencies reference actual prior steps.
-- No cycles exist (e.g. Step A depends on Step B, which depends on Step A). The validator script will automatically catch these issues.
+Use `list` to inspect workflow metadata without changing files. After adding an
+in-repository workflow, update release tracking and run the repository atomicity,
+workflow compiler, frontmatter-portability, and path-portability checks.

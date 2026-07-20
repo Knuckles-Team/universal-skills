@@ -95,7 +95,7 @@ def run_selftest() -> dict[str, dict]:
                     else "",
                 }
             except Exception as e:  # noqa: BLE001
-                results[name] = {"status": "fail", "detail": str(e)}
+                results[name] = {"status": "fail", "detail": type(e).__name__}
 
         for name in ANALYZER_SCRIPTS:
             script = SCRIPTS_DIR / name
@@ -120,7 +120,7 @@ def run_selftest() -> dict[str, dict]:
             except json.JSONDecodeError:
                 results[name] = {"status": "fail", "detail": "non-JSON output"}
             except Exception as e:  # noqa: BLE001
-                results[name] = {"status": "fail", "detail": str(e)}
+                results[name] = {"status": "fail", "detail": type(e).__name__}
     return results
 
 

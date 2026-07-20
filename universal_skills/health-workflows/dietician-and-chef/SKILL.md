@@ -18,7 +18,7 @@ team_config:
 tags: ['health', 'diet', 'recipes', 'mealie-mcp']
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Dietician And Chef Workflow

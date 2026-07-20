@@ -176,7 +176,7 @@ def parse_agent_file(agent_path: Path) -> Dict[str, Any]:
     # Extract YAML frontmatter (between --- markers)
     frontmatter_match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
     if not frontmatter_match:
-        raise ValueError(f"Invalid agent file format: {agent_path}")
+        raise ValueError("Invalid configured agent file format")
 
     yaml_content = frontmatter_match.group(1)
     markdown_content = frontmatter_match.group(2)

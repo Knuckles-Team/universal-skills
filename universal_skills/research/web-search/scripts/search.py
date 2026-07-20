@@ -1,33 +1,32 @@
 #!/usr/bin/env python3
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-import subprocess
+
+from search_bing import search as search_bing
+from search_duckduckgo import search as search_duckduckgo
+from search_google import search as search_google
+from search_searxng import search as search_searxng
 
 
-def get_script_path(script_base_name):
-    # The dispatcher is in the same directory as the other search scripts
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), script_base_name)
+def run_search_provider(provider: str, query: str, max_results: int):
+    """Dispatch through a fixed in-process provider map; never spawn a command."""
 
-
-def run_search_script(script_name, query, max_results):
-    script_path = get_script_path(script_name)
-    cmd = [
-        sys.executable,
-        script_path,
-        "--query",
-        query,
-        "--max-results",
-        str(max_results),
-        "--json",
-    ]
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return json.loads(result.stdout)
-    except Exception as e:
-        print(f"Error running {script_name}: {e}", file=sys.stderr)
-        return None
+    if provider == "searxng":
+        return search_searxng(query, os.environ["SEARXNG_URL"], max_results)
+    if provider == "google":
+        return search_google(
+            query,
+            os.environ["GOOGLE_API_KEY"],
+            os.environ["GOOGLE_CX"],
+            max_results,
+        )
+    if provider == "bing":
+        return search_bing(query, os.environ["BING_API_KEY"], max_results)
+    if provider == "duckduckgo":
+        return search_duckduckgo(query, max_results)
+    raise ValueError("Unsupported search provider")
 
 
 def main():
@@ -47,23 +46,30 @@ def main():
     args = parser.parse_args()
 
     # Determine which provider to use
-    provider_script = "search_duckduckgo.py"  # Default fallback
+    provider = "duckduckgo"  # Default fallback
 
     if os.environ.get("SEARXNG_URL"):
-        provider_script = "search_searxng.py"
+        provider = "searxng"
     elif os.environ.get("GOOGLE_API_KEY") and os.environ.get("GOOGLE_CX"):
-        provider_script = "search_google.py"
+        provider = "google"
     elif os.environ.get("BING_API_KEY"):
-        provider_script = "search_bing.py"
+        provider = "bing"
 
-    results = run_search_script(provider_script, args.query, args.max_results)
+    try:
+        results = run_search_provider(provider, args.query, args.max_results)
+    except Exception:
+        results = None
 
     if results is None:
         # If the preferred one failed, try DuckDuckGo as final fallback
-        if provider_script != "search_duckduckgo.py":
-            results = run_search_script(
-                "search_duckduckgo.py", args.query, args.max_results
-            )
+        if provider != "duckduckgo":
+            try:
+                results = run_search_provider(
+                    "duckduckgo", args.query, args.max_results
+                )
+                provider = "duckduckgo"
+            except Exception:
+                results = None
 
     if results is None:
         print("Error: All search providers failed.", file=sys.stderr)
@@ -72,7 +78,7 @@ def main():
     if args.json:
         print(json.dumps(results, indent=2))
     else:
-        print(f"--- Search Results for '{args.query}' (via {provider_script}) ---")
+        print(f"--- Search Results (via {provider}) ---")
         for i, result in enumerate(results, 1):
             print(f"\n{i}. {result.get('title')}")
             print(f"   URL: {result.get('link')}")

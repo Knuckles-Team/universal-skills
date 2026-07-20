@@ -4,7 +4,7 @@ domain: finance
 skill_type: skill
 description: Execute paper-trading algorithms via freqtrader.
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Freqtrade Executor Skill

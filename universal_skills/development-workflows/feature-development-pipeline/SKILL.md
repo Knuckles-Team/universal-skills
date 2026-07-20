@@ -8,7 +8,7 @@ tags:
   - dev-workflows
   - mcp-github-mcp
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Parallel Workflow: Feature Development Pipeline

@@ -25,7 +25,7 @@ def ipv4_subnet_calculator(ip_cidr):
             ),
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def mac_address_generator(prefix=None):

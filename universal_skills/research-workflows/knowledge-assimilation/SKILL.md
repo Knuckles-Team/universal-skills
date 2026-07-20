@@ -15,7 +15,7 @@ domain: research-workflows
 license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
   concepts:
     - CONCEPT:KG-2.7
@@ -229,11 +229,12 @@ Both pipelines share downstream tools: `comparative-analysis`, `sdd-implementer`
 
 ## References
 
-- [agent-utilities-evolution](../agent-utilities-evolution/SKILL.md) — Pull-based evolution
-- [research-scanner](../research-scanner/SKILL.md) — Paper discovery
-- [comparative-analysis](../comparative-analysis/SKILL.md) — Feature extraction
-- [x-assistant guide](../../../../agent-utilities/docs/guides/x-assistant.md) — X tools
-- [knowledge-assimilation guide](../../../../agent-utilities/docs/guides/knowledge-assimilation.md) — MCP pattern
+- `agent-utilities-evolution` — pull-based evolution capability owned by the
+  `agent-utilities` package and available only when that package provides it.
+- [research-scanner](../../research/research-scanner/SKILL.md) — Paper discovery
+- [comparative-analysis](../../research/comparative-analysis/SKILL.md) — Feature extraction
+- Package-specific X and assimilation implementation guides are owned by
+  `agent-utilities` under `docs/guides/`; they are not bundled with this workflow.
 
 ## Execution
 

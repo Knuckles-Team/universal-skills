@@ -1,150 +1,449 @@
 #!/usr/bin/env python3
-"""
-Skill Workflow Builder - Create, index, and topologically validate workflow-based skills.
+"""Scaffold and validate pure atomic-skill workflows."""
 
-Usage:
-    python build_workflow.py list [--root <path>]
-    python build_workflow.py scaffold <workflow-name> --domain <domain> --description <desc> [--root <path>]
-    python build_workflow.py validate <path/to/SKILL.md>
-    python build_workflow.py query-kg [--db <path>]
+from __future__ import annotations
 
-Examples:
-    python build_workflow.py list
-    python build_workflow.py scaffold check-disk-capacity --domain infrastructure-workflows --description "Check server disk space"
-"""
-
-import sys
-import re
 import argparse
 import json
-import sqlite3
+import re
+import shutil
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Sequence
 
 try:
     import yaml
-except ImportError:
+except ImportError:  # pragma: no cover - the skill extra installs PyYAML
     yaml = None
 
-# ANSI colors for premium terminal UI
-BLUE = "\033[94m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
-RED = "\033[91m"
-BOLD = "\033[1m"
-RESET = "\033[0m"
+NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+MCP_TOOL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
+PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+TRIGGER_RE = re.compile(r"\buse when\b", re.IGNORECASE)
+STEP_RE = re.compile(
+    r"^###\s+Step\s+(\d+):\s*([a-z0-9]+(?:-[a-z0-9]+)*)"
+    r"(?:\s*\[depends_on:\s*([^\]]+)\])?\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+DESCRIPTION_MAX = 1024
+INLINE_KEYS = ("description", "expected", "instructions", "prompt", "command")
+DELEGATION_FOOTER = (
+    "**Execution:** If graph-os is reachable, offload the whole DAG via "
+    "`graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) "
+    "for true parallel/swarm execution. Otherwise execute the steps natively in "
+    "dependency order: run steps with no unmet `depends_on` in parallel, then "
+    "their dependents."
+)
 
 
-def print_premium(text: str, color: str = ""):
-    """Print premium terminal UI outputs."""
-    print(f"{color}{text}{RESET}")
+def slug(value: str) -> str:
+    """Normalize a label to a portable workflow node identifier."""
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", value.lower())).strip("-")
+
+
+def validate_identifier(value: str, label: str) -> list[str]:
+    errors: list[str] = []
+    if not NAME_RE.fullmatch(value):
+        errors.append(f"{label} must use lowercase kebab-case")
+    if len(value) > 64:
+        errors.append(f"{label} must be at most 64 characters")
+    return errors
+
+
+def validate_description(description: str) -> list[str]:
+    errors: list[str] = []
+    if not description.strip():
+        errors.append("description must not be empty")
+    elif len(description) > DESCRIPTION_MAX:
+        errors.append(f"description must be at most {DESCRIPTION_MAX} characters")
+    if "<" in description or ">" in description:
+        errors.append("description must not contain angle brackets")
+    if not TRIGGER_RE.search(description):
+        errors.append("description must include an explicit 'Use when' trigger")
+    return errors
 
 
 def get_default_workflows_root() -> Path:
-    """Determine the universal_skills root that holds the <domain>-workflows/ dirs.
-
-    Skill-workflows live at ``universal_skills/<domain>-workflows/<name>/`` (the
-    ``--domain`` arg already carries the ``-workflows`` suffix), so the root is the
-    ``universal_skills`` package dir itself.
-    """
-    current = Path(__file__).resolve()
-    for parent in current.parents:
+    """Return this checkout's ``universal_skills`` catalog root."""
+    for parent in Path(__file__).resolve().parents:
         if parent.name == "universal_skills":
             return parent
-    # Fallback to local workspace assumptions
-    return Path(
-        "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills"
-    )
+    return Path.cwd() / "universal_skills"
 
 
-def parse_workflow_skill(skill_md_path: Path) -> Optional[Dict]:
-    """Parse a workflow's SKILL.md file for metadata and steps."""
-    if not skill_md_path.exists():
-        return None
+def _find_catalog_root(path: Path) -> Path | None:
+    for candidate in (path.resolve(), *path.resolve().parents):
+        if candidate.name == "universal_skills":
+            return candidate
+    return None
 
+
+def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str, str | None]:
+    if not content.startswith("---"):
+        return {}, content, "SKILL.md is missing YAML frontmatter"
+    parts = content.split("---", 2)
+    if len(parts) != 3:
+        return {}, content, "SKILL.md has unterminated YAML frontmatter"
+    if yaml is None:
+        return {}, parts[2], "PyYAML is required to parse workflows"
     try:
-        content = skill_md_path.read_text(encoding="utf-8")
-    except Exception as e:
-        print_premium(f"❌ Error reading file {skill_md_path}: {e}", RED)
-        return None
+        frontmatter = yaml.safe_load(parts[1]) or {}
+    except yaml.YAMLError as exc:
+        return {}, parts[2], f"invalid YAML frontmatter: {type(exc).__name__}"
+    if not isinstance(frontmatter, dict):
+        return {}, parts[2], "YAML frontmatter must be a mapping"
+    return frontmatter, parts[2], None
 
-    # Parse YAML frontmatter
-    frontmatter = {}
-    body = content
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            yaml_content = parts[1]
-            body = parts[2]
-            if yaml:
-                try:
-                    frontmatter = yaml.safe_load(yaml_content) or {}
-                except Exception as e:
-                    print_premium(
-                        f"⚠️ Warning: YAML parsing error in {skill_md_path}: {e}", YELLOW
-                    )
-            else:
-                # Fallback simple line regex parsing if PyYAML is missing
-                for line in yaml_content.splitlines():
-                    match = re.match(r"^(\w+):\s*(.*)$", line.strip())
-                    if match:
-                        key, val = match.groups()
-                        # Clean tags/requires lists
-                        if val.startswith("[") and val.endswith("]"):
-                            val = [
-                                item.strip("'\" ")
-                                for item in val[1:-1].split(",")
-                                if item.strip()
-                            ]
-                        frontmatter[key] = val
 
-    # Parse Steps
-    steps = []
-    # Match headings like: ### Step 0: portainer-mcp or ### Step 2: user-interaction [depends_on: Step 0]
-    step_pattern = re.compile(
-        r"^###\s+Step\s+(\d+):\s*([a-zA-Z0-9_-]+)(?:\s*\[depends_on:\s*([^\]]+)\])?",
-        re.MULTILINE,
-    )
+def discover_atomic_skills(catalog_root: Path) -> set[str]:
+    """Return explicitly atomic skill names discoverable in a catalog."""
+    names: set[str] = set()
+    if not catalog_root.is_dir():
+        return names
+    for skill_md in sorted(catalog_root.rglob("SKILL.md")):
+        relative = skill_md.relative_to(catalog_root)
+        if "assets" in relative.parts or "skill_graphs" in relative.parts:
+            continue
+        content = skill_md.read_text(encoding="utf-8", errors="replace")
+        frontmatter, _, error = _parse_frontmatter(content)
+        if error is None and frontmatter.get("skill_type") == "skill":
+            name = str(frontmatter.get("name", skill_md.parent.name))
+            if NAME_RE.fullmatch(name):
+                names.add(name)
+    return names
 
-    matches = list(step_pattern.finditer(body))
-    for i, match in enumerate(matches):
-        step_num = int(match.group(1))
-        component = match.group(2).strip()
-        depends_raw = match.group(3)
 
-        # Calculate start and end of step description/details block
-        start_idx = match.end()
-        end_idx = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        step_body = body[start_idx:end_idx].strip()
+def _normalize_steps(
+    raw_steps: Sequence[dict[str, Any]],
+) -> tuple[list[dict], list[str]]:
+    steps: list[dict] = []
+    errors: list[str] = []
+    if not raw_steps:
+        return [], ["workflow must contain at least one step"]
 
-        # Extract Expected and Depends On fields
-        expected = None
-        expected_match = re.search(r"Expected:\s*(.*)", step_body)
-        if expected_match:
-            expected = expected_match.group(1).strip()
+    for position, raw in enumerate(raw_steps, start=1):
+        if not isinstance(raw, dict):
+            errors.append(f"step entry {position} must be an object")
+            continue
+        number = raw.get("step")
+        if isinstance(number, bool) or not isinstance(number, int) or number < 1:
+            errors.append(f"step entry {position} must have a positive integer 'step'")
+            continue
 
-        depends_on = []
-        if depends_raw:
-            depends_on = [d.strip() for d in depends_raw.split(",") if d.strip()]
-        else:
-            depends_match = re.search(r"Depends On:\s*(.*)", step_body)
-            if depends_match:
-                depends_on = [
-                    d.strip() for d in depends_match.group(1).split(",") if d.strip()
-                ]
+        skill_value = raw.get("skill")
+        mcp_tool_value = raw.get("mcp_tool")
+        skill = str(skill_value).strip() if skill_value else ""
+        mcp_tool = str(mcp_tool_value).strip() if mcp_tool_value else ""
+        package = str(raw.get("package") or "").strip()
+        if bool(skill) == bool(mcp_tool):
+            errors.append(
+                f"Step {number} must define exactly one of 'skill' or 'mcp_tool'"
+            )
+        if skill:
+            errors.extend(validate_identifier(skill, f"Step {number} skill"))
+        if mcp_tool and not MCP_TOOL_RE.fullmatch(mcp_tool):
+            errors.append(
+                f"Step {number} mcp_tool must name exactly one tool without spaces or commas"
+            )
+        if package and not skill:
+            errors.append(f"Step {number} package is valid only with a skill binding")
+        if package and not PACKAGE_RE.fullmatch(package):
+            errors.append(f"Step {number} package is not a valid distribution name")
+
+        component = str(
+            raw.get("id") or raw.get("component") or skill or slug(mcp_tool)
+        ).strip()
+        errors.extend(validate_identifier(component, f"Step {number} id"))
+        agent = str(raw.get("agent") or "workflow-executor").strip()
+        errors.extend(validate_identifier(agent, f"Step {number} agent"))
+
+        dependencies = raw.get("depends_on", [])
+        if dependencies is None:
+            dependencies = []
+        if not isinstance(dependencies, list) or not all(
+            isinstance(item, (str, int)) for item in dependencies
+        ):
+            errors.append(f"Step {number} depends_on must be a list of step references")
+            dependencies = []
+        inline = [key for key in INLINE_KEYS if raw.get(key)]
+        if inline:
+            errors.append(
+                f"Step {number} contains inline workflow logic: {', '.join(inline)}"
+            )
 
         steps.append(
             {
-                "step": step_num,
+                "step": number,
                 "component": component,
-                "description": step_body.split("\n")[0].strip(),
-                "expected": expected,
-                "depends_on": depends_on,
+                "skill": skill or None,
+                "package": package or None,
+                "mcp_tool": mcp_tool or None,
+                "agent": agent,
+                "depends_on": [str(item).strip() for item in dependencies],
+                "inline_lines": list(raw.get("inline_lines", [])),
+            }
+        )
+    return steps, errors
+
+
+def _analyze_dag(steps: Sequence[dict]) -> tuple[dict[str, list[str]], list[str]]:
+    """Resolve dependencies to node identifiers and detect malformed DAGs."""
+    errors: list[str] = []
+    numbers = [step["step"] for step in steps]
+    components = [step["component"] for step in steps]
+    if len(numbers) != len(set(numbers)):
+        errors.append("duplicate step numbers found")
+    if len(components) != len(set(components)):
+        errors.append("duplicate workflow node identifiers found")
+
+    number_to_component = {step["step"]: step["component"] for step in steps}
+    component_to_number = {step["component"]: step["step"] for step in steps}
+    dependencies: dict[str, list[str]] = {step["component"]: [] for step in steps}
+
+    for step in steps:
+        for reference in step["depends_on"]:
+            if reference.lower() in {"", "none", "[]"}:
+                continue
+            numeric = re.fullmatch(r"(?:step[ -]?)?(\d+)", reference, re.IGNORECASE)
+            if numeric:
+                dependency_number = int(numeric.group(1))
+                dependency = number_to_component.get(dependency_number)
+            else:
+                dependency = slug(reference)
+                dependency_number = component_to_number.get(dependency)
+                if dependency_number is None:
+                    dependency = None
+            if dependency is None:
+                errors.append(
+                    f"Step {step['step']} depends on unknown step '{reference}'"
+                )
+                continue
+            if dependency_number is not None and dependency_number >= step["step"]:
+                errors.append(
+                    f"Step {step['step']} dependency '{reference}' must reference an earlier step"
+                )
+            if dependency not in dependencies[step["component"]]:
+                dependencies[step["component"]].append(dependency)
+
+    state = {component: 0 for component in components}
+
+    def visit(component: str) -> bool:
+        state[component] = 1
+        for dependency in dependencies.get(component, []):
+            if dependency not in state:
+                continue
+            if state[dependency] == 1 or (state[dependency] == 0 and visit(dependency)):
+                return True
+        state[component] = 2
+        return False
+
+    if any(state[node] == 0 and visit(node) for node in state):
+        errors.append("circular dependency detected in workflow steps")
+    return dependencies, errors
+
+
+def validate_steps_dag(steps: Sequence[dict]) -> tuple[bool, list[str]]:
+    """Validate step identity, dependency references, ordering, and cycles."""
+    normalized, errors = _normalize_steps(steps)
+    _, dag_errors = _analyze_dag(normalized)
+    errors.extend(dag_errors)
+    return not errors, errors
+
+
+def validate_step_bindings(
+    steps: Sequence[dict], catalog_root: Path, requires: Sequence[str] = ()
+) -> list[str]:
+    """Require every node to bind to one atomic skill or one explicit MCP tool."""
+    atomic_skills = discover_atomic_skills(catalog_root)
+    required_packages = set(requires)
+    errors: list[str] = []
+    for step in steps:
+        if step.get("skill") and step["skill"] not in atomic_skills:
+            package = step.get("package")
+            if not package:
+                errors.append(
+                    f"Step {step['step']} references missing or non-atomic skill "
+                    f"'{step['skill']}' without a package owner"
+                )
+            elif package not in required_packages:
+                errors.append(
+                    f"Step {step['step']} package '{package}' must be declared in requires"
+                )
+        elif step.get("skill") and step.get("package"):
+            errors.append(
+                f"Step {step['step']} binds local skill '{step['skill']}' but also declares a package owner"
+            )
+        if step.get("mcp_tool") and not MCP_TOOL_RE.fullmatch(step["mcp_tool"]):
+            errors.append(f"Step {step['step']} does not name one explicit MCP tool")
+    return errors
+
+
+def _prepare_steps(
+    raw_steps: Sequence[dict[str, Any]],
+    catalog_root: Path,
+    requires: Sequence[str] = (),
+) -> tuple[list[dict], list[str]]:
+    steps, errors = _normalize_steps(raw_steps)
+    dependencies, dag_errors = _analyze_dag(steps)
+    errors.extend(dag_errors)
+    errors.extend(validate_step_bindings(steps, catalog_root, requires))
+    for step in steps:
+        step["depends_on"] = dependencies.get(step["component"], [])
+        if step.get("inline_lines"):
+            errors.append(
+                f"Step {step['step']} contains inline prose; workflows may only bind capabilities"
+            )
+    return sorted(steps, key=lambda item: item["step"]), errors
+
+
+def _execution_levels(steps: Sequence[dict]) -> list[list[dict]]:
+    remaining = {step["component"]: step for step in steps}
+    completed: set[str] = set()
+    levels: list[list[dict]] = []
+    while remaining:
+        ready = sorted(
+            (
+                step
+                for step in remaining.values()
+                if set(step["depends_on"]).issubset(completed)
+            ),
+            key=lambda item: item["step"],
+        )
+        if not ready:
+            raise ValueError("workflow DAG cannot be topologically sorted")
+        levels.append(ready)
+        for step in ready:
+            completed.add(step["component"])
+            del remaining[step["component"]]
+    return levels
+
+
+def _build_team_config(
+    workflow_name: str, description: str, steps: Sequence[dict]
+) -> dict[str, Any]:
+    specialists: list[str] = []
+    assignments: dict[str, list[str]] = {}
+    for step in steps:
+        agent = step["agent"]
+        capability = step.get("skill") or step.get("mcp_tool")
+        if agent not in specialists:
+            specialists.append(agent)
+        assignments.setdefault(agent, [])
+        if capability not in assignments[agent]:
+            assignments[agent].append(capability)
+    execution_mode = (
+        "parallel"
+        if any(len(level) > 1 for level in _execution_levels(steps))
+        else "sequential"
+    )
+    return {
+        "name": f"{workflow_name.replace('-', '_')}_team",
+        "task_pattern": description,
+        "execution_mode": execution_mode,
+        "specialist_ids": specialists,
+        "tool_assignments": assignments,
+    }
+
+
+def _render_execution(steps: Sequence[dict]) -> str:
+    levels = _execution_levels(steps)
+    lines = [
+        "## Execution",
+        "",
+        "Run this workflow as a dependency-ordered DAG. Steps with no unmet "
+        "`depends_on` run in parallel; dependents run after their prerequisites "
+        "complete.",
+        "",
+    ]
+    for index, level in enumerate(levels):
+        rendered = "; ".join(
+            f"Step {step['step']} — {step['component']}" for step in level
+        )
+        label = "Run first (in parallel)" if index == 0 else f"After level {index - 1}"
+        lines.append(f"- **{label}:** {rendered}")
+    lines.extend(["", DELEGATION_FOOTER])
+    return "\n".join(lines)
+
+
+def _render_workflow_body(
+    workflow_name: str, description: str, steps: Sequence[dict]
+) -> str:
+    title = " ".join(word.capitalize() for word in workflow_name.split("-"))
+    lines = [f"# {title} Workflow", "", description, "", "## Steps", ""]
+    for step in steps:
+        dependencies = ", ".join(step["depends_on"]) or "none"
+        lines.append(
+            f"### Step {step['step']}: {step['component']} [depends_on: {dependencies}]"
+        )
+        lines.append(f"**Agent**: `{step['agent']}`")
+        if step.get("skill"):
+            lines.append(f"**Skill**: `{step['skill']}`")
+            if step.get("package"):
+                lines.append(f"**Package**: `{step['package']}`")
+        else:
+            lines.append(f"**MCP Tool**: `{step['mcp_tool']}`")
+        lines.append("")
+    lines.append(_render_execution(steps))
+    return "\n".join(lines) + "\n"
+
+
+def parse_workflow_skill(skill_md_path: Path) -> dict[str, Any] | None:
+    """Parse workflow metadata, pure bindings, and dependency annotations."""
+    if not skill_md_path.is_file():
+        return None
+    content = skill_md_path.read_text(encoding="utf-8", errors="replace")
+    frontmatter, body, error = _parse_frontmatter(content)
+    if error:
+        return {"path": skill_md_path, "error": error, "steps": []}
+
+    matches = list(STEP_RE.finditer(body))
+    steps: list[dict[str, Any]] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        block = body[match.end() : end]
+        next_section = re.search(r"^##\s+", block, re.MULTILINE)
+        if next_section:
+            block = block[: next_section.start()]
+        dependencies = []
+        if match.group(3) and match.group(3).strip().lower() not in {"none", "[]"}:
+            dependencies = [
+                item.strip() for item in match.group(3).split(",") if item.strip()
+            ]
+
+        def field(label: str) -> str | None:
+            value = re.search(
+                rf"^\*\*{re.escape(label)}\*\*:\s*`([^`]+)`\s*$",
+                block,
+                re.MULTILINE,
+            )
+            return value.group(1).strip() if value else None
+
+        recognized = re.compile(
+            r"^\*\*(?:Agent|Skill|Package|MCP Tool)\*\*:\s*`[^`]+`\s*$"
+        )
+        inline_lines = [
+            line.strip()
+            for line in block.splitlines()
+            if line.strip() and not recognized.fullmatch(line.strip())
+        ]
+        steps.append(
+            {
+                "step": int(match.group(1)),
+                "component": match.group(2).lower(),
+                "skill": field("Skill"),
+                "package": field("Package"),
+                "mcp_tool": field("MCP Tool"),
+                "agent": field("Agent") or "",
+                "depends_on": dependencies,
+                "dependency_declared": match.group(3) is not None,
+                "inline_lines": inline_lines,
             }
         )
 
     return {
         "path": skill_md_path,
+        "frontmatter": frontmatter,
+        "body": body,
         "name": frontmatter.get("name", skill_md_path.parent.name),
         "skill_type": frontmatter.get("skill_type", ""),
         "description": frontmatter.get("description", ""),
@@ -155,446 +454,310 @@ def parse_workflow_skill(skill_md_path: Path) -> Optional[Dict]:
     }
 
 
-def index_all_workflows(root_path: Path) -> List[Dict]:
-    """Find and parse all workflow skills recursively."""
-    workflows = []
-    if not root_path.exists():
-        print_premium(f"❌ Workflows root path does not exist: {root_path}", RED)
+def validate_workflow_files(
+    skill_md_path: Path, catalog_root: Path | None = None
+) -> list[str]:
+    """Validate metadata, bindings, DAG, team parity, and execution parity."""
+    parsed = parse_workflow_skill(skill_md_path)
+    if parsed is None:
+        return ["configured workflow file was not found"]
+    if parsed.get("error"):
+        return [parsed["error"]]
+
+    root = catalog_root or _find_catalog_root(skill_md_path)
+    if root is None or not root.is_dir():
+        return ["could not locate the universal_skills catalog root"]
+    errors: list[str] = []
+    name = str(parsed["name"])
+    domain = str(parsed["domain"])
+    errors.extend(validate_identifier(name, "workflow name"))
+    errors.extend(validate_identifier(domain, "workflow domain"))
+    if name != skill_md_path.parent.name:
+        errors.append("frontmatter name must equal the workflow directory name")
+    if domain != skill_md_path.parent.parent.name:
+        errors.append("frontmatter domain must equal the containing domain")
+    if not domain.endswith("-workflows"):
+        errors.append("workflow domain must end with '-workflows'")
+    if parsed["skill_type"] != "workflow":
+        errors.append("skill_type must be 'workflow'")
+    errors.extend(validate_description(str(parsed["description"])))
+
+    frontmatter = parsed["frontmatter"]
+    orchestrator = str(frontmatter.get("agent", ""))
+    errors.extend(validate_identifier(orchestrator, "workflow agent"))
+    if any(not step.get("dependency_declared") for step in parsed["steps"]):
+        errors.append("every workflow step must declare depends_on, including roots")
+
+    requires = frontmatter.get("requires") or []
+    if not isinstance(requires, list) or not all(
+        isinstance(item, str) and PACKAGE_RE.fullmatch(item) for item in requires
+    ):
+        errors.append("requires must be a list of valid package distribution names")
+        requires = []
+    steps, step_errors = _prepare_steps(parsed["steps"], root, requires)
+    errors.extend(step_errors)
+    if step_errors:
+        return errors
+
+    expected_team = _build_team_config(name, str(parsed["description"]), steps)
+    if frontmatter.get("team_config") != expected_team:
+        errors.append("frontmatter team_config does not match workflow bindings")
+
+    team_path = skill_md_path.parent / "references" / "team.yaml"
+    if not team_path.is_file():
+        errors.append("missing references/team.yaml")
+    elif yaml is not None:
+        try:
+            team = yaml.safe_load(team_path.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError as exc:
+            errors.append(f"invalid references/team.yaml: {type(exc).__name__}")
+        else:
+            if team != expected_team:
+                errors.append(
+                    "references/team.yaml does not match frontmatter team_config"
+                )
+
+    expected_execution = _render_execution(steps)
+    if expected_execution not in parsed["body"]:
+        errors.append(
+            "## Execution does not match the dependency DAG or standard footer"
+        )
+    return errors
+
+
+def index_all_workflows(root_path: Path) -> list[dict[str, Any]]:
+    """Find explicitly typed workflow skills recursively."""
+    workflows: list[dict[str, Any]] = []
+    if not root_path.is_dir():
         return workflows
-
-    for p in root_path.rglob("SKILL.md"):
-        s = str(p).replace("\\", "/")
-        if "/assets/" in s:
+    for path in sorted(root_path.rglob("SKILL.md")):
+        if "assets" in path.relative_to(root_path).parts:
             continue
-        parsed = parse_workflow_skill(p)
-        # Only surface skill-workflows: skill_type == workflow, or a *-workflows domain.
-        if parsed and (
-            parsed.get("skill_type") == "workflow"
-            or str(parsed.get("domain", "")).endswith("-workflows")
-        ):
+        parsed = parse_workflow_skill(path)
+        if parsed and parsed.get("skill_type") == "workflow":
             workflows.append(parsed)
-
     return workflows
-
-
-def validate_steps_dag(steps: List[Dict]) -> Tuple[bool, List[str]]:
-    """Validate that the steps form a Directed Acyclic Graph (DAG) and dependencies exist."""
-    errors = []
-
-    # Check that all step numbers are unique
-    step_nums = {s["step"] for s in steps}
-    if len(step_nums) != len(steps):
-        errors.append("Duplicate step numbers found.")
-
-    # Build adjacency list
-    adj = {s["step"]: [] for s in steps}
-
-    # Resolve name-based dependencies (e.g. "[depends_on: gitlab-repository-seeder]")
-    # to their step number by matching the slugified component name. This makes the
-    # validator accept the three dependency dialects used across the workflow corpus:
-    # numeric ("Step 2" / "2"), and atomic-skill-name references.
-    def _slug(s: str) -> str:
-        return re.sub(r"[-\s]+", "_", s.strip().lower())
-
-    comp_to_num = {_slug(s["component"]): s["step"] for s in steps}
-
-    # Process dependencies
-    for s in steps:
-        step_num = s["step"]
-        for dep in s["depends_on"]:
-            # Numeric form first ("Step 0" or "0").
-            dep_match = re.fullmatch(r"(?:step\s*)?(\d+)", dep.strip(), re.IGNORECASE)
-            if dep_match:
-                dep_num = int(dep_match.group(1))
-            else:
-                # Name-based form: match the slugified component name.
-                dep_num = comp_to_num.get(_slug(dep))
-                if dep_num is None:
-                    errors.append(
-                        f"Step {step_num} depends on unresolvable '{dep}' "
-                        f"(not a step number or known step component)"
-                    )
-                    continue
-
-            if dep_num not in step_nums:
-                errors.append(f"Step {step_num} depends on non-existent Step {dep_num}")
-                continue
-
-            adj[dep_num].append(step_num)  # Edge from dep to step
-
-    # Cycle detection using DFS
-    visited = {s["step"]: 0 for s in steps}  # 0=unvisited, 1=visiting, 2=visited
-
-    def has_cycle(u) -> bool:
-        visited[u] = 1
-        for v in adj[u]:
-            if visited[v] == 1:
-                return True
-            if visited[v] == 0:
-                if has_cycle(v):
-                    return True
-        visited[u] = 2
-        return False
-
-    for u in visited:
-        if visited[u] == 0:
-            if has_cycle(u):
-                errors.append("Circular dependency detected in workflow steps!")
-                break
-
-    return len(errors) == 0, errors
 
 
 def scaffold_workflow_files(
     workflow_name: str,
     domain: str,
     description: str,
-    tags: List[str],
-    requires: List[str],
-    steps: List[Dict],
+    tags: Sequence[str],
+    requires: Sequence[str],
+    steps: Sequence[dict[str, Any]],
     root_path: Path,
-) -> Optional[Path]:
-    """Scaffold a new workflow's directory and default files."""
-    dest_dir = root_path / domain / workflow_name
-    if dest_dir.exists():
-        print_premium(f"❌ Error: Workflow folder already exists: {dest_dir}", RED)
+    orchestrator: str = "workflow-orchestrator",
+) -> Path | None:
+    """Write a complete dual-mode workflow after validating every binding."""
+    root_path = root_path.resolve()
+    errors = validate_identifier(workflow_name, "workflow name")
+    errors.extend(validate_identifier(domain, "workflow domain"))
+    errors.extend(validate_identifier(orchestrator, "workflow agent"))
+    errors.extend(validate_description(description))
+    if root_path.name != "universal_skills":
+        errors.append("root_path must point to a universal_skills catalog")
+    if not domain.endswith("-workflows"):
+        errors.append("workflow domain must end with '-workflows'")
+    invalid_requires = [
+        item
+        for item in requires
+        if not isinstance(item, str) or not PACKAGE_RE.fullmatch(item)
+    ]
+    if invalid_requires:
+        errors.append("requires contains invalid package distribution names")
+    if not invalid_requires and len(requires) != len(set(requires)):
+        errors.append("requires contains duplicate package distribution names")
+    prepared_steps, step_errors = _prepare_steps(steps, root_path, requires)
+    errors.extend(step_errors)
+    if yaml is None:
+        errors.append(
+            "PyYAML is required; install universal-skills[skill-workflow-builder]"
+        )
+    if errors:
+        for error in errors:
+            print(f"Error: {error}", file=sys.stderr)
         return None
 
-    try:
-        dest_dir.mkdir(parents=True, exist_ok=False)
-        print_premium(f"✅ Created folder: {dest_dir}", GREEN)
-    except Exception as e:
-        print_premium(f"❌ Error creating directory: {e}", RED)
+    destination = root_path / domain / workflow_name
+    if destination.exists():
+        print(
+            f"Error: workflow directory already exists: {destination}", file=sys.stderr
+        )
         return None
 
-    # Generate SKILL.md content. Every skill-workflow carries skill_type: workflow
-    # (the taxonomy field the installer + atomicity gate classify on) and a
-    # metadata.version tracked in .bumpversion.cfg.
+    team_config = _build_team_config(workflow_name, description, prepared_steps)
     frontmatter = {
         "name": workflow_name,
+        "domain": domain,
         "skill_type": "workflow",
         "description": description,
-        "domain": domain,
-        "tags": tags,
-        "requires": requires,
-        "metadata": {"version": "0.1.0"},
+        "agent": orchestrator,
+        "team_config": team_config,
+        "license": "MIT",
+        "tags": list(tags) or ["workflow"],
+        "requires": list(requires),
+        "metadata": {"version": "1.2.1", "author": "Genius"},
     }
-
-    frontmatter_str = "---\n"
-    if yaml:
-        frontmatter_str += yaml.dump(frontmatter, sort_keys=False)
-    else:
-        # Simple fallback serializer
-        frontmatter_str += f"name: {workflow_name}\n"
-        frontmatter_str += "skill_type: workflow\n"
-        frontmatter_str += f"description: {description}\n"
-        frontmatter_str += f"domain: {domain}\n"
-        frontmatter_str += f"tags: {json.dumps(tags)}\n"
-        frontmatter_str += f"requires: {json.dumps(requires)}\n"
-        frontmatter_str += "metadata:\n  version: '0.1.0'\n"
-    frontmatter_str += "---\n\n"
-
-    body_str = f"# {workflow_name} Workflow\n\n{description}\n\n"
-
-    for s in steps:
-        step_num = s["step"]
-        component = s["component"]
-        desc = s.get("description", "Perform operation")
-        expected = s.get("expected", "success")
-        deps = s.get("depends_on", [])
-
-        dep_str = ""
-        if deps:
-            dep_str = f" [depends_on: {', '.join(deps)}]"
-
-        body_str += f"### Step {step_num}: {component}{dep_str}\n"
-        body_str += f"{desc}\n"
-        body_str += f"Expected: {expected}\n\n"
-
-    skill_md = dest_dir / "SKILL.md"
-    try:
-        skill_md.write_text(frontmatter_str + body_str, encoding="utf-8")
-        print_premium(f"✅ Created SKILL.md in {dest_dir}", GREEN)
-    except Exception as e:
-        print_premium(f"❌ Error writing SKILL.md: {e}", RED)
-        return None
-
-    # Create default team.yaml reference
-    references_dir = dest_dir / "references"
-    try:
-        references_dir.mkdir(exist_ok=True)
-        team_yaml = references_dir / "team.yaml"
-        team_content = f"""name: {workflow_name.replace("_", " ").title()} Swarm
-task_pattern: Perform {workflow_name.replace("_", " ").title()} operations concurrently across all target layers
-specialist_ids:
-  - knowledge-graph
-"""
-        team_yaml.write_text(team_content, encoding="utf-8")
-        print_premium(f"✅ Created default team.yaml in {references_dir}", GREEN)
-    except Exception as e:
-        print_premium(f"❌ Error creating references: {e}", RED)
-
-    return dest_dir
-
-
-def query_local_kg(db_path: Path) -> List[Tuple]:
-    """Query a local SQLite Knowledge Graph database for existing workflows or specialists."""
-    if not db_path.exists():
-        print_premium(f"⚠️ Warning: Database file not found at {db_path}", YELLOW)
-        return []
-
-    try:
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-
-        # Look for table names first
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cursor.fetchall()]
-
-        results = []
-        if "nodes" in tables:
-            # Graph-OS structured schema search
-            cursor.execute("SELECT node_id, node_type, properties FROM nodes LIMIT 20;")
-            results = cursor.fetchall()
-            print_premium(
-                f"🤖 Connected to local KG database. Found {len(results)} sample nodes:",
-                BLUE,
-            )
-            for row in results:
-                print(f"  - [{row[1]}] ID: {row[0]}")
-        else:
-            print_premium(
-                "🤖 Connected to SQLite, but did not recognize standard graph-os schema.",
-                YELLOW,
-            )
-
-        conn.close()
-        return results
-    except Exception as e:
-        print_premium(f"❌ SQLite connection failed: {e}", RED)
-        return []
-
-
-def handle_scaffold_flow(args):
-    """Orchestrate the scaffolding command execution."""
-    root_path = Path(args.root) if args.root else get_default_workflows_root()
-
-    print_premium(
-        f"🚀 Preparing to scaffold workflow: '{args.name}' under '{args.domain}' domain...",
-        BOLD + BLUE,
+    frontmatter_text = yaml.safe_dump(
+        frontmatter, sort_keys=False, allow_unicode=True
+    ).strip()
+    skill_text = f"---\n{frontmatter_text}\n---\n\n" + _render_workflow_body(
+        workflow_name, description, prepared_steps
     )
 
-    # Gather steps interactively if steps parameter is omitted
-    steps = []
-    if not args.interactive and not args.steps_json:
-        # Provide a default Step 0
-        steps = [
-            {
-                "step": 0,
-                "component": "user-interaction",
-                "description": f"Gather user specification for {args.name}",
-                "expected": "spec_details",
-                "depends_on": [],
-            }
-        ]
+    try:
+        references = destination / "references"
+        references.mkdir(parents=True, exist_ok=False)
+        (destination / "SKILL.md").write_text(skill_text, encoding="utf-8")
+        (references / "team.yaml").write_text(
+            yaml.safe_dump(team_config, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+    except OSError as exc:
+        shutil.rmtree(destination, ignore_errors=True)
+        print(f"Error: failed to scaffold workflow: {type(exc).__name__}", file=sys.stderr)
+        return None
+
+    print(f"Created workflow: {destination}")
+    return destination
+
+
+def _interactive_steps() -> list[dict[str, Any]]:
+    steps: list[dict[str, Any]] = []
+    number = 1
+    while True:
+        binding_kind = (
+            input(f"Step {number} binding [skill/mcp, Enter to finish]: ")
+            .strip()
+            .lower()
+        )
+        if not binding_kind:
+            if steps:
+                return steps
+            print("At least one step is required.", file=sys.stderr)
+            continue
+        if binding_kind not in {"skill", "mcp"}:
+            print("Choose 'skill' or 'mcp'.", file=sys.stderr)
+            continue
+        binding = input(
+            "Atomic skill name: " if binding_kind == "skill" else "Exact MCP tool: "
+        ).strip()
+        package = ""
+        if binding_kind == "skill":
+            package = input("Package owner for an external skill [local]: ").strip()
+        node_id = input("Optional unique node id: ").strip()
+        agent = input("Specialist id [workflow-executor]: ").strip()
+        dependencies = input("Earlier nodes or Step N, comma-separated: ").strip()
+        step: dict[str, Any] = {
+            "step": number,
+            "agent": agent or "workflow-executor",
+            "depends_on": [
+                item.strip() for item in dependencies.split(",") if item.strip()
+            ],
+        }
+        step["skill" if binding_kind == "skill" else "mcp_tool"] = binding
+        if package:
+            step["package"] = package
+        if node_id:
+            step["id"] = node_id
+        steps.append(step)
+        number += 1
+
+
+def _handle_scaffold(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve() if args.root else get_default_workflows_root()
+    if args.interactive:
+        steps = _interactive_steps()
     elif args.steps_json:
         try:
             steps = json.loads(args.steps_json)
-        except Exception as e:
-            print_premium(f"❌ Invalid steps JSON: {e}", RED)
-            sys.exit(1)
+        except json.JSONDecodeError as exc:
+            print(f"Error: invalid steps JSON: {type(exc).__name__}", file=sys.stderr)
+            return 1
+        if not isinstance(steps, list):
+            print("Error: --steps-json must contain a JSON list", file=sys.stderr)
+            return 1
     else:
-        # Interactive step collection
-        print_premium("\n--- Interactive Step Configuration ---", BOLD)
-        step_idx = 0
-        while True:
-            print_premium(f"\n[Step {step_idx}]", BOLD + BLUE)
-            component = input(
-                "Enter component/tool (e.g. portainer-mcp, user-interaction) or press Enter to finish: "
-            ).strip()
-            if not component:
-                if step_idx == 0:
-                    print_premium("Must enter at least one step!", RED)
-                    continue
-                break
-
-            description = input("Enter description of what this step does: ").strip()
-            expected = input(
-                "Enter expected output/variables (e.g. endpoint_id): "
-            ).strip()
-            deps_raw = input(
-                "Enter dependencies as comma-separated step numbers (e.g. 0,1) [None]: "
-            ).strip()
-
-            depends_on = []
-            if deps_raw:
-                depends_on = [
-                    f"Step {d.strip()}" for d in deps_raw.split(",") if d.strip()
-                ]
-
-            steps.append(
-                {
-                    "step": step_idx,
-                    "component": component,
-                    "description": description,
-                    "expected": expected,
-                    "depends_on": depends_on,
-                }
-            )
-            step_idx += 1
-
-    # Validate DAG
-    is_valid, errors = validate_steps_dag(steps)
-    if not is_valid:
-        print_premium("❌ Step validation failed:", RED)
-        for err in errors:
-            print(f"  - {err}")
-        sys.exit(1)
-
-    tags = (
-        [t.strip() for t in args.tags.split(",") if t.strip()]
-        if args.tags
-        else ["workflow"]
+        print("Error: provide --steps-json or --interactive", file=sys.stderr)
+        return 1
+    tags = [item.strip() for item in args.tags.split(",") if item.strip()]
+    requires = [item.strip() for item in args.requires.split(",") if item.strip()]
+    result = scaffold_workflow_files(
+        args.name,
+        args.domain,
+        args.description,
+        tags,
+        requires,
+        steps,
+        root,
+        orchestrator=args.orchestrator,
     )
-    requires = (
-        [r.strip() for r in args.requires.split(",") if r.strip()]
-        if args.requires
-        else []
-    )
+    return 0 if result else 1
 
-    dest = scaffold_workflow_files(
-        args.name, args.domain, args.description, tags, requires, steps, root_path
-    )
 
-    if dest:
-        print_premium(
-            f"\n🎉 Successfully created and registered workflow at {dest}!",
-            BOLD + GREEN,
+def _handle_validate(args: argparse.Namespace) -> int:
+    path = Path(args.path).resolve()
+    root = Path(args.root).resolve() if args.root else _find_catalog_root(path)
+    errors = validate_workflow_files(path, root)
+    if errors:
+        print("Workflow validation failed:", file=sys.stderr)
+        for error in errors:
+            print(f"  - {error}", file=sys.stderr)
+        return 1
+    print(f"Workflow is valid: {path}")
+    return 0
+
+
+def _handle_list(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve() if args.root else get_default_workflows_root()
+    workflows = index_all_workflows(root)
+    for workflow in workflows:
+        print(
+            f"{workflow['domain']}/{workflow['name']} ({len(workflow['steps'])} steps)"
         )
+    return 0
 
 
-def handle_list_flow(args):
-    """Orchestrate the list command execution."""
-    root_path = Path(args.root) if args.root else get_default_workflows_root()
-    print_premium(f"🔍 Indexing all workflow skills in {root_path}...", BOLD + BLUE)
-
-    workflows = index_all_workflows(root_path)
-    print_premium(
-        f"Found {len(workflows)} active workflow-based skills:\n", BOLD + GREEN
-    )
-
-    # Sort by domain
-    by_domain = {}
-    for wf in workflows:
-        dom = wf["domain"] or "other"
-        by_domain.setdefault(dom, []).append(wf)
-
-    for dom, wfs in by_domain.items():
-        print_premium(f"📁 Domain: {dom}", BOLD + BLUE)
-        for wf in wfs:
-            print(f"  - {BOLD}{wf['name']}{RESET}")
-            print(f"    Description: {wf['description']}")
-            print(f"    Requires: {wf['requires']}")
-            print(f"    Steps ({len(wf['steps'])}):")
-            for s in wf["steps"]:
-                dep_str = (
-                    f" (Depends: {', '.join(s['depends_on'])})"
-                    if s["depends_on"]
-                    else ""
-                )
-                print(
-                    f"      * Step {s['step']}: [{s['component']}] -> {s['description']}{dep_str}"
-                )
-        print()
-
-
-def handle_validate_flow(args):
-    """Orchestrate the validation command execution."""
-    path = Path(args.path)
-    print_premium(f"🧐 Validating workflow skill at {path}...", BOLD + BLUE)
-
-    parsed = parse_workflow_skill(path)
-    if not parsed:
-        print_premium("❌ Failed to parse workflow file.", RED)
-        sys.exit(1)
-
-    is_valid, errors = validate_steps_dag(parsed["steps"])
-    if is_valid:
-        print_premium(
-            "✅ Workflow passes topological DAG checks! No circular dependencies.",
-            GREEN,
-        )
-    else:
-        print_premium("❌ Circular dependencies or broken references detected:", RED)
-        for err in errors:
-            print(f"  - {err}")
-        sys.exit(1)
-
-
-def handle_query_kg_flow(args):
-    """Orchestrate querying the local SQLite database."""
-    db_path = (
-        Path(args.db)
-        if args.db
-        else Path("/home/apps/workspace/knowledge_graph_test.db")
-    )
-    query_local_kg(db_path)
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Skill Workflow Builder CLI")
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # List command
-    list_parser = subparsers.add_parser("list", help="List all current workflows")
-    list_parser.add_argument("--root", help="Custom path to the workflows directory")
+    list_parser = subparsers.add_parser("list", help="List workflow metadata")
+    list_parser.add_argument("--root", help="Path to the universal_skills catalog")
+    list_parser.set_defaults(handler=_handle_list)
 
-    # Scaffold command
     scaffold_parser = subparsers.add_parser(
-        "scaffold", help="Scaffold a new workflow skill"
+        "scaffold", help="Scaffold a pure skill workflow"
     )
-    scaffold_parser.add_argument("name", help="Name of the workflow (e.g. check_disk)")
+    scaffold_parser.add_argument("name", help="Lowercase kebab-case workflow name")
     scaffold_parser.add_argument(
-        "--domain", required=True, help="Domain directory (e.g. infra)"
-    )
-    scaffold_parser.add_argument(
-        "--description", required=True, help="High level description"
-    )
-    scaffold_parser.add_argument("--tags", help="Comma-separated tags list")
-    scaffold_parser.add_argument(
-        "--requires", help="Comma-separated required tools list"
+        "--domain", required=True, help="A top-level *-workflows domain"
     )
     scaffold_parser.add_argument(
-        "--root", help="Custom path to the workflows directory"
+        "--description",
+        required=True,
+        help="Routing description containing what it does and 'Use when'",
     )
-    scaffold_parser.add_argument(
-        "--interactive", action="store_true", help="Interactively enter step details"
-    )
-    scaffold_parser.add_argument(
-        "--steps-json", help="JSON string representing workflow steps"
-    )
+    scaffold_parser.add_argument("--tags", default="workflow")
+    scaffold_parser.add_argument("--requires", default="")
+    scaffold_parser.add_argument("--root", help="Path to the universal_skills catalog")
+    scaffold_parser.add_argument("--orchestrator", default="workflow-orchestrator")
+    step_mode = scaffold_parser.add_mutually_exclusive_group(required=True)
+    step_mode.add_argument("--interactive", action="store_true")
+    step_mode.add_argument("--steps-json", help="JSON list of pure workflow nodes")
+    scaffold_parser.set_defaults(handler=_handle_scaffold)
 
-    # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate a workflow file")
-    validate_parser.add_argument("path", help="Path to SKILL.md of the workflow")
-
-    # Query local KG command
-    query_parser = subparsers.add_parser(
-        "query-kg", help="Query local Knowledge Graph SQLite"
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate a complete workflow"
     )
-    query_parser.add_argument("--db", help="Path to the database file")
+    validate_parser.add_argument("path", help="Path to the workflow SKILL.md")
+    validate_parser.add_argument("--root", help="Path to the universal_skills catalog")
+    validate_parser.set_defaults(handler=_handle_validate)
 
-    args = parser.parse_args()
-
-    if args.command == "list":
-        handle_list_flow(args)
-    elif args.command == "scaffold":
-        handle_scaffold_flow(args)
-    elif args.command == "validate":
-        handle_validate_flow(args)
-    elif args.command == "query-kg":
-        handle_query_kg_flow(args)
+    args = parser.parse_args(argv)
+    return args.handler(args)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -98,7 +98,7 @@ def _check_skill_md(skill_md: Path, root: Path) -> list[str]:
     try:
         data = yaml.safe_load(fm_text) or {}
     except Exception as e:  # noqa: BLE001
-        violations.append(f"{rel}: transformed frontmatter fails to parse: {e}")
+        violations.append(f"{rel}: transformed frontmatter fails to parse: {type(e).__name__}")
         return violations
     if not isinstance(data, dict):
         violations.append(f"{rel}: transformed frontmatter is not a mapping")

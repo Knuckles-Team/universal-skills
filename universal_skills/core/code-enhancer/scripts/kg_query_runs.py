@@ -21,6 +21,10 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+from urllib.request import Request
+
+from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
 # Cross-repo Cypher library (run against graph-os; CodeEnhancementRun/DomainScore/Finding/Repo).
 QUERIES: dict[str, str] = {
@@ -61,22 +65,29 @@ def execute_via_mcp(cypher: str, endpoint: str | None = None) -> dict[str, Any]:
         return {
             "status": "skipped",
             "reason": "no GRAPH_OS_MCP_URL configured",
-            "cypher": cypher,
         }
     try:
-        import urllib.request
-
         body = json.dumps({"cypher": cypher}).encode()
-        req = urllib.request.Request(
+        req = Request(
             url.rstrip("/") + "/graph_query",
             data=body,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - operator-configured URL
-            return {"status": "ok", "rows": json.loads(resp.read().decode() or "[]")}
-    except Exception as e:  # noqa: BLE001
-        return {"status": "error", "error": str(e), "cypher": cypher}
+        host = (urlsplit(url).hostname or "").lower().rstrip(".")
+        rows, _ = open_json(
+            req,
+            policy=UrlPolicy(
+                frozenset({host}),
+                allow_private_hosts=frozenset({host}),
+                allow_http_loopback=True,
+            ),
+            timeout=30,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return {"status": "ok", "rows": rows if isinstance(rows, list) else []}
+    except (SafeHttpError, ValueError) as e:
+        return {"status": "error", "error": type(e).__name__}
 
 
 def _load_reports(d: Path) -> dict[str, dict]:

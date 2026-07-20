@@ -162,7 +162,7 @@ def _measure_import_rss(repo: Path, package: str) -> dict[str, Any]:
         data["resident_mb"] = round(data["after"], 1)
         return data
     except (subprocess.TimeoutExpired, json.JSONDecodeError, IndexError) as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def _measure_importtime(repo: Path, package: str) -> dict[str, Any]:

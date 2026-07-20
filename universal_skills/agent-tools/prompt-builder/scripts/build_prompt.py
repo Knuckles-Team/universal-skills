@@ -108,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     if errs and not args.scaffold:
         print("Refusing to write non-canonical prompt:", file=sys.stderr)
         for e in errs:
-            print(f"  - {e}", file=sys.stderr)
+            print(f"  - {type(e).__name__}", file=sys.stderr)
         return 1
 
     StructuredPrompt.model_validate(blueprint).save(args.output)

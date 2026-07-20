@@ -9,7 +9,7 @@ from importlib.resources import files, as_file
 from typing import Iterable, Optional
 
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 
 def get_universal_skills_package_name() -> str:
@@ -195,7 +195,7 @@ def resolve_mcp_reference(filename: str) -> Optional[str]:
         import logging
 
         logging.getLogger(__name__).debug(
-            f"Error resolving MCP reference {filename}: {e}"
+            f"Error resolving configured MCP reference: {type(e).__name__}"
         )
 
     return None
@@ -240,10 +240,10 @@ def portable_name(name: str, *, max_len: int = DEFAULT_MAX_NAME) -> str:
         base = f"{base}_"
     full = f"{base}{suffix}"
     if len(full) > max_len:
-        digest = hashlib.sha1(name.encode("utf-8"), usedforsecurity=False).hexdigest()[
-            :8
-        ]
-        keep = max(1, max_len - len(suffix) - 9)  # 9 = '-' + 8-char hash
+        if max_len < len(suffix) + 34:
+            raise ValueError("path component budget is too small for a safe digest")
+        digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:32]
+        keep = max(1, max_len - len(suffix) - 33)  # '-' + 128-bit digest
         full = f"{base[:keep]}-{digest}{suffix}"
     return full or "_"
 
@@ -268,7 +268,9 @@ def portable_relpath(
     if len(joined) <= max_total:
         return joined
     prefix = "/".join(safe[:-1])
-    budget = max(8, max_total - len(prefix) - 1)
+    budget = max_total - len(prefix) - 1
+    if budget < 34:
+        raise ValueError("relative path budget is too small for a safe digest")
     safe[-1] = portable_name(safe[-1], max_len=budget)
     return "/".join(safe)
 

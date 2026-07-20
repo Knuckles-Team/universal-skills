@@ -20,7 +20,7 @@ team_config:
 tags: ['postiz', 'social-media', 'marketing', 'scheduling', 'postiz-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Postiz Scheduler Workflow
@@ -31,7 +31,7 @@ Automatically lists active social integrations, discovers slot availabilities, p
 
 ## Steps
 
-### Step 0: Postiz Agent
+### Step 0: Postiz Integration Discovery [skill: postiz-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
@@ -45,14 +45,14 @@ Expected: `active_integrations, recommended_slots`
 Present active channels and slot suggestions. Prompt the user for post body text, image/video attachment URLs, and schedule parameters.
 Expected: `post_content, file_url, release_time`
 
-### Step 2: Postiz Agent
+### Step 2: Postiz Post Scheduling [skill: postiz-agent]
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
 Create and schedule the post (uploading the file attachment if provided) using the postiz_posts and postiz_uploads tools.
 Expected: `post_creation_result`
 
-### Step 3: KG Persistence [depends_on: postiz-agent]
+### Step 3: KG Persistence [depends_on: Step 2]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Postiz Agent; Step 1 — User Interaction; Step 2 — Postiz Agent
+- **Run first (in parallel):** Step 0 — Postiz Integration Discovery; Step 1 — User Interaction; Step 2 — Postiz Post Scheduling
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

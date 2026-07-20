@@ -177,7 +177,7 @@ def _extract_paper_profile(paper_path: str) -> dict:
         profile["content_sample"] = content[:500]
 
     except Exception as e:
-        profile["error"] = str(e)
+        profile["error"] = type(e).__name__
 
     profile["keywords"] = list(profile["keywords"])
     return profile
@@ -369,10 +369,13 @@ def main():
                 item_type = "paper" if label in ("Article", "Document") else "codebase"
 
                 def _parse_list_prop(val):
-                    if isinstance(val, list): return val
+                    if isinstance(val, list):
+                        return val
                     if isinstance(val, str):
-                        try: return json.loads(val)
-                        except: return []
+                        try:
+                            return json.loads(val)
+                        except json.JSONDecodeError:
+                            return []
                     return []
 
                 content = row.get("content", "")
@@ -386,7 +389,7 @@ def main():
                     "patterns": _parse_list_prop(row.get("patterns")),
                     "modules": _parse_list_prop(row.get("modules")),
                     "content_sample": content_sample,
-                    "is_research": item_type == "paper"
+                    "is_research": item_type == "paper",
                 }
 
                 scores = score_item(target_profile, item_profile)
@@ -400,7 +403,7 @@ def main():
                 )
 
         except Exception as e:
-            print(json.dumps({"error": f"Failed to query Knowledge Graph: {e}"}))
+            print(json.dumps({"error": f"Failed to query Knowledge Graph: {type(e).__name__}"}))
             sys.exit(1)
     else:
         for item_path in args.items:

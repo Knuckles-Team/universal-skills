@@ -13,9 +13,31 @@ principal's allow rules.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 PROFILES = ("full-access", "read-only", "server-scoped", "role-based")
+
+
+def write_private_json(path: Path, value: dict) -> None:
+    """Atomically write policy metadata with owner-only permissions."""
+
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    temp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(temp, flags, 0o600)
+    try:
+        payload = (json.dumps(value, indent=2) + "\n").encode("utf-8")
+        offset = 0
+        while offset < len(payload):
+            offset += os.write(descriptor, payload[offset:])
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    os.replace(temp, path)
+    os.chmod(path, 0o600)
 
 
 def server_prefix(server: str) -> str:
@@ -106,7 +128,7 @@ def upsert_client_rules(policy_path: Path, client_id: str, rules: list[dict]) ->
         if r.get("name") == "_base-meta-tools" or not _is_clients_rule(r, client_id)
     ]
     policy["rules"] = kept + rules
-    policy_path.write_text(json.dumps(policy, indent=2) + "\n")
+    write_private_json(policy_path, policy)
     return policy
 
 
@@ -119,5 +141,5 @@ def remove_client_rules(policy_path: Path, client_id: str) -> int:
         for r in policy.get("rules", [])
         if r.get("name") == "_base-meta-tools" or not _is_clients_rule(r, client_id)
     ]
-    policy_path.write_text(json.dumps(policy, indent=2) + "\n")
+    write_private_json(policy_path, policy)
     return before - len(policy["rules"])

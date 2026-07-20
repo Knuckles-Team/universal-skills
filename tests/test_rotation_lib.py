@@ -26,7 +26,7 @@ def test_redact_token_shapes():
     samples = {
         "github": "GITHUB_TOKEN=ghp_" + "A" * 36,
         "gitlab": "token glpat-" + "B" * 20,
-        "langfuse": "sk-lf-fa2ee252-4711-4298-9d9c-c73b21f23ac6",
+        "langfuse": "sk-lf-test-placeholder-value",
         "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
         "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ."
         "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",

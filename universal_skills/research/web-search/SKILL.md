@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Web Search
@@ -56,6 +56,15 @@ python scripts/search_duckduckgo.py --query "your search query" --max-results 5 
 - Utilizes a given Searxng instance (public or self-hosted).
 - Requires the `SEARXNG_URL` environment variable (e.g., `https://searx.be`).
 - A privacy-respecting metasearch engine.
+
+### Transport policy
+
+All providers use the agent-utilities outbound-source boundary. TLS verification,
+private CA bundles, proxies, approved private hosts, redirect policy, and response
+limits come from `AgentConfig`/XDG configuration (`TLS_PROFILE_REF`,
+`TLS_CA_BUNDLE_REF`, and `SOURCE_HTTP_*`). Provider scripts do not expose a
+`verify=False` or `--insecure` shortcut and do not persist endpoint or credential
+material.
 
 ## Best Practices
 - Prefer DuckDuckGo if no API keys are available in the environment.

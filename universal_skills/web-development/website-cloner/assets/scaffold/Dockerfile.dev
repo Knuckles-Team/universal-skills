@@ -1,9 +1,10 @@
-FROM node:24-alpine
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci --no-audit --no-fund \
+    && chown -R node:node /app
 
 # Source files are mounted as a volume at runtime for hot reload
 
@@ -12,4 +13,5 @@ EXPOSE 3000
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 
+USER 1000:1000
 CMD ["npm", "run", "dev"]

@@ -1,5 +1,12 @@
 """Pytest configuration for universal-skills tests."""
 
+import os
+
+import pytest
+
+
+os.environ["AGENT_UTILITIES_TESTING"] = "true"
+
 
 def pytest_configure(config):
     """Register custom markers."""
@@ -7,13 +14,6 @@ def pytest_configure(config):
         "markers",
         "concept(id): mark test with a concept ID for traceability",
     )
-
-
-import os
-import pytest
-
-os.environ["AGENT_UTILITIES_TESTING"] = "true"
-
 
 @pytest.fixture(autouse=True)
 def isolate_graph_db(monkeypatch, tmp_path):

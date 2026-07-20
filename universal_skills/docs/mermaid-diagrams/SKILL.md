@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Mermaid Diagramming
@@ -210,19 +210,9 @@ flowchart LR
 - **Overcomplexity** — Split complex diagrams into multiple focused views
 - **Missing relationships** — Document all important connections between entities
 
----
-
-## Reference Files
-
-For in-depth guidance on specific diagram types, see:
-
-- [references/class-diagrams.md](references/class-diagrams.md) — Domain modeling, relationships (association, composition, aggregation, inheritance), multiplicity, methods/properties
-- [references/sequence-diagrams.md](references/sequence-diagrams.md) — Actors, participants, messages (sync/async), activations, loops, alt/opt/par blocks, notes
-- [references/flowcharts.md](references/flowcharts.md) — Node shapes, connections, decision logic, subgraphs, styling
-- [references/erd-diagrams.md](references/erd-diagrams.md) — Entities, relationships, cardinality, keys, attributes
-- [references/c4-diagrams.md](references/c4-diagrams.md) — System context, container, component diagrams, boundaries
-- [references/architecture-diagrams.md](references/architecture-diagrams.md) — Cloud services, infrastructure, CI/CD deployments
-- [references/advanced-features.md](references/advanced-features.md) — Themes, styling, configuration, layout options
+Renderer support varies, especially for C4 and newer configuration features. If a
+requested diagram type is unavailable in the target renderer, express the same
+relationships with a portable flowchart and retain the architecture-level labels.
 
 ---
 

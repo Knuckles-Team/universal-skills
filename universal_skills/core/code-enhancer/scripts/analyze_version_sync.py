@@ -73,7 +73,7 @@ def analyze_version_sync(root_dir: str = ".") -> dict:
             "domain": "Version Sync Analysis",
             "score": score,
             "grade": "F",
-            "findings": [f"Failed to parse .bumpversion.cfg: {e}"],
+            "findings": [f"Failed to parse .bumpversion.cfg: {type(e).__name__}"],
             "justifications": justifications,
             "details": {"tracked_files": [], "drifted_files": []},
         }

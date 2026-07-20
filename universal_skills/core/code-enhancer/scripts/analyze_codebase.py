@@ -89,7 +89,9 @@ def _analyze_file(filepath: Path) -> dict:
     if len(block) >= 4:
         normalized_blocks.append("\n".join(block))
 
-    block_hashes = [hashlib.md5(b.encode()).hexdigest() for b in normalized_blocks]
+    block_hashes = [
+        hashlib.sha256(block.encode()).hexdigest() for block in normalized_blocks
+    ]
 
     return {
         "file": str(filepath),

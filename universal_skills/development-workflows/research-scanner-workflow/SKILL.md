@@ -22,7 +22,7 @@ team_config:
 tags: [dev-workflows, research-scanner]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Research Scanner Workflow
@@ -33,19 +33,19 @@ Discover research papers using ScholarX and bulk ingest them into the Graph-OS K
 
 ## Steps
 
-### Step 0: User Interaction
+### Step 0: collect-research-request [skill: user-interaction]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
 
 Get the user's research focus query, lookback days, specific target scientific sources (e.g., arxiv, biorxiv), and maximum results.
 
-### Step 1: Scholarx Mcp
+### Step 1: search-papers [skill: scholarx-mcp]
 **Agent**: `builder-agent`
 **Tools**: `rep_rm_projects`
 
 Search for the research papers based on the search parameters using the `scholarx_search` action with `action='search'`.
 
-### Step 2: Scholarx Mcp
+### Step 2: download-papers [skill: scholarx-mcp]
 **Agent**: `validator-agent`
 **Tools**: `rep_rm_projects, gl_pipelines`
 
@@ -57,13 +57,13 @@ Submit bulk download jobs for the discovered paper IDs via `scholarx_storage` wi
 
 Ingest the newly downloaded research PDFs into the Knowledge Graph via the ingest action `mcp_graph-os_graph_ingest` with `action='ingest'`.
 
-### Step 4: User Interaction
+### Step 4: present-research-summary [skill: user-interaction]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
 
 Display the completed research summary and details of the ingested papers to the user.
 
-### Step 5: KG Persistence [depends_on: user-interaction]
+### Step 5: KG Persistence [depends_on: Step 0, Step 4]
 **Agent**: `publisher-agent`
 **Tools**: `graph_write`
 
@@ -79,7 +79,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — User Interaction; Step 1 — Scholarx Mcp; Step 2 — Scholarx Mcp; Step 3 — Graph Os; Step 4 — User Interaction
+- **Run first (in parallel):** Step 0 — collect-research-request; Step 1 — search-papers; Step 2 — download-papers; Step 3 — Graph Os; Step 4 — present-research-summary
 - **After level 0:** Step 5 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

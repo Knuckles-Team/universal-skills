@@ -12,7 +12,7 @@ def init_scaffold():
         scaffold_path = skill_root / "assets" / "scaffold"
 
         if not scaffold_path.exists():
-            print(f"Error: Scaffold directory not found at {scaffold_path}")
+            print("Error: configured scaffold directory was not found")
             sys.exit(1)
 
         target_dir = Path.cwd()
@@ -43,7 +43,7 @@ def init_scaffold():
         print("3. Start cloning using the instructions in SKILL.md")
 
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected error occurred: {type(e).__name__}")
         sys.exit(1)
 
 

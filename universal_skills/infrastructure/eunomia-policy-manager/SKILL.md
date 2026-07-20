@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [eunomia, authorization, policies, mcp, security, governance]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
@@ -24,7 +24,7 @@ Atomic operations for managing authorization policies on the centralized Eunomia
 
 ## Prerequisites
 
-- **Eunomia Server** running and reachable (default: `http://eunomia.arpa`).
+- **Eunomia Server** connection resolved from an AgentConfig connection profile.
 - Python 3.10+ with `eunomia-sdk` installed (`pip install eunomia-sdk`).
 - Policy JSON files in `services/eunomia/policies/` (for push operations).
 
@@ -32,10 +32,11 @@ Atomic operations for managing authorization policies on the centralized Eunomia
 
 | Variable | Default | Description |
 |---|---|---|
-| `EUNOMIA_ENDPOINT` | `http://eunomia.arpa` | URL of the centralized Eunomia authorization server |
+| `EUNOMIA_ENDPOINT` | required at runtime | URL resolved from the configured Eunomia connection profile |
 | `POLICY_DIR` | `services/eunomia/policies/` | Directory containing per-service policy JSON files |
 
-Override these by passing `--endpoint` and `--policy-dir` CLI arguments to the scripts.
+Resolve the connection through AgentConfig and pass its runtime value with
+`--endpoint`; never commit it. Override the policy source with `--policy-dir`.
 
 ## Operations
 
@@ -125,7 +126,8 @@ Each policy file follows this structure:
 
 ## Error Handling
 
-- **Connection refused**: Eunomia server is not running. Verify with `curl http://eunomia.arpa/health`.
+- **Connection refused**: run the AgentConfig/doctor connection check for the
+  selected Eunomia profile; do not substitute a stored endpoint or disable TLS.
 - **eunomia-sdk not installed**: Run `pip install eunomia-sdk`.
 - **Invalid policy JSON**: The push script validates against Pydantic schemas and reports specific validation errors.
 - **Policy already exists**: The push script deletes existing policies before re-creating (idempotent).

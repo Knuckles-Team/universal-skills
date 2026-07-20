@@ -1,14 +1,27 @@
 services:
   app:
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: ${MCP_CONTAINER_MEMORY_LIMIT:-2g}
+    cpus: ${MCP_CONTAINER_CPU_LIMIT:-1.0}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+      - /app/.next/cache:rw,noexec,nosuid,nodev,uid=10001,gid=10001,size=64m
     build:
       context: .
       dockerfile: Dockerfile
       target: runner
-    image: ai-website-cloner:latest
+    image: ai-website-cloner:local
     container_name: ai-website-cloner
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
+      - "127.0.0.1:${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
@@ -25,14 +38,26 @@ services:
       start_period: 10s
 
   dev:
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: ${MCP_CONTAINER_MEMORY_LIMIT:-2g}
+    cpus: ${MCP_CONTAINER_CPU_LIMIT:-1.0}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
     build:
       context: .
       dockerfile: Dockerfile.dev
-    image: ai-website-cloner:dev
+    image: ai-website-cloner:dev-local
     container_name: ai-website-cloner-dev
     restart: unless-stopped
     ports:
-      - "${DEV_PORT:-3001}:3000"
+      - "127.0.0.1:${DEV_PORT:-3001}:3000"
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1

@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [branding, identity, design-system, typography, color, voice-tone]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Brand Guidelines Creation

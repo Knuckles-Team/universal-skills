@@ -258,27 +258,27 @@ def _normalize_layout_node(node: Any, *, path: str = "tmux.layout") -> Optional[
     if node is None or node == {}:
         return None
     if not isinstance(node, dict):
-        raise ValueError(f"Invalid {path}: expected a mapping")
+        raise ValueError("Invalid configured layout: expected a mapping")
 
     allowed_keys = {"split", "panes"}
     extra_keys = set(node.keys()) - allowed_keys
     if extra_keys:
         extra = ", ".join(sorted(extra_keys))
-        raise ValueError(f"Invalid {path}: unexpected keys {extra}")
+        raise ValueError(f"Invalid configured layout: {len(extra)} unexpected key(s)")
 
     split = node.get("split")
     panes = node.get("panes")
     if split is None or panes is None:
-        raise ValueError(f"Invalid {path}: expected 'split' and 'panes'")
+        raise ValueError("Invalid configured layout: expected 'split' and 'panes'")
     if not isinstance(split, str):
-        raise ValueError(f"Invalid {path}: 'split' must be a string")
+        raise ValueError("Invalid configured layout: 'split' must be a string")
 
     split_key = _LAYOUT_SPLIT_ALIASES.get(split.strip().lower())
     if split_key not in {"h", "v"}:
-        raise ValueError(f"Invalid {path}: 'split' must be 'h' or 'v'")
+        raise ValueError("Invalid configured layout: 'split' must be 'h' or 'v'")
 
     if not isinstance(panes, list) or len(panes) != 2:
-        raise ValueError(f"Invalid {path}: 'panes' must be a list of 2 items")
+        raise ValueError("Invalid configured layout: 'panes' must contain two items")
 
     return {
         "split": split_key,
@@ -750,7 +750,7 @@ def inject_system_prompt(agent_id: str, prompt: str) -> bool:
 
         return True
     except Exception as e:
-        print(f"  Debug: Injection error - {e}")
+        print(f"  Debug: Injection error - {type(e).__name__}")
         return False
     finally:
         import os

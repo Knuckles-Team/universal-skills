@@ -47,13 +47,25 @@ import hashlib
 import json
 import os
 import time
-import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+from urllib.request import Request
+
+from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
 # ---------------------------------------------------------------------------
 # Tier 1 — graph-os / the ingested code KG
 # ---------------------------------------------------------------------------
+
+
+def _endpoint_policy(url: str) -> UrlPolicy:
+    host = (urlsplit(url).hostname or "").lower().rstrip(".")
+    return UrlPolicy(
+        frozenset({host}),
+        allow_private_hosts=frozenset({host}),
+        allow_http_loopback=True,
+    )
 
 
 def kg_code_context(
@@ -79,16 +91,20 @@ def kg_code_context(
     body = json.dumps(
         {"query": query, "intent": intent, "top_k": top_k, "node_id": node_id}
     ).encode("utf-8")
-    req = urllib.request.Request(
+    req = Request(
         url + "/api/graph/analyze/code-context",
         data=body,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - operator-configured URL
-            payload = json.loads(resp.read().decode("utf-8") or "{}")
-    except Exception:  # noqa: BLE001 - best-effort; any failure -> fall through
+        payload, _ = open_json(
+            req,
+            policy=_endpoint_policy(url),
+            timeout=timeout,
+            max_bytes=4 * 1024 * 1024,
+        )
+    except (SafeHttpError, ValueError):
         return None
     if not isinstance(payload, dict) or payload.get("status") != "success":
         return None
@@ -137,16 +153,20 @@ def kg_write_analysis(
             },
         }
     ).encode("utf-8")
-    req = urllib.request.Request(
+    req = Request(
         url + "/api/graph/write",
         data=body,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - operator-configured URL
-            payload = json.loads(resp.read().decode("utf-8") or "{}")
-    except Exception:  # noqa: BLE001 - best-effort; a write failure never blocks the report
+        payload, _ = open_json(
+            req,
+            policy=_endpoint_policy(url),
+            timeout=timeout,
+            max_bytes=4 * 1024 * 1024,
+        )
+    except (SafeHttpError, ValueError):
         return None
     if not isinstance(payload, dict) or payload.get("status") != "success":
         return None

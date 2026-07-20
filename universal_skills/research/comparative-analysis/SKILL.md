@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
@@ -336,7 +336,7 @@ Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this st
 # - [ ] Design Consistent: Does the implementation follow the same patterns as sibling modules?
 # - [ ] Tests Exist: Is there at least one test that exercises the hot path through this feature?
 
-rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
+rm -rf ${AGENT_UTILITIES_WORKSPACE_ROOT}/.specify/ca_repos/<session_id>
 ```
 
 ## Output Location Rules

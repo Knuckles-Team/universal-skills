@@ -41,14 +41,14 @@ def main(argv: list[str] | None = None) -> int:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as e:
-            print(f"FAIL {path}: unreadable ({e})", file=sys.stderr)
+            print(f"FAIL {path}: unreadable ({type(e).__name__})", file=sys.stderr)
             failed += 1
             continue
         errs = validate_canonical(data, strict=args.strict)
         if errs:
             print(f"FAIL {path}:", file=sys.stderr)
             for e in errs:
-                print(f"  - {e}", file=sys.stderr)
+                print(f"  - {type(e).__name__}", file=sys.stderr)
             failed += 1
         else:
             print(f"OK   {path}")

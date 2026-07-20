@@ -22,7 +22,7 @@ team_config:
 tags: [freqtrade, deploy, hyperopt, automation]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Freqtrade Strategy Deploy Workflow

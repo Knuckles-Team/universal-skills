@@ -20,7 +20,7 @@ team_config:
 tags: ['telemetry', 'observability', 'langfuse', 'graph-os']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Telemetry Ingestion Workflow
@@ -31,14 +31,14 @@ Extracts anomalous execution traces and success rates from Langfuse, then ingest
 
 ## Steps
 
-### Step 0: Langfuse Mcp
+### Step 0: Langfuse Trace Retrieval [skill: langfuse-mcp]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
 Fetch recent execution traces and filter for long-running or failed tasks based on baseline configurations.
 Expected: `trace, filter`
 
-### Step 1: Langfuse Mcp
+### Step 1: Langfuse Metrics Aggregation [skill: langfuse-mcp]
 **Agent**: `processor-agent`
 **Tools**: `graph_analyze, document_tools`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Langfuse Mcp; Step 1 — Langfuse Mcp; Step 2 — Graph Os
+- **Run first (in parallel):** Step 0 — Langfuse Trace Retrieval; Step 1 — Langfuse Metrics Aggregation; Step 2 — Graph Os
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

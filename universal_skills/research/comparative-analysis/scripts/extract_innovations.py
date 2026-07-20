@@ -383,7 +383,7 @@ def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
         print("agent_utilities not available for KG resolution.", file=sys.stderr)
         return []
     except Exception as e:
-        print(f"KG resolution failed: {e}", file=sys.stderr)
+        print(f"KG resolution failed: {type(e).__name__}", file=sys.stderr)
         return []
 
 
@@ -526,7 +526,7 @@ def main():
             try:
                 content = path.read_text(errors="ignore")
             except Exception as e:
-                results.append({"source": str(path), "error": str(e)})
+                results.append({"source": str(path), "error": type(e).__name__})
                 continue
         elif path.is_dir():
             content = ""

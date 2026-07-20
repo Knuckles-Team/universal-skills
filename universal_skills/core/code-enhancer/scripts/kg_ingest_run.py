@@ -26,11 +26,15 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+from urllib.request import Request
+
+from universal_skills._security.http import SafeHttpError, UrlPolicy, open_bounded
 
 
 def _id(*parts: str) -> str:
     raw = ":".join(parts)
-    return hashlib.sha1(raw.encode(), usedforsecurity=False).hexdigest()[:16]
+    return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
 def build_kg_payload(report: dict[str, Any]) -> dict[str, Any]:
@@ -113,26 +117,34 @@ def ingest_via_mcp(
             "edges": len(payload["edges"]),
         }
     try:
-        import urllib.request
-
         body = json.dumps({"action": "bulk_ingest", "payload": payload}).encode()
-        req = urllib.request.Request(
+        req = Request(
             url.rstrip("/") + "/graph_write",
             data=body,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - operator-configured URL
-            return {
-                "status": "ingested",
-                "http": resp.status,
-                "nodes": len(payload["nodes"]),
-                "edges": len(payload["edges"]),
-            }
-    except Exception as e:  # noqa: BLE001 - ingest is best-effort
+        host = (urlsplit(url).hostname or "").lower().rstrip(".")
+        response = open_bounded(
+            req,
+            policy=UrlPolicy(
+                frozenset({host}),
+                allow_private_hosts=frozenset({host}),
+                allow_http_loopback=True,
+            ),
+            timeout=30,
+            max_bytes=1 * 1024 * 1024,
+        )
+        return {
+            "status": "ingested",
+            "http": response.status,
+            "nodes": len(payload["nodes"]),
+            "edges": len(payload["edges"]),
+        }
+    except (SafeHttpError, ValueError) as e:
         return {
             "status": "error",
-            "error": str(e),
+            "error": type(e).__name__,
             "nodes": len(payload["nodes"]),
             "edges": len(payload["edges"]),
         }

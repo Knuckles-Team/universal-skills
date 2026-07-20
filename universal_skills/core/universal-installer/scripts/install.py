@@ -386,7 +386,7 @@ def _prune_broken_symlinks(target_path: Path) -> int:
                     logger.info(f"Pruned broken symlink: {entry.name} → {dead_target}")
                     pruned += 1
                 except OSError as e:
-                    logger.warning(f"Could not prune broken symlink {entry.name}: {e}")
+                    logger.warning(f"Could not prune broken symlink {entry.name}: {type(e).__name__}")
     if pruned:
         logger.info(
             f"Pruned {pruned} broken symlink(s) left by renamed/removed skills."
@@ -599,7 +599,7 @@ def install_skills(
                 shutil.copytree(src_abs, skill_dst)
             installed_count += 1
         except Exception as e:
-            logger.error(f"Failed to install {skill_src.name}: {e}")
+            logger.error(f"Failed to install {skill_src.name}: {type(e).__name__}")
 
     # After (re)installing, sweep away dead links from renamed/removed skills so a
     # refactor leaves no orphaned stubs. Only on a FULL install — a targeted
@@ -645,7 +645,7 @@ def _run_validate(target_path: Path) -> None:
             timeout=60,
         )
     except Exception as e:  # noqa: BLE001
-        logger.warning(f"--validate could not run the portability checker: {e}")
+        logger.warning(f"--validate could not run the portability checker: {type(e).__name__}")
         return
     if proc.returncode != 0:
         logger.warning(
@@ -1123,7 +1123,7 @@ def main():
                 )
                 logger.info(f"Wrote install manifest: {manifest_path}")
             except OSError as e:  # noqa: BLE001
-                logger.warning(f"Could not write install manifest: {e}")
+                logger.warning(f"Could not write install manifest: {type(e).__name__}")
             logger.info(
                 "Provider prompts/ontologies changed — to refresh the KG, run "
                 "`source_sync source=all mode=delta` via the graph-os MCP "

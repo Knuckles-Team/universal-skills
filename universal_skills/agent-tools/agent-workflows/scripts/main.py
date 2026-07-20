@@ -955,7 +955,7 @@ def cmd_heartbeat_trace(args) -> int:
             until_text=getattr(args, "until", None),
         )
     except ValueError as e:
-        print(f"❌ {e}")
+        print(f"❌ {type(e).__name__}")
         return 1
 
     agent_id = _resolve_trace_agent_id(getattr(args, "agent", None))
@@ -1022,7 +1022,7 @@ def cmd_heartbeat_slo(args) -> int:
             until_text=getattr(args, "until", None),
         )
     except ValueError as e:
-        print(f"❌ {e}")
+        print(f"❌ {type(e).__name__}")
         return 1
 
     agent_id = _resolve_trace_agent_id(getattr(args, "agent", None))
@@ -1036,7 +1036,7 @@ def cmd_heartbeat_slo(args) -> int:
             until=until,
         )
     except ValueError as e:
-        print(f"❌ {e}")
+        print(f"❌ {type(e).__name__}")
         return 1
 
     if getattr(args, "json", False):

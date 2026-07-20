@@ -16,7 +16,7 @@ requires:
   - systems-manager-mcp
   - portainer-mcp
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Service Observability Provisioner Skill
@@ -46,7 +46,8 @@ Configure log capture for the target application:
 
 ### Step 2: Register Prometheus Metrics Scraper
 Set up metrics discovery:
-- Add a new static or dynamic scraper job to `/home/apps/prometheus/prometheus.yml`:
+- Resolve the Prometheus collector profile and configuration sink through
+  AgentConfig, then add a static or dynamic scraper job through that provider:
   ```yaml
   - job_name: '<service-name>'
     static_configs:
@@ -56,23 +57,22 @@ Set up metrics discovery:
 
 ### Step 2b: Register Service Dashboard
 Surface the new service's metrics in Grafana (datasources + a dashboard provider are already
-provisioned-as-code under `services/lgtm/grafana/provisioning/`; the Prometheus datasource
-`uid` is `prometheus`):
+provisioned through the AgentConfig dashboard-source reference; resolve the
+Prometheus datasource identifier from that profile):
 - **MCP / fleet services** need **no new dashboard** — the templated **MCP Per-Service**
   dashboard (`$stack` variable, `label_values(up{job="mcp-fleet"}, stack)`) and the
   **MCP Fleet Overview** pick it up automatically once it scrapes. Just confirm the new
   service appears in the `$stack` picker and the **Container Resources** dashboard (it groups
   by `container_label_com_docker_swarm_service_name`, kept by the cAdvisor label whitelist).
-- **Bespoke platform services** (own `/metrics`, e.g. keycloak/immich/langfuse): add a panel
-  set by **extending the generator** `agent-utilities/scripts/gen_grafana_dashboards.py` (a new
-  `*()` builder + an entry in `main()`), then re-run it — dashboards are generated as code, so a
-  hand-edited JSON in `dashboards/json/` is clobbered on the next run. Reference panels as:
+- **Platform services** with their own `/metrics`: add a panel set through the
+  configured dashboard generator and source reference. Do not assume a repository
+  path or hand-edit provider-managed generated JSON. Reference panels as:
   ```json
-  { "datasource": { "type": "prometheus", "uid": "prometheus" },
+  { "datasource": { "type": "prometheus", "uid": "<datasource-uid>" },
     "targets": [ { "expr": "<your_service_metric>" } ] }
   ```
-- The dashboard provider auto-loads new JSON from `dashboards/json/` within
-  `updateIntervalSeconds` (30s) — no Grafana restart needed.
+- Verify the configured dashboard provider loads the generated artifact within its
+  referenced refresh policy.
 
 ### Step 3: Verify Telemetry Flows
 Confirm log shipping and metric collection:

@@ -76,7 +76,7 @@ def _run_job(label: str, argv: list[str], out_path: Path) -> dict:
             text=True,
         )
     except Exception as exc:  # pragma: no cover - subprocess spawn failure
-        return {"label": label, "ok": False, "error": str(exc)}
+        return {"label": label, "ok": False, "error": type(exc).__name__}
     if proc.returncode != 0:
         return {
             "label": label,

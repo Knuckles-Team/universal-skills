@@ -381,7 +381,7 @@ def main() -> int:
     args = parse_args()
     data_dir = Path(args.data_dir)
     if not data_dir.exists():
-        print(f"Data directory not found: {data_dir}", file=sys.stderr)
+        print("Configured data directory was not found", file=sys.stderr)
         return 1
 
     since = parse_date(args.since) if args.since else None
@@ -392,7 +392,7 @@ def main() -> int:
             data_dir, args.file, args.community_id
         )
     except (ValueError, FileNotFoundError) as exc:
-        print(str(exc), file=sys.stderr)
+        print(type(exc).__name__, file=sys.stderr)
         return 2
 
     people = load_people(data_dir)

@@ -22,7 +22,7 @@ def yaml_to_json(yaml_str):
         data = yaml.safe_load(yaml_str)
         return {"json": json.dumps(data, indent=2)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def json_to_toml(json_str):
@@ -32,7 +32,7 @@ def json_to_toml(json_str):
         data = json.loads(json_str)
         return {"toml": toml.dumps(data)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def base64_encode(text):
@@ -43,7 +43,7 @@ def base64_decode(text):
     try:
         return {"decoded": base64.b64decode(text.encode("utf-8")).decode("utf-8")}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def text_to_binary(text):
@@ -54,7 +54,7 @@ def binary_to_text(binary_str):
     try:
         return {"text": "".join(chr(int(b, 2)) for b in binary_str.split(" "))}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def url_encode(text):

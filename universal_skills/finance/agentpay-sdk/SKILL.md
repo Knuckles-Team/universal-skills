@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [agentpay sdk]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
@@ -217,4 +217,3 @@ AgentPay can pay for any MPP-enabled API using `agentpay mpp`. No API keys or ac
 ## Extra References
 
 - Read [references/capabilities.md](./references/capabilities.md) only when you need exact flags or examples.
-- Read [references/demo-walkthrough.md](./references/demo-walkthrough.md) only when you need a short live demo script.

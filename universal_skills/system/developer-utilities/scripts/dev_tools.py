@@ -32,7 +32,7 @@ def parse_jwt(token):
             "signature": parts[2],
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def prettify_sql(sql_query):
@@ -42,7 +42,7 @@ def prettify_sql(sql_query):
         formatted = sqlparse.format(sql_query, reindent=True, keyword_case="upper")
         return {"formatted_sql": formatted}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def test_regex(pattern, text, flags=0):
@@ -61,7 +61,7 @@ def test_regex(pattern, text, flags=0):
             "count": len(matches),
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def parse_ua(user_agent_string):
@@ -86,7 +86,7 @@ def parse_ua(user_agent_string):
             },
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def minify_json(json_str):
@@ -94,7 +94,7 @@ def minify_json(json_str):
         parsed = json.loads(json_str)
         return {"minified": json.dumps(parsed, separators=(",", ":"))}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def diff_json(json1, json2):
@@ -109,7 +109,7 @@ def diff_json(json1, json2):
         diff = list(unified_diff(str1, str2, fromfile="json1", tofile="json2"))
         return {"diff": "".join(diff)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def main():

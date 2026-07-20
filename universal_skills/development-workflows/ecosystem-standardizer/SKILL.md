@@ -13,7 +13,7 @@ domain: development-workflows
 tags: ['standardization', 'drift', 'audit', 'ecosystem', 'onboarding', 'dev-workflows']
 requires: ['repository-manager-mcp']
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
@@ -138,8 +138,8 @@ Run the comprehensive drift audit script against all (or targeted) projects:
 
 ```bash
 python scripts/audit_ecosystem.py \
-    --agents-dir /home/apps/workspace/agent-packages/agents \
-    --output /home/apps/workspace/reports/ecosystem-drift-report.md
+    --agents-dir ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents \
+    --output ${AGENT_UTILITIES_WORKSPACE_ROOT}/reports/ecosystem-drift-report.md
 ```
 
 This produces a full drift report with:
@@ -233,8 +233,8 @@ Run the drift audit again to verify all fixes were applied:
 
 ```bash
 python scripts/audit_ecosystem.py \
-    --agents-dir /home/apps/workspace/agent-packages/agents \
-    --output /home/apps/workspace/reports/ecosystem-drift-report-post-fix.md
+    --agents-dir ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents \
+    --output ${AGENT_UTILITIES_WORKSPACE_ROOT}/reports/ecosystem-drift-report-post-fix.md
 ```
 
 Compare pre-fix and post-fix scores. Present delta to user.

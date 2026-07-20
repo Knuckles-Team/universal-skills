@@ -164,6 +164,7 @@ class ScheduleRunFlowHelperTests(unittest.TestCase):
                 ),
             ),
         )
+        self.assertEqual(task_message, "run task")
 
     def test_build_task_message_codex_prefers_schedule_task_path(self):
         temp_root = Path(tempfile.mkdtemp(prefix="test-build-codex-task-"))

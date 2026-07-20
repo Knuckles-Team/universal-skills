@@ -140,7 +140,7 @@ def _analyze_test_file(filepath: Path) -> dict:
             for ln in body_lines[1:]
             if ln.strip() and not ln.strip().startswith("#")
         )
-        body_hash = hashlib.md5(normalized.encode()).hexdigest()
+        body_hash = hashlib.sha256(normalized.encode()).hexdigest()
 
         tests.append(
             {

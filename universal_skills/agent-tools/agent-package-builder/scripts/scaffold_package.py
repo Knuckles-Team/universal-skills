@@ -3,10 +3,10 @@
 """
 Agent Package Builder — Scaffolds a complete agent-package project.
 
-Generates the full project structure following the gitlab-api golden standard
-(/home/apps/workspace/agent-packages/agents/gitlab-api), including the modular
-api/ and mcp/ split, the full pre-commit gate, the three GitHub workflows
-(pipeline/docs/pages), the 7-page Material mkdocs site, AGENTS.md+CLAUDE.md
+Generates the full project structure following the configured golden standard,
+including the modular api/ and mcp/ split, the full pre-commit gate, the two
+consolidated GitHub workflows (pipeline/pages), the 7-page Material mkdocs site,
+AGENTS.md+CLAUDE.md
 stub pattern, and the a2a.json / opencode.json / pytest.ini / MANIFEST.in /
 .codespellignore / .vulture_ignore config set.
 
@@ -55,18 +55,22 @@ description = "{description}"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.11, <3.15"
-dependencies = [ "agent-utilities>=0.51.0", "python-dotenv>=1.0.0",{gql_core_dep}]
+dependencies = [
+    "agent-utilities[mcp]>=1.27.1,<2.0.0",
+    "epistemic-graph[full]>=2.23.1,<3.0.0",{gql_core_dep}
+]
 [[project.authors]]
-name = "{author}"
-email = "{email}"
+name = "Repository Maintainers"
 
 [project.license]
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-utilities[mcp]>=0.51.0",]
-agent = [ "agent-utilities[agent,logfire]>=0.51.0",]
-{gql_extra}all = [ "{package_name}[{all_extras}]>=0.1.0",]
+mcp = [ "agent-utilities[mcp]>=1.27.1,<2.0.0",]
+agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0",]
+{gql_extra}all = [
+    "agent-utilities[mcp,agent-runtime,logfire]>=1.27.1,<2.0.0",{gql_all_dep}
+]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
@@ -130,10 +134,6 @@ tag = True
 search = version = "{{current_version}}"
 replace = version = "{{new_version}}"
 
-[bumpversion:file(all-extra):pyproject.toml]
-search = {package_name}[{all_extras}]>={{current_version}}
-replace = {package_name}[{all_extras}]>={{new_version}}
-
 [bumpversion:file:a2a.json]
 search = "version": "{{current_version}}"
 replace = "version": "{{new_version}}"
@@ -172,7 +172,7 @@ ci:
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v6.0.0
+  rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
   hooks:
   - id: check-added-large-files
     args: ["--maxkb=2000"]
@@ -190,7 +190,7 @@ repos:
   - id: end-of-file-fixer
   - id: no-commit-to-branch
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.15.12
+  rev: 6fec9b7edb08fd9989088709d864a7826dc74e80 # v0.15.12
   hooks:
   - id: ruff-check
     args: ["--fix", "--ignore=E402,B008,E501"]
@@ -198,57 +198,63 @@ repos:
   - id: ruff-format
     exclude: ^(tests/|test/|scripts/|script/)
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.20.2
+  rev: fc0f09a29bb495f4a91f00266155d6282d52485d # v1.20.2
   hooks:
   - id: mypy
-    additional_dependencies: [pydantic, types-PyYAML, types-requests,
-        types-setuptools]
+    additional_dependencies: [pydantic==2.13.4, types-PyYAML==6.0.12.20260518,
+        types-requests==2.33.0.20260518, types-setuptools==83.0.0.20260706]
     args: ["--ignore-missing-imports"]
 - repo: https://github.com/jendrikseipp/vulture
-  rev: v2.16
+  rev: b0f67ba0044693aa9ec0d38fe460590facc98004 # v2.16
   hooks:
   - id: vulture
     pass_filenames: false
     args: [".", "--min-confidence", "95", "--exclude", "node_modules,dotnet,.venv"]
     require_serial: true
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.4.2
+  rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # v2.4.2
   hooks:
   - id: codespell
     args: ["-L", "ans,linar,nam,tread,ot,", "--ignore-words=.codespellignore"]
     exclude: ^(tests/|test/|scripts/|script/|.*lock.*)
 - repo: https://github.com/PyCQA/bandit
-  rev: 1.9.4
+  rev: 92ae8b82fb422a639f0ed8d99e96cea769594e08 # 1.9.4
   hooks:
   - id: bandit
     args: ["--skip", "B101,B404,B603"]
     exclude: ^(tests/|test/|scripts/|script/|__tests__/)
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.9.1
+  rev: d31b7eae1767c43460afb3ba130e0a6602933abe # 1.9.1
   hooks:
   - id: nbqa-ruff
     args: ["--fix"]
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.11.8
+  rev: 659a7789596d520c849e9c96525119e9fbaa731f # 0.11.8
   hooks:
   - id: uv-lock
 - repo: local
   hooks:
+  - id: supply-chain-source-contract
+    name: enforce immutable workflow, hook, container, and dependency sources
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${AGENT_UTILITIES_ROOT:-"$(dirname "$repo")/agent-utilities"}; python3 "$root/scripts/check_fleet_supply_chain.py" .'
+    language: system
+    files: ^(\\.github/workflows/.*\\.ya?ml|\\.pre-commit-config\\.yaml|.*(?:Dockerfile|\\.dockerfile).*|.*(?:compose|stack).*\\.ya?ml|pyproject\\.toml|package\\.json|Cargo\\.toml|.*\\.lock|pnpm-lock\\.yaml)$
+    pass_filenames: false
   - id: okf-no-legacy-concepts
     name: OKF-CIS — no legacy CONCEPT ids
-    entry: python3 /home/apps/workspace/agent-packages/agent-utilities/scripts/check_no_legacy_markers.py .
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${AGENT_UTILITIES_ROOT:-"$(dirname "$repo")/agent-utilities"}; python3 "$root/scripts/check_no_legacy_markers.py" .'
     language: system
     pass_filenames: false
     always_run: true
   - id: check-mermaid
     name: Check Mermaid syntax
-    entry: python3 /home/apps/workspace/agent-packages/agent-utilities/scripts/mermaid_linter.py
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${AGENT_UTILITIES_ROOT:-"$(dirname "$repo")/agent-utilities"}; python3 "$root/scripts/mermaid_linter.py" "$@"' --
     language: system
     files: \\.md$
     pass_filenames: true
   - id: check-stubs
     name: Check for Active Stubs and TODOs
-    entry: python3 /home/apps/workspace/agent-packages/agent-utilities/scripts/check_stubs.py
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${AGENT_UTILITIES_ROOT:-"$(dirname "$repo")/agent-utilities"}; python3 "$root/scripts/check_stubs.py" "$@"' --
     language: system
     types: [python]
   - id: mermaid-validate
@@ -261,7 +267,7 @@ repos:
   - id: check-agent-standards
     name: check agent standards
     entry: |-
-      bash -c 'for f in $(find . -type f -name "agent_server.py" -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do grep -q "warnings.filterwarnings" "$f" && grep -q "file=sys.stderr" "$f" || { echo "Missing warnings.filterwarnings or file=sys.stderr in $f"; exit 1; }; done'
+      bash -c 'for f in $(find . -type f -name "agent_server.py" -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do grep -q "warnings.filterwarnings" "$f" && grep -q "file=sys.stderr" "$f" || { echo "agent_server.py is missing required warning controls"; exit 1; }; done'
     language: system
     pass_filenames: false
     always_run: true
@@ -316,7 +322,7 @@ repos:
     pass_filenames: false
     always_run: true
 - repo: https://github.com/AleksaC/hadolint-py
-  rev: v2.14.0
+  rev: 458cb25edf664682e3e856a53a2f9af33e068297 # v2.14.0
   hooks:
   - id: hadolint
     args:
@@ -326,7 +332,7 @@ repos:
     - --ignore=DL4006
     - --ignore=SC2102
 - repo: https://github.com/IamTheFij/docker-pre-commit
-  rev: v3.0.1
+  rev: f626253b23de45412865c07fd076ff95d4cd77a7 # v3.0.1
   hooks:
   - id: docker-compose-check
 
@@ -351,20 +357,20 @@ repos:
   - id: check-atomicity
     name: atomicity edict (atomic skills + dual-mode workflows)
     entry: |-
-      bash -c 'd=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_atomicity.py --root "$d"; fi'
+      bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${UNIVERSAL_SKILLS_ROOT:-"$(dirname "$repo")/skills/universal-skills"}; d=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 "$root/scripts/check_atomicity.py" --root "$d"; fi'
     language: system
     pass_filenames: false
     always_run: true
   - id: check-frontmatter-portability
     name: cross-agent frontmatter portability (Codex + fleet)
     entry: |-
-      bash -c 'd=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_frontmatter_portability.py "$d" --max-violations 0; fi'
+      bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${UNIVERSAL_SKILLS_ROOT:-"$(dirname "$repo")/skills/universal-skills"}; d=$(find . -maxdepth 2 -type d -name skills | head -1); if [ -n "$d" ]; then python3 "$root/scripts/check_frontmatter_portability.py" "$d" --max-violations 0; fi'
     language: system
     pass_filenames: false
     always_run: true
   - id: check-path-portability
     name: cross-platform path portability
-    entry: python3 /home/apps/workspace/agent-packages/skills/universal-skills/scripts/check_path_portability.py . --max-path 200 --max-name 100 --max-violations 0
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${UNIVERSAL_SKILLS_ROOT:-"$(dirname "$repo")/skills/universal-skills"}; python3 "$root/scripts/check_path_portability.py" . --max-path 200 --max-name 100 --max-violations 0'
     language: system
     pass_filenames: false
     always_run: true
@@ -372,25 +378,24 @@ repos:
 
 DOCKERFILE = """\
 # syntax=docker/dockerfile:1
-# Two right-sized images from ONE Dockerfile, selected by build --target. Both are
-# slim multi-stage (build in a builder, ship only /usr/local — no dev-tools/source):
+# Two runtime images from ONE Dockerfile, selected by build --target. Both are
+# multi-stage builds that ship only the installed runtime:
 #
-#   --target agent  (DEFAULT)  installs {package_name}[agent] = the FULL runtime
-#                              (agent-utilities[agent]: engine + pydantic-ai + dspy +
+#   --target agent  (DEFAULT)  installs {package_name}[agent] = the agent runtime
+#                              (agent-utilities[agent-runtime,logfire]: engine + agent +
 #                              skills). Because [agent] also includes [mcp], this image
-#                              can run EITHER the agent OR the mcp server. Push as the
-#                              default tags: latest / main / <version>.
+#                              can run either the agent or the MCP server. Publish and
+#                              deploy it by immutable manifest digest.
 #
-#   --target mcp               installs {package_name}[mcp]   = MCP-server tooling ONLY
-#                              (agent-utilities[mcp]: fastmcp/fastapi — NO engine,
-#                              pydantic-ai, dspy, llama-index, tree-sitter). The slim
-#                              variant. Push as the :mcp / :mcp-<version> tag.
+#   --target mcp               installs {package_name}[mcp] = the MCP serving runtime.
+#                              The mandatory epistemic-graph[full] engine remains present;
+#                              only the optional agent orchestration stack is omitted.
 #
-#   docker build --target agent -t {package_name}:latest .
+#   docker build --target agent -t {package_name}:local .
 #   docker build --target mcp   -t {package_name}:mcp    .
 # See agent-packages/CLAUDE.md "Connector recipe" for the tag contract.
-FROM python:3.11-slim AS builder-base
-COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
+FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS builder-base
+COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
     UV_SYSTEM_PYTHON=1 \\
@@ -401,7 +406,7 @@ RUN apt-get update \\
     && apt-get install -y --no-install-recommends build-essential \\
     && rm -rf /var/lib/apt/lists/*
 
-# Slim MCP-only dependency closure.
+# MCP serving dependency closure (including mandatory epistemic-graph[full]).
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
     uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[mcp]>=0.1.0
@@ -411,8 +416,8 @@ FROM builder-base AS builder-agent
 RUN --mount=type=cache,target=/root/.cache/uv \\
     uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[agent]>=0.1.0
 
-FROM python:3.11-slim AS runtime-base
-ARG HOST=0.0.0.0
+FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS runtime-base
+ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
 ARG AUTH_TYPE="none"
@@ -427,21 +432,22 @@ ENV HOST=${{HOST}} \\
     UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy
 
-# Slim image: MCP server only.
+# MCP serving image.
 FROM runtime-base AS mcp
 COPY --from=builder-mcp /usr/local /usr/local
 CMD ["{mcp_cmd}"]
 
-# Full image (DEFAULT target): agent runtime; can also run the mcp server.
+# Agent image (DEFAULT target); can also run the MCP server.
 FROM runtime-base AS agent
 COPY --from=builder-agent /usr/local /usr/local
 CMD ["{agent_cmd}"]
 """
 
 DEBUG_DOCKERFILE = """\
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3
+COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 
-ARG HOST=0.0.0.0
+ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
 ARG AUTH_TYPE="none"
@@ -454,18 +460,11 @@ ENV HOST=${{HOST}} \\
     PATH="/usr/local/cargo/bin:/root/.local/bin:/usr/local/bin:${{PATH}}" \\
     UV_HTTP_TIMEOUT=3600 \\
     UV_SYSTEM_PYTHON=1 \\
-    UV_COMPILE_BYTECODE=1 \\
-    RUSTUP_HOME="/usr/local/rustup" \\
-    CARGO_HOME="/usr/local/cargo"
+    UV_COMPILE_BYTECODE=1
 
-# Install base dependencies, uv, and starship shell prompt
+# Install bounded development dependencies from the base distribution.
 RUN apt-get update \\
-    && apt-get install -y default-jre ripgrep tree fd-find curl nano build-essential cmake libssl-dev libcurl4-openssl-dev pkg-config \\
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \\
-    && curl -sS https://starship.rs/install.sh | sh -s -- --yes \\
-    && curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal \\
-    && mkdir -p /root/.config \\
-    && echo "eval \\"\\$(starship init bash)\\"" >> /root/.bashrc \\
+    && apt-get install -y --no-install-recommends default-jre ripgrep tree fd-find nano build-essential cmake libssl-dev libcurl4-openssl-dev pkg-config cargo rustc \\
     && apt-get clean \\
     && rm -rf /var/lib/apt/lists/*
 
@@ -476,8 +475,6 @@ COPY . /app
 # (.[agent], which includes .[mcp]) so it can run either server while debugging.
 RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[agent]
 
-COPY docker/starship.toml /root/.config/starship.toml
-
 CMD ["{mcp_cmd}"]
 """
 
@@ -486,20 +483,25 @@ version: '3.8'
 
 services:
   {package_name}-mcp:
-    # Slim MCP-only image (built `--target mcp`, pushed as the :mcp tag).
-    image: knucklessg1/{package_name}:mcp
+    # MCP serving image (built with `--target mcp`).
+    image: "${{MCP_IMAGE:?set-MCP_IMAGE-to-image@sha256-digest}}"
     container_name: {package_name}-mcp
     hostname: {package_name}-mcp
     restart: always
-    env_file:
-      - ../.env
+    volumes:
+      - type: bind
+        source: ${{AGENT_CONFIG_DIR:?set-AGENT_CONFIG_DIR-to-an-AgentConfig-directory}}
+        target: /etc/agent-utilities
+        read_only: true
     environment:
       - PYTHONUNBUFFERED=1
       - HOST=0.0.0.0
       - PORT=8000
       - TRANSPORT=streamable-http
+      - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
+      - AGENT_UTILITIES_CONFIG_DIR=/etc/agent-utilities
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -513,27 +515,27 @@ services:
         max-file: "3"
 
   {package_name}-agent:
-    # Full agent runtime image (default target, pushed as :latest).
-    image: knucklessg1/{package_name}:latest
+    # Full agent runtime image. Deployment inputs must be immutable digests.
+    image: "${{AGENT_IMAGE:?set-AGENT_IMAGE-to-image@sha256-digest}}"
     container_name: {package_name}-agent
     hostname: {package_name}-agent
     restart: always
     depends_on:
       - {package_name}-mcp
-    env_file:
-      - ../.env
+    volumes:
+      - type: bind
+        source: ${{AGENT_CONFIG_DIR:?set-AGENT_CONFIG_DIR-to-an-AgentConfig-directory}}
+        target: /etc/agent-utilities
+        read_only: true
     command: [ "{agent_cmd}" ]
     environment:
       - PYTHONUNBUFFERED=1
       - HOST=0.0.0.0
       - PORT={agent_port}
       - MCP_URL=http://{package_name}-mcp:8000/mcp
-      - PROVIDER=${{PROVIDER:-openai}}
-      - MODEL_ID=${{MODEL_ID:-gpt-4o}}
-      - ENABLE_WEB_UI=True
-      - ENABLE_OTEL=True
+      - AGENT_UTILITIES_CONFIG_DIR=/etc/agent-utilities
     ports:
-      - "{agent_port}:{agent_port}"
+      - "127.0.0.1:{agent_port}:{agent_port}"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:{agent_port}/health')"]
       interval: 30s
@@ -552,20 +554,25 @@ version: '3.8'
 
 services:
   {package_name}-mcp:
-    # Slim MCP-only image (built `--target mcp`, pushed as the :mcp tag).
-    image: knucklessg1/{package_name}:mcp
+    # MCP serving image (built with `--target mcp`).
+    image: "${{MCP_IMAGE:?set-MCP_IMAGE-to-image@sha256-digest}}"
     container_name: {package_name}-mcp
     hostname: {package_name}-mcp
     restart: always
-    env_file:
-      - ../.env
+    volumes:
+      - type: bind
+        source: ${{AGENT_CONFIG_DIR:?set-AGENT_CONFIG_DIR-to-an-AgentConfig-directory}}
+        target: /etc/agent-utilities
+        read_only: true
     environment:
       - PYTHONUNBUFFERED=1
       - HOST=0.0.0.0
       - PORT=8000
       - TRANSPORT=streamable-http
+      - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
+      - AGENT_UTILITIES_CONFIG_DIR=/etc/agent-utilities
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -681,25 +688,24 @@ ENV_EXAMPLE = """\
 # ==============================================================================
 
 # --- MCP Server Settings ---
-HOST=0.0.0.0
+HOST=127.0.0.1
 PORT=8000
 TRANSPORT=stdio # options: stdio, streamable-http, sse
+AUTH_TYPE=none # network listeners outside loopback require configured authentication
 
-# --- Telemetry & Observability (OTEL / Langfuse) ---
-ENABLE_OTEL=True
-# OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:8080/api/public/otel
-# OTEL_EXPORTER_OTLP_PUBLIC_KEY=pk-...
-# OTEL_EXPORTER_OTLP_SECRET_KEY=sk-...
-# OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+# --- Runtime Features ---
+MCP_TOOL_MODE=intent
+ENABLE_OTEL=False
+# Configure telemetry endpoint, credential, and TLS references in AgentConfig.
 
 # --- Enterprise Security & Access Governance (Eunomia) ---
 EUNOMIA_TYPE=none # options: none, embedded, remote
 EUNOMIA_POLICY_FILE=mcp_policies.json
-# EUNOMIA_REMOTE_URL=http://eunomia-server:8000
 
-# --- Core API / Client Credentials for {display_name} ---
-{service_url_env}=http://localhost:8080
-# {auth_env}=your_token_here
+# --- Provider Runtime ---
+# Configure provider_configs.{short_name} in AgentConfig with endpoint_ref,
+# credential_refs, and exactly one tls_profile or tls_profile_ref. Resolved endpoint,
+# credential, and trust material remain runtime-only and are never written here.
 
 # --- Tool Toggle Switches ---
 SYSTEMTOOL=True
@@ -745,22 +751,7 @@ A2A_JSON = """\
 
 OPENCODE_JSON = """\
 {
-  "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "lmstudio": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "LM Studio (local)",
-      "options": {
-        "baseURL": "http://vllm.arpa/v1"
-      },
-      "models": {
-        "qwen/qwen3.6-27b": {
-          "name": "Qwen 3.6-35B-A3B"
-        }
-      }
-    }
-  },
-  "model": "lmstudio/qwen/qwen3.6-27b"
+  "$schema": "https://opencode.ai/config.json"
 }
 """
 
@@ -807,7 +798,7 @@ imported below, so `CLAUDE.md` and `AGENTS.md` always stay in sync. Edit
 LICENSE_MIT = """\
 MIT License
 
-Copyright (c) {year} {author}
+Copyright (c) {year} Repository Maintainers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1030,14 +1021,12 @@ domains can be toggled on or off with the listed environment variable. The table
 ### Install with `uvx` (no install — run on demand)
 
 ```bash
-uvx --from "{package_name}[mcp]" {mcp_cmd}      # MCP server (slim deps)
-uvx --from "{package_name}[agent]" {agent_cmd}  # A2A agent server (full runtime)
+uvx --from "{package_name}[mcp]" {mcp_cmd}      # MCP server + full graph engine
+uvx --from "{package_name}[agent]" {agent_cmd}  # MCP + A2A agent runtime
 ```
 
-> The `[mcp]` extra installs only the FastMCP/FastAPI MCP-server tooling
-> (`agent-utilities[mcp]`) — it excludes the heavy agent runtime (the
-> epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`), so it is far
-> smaller. Use `[agent]` only when you run the integrated agent.
+> Every supported install includes `epistemic-graph[full]`. The `[mcp]` extra adds
+> the MCP serving stack; `[agent]` adds the current `agent-runtime` and telemetry.
 
 ### Install with `pip`
 
@@ -1074,7 +1063,7 @@ print(status)
 {mcp_cmd}
 
 # Networked streamable-http
-{mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
+{mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
 ```
 
 ### Calling an MCP tool
@@ -1098,10 +1087,10 @@ Tools are action-routed — pass an `action` plus a JSON `params_json` string:
 The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 `sse` mode.
 
-#### Environment Variables
+#### Runtime configuration
 
-*   `{service_url_env}`: The URL of the target service.
-*   `{auth_env}`: The API token or access token.
+Keep `provider_configs.{short_name}` endpoint, credential, selector, and TLS
+references in `AgentConfig`; do not place resolved values in MCP client JSON.
 
 ### MCP Configuration Examples
 
@@ -1113,12 +1102,10 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 {{
   "mcpServers": {{
     "{mcp_cmd}": {{
-      "command": "uvx",
-      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}"],
+      "command": "{mcp_cmd}",
+      "args": [],
       "env": {{
-        "MCP_TOOL_MODE": "condensed",
-        "{service_url_env}": "https://service.example.com",
-        "{auth_env}": "your_token"
+        "MCP_TOOL_MODE": "intent"
       }}
     }}
   }}
@@ -1131,15 +1118,13 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 {{
   "mcpServers": {{
     "{mcp_cmd}": {{
-      "command": "uvx",
-      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}", "--transport", "streamable-http", "--port", "8000"],
+      "command": "{mcp_cmd}",
+      "args": ["--transport", "streamable-http", "--port", "8000"],
       "env": {{
         "TRANSPORT": "streamable-http",
-        "HOST": "0.0.0.0",
+        "HOST": "127.0.0.1",
         "PORT": "8000",
-        "MCP_TOOL_MODE": "condensed",
-        "{service_url_env}": "https://service.example.com",
-        "{auth_env}": "your_token"
+        "MCP_TOOL_MODE": "intent"
       }}
     }}
   }}
@@ -1159,35 +1144,36 @@ consumed from a **remote deployment**. The
 copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable-http**,
 **local container / uv**, and **remote URL**:
 
-- **Local container / uv** — launch the server from `mcp_config.json` via `uvx`,
-  `docker run`, or `podman run`, or point at a local streamable-http container by `url`.
-- **Remote URL** — connect to a server deployed behind Caddy at
-  `http://{mcp_cmd}.arpa/mcp` using the `"url"` key.
+- **Local container** — launch a reviewed immutable image as a least-privilege
+  stdio child with no listener or published port.
+- **Remote URL** — connect through an operator-supplied authenticated HTTPS ingress.
+  Keep the URL, outbound identity references, trust profile, and exact
+  `MCP_ALLOWED_HOSTS` in `AgentConfig`.
 <!-- END GENERATED: additional-deployment-options -->
 
 ## Container images (`:mcp` vs `:agent`)
 
 One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
 
-| Image tag | Build target | Contents | Entrypoint |
+| Local build tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `knucklessg1/{package_name}:mcp` | `--target mcp` | `{package_name}[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index` | `{mcp_cmd}` |
-| `knucklessg1/{package_name}:latest` | `--target agent` (default) | `{package_name}[agent]` — **full** agent runtime + epistemic-graph engine | `{agent_cmd}` |
+| `{package_name}:mcp-local` | `--target mcp` | `{package_name}[mcp]` — MCP serving runtime + `epistemic-graph[full]` | `{mcp_cmd}` |
+| `{package_name}:agent-local` | `--target agent` (default) | `{package_name}[agent]` — MCP + agent runtime + `epistemic-graph[full]` | `{agent_cmd}` |
 
 ```bash
-docker build --target mcp   -t knucklessg1/{package_name}:mcp    docker/   # slim MCP server
-docker build --target agent -t knucklessg1/{package_name}:latest docker/   # full agent
+docker build --target mcp   -t {package_name}:mcp-local docker/
+docker build --target agent -t {package_name}:agent-local docker/
 ```
 
 ## Knowledge-graph database (`epistemic-graph`)
 
-The full agent (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in via
-`agent-utilities[agent]`). For production — or to share one knowledge graph across multiple
+Every image embeds the **epistemic-graph[full]** engine. For production — or to
+share one knowledge graph across multiple
 agents — run **epistemic-graph as its own database container** and point the agent at it.
 Deployment recipes (single-node + Raft HA), connection config, and the full database
 architecture (with diagrams) are in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
-The slim `[mcp]` server does **not** require the database.
+Local engine autostart or an operator-configured remote engine is selected through AgentConfig.
 
 ## Documentation
 
@@ -1231,49 +1217,26 @@ on:
     branches:
       - 'main'
 
+permissions:
+  contents: read
+
 jobs:
   publish-pypi:
-    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main
+    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@dc60f5ca0cfd00bf2e66f912a33d6d0f8ee62874 # v2.0.1
+    permissions:
+      contents: write
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
   publish-docker:
     needs: publish-pypi
-    uses: Knuckles-Team/pipelines/.github/workflows/container_pipeline.yml@main
+    uses: Knuckles-Team/pipelines/.github/workflows/container_pipeline.yml@dc60f5ca0cfd00bf2e66f912a33d6d0f8ee62874 # v2.0.1
+    permissions:
+      contents: read
     secrets:
       DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
-"""
-
-DOCS_YML = """\
-name: Deploy Documentation
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  deploy-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install MkDocs
-        run: pip install mkdocs-material
-
-      - name: Build and Deploy
-        run: mkdocs gh-deploy --force
 """
 
 PAGES_YML = """\
@@ -1288,9 +1251,16 @@ on:
       - 'mkdocs.yml'
       - 'README.md'
 
+permissions:
+  contents: read
+
 jobs:
   publish-pages:
-    uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main
+    uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@dc60f5ca0cfd00bf2e66f912a33d6d0f8ee62874 # v2.0.1
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 """
 
 # ── AGENTS.md (golden pattern, incl. Quality Bar + worktree sections) ─────────
@@ -1379,7 +1349,7 @@ pre-commit run --all-files
 **Don't:**
 - Use `cd` commands in scripts; use absolute paths or relative to project root.
 - Add new dependencies to `dependencies` in `pyproject.toml` without checking `optional-dependencies` first.
-- Hardcode secrets; use environment variables or `.env` files.
+- Hardcode endpoints, credentials, or trust material; use AgentConfig runtime references.
 
 ## Safety & Boundaries
 **Always do:**
@@ -1391,7 +1361,7 @@ pre-commit run --all-files
 - Deleting or renaming public tool functions.
 
 **Never do:**
-- Commit `.env` files or secrets.
+- Commit resolved provider values, certificate paths, or secrets.
 - Modify `agent-utilities` or `universal-skills` files from within this package.
 
 ## When Stuck
@@ -1484,25 +1454,25 @@ why rather than bypassing it.
 
 ## Working with Git Worktrees (multi-session)
 
-Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
-edit the canonical checkout** (`/home/apps/workspace/agent-packages/<repo>`) — a
+Multiple agents/sessions work the configured package repos concurrently. **Do not
+edit the canonical checkout** (`$AGENT_PACKAGES_ROOT/<repo>`) — a
 background `repository-manager` sync can reset its working tree and discard
 uncommitted edits. Take your own git worktree on your own branch instead:
 
 ```bash
 # preferred — repository-manager MCP:
-rm_worktree add <repo> <your-branch>      # -> /home/apps/worktrees/<repo>/<your-branch>
+rm_worktree add <repo> <your-branch>      # path comes from repository-manager config
 
 # raw-git fallback:
-git -C agent-packages/<repo> checkout main
-git -C agent-packages/<repo> worktree add /home/apps/worktrees/<repo>/<branch> -b <branch>
+git -C "$AGENT_PACKAGES_ROOT/<repo>" checkout main
+git -C "$AGENT_PACKAGES_ROOT/<repo>" worktree add \
+  "$AGENT_WORKTREES_ROOT/<repo>/<branch>" -b <branch>
 ```
 
 Work in the worktree and **commit often** (commits survive a working-tree reset).
 Each session must use a **distinct branch** — git allows a branch in only one
-worktree, which is what keeps concurrent sessions from colliding. Worktrees live
-under `/home/apps/worktrees/` (outside the workspace scan, so the sync leaves them
-alone).
+worktree, which is what keeps concurrent sessions from colliding. Configure the
+worktree root outside the repository-manager workspace scan.
 
 **Finishing work in a worktree** — run this sequence before calling it done:
 1. **Pre-commit green** — `pre-commit run --all-files`; resolve every issue per the
@@ -1579,49 +1549,35 @@ __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
 AUTH_PY = """\
 #!/usr/bin/python
 
-\"\"\"Authentication.
-
-Priority:
-1. **OIDC Delegation** (RFC 8693 Token Exchange) — when ``ENABLE_DELEGATION`` is
-   active, exchanges the IdP-issued user token for a downstream access token via the
-   shared ``agent_utilities.mcp.delegated_auth`` helper.
-2. **Fixed credentials** — falls back to the ``{auth_env}`` env var.
-
-For a multi-tenant service, add an ``instances.py`` that resolves a configured
-instance NAME (from ``<service>_instances`` in ``~/.config/agent-utilities/config.json``)
-to ``(url, token, verify)`` and call it here before the delegation/fixed paths — see
-``gitlab_api.instances`` (CONCEPT:KG-2.9g) for the golden pattern.
-\"\"\"
+\"\"\"Resolve reference-only provider configuration at the client boundary.\"\"\"
 
 from agent_utilities.base_utilities import get_logger
-from agent_utilities.core.config import setting
+from agent_utilities.core.config import AgentConfig
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
+from agent_utilities.core.provider_runtime import (
+    ResolvedProviderRuntime,
+    resolve_provider_runtime_profile,
+)
 
 from .api import ApiClientSystem
 
 logger = get_logger(__name__)
 _client = None
+_provider_runtime: ResolvedProviderRuntime | None = None
 
 
-def get_client(
-    url: str | None = None,
-    token: str | None = None,
-    verify: bool | None = None,
-    config: dict | None = None,
-) -> ApiClientSystem:
-    \"\"\"Get or create a singleton API client (OIDC delegation or fixed credentials).
-
-    Credentials resolve through the shared config layer (the one XDG
-    ``config.json`` / env) at call time, not frozen at import.
-    \"\"\"
-    global _client
+def get_client(config: AgentConfig | None = None) -> ApiClientSystem:
+    \"\"\"Build one client from ``provider_configs.{short_name}`` in AgentConfig.\"\"\"
+    global _client, _provider_runtime
     if _client is not None:
         return _client
 
-    base_url = url or setting("{service_url_env}", "http://localhost:8080")
-    token = token or setting("{auth_env}", "")
-    if verify is None:
-        verify = setting("{ssl_verify_env}", True)
+    active_config = config or AgentConfig()
+    runtime = resolve_provider_runtime_profile("{short_name}", config=active_config)
+    if not runtime.endpoint or runtime.tls is None:
+        runtime.close()
+        raise RuntimeError("Provider profile requires endpoint and TLS references")
+    token = runtime.credentials.get("token", "")
 
     from agent_utilities.mcp.delegated_auth import (
         get_delegated_token,
@@ -1630,44 +1586,48 @@ def get_client(
     )
 
     # --- Path 1: OIDC Delegation (RFC 8693 Token Exchange) ---
-    if is_delegation_enabled(config):
+    if is_delegation_enabled():
         try:
             delegated_token = get_delegated_token(
-                config=config,
-                audience=(config or {{}}).get("audience", base_url),
-                scopes=(config or {{}}).get("delegated_scopes", "api"),
-                verify=verify,
+                audience=runtime.endpoint,
             )
-            identity = get_user_identity()
-            logger.info(
-                "Using OIDC delegated token",
-                extra={{"user_email": identity.get("email"), "url": base_url}},
-            )
+            get_user_identity()
+            logger.info("Using OIDC delegated token")
             _client = ApiClientSystem(
-                base_url=base_url, token=delegated_token, verify=verify
+                base_url=runtime.endpoint,
+                token=delegated_token,
+                tls_profile=runtime.tls,
             )
+            _provider_runtime = runtime
             return _client
         except Exception as e:
+            runtime.close()
             logger.error(
                 "OIDC delegation failed",
-                extra={{"error_type": type(e).__name__, "error_message": str(e)}},
+                extra={{"error_type": type(e).__name__, "error_message": type(e).__name__}},
             )
-            raise RuntimeError(f"Token exchange failed: {{str(e)}}") from e
+            raise RuntimeError(f"Token exchange failed: {{type(e).__name__}}") from e
 
-    # --- Path 2: Fixed Credentials ({auth_env}) ---
+    # --- Path 2: referenced fixed credential ---
     logger.info("Using fixed credentials")
     try:
-        _client = ApiClientSystem(base_url=base_url, token=token, verify=verify)
+        _client = ApiClientSystem(
+            base_url=runtime.endpoint,
+            token=token,
+            tls_profile=runtime.tls,
+        )
+        _provider_runtime = runtime
     except (AuthError, UnauthorizedError) as e:
+        runtime.close()
         raise RuntimeError(
-            f"AUTHENTICATION ERROR: The credentials provided are not valid for '{{base_url}}'. "
-            f"Please check your {auth_env} and {service_url_env} environment variables. "
-            f"Error details: {{str(e)}}"
+            "AUTHENTICATION ERROR: The configured credentials were rejected. "
+            "Check the provider profile's runtime references."
         ) from e
     except Exception as e:
+        runtime.close()
         raise RuntimeError(
-            f"AUTHENTICATION ERROR: Failed to instantiate client. "
-            f"Error details: {{str(e)}}"
+            "AUTHENTICATION ERROR: Failed to instantiate client. "
+            f"Error details: {{type(e).__name__}}"
         ) from e
 
     return _client
@@ -1701,9 +1661,9 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
     \"\"\"Initialize and return the {display_name} MCP instance, args, and middlewares.
 
     The whole tool surface is wired by the shared ``register_tool_surface`` helper
-    per ``MCP_TOOL_MODE`` (read from the XDG config): ``condensed`` (default,
-    action-routed tools), ``verbose`` (one named 1:1 tool per API method), or
-    ``both``. To add a domain, drop a ``register_<domain>_tools(mcp)`` into the
+    per ``MCP_TOOL_MODE`` (read from AgentConfig): ``intent`` (default,
+    action-routed tools) or ``verbose`` (one named 1:1 tool per API method).
+    To add a domain, drop a ``register_<domain>_tools(mcp)`` into the
     ``mcp/`` package and re-export it from ``mcp/__init__.py`` — it is auto-discovered
     and gated by ``setting("<DOMAIN>TOOL", True)``; no edit here is needed. For
     fully-typed verbose tools, vendor an OpenAPI/Swagger spec under ``specs/`` and
@@ -1714,7 +1674,7 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
     args, mcp, middlewares = create_mcp_server(
         name="{display_name} MCP",
         version=__version__,
-        instructions="{display_name} MCP Server — condensed and verbose tool surfaces.",
+        instructions="{display_name} MCP Server — intent and verbose tool surfaces.",
     )
 
     register_tool_surface(
@@ -1756,9 +1716,10 @@ if __name__ == "__main__":
 AGENT_SERVER_PY = """\
 #!/usr/bin/python
 import logging
-import os
 import sys
 import warnings
+
+from agent_utilities.core.config import setting
 
 __version__ = "0.1.0"
 
@@ -1784,7 +1745,7 @@ def agent_server():
 
     initialize_workspace()
     meta = load_identity()
-    agent_name = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
+    agent_name = setting("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
 
     print(f"{{agent_name}} v{{__version__}}", file=sys.stderr)
     parser = create_agent_parser()
@@ -1804,11 +1765,11 @@ def agent_server():
         router_model=args.model_id,
         agent_model=args.model_id,
         base_url=args.base_url,
-        api_key=args.api_key,
-        agent_description=os.getenv(
+        api_key=None,
+        agent_description=setting(
             "AGENT_DESCRIPTION", meta.get("description", "{description}")
         ),
-        system_prompt=os.getenv(
+        system_prompt=setting(
             "AGENT_SYSTEM_PROMPT",
             meta.get("content") or build_system_prompt_from_workspace(),
         ),
@@ -1836,40 +1797,117 @@ if __name__ == "__main__":
     agent_server()
 """
 
-API_CLIENT_FACADE = """\
-#!/usr/bin/python
-\"\"\"Facade re-export of the modular api/ sub-package (backward compatibility).\"\"\"
-
-from .api import *  # noqa: F401,F403
-from .api import __all__ as _api_all
-
-__all__ = list(_api_all)
-"""
-
 API_CLIENT_BASE = """\
+import json
+import time
 from typing import Any, Dict
+from urllib.parse import SplitResult, urljoin, urlsplit
 
-import requests
+from agent_utilities.core.http_client import create_http_client
+from agent_utilities.core.transport_security import ResolvedTLSProfile
+
+_MAX_RESPONSE_BYTES = 16 * 1024 * 1024
+_MAX_RESPONSE_SECONDS = 60.0
+_REQUEST_TIMEOUT_S = 30.0
+
+
+def _origin(parsed: SplitResult) -> tuple[str, str, int]:
+    scheme = parsed.scheme.lower()
+    return scheme, (parsed.hostname or "").lower(), parsed.port or (443 if scheme == "https" else 80)
+
+
+def _validate_base_url(base_url: str) -> tuple[str, tuple[str, str, int], str]:
+    rendered = str(base_url or "").strip()
+    if not rendered or len(rendered) > 2048 or any(c in rendered for c in "\\x00\\r\\n"):
+        raise ValueError("Invalid service base URL")
+    try:
+        parsed = urlsplit(rendered)
+        origin = _origin(parsed)
+    except ValueError as exc:
+        raise ValueError("Invalid service base URL") from exc
+    if (
+        parsed.scheme.lower() not in {{"http", "https"}}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("Service base URL must be HTTP(S) without credentials")
+    return rendered.rstrip("/") + "/", origin, parsed.hostname.lower()
+
+
+def _request_url(
+    base_url: str, expected_origin: tuple[str, str, int], path: str
+) -> str:
+    rendered = str(path or "")
+    if len(rendered) > 4096 or any(c in rendered for c in "\\x00\\r\\n"):
+        raise ValueError("Invalid API path")
+    try:
+        url = urljoin(base_url, rendered.lstrip("/"))
+        if _origin(urlsplit(url)) != expected_origin:
+            raise ValueError("API path changed the configured service origin")
+    except ValueError as exc:
+        raise ValueError("Invalid API path") from exc
+    return url
 
 
 class ApiClientBase:
     \"\"\"Base HTTP API client wrapper.\"\"\"
 
-    def __init__(self, base_url: str, token: str, verify: bool = True):
-        self.base_url = base_url.rstrip("/")
+    def __init__(
+        self,
+        base_url: str,
+        token: str,
+        tls_profile: ResolvedTLSProfile,
+    ):
+        self.base_url, self._origin, hostname = _validate_base_url(base_url)
         self.token = token
-        self.verify = verify
-        self.session = requests.Session()
-        self.session.headers.update({{"Authorization": f"Bearer {{token}}"}})
+        self.tls_profile = tls_profile
+        headers = {{"Authorization": f"Bearer {{token}}"}} if token else {{}}
+        tls_kwargs = tls_profile.httpx_kwargs()
+        self.session = create_http_client(
+            timeout=_REQUEST_TIMEOUT_S,
+            headers=headers,
+            follow_redirects=False,
+            pin_egress=not tls_profile.proxy_url and not tls_profile.trust_env,
+            allowed_private_hosts=(hostname,),
+            allow_loopback=True,
+            **tls_kwargs,
+        )
 
     def request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
-        url = f"{{self.base_url}}/{{path.lstrip('/')}}"
-        response = self.session.request(method, url, verify=self.verify, **kwargs)
-        response.raise_for_status()
+        url = _request_url(self.base_url, self._origin, path)
+        if kwargs.get("follow_redirects") not in (None, False):
+            raise ValueError("Redirect following is disabled")
+        kwargs["follow_redirects"] = False
+        with self.session.stream(method, url, **kwargs) as response:
+            response.raise_for_status()
+            declared = response.headers.get("content-length")
+            if declared:
+                try:
+                    declared_size = int(declared)
+                except ValueError as exc:
+                    raise RuntimeError("Invalid response content length") from exc
+                if declared_size < 0 or declared_size > _MAX_RESPONSE_BYTES:
+                    raise RuntimeError("Response size limit exceeded")
+            body = bytearray()
+            deadline = time.monotonic() + _MAX_RESPONSE_SECONDS
+            for chunk in response.iter_bytes():
+                if time.monotonic() > deadline:
+                    raise RuntimeError("Response time limit exceeded")
+                body.extend(chunk)
+                if len(body) > _MAX_RESPONSE_BYTES:
+                    raise RuntimeError("Response size limit exceeded")
+        if response.status_code == 204 or not body:
+            return {{"status": response.status_code}}
         try:
-            return response.json()
-        except ValueError:
-            return {{"status": response.status_code, "text": response.text}}
+            return json.loads(body)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return {{
+                "status": response.status_code,
+                "text": body.decode("utf-8", errors="replace")[:4096],
+            }}
 """
 
 API_CLIENT_SYSTEM = """\
@@ -1962,7 +2000,7 @@ def register_system_tools(mcp: FastMCP):
         try:
             kwargs = json.loads(params_json)
         except Exception as e:
-            return {{"error": f"Invalid params_json: {{e}}"}}
+            return {{"error": f"Invalid params_json: {{type(e).__name__}}"}}
 
         kwargs = {{k: v for k, v in kwargs.items() if v is not None}}
 
@@ -2002,16 +2040,14 @@ ROOT_MCP_CONFIG_JSON = """\
         "{mcp_cmd}"
       ],
       "env": {{
-        "{service_url_env}": "<YOUR_{service_url_env}>",
-        "{auth_env}": "<YOUR_{auth_env}>",
-        "{ssl_verify_env}": "<YOUR_{ssl_verify_env}>",
-        "MCP_TOOL_MODE": "condensed",
+        "MCP_TOOL_MODE": "intent",
         "SYSTEMTOOL": "True"
       }}
     }}
   }}
 }}
 """
+
 
 def render_main_agent_json(display_name: str, description: str, source: str) -> str:
     """Render the package's canonical main-agent prompt (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical).
@@ -2071,7 +2107,6 @@ description: >-
 license: MIT
 tags: [{slug}, starter, mcp]
 metadata:
-  author: Genius
   version: '0.1.0'
 ---
 
@@ -2089,6 +2124,7 @@ skill to connect to this package's MCP server and invoke its tools.
 > Replace this with concrete, trigger-oriented capabilities for {display_name}
 > (one capability per skill — keep it atomic).
 """
+
 
 def render_ontology_init(display_name: str, domain: str) -> str:
     """Data-only ontology subpackage docstring (CONCEPT:AU-KG.ontology.federation-provider-leg)."""
@@ -2149,29 +2185,24 @@ def render_kg_ingest(display_name: str, pkg_dir: str, source: str, domain: str) 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. The package natively pushes its OWN data
 into the ONE engine, in every modality that applies (the "maximum ingestion" bar): typed OWL
 nodes (:Class), documents (:Document), and raw blobs (:Blob/:MediaAsset). Thin mapper over the
-shared primitive ``agent_utilities.knowledge_graph.memory.native_ingest`` — imported GUARDED so
-it no-ops with no KG stack / no reachable engine (never raises). Node ids: ``__SOURCE__:<class>:<id>``;
+shared primitive ``agent_utilities.knowledge_graph.memory.native_ingest``. The package's mandatory
+``epistemic-graph[full]`` dependency makes the engine contract explicit. Node ids:
+``__SOURCE__:<class>:<id>``;
 ``type`` values must match the classes in ``ontology/__DOMAIN__.ttl``.
 """
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
-logger = logging.getLogger("__PKG__.kg")
+from agent_utilities.knowledge_graph.memory import native_ingest
 
 _SOURCE = "__SOURCE__"
 _DOMAIN = "__DOMAIN__"
 
 
 def _primitive():
-    """The shared native_ingest module, or None when unavailable."""
-    try:
-        from agent_utilities.knowledge_graph.memory import native_ingest
-    except Exception as e:  # noqa: BLE001 — KG stack absent
-        logger.debug("native ingest unavailable: %s", e)
-        return None
+    """Return the mandatory shared native-ingestion module."""
     return native_ingest
 
 
@@ -2179,11 +2210,9 @@ def ingest_records(records: list[dict[str, Any]]) -> dict[str, int] | None:
     """Map __DISPLAY__ records -> typed OWL nodes and push them into the KG.
 
     TODO: replace the mapping below with real fields + the classes/links from your .ttl.
-    Returns ``{"nodes":n, "edges":m}`` or ``None`` (no engine). Never raises.
+    Returns ``{"nodes":n, "edges":m}`` from the configured engine.
     """
     ni = _primitive()
-    if ni is None:
-        return None
     entities, relationships = [], []
     for rec in records or []:
         rid = rec.get("id") or rec.get("name")
@@ -2202,8 +2231,6 @@ def ingest_records(records: list[dict[str, Any]]) -> dict[str, int] | None:
 def ingest_documents(docs: list[dict[str, Any]]) -> dict[str, int] | None:
     """Push text records ({id,text,title?,source_uri?}) as :Document nodes."""
     ni = _primitive()
-    if ni is None:
-        return None
     return ni.ingest_documents(docs, source=_SOURCE, domain=_DOMAIN)
 
 
@@ -2211,8 +2238,6 @@ def ingest_blob(data: bytes, *, name: str = "", mime_type: str = "", media_type:
                 extra: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Store raw bytes (attachment/file/media) as a :Blob + :MediaAsset."""
     ni = _primitive()
-    if ni is None:
-        return None
     store = ni.media_store()
     if store is None or not data:
         return None
@@ -2243,8 +2268,11 @@ def render_specialist_prompt(display_name: str, source: str, domain: str) -> str
         "extends": "agent-utilities:base",
         "compose": "append",
         "description": f"{display_name} domain specialist. TODO: scope to a tool-category.",
-        "metadata": {"topic": display_name, "tone": "technical and precise",
-                     "style": f"{display_name} specialist"},
+        "metadata": {
+            "topic": display_name,
+            "tone": "technical and precise",
+            "style": f"{display_name} specialist",
+        },
         "identity": {
             "role": f"{display_name} Specialist",
             "goal": f"Operate {display_name} and map its data into the knowledge graph.",
@@ -2256,7 +2284,10 @@ def render_specialist_prompt(display_name: str, source: str, domain: str) -> str
                 "natively ingest the data you touch (typed nodes / documents / blobs). "
                 "TODO: tailor to a specific tool-category."
             ),
-            "quality_checklist": ["used the domain-typed tool", "ingested touched data into the KG"],
+            "quality_checklist": [
+                "used the domain-typed tool",
+                "ingested touched data into the KG",
+            ],
         },
         "skills": [],
         "tools": [],
@@ -2292,7 +2323,7 @@ def render_source_presets(package_name: str, domain: str) -> str:
 def render_kg_ingest_test(pkg_dir: str) -> str:
     """Fakes-based Wire-First coverage for the native ingestion mapper."""
     return (
-        '"""Native epistemic-graph ingestion — Wire-First coverage (fakes; no engine)."""\n\n'
+        '"""Native epistemic-graph ingestion — Wire-First coverage with fakes."""\n\n'
         "from __future__ import annotations\n\n"
         f"from {pkg_dir} import kg_ingest\n\n\n"
         "class _FakeNI:\n"
@@ -2300,20 +2331,17 @@ def render_kg_ingest_test(pkg_dir: str) -> str:
         "        self.entities = None\n"
         "    def ingest_entities(self, entities, relationships, *, source, domain):\n"
         "        self.entities = entities\n"
-        "        return {\"nodes\": len(entities), \"edges\": len(relationships or [])}\n"
+        '        return {"nodes": len(entities), "edges": len(relationships or [])}\n'
         "    def ingest_documents(self, docs, *, source, domain):\n"
-        "        return {\"nodes\": len(docs), \"edges\": 0}\n"
+        '        return {"nodes": len(docs), "edges": 0}\n'
         "    def media_store(self):\n"
         "        return None\n\n\n"
         "def test_ingest_records_maps_and_pushes(monkeypatch):\n"
         "    fake = _FakeNI()\n"
-        "    monkeypatch.setattr(kg_ingest, \"_primitive\", lambda: fake)\n"
-        "    res = kg_ingest.ingest_records([{\"id\": \"1\", \"name\": \"x\"}])\n"
-        "    assert res == {\"nodes\": 1, \"edges\": 0}\n"
-        "    assert fake.entities[0][\"id\"].endswith(\":resource:1\")\n\n\n"
-        "def test_ingest_noops_without_engine(monkeypatch):\n"
-        "    monkeypatch.setattr(kg_ingest, \"_primitive\", lambda: None)\n"
-        "    assert kg_ingest.ingest_records([{\"id\": \"1\"}]) is None\n"
+        '    monkeypatch.setattr(kg_ingest, "_primitive", lambda: fake)\n'
+        '    res = kg_ingest.ingest_records([{"id": "1", "name": "x"}])\n'
+        '    assert res == {"nodes": 1, "edges": 0}\n'
+        '    assert fake.entities[0]["id"].endswith(":resource:1")\n'
     )
 
 
@@ -2329,11 +2357,16 @@ Requires: pip install {package_name}[gql]
 
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import urlsplit
 
 from agent_utilities.core.decorators import require_auth
 from agent_utilities.core.exceptions import (
     MissingParameterError,
     ParameterError,
+)
+from agent_utilities.core.transport_security import (
+    ResolvedTLSProfile,
+    resolve_configured_tls_profile,
 )
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
@@ -2346,19 +2379,38 @@ class GraphQL:
         self,
         url: str = None,
         token: str = None,
-        proxies: Dict = None,
-        verify: bool = True,
+        tls_profile: ResolvedTLSProfile | None = None,
         debug: bool = False,
     ):
         if not url:
             raise MissingParameterError("URL is required")
         if not token:
             raise MissingParameterError("Token is required")
+        rendered_url = str(url).strip()
+        if (
+            len(rendered_url) > 2048
+            or any(c in rendered_url for c in "\\x00\\r\\n")
+        ):
+            raise ParameterError("Invalid GraphQL service URL")
+        try:
+            parsed_url = urlsplit(rendered_url)
+        except ValueError as exc:
+            raise ParameterError("Invalid GraphQL service URL") from exc
+        if (
+            parsed_url.scheme.lower() not in {{"http", "https"}}
+            or not parsed_url.hostname
+            or parsed_url.username is not None
+            or parsed_url.password is not None
+            or parsed_url.query
+            or parsed_url.fragment
+        ):
+            raise ParameterError("Invalid GraphQL service URL")
 
-        self.url = f"{{url.rstrip('/')}}/api/graphql"
+        self.url = f"{{rendered_url.rstrip('/')}}/api/graphql"
         self.token = token
-        self.proxies = proxies
-        self.verify = verify
+        self.tls_profile = tls_profile or resolve_configured_tls_profile(
+            "{short_name}"
+        )
         self.debug = debug
 
         logging.basicConfig(
@@ -2367,11 +2419,12 @@ class GraphQL:
         )
 
         headers = {{"Authorization": f"Bearer {{token}}"}}
+        request_kwargs = self.tls_profile.requests_kwargs()
         self.transport = RequestsHTTPTransport(
             url=self.url,
             headers=headers,
-            verify=verify,
-            proxies=proxies,
+            timeout=30,
+            **request_kwargs,
         )
         self.client = Client(
             transport=self.transport, fetch_schema_from_transport=True
@@ -2385,6 +2438,8 @@ class GraphQL:
         operation_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         \"\"\"Execute a GraphQL query or mutation.\"\"\"
+        if not isinstance(query_str, str) or len(query_str) > 1_000_000:
+            raise ParameterError("GraphQL query exceeds its input boundary")
         try:
             query = gql(query_str)
             result = self.client.execute(
@@ -2394,8 +2449,8 @@ class GraphQL:
                 raise ParameterError(f"GraphQL errors: {{result['errors']}}")
             return result
         except Exception as e:
-            logging.error(f"GraphQL execution failed: {{str(e)}}")
-            raise ParameterError(f"Query execution failed: {{str(e)}}")
+            logging.error(f"GraphQL execution failed: {{type(e).__name__}}")
+            raise ParameterError(f"Query execution failed: {{type(e).__name__}}")
 """
 
 VALIDATE_AGENT_PY = """\
@@ -2410,7 +2465,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 try:
     from {pkg_dir}.agent_server import agent_server  # noqa: F401
 except ImportError as e:
-    print(f"Agent import failed: {{e}}")
+    print(f"Agent import failed: {{type(e).__name__}}")
     sys.exit(1)
 
 print("Agent entry point import OK")
@@ -2535,15 +2590,15 @@ typed, action-routed connector.
 `{package_name}` wraps the target service with typed, deterministic MCP tools and an
 optional Pydantic-AI agent server.
 
-The connector remains inactive when credentials are absent: configure
-`{service_url_env}` and `{auth_env}` to connect it to an instance.
+The connector remains inactive until `provider_configs.{short_name}` resolves a
+runtime endpoint, credential reference, and TLS profile through `AgentConfig`.
 
 ## Explore the documentation
 
 <div class="grid cards" markdown>
 
 - :material-rocket-launch: **[Installation](installation.md)** — pip, source, extras, and the prebuilt Docker image.
-- :material-server-network: **[Deployment](deployment.md)** — run the MCP and agent servers, Docker Compose, Caddy + Technitium.
+- :material-server-network: **[Deployment](deployment.md)** — run local transports or connect through an authenticated TLS ingress.
 - :material-console: **[Usage](usage.md)** — the MCP tools, the Python client, and the CLI.
 - :material-database-cog: **[Backing Platform](platform.md)** — deploy the target service with Docker.
 - :material-sitemap: **[Overview](overview.md)** — the action-routed tool surface and architecture.
@@ -2593,7 +2648,7 @@ DOCS_INSTALLATION_MD = """\
 ## Requirements
 
 - **Python 3.11 – 3.14**.
-- A reachable target service instance and access token.
+- A provider profile in `AgentConfig` containing endpoint, credential, and TLS references.
 
 ## From PyPI (recommended)
 
@@ -2605,8 +2660,8 @@ pip install {package_name}
 
 | Extra | Install | Pulls in |
 |---|---|---|
-| `mcp` | `pip install "{package_name}[mcp]"` | FastMCP MCP-server runtime (`agent-utilities[mcp]`) |
-| `agent` | `pip install "{package_name}[agent]"` | Pydantic-AI agent + Logfire tracing |
+| `mcp` | `pip install "{package_name}[mcp]"` | MCP runtime + mandatory `epistemic-graph[full]` |
+| `agent` | `pip install "{package_name}[agent]"` | Current agent runtime + Logfire tracing |
 | `all` | `pip install "{package_name}[all]"` | Everything above |
 
 ## From source
@@ -2620,7 +2675,8 @@ pip install -e ".[all]"
 ## Docker
 
 ```bash
-docker pull knucklessg1/{package_name}:latest
+IMAGE_REF='<registry>/{package_name}@sha256:<digest>'
+docker pull "$IMAGE_REF"
 ```
 """
 
@@ -2643,8 +2699,8 @@ matching `mcp_config.json` below.
 |---|--------|-----------|---------------|------------------------|
 | 1 | stdio | `stdio` | client launches a subprocess | `command` |
 | 2 | Streamable-HTTP (local) | `streamable-http` | a local network port | `command` or `url` |
-| 3 | Local container / uv | `stdio` or `streamable-http` | Docker / Podman / uv on this host | `command` or `url` |
-| 4 | Remote URL | `streamable-http` | a remote host behind Caddy | `url` |
+| 3 | Local container | `stdio` | reviewed Docker / Podman image on this host | `command` |
+| 4 | Remote URL | `streamable-http` | operator-owned authenticated TLS ingress | `url` |
 
 ### 1. stdio (local subprocess)
 
@@ -2652,11 +2708,10 @@ matching `mcp_config.json` below.
 {{
   "mcpServers": {{
     "{mcp_cmd}": {{
-      "command": "uvx",
-      "args": ["--from", "{package_name}[mcp]", "{mcp_cmd}"],
+      "command": "{mcp_cmd}",
+      "args": [],
       "env": {{
-        "{service_url_env}": "https://service.example.com",
-        "{auth_env}": "your_token"
+        "MCP_TOOL_MODE": "intent"
       }}
     }}
   }}
@@ -2666,7 +2721,7 @@ matching `mcp_config.json` below.
 ### 2. Streamable-HTTP (local process)
 
 ```bash
-uvx --from "{package_name}[mcp]" {mcp_cmd} --transport streamable-http --host 0.0.0.0 --port 8000
+{mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
 curl -s http://localhost:8000/health        # {{"status":"OK"}}
 ```
 
@@ -2680,7 +2735,7 @@ Connect to the running process by URL:
 }}
 ```
 
-### 3. Local container / uv
+### 3. Local container
 
 Launch a container directly from `mcp_config.json` (swap `docker` for `podman` for a
 daemonless runtime):
@@ -2691,46 +2746,36 @@ daemonless runtime):
     "{mcp_cmd}": {{
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run", "-i", "--rm", "--read-only", "--cap-drop=ALL",
+        "--security-opt=no-new-privileges", "--pids-limit=256",
+        "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
         "-e", "TRANSPORT=stdio",
-        "-e", "{service_url_env}=https://service.example.com",
-        "-e", "{auth_env}=your_token",
-        "knucklessg1/{package_name}:latest"
+        "<registry>/{package_name}@sha256:<digest>"
       ]
     }}
   }}
 }}
 ```
 
-Or run a local streamable-http container and connect by URL:
+Supply the provider profile through the operator-owned AgentConfig mount or secret
+projection. The image and this document contain no endpoint, credential, or trust material.
 
-```bash
-docker compose -f docker/mcp.compose.yml up -d
-```
+### 4. Remote URL (authenticated TLS ingress)
 
-```json
-{{
-  "mcpServers": {{
-    "{mcp_cmd}": {{ "url": "http://localhost:8000/mcp" }}
-  }}
-}}
-```
-
-### 4. Remote URL (deployed behind Caddy)
-
-When the server is deployed remotely and published through Caddy on the internal
-`*.arpa` zone, connect with the `"url"` key — no local process or image required:
+When the server is deployed remotely, connect through its operator-supplied
+authenticated HTTPS ingress; no local process or image is required:
 
 ```json
 {{
   "mcpServers": {{
-    "{mcp_cmd}": {{ "url": "http://{mcp_cmd}.arpa/mcp" }}
+    "{mcp_cmd}": {{ "url": "https://service.example.invalid/mcp" }}
   }}
 }}
 ```
 
-Caddy reverse-proxies `http://{mcp_cmd}.arpa` to the container's `:8000`
-streamable-http listener.
+Configure outbound MCP identity and trust references in `AgentConfig`. The server
+must use direct TLS or an explicitly trusted TLS-terminating ingress and an exact
+`MCP_ALLOWED_HOSTS` policy; do not commit the endpoint, credentials, or trust paths.
 <!-- END GENERATED: deployment-options -->
 
 ## Docker Compose
@@ -2764,25 +2809,21 @@ flag.
 ```python
 from {pkg_dir}.auth import get_client
 
-api = get_client()        # reads {service_url_env} / {auth_env} from the environment / .env
+api = get_client()        # resolves provider_configs.{short_name} from AgentConfig
 status = api.get_system_status()
 ```
 
 ## As a CLI
 
-```bash
-export {service_url_env}="http://localhost:8080"
-export {auth_env}="your_token"
-{mcp_cmd} --transport stdio
-```
+Configure `provider_configs.{short_name}` with runtime-only endpoint and credential
+references plus one TLS profile selector, then run `{mcp_cmd} --transport stdio`.
 """
 
 DOCS_PLATFORM_MD = """\
 # Backing Platform — {display_name}
 
 `{package_name}` is a **client** of a backing service instance. This page provides a
-Docker recipe for deploying one locally to serve as the target of
-`{service_url_env}`.
+Docker recipe for deploying one locally as an AgentConfig-selected provider endpoint.
 
 !!! note "Backing-system recipe"
     Each connector in the ecosystem follows the same convention — a
@@ -2843,7 +2884,7 @@ def mock_api_client():
 """
 
 TESTS_AUTH = """\
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -2855,11 +2896,22 @@ from {pkg_dir}.auth import get_client
 def test_get_client_auth_error():
     \"\"\"Auth failure surfaces a clear error. CONCEPT:{concept_prefix}-001\"\"\"
     auth_module._client = None
-    with patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls:
+    runtime = MagicMock()
+    runtime.endpoint = "https://service.example.invalid"
+    runtime.credentials = {{"token": "runtime-secret"}}
+    with (
+        patch("{pkg_dir}.auth.resolve_provider_runtime_profile", return_value=runtime),
+        patch(
+            "agent_utilities.mcp.delegated_auth.is_delegation_enabled",
+            return_value=False,
+        ),
+        patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls,
+    ):
         mock_client_cls.side_effect = Exception("Auth Failure")
         with pytest.raises(RuntimeError) as exc_info:
             get_client()
         assert "AUTHENTICATION ERROR" in str(exc_info.value)
+        runtime.close.assert_called_once()
     auth_module._client = None
 """
 
@@ -2869,16 +2921,57 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from {pkg_dir}.api import ApiClientBase
+from {pkg_dir}.api.api_client_base import _MAX_RESPONSE_BYTES
+
+
+def _tls_profile():
+    profile = MagicMock()
+    profile.proxy_url = None
+    profile.trust_env = False
+    profile.httpx_kwargs.return_value = {{"verify": True, "trust_env": False}}
+    return profile
 
 
 @pytest.mark.concept("{concept_prefix}-001")
 def test_request_returns_json():
     \"\"\"API client returns parsed JSON. CONCEPT:{concept_prefix}-001\"\"\"
-    client = ApiClientBase(base_url="http://localhost", token="t")
+    client = ApiClientBase(
+        base_url="http://localhost", token="t", tls_profile=_tls_profile()
+    )
     response = MagicMock()
-    response.json.return_value = {{"ok": True}}
-    with patch.object(client.session, "request", return_value=response):
+    response.headers = {{}}
+    response.status_code = 200
+    response.iter_bytes.return_value = [b'{{"ok": true}}']
+    context = MagicMock()
+    context.__enter__.return_value = response
+    with patch.object(client.session, "stream", return_value=context):
         assert client.request("GET", "/health") == {{"ok": True}}
+
+
+def test_request_rejects_origin_change():
+    client = ApiClientBase(
+        base_url="http://localhost", token="t", tls_profile=_tls_profile()
+    )
+
+    with pytest.raises(ValueError, match="API path"):
+        client.request("GET", "https://example.invalid/health")
+
+
+def test_request_rejects_oversized_response():
+    client = ApiClientBase(
+        base_url="http://localhost", token="t", tls_profile=_tls_profile()
+    )
+    response = MagicMock()
+    response.headers = {{}}
+    response.status_code = 200
+    response.iter_bytes.return_value = [b"x" * (_MAX_RESPONSE_BYTES + 1)]
+    context = MagicMock()
+    context.__enter__.return_value = response
+    with (
+        patch.object(client.session, "stream", return_value=context),
+        pytest.raises(RuntimeError, match="size limit"),
+    ):
+        client.request("GET", "/health")
 """
 
 TESTS_MCP_VALIDATION = """\
@@ -2959,10 +3052,6 @@ def scaffold(
     pkg_types: str = "api_client,mcp,agent",
     display_name: str = "",
     description: str = "",
-    author: str = "Audel Rouhi",
-    email: str = "knucklessg1@gmail.com",
-    service_url_env: str = "",
-    auth_env: str = "",
     concept_prefix: str = "",
     doc_urls: str = "",
     in_place: bool = False,
@@ -2975,10 +3064,6 @@ def scaffold(
     if not description:
         description = f"{display_name} API + MCP Server + A2A Server"
     upper_name = to_upper_env(package_name)
-    if not service_url_env:
-        service_url_env = f"{upper_name}_URL"
-    if not auth_env:
-        auth_env = f"{upper_name}_TOKEN"
     if not concept_prefix:
         concept_prefix = upper_name.split("_")[0]
 
@@ -2993,14 +3078,13 @@ def scaffold(
         agent_cmd = f"{package_name}-agent"
         short_name = package_name
 
-    ssl_verify_env = f"{upper_name}_SSL_VERIFY"
     year = datetime.datetime.now().year
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
     has_graphql = "graphql" in types
     gql_core_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
     gql_extra = 'gql = [ "gql[requests]>=4.0.0",]\n' if has_graphql else ""
-    all_extras = "mcp,agent,gql,logfire" if has_graphql else "mcp,agent,logfire"
+    gql_all_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
     gql_module_name = f"{to_pkg_dir(short_name)}_gql"
     gql_optional_module = (
         f'\n    "{pkg_dir}.{gql_module_name}": "gql",' if has_graphql else ""
@@ -3012,11 +3096,6 @@ def scaffold(
         "pkg_dir": pkg_dir,
         "display_name": display_name,
         "description": description,
-        "author": author,
-        "email": email,
-        "service_url_env": service_url_env,
-        "auth_env": auth_env,
-        "ssl_verify_env": ssl_verify_env,
         "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "agent_cmd": agent_cmd,
@@ -3024,7 +3103,7 @@ def scaffold(
         "agent_port": "9000",
         "gql_core_dep": gql_core_dep,
         "gql_extra": gql_extra,
-        "all_extras": all_extras,
+        "gql_all_dep": gql_all_dep,
         "gql_optional_module": gql_optional_module,
         "gql_all_extend": gql_all_extend,
         "year": year,
@@ -3043,7 +3122,6 @@ def scaffold(
         root / ".pre-commit-config.yaml": (PRECOMMIT_CONFIG, False),
         root / ".dockerignore": (DOCKERIGNORE, True),
         root / ".env.example": (ENV_EXAMPLE, True),
-        root / ".env": (ENV_EXAMPLE, True),
         root / ".gitignore": (GITIGNORE, False),
         root / ".gitattributes": (GITATTRIBUTES, False),
         root / ".codespellignore": (CODESPELLIGNORE, False),
@@ -3066,7 +3144,6 @@ def scaffold(
         root / "docker/starship.toml": (STARSHIP_TOML, True),
         # GitHub workflows
         root / ".github/workflows/pipeline.yml": (PIPELINE_YML, False),
-        root / ".github/workflows/docs.yml": (DOCS_YML, False),
         root / ".github/workflows/pages.yml": (PAGES_YML, False),
         # Docs site (7 standard pages)
         root / "mkdocs.yml": (MKDOCS_YML, True),
@@ -3084,7 +3161,6 @@ def scaffold(
     # Package files
     files[pkg / "__init__.py"] = (INIT_PY, True)
     files[pkg / "auth.py"] = (AUTH_PY, True)
-    files[pkg / "api_client.py"] = (API_CLIENT_FACADE, False)
     files[pkg / f"{to_pkg_dir(short_name)}_input_models.py"] = (INPUT_MODELS_PY, True)
     files[pkg / f"{to_pkg_dir(short_name)}_response_models.py"] = (
         RESPONSE_MODELS_PY,
@@ -3120,18 +3196,30 @@ def scaffold(
     # STUBS — see PARITY_MANIFEST §6 and the gitlab-api / media-downloader reference impls.
     ontology_domain = short_name
     files[pkg / "ontology" / "__init__.py"] = (
-        render_ontology_init(display_name, ontology_domain), False)
+        render_ontology_init(display_name, ontology_domain),
+        False,
+    )
     files[pkg / "ontology" / f"{ontology_domain}.ttl"] = (
-        render_ontology_ttl(display_name, ontology_domain), False)
+        render_ontology_ttl(display_name, ontology_domain),
+        False,
+    )
     files[pkg / "kg_ingest.py"] = (
-        render_kg_ingest(display_name, pkg.name, package_name, ontology_domain), False)
+        render_kg_ingest(display_name, pkg.name, package_name, ontology_domain),
+        False,
+    )
     files[pkg / "prompts" / f"{ontology_domain.replace('-', '_')}_specialist.json"] = (
-        render_specialist_prompt(display_name, package_name, ontology_domain), False)
+        render_specialist_prompt(display_name, package_name, ontology_domain),
+        False,
+    )
     files[pkg / "connectors" / "__init__.py"] = ("", False)
     files[pkg / "connectors" / "mcp_source_presets.json"] = (
-        render_source_presets(package_name, ontology_domain), False)
+        render_source_presets(package_name, ontology_domain),
+        False,
+    )
     files[root / "tests" / "test_kg_ingest.py"] = (
-        render_kg_ingest_test(pkg.name), False)
+        render_kg_ingest_test(pkg.name),
+        False,
+    )
 
     # API modular directory scaffolding
     files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)
@@ -3245,26 +3333,6 @@ if __name__ == "__main__":
         help="One-line description (default: auto-generated)",
     )
     parser.add_argument(
-        "--author",
-        default="Audel Rouhi",
-        help="Author name (default: Audel Rouhi)",
-    )
-    parser.add_argument(
-        "--email",
-        default="knucklessg1@gmail.com",
-        help="Author email (default: knucklessg1@gmail.com)",
-    )
-    parser.add_argument(
-        "--service-url-env",
-        default="",
-        help="Environment variable name for service URL (default: {UPPER_NAME}_URL)",
-    )
-    parser.add_argument(
-        "--auth-env",
-        default="",
-        help="Environment variable name for auth token (default: {UPPER_NAME}_TOKEN)",
-    )
-    parser.add_argument(
         "--concept-prefix",
         default="",
         help="Unique CONCEPT ID prefix (default: derived from package name; check the registry in SKILL.md for collisions)",
@@ -3288,10 +3356,6 @@ if __name__ == "__main__":
         pkg_types=args.pkg_types,
         display_name=args.display_name,
         description=args.description,
-        author=args.author,
-        email=args.email,
-        service_url_env=args.service_url_env,
-        auth_env=args.auth_env,
         concept_prefix=args.concept_prefix,
         doc_urls=args.doc_urls,
         in_place=args.in_place,

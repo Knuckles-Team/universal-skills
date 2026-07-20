@@ -51,8 +51,8 @@ def validate_config_permissions(path: Path) -> None:
     if os.name != "nt":  # Skip on Windows
         mode = path.stat().st_mode
         if bool(mode & stat.S_IRWXG) or bool(mode & stat.S_IRWXO):
-            print(f"WARNING: {path} has insecure permissions!")
-            print(f"Config contains credentials. Run: chmod 600 {path}")
+            print("WARNING: configured credential file has insecure permissions!")
+            print("Config contains credentials. Restrict it to owner-only permissions.")
 
 
 def validate_db_config(db: dict) -> None:
@@ -188,7 +188,7 @@ def execute_query(db_config: dict, query: str, limit: Optional[int] = None) -> N
                 print("Query executed (no result set returned)")
 
     except psycopg2.Error as e:
-        error_msg = str(e)
+        error_msg = type(e).__name__
         # Sanitize to avoid leaking credentials
         if "password" in error_msg.lower() or "authentication" in error_msg.lower():
             error_msg = "Authentication failed. Check credentials in connections.json"

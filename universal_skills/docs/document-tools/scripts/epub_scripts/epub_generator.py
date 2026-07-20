@@ -273,7 +273,7 @@ class EPUBGenerator:
             self._write_epub(output_path)
             return True
         except Exception as e:
-            print(f"Error generating EPUB: {e}")
+            print(f"Error generating EPUB: {type(e).__name__}")
             raise
 
     def _create_book(self) -> None:

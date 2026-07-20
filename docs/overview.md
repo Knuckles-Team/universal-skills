@@ -1,119 +1,80 @@
-# universal-skills — Concept Overview
+# Catalog architecture
 
-> **Category**: Skills | **Ecosystem Role**: MCP Server + A2A Agent
-> Built on [`agent-utilities`](https://github.com/Knuckles-Team/agent-utilities) — the unified AGI Harness.
+## Atomic skills
 
-## Description
+An atomic skill has one trigger surface, one primary capability, and one result
+contract. Its canonical location is:
 
-Universal skill library providing cross-cutting agent capabilities.
-
-## Enterprise Readiness
-
-All agents in the ecosystem inherit enterprise-grade infrastructure from `agent-utilities`:
-
-| Feature | Status | Source |
-|:--------|:-------|:-------|
-| **JWT/OIDC Authentication** | ✅ Built-in | `agent-utilities[auth]` — Authlib JWKS + API key middleware |
-| **OpenTelemetry Instrumentation** | ✅ Built-in | `agent-utilities[logfire]` — OTLP export, FastAPI auto-instrumentation |
-| **HashiCorp Vault Integration** | ✅ Built-in | `agent-utilities[vault]` — `secret://`, `env://`, `vault://` URI schemes |
-| **Audit Logging** | ✅ Built-in | Append-only compliance trail with 30+ action types (CONCEPT:AU-OS.governance.wasm-micro-agent-sandbox) |
-| **Token Usage Analytics** | ✅ Built-in | 4-bucket tracking with budget alerting (CONCEPT:AU-OS.governance.wasm-micro-agent-sandbox) |
-| **Prompt Injection Defense** | ✅ Built-in | 25+ pattern scanner + jailbreak taxonomy (CONCEPT:OS-5.1) |
-| **Guardrail Engine** | ✅ Built-in | Input/output interception with block/redact/warn (CONCEPT:AU-OS.governance.reactive-multi-axis-budget) |
-| **Action Execution Pipeline** | ✅ Built-in | Token, cost, duration, and node transition limits Dry-run / commit / rollback phases (CONCEPT:ORCH-1.4) |
-| **Resource Scheduling** | ✅ Built-in | Priority queuing + preemption limits (CONCEPT:OS-5.2) |
-| **Session Concurrency** | ✅ Built-in | Enqueue/reject/interrupt/rollback (CONCEPT:AU-OS.governance.reactive-multi-axis-budget) |
-
-## Concept Registry
-
-This project implements or inherits the following ecosystem concepts:
-
-| Concept ID | Description | Source |
-|:-----------|:------------|:-------|
-| AHE-3.4 | Distributed Agentic Evolution | `agent-utilities` (inherited) |
-| ECO-4.1 | MCP & Universal Skills | `agent-utilities` (inherited) |
-| ECO-4.8 | **Dynamic Skill Evolution** | `agent-utilities` (inherited) |
-
-> 📖 **Full Registry**: See [`agent-utilities/docs/overview.md`](https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/overview.md) for the complete 5-Pillar concept index.
-
-## Architecture
-
-This project follows the standardized agent-package pattern:
-
-```
-universal-skills/
-├── universal_skills/        # Source code
-│   ├── __init__.py
-│   ├── agent_server.py      # Entry point (create_graph_agent_server)
-│   ├── api_client.py        # REST/GraphQL API wrapper
-│   └── mcp_server.py        # FastMCP tool definitions
-├── tests/                   # Test suite
-├── docs/                    # Documentation
-├── pyproject.toml           # Package metadata
-├── mcp_config.json          # MCP server configuration
-├── main_agent.json          # Agent identity & system prompt
-└── Dockerfile               # Container deployment
+```text
+universal_skills/<domain>/<skill-name>/
+├── SKILL.md
+├── scripts/       # optional executable helpers
+├── references/    # optional detailed guidance
+└── assets/        # optional output resources or templates
 ```
 
-## MCP Configuration
+`SKILL.md` frontmatter declares `name`, `domain`, `skill_type: skill`, and a
+self-sufficient trigger-oriented `description`. The body explains boundaries,
+inputs, outputs, safety, and only the resources needed for that capability. It does
+not contain a dependency DAG or orchestrate other skills.
 
-### stdio Mode
-```json
-{
-  "mcpServers": {
-    "universal-skills": {
-      "command": "uv",
-      "args": ["run", "--with", "universal-skills", "universal-mcp"],
-      "env": {}
-    }
-  }
-}
+## Skill workflows
+
+A workflow is a pure grouping of existing atomic skills or exact MCP tools. It owns
+ordering, not business logic:
+
+```text
+universal_skills/<domain>-workflows/<workflow-name>/
+├── SKILL.md
+└── references/
+    └── team.yaml
 ```
 
-### Streamable HTTP Mode
+Each `### Step N:` binds one atomic skill with `[skill: <name>]` or one MCP tool
+with `[mcp_tool: <server.tool>]`. `depends_on` forms an acyclic graph. The
+`## Execution` section renders the same graph for native execution, while the
+standard footer allows graph-os delegation. `references/team.yaml` must describe
+the same specialist set and execution mode.
+
+## Package-owned capabilities
+
+Operations tied to one API, service, deployment, SDK, or agent package belong in
+that package:
+
+```text
+agent-packages/agents/<package>/<module>/skills/<operation-skill>/SKILL.md
+```
+
+The package publishes its skill directory through the
+`agent_utilities.skill_providers` setuptools entry point. A cross-package universal
+workflow may invoke that skill by declaring the package and skill in `requires`.
+This keeps installation, versioning, credentials, and compatibility with the owner.
+
+## Discovery and packaging
+
+The Python wheel includes all files below `universal_skills/`, including scripts,
+references, hidden scaffold assets, and nested templates. It excludes bytecode,
+caches, generated analysis results, and packaged `.skill` archives. Runtime catalog
+audits count canonical `SKILL.md` entries and deliberately exclude `assets/` templates
+and generated skill graphs.
+
+## Quality gates
+
+Use complementary checks because no one validator proves semantic quality:
+
 ```bash
-universal-mcp --transport streamable-http --port 8001
+# Atomic/workflow contract and version parity
+python scripts/check_atomicity.py --strict
+python scripts/gen_bumpversion.py --check
+
+# Full structural and routing inventory
+python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py \
+  universal_skills --fail-on never
+
+# Executable verification
+pytest -q
+pre-commit run --all-files
 ```
 
-## Day 0 Bootstrap & Multi-Service Wiring Orchestrator
-
-The package includes a comprehensive, graph-driven **Day 0 Bootstrap & Multi-Service Wiring Orchestrator** workflow. It maps the automated top-down provisioning and configuration of all **19 homelab services** starting from a single bare-metal server:
-
-```mermaid
-graph TD
-    subgraph "Layer 0: Host Discovery & Pre-flight"
-        A[SSH key Full-Mesh Bootstrap] --> B[Host OS & HW Discovery]
-        B --> C[Overlay Networks Provisioning]
-    end
-
-    subgraph "Layer 1: Edge Router & Authoritative DNS"
-        C --> D[Technitium DNS Server macvlan/static IP 10.0.0.199]
-        D --> E[Caddy Dynamic Ingress Router HTTP/HTTPS]
-    end
-
-    subgraph "Layer 2: Identity & Security Foundations"
-        E --> F[Keycloak SSO OIDC/SAML]
-        F --> G[OpenBao Secure Vault KV2 Engine]
-    end
-
-    subgraph "Layer 3: DevOps & GitOps Automation"
-        G --> H[GitLab Project & Repo Provisioning]
-        H --> I[Portainer GitOps Syncing with GitLab PATs]
-    end
-
-    subgraph "Layer 4: Automated Services Provisioning"
-        I --> J[Launch 19 Services in Dependency Tiers]
-    end
-
-    subgraph "Layer 5: Unified Cross-Service Wiring"
-        J --> K1[DNS: Technitium Authoritative Records Mapping]
-        J --> K2[Proxy: Caddy Dynamic Overlay Routing]
-        J --> K3[SSO: Keycloak Clients Auto-Registration]
-        J --> K4[Observability: Loki/Prometheus Scraping & Langfuse OTEL Traces]
-        J --> K5[Backups: BorgBackup Database Dumps & Repository Sync]
-    end
-
-    subgraph "Layer 6: Knowledge Graph Materialization"
-        K1 & K2 & K3 & K4 & K5 --> L[Ingest Full Topology Snapshot into Graph-OS]
-    end
-```
+The catalog auditor reports unresolved legacy composition and routing debt instead
+of silently treating a passing schema check as proof that a skill is well designed.

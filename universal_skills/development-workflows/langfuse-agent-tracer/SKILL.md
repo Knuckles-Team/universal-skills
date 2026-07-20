@@ -20,7 +20,7 @@ team_config:
 tags: ['langfuse', 'telemetry', 'tracing', 'monitoring', 'debugging', 'langfuse-mcp']
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Langfuse Agent Tracer Workflow
@@ -31,7 +31,7 @@ Automatically queries Langfuse sessions and traces to isolate agent-utilities ex
 
 ## Steps
 
-### Step 0: Langfuse Mcp
+### Step 0: list-agent-traces [skill: langfuse-mcp]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
 
@@ -45,14 +45,14 @@ Expected: `trace_list_data, active_sessions`
 Present a structured dashboard of agent executions, highlighting traces with warning levels, high latencies, or error logs. Prompt the user to select an execution trace for deep analysis.
 Expected: `selected_trace_id, diagnosis_notes`
 
-### Step 2: Langfuse Mcp
+### Step 2: fetch-trace-details [skill: langfuse-mcp]
 **Agent**: `validator-agent`
 **Tools**: `rep_rm_projects, gl_pipelines`
 
 Retrieve complete telemetry span trees, inputs, outputs, and prompt details for the selected execution trace using the trace_get action.
 Expected: `trace_span_details`
 
-### Step 3: KG Persistence [depends_on: langfuse-mcp]
+### Step 3: KG Persistence [depends_on: Step 0, Step 2]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -68,7 +68,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Langfuse Mcp; Step 1 — User Interaction; Step 2 — Langfuse Mcp
+- **Run first (in parallel):** Step 0 — list-agent-traces; Step 1 — User Interaction; Step 2 — fetch-trace-details
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

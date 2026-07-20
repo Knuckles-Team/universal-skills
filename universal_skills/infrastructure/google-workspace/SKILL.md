@@ -1,17 +1,9 @@
 ---
 name: google-workspace
-domain: infrastructure
-skill_type: skill
 description: >-
-  Use this skill to interact with the Google Workspace ecosystem, including Gmail,
-  Google Calendar, Google Chat, Google Docs, Google Drive, Google Sheets, and
-  Google Slides. You can search for files, read emails, manage calendar events,
-  send messages, read/write docs and sheets, and interact with slides.
-license: MIT
-tags: [google, workspace, gmail, calendar, chat, docs, drive, sheets, slides, api]
-metadata:
-  version: '1.2.0'
-  author: Genius
+  Interact with Gmail, Google Calendar, Google Chat, Google Docs, Google Drive,
+  Google Sheets, and Google Slides. Use for searching or managing Workspace
+  content, messages, files, events, documents, spreadsheets, or presentations.
 ---
 # Google Workspace
 
@@ -20,7 +12,24 @@ metadata:
 This skill consolidates all Google Workspace integrations into a single interface.
 
 ## Authentication
-Each tool has its own `auth.py` script in its respective subdirectory to handle OAuth authentication for the required scopes. Before using a tool, you may need to run its `auth.py status` to ensure it is authenticated. If not, inform the user they need to run `python scripts/<tool>/auth.py login`.
+
+Configure `GOOGLE_WORKSPACE_OAUTH_CLIENT_ID` and
+`GOOGLE_WORKSPACE_OAUTH_BROKER_URL` through AgentConfig or the process
+environment. The broker must use HTTPS and must not contain embedded
+credentials, a query, or a fragment. Keep its client secret in the broker's
+secret manager; never place it in this skill or a generated config.
+
+Each service has a scoped `auth.py` helper. Run
+`python scripts/<service>/auth.py status`, then `login` when needed. Tokens are
+stored only in the system keyring. The `token` command reports availability and
+never prints token material. Never copy authorization URLs, OAuth state, or
+tokens into logs, traces, reports, or chat.
+
+Outbound API calls are restricted to the exact Google service hosts, reject
+redirects and ambient proxies, use finite timeouts and bounded responses, and
+verify TLS. For a managed trust chain, configure `SSL_CERT_FILE`, `SSL_CERT_DIR`,
+or `REQUESTS_CA_BUNDLE` at runtime; the skill never persists those paths or the
+certificate material. File and attachment uploads are limited to 32 MiB.
 
 ## Capabilities/Tools
 
@@ -54,4 +63,4 @@ Each tool has its own `auth.py` script in its respective subdirectory to handle 
 
 ## Usage Notes
 - When working with files (Docs, Sheets, Slides), it's often best to use the **Drive** tool to search for the file and get its `ID` first, then pass that `ID` to the respective tool.
-- Always use the absolute path or correct relative path to the scripts (e.g. `scripts/drive/drive.py`).
+- Resolve scripts relative to this skill root; do not persist machine-specific absolute paths.

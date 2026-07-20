@@ -1,313 +1,303 @@
 #!/usr/bin/env python3
-"""
-Skill Initializer - Creates a new skill from template
+"""Create and validate one atomic universal skill."""
 
-Usage:
-    init_skill.py <skill-name> --path <path>
+from __future__ import annotations
 
-Examples:
-    init_skill.py my-new-skill --path skills/public
-    init_skill.py my-api-helper --path skills/private
-    init_skill.py custom-skill --path /custom/location
-"""
-
+import argparse
+import re
+import shutil
 import sys
 from pathlib import Path
+from typing import Any, Sequence
 
-SKILL_TEMPLATE = """---
-name: {skill_name}
-domain: {domain}
-skill_type: skill
-description: [ACTION REQUIRED: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
-license: MIT
-tags: [ACTION REQUIRED: Add relevant keywords like agent, documentation, workflow, etc.]
-metadata:
-  author: [ACTION REQUIRED: Add author name]
-  version: '0.1.21'
----
+try:
+    import yaml
+except ImportError:  # pragma: no cover - the skill extra installs PyYAML
+    yaml = None
 
-# {skill_title}
-
-## Overview
-
-[ACTION REQUIRED: 1-2 sentences explaining what this skill enables]
-
-## Structuring This Skill
-
-[ACTION REQUIRED: Choose the structure that best fits this skill's purpose. Common patterns:
-
-**1. Workflow-Based** (best for sequential processes)
-- Works well when there are clear step-by-step procedures
-- Example: DOCX skill with "Workflow Decision Tree" → "Reading" → "Creating" → "Editing"
-- Structure: ## Overview → ## Workflow Decision Tree → ## Step 1 → ## Step 2...
-
-**2. Task-Based** (best for tool collections)
-- Works well when the skill offers different operations/capabilities
-- Example: PDF skill with "Quick Start" → "Merge PDFs" → "Split PDFs" → "Extract Text"
-- Structure: ## Overview → ## Quick Start → ## Task Category 1 → ## Task Category 2...
-
-**3. Reference/Guidelines** (best for standards or specifications)
-- Works well for brand guidelines, coding standards, or requirements
-- Example: Brand styling with "Brand Guidelines" → "Colors" → "Typography" → "Features"
-- Structure: ## Overview → ## Guidelines → ## Specifications → ## Usage...
-
-**4. Capabilities-Based** (best for integrated systems)
-- Works well when the skill provides multiple interrelated features
-- Example: Product Management with "Core Capabilities" → numbered capability list
-- Structure: ## Overview → ## Core Capabilities → ### 1. Feature → ### 2. Feature...
-
-Patterns can be mixed and matched as needed. Most skills combine patterns (e.g., start with task-based, add workflow for complex operations).
-
-Delete this entire "Structuring This Skill" section when done - it's just guidance.]
-
-## [ACTION REQUIRED: Replace with the first main section based on chosen structure]
-
-[ACTION REQUIRED: Add content here. See examples in existing skills:
-- Code samples for technical skills
-- Decision trees for complex workflows
-- Concrete examples with realistic user requests
-- References to scripts/templates/references as needed]
-
-## Resources
-
-This skill includes example resource directories that demonstrate how to organize different types of bundled resources:
-
-### scripts/
-Executable code (Python/Bash/etc.) that can be run directly to perform specific operations.
-
-**Examples from other skills:**
-- PDF skill: `fill_fillable_fields.py`, `extract_form_field_info.py` - utilities for PDF manipulation
-- DOCX skill: `document.py`, `utilities.py` - Python modules for document processing
-
-**Appropriate for:** Python scripts, shell scripts, or any executable code that performs automation, data processing, or specific operations.
-
-**Note:** Scripts may be executed without loading into context, but can still be read by Agent for patching or environment adjustments.
-
-### references/
-Documentation and reference material intended to be loaded into context to inform Agent's process and thinking.
-
-**Examples from other skills:**
-- Product management: `communication.md`, `context_building.md` - detailed workflow guides
-- BigQuery: API reference documentation and query examples
-- Finance: Schema documentation, company policies
-
-**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that Agent should reference while working.
-
-### assets/
-Files not intended to be loaded into context, but rather used within the output Agent produces.
-
-**Examples from other skills:**
-- Brand styling: PowerPoint template files (.pptx), logo files
-- Frontend builder: HTML/React boilerplate project directories
-- Typography: Font files (.ttf, .woff2)
-
-**Appropriate for:** Templates, boilerplate code, document templates, images, icons, fonts, or any files meant to be copied or used in the final output.
-
----
-
-**Any unneeded directories can be deleted.** Not every skill requires all three types of resources.
-"""
-
-EXAMPLE_SCRIPT = '''#!/usr/bin/env python3
-"""
-Example helper script for {skill_name}
-
-This is a placeholder script that can be executed directly.
-Replace with actual implementation or delete if not needed.
-
-Example real scripts from other skills:
-- pdf/scripts/fill_fillable_fields.py - Fills PDF form fields
-- pdf/scripts/convert_pdf_to_images.py - Converts PDF pages to images
-"""
-
-def main():
-    print("This is an example script for {skill_name}")
-    # ACTION REQUIRED: Add actual script logic here
-    # This could be data processing, file conversion, API calls, etc.
-
-if __name__ == "__main__":
-    main()
-'''
-
-EXAMPLE_REFERENCE = """# Reference Documentation for {skill_title}
-
-This is a placeholder for detailed reference documentation.
-Replace with actual reference content or delete if not needed.
-
-Example real reference docs from other skills:
-- product-management/references/communication.md - Comprehensive guide for status updates
-- product-management/references/context_building.md - Deep-dive on gathering context
-- bigquery/references/ - API references and query examples
-
-## When Reference Docs Are Useful
-
-Reference docs are ideal for:
-- Comprehensive API documentation
-- Detailed workflow guides
-- Complex multi-step processes
-- Information too lengthy for main SKILL.md
-- Content that's only needed for specific use cases
-
-## Structure Suggestions
-
-### API Reference Example
-- Overview
-- Authentication
-- Endpoints with examples
-- Error codes
-- Rate limits
-
-### Workflow Guide Example
-- Prerequisites
-- Step-by-step instructions
-- Common patterns
-- Troubleshooting
-- Best practices
-"""
-
-EXAMPLE_ASSET = """# Example Asset File
-
-This placeholder represents where asset files would be stored.
-Replace with actual asset files (templates, images, fonts, etc.) or delete if not needed.
-
-Asset files are NOT intended to be loaded into context, but rather used within
-the output Agent produces.
-
-Example asset files from other skills:
-- Brand guidelines: logo.png, slides_template.pptx
-- Frontend builder: hello-world/ directory with HTML/React boilerplate
-- Typography: custom-font.ttf, font-family.woff2
-- Data: sample_data.csv, test_dataset.json
-
-## Common Asset Types
-
-- Templates: .pptx, .docx, boilerplate directories
-- Images: .png, .jpg, .svg, .gif
-- Fonts: .ttf, .otf, .woff, .woff2
-- Boilerplate code: Project directories, starter files
-- Icons: .ico, .svg
-- Data files: .csv, .json, .xml, .yaml
-
-Note: This is a text placeholder. Actual assets can be any file type.
-"""
+NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+TRIGGER_RE = re.compile(r"\buse when\b", re.IGNORECASE)
+STEP_RE = re.compile(r"^###\s+Step\s+\d+:", re.MULTILINE | re.IGNORECASE)
+RESOURCE_NAMES = ("scripts", "references", "assets")
+WORKFLOW_KEYS = {"agent", "team_config", "depends_on", "cron"}
+SENSITIVE_NAMES = {".env", "credentials.json", "secrets.json"}
+SENSITIVE_SUFFIXES = {".key", ".pem", ".p12", ".pfx"}
+DESCRIPTION_MAX = 1024
 
 
-def title_case_skill_name(skill_name):
-    """Convert hyphenated skill name to Title Case for display."""
+def title_case_skill_name(skill_name: str) -> str:
+    """Convert a kebab-case skill name to a display title."""
     return " ".join(word.capitalize() for word in skill_name.split("-"))
 
 
-def init_skill(skill_name, path):
-    """
-    Initialize a new skill directory with template SKILL.md.
+def validate_name(name: str, *, label: str = "skill name") -> list[str]:
+    """Return naming errors for a catalog identifier."""
+    errors: list[str] = []
+    if not NAME_RE.fullmatch(name):
+        errors.append(f"{label} must use lowercase kebab-case")
+    if len(name) > 64:
+        errors.append(f"{label} must be at most 64 characters")
+    return errors
 
-    Args:
-        skill_name: Name of the skill
-        path: Path where the skill directory should be created
 
-    Returns:
-        Path to created skill directory, or None if error
-    """
-    # Determine skill directory path
-    skill_dir = Path(path).resolve() / skill_name
+def validate_description(description: str) -> list[str]:
+    """Return routing-description errors."""
+    errors: list[str] = []
+    if not description.strip():
+        errors.append("description must not be empty")
+    elif len(description) > DESCRIPTION_MAX:
+        errors.append(f"description must be at most {DESCRIPTION_MAX} characters")
+    if "<" in description or ">" in description:
+        errors.append("description must not contain angle brackets")
+    if not TRIGGER_RE.search(description):
+        errors.append("description must include an explicit 'Use when' trigger")
+    return errors
 
-    # Check if directory already exists
-    if skill_dir.exists():
-        print(f"❌ Error: Skill directory already exists: {skill_dir}")
+
+def validate_domain_path(domain_path: Path) -> tuple[str, list[str]]:
+    """Validate a direct ``universal_skills/<domain>`` destination."""
+    resolved = domain_path.resolve()
+    domain = resolved.name
+    errors = validate_name(domain, label="domain")
+    if resolved.parent.name != "universal_skills":
+        errors.append("--path must be a direct universal_skills/<domain> directory")
+    if domain.endswith("-workflows"):
+        errors.append(
+            "skill-builder creates atomic skills only; use skill-workflow-builder "
+            "for a *-workflows domain"
+        )
+    return domain, errors
+
+
+def parse_resources(value: str | Sequence[str] | None) -> tuple[str, ...]:
+    """Normalize and validate requested resource directory names."""
+    if value is None:
+        return ()
+    items = value.split(",") if isinstance(value, str) else list(value)
+    resources: list[str] = []
+    for item in items:
+        name = str(item).strip()
+        if not name:
+            continue
+        if name not in RESOURCE_NAMES:
+            choices = ", ".join(RESOURCE_NAMES)
+            raise ValueError(f"unknown resource '{name}'; choose from {choices}")
+        if name not in resources:
+            resources.append(name)
+    return tuple(resources)
+
+
+def _split_frontmatter(text: str) -> tuple[dict[str, Any], str, str | None]:
+    if not text.startswith("---"):
+        return {}, text, "SKILL.md is missing YAML frontmatter"
+    parts = text.split("---", 2)
+    if len(parts) != 3:
+        return {}, text, "SKILL.md has unterminated YAML frontmatter"
+    if yaml is None:
+        return {}, parts[2], "PyYAML is required to validate a skill"
+    try:
+        frontmatter = yaml.safe_load(parts[1]) or {}
+    except yaml.YAMLError as exc:
+        return {}, parts[2], f"invalid YAML frontmatter: {type(exc).__name__}"
+    if not isinstance(frontmatter, dict):
+        return {}, parts[2], "YAML frontmatter must be a mapping"
+    return frontmatter, parts[2], None
+
+
+def validate_atomic_skill(skill_path: Path) -> list[str]:
+    """Validate the metadata, placement, and atomicity of one skill folder."""
+    skill_path = skill_path.resolve()
+    errors: list[str] = []
+    if not skill_path.is_dir():
+        return ["configured skill folder was not found"]
+
+    skill_md = skill_path / "SKILL.md"
+    if not skill_md.is_file():
+        return ["SKILL.md was not found in the configured skill folder"]
+
+    domain, domain_errors = validate_domain_path(skill_path.parent)
+    errors.extend(domain_errors)
+    text = skill_md.read_text(encoding="utf-8", errors="replace")
+    frontmatter, body, parse_error = _split_frontmatter(text)
+    if parse_error:
+        return errors + [parse_error]
+
+    name = str(frontmatter.get("name", ""))
+    errors.extend(validate_name(name))
+    if name != skill_path.name:
+        errors.append(
+            f"frontmatter name '{name}' must equal directory '{skill_path.name}'"
+        )
+    if frontmatter.get("domain") != domain:
+        errors.append(f"frontmatter domain must equal containing domain '{domain}'")
+    if frontmatter.get("skill_type") != "skill":
+        errors.append("skill_type must be 'skill' for an atomic skill")
+
+    errors.extend(validate_description(str(frontmatter.get("description", ""))))
+    forbidden = sorted(WORKFLOW_KEYS.intersection(frontmatter))
+    if forbidden:
+        errors.append(
+            "atomic skill contains workflow-only metadata: " + ", ".join(forbidden)
+        )
+    if STEP_RE.search(body):
+        errors.append("atomic SKILL.md must not contain numbered workflow steps")
+    if "ACTION REQUIRED" in text or re.search(r"\bTODO\b", text):
+        errors.append("skill contains unfinished placeholder markers")
+
+    for path in sorted(skill_path.rglob("*")):
+        if path.is_symlink():
+            errors.append(
+                f"skill must not contain symlinks: {path.relative_to(skill_path)}"
+            )
+        if path.is_file() and (
+            path.name.lower() in SENSITIVE_NAMES
+            or path.suffix.lower() in SENSITIVE_SUFFIXES
+        ):
+            errors.append(
+                f"skill contains a potentially sensitive file: {path.relative_to(skill_path)}"
+            )
+    return errors
+
+
+def _render_skill(
+    skill_name: str,
+    domain: str,
+    description: str,
+    resources: Sequence[str],
+    tags: Sequence[str],
+    author: str,
+    version: str,
+) -> str:
+    if yaml is None:  # pragma: no cover - checked by the CLI
+        raise RuntimeError("PyYAML is required to initialize a skill")
+    frontmatter = {
+        "name": skill_name,
+        "domain": domain,
+        "skill_type": "skill",
+        "description": description,
+        "license": "MIT",
+        "tags": list(tags) or [skill_name],
+        "metadata": {"version": version, "author": author},
+    }
+    title = title_case_skill_name(skill_name)
+    body = [
+        f"# {title}",
+        "",
+        "## Purpose",
+        "",
+        description,
+        "",
+        "## Instructions",
+        "",
+        "Perform only the focused capability described above. Preserve the user's",
+        "scope and constraints, inspect the relevant inputs, and report the result",
+        "with enough evidence for the user to verify it.",
+    ]
+    if resources:
+        body.extend(["", "## Resources", ""])
+        labels = {
+            "scripts": "Run deterministic helpers from `scripts/` when needed.",
+            "references": "Read only the relevant guidance from `references/`.",
+            "assets": "Reuse output materials from `assets/` rather than recreating them.",
+        }
+        body.extend(f"- {labels[resource]}" for resource in resources)
+    fm = yaml.safe_dump(frontmatter, sort_keys=False, allow_unicode=True).strip()
+    return f"---\n{fm}\n---\n\n" + "\n".join(body) + "\n"
+
+
+def init_skill(
+    skill_name: str,
+    path: str | Path,
+    description: str,
+    resources: str | Sequence[str] | None = None,
+    tags: Sequence[str] = (),
+    author: str = "Genius",
+    version: str = "1.2.1",
+) -> Path | None:
+    """Initialize one valid atomic skill and only requested resource directories."""
+    domain_path = Path(path).resolve()
+    domain, errors = validate_domain_path(domain_path)
+    errors.extend(validate_name(skill_name))
+    errors.extend(validate_description(description))
+    try:
+        requested_resources = parse_resources(resources)
+    except ValueError as exc:
+        errors.append(type(exc).__name__)
+        requested_resources = ()
+    if errors:
+        for error in errors:
+            print(f"Error: {error}", file=sys.stderr)
+        return None
+    if yaml is None:
+        print(
+            "Error: PyYAML is required; install universal-skills[skill-builder]",
+            file=sys.stderr,
+        )
         return None
 
-    # Create skill directory
+    skill_dir = domain_path / skill_name
+    if skill_dir.exists():
+        print("Error: configured skill directory already exists", file=sys.stderr)
+        return None
+
     try:
         skill_dir.mkdir(parents=True, exist_ok=False)
-        print(f"✅ Created skill directory: {skill_dir}")
-    except Exception as e:
-        print(f"❌ Error creating directory: {e}")
+        content = _render_skill(
+            skill_name,
+            domain,
+            description,
+            requested_resources,
+            tags,
+            author,
+            version,
+        )
+        (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+        for resource in requested_resources:
+            (skill_dir / resource).mkdir()
+    except OSError as exc:
+        shutil.rmtree(skill_dir, ignore_errors=True)
+        print(f"Error: failed to initialize skill: {type(exc).__name__}", file=sys.stderr)
         return None
 
-    # Create SKILL.md from template. `domain` is the containing top-level directory
-    # name (STANDARDS.md §2.1) — the basename of `--path`, e.g. `--path
-    # universal_skills/finance-workflows` -> domain "finance-workflows".
-    skill_title = title_case_skill_name(skill_name)
-    domain = Path(path).resolve().name
-    skill_content = SKILL_TEMPLATE.format(
-        skill_name=skill_name, skill_title=skill_title, domain=domain
-    )
-
-    skill_md_path = skill_dir / "SKILL.md"
-    try:
-        skill_md_path.write_text(skill_content)
-        print("✅ Created SKILL.md")
-    except Exception as e:
-        print(f"❌ Error creating SKILL.md: {e}")
-        return None
-
-    # Create resource directories with example files
-    try:
-        # Create scripts/ directory with example script
-        scripts_dir = skill_dir / "scripts"
-        scripts_dir.mkdir(exist_ok=True)
-        example_script = scripts_dir / "example.py"
-        example_script.write_text(EXAMPLE_SCRIPT.format(skill_name=skill_name))
-        example_script.chmod(0o755)
-        print("✅ Created scripts/example.py")
-
-        # Create references/ directory with example reference doc
-        references_dir = skill_dir / "references"
-        references_dir.mkdir(exist_ok=True)
-        example_reference = references_dir / "api_reference.md"
-        example_reference.write_text(EXAMPLE_REFERENCE.format(skill_title=skill_title))
-        print("✅ Created references/api_reference.md")
-
-        # Create assets/ directory with example asset placeholder
-        assets_dir = skill_dir / "assets"
-        assets_dir.mkdir(exist_ok=True)
-        example_asset = assets_dir / "example_asset.txt"
-        example_asset.write_text(EXAMPLE_ASSET)
-        print("✅ Created assets/example_asset.txt")
-    except Exception as e:
-        print(f"❌ Error creating resource directories: {e}")
-        return None
-
-    # Print next steps
-    print(f"\n✅ Skill '{skill_name}' initialized successfully at {skill_dir}")
-    print("\nNext steps:")
-    print("1. Edit SKILL.md to complete the TODO items and update the description")
-    print(
-        "2. Customize or delete the example files in scripts/, references/, and assets/"
-    )
-    print("3. Run the validator when ready to check the skill structure")
-
+    print(f"Created atomic skill: {skill_dir}")
     return skill_dir
 
 
-def main():
-    if len(sys.argv) < 4 or sys.argv[2] != "--path":
-        print("Usage: init_skill.py <skill-name> --path <path>")
-        print("\nSkill name requirements:")
-        print("  - Kebab-case identifier (e.g., 'my-data-analyzer')")
-        print("  - Lowercase letters, digits, and hyphens only")
-        print("  - Max 64 characters")
-        print("  - Must match directory name exactly")
-        print("\nExamples:")
-        print("  init_skill.py my-new-skill --path skills/public")
-        print("  init_skill.py my-api-helper --path skills/private")
-        print("  init_skill.py custom-skill --path /custom/location")
-        sys.exit(1)
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("skill_name", help="Lowercase kebab-case skill name")
+    parser.add_argument(
+        "--path",
+        required=True,
+        help="Direct universal_skills/<domain> destination",
+    )
+    parser.add_argument(
+        "--description",
+        required=True,
+        help="Routing description containing what the skill does and 'Use when'",
+    )
+    parser.add_argument(
+        "--resources",
+        default="",
+        help="Comma-separated subset of scripts,references,assets",
+    )
+    parser.add_argument("--tags", default="", help="Comma-separated tags")
+    parser.add_argument("--author", default="Genius")
+    parser.add_argument("--version", default="1.2.1")
+    args = parser.parse_args(argv)
 
-    skill_name = sys.argv[1]
-    path = sys.argv[3]
-
-    print(f"🚀 Initializing skill: {skill_name}")
-    print(f"   Location: {path}")
-    print()
-
-    result = init_skill(skill_name, path)
-
-    if result:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    tags = tuple(tag.strip() for tag in args.tags.split(",") if tag.strip())
+    result = init_skill(
+        args.skill_name,
+        args.path,
+        args.description,
+        resources=args.resources,
+        tags=tags,
+        author=args.author,
+        version=args.version,
+    )
+    return 0 if result else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

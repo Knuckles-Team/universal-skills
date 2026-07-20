@@ -40,7 +40,7 @@ def create_slide_from_layout(unpacked_dir: Path, layout_file: str) -> None:
 
     layout_path = layouts_dir / layout_file
     if not layout_path.exists():
-        print(f"Error: {layout_path} not found", file=sys.stderr)
+        print("Error: configured layout was not found", file=sys.stderr)
         sys.exit(1)
 
     next_num = get_next_slide_number(slides_dir)
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     source = sys.argv[2]
 
     if not unpacked_dir.exists():
-        print(f"Error: {unpacked_dir} not found", file=sys.stderr)
+        print("Error: configured unpacked directory was not found", file=sys.stderr)
         sys.exit(1)
 
     source_type, layout_file = parse_source(source)

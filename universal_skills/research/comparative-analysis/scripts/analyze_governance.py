@@ -79,7 +79,7 @@ def analyze_contributors(project_path: Path) -> dict:
         )
         if result.returncode != 0:
             return {"total": 0, "bus_factor": 0, "error": "not a git repo"}
-        lines = [l.strip() for l in result.stdout.strip().split("\n") if l.strip()]
+        lines = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
         contributors = []
         for line in lines:
             match = re.match(r"(\d+)\s+(.+)", line)

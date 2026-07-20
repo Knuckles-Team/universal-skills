@@ -48,12 +48,24 @@ except Exception:  # pragma: no cover - standalone execution
 
     def _portable_name(name: str, max_len: int = 80) -> str:
         cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name or "").strip(". ") or "_"
-        return cleaned[:max_len]
+        if len(cleaned) <= max_len:
+            return cleaned
+        if max_len < 34:
+            raise ValueError("path component budget is too small for a safe digest")
+        digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:32]
+        return f"{cleaned[: max_len - 33]}-{digest}"
 
     def _portable_relpath(parts, max_total: int = 140) -> str:
-        return "/".join(_portable_name(p) for p in parts if p not in ("", "."))[
-            :max_total
-        ]
+        safe = [_portable_name(p) for p in parts if p not in ("", ".")]
+        joined = "/".join(safe)
+        if len(joined) <= max_total:
+            return joined
+        prefix = "/".join(safe[:-1])
+        budget = max_total - len(prefix) - 1
+        if budget < 34:
+            raise ValueError("relative path budget is too small for a safe digest")
+        safe[-1] = _portable_name(safe[-1], max_len=budget)
+        return "/".join(safe)
 
 
 def _flatten_reference_tree(skill_dir: Path) -> None:
@@ -66,7 +78,7 @@ def _flatten_reference_tree(skill_dir: Path) -> None:
     nested, title-derived directories. This runs immediately after ``build()``
     and:
     * moves every ``reference/**/*.md`` to ``reference/<hash>.md`` where
-      ``hash = sha1(seed)[:8]`` (extended to ``[:12]``/``[:16]`` on collision),
+      ``hash = sha256(seed)[:8]`` (extended to ``[:12]``/``[:16]`` on collision),
       seeded on the section's source URL when known, else its title/path;
     * keeps the human ``title``/``group``/``url`` in ``index.json``'s
       ``sections[]`` entries (the file reference becomes the hashed name);
@@ -90,7 +102,7 @@ def _flatten_reference_tree(skill_dir: Path) -> None:
         if not old_file.is_file():
             continue
         seed = section.get("url") or section.get("title") or old_rel
-        digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
         chosen = digest[:8]
         for length in (8, 12, 16):
             candidate = digest[:length]
@@ -283,10 +295,7 @@ def generate_skill(
         crawler_fn=_make_crawler_fn(crawl_opts), kg_enrich=not no_kg
     )
     out_dir = _resolve_out_dir(target_type, output_dir)
-    print(
-        f"🛠️  Building skill-graph **{skill_name}** "
-        f"from {len(specs)} source(s) → {out_dir / skill_name}"
-    )
+    print(f"🛠️  Building a skill graph from {len(specs)} configured source(s)")
     result = pipe.build(
         name=skill_name,
         specs=specs,
@@ -297,19 +306,21 @@ def generate_skill(
     _flatten_reference_tree(Path(result["skill_dir"]))
     kg = "yes" if result["kg_ingested"] else "no (offline)"
     print(
-        f"✅ Built **{skill_name}**: {result['file_count']} files • "
+        f"✅ Built skill graph: {result['file_count']} files • "
         f"KG-ingested: {kg} • v{result['version']}"
     )
     if result["validation_errors"]:
-        print("⚠️  validation issues:")
-        for err in result["validation_errors"]:
-            print(f"   - {err}")
+        print(
+            f"⚠️  {len(result['validation_errors'])} validation issue(s); details omitted"
+        )
 
     if distill:
         print("📖 Distilling an OVERVIEW.md (essence + cheatsheet)…")
         d = pipe.distill_one(out_dir / skill_name)
         print(
-            f"   {'✅ distilled' if d.get('status') == 'distilled' else '⚠️ ' + str(d)}"
+            "   ✅ distilled"
+            if d.get("status") == "distilled"
+            else "   ⚠️ distillation failed"
         )
     return result
 

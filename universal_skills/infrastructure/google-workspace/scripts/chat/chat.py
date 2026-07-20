@@ -4,30 +4,28 @@ Google Chat API operations.
 Lightweight alternative to the full Google Workspace MCP server.
 """
 
-try:
-    import requests as req_lib
-except ImportError:
-    print("Error: Missing required dependencies for the 'google-workspace' skill.")
-    print(
-        "Please install them by running: pip install 'universal-skills[google-workspace]'"
-    )
-    import sys
-
-    sys.exit(1)
 import argparse
 import json
 import mimetypes
 import os
+import re
+import secrets
 import sys
-import urllib.request
-import urllib.error
 import urllib.parse
 from typing import Optional
+from urllib.request import Request
 
 from auth import get_valid_access_token
+from universal_skills._security.http import (
+    SafeHttpError,
+    SafeHttpStatus,
+    UrlPolicy,
+    open_json,
+)
 
 CHAT_API_BASE = "https://chat.googleapis.com/v1"
 CHAT_UPLOAD_BASE = "https://chat.googleapis.com/upload/v1"
+SPACE_NAME_RE = re.compile(r"^spaces/[A-Za-z0-9_-]{1,256}$")
 
 
 def api_request(
@@ -50,16 +48,18 @@ def api_request(
     body = json.dumps(data).encode("utf-8") if data else None
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        return {"error": f"HTTP {e.code}: {error_body}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Request failed: {e.reason}"}
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response"}
+        req = Request(url, data=body, headers=headers, method=method)
+        payload, _ = open_json(
+            req,
+            policy=UrlPolicy(frozenset({"chat.googleapis.com"})),
+            timeout=30,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else {"success": True}
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def upload_attachment(space_name: str, file_path: str, text: str = "") -> dict:
@@ -69,38 +69,53 @@ def upload_attachment(space_name: str, file_path: str, text: str = "") -> dict:
     if not token:
         return {"error": "Failed to get access token"}
 
-    if not os.path.isfile(file_path):
-        return {"error": f"File not found: {file_path}"}
+    if SPACE_NAME_RE.fullmatch(space_name) is None:
+        return {"error": "Invalid space identifier"}
+    if not os.path.isfile(file_path) or os.path.islink(file_path):
+        return {"error": "Configured file was not found"}
+    if os.path.getsize(file_path) > 32 * 1024 * 1024:
+        return {"error": "Configured file exceeds the upload boundary"}
 
     mime_type, _ = mimetypes.guess_type(file_path)
     if not mime_type:
         mime_type = "application/octet-stream"
 
     filename = os.path.basename(file_path)
-    headers = {"Authorization": f"Bearer {token}"}
-
     # Step 1: Upload the file to get an attachment token
     upload_url = f"{CHAT_UPLOAD_BASE}/{space_name}/attachments:upload"
     metadata = json.dumps({"filename": filename})
-
-    with open(file_path, "rb") as f:
-        upload_resp = req_lib.post(
-            upload_url,
-            headers=headers,
-            files={
-                "metadata": ("metadata", metadata, "application/json"),
-                "file": (filename, f, mime_type),
+    boundary = "skill-" + secrets.token_hex(16)
+    try:
+        with open(file_path, "rb") as stream:
+            file_content = stream.read(32 * 1024 * 1024 + 1)
+        if len(file_content) > 32 * 1024 * 1024:
+            return {"error": "Configured file exceeds the upload boundary"}
+        multipart = (
+            f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+            f"{metadata}\r\n--{boundary}\r\nContent-Type: {mime_type}\r\n"
+            f"Content-Disposition: form-data; name=\"file\"; filename=\"upload\"\r\n\r\n"
+        ).encode() + file_content + f"\r\n--{boundary}--\r\n".encode()
+        request = Request(
+            upload_url + "?uploadType=multipart",
+            data=multipart,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": f"multipart/related; boundary={boundary}",
             },
-            params={"uploadType": "multipart"},
-            timeout=60,
+            method="POST",
         )
-
-    if upload_resp.status_code != 200:
-        return {
-            "error": f"Upload failed HTTP {upload_resp.status_code}: {upload_resp.text}"
-        }
-
-    upload_data = upload_resp.json()
+        upload_data, _ = open_json(
+            request,
+            policy=UrlPolicy(frozenset({"chat.googleapis.com"})),
+            timeout=60,
+            max_bytes=8 * 1024 * 1024,
+        )
+    except SafeHttpStatus as error:
+        return {"error": f"Remote service returned HTTP {error.status}"}
+    except (OSError, SafeHttpError):
+        return {"error": "Remote service request failed"}
+    if not isinstance(upload_data, dict):
+        return {"error": "Invalid upload response"}
     attachment_token = upload_data.get("attachmentDataRef", {}).get(
         "attachmentUploadToken"
     )
@@ -108,7 +123,6 @@ def upload_attachment(space_name: str, file_path: str, text: str = "") -> dict:
         return {"error": "Upload succeeded but no attachment token returned"}
 
     # Step 2: Send message with the attachment reference
-    msg_url = f"{CHAT_API_BASE}/{space_name}/messages"
     msg_data = {
         "text": text,
         "attachment": [
@@ -120,17 +134,7 @@ def upload_attachment(space_name: str, file_path: str, text: str = "") -> dict:
         ],
     }
 
-    msg_resp = req_lib.post(
-        msg_url,
-        headers={**headers, "Content-Type": "application/json"},
-        data=json.dumps(msg_data),
-        timeout=30,
-    )
-
-    if msg_resp.status_code != 200:
-        return {"error": f"Send failed HTTP {msg_resp.status_code}: {msg_resp.text}"}
-
-    return msg_resp.json()
+    return api_request("POST", f"{space_name}/messages", data=msg_data)
 
 
 def list_spaces() -> dict:

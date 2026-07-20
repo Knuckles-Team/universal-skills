@@ -29,6 +29,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from safe_zip import safe_extract_zip
+
 
 def main():
     parser = argparse.ArgumentParser(description="Validate Office document XML files")
@@ -61,17 +63,17 @@ def main():
     args = parser.parse_args()
 
     path = Path(args.path)
-    assert path.exists(), f"Error: {path} does not exist"
+    assert path.exists(), "Error: configured path does not exist"
 
     original_file = None
     if args.original:
         original_file = Path(args.original)
-        assert original_file.is_file(), f"Error: {original_file} is not a file"
+        assert original_file.is_file(), "Error: configured original is not a file"
         assert original_file.suffix.lower() in [
             ".docx",
             ".pptx",
             ".xlsx",
-        ], f"Error: {original_file} must be a .docx, .pptx, or .xlsx file"
+        ], "Error: configured original must be an Office file"
 
     file_extension = (original_file or path).suffix.lower()
     assert file_extension in [
@@ -79,16 +81,16 @@ def main():
         ".pptx",
         ".xlsx",
     ], (
-        f"Error: Cannot determine file type from {path}. Use --original or provide a .docx/.pptx/.xlsx file."
+        "Error: cannot determine configured Office file type"
     )
 
     if path.is_file() and path.suffix.lower() in [".docx", ".pptx", ".xlsx"]:
         temp_dir = tempfile.mkdtemp()
         with zipfile.ZipFile(path, "r") as zf:
-            zf.extractall(temp_dir)
+            safe_extract_zip(zf, temp_dir)
         unpacked_dir = Path(temp_dir)
     else:
-        assert path.is_dir(), f"Error: {path} is not a directory or Office file"
+        assert path.is_dir(), "Error: configured path is not a directory or Office file"
         unpacked_dir = path
 
     match file_extension:

@@ -12,8 +12,8 @@ description: >-
 license: MIT
 tags: [artifacts, frontend, docs, design-system]
 metadata:
-  version: '1.2.0'
-  author: Audel Rouhi
+  version: '1.2.1'
+  author: Agent Utilities Contributors
 ---
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 

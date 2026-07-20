@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [research, scanner, scholarx, pulselink, automation, agent-workflow]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
@@ -63,7 +63,7 @@ keys go in this skill.
 Use the provided `scripts/dynamic_scorer.py` to evaluate the fetched papers. The script will automatically auto-detect the agent-utilities KG and construct a taxonomy dynamically without needing hardcoded files!
 
 ```bash
-python /home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/research-scanner/scripts/dynamic_scorer.py \
+python ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/research-scanner/scripts/dynamic_scorer.py \
     --papers papers.json \
     --min-score 3.0 \
     --output top_papers.json

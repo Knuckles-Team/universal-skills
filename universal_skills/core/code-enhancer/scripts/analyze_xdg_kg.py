@@ -35,7 +35,7 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
             backend = create_backend(backend_type="ladybug", db_path=str(kg_db_path()))
             engine = IntelligenceGraphEngine(graph=nx.MultiDiGraph(), backend=backend)
         except ImportError as e:
-            logger.warning(f"Skipping XDG KG check due to missing dependency: {e}")
+            logger.warning(f"Skipping XDG KG check due to missing dependency: {type(e).__name__}")
             return {
                 "domain": "XDG Compliance (KG)",
                 "score": 100,

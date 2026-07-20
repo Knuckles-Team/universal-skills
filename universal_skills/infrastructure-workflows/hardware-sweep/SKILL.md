@@ -22,7 +22,7 @@ team_config:
 tags: ['hardware', 'sweep', 'discovery', 'os', 'system-info']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Hardware Sweep Workflow
@@ -40,14 +40,14 @@ OS and hardware information sweep across all inventory hosts. Collects CPU, memo
 List all hosts from inventory with their connectivity status
 Expected: `host, inventory`
 
-### Step 1: Systems Manager Mcp
+### Step 1: collect-host-hardware [skill: systems-manager-mcp]
 **Agent**: `deployer-agent`
 **Tools**: `pt_stack, cnt_cm_compose_operations`
 
 For each reachable host, collect CPU model and core count, total and available RAM, disk partitions and usage, OS distribution and kernel version
 Expected: `cpu, memory, disk, os`
 
-### Step 2: Systems Manager Mcp
+### Step 2: collect-accelerators [skill: systems-manager-mcp]
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
@@ -77,7 +77,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Tunnel Manager Mcp; Step 1 — Systems Manager Mcp; Step 2 — Systems Manager Mcp; Step 3 — Graph Os
+- **Run first (in parallel):** Step 0 — Tunnel Manager Mcp; Step 1 — collect-host-hardware; Step 2 — collect-accelerators; Step 3 — Graph Os
 - **After level 0:** Step 4 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

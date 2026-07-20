@@ -3,132 +3,144 @@ name: web-crawler
 domain: research
 skill_type: skill
 description: >-
-  Comprehensive tool for crawling websites, single pages, and sitemaps to yield
-  clean, refined markdown that is natively ingested into the epistemic-graph
-  Knowledge Graph (graph-os) as Document+Chunk+Concept objects with provenance,
-  by default. Use when the agent needs to read or extract knowledge from online
-  documentation, parse entire websites recursively, extract markdown from a
-  single URL, chunk markdown, bulk-process URLs from a sitemap XML, or persist
-  scraped web content into the Knowledge Graph for later semantic search/recall.
+  Bounded, privacy-aware website and sitemap crawler with AgentConfig-managed
+  egress, TLS, output confinement, and optional GraphOS document ingestion. Use
+  when fetching one page, crawling a site or sitemap, or ingesting approved web
+  content into GraphOS.
+tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledge-graph, graph-os, ingest]
 license: MIT
-tags: [web, crawler, documentation, docs, scrapper, scrape, extract, markdown, sitemap, knowledge-graph, graph-os, ingest]
 metadata:
-  version: '1.2.0'
-  author: Genius
+  version: '1.3.0'
+  author: Repository Maintainers
 ---
 # Web Crawler Skill
 
-This skill provides a robust CLI script (`scripts/crawl.py`) that utilizes `crawl4ai` to scrape websites, chunk markdown, process sitemaps, and recursively extract pages — and, **by default, ingests every crawled page into the epistemic-graph Knowledge Graph** via graph-os's unified `ingest_url` pipeline. It is a **thin entrypoint**: crawling/discovery lives here, but the actual fetch-quality decision, chunking, contextual enrichment, embeddings, concept extraction, and provenance stamping all happen in the ONE shared ingestion path (`agent_utilities.knowledge_graph.ingestion`) that every URL source (web-crawler, ArchiveBox, search results, feeds) converges on — this skill does not maintain a parallel ingestion mechanism.
+`scripts/crawl.py` crawls a page, a sitemap, or a same-origin section and emits
+privacy-sanitized markdown. Its default acquisition path is the shared bounded
+HTTP client. Headless-browser fetching is disabled unless an operator enables
+`SOURCE_HTTP_ALLOW_BROWSER_FETCH` through `AgentConfig`.
+
+Every outbound destination is checked immediately before I/O. Seed URLs,
+robots and sitemap locations, nested sitemap entries, redirects, browser
+navigation results, and recursively discovered links all use the same policy.
+Only HTTP(S) URLs without embedded credentials are accepted. Private or
+reserved destinations are denied unless their exact hostname is configured in
+`SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS`; cross-host redirects and sitemap entries
+require an exact `SOURCE_HTTP_ALLOWED_REDIRECT_HOSTS` entry.
 
 ## Usage
 
-Use the provided `scripts/crawl.py` to extract text from websites. Always consider if you need to output to a file or stdout. For single pages, stdout is fine. For sitemaps and recursive crawls, always specify `--output-dir`.
-
 ```bash
-python scripts/crawl.py --urls <url> --strategy <strategy> [options]
+python scripts/crawl.py --urls https://docs.example.org/guide/ --strategy recursive --output-dir crawler-output
 ```
 
-### Strategies
+Strategies:
 
-1. **`single`**: Crawls a single page.
-   * `python scripts/crawl.py --urls https://example.com/page --strategy single`
-2. **`chunked`**: Crawls a single page and splits the markdown by H1/H2 headers (# or ##).
-   * `python scripts/crawl.py --urls https://example.com/page --strategy chunked`
-3. **`sitemap-sequential`**: Fetches all URLs in a `sitemap.xml` and crawls them one by one, reusing the browser session. Best for small numbers of URLs when you need reliable parsing without taxing the target server.
-   * `python scripts/crawl.py --urls https://example.com/sitemap.xml --strategy sitemap-sequential --output-dir ./docs`
-4. **`sitemap-parallel`**: Fetches all URLs in a `sitemap.xml` and crawls them concurrently (memory adaptive dispatch). Best for large documentation sites.
-   * `python scripts/crawl.py --urls https://example.com/sitemap.xml --strategy sitemap-parallel --max-concurrent 10 --output-dir ./docs`
-5. **`recursive`**: Crawls a site starting from a single URL and recursively follows internal links up to a depth limit, deduplicating URLs. Automatically enforces path prefix restriction to stay within the starting section.
-   * `python scripts/crawl.py --urls https://example.com/docs/ --strategy recursive --max-depth 2 --output-dir ./crawled_content`
+1. `single` fetches one or more individual pages.
+2. `chunked` splits each page at H1/H2 boundaries.
+3. `sitemap-sequential` processes bounded sitemap entries one at a time.
+4. `sitemap-parallel` processes bounded sitemap entries with limited concurrency.
+5. `recursive` follows validated same-origin links to the configured depth.
 
-> [!TIP]
-> **Sitemap Auto-Discovery**: If you provide a single URL and use the `single` or `recursive` strategy, the script will automatically check `robots.txt` and `/sitemap.xml`. If a sitemap is found, it will switch to `sitemap-parallel` for complete and efficient coverage.
+Auto-discovery checks bounded `robots.txt` and `sitemap.xml` responses. An
+automatically discovered sitemap remains inside the seed origin unless its host
+is explicitly approved. `--ignore-prefix-restriction` relaxes only the path
+prefix; it never relaxes URL, DNS, private-address, or origin controls.
 
-### Options
+### Bounds
 
-* `--max-depth`: Max recursion depth for `recursive` (default: 3).
-* `--max-concurrent`: Number of parallel browser sessions for `sitemap-parallel` and `recursive` (default: 10).
-* `--max-pages`: Total page limit for recursive crawls (default: 500).
-* `--output-dir`: Important! Directory to save markdown files.
-* `--disable-magic-js`: Use if you don't want the heavy element-scrubbing CSS/JS to run (good for clean static sites).
-* `--ignore-prefix-restriction`: Disables the automatic path-prefix filter in recursive mode.
-* `--wait-for`: Custom CSS selector or JS expression to wait for (e.g., `"css:.my-content"`).
-* `--insecure`: Disable SSL verification (use with caution).
-* `--no-kg-ingest`: Disable native Knowledge Graph ingestion (see below). File output (`--output-dir`) is unaffected either way.
-* `--kg-mode`: `content` (default) or `url` — how each page is ingested (see below).
-* `--kg-endpoint`: graph-os base URL for ingestion (else `$GRAPH_OS_URL`, default `http://graph-os.arpa`); `/mcp` is appended automatically. `$GRAPH_OS_TOKEN` supplies a bearer token if the gateway requires auth.
+- `--max-depth`: 1–8; default 3.
+- `--max-concurrent`: 1–16; default 4.
+- `--max-pages`: 1–5,000; default 500.
+- at most 50 seed URLs, 1,000 extracted links per page, three nested sitemap
+  levels, 5,000 sitemap locations, and 512 chunks per page.
+- response bodies, redirects, CAs, proxies, and private-host exceptions come
+  from `AgentConfig` (`SOURCE_HTTP_MAX_RESPONSE_BYTES`,
+  `SOURCE_HTTP_MAX_REDIRECTS`, and the shared TLS profile fields).
+- page and MCP response/request sizes and timeouts have hard ceilings in the
+  security runtime.
+- one invocation emits at most 5,000 files/records and 512 MiB across disk or
+  stdout, even if per-page and page-count limits would permit more.
 
-## Knowledge Graph Ingestion (native, default ON)
+There is no insecure command-line switch. TLS verification, system trust,
+custom CA bundles, mTLS, and proxies are resolved at runtime through the shared
+transport-security profile. An insecure TLS profile still requires the central
+two-part explicit acknowledgement; the crawler does not create a bypass of its
+own.
 
-**Every crawl ends in the epistemic-graph, not just files.** As each page is
-successfully crawled, cleaned, and deduped, the skill ingests it into graph-os /
-epistemic-graph **over graph-os's MCP streamable-http surface** (`<endpoint>/mcp`
-— a JSON-RPC `tools/call` after an `initialize` handshake, mounting the tool with
-`load_tools` since graph-os is a dynamic multiplexer). This is exactly how the
-platform reaches the fleet — no REST gateway required, stdlib `urllib` only.
-There are two native modes:
+## Output and privacy
 
-**`content` mode (default) — push the crawler's own cleaned markdown.** The
-skill calls the `document_process` tool with the page's refined `fit_markdown`
-(`document=<md>`, `source=<url>`). graph-os chunks, embeds, and contextually
-enriches **our cleaned content** into a `:Document` + `:Chunk` objects with a
-`content_hash`, `source` = the page URL, and the title taken from the page's
-first `#` heading. This is the mode that **guarantees the clean, refined
-markdown is what lands in the KG** — the content is fixed by *this* crawler's
-crawl4ai `fit_markdown`, independent of whatever fetch backend the graph-os pod
-itself has. This directly fulfills "ingest a clean and refined set of markdown
-scraped documents".
+`--output-dir` is resolved under `WORKSPACE_PATH` when that AgentConfig field is
+configured, otherwise under the agent-utilities XDG data directory. Absolute
+paths are accepted only when they remain beneath one of those roots. Existing
+symlink components, traversal outside the allowed roots, and symlink targets
+are rejected. Files are written atomically with private permissions and opaque,
+content-neutral names.
 
-**`url` mode (`--kg-mode url`) — delegate the fetch.** The skill calls the
-`graph_ingest` tool with `action='ingest_url', target_path=<url>`. graph-os
-**re-fetches** through its own resolver chain (ArchiveBox → crawl4ai → requests)
-and materializes a `:Document` (`source_url`/`ast_hash`) **plus `:Concept` nodes**
-(LLM entity/topic extraction) and chunks. Prefer this when you want graph-os's
-ArchiveBox snapshot / server-side fetch and its concept graph — but note the KG
-content is only as clean as the gateway pod's fetch backend (if that pod lacks
-crawl4ai it falls back to `requests+markitdown`, which keeps more page chrome).
+Before content crosses stdout, disk, or GraphOS persistence boundaries, the
+shared persistence privacy guard redacts recognized personal identifiers,
+secrets, machine-specific paths, and runtime identity terms. Logs contain only
+counts and stable error categories—not URLs, endpoints, filesystem paths,
+tokens, response bodies, or upstream exception text.
 
-Re-ingesting the same page is idempotent — the Document id / `content_hash`
-is derived from the content, so an unchanged page is a no-op and a changed one
-updates in place.
+If `--output-dir` is omitted, sanitized content is written to stdout. Use a
+confined output directory for sitemap and recursive jobs.
 
-### Clean & refined markdown (what actually lands in the KG)
+## Optional browser mode
 
-`extract_markdown()` prefers crawl4ai's **`fit_markdown`** (the
-`PruningContentFilter`-scored, boilerplate-stripped rendering — nav/sidebar/
-cookie-banner/footer chrome scored out) over the unfiltered `raw_markdown`,
-then collapses incidental whitespace. Across a multi-page crawl
-(`sitemap-*`/`recursive`), a normalized content fingerprint dedups
-near-identical pages (e.g. print views, redirects landing on the same
-content) — a duplicate is logged and skipped, never saved or ingested twice.
-In the default `content` mode this cleaned markdown is exactly what is pushed
-to the KG.
+Set `SOURCE_HTTP_ALLOW_BROWSER_FETCH=true` through `AgentConfig` only when a
+site genuinely requires rendered JavaScript. Browser mode:
 
-### Degradation
+- keeps the Chromium sandbox enabled;
+- preflights every top-level navigation through the bounded HTTP policy;
+- validates the final navigation URL before accepting content;
+- constrains Chromium DNS resolution to seed and explicitly approved hosts;
+- disables iframe processing;
+- uses bounded page/wait timeouts and concurrency; and
+- accepts only a bounded CSS selector through `--wait-for` (arbitrary CLI
+  JavaScript is rejected).
 
-If graph-os is unreachable (network error, gateway down), the first failed
-submission logs a clear warning and the run **falls back to file-only
-output** for the remainder of the crawl — it never blocks or fails the crawl
-itself. (If a page reaches only the plain-HTTP fallback fetch and thus has no
-clean markdown, `content` mode transparently degrades to `url` mode for that
-page so graph-os can still fetch it server-side.) Check the final
-`KG ingestion (<mode>): N page(s) submitted to <endpoint>` summary line to
-confirm ingestion happened.
+A browser necessarily has a larger subresource egress surface than the default
+HTTP parser. Keep browser mode disabled for untrusted or ordinary static
+content. Because Chromium cannot faithfully consume every shared transport
+profile, browser mode accepts only verified system trust with no custom CA,
+mTLS material, or configured proxy. Those profiles fail closed; use the default
+HTTP path, which supports them natively. The fixed content-cleaning script is
+packaged code, not runtime input.
 
-### Internal use as an acquisition backend
+## Knowledge Graph ingestion
 
-`agent-utilities` itself drives this script as a subprocess for two internal
-paths — a single-page fetch backend (`web_fetch._fetch_via_crawl4ai`, behind
-`ingest_url`'s own resolver) and the skill-graph corpus builder
-(`skill_graph_pipeline._crawl_via_script`). Both always pass `--no-kg-ingest`
-(they run their own, differently-scoped ingestion afterward) — this is why
-`--no-kg-ingest` exists as an explicit opt-out rather than the default.
+Knowledge Graph ingestion is active when a GraphOS endpoint is supplied at
+runtime through `--kg-endpoint` or `GRAPH_OS_URL`; `--no-kg-ingest` disables it.
+`GRAPH_OS_TOKEN`, when needed, is runtime-only and is never logged or persisted
+by this skill.
 
-### Querying it back
+The endpoint is validated by the same SSRF policy on every request. GraphOS TLS,
+CA, mTLS, and proxy settings resolve through the `graph-os` transport profile.
+Redirects are rejected, JSON-RPC request/response bodies and session headers are
+bounded, and malformed SSE/JSON fails closed.
 
+The crawler calls only `document_process` with privacy-sanitized content. Its
+source provenance is a stable, non-reversible reference rather than a raw URL.
+The former URL-only mode was removed because it delegated a second fetch and
+could persist a sensitive location outside this skill's privacy boundary.
+Failure is best-effort: the first MCP failure disables further submissions for
+the run while local sanitized output continues.
+
+## Runtime policy example
+
+The values below are deployment-neutral. Store profile catalogs and certificate
+material behind secret references rather than committing paths or PEM data.
+
+```text
+SOURCE_HTTP_MAX_RESPONSE_BYTES=10485760
+SOURCE_HTTP_MAX_REDIRECTS=3
+SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS=[]
+SOURCE_HTTP_ALLOWED_REDIRECT_HOSTS=[]
+SOURCE_HTTP_ALLOW_BROWSER_FETCH=false
+GRAPH_OS_TLS_PROFILE=graph-os-production
+TLS_PROFILES_REF=secret://runtime/tls-profiles
 ```
-graph_search query="<topic from the crawled page>"
-# content mode stamps the page URL on d.source; url mode on d.source_url:
-graph_query cypher="MATCH (d:Document) WHERE d.source = '<url>' OR d.source_url = '<url>' RETURN d"
-graph_query cypher="MATCH (c:Chunk)-[:CHUNK_OF]->(d:Document) WHERE d.source = '<url>' RETURN c"
-```
+
+Exact private and redirect hosts may be supplied at runtime when an operator
+intentionally crawls an intranet source. Do not use wildcard entries.

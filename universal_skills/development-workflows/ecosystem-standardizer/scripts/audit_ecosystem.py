@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import json
-import os
 import re
 import sys
 import tomllib
@@ -229,7 +228,6 @@ def audit_env_vars(project_dir: Path, pkg_name: str) -> dict:
         genuine_url_vars = []
         for v in url_vars:
             # If this var only appears as a fallback (after 'or os.getenv'), skip it
-            fallback_pattern = f'or os.getenv("{v}"'
             primary_pattern = re.compile(rf'(?<!or )os\.getenv\("{re.escape(v)}"')
             if primary_pattern.search(content):
                 genuine_url_vars.append(v)
@@ -323,7 +321,7 @@ def audit_pyproject(project_dir: Path) -> dict:
                 results["issues"].append(f"Self-dependency detected: {dep}")
 
     except Exception as e:
-        results["issues"].append(f"Parse error: {e}")
+        results["issues"].append(f"Parse error: {type(e).__name__}")
 
     return results
 
@@ -628,7 +626,7 @@ def main():
 
     agents_dir = Path(args.agents_dir)
     if not agents_dir.exists():
-        print(f"❌ Directory not found: {agents_dir}")
+        print("❌ Configured agents directory was not found")
         sys.exit(1)
 
     # Discover projects
@@ -643,7 +641,7 @@ def main():
     audits = []
     for project_dir in projects:
         if not project_dir.exists():
-            print(f"  ⚠️ Skipping {project_dir.name} (not found)")
+            print("  ⚠️ Skipping configured project (not found)")
             continue
         audit = audit_project(project_dir)
         g = grade(audit["scores"]["overall"])

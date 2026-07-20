@@ -10,11 +10,17 @@ description: >-
   graph. Detection + maker protection only — never trade concealment.
 domain: finance-workflows
 agent: quant_analyst
+team_config:
+  name: market-microstructure-surveillance-team
+  task_pattern: defensive market microstructure surveillance
+  execution_mode: sequential
+  specialist_ids:
+    - quant-analyst
 tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensive]
 concept: CONCEPT:EE-042
 requires: ['agent-utilities']
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Market Microstructure Surveillance

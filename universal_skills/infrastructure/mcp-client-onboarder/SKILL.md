@@ -15,13 +15,13 @@ description: >-
 license: MIT
 tags: [mcp, multiplexer, authorization, eunomia, keycloak, zero-trust, onboarding, security]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 
 # MCP Client Onboarder
 
-One-shot onboarding for the **central MCP multiplexer** (`mcp-multiplexer.arpa`).
+One-shot onboarding for the configured **central MCP multiplexer**.
 The multiplexer is zero-trust: every request carries a verified Keycloak JWT, and
 **Eunomia** authorizes each principal (the token's `azp`/`client_id` →
 `agent:<id>`). This skill provisions both halves of a new client — identity
@@ -29,8 +29,8 @@ The multiplexer is zero-trust: every request carries a verified Keycloak JWT, an
 
 ## Access-control model (resolution order)
 
-The multiplexer evaluates an **embedded** Eunomia policy file
-(`services/mcp-multiplexer/eunomia_policy.json`) in this order:
+The multiplexer evaluates its configured **embedded** Eunomia policy file in this
+order:
 
 1. **`default_effect: deny`** — nothing is allowed unless a rule says so.
 2. **`_base-meta-tools`** (inherited by every authenticated principal) — grants
@@ -72,12 +72,12 @@ python scripts/onboard.py ci-bot --profile server-scoped \
 python scripts/onboard.py oncall --profile role-based --role devops
 ```
 
-Onboarding is **idempotent** (re-running replaces the client's prior rules) and
-prints the client secret (store it in **OpenBao** — never commit). It writes the
-policy file but does **not** restart the service: **restart the mcp-multiplexer**
-afterwards so the embedded PDP reloads the policy (it is read at boot). The client
-then mints tokens with `services/mcp-multiplexer/mint_token.py` and connects with
-`Authorization: Bearer <token>`.
+Onboarding is **idempotent** (re-running replaces the client's prior rules). It
+never prints or stores the client secret; retrieve that credential through the
+identity provider's approved secret-management workflow. It writes the policy
+file but does **not** restart the service: restart the configured multiplexer so
+the embedded PDP reloads the policy. Clients connect with an
+`Authorization: Bearer <token>` header obtained outside this skill.
 
 ## Ephemeral clients + reaper
 
@@ -98,7 +98,7 @@ revocation.
 ```bash
 python -c "from scripts.policy_rules import remove_client_rules; \
   from pathlib import Path; \
-  print(remove_client_rules(Path('/home/apps/workspace/services/mcp-multiplexer/eunomia_policy.json'),'ci-bot'))"
+  print(remove_client_rules(Path('${MCP_POLICY_FILE}'),'ci-bot'))"
 KEYCLOAK_ADMIN_PASSWORD=… python -c "import scripts.keycloak_client as k; k.delete_client('ci-bot', k.get_admin_token())"
 ```
 
@@ -106,11 +106,16 @@ KEYCLOAK_ADMIN_PASSWORD=… python -c "import scripts.keycloak_client as k; k.de
 
 | Variable | Default | Description |
 |---|---|---|
-| `KEYCLOAK_URL` | `http://keycloak.arpa` | Keycloak base URL |
-| `KEYCLOAK_REALM` | `homelab` | realm holding the machine clients |
+| `KEYCLOAK_URL` | required | HTTPS Keycloak base URL (plain HTTP is loopback-only) |
+| `KEYCLOAK_REALM` | `master` | realm holding the machine clients |
+| `KEYCLOAK_ADMIN_REALM` | `master` | realm used to obtain the administrator token |
 | `KEYCLOAK_ADMIN_PASSWORD` | — | admin password (required for client create/delete) |
-| `MCP_POLICY_FILE` | `…/services/mcp-multiplexer/eunomia_policy.json` | the embedded policy file |
-| `MCP_EPHEMERAL_FILE` | `…/services/mcp-multiplexer/ephemeral_clients.json` | TTL sidecar |
+| `MCP_POLICY_FILE` | XDG config | the embedded policy file |
+| `MCP_EPHEMERAL_FILE` | XDG config | owner-only TTL sidecar |
+
+TLS verification is mandatory. Configure a complete runtime trust chain with
+`SSL_CERT_FILE`, `SSL_CERT_DIR`, or `REQUESTS_CA_BUNDLE`; paths and certificate
+contents are read only at runtime and are never copied into reports or traces.
 
 ## Files
 
@@ -121,5 +126,6 @@ KEYCLOAK_ADMIN_PASSWORD=… python -c "import scripts.keycloak_client as k; k.de
 - `templates/` — reference rule shapes + `roles.json`.
 
 ## References
-- [agent-os-deployment](../agent-os-deployment/SKILL.md) — day-0 multiplexer setup (steps 2/2b).
+- `agent-os-deployment` — package-owned day-0 multiplexer setup; use it only when
+  its owning agent package is installed.
 - [eunomia-policy-manager](../eunomia-policy-manager/SKILL.md) — remote per-service policies (different target).

@@ -22,7 +22,7 @@ team_config:
 tags: ['ssh', 'bootstrap', 'keys', 'onboarding', 'security']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Ssh Bootstrap Workflow
@@ -33,7 +33,7 @@ Interactive SSH key bootstrap for new infrastructure hosts. Checks existing conn
 
 ## Steps
 
-### Step 0: Tunnel Manager Mcp
+### Step 0: inspect-ssh-connectivity [skill: tunnel-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
@@ -47,21 +47,21 @@ Expected: `host, inventory, status`
 Check if SSH keys exist at ~/.ssh/id_rsa. If not, generate a new RSA key pair
 Expected: `ssh, key, generate`
 
-### Step 2: Tunnel Manager Mcp
+### Step 2: distribute-ssh-keys [skill: tunnel-manager-mcp]
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
 For each host that failed connectivity, set up passwordless SSH using the generated key
 Expected: `ssh, passwordless, setup`
 
-### Step 3: Tunnel Manager Mcp
+### Step 3: verify-ssh-connectivity [skill: tunnel-manager-mcp]
 **Agent**: `dns-configurator`
 **Tools**: `adg_rewrites, td_zones`
 
 Verify connectivity to all hosts after key distribution
 Expected: `verify, connectivity`
 
-### Step 4: KG Persistence [depends_on: tunnel-manager-mcp]
+### Step 4: KG Persistence [depends_on: Step 0, Step 2, Step 3]
 **Agent**: `dns-configurator`
 **Tools**: `graph_write`
 
@@ -77,7 +77,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Tunnel Manager Mcp; Step 1 — Systems Manager Mcp; Step 2 — Tunnel Manager Mcp; Step 3 — Tunnel Manager Mcp
+- **Run first (in parallel):** Step 0 — inspect-ssh-connectivity; Step 1 — Systems Manager Mcp; Step 2 — distribute-ssh-keys; Step 3 — verify-ssh-connectivity
 - **After level 0:** Step 4 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

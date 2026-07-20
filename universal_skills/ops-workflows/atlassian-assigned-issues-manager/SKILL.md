@@ -20,7 +20,7 @@ team_config:
 tags: ['atlassian', 'jira', 'tasks', 'agile', 'atlassian-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Atlassian Assigned Issues Manager Workflow
@@ -31,7 +31,7 @@ Automatically retrieves issues assigned to the current user, flags tickets older
 
 ## Steps
 
-### Step 0: Atlassian Agent
+### Step 0: Atlassian Assigned-Issue Query [skill: atlassian-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
@@ -45,14 +45,14 @@ Expected: `assigned_issues, stale_issues`
 Display the active and stale issues dashboard. Prompt the user for notes on recent progress or task updates.
 Expected: `progress_inputs, selected_stale_resolutions`
 
-### Step 2: Atlassian Agent
+### Step 2: Atlassian Issue-Update Drafting [skill: atlassian-agent]
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
 Create suggested comment updates on Jira issues using atlassian_jira_comment tool, or generate recommended drafts for new backlog tickets to align with current work.
 Expected: `update_results, draft_tickets`
 
-### Step 3: KG Persistence [depends_on: atlassian-agent]
+### Step 3: KG Persistence [depends_on: Step 2]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Atlassian Agent; Step 1 — User Interaction; Step 2 — Atlassian Agent
+- **Run first (in parallel):** Step 0 — Atlassian Assigned-Issue Query; Step 1 — User Interaction; Step 2 — Atlassian Issue-Update Drafting
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -25,7 +25,7 @@ tags:
 requires:
   - graph-os
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # Database Environment Setup (Stardog + pg-age)
@@ -33,9 +33,11 @@ metadata:
 Stand up the two database environments agent-utilities is built around — **prod**
 (Stardog) and **dev** (local SPARQL) — and durably backfill the graph into Apache
 AGE. This skill is the guided front-end to the `setup-databases` CLI / the
-`graph_configure` MCP actions `setup_databases` & `verify_databases`. The full
-narrative reference is [`docs/recipes/databases.md`](../../../../agent-utilities/docs/recipes/databases.md)
-in agent-utilities.
+`graph_configure` MCP actions `setup_databases` & `verify_databases`. The detailed
+recipe is owned by the `agent-utilities` package at
+`docs/recipes/databases.md`; it is not bundled with this universal skill. Consult
+the compatible package checkout only when package-specific implementation detail
+is needed.
 
 ## Prerequisites
 

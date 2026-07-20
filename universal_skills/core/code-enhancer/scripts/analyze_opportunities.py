@@ -263,7 +263,6 @@ def find_opportunities(root: Path) -> dict[str, list[dict[str, Any]]]:
         )
 
     # Tier 2 — implied-but-missing: partial CRUD lifecycles + stubs
-    read_verbs = {"create", "add", "get", "fetch", "read", "load", "list"}
     write_verbs = {"update", "edit", "set", "delete", "remove", "drop"}
     for noun, verbs in sorted(nouns_verbs.items()):
         if verbs & {"create", "add"} and not (verbs & write_verbs):
@@ -291,9 +290,6 @@ def analyze(root: Path) -> dict[str, Any]:
 
     # Tier 3 — README features vs code (aspirational gaps / undocumented value)
     aspirational: list[dict[str, Any]] = []
-    code_blob = " ".join(
-        _read(p)[:0] or "" for p in []
-    )  # placeholder; lightweight below
     all_code = " ".join(_read(p) for p in _py_files(root)[:400]).lower()
     for feat in intent.get("claimed_features", [])[:20]:
         key = re.sub(r"[^a-z0-9 ]", "", feat.lower()).split()

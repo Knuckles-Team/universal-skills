@@ -44,7 +44,7 @@ def merge_runs(input_dir: str) -> tuple[int, str]:
         return merge_count, f"Merged {merge_count} runs"
 
     except Exception as e:
-        return 0, f"Error: {e}"
+        return 0, f"Error: {type(e).__name__}"
 
 
 def _find_elements(root, tag: str) -> list:

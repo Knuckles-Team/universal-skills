@@ -17,8 +17,8 @@ file. Optionally stamps a TTL so the ephemeral reaper revokes it later.
     # a named role (servers from roles.json)
     onboard.py oncall --profile role-based --role devops
 
-After onboarding, restart the multiplexer so the embedded PDP reloads the policy
-(it is read at boot). The printed client secret belongs in OpenBao — never git.
+After onboarding, retrieve the generated credential through the configured
+secret-management workflow, then restart the multiplexer so its policy reloads.
 """
 
 from __future__ import annotations
@@ -34,12 +34,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import keycloak_client as kc  # noqa: E402
 import policy_rules as pr  # noqa: E402
 
+_CONFIG_ROOT = Path(
+    os.environ.get("AGENT_UTILITIES_CONFIG_DIR")
+    or Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    / "agent-utilities"
+)
+_MULTIPLEXER_CONFIG = _CONFIG_ROOT / "mcp-multiplexer"
 DEFAULT_POLICY = os.environ.get(
-    "MCP_POLICY_FILE", "/home/apps/workspace/services/mcp-multiplexer/eunomia_policy.json"
+    "MCP_POLICY_FILE", str(_MULTIPLEXER_CONFIG / "eunomia_policy.json")
 )
 DEFAULT_EPHEMERAL = os.environ.get(
     "MCP_EPHEMERAL_FILE",
-    "/home/apps/workspace/services/mcp-multiplexer/ephemeral_clients.json",
+    str(_MULTIPLEXER_CONFIG / "ephemeral_clients.json"),
 )
 DEFAULT_ROLES = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "roles.json"
@@ -81,12 +87,11 @@ def main() -> int:
         args.client_id, args.profile, servers=servers, roles_map=roles_map, role=args.role
     )
 
-    secret = None
     if not args.no_keycloak:
         if not kc.ADMIN_PASS:
             return _fail("Set KEYCLOAK_ADMIN_PASSWORD to create the Keycloak client.")
         token = kc.get_admin_token()
-        secret = kc.create_client(args.client_id, token)
+        kc.create_client(args.client_id, token)
 
     pr.upsert_client_rules(Path(args.policy_file), args.client_id, rules)
 
@@ -96,11 +101,11 @@ def main() -> int:
         eph_path = Path(args.ephemeral_file)
         eph = json.loads(eph_path.read_text()) if eph_path.exists() else {}
         eph[args.client_id] = {"expires_at": expiry, "profile": args.profile}
-        eph_path.write_text(json.dumps(eph, indent=2) + "\n")
+        pr.write_private_json(eph_path, eph)
 
-    print(f"onboarded '{args.client_id}' profile={args.profile} rules={len(rules)}")
-    if secret:
-        print(f"  client secret: {secret}   (store in OpenBao; never commit)")
+    print(f"Onboarded configured client with {len(rules)} policy rule(s).")
+    if not args.no_keycloak:
+        print("  Client created; retrieve its credential through identity-provider admin tooling.")
     if args.ttl:
         print(f"  ephemeral: expires in {args.ttl} (run reap.py to revoke)")
     print("  NEXT: restart the mcp-multiplexer service so the embedded policy reloads.")
@@ -108,7 +113,7 @@ def main() -> int:
 
 
 def _fail(msg: str) -> int:
-    print(f"ERROR: {msg}", file=sys.stderr)
+    print("ERROR: client onboarding failed", file=sys.stderr)
     return 1
 
 

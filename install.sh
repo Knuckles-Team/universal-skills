@@ -12,8 +12,9 @@
 # `universal-installer` skill (and the `install-skills` CLI) are present and can deploy
 # any other skill. agent-os-genesis is then loadable/invocable in your tools.
 #
-# Usage:
-#   curl -fsSL https://knuckles-team.github.io/universal-skills/install.sh | sh
+# Usage (download first so the installer can be reviewed before execution):
+#   curl -fSLo universal-skills-install.sh https://knuckles-team.github.io/universal-skills/install.sh
+#   sh universal-skills-install.sh
 #   # or from a clone:
 #   sh install.sh [--editable] [--copy] [--skills a,b] [--mcp <config.json>] [--no-mcp] [--dry-run]
 #
@@ -27,13 +28,18 @@
 #   --dry-run         Print the steps without executing.
 set -eu
 
+PACKAGE_VERSION="1.2.1"
 EDITABLE=0; LINK="--symlink"; SKILLS=""; MCP_CONFIG=""; DRY=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --editable) EDITABLE=1 ;;
     --copy) LINK="" ;;
-    --skills) SKILLS="$2"; shift ;;
-    --mcp) MCP_CONFIG="$2"; shift ;;
+    --skills)
+      [ $# -ge 2 ] || { echo "--skills requires a value" >&2; exit 2; }
+      SKILLS="$2"; shift ;;
+    --mcp)
+      [ $# -ge 2 ] || { echo "--mcp requires a value" >&2; exit 2; }
+      MCP_CONFIG="$2"; shift ;;
     --no-mcp) MCP_CONFIG="" ;;
     --dry-run) DRY=1 ;;
     -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
@@ -44,7 +50,10 @@ done
 
 info() { printf '\033[36m==>\033[0m %s\n' "$1"; }
 warn() { printf '\033[33mwarn:\033[0m %s\n' "$1"; }
-run() { info "$1"; [ "$DRY" -eq 1 ] || sh -c "$1"; }
+run() {
+  info "$*"
+  [ "$DRY" -eq 1 ] || "$@"
+}
 
 # Repo root = this script's dir (so --editable installs from the checkout).
 REPO_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
@@ -54,36 +63,45 @@ HAVE_UV=0; command -v uv >/dev/null 2>&1 && HAVE_UV=1
 #    stable location (an ephemeral `uvx` run would leave dangling links).
 if [ "$EDITABLE" -eq 1 ]; then
   if [ "$HAVE_UV" -eq 1 ]; then
-    run "uv pip install -e \"$REPO_DIR\"" || run "pip install -e \"$REPO_DIR\""
+    run uv pip install -e "$REPO_DIR" || run pip install -e "$REPO_DIR"
   else
-    run "pip install -e \"$REPO_DIR\""
+    run pip install -e "$REPO_DIR"
   fi
 else
   if [ "$HAVE_UV" -eq 1 ]; then
-    run "uv tool install universal-skills" || run "pip install universal-skills"
+    run uv tool install "universal-skills==$PACKAGE_VERSION" || \
+      run pip install "universal-skills==$PACKAGE_VERSION"
   else
-    run "pip install universal-skills"
+    run pip install "universal-skills==$PACKAGE_VERSION"
   fi
 fi
 
 # 2) Resolve the install-skills CLI (uv tool puts it on PATH; else call via python).
 if command -v install-skills >/dev/null 2>&1; then
-  INSTALL_SKILLS="install-skills"
+  run_install_skills() { run install-skills "$@"; }
 else
-  INSTALL_SKILLS="python3 -c 'from universal_skills.core.skill_installer import main; main()'"
+  run_install_skills() {
+    run python3 -c 'from universal_skills.core.skill_installer import main; main()' "$@"
+  }
   warn "install-skills not on PATH — invoking via python."
 fi
 
 # 3) Deploy skills into every detected tool, preferring symlinks.
-SKILLS_ARG=""
-[ -n "$SKILLS" ] && SKILLS_ARG="--skills $SKILLS"
-run "$INSTALL_SKILLS --all-detected $LINK $SKILLS_ARG"
+if [ -n "$LINK" ] && [ -n "$SKILLS" ]; then
+  run_install_skills --all-detected "$LINK" --skills "$SKILLS"
+elif [ -n "$LINK" ]; then
+  run_install_skills --all-detected "$LINK"
+elif [ -n "$SKILLS" ]; then
+  run_install_skills --all-detected --skills "$SKILLS"
+else
+  run_install_skills --all-detected
+fi
 
 # 4) Optional: wire MCP servers (genesis needs the graph-os + connector MCP servers).
 if [ -n "$MCP_CONFIG" ]; then
   MCP_INSTALL="$(python3 -c 'import importlib.util as u,os; s=u.find_spec("universal_skills"); print(os.path.join(os.path.dirname(s.origin),"agent-tools","mcp-installer","scripts","install.py")) if s else print("")' 2>/dev/null || true)"
   if [ -n "$MCP_INSTALL" ] && [ -f "$MCP_INSTALL" ]; then
-    run "python3 \"$MCP_INSTALL\" --config \"$MCP_CONFIG\" --all-detected"
+    run python3 "$MCP_INSTALL" --config "$MCP_CONFIG" --all-detected
   else
     warn "mcp-installer not found in the installed package — skipping MCP wiring."
   fi

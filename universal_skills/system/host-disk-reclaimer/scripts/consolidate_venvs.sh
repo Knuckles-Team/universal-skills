@@ -5,7 +5,7 @@
 # the now-redundant per-repo .venv dirs.
 #
 # Usage: consolidate_venvs.sh <SHARED_VENV> <PACKAGES_ROOT> [--apply]
-#   SHARED_VENV   : path to the one venv to keep (e.g. /home/apps/workspace/.venv)
+#   SHARED_VENV   : path to the one venv to keep (e.g. "$AGENT_UTILITIES_WORKSPACE_ROOT/.venv")
 #   PACKAGES_ROOT : dir whose immediate <child>/ entries are packages with a
 #                   pyproject.toml and a per-repo .venv (e.g. .../agents)
 #   default is a DRY-RUN (reports missing pkgs only); --apply makes changes.

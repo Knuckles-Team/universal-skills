@@ -2,27 +2,23 @@
 import argparse
 import json
 import sys
-import os
 
 try:
-    import requests
-    from agent_utilities.base_utilities import to_boolean
+    from http_runtime import fetch_json, validate_search_request
 except ImportError:
     print("Error: Missing required dependencies for the 'web-search' skill.")
     print("Please install them by running: pip install 'universal-skills[web-search]'")
     sys.exit(1)
 
 
-def search(query: str, max_results: int = 10, ssl_verify: bool = True):
+def search(query: str, max_results: int = 10):
     try:
+        query, max_results = validate_search_request(query, max_results)
         # DuckDuckGo search API endpoint
         url = "https://api.duckduckgo.com/"
         params = {"q": query, "format": "json", "no_html": 1, "skip_disambig": 1}
 
-        response = requests.get(url, params=params, verify=ssl_verify, timeout=30)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-
-        data = response.json()
+        data = fetch_json(url, params=params)
         results = []
 
         # DuckDuckGo API returns results in 'RelatedTopics' or 'Results'
@@ -58,10 +54,9 @@ def search(query: str, max_results: int = 10, ssl_verify: bool = True):
                         "snippet": r.get("Text"),
                     }
                 )
-        return results
-    except Exception as e:
-        print(f"Error performing DuckDuckGo search: {e}", file=sys.stderr)
-        sys.exit(1)
+        return results[:max_results]
+    except Exception as exc:
+        raise RuntimeError("DuckDuckGo search failed") from exc
 
 
 def main():
@@ -77,24 +72,13 @@ def main():
     parser.add_argument(
         "--json", action="store_true", help="Output results in JSON format"
     )
-    parser.add_argument(
-        "--insecure",
-        action="store_true",
-        help="Disable SSL verification (Use with caution)",
-    )
-
     args = parser.parse_args()
 
-    # Precedence: Env Var SSL_VERIFY > CLI --insecure > Default (True)
-    ssl_verify_env = os.getenv("SSL_VERIFY")
-    if ssl_verify_env is not None:
-        ssl_verify = to_boolean(ssl_verify_env)
-    elif args.insecure:
-        ssl_verify = False
-    else:
-        ssl_verify = True
-
-    results = search(args.query, args.max_results, ssl_verify=ssl_verify)
+    try:
+        results = search(args.query, args.max_results)
+    except Exception as exc:
+        print(f"Search failed ({type(exc).__name__})", file=sys.stderr)
+        sys.exit(1)
 
     if args.json:
         print(json.dumps(results, indent=2))

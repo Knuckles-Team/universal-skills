@@ -3,19 +3,20 @@ name: mcp-installer
 domain: agent-tools
 skill_type: skill
 description: >-
-  Install a pre-configured MCP config file into various agent tool directories.
-  Use when the user wants to install an mcp_config.json into Windsurf, Claude Code,
-  OpenCode, Antigravity, Devin, Codex, or a custom agent path. It handles merging
-  with existing configurations.
+  Install and merge a pre-configured MCP JSON file for Windsurf, Claude Code,
+  Claude Desktop, OpenCode, Antigravity, Devin, agent-utilities, or an explicit
+  JSON target. Use when an MCP client supports the mcpServers JSON convention;
+  use the client's native command instead for Codex registration.
 license: MIT
 tags: [mcp, installer, deployment, agent-tools, config]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # MCP Installer Skill
 
-This skill allows you to install and merge a pre-configured `mcp_config.json` into the configuration files of various agent development tools.
+Use `scripts/install.py` to merge a pre-configured `mcp_config.json` into a
+supported JSON-based client's configuration.
 
 ## Supported Tools
 
@@ -26,7 +27,15 @@ This skill allows you to install and merge a pre-configured `mcp_config.json` in
 - **antigravity**: `~/.gemini/antigravity/mcp_config.json`
 - **agent-utilities** / **agent-terminal-ui**: `~/.config/agent-utilities/mcp_config.json`
 - **devin**: `~/.config/devin/mcp_config.json`
-- **codex**: `~/.codex/mcp_config.json`
+
+Codex is intentionally not a JSON target. Register servers through its native
+`codex mcp add` command so Codex owns the corresponding `config.toml` entry. For
+GraphOS, agent-utilities provides `setup-config codex`, which canonicalizes this
+portable launcher without env, secrets, or machine paths:
+
+```bash
+codex mcp add graph-os -- graph-os --transport stdio
+```
 
 ## Tools
 
@@ -35,7 +44,7 @@ Install an `mcp_config.json` file into a target tool's configuration directory. 
 
 #### Arguments
 - `--config`: The path to the source `mcp_config.json` file you want to install.
-- `--tool`: The target tool to install into (windsurf, claude, claude-desktop, opencode, antigravity, devin, codex).
+- `--tool`: The JSON-config target tool (windsurf, claude, claude-desktop, opencode, antigravity, devin).
 - `--path`: (Optional) Explicit custom path to the target configuration file.
 - `--force`: (Optional) Overwrite existing configuration entirely rather than merging `mcpServers`.
 

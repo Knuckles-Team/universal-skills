@@ -1,129 +1,81 @@
 #!/usr/bin/env python3
-import asyncio
+"""Compatibility entry point for the consolidated web-crawler skill.
+
+This module intentionally contains no transport or browser implementation. It
+reuses web-crawler's AgentConfig-backed SSRF, DNS, redirect, TLS, privacy, and
+resource boundaries so the legacy single-page command cannot drift into a
+second fetch stack.
+"""
+
+from __future__ import annotations
+
 import argparse
-import sys
-import os
+import asyncio
 import json
-from typing import Optional
-
-try:
-    from crawl4ai import (
-        AsyncWebCrawler,
-        BrowserConfig,
-        CrawlerRunConfig,
-        CacheMode,
-    )
-
-    # Lazy load pydantic_ai to avoid dependency issues if only fetching
-except ImportError:
-    print("Error: Missing required dependencies for the 'web-fetch' skill.")
-    print("Please install them by running: pip install 'universal-skills[web-fetch]'")
-    sys.exit(1)
+import sys
+from pathlib import Path
 
 
-async def fetch_page(url: str, prompt: Optional[str] = None):
-    browser_config = BrowserConfig(
-        headless=True,
-        verbose=False,
-        extra_args=["--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"],
-    )
+def _crawler_runtime():
+    """Load the sibling implementation only when an actual fetch is requested."""
 
-    crawl_config = CrawlerRunConfig(
-        cache_mode=CacheMode.BYPASS,
-        magic=True,
-        wait_until="networkidle",
-        process_iframes=True,
-        # Exclude common noise elements
-        excluded_tags=["header", "footer", "nav", "ads"],
-        remove_overlay_elements=True,
-    )
-
-    async with AsyncWebCrawler(config=browser_config) as crawler:
-        result = await crawler.arun(url=url, config=crawl_config)
-
-        if not result.success:
-            print(f"Error: Failed to fetch {url}: {result.error_message}")
-            return None
-
-        # Extract markdown using crawl4ai's high-fidelity extraction
-        markdown = ""
-        if hasattr(result, "markdown_v2") and result.markdown_v2:
-            markdown = getattr(
-                result.markdown_v2,
-                "raw_markdown",
-                getattr(result.markdown_v2, "fit_markdown", str(result.markdown_v2)),
-            )
-        elif hasattr(result, "markdown"):
-            if isinstance(result.markdown, str):
-                markdown = result.markdown
-            elif hasattr(result.markdown, "raw_markdown"):
-                markdown = result.markdown.raw_markdown
-            else:
-                markdown = str(result.markdown)
-        else:
-            markdown = str(result)
-
-        markdown = markdown.strip()
-
-        if not prompt:
-            return markdown
-
-        # LLM Extraction if prompt is provided
-        try:
-            from pydantic_ai import Agent
-            from pydantic import BaseModel
-
-            class ExtractionResult(BaseModel):
-                result: str
-
-            # Use the environment-configured model or fallback to a sensible default
-            model = os.getenv("PYDANTIC_AI_MODEL", "anthropic:claude-3-5-sonnet-latest")
-            agent = Agent(model, result_type=ExtractionResult)
-
-            user_prompt = (
-                f"You are a web content analyst. Extract information from the provided markdown content based on the prompt below.\n"
-                f"Prompt: {prompt}\n\n"
-                f"Markdown Content:\n{markdown}"
-            )
-
-            res = await agent.run(user_prompt)
-            return res.data.result
-        except ImportError:
-            print("Warning: pydantic-ai not installed. Returning raw markdown.")
-            return markdown
-        except Exception as e:
-            print(f"Warning: LLM extraction failed: {e}. Returning raw markdown.")
-            return markdown
+    scripts = Path(__file__).resolve().parents[2] / "web-crawler" / "scripts"
+    if not scripts.is_dir() or scripts.is_symlink():
+        raise RuntimeError("crawler_runtime_unavailable")
+    sys.path.insert(0, str(scripts))
+    try:
+        from crawl import SafeHttpCrawler, extract_markdown
+        from security_runtime import CrawlerSecurityPolicy
+    except ImportError:
+        raise RuntimeError("crawler_runtime_unavailable") from None
+    return SafeHttpCrawler, extract_markdown, CrawlerSecurityPolicy
 
 
-async def main():
+async def fetch_page(url: str) -> tuple[str, str]:
+    """Fetch one page through web-crawler's shared hardened HTTP path."""
+
+    SafeHttpCrawler, extract_markdown, CrawlerSecurityPolicy = _crawler_runtime()
+    policy = CrawlerSecurityPolicy.from_agent_config()
+    normalized = policy.validate_url(url)
+    async with SafeHttpCrawler(policy, max_concurrent=1) as crawler:
+        result = await crawler.arun(url=normalized, config=None)
+    if not getattr(result, "success", False):
+        raise RuntimeError("fetch_failed")
+    content = policy.reserve_output(extract_markdown(result, policy))
+    return policy.source_reference(normalized), content
+
+
+async def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Fetch and extract content from a single URL."
+        description="Fetch one page through the consolidated web-crawler runtime."
     )
-    parser.add_argument("--url", required=True, help="The URL to fetch.")
+    parser.add_argument("--url", required=True, help="Public HTTP(S) URL to fetch.")
+    parser.add_argument("--json", action="store_true", help="Emit bounded JSON.")
     parser.add_argument(
         "--prompt",
-        help="Optional prompt to extract specific information from the content.",
+        help=argparse.SUPPRESS,
     )
-    parser.add_argument("--json", action="store_true", help="Output in JSON format.")
-
     args = parser.parse_args()
 
-    # URL basic validation
-    if not args.url.startswith(("http://", "https://")):
-        print("Error: Invalid URL scheme. Only http and https are supported.")
-        sys.exit(1)
+    if args.prompt:
+        print(
+            "Embedded LLM extraction was retired; analyze the sanitized fetch "
+            "result through the governed agent runtime.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        source_ref, result = await fetch_page(args.url)
+    except Exception:
+        print("Configured fetch failed.", file=sys.stderr)
+        return 1
 
-    result = await fetch_page(args.url, args.prompt)
-
-    if result:
-        if args.json:
-            print(json.dumps({"url": args.url, "result": result}, indent=2))
-        else:
-            print(result)
+    if args.json:
+        print(json.dumps({"source_ref": source_ref, "result": result}))
     else:
-        sys.exit(1)
+        print(result)
+    return 0
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    raise SystemExit(asyncio.run(main()))

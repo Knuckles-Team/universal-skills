@@ -41,10 +41,10 @@ def pack(
     suffix = output_path.suffix.lower()
 
     if not input_dir.is_dir():
-        return None, f"Error: {input_dir} is not a directory"
+        return None, "Error: configured input path is not a directory"
 
     if suffix not in {".docx", ".pptx", ".xlsx"}:
-        return None, f"Error: {output_file} must be a .docx, .pptx, or .xlsx file"
+        return None, "Error: configured output must be an Office file"
 
     if validate and original_file:
         original_path = Path(original_file)
@@ -55,7 +55,7 @@ def pack(
             if output:
                 print(output)
             if not success:
-                return None, f"Error: Validation failed for {input_dir}"
+                return None, "Error: validation failed for configured input"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_content_dir = Path(temp_dir) / "content"
@@ -89,7 +89,7 @@ def _run_validation(
             try:
                 author = infer_author_func(unpacked_dir, original_file)
             except ValueError as e:
-                print(f"Warning: {e} Using default author 'Agent'.", file=sys.stderr)
+                print(f"Warning: {type(e).__name__} Using default author 'Agent'.", file=sys.stderr)
 
         validators = [
             DOCXSchemaValidator(unpacked_dir, original_file),
@@ -132,7 +132,7 @@ def _condense_xml(xml_file: Path) -> None:
 
         xml_file.write_bytes(dom.toxml(encoding="UTF-8"))
     except Exception as e:
-        print(f"ERROR: Failed to parse {xml_file.name}: {e}", file=sys.stderr)
+        print(f"ERROR: XML parse failed ({type(e).__name__})", file=sys.stderr)
         raise
 
 

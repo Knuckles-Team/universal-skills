@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
   author: Genius
 ---
 # Security Tools
@@ -24,6 +24,11 @@ Interact with the Sentry API to inspect application errors and tracebacks.
 # Requires SENTRY_AUTH_TOKEN in the environment
 python scripts/sentry_api.py --project my-project list-issues
 ```
+
+`SENTRY_BASE_URL` must be HTTPS unless it is loopback. The client rejects
+redirects and ambient proxies, accepts only the configured host, bounds every
+response, and reads optional CA trust from `SSL_CERT_FILE`, `SSL_CERT_DIR`, or
+`REQUESTS_CA_BUNDLE` without persisting environment-specific paths.
 
 ## 2. Security Ownership Maps (`scripts/`)
 Analyze git histories and identify which users own the most sensitive files, or calculate bus factor (how catastrophic losing a single maintainer would be to security knowledge).

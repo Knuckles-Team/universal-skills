@@ -20,7 +20,7 @@ _spec = importlib.util.spec_from_file_location(
     "universal_skills._universal_installer_impl", _impl_path
 )
 if _spec is None or _spec.loader is None:  # pragma: no cover - defensive
-    raise ImportError(f"Could not load universal-installer implementation at {_impl_path}")
+    raise ImportError("Could not load the universal-installer implementation")
 _impl = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_impl)
 

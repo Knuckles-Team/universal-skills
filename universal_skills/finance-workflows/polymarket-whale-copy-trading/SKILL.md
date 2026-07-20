@@ -15,7 +15,7 @@ requires:
 - mcp_risk
 - mcp_orders
 metadata:
-  version: '1.2.0'
+  version: '1.2.1'
 ---
 
 # polymarket-whale-copy-trading Workflow
@@ -26,7 +26,7 @@ Mirror leaderboard whale wallet trades in real-time syncing activity to a local 
 Poll target top-performing Polymarket trader wallet addresses
 Expected: whale_trade_event
 
-### Step 1: database-tools [depends_on: Step 0]
+### Step 1: record-detected-trade [skill: database-tools] [depends_on: Step 0]
 Sync detected whale trade activity to local Supabase database to avoid duplication
 Expected: synced_database_record
 
@@ -38,7 +38,7 @@ Expected: validated_trade_sizing
 Mirror the target trade by placing corresponding buy/sell orders via the CLOB client
 Expected: submitted_copy_order
 
-### Step 4: database-tools [depends_on: Step 3]
+### Step 4: record-copy-execution [skill: database-tools] [depends_on: Step 3]
 Update Supabase historical trade ledger with local execution prices and order status
 Expected: updated_ledger_record
 
@@ -47,9 +47,9 @@ Expected: updated_ledger_record
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
 - **Run first (in parallel):** Step 0 — mcp_signals
-- **After level 0:** Step 1 — database-tools
+- **After level 0:** Step 1 — record-detected-trade
 - **After level 1:** Step 2 — mcp_risk
 - **After level 2:** Step 3 — mcp_orders
-- **After level 3:** Step 4 — database-tools
+- **After level 3:** Step 4 — record-copy-execution
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

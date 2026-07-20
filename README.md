@@ -1,184 +1,121 @@
-# Universal Skills - Pydantic AI Skills
+# Universal Skills
 
-![PyPI - Version](https://img.shields.io/pypi/v/universal-skills)
-![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
-![PyPI - Downloads](https://img.shields.io/pypi/dd/universal-skills)
-![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/universal-skills)
-![GitHub forks](https://img.shields.io/github/forks/Knuckles-Team/universal-skills)
-![GitHub contributors](https://img.shields.io/github/contributors/Knuckles-Team/universal-skills)
-![PyPI - License](https://img.shields.io/pypi/l/universal-skills)
-![GitHub](https://img.shields.io/github/license/Knuckles-Team/universal-skills)
+[![PyPI version](https://img.shields.io/pypi/v/universal-skills)](https://pypi.org/project/universal-skills/)
+[![Python](https://img.shields.io/pypi/pyversions/universal-skills)](https://pypi.org/project/universal-skills/)
+[![License](https://img.shields.io/github/license/Knuckles-Team/universal-skills)](LICENSE)
 
-![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/universal-skills)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/Knuckles-Team/universal-skills)
-![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Knuckles-Team/universal-skills)
-![GitHub issues](https://img.shields.io/github/issues/Knuckles-Team/universal-skills)
+*Version: 1.2.1*
 
-![GitHub top language](https://img.shields.io/github/languages/top/Knuckles-Team/universal-skills)
-![GitHub language count](https://img.shields.io/github/languages/count/Knuckles-Team/universal-skills)
-![GitHub repo size](https://img.shields.io/github/repo-size/Knuckles-Team/universal-skills)
-![GitHub repo file count (file type)](https://img.shields.io/github/directory-file-count/Knuckles-Team/universal-skills)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/universal-skills)
-![PyPI - Implementation](https://img.shields.io/pypi/implementation/universal-skills)
+Universal Skills is a portable catalog of agent capabilities and dependency-ordered
+skill workflows. It supports Claude-compatible `SKILL.md` discovery and the
+agent-utilities provider ecosystem.
 
-*Version: 1.2.0*
+## Catalog model
 
-> **Documentation** — The complete catalog of universal skills, skill-graph
-> authoring guidance, security and SSL configuration, and installation and
-> integration instructions are maintained in the
-> [official documentation](https://knuckles-team.github.io/universal-skills/).
+- `universal_skills/<domain>/<name>/` contains one atomic skill with one capability.
+- `universal_skills/<domain>-workflows/<name>/` contains a pure DAG over atomic
+  skills or exact MCP tools; workflows do not embed business logic.
+- Platform and package operations belong under
+  `agent-packages/agents/<package>/<module>/skills/` and are exposed through
+  `agent_utilities.skill_providers`.
+- `assets/` may contain nested templates, but those are package resources rather
+  than canonical catalog entries.
 
-## Overview
+The catalog includes development, infrastructure, finance, research, product,
+creative, documentation, web, system, operations, content, and data capabilities.
+The content and data domains include evidence-aware drafting, publication preflight,
+dataset profiling, deterministic data-quality validation, and data-dictionary
+authoring.
 
-Universal Skills is a collection of shared, reusable skills designed for Pydantic AI Agents. It provides a standardized way to give agents advanced capabilities like codebase searching, file navigation, and inter-agent communication.
+## Catalog quality and roadmap
 
-## Included Skills
+- [Per-skill structural audit](docs/skill-catalog-audit.md)
+- [Category improvement roadmap and workflow designs](docs/skill-catalog-improvement-roadmap.md)
+- [Skill and workflow architecture](docs/overview.md)
+- [Published documentation](https://knuckles-team.github.io/universal-skills/)
 
-The following universal skills are available. You can disable specific skills by setting their corresponding environment variables to `False` (default is `True`).
-
-| Skill Directory       | Description                                                           | Disable Flag                          | Install Command                         |
-|:----------------------|:----------------------------------------------------------------------|:--------------------------------------|:----------------------------------------|
-| `agent-tools/agent-browser`| Browser automation CLI for agents using the agent-browser tool.      | `AGENT_BROWSER_ENABLE=False`          | `universal-skills[agent-browser]`       |
-| `agent-tools/agent-builder`| Templates and guidelines for building Single and Multi-Agent systems. | `AGENT_BUILDER_ENABLE=False`          | `universal-skills[agent-builder]`       |
-| `agent-tools/agent-spawner`| Spawns a Pydantic AI agent dynamically using an MCP configuration.    | `AGENT_SPAWNER_ENABLE=False`          | `universal-skills[agent-spawner]`       |
-| `agent-tools/agent-workflows`| Agent-to-Agent communication, orchestration, and subagent dispatch.   | `AGENT_WORKFLOWS_ENABLE=False`        | `universal-skills[agent-workflows]`     |
-| `creative/algorithmic-art`| Generative algorithmic art using p5.js and interactive artifacts.    | `ALGORITHMIC_ART_ENABLE=False`        | `universal-skills[algorithmic-art]`     |
-| `api-wrapper-builder` | Guide for creating robust, standardized API wrappers.                 | `API_WRAPPER_BUILDER_ENABLE=False`    | `universal-skills[api-wrapper-builder]` |
-| `research/brainstorming`| Structured ideation, problem-framing, and design research.            | `BRAINSTORMING_ENABLE=False`          | `universal-skills[brainstorming]`       |
-| `creative/brand-guidelines`| Creating brand identity systems (logos, palettes, voice/tone).         | `BRAND_GUIDELINES_ENABLE=False`       | `universal-skills[brand-guidelines]`    |
-| `web-dev/browser-tools`| Web browser interaction and E2E visual QA via Playwright.             | `BROWSER_TOOLS_ENABLE=False`          | `universal-skills[browser-tools]`       |
-| `dev-workflows/c4-architecture`| Software architecture documentation using the C4 model in Mermaid.   | `C4_ARCHITECTURE_ENABLE=False`        | `universal-skills[c4-architecture]`     |
-| `creative/canvas-design`| Programmatic graphic design using HTML Canvas or SVG APIs.            | `CANVAS_DESIGN_ENABLE=False`          | `universal-skills[canvas-design]`       |
-| `infra/cloudflare-deploy`| Deploy applications and infrastructure to Cloudflare.                 | `CLOUDFLARE_DEPLOY_ENABLE=True` (D)   | `universal-skills[cloudflare-deploy]`           |
-| `core/code-enhancer`| 12-domain code analysis with 0-100 grading, security/arch/dep audit. | `CODE_ENHANCER_ENABLE=False`          | `universal-skills[code-enhancer]`       |
-| `creative/creative-media`| Creative media processing (animations, GIFs, image conversion).       | `CREATIVE_MEDIA_ENABLE=False`         | `universal-skills[creative-media]`     |
-| `integration/database-tools`| Connect and query PostgreSQL, MySQL, and MSSQL databases.             | `DATABASE_TOOLS_ENABLE=False`         | `universal-skills[database-tools]`      |
-| `system/developer-utilities`| Formatting, conversion, generation, cryptographic, and networking.    | `DEVELOPER_UTILITIES_ENABLE=False`    | `universal-skills[developer-utilities]` |
-| `dev-workflows/diagnose`| Disciplined diagnosis loop for hard bugs and performance regressions. | `DIAGNOSE_ENABLE=False`               | `universal-skills[diagnose]`            |
-| `docs/document-converter`| Bulk convert .docx and .pdf to Markdown with high fidelity.           | `DOCUMENT_CONVERTER_ENABLE=False`     | `universal-skills[document-converter]`  |
-| `docs/document-tools`| Read, edit, analyze, or create document files (PDF, spreadsheet, etc) | `DOCUMENT_TOOLS_ENABLE=False`         | `universal-skills[document-tools]`      |
-| `core/efficient-mode`| Ultra-compressed communication mode to reduce token usage.            | `EFFICIENT_MODE_ENABLE=False`         | `universal-skills[efficient-mode]`      |
-| `integration/github-tools`| GitHub workflows, PR comments, CI fixes, and git practices.           | `GITHUB_TOOLS_ENABLE=False`           | `universal-skills[github-tools]`        |
-| `integration/google-workspace`| Google Workspace ecosystem integration (Gmail, Drive, Docs, etc).     | `GOOGLE_WORKSPACE_ENABLE=True` (D)    | `universal-skills[google-workspace]`    |
-| `product/internal-comms`| Creating internal announcements, memos, and executive briefings.      | `INTERNAL_COMMS_ENABLE=False`         | `universal-skills[internal-comms]`      |
-| `integration/issue-triage`| Triage GitHub issues through a state machine of triage roles.         | `ISSUE_TRIAGE_ENABLE=False`           | `universal-skills[issue-triage]`        |
-| `jira-tools`          | Interact with Jira via CLI or Atlassian MCP for ticket management.    | `JIRA_TOOLS_ENABLE=False`             | `universal-skills[jira-tools]`          |
-| `system/jupyter-notebook`| Create, scaffold, or edit Jupyter notebooks.                          | `JUPYTER_NOTEBOOK_ENABLE=True` (D)    | `universal-skills[jupyter-notebook]`    |
-| `docs/marp-presentations`| Create professional Marp Markdown presentation slides.                | `MARP_PRESENTATIONS_ENABLE=False`     | `universal-skills[marp-presentations]`  |
-| `agent-tools/mcp-builder`| Guide for creating high-quality FastMCP servers.                      | `MCP_BUILDER_ENABLE=False`            | `universal-skills[mcp-builder]`         |
-| `docs/mermaid-diagrams`| Create software diagrams (class, sequence, flowchart, ERD, C4, etc). | `MERMAID_DIAGRAMS_ENABLE=False`       | `universal-skills[mermaid-diagrams]`    |
-| `product-management`  | PRD development, user stories, prioritization, and roadmapping.       | `PRODUCT_MANAGEMENT_ENABLE=False`     | `universal-skills[product-management]`  |
-| `product/product-strategy`| Market analysis, TAM/SAM/SOM, positioning, and SaaS metrics.          | `PRODUCT_STRATEGY_ENABLE=False`       | `universal-skills[product-strategy]`    |
-| `project-planning`    | High-level reasoning, brainstorming, debugging, and research.         | `PROJECT_PLANNING_ENABLE=False`       | `universal-skills[project-planning]`    |
-| `qa-planning`         | QA test plans, manual test cases, regression suites, and bug reports. | `QA_PLANNING_ENABLE=False`            | `universal-skills[qa-planning]`         |
-| `web-dev/react-development`| Type-safe React + TypeScript components, routing, and best practices. | `REACT_DEVELOPMENT_ENABLE=False`      | `universal-skills[react-development]`   |
-| `web-dev/react-native-skills`| React Native and Expo best practices and performance optimization.    | `REACT_NATIVE_SKILLS_ENABLE=False`    | `universal-skills[react-native-skills]` |
-| `infra/security-tools`| Threat modeling, Sentry error logs, and security code analysis.       | `SECURITY_TOOLS_ENABLE=False`         | `universal-skills[security-tools]`      |
-| `core/skill-builder`| Tooling for creating and standardizing new universal skills.          | `SKILL_BUILDER_ENABLE=False`          | `universal-skills[skill-builder]`       |
-| `agent-tools/skill-graph-builder`| Transform website documentation into indexed agent skills.            | `SKILL_GRAPH_BUILDER_ENABLE=True` (D) | `universal-skills[skill-graph-builder]` |
-| `agent-tools/skill-workflow-builder`| Brainstorm, structure, verify, and scaffold workflow-based skills.   | `SKILL_WORKFLOW_BUILDER_ENABLE=True` (D)| `universal-skills[skill-workflow-builder]` |
-| `core/universal-installer`| Install skills, ontologies, prompts + wire graph-os/fleet MCP servers into Windsurf, Claude Code, Antigravity, etc. | `UNIVERSAL_INSTALLER_ENABLE=False` | `universal-skills[universal-installer]` |
-| `core/session-handoff`| Create and restore agent session handoff documents.                   | `SESSION_HANDOFF_ENABLE=False`        | `universal-skills[session-handoff]`     |
-| `system/system-tools`| Hardware and OS operations (screenshots, bluetooth, tmux).            | `SYSTEM_TOOLS_ENABLE=False`           | `universal-skills[system-tools]`        |
-| `systems-manager`     | Fast codebase search, file navigation, and structural code analysis.  | `SYSTEMS_MANAGER_ENABLE=False`        | `universal-skills[systems-manager]`     |
-| `dev-workflows/tdd-methodology`| Test-Driven Development workflow (Red-Green-Refactor cycle).          | `TDD_METHODOLOGY_ENABLE=False`        | `universal-skills[tdd-methodology]`     |
-| `web-dev/theme-factory`| Designing themes, design tokens, and CSS variable systems.            | `THEME_FACTORY_ENABLE=False`          | `universal-skills[theme-factory]`       |
-| `research/user-research`| User discovery, JTBD, personas, and journey mapping.                  | `USER_RESEARCH_ENABLE=False`          | `universal-skills[user-research]`       |
-| `web-dev/web-artifacts`| Frontend design, UI building, and artifact generation.                | `WEB_ARTIFACTS_ENABLE=False`          | `universal-skills[web-artifacts]`       |
-| `web-dev/website-builder`| World-class frontend engineer for cinematic landing pages.            | `WEBSITE_BUILDER_ENABLE=False`        | `universal-skills[website-builder]`             |
-| `web-dev/website-cloner`| Multi-phase pipeline for pixel-perfect website cloning.               | `WEBSITE_CLONER_ENABLE=False`         | `universal-skills[website-cloner]`      |
-| `research/web-crawler`| High-speed recursive web crawling and sitemap processing.             | `WEB_CRAWLER_ENABLE=True` (D)         | `universal-skills[web-crawler]`         |
-| `web-dev/web-design-guidelines`| Review UI code for Web Interface Guidelines compliance.              | `WEB_DESIGN_GUIDELINES_ENABLE=False`  | `universal-skills[web-design-guidelines]`|
-| `research/web-search`| Search the web via DDG, Google, Bing, or Searxng.                     | `WEB_SEARCH_ENABLE=False`             | `universal-skills[web-search]`          |
-| `system/zoom-out`| Meta-skill to tell the agent to step back and give broader context.   | `ZOOM_OUT_ENABLE=False`               | `universal-skills[zoom-out]`            |
-
-## Security & SSL Verification
-
-All relevant scripts in Universal Skills support a standardized approach to SSL verification:
-
-- **CLI Override**: Use the `--insecure` flag to disable SSL verification.
-- **Environment Variable**: Set `SSL_VERIFY=False` (or `0`, `off`) to disable verification globally.
-- **Precedence**: Command-line flags always take precedence over environment variables.
-
-## Building Your Own Skill-Graphs
-
-Universal Skills includes a `skill-graph-builder` that allows you to transform any website's documentation into an indexed knowledge base for your agents. These are stored in your local cache directory (`~/.cache/universal-skills/skill-graphs`) and can be enabled via environment variables.
-
-### Example: Creating a Skill-Graph
-
-You can prompt your agent to build a skill-graph for any technical documentation:
-
-> "Use the skill-graph-builder to crawl https://ai.pydantic.dev and create a skill-graph named 'pydantic-ai-docs'."
-
-Once built, the graph will be available in your cache.
-
-### Enabling Your Graphs
-
-To use a manually built graph, set its corresponding enable flag to `True`:
+Reproduce the catalog audit locally:
 
 ```bash
-export PYDANTIC_AI_DOCS_ENABLE=True
+python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py \
+  universal_skills --format markdown
 ```
 
-## Quick start — one-click install
+The audit reports trigger quality, atomicity signals, workflow dependency problems,
+unbound components, placeholder content, team-configuration drift, broken local
+links, and taxonomy consistency. It is a structural lint, so safety and domain
+correctness still require human review.
 
-Install the package **and** deploy every skill (incl. `universal-installer` and
-`agent-os-genesis`, alias `agent-utilities-genesis`) into all detected AI tools
-(Claude Code, Antigravity, Windsurf, OpenCode, Cursor, Zed, Codex, Devin) and the
-agent-utilities XDG space (`~/.config/agent-utilities/skills`), preferring **symlinks**
-to the installed package (Windows uses a directory junction, then a copy):
+## Install
 
-```bash
-# one-click (clone, then run)
-sh install.sh                       # PyPI install + symlink-deploy into all detected tools
-sh install.sh --editable            # dev: editable install, skills symlink to your working tree
-sh install.sh --skills agent-os-genesis   # only the genesis skill
-sh install.sh --mcp ./mcp_config.json     # also wire MCP servers into detected tools
-# Windows:  ./install.ps1  [-Editable] [-Skills agent-os-genesis] [-Mcp .\mcp_config.json]
-```
-
-Or the equivalent one-liner (no clone) — a **persistent** install is required so the
-symlinks resolve:
+Install the package, then deploy discovered skills to supported agent tools:
 
 ```bash
-uv tool install universal-skills && install-skills --all-detected --symlink
-```
-
-Once installed, the `universal-installer` skill (and the `install-skills` CLI) are
-present, so any other skill can be deployed; **`agent-os-genesis`** is loadable in your tools —
-invoke it (or `day0`) to stand up the Agent OS, or *"deploy `<package>` with
-agent-os-genesis"* to provision a single connector.
-
-## Installation (manual / specific extras)
-
-```bash
-# Install with all standard skills
-pip install universal-skills[all]
-
-# Or install specific skill categories
-pip install universal-skills[systems-manager,web-crawler,web-search]
-
-# Then deploy skills into your tools (symlink preferred):
+pip install universal-skills
 install-skills --all-detected --symlink
 ```
 
-## Usage
+For local development:
 
-Universal skills are typically loaded using the `get_universal_skills_path()` utility, which can be integrated into your agent's toolset. The utility will automatically respect the environment variables shown above to filter out disabled skills.
-
-```python
-from universal_skills.skill_utilities import get_universal_skills_path, get_skill_graph_path
-from pydantic_ai_skills import SkillsToolset
-
-# Load enabled universal skills
-skills_directories = [get_universal_skills_path(), get_skill_graph_path()]
-skills = SkillsToolset(directories=skills_directories)
+```bash
+git clone https://github.com/Knuckles-Team/universal-skills.git
+cd universal-skills
+pip install -e '.[test]'
+install-skills --all-detected --symlink
 ```
 
+The repository also provides `install.sh` and `install.ps1` for package installation
+and skill deployment. Review targets and configuration changes before using broad
+installation options.
 
-## Attributions
+## Use from Python
 
-- Claude
-- Vercel
-- Google
-- Many more
+```python
+from pydantic_ai_skills import SkillsToolset
+
+from universal_skills.skill_utilities import (
+    get_skill_graph_path,
+    get_universal_skills_path,
+)
+
+skills = SkillsToolset(
+    directories=[get_universal_skills_path(), get_skill_graph_path()]
+)
+```
+
+Discovery respects each skill's enable/disable environment flag. Package-owned
+skills are discovered from installed provider entry points by the universal
+installer.
+
+## Author a skill or workflow
+
+Use the bundled builders rather than copying a legacy entry:
+
+```bash
+# Atomic skill: creates only explicitly requested resource directories
+python universal_skills/core/skill-builder/scripts/init_skill.py --help
+
+# Pure DAG workflow: resolves atomic skills or explicit MCP tools
+python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py --help
+```
+
+Before opening a change:
+
+```bash
+python scripts/gen_bumpversion.py
+python scripts/check_atomicity.py --strict
+pytest -q
+pre-commit run --all-files
+```
+
+## Security boundaries
+
+Audit and discovery are read-only. Skills that publish, send, delete, rotate,
+restart, deploy, trade, persist data, or otherwise change external state must make
+that side effect explicit and obtain the authorization appropriate to the target.
+Network scripts must verify TLS by default, bound requests, redact secrets, and
+treat retrieved content as untrusted input.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
