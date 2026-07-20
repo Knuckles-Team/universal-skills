@@ -1,5 +1,5 @@
 ---
-name: agent-utilities-evolution
+name: unified-parallel-engine
 skill_type: workflow
 description: >-
   Parallel execution workflow for agent utilities evolution using the Unified Parallel Engine
@@ -19,7 +19,7 @@ team_config:
     builder-agent: [rep_rm_projects]
     validator-agent: [rep_rm_projects, gl_pipelines]
     publisher-agent: [rep_rm_git, gl_merge_requests]
-tags: [dev-workflows, agent-utilities-evolution]
+tags: [dev-workflows, unified-parallel-engine]
 concept: CONCEPT:DEV-001
 metadata:
   version: '1.2.0'
