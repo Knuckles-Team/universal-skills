@@ -38,21 +38,21 @@ Combined workspace + system health validation. Checks repository state alongside
 List the available workspace actions and current workspace configuration
 Expected: `workspace, list`
 
-### Step 1: Systems Manager
+### Step 1: collect-system-utilization [skill: systems-manager]
 **Agent**: `builder-agent`
 **Tools**: `rep_rm_projects`
 
 Get current system memory and CPU utilization
 Expected: `memory, cpu`
 
-### Step 2: Systems Manager
+### Step 2: collect-disk-usage [skill: systems-manager]
 **Agent**: `validator-agent`
 **Tools**: `rep_rm_projects, gl_pipelines`
 
 Check disk usage for the main workspace partition
 Expected: `disk, usage`
 
-### Step 3: KG Persistence [depends_on: systems-manager]
+### Step 3: KG Persistence [depends_on: Step 1, Step 2]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -68,7 +68,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Repository Manager Mcp; Step 1 — Systems Manager; Step 2 — Systems Manager
+- **Run first (in parallel):** Step 0 — Repository Manager Mcp; Step 1 — collect-system-utilization; Step 2 — collect-disk-usage
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

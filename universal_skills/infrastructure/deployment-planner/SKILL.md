@@ -82,7 +82,7 @@ Collect compute resources from every reachable node in the cluster inventory.
 | **GPU/Accelerators** | `nvidia-smi` or `lspci \| grep -i vga` | None / RTX 3090 |
 | **Architecture** | `uname -m` | x86_64 / aarch64 |
 | **Swarm Role** | `docker node ls` | Leader / Manager / Worker |
-| **Node Labels** | `docker node inspect --format labels` | name=R820, poweredge=true |
+| **Node Labels** | `docker node inspect --format labels` | workload-class=general |
 | **Container Runtime** | `docker info --format '{{.ServerVersion}}'` | 28.5.1 |
 
 **Output Format:**
@@ -90,18 +90,18 @@ Collect compute resources from every reachable node in the cluster inventory.
 {
   "nodes": [
     {
-      "hostname": "R820",
-      "ip": "10.0.0.13",
-      "cpu_model": "Xeon E5-4620 @ 2.20GHz",
-      "cpu_cores": 64,
-      "ram_total_gib": 247,
-      "ram_available_gib": 239,
-      "disk_total_gb": 916,
-      "disk_available_gb": 626,
-      "disk_used_pct": 29,
+      "hostname": "compute-a",
+      "address_ref": "connection://inventory/compute-a",
+      "cpu_model": "Example Processor",
+      "cpu_cores": 16,
+      "ram_total_gib": 64,
+      "ram_available_gib": 48,
+      "disk_total_gb": 500,
+      "disk_available_gb": 350,
+      "disk_used_pct": 30,
       "architecture": "x86_64",
       "swarm_role": "leader",
-      "labels": {"name": "R820", "homelab": "true", "poweredge": "true"},
+      "labels": {"workload-class": "general"},
       "gpu": null
     }
   ]
@@ -306,34 +306,34 @@ Generate a deterministic deployment manifest that can recreate the entire cluste
 ```yaml
 # golden-deployment.yaml
 cluster:
-  name: "homelab"
-  created: "2026-05-26"
+  name: "example-cluster"
+  created: "<ISO-8601-date>"
 
 nodes:
-  - hostname: R820
+  - hostname: compute-a
     role: compute_leader
     swarm_role: leader
-    labels: {name: R820, homelab: "true", poweredge: "true"}
+    labels: {workload-class: general}
 
-  - hostname: RW710
+  - hostname: edge-a
     role: gateway
     swarm_role: worker
-    labels: {name: RW710, homelab: "true", poweredge: "true"}
+    labels: {workload-class: edge}
 
-  - hostname: R710
+  - hostname: app-a
     role: app_server
     swarm_role: worker
-    labels: {name: R710, homelab: "true", poweredge: "true"}
+    labels: {workload-class: application}
 
 placements:
   - service: caddy_caddy
     tier: T0
-    node: RW710
+    node: edge-a
     reason: "Gateway role - reverse proxy with host-mode ports"
 
   - service: keycloak_keycloak
     tier: T1
-    node: RW710
+    node: edge-a
     reason: "Co-located with Caddy for SSO flows"
 
 networks:
@@ -346,8 +346,8 @@ networks:
       attachable: true
 
 registry:
-  url: registry.arpa
-  tls: internal
+  connection_ref: registry://default
+  tls_profile_ref: tls://registry-default
   mirror: true
 ```
 
@@ -370,9 +370,10 @@ Add a `target:` and `k8s:` block to the blueprint to drive it:
 ```yaml
 target: kubernetes          # swarm | kubernetes
 k8s:
-  namespace: homelab
-  storageClass: local-path  # RKE2/k3s default node-local provisioner
-  ingressClass: nginx
+  namespace: example-system
+  nodeLabelKey: kubernetes.io/hostname
+  storageClass: example-storage  # omit to use the cluster default
+  ingressClass: example-ingress
 ```
 
 **Native emitter mapping** (consumes the same `placements`, enriched from the
@@ -380,7 +381,7 @@ Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
 
 | Blueprint signal | Kubernetes output |
 |---|---|
-| placement `node` (`node.labels.name == X`) | `nodeAffinity` required match on label `name=<node>` |
+| placement `node` | `nodeAffinity` match on the configured `k8s.nodeLabelKey` |
 | default placement | **Deployment** (`replicas` from catalog, default 1) |
 | `volumes` present, or tier T2/T6 | **StatefulSet** + `volumeClaimTemplates` on `local-path` |
 | `mode: global` | **DaemonSet** |
@@ -441,9 +442,9 @@ After executing a deployment plan, verify:
 
 1. **All services running**: `docker service ls | grep '0/' ` → should return empty
 2. **No cross-node volume errors**: Check service logs for mount failures
-3. **Network connectivity**: Each `.arpa` domain returns 200/302
+3. **Network connectivity**: Each configured service URL returns its expected status
 4. **Resource utilization**: No node exceeds 80% RAM or 90% CPU
-5. **Registry accessibility**: All nodes can pull from `registry.arpa`
+5. **Registry accessibility**: All nodes can pull through the configured registry connection
 6. **DNS resolution**: All overlay service names resolve within containers
 
 ## KG Schema (Optional)

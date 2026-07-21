@@ -1,7 +1,7 @@
 {
   "domain": "CA-007",
   "domain_name": "Documentation",
-  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "project": "${WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
   "readme": {
     "score": 90,
     "found": true,

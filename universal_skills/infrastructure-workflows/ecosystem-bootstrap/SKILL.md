@@ -3,8 +3,8 @@ name: ecosystem-bootstrap
 skill_type: workflow
 description: >
   Self-deploying bootstrap workflow that unfolds the complete agent-utilities
-  ecosystem on a fresh machine. Queries the user for deployment profile
-  (homelab/enterprise/minimal), installs system dependencies via
+  ecosystem on a fresh machine. Resolves the canonical deployment profile
+  (tiny/single-node-prod/enterprise), installs system dependencies via
   systems-manager-mcp, deploys core infrastructure (Docker, Portainer, Technitium DNS),
   service containers (wger, mealie, Jellyfin, etc.), and all MCP server
   containers as streamable-http Docker deployments. Transitions from
@@ -15,7 +15,7 @@ tags:
   - bootstrap
   - deployment
   - self-deploy
-  - homelab
+  - self-hosted
   - enterprise
   - docker
   - portainer
@@ -42,20 +42,18 @@ MCP server containers, DNS routing, and Knowledge Graph registration.
 
 ## Steps
 
-### Step 0: user-interaction
+### Step 0: select-deployment-profile [skill: user-interaction]
 
-> **Canonical profiles** — agent-utilities' day-0 uses three tiers:
-> **tiny** (all-local, zero-infra → `agent-utilities/scripts/bootstrap.sh`),
-> **single-node-prod** (one durable host), and **enterprise** (full swarm). This
-> workflow's `minimal`→**tiny/single-node-prod**, `homelab`/`enterprise`→**enterprise**.
+> **Canonical profiles** — agent-utilities day 0 uses three current tiers:
+> **tiny** (all-local, zero-infra), **single-node-prod** (one durable host), and
+> **enterprise** (multi-host Kubernetes). Do not translate legacy profile names.
 > The `*-mcp` connector set per profile is the single source of truth in
-> `agent-utilities/deploy/mcp-fleet.registry.yml` (see the
-> `agent-os-genesis` / `day0` A-series steps).
+> `agent-utilities/deploy/mcp-fleet.registry.yml`.
 
 Present the deployment profile questionnaire to the user. Ask:
-1. **Deployment profile**: homelab (all services), enterprise (ITIL + productivity), or minimal (core infrastructure only)
+1. **Deployment profile**: tiny, single-node-prod, or enterprise
 2. **Target host**: localhost, remote SSH host (via tunnel-manager), or multi-node cluster
-3. **DNS domain**: base domain for service routing (e.g., `home.lab`, `corp.example.com`)
+3. **DNS profile reference**: AgentConfig connection/policy reference for service routing
 4. **GPU availability**: whether to deploy GPU-accelerated services (data-science-mcp, CUDA models)
 5. **External services**: which cloud services are already configured (Jira, ServiceNow, GitHub, etc.)
 6. **Storage paths**: data volume mount points for persistent storage
@@ -81,48 +79,36 @@ Use `container_manager_docker` with `action='docker_create_container'` for each.
 Expected: portainer_container_id, dns_container_id, agent_network_id
 Depends On: Step 1
 
-### Step 3: portainer-mcp
+### Step 3: verify-portainer [skill: portainer-mcp]
 Verify Portainer is accessible and complete initial setup. Use `portainer_auth` to authenticate, then `portainer_environment` with `action='get_endpoints'` to confirm the local Docker endpoint is registered. All subsequent container deployments will use Portainer stacks.
 Expected: portainer_auth_token, endpoint_id
 Depends On: Step 2
 
-### Step 4: technitium-dns-mcp
-Configure Technitium DNS with DNS records for all services that will be deployed. Use `add_record` with `zone='arpa'` to create entries like:
-- `portainer.{dns_domain}` → container IP
-- `mealie.{dns_domain}` → container IP
-- `wger.{dns_domain}` → container IP
-- (one record per service in the selected deployment profile)
+### Step 4: configure-service-dns [skill: technitium-dns-mcp]
+Configure DNS records through the AgentConfig-resolved DNS connection. Resolve the
+zone from that profile and use `add_record` once per enabled service. Pass opaque
+service and address references to the provider; do not retain resolved names or
+addresses in workflow output.
 Expected: dns_records, record_count
 Depends On: Step 2
 
-### Step 5: portainer-mcp
-Deploy **Tier 1: Platform Services** as Portainer stacks based on the deployment profile. Use `portainer_stack` with `action='create_standalone_stack'` for each stack. **Homelab profile** deploys all; enterprise/minimal deploy subsets:
-- **Health**: wger (fitness), Mealie (meal planning)
-- **Media**: Jellyfin (media server), qBittorrent (downloads)
-- **Productivity**: Nextcloud (files/calendar), Listmonk (email)
-- **Social**: Owncast (streaming), Postiz (social scheduling)
-- **Observability**: Uptime Kuma (monitoring), Langfuse (LLM tracing), Grafana + Prometheus
-- **Development**: Gitea/GitLab CE, SearXNG (search)
-- **Enterprise** (if profile=enterprise): ServiceNow mid-server, LeanIX connector
+### Step 5: deploy-platform-services [skill: portainer-mcp]
+Deploy **Tier 1: Platform Services** through the orchestrator selected by the
+canonical deployment profile. Use the profile's enabled component set as the
+source of truth; do not carry a separate environment-specific service list. Resolve
+image, storage, identity, network, and TLS settings from each component profile.
 Expected: deployed_stacks, stack_ids, service_urls
 Depends On: Step 3, Step 4
 
-### Step 6: portainer-mcp
-Deploy **Tier 2: MCP Server Containers** as streamable-http Docker deployments. Each MCP server runs in its own container with health checks:
-- `technitium-dns-mcp`, `container-manager-mcp`, `systems-manager-mcp`, `tunnel-manager-mcp`
-- `portainer-mcp`, `uptime-kuma-mcp`, `mealie-mcp`, `wger-mcp`
-- `qbittorrent-mcp`, `jellyfin-mcp`, `owncast-mcp`, `postiz-mcp`
-- `langfuse-mcp`, `repository-manager-mcp`, `github-mcp`, `gitlab-mcp`
-- `searxng-mcp`, `scholarx-mcp`, `nextcloud-mcp`, `home-assistant-mcp`
-- `servicenow-mcp`, `leanix-mcp`, `atlassian-mcp`, `microsoft-mcp`
-- `plane-mcp`, `listmonk-mcp`, `stirlingpdf-mcp`, `archivebox-mcp`
-- `audio-transcriber-mcp`, `data-science-mcp`, `media-downloader-mcp`
-- `arr-mcp`, `documentdb-mcp`, `vector-mcp`
-Use `portainer_stack` with a docker-compose referencing each agent's `docker/Dockerfile`.
+### Step 6: deploy-mcp-services [skill: portainer-mcp]
+Deploy the MCP connector set selected by the canonical fleet registry and deployment
+profile. Each enabled connector receives a health check and only named AgentConfig
+connection references; the workflow does not enumerate a local fleet. Use the
+orchestrator adapter selected by the profile.
 Expected: mcp_containers, mcp_endpoints, health_status
 Depends On: Step 5
 
-### Step 7: technitium-dns-mcp
+### Step 7: update-mcp-dns [skill: technitium-dns-mcp]
 Update DNS records with the actual container IPs for all deployed services and MCP servers. Use `add_record` for each MCP server endpoint.
 Expected: mcp_dns_records, total_records
 Depends On: Step 6
@@ -137,7 +123,7 @@ Register the complete deployment topology in the Knowledge Graph. Use `graph_wri
 Expected: manifest_node_id, topology_nodes, relationship_count
 Depends On: Step 6, Step 7
 
-### Step 9: user-interaction
+### Step 9: present-bootstrap-summary [skill: user-interaction]
 Present the deployment summary dashboard to the user:
 - Total services deployed (by tier)
 - DNS routing table
@@ -152,6 +138,6 @@ Depends On: Step 8
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — user-interaction; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — portainer-mcp; Step 4 — technitium-dns-mcp; Step 5 — portainer-mcp; Step 6 — portainer-mcp; Step 7 — technitium-dns-mcp; Step 8 — graph-os; Step 9 — user-interaction
+- **Run first (in parallel):** Step 0 — select-deployment-profile; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — verify-portainer; Step 4 — configure-service-dns; Step 5 — deploy-platform-services; Step 6 — deploy-mcp-services; Step 7 — update-mcp-dns; Step 8 — graph-os; Step 9 — present-bootstrap-summary
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

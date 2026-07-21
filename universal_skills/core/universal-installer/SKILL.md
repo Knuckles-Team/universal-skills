@@ -5,8 +5,8 @@ skill_type: skill
 description: >-
   Install and wire the whole fleet contribution surface into an agent tool in one
   step: skills, skill-graphs, skill-workflows, ontologies, and system prompts —
-  plus generating/patching that tool's mcp_config.json to wire graph-os (local
-  stdio via uvx, or a remote instance) and every auto-detected agents/* MCP
+  plus generating/patching supported JSON-client MCP configuration to wire
+  graph-os (portable local stdio, or a remote instance) and auto-detected agents/* MCP
   server. Supports installing from pip-installed providers or directly from an
   agents/* project checkout. Use when the user wants to install skills or
   ontologies or prompts into Windsurf, Claude Code, OpenCode, Antigravity,
@@ -35,9 +35,9 @@ one entry point per artifact type:
   agent-utilities XDG tree (`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
-- **graph-os + fleet MCP wiring** — generates/patches the target tool's
-  `mcp_config.json` with a `graph-os` entry (stdio-local via `uvx`, or a remote
-  URL) plus one entry per auto-detected `agents/*` MCP server — see
+- **graph-os + fleet MCP wiring** — generates/patches supported JSON clients
+  with a portable installed `graph-os` stdio entry (or a remote URL), plus one
+  entry per auto-detected `agents/*` MCP server — see
   "MCP server wiring" below.
 - **Per-package auto-detection**, including installing directly from an
   `agents/*` project checkout that isn't pip-installed yet (`--from-package`).
@@ -129,11 +129,11 @@ install-universal --tool claude --symlink --layer atomic --graph-os stdio
 # Install everything into every detected tool (interactive picker if TTY-attached)
 install-universal --all-detected --symlink
 
-# Wire a remote graph-os instead of a local uvx-spawned one
+# Wire a remote graph-os instead of the installed local stdio launcher
 install-universal --tool claude --graph-os remote --graph-os-url https://graph-os.example.com/mcp
 
 # Install directly from an unreleased agents/* checkout (skills+prompts+ontology)
-install-universal --tool claude --from-package /home/apps/workspace/agent-packages/agents/gitlab-api
+install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
 ```
 
 > Invoke via the `install-universal` console entry point (installed with the
@@ -189,21 +189,17 @@ Reuses the bundled **`mcp-installer`** skill's config-merge machinery
 (`merge_mcp_configs` / `install_mcp_config` — never overwrites unrelated
 `mcpServers` entries, backs up the target file before merging) rather than
 re-implementing it. `scripts/mcp_setup.py` builds two kinds of entries and
-merges them into the target tool's MCP config file (same `--tool` selection as
-the skill leg):
+merges them into a supported JSON client's MCP config file. Codex remains a
+skill-install target, but is intentionally skipped by this JSON leg. Register
+GraphOS in Codex through agent-utilities' `setup-config codex` command (or the
+equivalent `codex mcp add graph-os -- graph-os --transport stdio`) so Codex owns
+its `config.toml` entry and no env, secret, working directory, or machine path
+is copied.
 
-1. **`graph-os`** — following the pattern published in every `agents/*`
-   README's `mcp_config.json` example plus agent-utilities' own dev
-   convention:
-   - `--graph-os stdio` (default): if a `graph-os` console script is already on
-     `PATH` (locally pip-installed agent-utilities), wires it as a bare
-     command (`"command": "graph-os", "args": []`); otherwise falls back to
-     `"command": "uvx", "args": ["--from", "agent-utilities[mcp]", "graph-os"]`
-     — the same `uvx --from <pkg>[mcp] <entry>` shape every `agents/*` README
-     publishes. Either way `env` carries `MCP_TOOL_MODE` (default
-     `condensed`) plus the standard `WORKSPACE_PATH` /
-     `AGENT_UTILITIES_CONFIG_DIR` / `GRAPH_PERSISTENCE_PATH` keys from
-     agent-utilities' own `docs/examples/example_mcp_config.json`.
+1. **`graph-os`**:
+   - `--graph-os stdio` (default): wires the installed portable launcher as
+     `"command": "graph-os", "args": ["--transport", "stdio"]`. Runtime
+     topology and state resolve through AgentConfig, not client env fields.
    - `--graph-os remote --graph-os-url <url>`: wires `{"url": "<url>"}` — the
      Streamable-HTTP/remote shape every `agents/*` README documents as the
      alternative to stdio.
@@ -219,7 +215,7 @@ the skill leg):
 
 **Interactive decision point.** `--interactive`/bare-TTY invocation asks,
 per the picker in `install.py`'s `_run_interactive()`: *"Wire graph-os as (1)
-local stdio (uvx/console-script), (2) a remote instance (enter URL), or (3)
+local stdio (installed console script), (2) a remote instance (enter URL), or (3)
 skip?"* — mirrors the tool/provider pickers already there. Non-interactively,
 `--graph-os` defaults to `stdio` (never silently skipped, since a graph-os
 entry is the common case) unless `--no-mcp` is given.

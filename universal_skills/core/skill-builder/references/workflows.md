@@ -1,28 +1,23 @@
-# Workflow Patterns
+# Atomic Skill or Skill Workflow?
 
-## Sequential Workflows
+Use this boundary check before adding ordered instructions to an atomic skill.
 
-For complex tasks, break operations into clear, sequential steps. It is often helpful to give Agent an overview of the process towards the beginning of SKILL.md:
+## Keep one atomic skill when
 
-```markdown
-Filling a PDF form involves these steps:
+- one user intent selects the entire capability;
+- its internal checks cannot provide useful results independently; and
+- the skill does not delegate stages to other skills or specialist agents.
 
-1. Analyze the form (run analyze_form.py)
-2. Create field mapping (edit fields.json)
-3. Validate mapping (run validate_fields.py)
-4. Fill the form (run fill_form.py)
-5. Verify output (run verify_output.py)
-```
+An atomic skill may contain a short procedure for its own capability. Do not encode
+that procedure as a cross-capability DAG, `### Step N:` headings, or `depends_on`.
 
-## Conditional Workflows
+## Build a skill workflow when
 
-For tasks with branching logic, guide Agent through decision points:
+- two or more stages are independently triggerable atomic skills;
+- stages need ordering, fan-out, fan-in, or different specialists; or
+- a stage invokes one explicit MCP tool as a workflow node.
 
-```markdown
-1. Determine the modification type:
-   **Creating new content?** → Follow "Creation workflow" below
-   **Editing existing content?** → Follow "Editing workflow" below
-
-2. Creation workflow: [steps]
-3. Editing workflow: [steps]
-```
+Create or repair the required atoms first. Then use `skill-workflow-builder` to
+place the composition in `universal_skills/<domain>-workflows/<workflow-name>/`.
+Keep business logic in the atomic skills; the workflow should contain only bindings
+and dependencies.

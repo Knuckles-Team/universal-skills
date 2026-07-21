@@ -16,34 +16,38 @@ _spec.loader.exec_module(emit_manifests)
 
 def _blueprint():
     return {
-        "cluster": {"name": "homelab"},
-        "k8s": {"namespace": "homelab", "storageClass": "local-path"},
+        "cluster": {"name": "example-cluster"},
+        "k8s": {
+            "namespace": "example-system",
+            "storageClass": "example-storage",
+            "nodeLabelKey": "kubernetes.io/hostname",
+        },
         "placements": [
             # T0 edge with published ports -> Deployment + Service
             {
                 "service": "caddy",
                 "tier": "T0",
-                "node": "R820",
-                "image": "registry.arpa/caddy:cloudflare",
+                "node": "edge-a",
+                "image": "registry.example/caddy:cloudflare",
                 "ports": ["80:80", "443:443"],
             },
             # DB with volumes -> StatefulSet + volumeClaimTemplates
             {
                 "service": "pg-age",
                 "tier": "T1",
-                "node": "R820",
-                "image": "registry.arpa/pg-age:latest",
-                "volumes": ["/home/apps/pg-age/data:/var/lib/postgresql/data"],
+                "node": "storage-a",
+                "image": "registry.example/pg-age:latest",
+                "volumes": ["database-data:/var/lib/postgresql/data"],
             },
             # observability marked global -> DaemonSet
             {
                 "service": "node-exporter",
                 "tier": "T1",
-                "node": "R710",
+                "node": "worker-a",
                 "mode": "global",
             },
             # plain stateless MCP -> Deployment
-            {"service": "gitlab-mcp", "tier": "T5", "node": "RW710"},
+            {"service": "gitlab-mcp", "tier": "T5", "node": "worker-b"},
         ],
     }
 
@@ -70,11 +74,11 @@ def test_emit_kubernetes_kinds():
 def test_namespace_from_blueprint_k8s_block():
     manifests = emit_manifests.emit(_blueprint(), "kubernetes", "default")
     ns = [m for m in manifests if m["kind"] == "Namespace"][0]
-    assert ns["metadata"]["name"] == "homelab"
+    assert ns["metadata"]["name"] == "example-system"
     # all workloads land in that namespace
     for m in manifests:
         if m["kind"] in ("Deployment", "StatefulSet", "Service"):
-            assert m["metadata"]["namespace"] == "homelab"
+            assert m["metadata"]["namespace"] == "example-system"
 
 
 def test_node_affinity_pins_to_node_label():
@@ -88,14 +92,18 @@ def test_node_affinity_pins_to_node_label():
     term = affinity["requiredDuringSchedulingIgnoredDuringExecution"][
         "nodeSelectorTerms"
     ][0]["matchExpressions"][0]
-    assert term == {"key": "name", "operator": "In", "values": ["R820"]}
+    assert term == {
+        "key": "kubernetes.io/hostname",
+        "operator": "In",
+        "values": ["edge-a"],
+    }
 
 
 def test_statefulset_uses_volume_claim_templates():
     manifests = emit_manifests.emit(_blueprint(), "kubernetes", "default")
     sts = [m for m in manifests if m["kind"] == "StatefulSet"][0]
     vcts = sts["spec"]["volumeClaimTemplates"]
-    assert vcts[0]["spec"]["storageClassName"] == "local-path"
+    assert vcts[0]["spec"]["storageClassName"] == "example-storage"
     mounts = sts["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
     assert mounts[0]["mountPath"] == "/var/lib/postgresql/data"
     assert sts["spec"]["serviceName"] == "pg-age"

@@ -144,7 +144,7 @@ def _validate_changelog_format(changelog_path: Path) -> dict:
                         )
 
         except Exception as e:
-            result["issues"].append(f"Failed to parse CHANGELOG.md: {e}")
+            result["issues"].append(f"Failed to parse CHANGELOG.md: {type(e).__name__}")
     else:
         result["issues"].append(
             "keepachangelog not installed — pip install 'universal-skills[code-enhancer]'"

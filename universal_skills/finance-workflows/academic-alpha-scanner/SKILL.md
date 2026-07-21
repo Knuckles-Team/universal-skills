@@ -1,100 +1,93 @@
 ---
 name: academic-alpha-scanner
+domain: finance-workflows
 skill_type: workflow
 description: >-
-  Parallel execution workflow for academic alpha scanner using the Unified Parallel Engine
-domain: finance-workflows
-agent: quant_analyst
+  Discover academic market-factor research, audit its evidence, extract comparable
+  hypotheses, obtain the required market data, and backtest the candidates by
+  composing package-owned and universal atomic skills. Use when a quantitative
+  researcher wants an evidence-linked screening report for candidate alpha factors,
+  not live trading or investment advice.
+license: MIT
+requires:
+  - scholarx
+  - scholarx-operations
+agent: quant-research-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: academic-alpha-scanner-team
+  task_pattern: evidence-linked academic alpha screening
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, academic-alpha-scanner]
+    - scholarx-operations
+    - citation-auditor
+    - factor-hypothesis-extractor
+    - quant-data-ingest
+    - qlib-backtester
+tags: [finance, research, alpha, evidence, backtesting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.2.1'
+  author: Genius
 ---
 
 # Academic Alpha Scanner Workflow
 
-**CONCEPT:EE-011**
+Compose the package-owned ScholarX skill and named universal atomic skills. Keep
+research findings and backtest results clearly separate from investment advice or
+live-order execution.
 
-Parallel execution workflow for academic alpha scanner using the Unified Parallel Engine
+## Inputs
+
+Provide the research question, markets, asset universe, date range, source filters,
+candidate-selection criteria, data constraints, and backtest assumptions.
 
 ## Steps
 
-### Step 1: Arxiv
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: scholarx-operations [skill: scholarx-operations]
 
-Execute arxiv operations for the Academic Alpha Scanner workflow.
-Expected: `arxiv_artifacts`
+Invoke `$scholarx-operations` with the workflow inputs.
 
-### Step 2: Ssrn
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `paper_source_packet`
 
-Execute ssrn operations for the Academic Alpha Scanner workflow.
-Expected: `ssrn_artifacts`
+### Step 1: citation-auditor [skill: citation-auditor] [depends_on: Step 0]
 
-### Step 3: Nber
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$citation-auditor` with `paper_source_packet`.
 
-Execute nber operations for the Academic Alpha Scanner workflow.
-Expected: `nber_artifacts`
+Expected: `evidence_audit`
 
-### Step 4: Extract Factors [depends_on: arxiv, ssrn, nber]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
+### Step 2: factor-hypothesis-extractor [skill: factor-hypothesis-extractor] [depends_on: Step 1]
 
-Execute extract factors operations for the Academic Alpha Scanner workflow.
-Expected: `extract_factors_artifacts`
+Invoke `$factor-hypothesis-extractor` with `paper_source_packet`, `evidence_audit`,
+and the workflow inputs.
 
-### Step 5: Replicate [depends_on: extract_factors]
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+Expected: `candidate_factor_hypotheses`
 
-Execute replicate operations for the Academic Alpha Scanner workflow.
-Expected: `replicate_artifacts`
+### Step 3: quant-data-ingest [skill: quant-data-ingest] [depends_on: Step 2]
 
-### Step 6: Backtest [depends_on: replicate]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Invoke `$quant-data-ingest` with `candidate_factor_hypotheses` and the workflow
+inputs.
 
-Execute backtest operations for the Academic Alpha Scanner workflow.
-Expected: `backtest_artifacts`
+Expected: `normalized_market_dataset`
 
-### Step 7: KG Persistence [depends_on: backtest]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
+### Step 4: qlib-backtester [skill: qlib-backtester] [depends_on: Step 3]
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Invoke `$qlib-backtester` with `candidate_factor_hypotheses`,
+`normalized_market_dataset`, and the workflow inputs.
+
+Expected: `backtest_report`
 
 ## Output
-- Academic Alpha Scanner results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `paper_source_packet`, `evidence_audit`, `candidate_factor_hypotheses`, and
+`backtest_report`, including the assumptions and limitations emitted by each skill.
+Do not place or recommend live trades.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Arxiv; Step 2 — Ssrn; Step 3 — Nber
-- **After level 0:** Step 4 — Extract Factors
-- **After level 1:** Step 5 — Replicate
-- **After level 2:** Step 6 — Backtest
-- **After level 3:** Step 7 — KG Persistence
+- **Run first:** Step 0 — `$scholarx-operations`.
+- **After Step 0:** Step 1 — `$citation-auditor`.
+- **After Step 1:** Step 2 — `$factor-hypothesis-extractor`.
+- **After Step 2:** Step 3 — `$quant-data-ingest`.
+- **After Step 3:** Step 4 — `$qlib-backtester`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

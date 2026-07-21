@@ -33,42 +33,42 @@ Automatically scans local containers, pulls crash logs, and designs remediation 
 
 ## Steps
 
-### Step 0: Container Manager Mcp
+### Step 0: scan-local-containers [skill: container-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
 Scan all local container instances (running and stopped) using cm_container_operations list_containers tool with all_containers parameter.
 Expected: `local_containers_list`
 
-### Step 1: User Interaction
+### Step 1: select-failed-containers [skill: user-interaction]
 **Agent**: `deployer-agent`
 **Tools**: `pt_stack, cnt_cm_compose_operations`
 
 Filter and present any stopped or unhealthy containers from local_containers_list. Ask the user for confirmation to inspect crash logs.
 Expected: `selected_containers`
 
-### Step 2: Container Manager Mcp
+### Step 2: fetch-failure-logs [skill: container-manager-mcp]
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
 Retrieve log outputs for selected failed containers using cm_container_operations get_container_logs tool with tail parameter.
 Expected: `container_logs`
 
-### Step 3: Container Manager Mcp
+### Step 3: inspect-compose-state [skill: container-manager-mcp]
 **Agent**: `dns-configurator`
 **Tools**: `adg_rewrites, td_zones`
 
 Check local compose environments using cm_compose_operations ps tool.
 Expected: `compose_states`
 
-### Step 4: User Interaction
+### Step 4: present-remediation-plan [skill: user-interaction]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
 Fuse container logs and compose states to diagnose root failures and formulate automated remediation steps.
 Expected: `remediation_plan`
 
-### Step 5: KG Persistence [depends_on: user-interaction]
+### Step 5: KG Persistence [depends_on: Step 1, Step 4]
 **Agent**: `dns-configurator`
 **Tools**: `graph_write`
 
@@ -84,7 +84,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Container Manager Mcp; Step 1 — User Interaction; Step 2 — Container Manager Mcp; Step 3 — Container Manager Mcp; Step 4 — User Interaction
+- **Run first (in parallel):** Step 0 — scan-local-containers; Step 1 — select-failed-containers; Step 2 — fetch-failure-logs; Step 3 — inspect-compose-state; Step 4 — present-remediation-plan
 - **After level 0:** Step 5 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

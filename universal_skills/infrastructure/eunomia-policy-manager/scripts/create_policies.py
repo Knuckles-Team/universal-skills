@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 
 # Default set of known MCP services in the fleet
 DEFAULT_SERVICES = [

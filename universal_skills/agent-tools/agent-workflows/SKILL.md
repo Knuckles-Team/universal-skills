@@ -57,7 +57,7 @@ python scripts/a2a_client.py \
 
 # 2. Ask an agent and stream real-time updates (SSE)
 python scripts/a2a_client.py \
-  --url http://searxng-agent.arpa/a2a/ \
+  --url https://agent.example.test/a2a/ \
   --action chat \
   --stream \
   --query "Explain quantum mechanics in 1 line."
@@ -66,9 +66,9 @@ python scripts/a2a_client.py \
 python scripts/a2a_client.py --agent-name SearchMaster --action get-card
 
 # 4. Monitor the Agent's Task Queue
-python scripts/a2a_client.py --url http://searxng-agent.arpa/a2a/ --action list-tasks
+python scripts/a2a_client.py --url https://agent.example.test/a2a/ --action list-tasks
 
-# Note: Use --insecure to bypass SSL verification if needed.
+# For private endpoints, resolve the URL and verified CA profile through AgentConfig.
 ```
 
 ---

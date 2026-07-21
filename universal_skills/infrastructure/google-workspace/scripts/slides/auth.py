@@ -17,6 +17,7 @@ except ImportError:
     sys.exit(1)
 import http.server
 import json
+import os
 import secrets
 import socket
 import sys
@@ -25,14 +26,30 @@ import webbrowser
 from base64 import b64encode
 from dataclasses import dataclass
 from typing import Optional
-from urllib.parse import urlencode, parse_qs, urlparse
-import urllib.request
-import urllib.error
+from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.request import Request
+
+from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
 # OAuth Configuration - uses same cloud function as MCP server
-CLIENT_ID = "338689075775-o75k922vn5fdl18qergr96rp8g63e4d7.apps.googleusercontent.com"
-CLOUD_FUNCTION_URL = "https://google-workspace-extension.geminicli.com"
+CLIENT_ID = os.environ.get("GOOGLE_WORKSPACE_OAUTH_CLIENT_ID", "").strip()
+CLOUD_FUNCTION_URL = os.environ.get(
+    "GOOGLE_WORKSPACE_OAUTH_BROKER_URL", ""
+).strip().rstrip("/")
 REFRESH_ENDPOINT = f"{CLOUD_FUNCTION_URL}/refreshToken"
+
+
+def _oauth_configuration_valid() -> bool:
+    parsed = urlparse(CLOUD_FUNCTION_URL)
+    return bool(
+        CLIENT_ID
+        and parsed.scheme == "https"
+        and parsed.hostname
+        and not parsed.username
+        and not parsed.password
+        and not parsed.query
+        and not parsed.fragment
+    )
 
 # Keyring configuration
 KEYCHAIN_SERVICE = "google-slides-skill-oauth"
@@ -120,19 +137,30 @@ def is_token_expired(token_info: TokenInfo) -> bool:
 
 def refresh_access_token(refresh_token: str) -> Optional[dict]:
     """Refresh access token using the cloud function."""
+    if not _oauth_configuration_valid():
+        print("OAuth client or HTTPS broker is not configured.", file=sys.stderr)
+        return None
     try:
         data = json.dumps({"refresh_token": refresh_token}).encode("utf-8")
-        req = urllib.request.Request(
+        req = Request(
             REFRESH_ENDPOINT,
             data=data,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as e:
-        print(f"Error refreshing token: {e}", file=sys.stderr)
+        host = (urlparse(CLOUD_FUNCTION_URL).hostname or "").lower().rstrip(".")
+        payload, _ = open_json(
+            req,
+            policy=UrlPolicy(
+                frozenset({host}), allow_private_hosts=frozenset({host})
+            ),
+            timeout=30,
+            max_bytes=1 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else None
+    except (SafeHttpError, ValueError) as e:
+        print(f"Error refreshing token: {type(e).__name__}", file=sys.stderr)
         return None
 
 
@@ -216,6 +244,9 @@ class OAuthCallbackHandler(http.server.BaseHTTPRequestHandler):
 
 def perform_oauth_flow() -> Optional[TokenInfo]:
     """Perform the full OAuth flow with browser-based authentication."""
+    if not _oauth_configuration_valid():
+        print("OAuth client or HTTPS broker is not configured.", file=sys.stderr)
+        return None
     port = get_available_port()
     redirect_uri = f"http://localhost:{port}/oauth2callback"
     csrf_token = secrets.token_hex(32)
@@ -246,7 +277,7 @@ def perform_oauth_flow() -> Optional[TokenInfo]:
     server.timeout = 300  # 5 minute timeout
 
     print("Opening browser for authentication...", file=sys.stderr)
-    print(f"If browser doesn't open, visit: {auth_url}", file=sys.stderr)
+    print("Opening the configured OAuth authorization flow.", file=sys.stderr)
 
     webbrowser.open(auth_url)
 
@@ -332,7 +363,7 @@ def main():
 
     subparsers.add_parser("login", help="Authenticate with Google")
     subparsers.add_parser("logout", help="Clear stored tokens")
-    subparsers.add_parser("token", help="Print current access token")
+    subparsers.add_parser("token", help="Check whether an access token is available")
     subparsers.add_parser("status", help="Check authentication status")
 
     args = parser.parse_args()
@@ -355,7 +386,7 @@ def main():
     elif args.command == "token":
         token = get_valid_access_token(interactive=False)
         if token:
-            print(token)
+            print("Access token available.")
         else:
             print("Not authenticated. Run: python auth.py login", file=sys.stderr)
             sys.exit(1)

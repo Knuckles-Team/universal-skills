@@ -87,3 +87,5 @@ extra:
 nav:
   - Home: index.md
   - Overview: overview.md
+  - Catalog Audit: skill-catalog-audit.md
+  - Improvement Roadmap: skill-catalog-improvement-roadmap.md

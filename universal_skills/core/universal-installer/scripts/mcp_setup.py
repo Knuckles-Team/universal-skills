@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""graph-os + fleet MCP config generation, merged via the bundled mcp-installer.
+"""Portable graph-os + fleet MCP wiring for JSON-config clients.
 
 Builds the ``mcpServers`` entries this skill is responsible for (graph-os +
 auto-detected ``agents/*`` servers) and merges them into a target agent tool's
@@ -14,11 +14,9 @@ Grounding for the entry shapes (no invented fields):
   ``agents/github-agent/README.md``), and the remote/Streamable-HTTP
   alternative is a bare ``{"url": "<url>"}`` (same READMEs, "Alternatively,
   connect to a pre-deployed Streamable-HTTP instance by `url`").
-- agent-utilities' own local/dev convention
-  (``agent-utilities/docs/examples/example_mcp_config.json``) wires graph-os as
-  an already-installed console script (``"command": "graph-os", "args": []``)
-  with env ``WORKSPACE_PATH`` / ``AGENT_UTILITIES_CONFIG_DIR`` /
-  ``GRAPH_PERSISTENCE_PATH`` / ``MCP_TOOL_MODE``.
+- The graph-os launcher is the installed, machine-neutral console script with
+  explicit stdio transport. Deployment topology and runtime state resolve from
+  AgentConfig rather than being copied into a client registration.
 - The per-package MCP console-script name is **never guessed** (it is not a
   fixed suffix transform — ``gitlab-api`` → ``gitlab-mcp``, ``github-agent`` →
   ``github-mcp``, i.e. package-specific) — it is read from real
@@ -30,7 +28,6 @@ from __future__ import annotations
 
 import logging
 import shutil
-import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -94,7 +91,6 @@ def detect_present_mcp_tools() -> Dict[str, Path]:
 def build_graph_os_entry(
     mode: str = "stdio",
     remote_url: Optional[str] = None,
-    tool_mode: str = "condensed",
 ) -> Optional[Dict[str, Any]]:
     """Build the ``graph-os`` mcpServers entry for ``mode`` (stdio|remote|skip)."""
     if mode == "skip":
@@ -104,27 +100,7 @@ def build_graph_os_entry(
             logger.error("--graph-os remote requires --graph-os-url.")
             return None
         return {"url": remote_url}
-    # stdio (default): prefer an already-installed console script; fall back to
-    # the uvx-portable form every agents/* README publishes.
-    if shutil.which("graph-os"):
-        command, args = "graph-os", []
-    else:
-        command, args = "uvx", ["--from", "agent-utilities[mcp]", "graph-os"]
-    return {
-        "command": command,
-        "args": args,
-        "env": {
-            "MCP_TOOL_MODE": tool_mode,
-            "WORKSPACE_PATH": str(Path("~/workspace").expanduser()),
-            "AGENT_UTILITIES_CONFIG_DIR": str(
-                Path("~/.config/agent-utilities").expanduser()
-            ),
-            "GRAPH_PERSISTENCE_PATH": str(
-                Path("~/.local/share/agent-utilities/graph_state").expanduser()
-            ),
-        },
-        "disabled": False,
-    }
+    return {"command": "graph-os", "args": ["--transport", "stdio"]}
 
 
 def _dist_mcp_console_scripts(dist_name: str) -> List[str]:
@@ -215,7 +191,7 @@ def wire_mcp_config(
         )
         return False
     servers: Dict[str, Dict[str, Any]] = {}
-    graph_os_entry = build_graph_os_entry(graph_os_mode, graph_os_url, tool_mode)
+    graph_os_entry = build_graph_os_entry(graph_os_mode, graph_os_url)
     if graph_os_entry is not None:
         servers["graph-os"] = graph_os_entry
     servers.update(

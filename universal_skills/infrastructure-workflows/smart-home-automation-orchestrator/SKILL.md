@@ -29,21 +29,21 @@ Interacts with Home Assistant using home-assistant-agent to read device states, 
 
 ## Steps
 
-### Step 0: Home Assistant Agent
+### Step 0: collect-home-state [skill: home-assistant-agent]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
 Retrieve current device states, entity metrics, and active calendar event triggers using home_assistant_states list_states and home_assistant_calendar get_calendar_events tools. Target sensor context: {{task}}
 Expected: `sensor_states, calendar_schedules, target_devices`
 
-### Step 1: Home Assistant Agent
+### Step 1: execute-home-automation [skill: home-assistant-agent]
 **Agent**: `deployer-agent`
 **Tools**: `pt_stack, cnt_cm_compose_operations`
 
 Execute the smart home automation scene or service update. Call home_assistant_services call_service to trigger lighting, climate, script, or custom notification actions matching the target schedule and state.
 Expected: `automation_results, service_call_logs`
 
-### Step 2: KG Persistence [depends_on: home-assistant-agent]
+### Step 2: KG Persistence [depends_on: Step 0, Step 1]
 **Agent**: `deployer-agent`
 **Tools**: `graph_write`
 
@@ -59,7 +59,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Home Assistant Agent; Step 1 — Home Assistant Agent
+- **Run first (in parallel):** Step 0 — collect-home-state; Step 1 — execute-home-automation
 - **After level 0:** Step 2 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

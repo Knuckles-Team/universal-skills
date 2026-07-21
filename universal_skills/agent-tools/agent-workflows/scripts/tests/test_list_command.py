@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import io
 import sys
 from pathlib import Path
@@ -9,7 +10,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from commands.listing import cmd_list
+cmd_list = importlib.import_module("commands.listing").cmd_list
 
 
 class _Deps:
@@ -43,7 +44,7 @@ class ListCommandTests(unittest.TestCase):
 
         out = io.StringIO()
         with redirect_stdout(out):
-            rc = cmd_list(args, deps=deps)
+            cmd_list(args, deps=deps)
 
         text = out.getvalue()
         # When running filter is active, only show agents that are in a running state
@@ -55,7 +56,7 @@ class ListCommandTests(unittest.TestCase):
 
         out = io.StringIO()
         with redirect_stdout(out):
-            rc = cmd_list(args, deps=deps)
+            cmd_list(args, deps=deps)
 
         text = out.getvalue()
         # When no filter, show all agents

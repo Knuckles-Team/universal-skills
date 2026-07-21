@@ -1,7 +1,10 @@
-name: Blog Post Generator Swarm
-task_pattern: Perform Blog Post Generator operations concurrently across all target layers
+name: blog-post-generator-team
+task_pattern: sourced blog post drafting and readiness review
+execution_mode: sequential
 specialist_ids:
-  - researcher
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
+  - web-search
+  - content-outline-builder
+  - content-draft-writer
+  - citation-auditor
+  - copy-editor
+  - publication-preflight

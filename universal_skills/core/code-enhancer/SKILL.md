@@ -142,6 +142,11 @@ configuration needed for either. **This degradation is real, not theoretical**: 
 graph-os deployment may be on a protocol/tool surface that predates the REST contract above (fleet
 version drift) — the tiering means that never breaks the skill, it just quietly falls back.
 
+Remote graph endpoints must use HTTPS; plain HTTP is accepted only for loopback.
+Requests reject redirects and ambient proxies, remain on the exact configured host,
+bound response bodies, and read optional CA trust only from `SSL_CERT_FILE`,
+`SSL_CERT_DIR`, or `REQUESTS_CA_BUNDLE` at runtime.
+
 The remaining `ast`-heavy analyzers (`analyze_codebase.py`, `analyze_security.py`,
 `analyze_liveness.py`, `evaluate_heuristics.py`, `analyze_architecture.py`,
 `analyze_dependency_migration.py`, `analyze_minimalism.py`) stay on a direct local `ast` parse:

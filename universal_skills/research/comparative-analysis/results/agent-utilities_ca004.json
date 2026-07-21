@@ -1,7 +1,7 @@
 {
   "domain": "CA-004",
   "domain_name": "Code Quality",
-  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
   "quality_metrics": {
     "file_count": 320,
     "total_loc": 88121,

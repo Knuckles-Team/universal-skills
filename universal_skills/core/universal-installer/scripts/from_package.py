@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 if sys.version_info >= (3, 11):
     import tomllib

@@ -164,10 +164,14 @@ python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_
 
 # Multiple servers (backend + frontend)
 python scripts/with_server.py \
-  --server "cd backend && python server.py" --port 3000 \
-  --server "cd frontend && npm run dev" --port 5173 \
+  --server "python server.py" --cwd backend --port 3000 \
+  --server "npm run dev" --cwd frontend --port 5173 \
   -- python your_automation.py
 ```
+
+`--server` is parsed as an argument vector and never evaluated by a shell. Use
+the matching workspace-relative `--cwd` option instead of `cd`, pipes, command
+substitution, or shell control operators.
 
 ### Playwright Script Pattern
 

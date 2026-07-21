@@ -47,37 +47,19 @@ If you only need the binary on PATH (no env persistence), run it as a subprocess
 - **Playwright Chromium is usually already cached** at `~/.cache/ms-playwright`
   (`PLAYWRIGHT_BROWSERS_PATH`). Bootstrap only downloads it if absent.
 
-## Headless server / SSH environments (e.g. this homelab)
+## Headless and managed environments
 
 - **Headless is the default** — do *not* pass `--headed` on a server with no display.
-- **Containers need `--no-sandbox`.** Bootstrap sets `AGENT_BROWSER_ARGS=--no-sandbox`.
-  Use a **single** flag here: multiple space-split flags in `AGENT_BROWSER_ARGS` trip
-  Chromium's `Multiple targets are not supported in headless mode`.
-- **Internal / plain-HTTP sites are blocked by default.** Homelab `*.arpa` hosts
-  (served by Caddy over **http**) — and any pure-http site — return
-  `ERR_BLOCKED_BY_CLIENT` and land on `chrome-error://`. Cause: Chromium's
-  **HTTPS-Upgrade** auto-upgrades `http`→`https` and won't fall back. `--no-sandbox`
-  alone does NOT fix this, and the needed `--disable-features` flag can't be added via
-  `AGENT_BROWSER_ARGS` (see the multi-flag bug above).
-
-  **Working fix — pre-launch Chromium with the flags, then attach over CDP:**
-
-  ```bash
-  bash <skill-dir>/bootstrap.sh --connect      # launches Chromium + `agent-browser connect`
-  agent-browser open http://twenty.arpa/       # now loads (verified -> /welcome)
-  ```
-
-  Equivalent manual form:
-
-  ```bash
-  CHROME=$(find ~/.cache/ms-playwright -name chrome -path '*chromium-*' | head -1)
-  "$CHROME" --headless=new --no-sandbox --disable-gpu \
-    --disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2 \
-    --remote-debugging-port=9222 --user-data-dir="$(mktemp -d)" &
-  agent-browser connect 9222
-  ```
-
-- **Self-signed HTTPS:** add `--ignore-https-errors` on `open`.
+- **Container sandboxing is policy-owned.** Keep Chromium's sandbox enabled unless
+  the AgentConfig browser profile explicitly selects an already-isolated container
+  runtime that requires a different setting. Do not embed runtime flags in the skill.
+- **Private endpoints are reference-driven.** Resolve the target URL and TLS profile
+  from AgentConfig. Install the referenced complete CA bundle and keep HTTPS upgrade,
+  certificate, and hostname verification enabled. A plain-HTTP development endpoint
+  requires an explicit transport policy and must not become a stored default.
+- **Connection flags are profile-owned.** When a managed CDP browser is required,
+  use the browser connection reference supplied by the runtime. Do not retain its
+  address, user-data path, or launch command.
 
 ## Daemon hygiene
 

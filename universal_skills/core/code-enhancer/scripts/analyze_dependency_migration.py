@@ -199,7 +199,7 @@ def _pytest_deprecations(root: Path, test_path: str, timeout: int = 280) -> list
         )
         text = proc.stdout + "\n" + proc.stderr
     except Exception as e:  # noqa: BLE001
-        return [{"file": "", "line": 0, "category": "RunError", "msg": str(e)}]
+        return [{"file": "", "line": 0, "category": "RunError", "msg": type(e).__name__}]
     out: list[dict] = []
     seen: set[tuple] = set()
     for ln in text.splitlines():

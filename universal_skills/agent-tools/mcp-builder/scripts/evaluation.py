@@ -9,14 +9,13 @@ import json
 import re
 import sys
 import time
-import traceback
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
 from ai_provider import AIProvider
-
 from connections import create_connection
+from defusedxml import ElementTree as DefusedET
+from defusedxml.common import DefusedXmlException
 
 EVALUATION_PROMPT = """You are an AI assistant with access to tools.
 
@@ -52,12 +51,47 @@ Response Requirements:
 - For names or text, provide the exact text requested
 - Your response should go last"""
 
+MAX_EVALUATION_XML_BYTES = 8 * 1024 * 1024
+MAX_EVALUATION_ELEMENTS = 50_000
+MAX_EVALUATION_DEPTH = 48
+
+
+def _parse_evaluation_root(file_path: Path):
+    """Parse a regular, bounded evaluation document with unsafe XML disabled."""
+
+    if file_path.is_symlink() or not file_path.is_file():
+        raise ValueError("evaluation document is not a regular file")
+    size = file_path.stat().st_size
+    if size <= 0 or size > MAX_EVALUATION_XML_BYTES:
+        raise ValueError("evaluation document exceeds its safe size boundary")
+    with file_path.open("rb") as stream:
+        payload = stream.read(MAX_EVALUATION_XML_BYTES + 1)
+    if len(payload) != size or len(payload) > MAX_EVALUATION_XML_BYTES:
+        raise ValueError("evaluation document changed while being read")
+    try:
+        root = DefusedET.fromstring(
+            payload,
+            forbid_dtd=True,
+            forbid_entities=True,
+            forbid_external=True,
+        )
+    except (DefusedET.ParseError, DefusedXmlException, ValueError):
+        raise ValueError("evaluation document is invalid") from None
+    count = 0
+    stack = [(root, 1)]
+    while stack:
+        element, depth = stack.pop()
+        count += 1
+        if count > MAX_EVALUATION_ELEMENTS or depth > MAX_EVALUATION_DEPTH:
+            raise ValueError("evaluation document exceeds its structure boundary")
+        stack.extend((child, depth + 1) for child in element)
+    return root
+
 
 def parse_evaluation_file(file_path: Path) -> list[dict[str, Any]]:
     """Parse XML evaluation file with qa_pair elements."""
     try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+        root = _parse_evaluation_root(file_path)
         evaluations = []
 
         for qa_pair in root.findall(".//qa_pair"):
@@ -74,7 +108,7 @@ def parse_evaluation_file(file_path: Path) -> list[dict[str, Any]]:
 
         return evaluations
     except Exception as e:
-        print(f"Error parsing evaluation file {file_path}: {e}")
+        print(f"Error parsing evaluation file ({type(e).__name__})")
         return []
 
 
@@ -122,8 +156,7 @@ async def agent_loop(
                 else str(tool_result)
             )
         except Exception as e:
-            tool_response = f"Error executing tool {tool_name}: {str(e)}\n"
-            tool_response += traceback.format_exc()
+            tool_response = f"Tool execution failed ({type(e).__name__})"
         tool_duration = time.time() - tool_start_ts
 
         if tool_name not in tool_metrics:
@@ -390,7 +423,7 @@ Examples:
     args = parser.parse_args()
 
     if not args.eval_file.exists():
-        print(f"Error: Evaluation file not found: {args.eval_file}")
+        print("Error: configured evaluation file was not found")
         sys.exit(1)
 
     headers = parse_headers(args.headers) if args.headers else None
@@ -406,7 +439,7 @@ Examples:
             headers=headers,
         )
     except ValueError as e:
-        print(f"Error: {e}")
+        print(f"Error: {type(e).__name__}")
         sys.exit(1)
 
     print(f"🔗 Connecting to MCP server via {args.transport}...")

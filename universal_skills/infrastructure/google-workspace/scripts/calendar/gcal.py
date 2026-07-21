@@ -7,13 +7,18 @@ Lightweight alternative to the full Google Workspace MCP server.
 import argparse
 import json
 import sys
-import urllib.request
-import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from urllib.request import Request
 
 from auth import get_valid_access_token
+from universal_skills._security.http import (
+    SafeHttpError,
+    SafeHttpStatus,
+    UrlPolicy,
+    open_json,
+)
 
 CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3"
 
@@ -72,24 +77,18 @@ def api_request(
     body = json.dumps(data).encode("utf-8") if data else None
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=30) as response:
-            response_text = response.read().decode("utf-8")
-            if response_text:
-                return json.loads(response_text)
-            return {"success": True}
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        try:
-            error_json = json.loads(error_body)
-            error_message = error_json.get("error", {}).get("message", error_body)
-        except json.JSONDecodeError:
-            error_message = error_body
-        return {"error": f"HTTP {e.code}: {error_message}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Request failed: {e.reason}"}
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response"}
+        req = Request(url, data=body, headers=headers, method=method)
+        payload, _ = open_json(
+            req,
+            policy=UrlPolicy(frozenset({"www.googleapis.com"})),
+            timeout=30,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else {"success": True}
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def list_calendars() -> dict:

@@ -33,31 +33,31 @@ Fetch active ServiceNow incidents ordered with higher priority showing first
 
 ## Steps
 
-### Step 0: Servicenow Api
+### Step 0: ServiceNow Incident Query [skill: servicenow-api]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
 Retrieve the list of active incidents using the `servicenow_incidents` action with `action='get_incidents'`. Pass `params_json` containing a query like `{"sysparm_query": "active=true^ORDERBYpriority"}` to ensure critical priority incidents appear first.
 
-### Step 1: User Interaction
+### Step 1: Incident-Selection Interaction [skill: user-interaction]
 **Agent**: `processor-agent`
 **Tools**: `graph_analyze, document_tools`
 
 Present the list of prioritized incidents to the user. Request selection of a specific incident for deeper inspection or action.
 
-### Step 2: Servicenow Api
+### Step 2: ServiceNow Incident Inspection [skill: servicenow-api]
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
 Fetch full details for the selected incident ID using the `servicenow_incidents` action with `action='get_incident'` and the incident's sys_id.
 
-### Step 3: User Interaction
+### Step 3: Incident-Detail Presentation [skill: user-interaction]
 **Agent**: `report-agent`
 **Tools**: `graph_write, document_tools`
 
 Display the comprehensive incident history, comments, SLA status, and proposed remediation plan to the user.
 
-### Step 4: KG Persistence [depends_on: user-interaction]
+### Step 4: KG Persistence [depends_on: Step 3]
 **Agent**: `report-agent`
 **Tools**: `graph_write`
 
@@ -76,7 +76,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Servicenow Api; Step 1 — User Interaction; Step 2 — Servicenow Api; Step 3 — User Interaction
+- **Run first (in parallel):** Step 0 — ServiceNow Incident Query; Step 1 — Incident-Selection Interaction; Step 2 — ServiceNow Incident Inspection; Step 3 — Incident-Detail Presentation
 - **After level 0:** Step 4 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

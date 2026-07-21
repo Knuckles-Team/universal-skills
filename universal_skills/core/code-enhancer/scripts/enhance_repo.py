@@ -158,7 +158,7 @@ def run_domain(domain: dict[str, Any], repo: Path) -> dict[str, Any]:
     except subprocess.TimeoutExpired:
         return {"status": "error", "error": f"timeout after {domain['timeout']}s"}
     except Exception as e:  # pragma: no cover - subprocess transport
-        return {"status": "error", "error": str(e)}
+        return {"status": "error", "error": type(e).__name__}
     elapsed = round(time.monotonic() - started, 1)
     try:
         data = json.loads(proc.stdout or "{}")

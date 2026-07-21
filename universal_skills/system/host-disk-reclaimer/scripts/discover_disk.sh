@@ -25,7 +25,7 @@ done
 echo
 
 echo "## Git worktrees (often the #1 hidden consumer)"
-for root in "$TARGET/worktrees" /home/apps/worktrees "$HOME/worktrees"; do
+for root in "$TARGET/worktrees" "${AGENT_WORKTREE_ROOT:-$TARGET/worktrees}" "$HOME/worktrees"; do
   [ -d "$root" ] && echo "  $root : $(find "$root" -maxdepth 2 -name .git 2>/dev/null | wc -l) worktrees, $(du -sh "$root" 2>/dev/null | cut -f1)"
 done
 echo

@@ -1,162 +1,103 @@
 #!/usr/bin/env python3
-"""
-Spawn a new Pydantic AI Agent dynamically and interact with it.
-"""
+"""Create one bounded delegated agent from the shared AgentConfig runtime."""
+
+from __future__ import annotations
 
 import argparse
 import asyncio
-import os
+import re
 import sys
 
-# Optional dependency guardrail
-try:
-    from agent_utilities.agent_utilities import create_agent, chat
-except ImportError:
-    print(
-        "Error: The 'agent_utilities' package is required but not installed.",
-        file=sys.stderr,
-    )
-    print(
-        "Please ensure it is installed or available in your environment.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+_SAFE_MODEL_TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
+_MAX_PROMPT_BYTES = 64 * 1024
+_MAX_SYSTEM_PROMPT_BYTES = 16 * 1024
 
 
-async def main():
+def _bounded_private_text(value: str, *, limit: int, label: str) -> str:
+    from agent_utilities.security.persistence_privacy import sanitize_for_persistence
+
+    rendered = str(value or "").strip()
+    if not rendered or len(rendered.encode("utf-8")) > limit or "\x00" in rendered:
+        raise ValueError(f"{label}_invalid")
+    clean, _ = sanitize_for_persistence(rendered)
+    return str(clean)
+
+
+async def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Spawn a new Pydantic AI agent and interact with it."
+        description="Run one delegated agent using the shared AgentConfig catalog."
     )
-
-    # Required Arguments
-    parser.add_argument("--prompt", required=True, help="Prompt to send to the agent")
-
-    # Optional Arguments (Config)
-    parser.add_argument(
-        "--mcp-config",
-        default=os.getenv("MCP_CONFIG"),
-        help="Path to the mcp_config.json file",
-    )
-    parser.add_argument(
-        "--mcp-url", default=os.getenv("MCP_URL"), help="Single MCP Server URL"
-    )
-    parser.add_argument(
-        "--custom-skills-directory",
-        default=os.getenv("CUSTOM_SKILLS_DIRECTORY"),
-        help="Path to custom skills directory",
-    )
-
-    # Optional Arguments (Agent Personality)
-    parser.add_argument(
-        "--name",
-        default=os.getenv("DEFAULT_AGENT_NAME", "SpawnedAgent"),
-        help="Name for the newly spawned agent",
-    )
-    parser.add_argument(
-        "--system-prompt",
-        default=os.getenv("AGENT_SYSTEM_PROMPT", "You are a helpful assistant."),
-        help="System prompt for the newly spawned agent",
-    )
-
-    # Optional Arguments (LLM Parameters)
+    parser.add_argument("--prompt", required=True, help="Bounded delegated task.")
     parser.add_argument(
         "--provider",
-        default=os.getenv("PROVIDER", "openai"),
-        help="LLM Provider (openai, anthropic, etc.)",
+        help="Optional provider identifier; defaults to AgentConfig's chat model.",
     )
     parser.add_argument(
         "--model-id",
-        default=os.getenv("MODEL_ID", "qwen/qwen3.5-9b"),
-        help="LLM Model ID",
+        help="Optional model identifier; defaults to AgentConfig's chat model.",
     )
     parser.add_argument(
-        "--base-url",
-        default=os.getenv("LLM_BASE_URL", "http://host.docker.internal:1234/v1"),
-        help="LLM Base URL",
+        "--system-prompt",
+        help="Optional bounded system instruction for this invocation.",
     )
-    parser.add_argument(
-        "--api-key", default=os.getenv("LLM_API_KEY", "ollama"), help="LLM API Key"
-    )
-    parser.add_argument(
-        "--insecure", action="store_true", help="Disable SSL Verification"
-    )
-
-    # Dotenv support
-    parser.add_argument(
-        "--dotenv", help="Path to a .env file to load environment variables from"
-    )
-
     args = parser.parse_args()
 
-    # Load dotenv if provided
-    if args.dotenv:
-        try:
-            from dotenv import load_dotenv
+    try:
+        from agent_utilities.agent_utilities import chat, create_agent
+        from agent_utilities.core.config import AgentConfig
 
-            load_dotenv(args.dotenv)
-            # Re-evaluate arguments that might be in env if they weren't explicitly passed
-            # This is a bit tricky with argparse defaults already set at parse time.
-            # However, create_agent uses passed args, so we update the args object manually if default was used.
-            # But wait, create_agent will use the args we pass.
-            # If the user DID NOT pass --name, args.name is 'SpawnedAgent' (default).
-            # If they have DEFAULT_AGENT_NAME in .env, we want that.
-        except ImportError:
-            print(
-                "Error: python-dotenv is not installed. Install it with: pip install python-dotenv",
-                file=sys.stderr,
+        cfg = AgentConfig()
+        default_model = cfg.default_chat_model
+        provider = args.provider or (
+            default_model.provider if default_model is not None else "openai"
+        )
+        model_id = args.model_id or (
+            default_model.id if default_model is not None else "qwen/qwen3.6-27b"
+        )
+        if not _SAFE_MODEL_TOKEN.fullmatch(provider) or not _SAFE_MODEL_TOKEN.fullmatch(
+            model_id
+        ):
+            raise ValueError("model_identifier_invalid")
+        prompt = _bounded_private_text(
+            args.prompt, limit=_MAX_PROMPT_BYTES, label="prompt"
+        )
+        system_prompt = (
+            _bounded_private_text(
+                args.system_prompt,
+                limit=_MAX_SYSTEM_PROMPT_BYTES,
+                label="system_prompt",
             )
-            sys.exit(1)
+            if args.system_prompt
+            else cfg.agent_system_prompt
+        )
+        api_key = default_model.api_key if default_model is not None else None
+        base_url = default_model.base_url if default_model is not None else None
+        agent = create_agent(
+            provider=provider,
+            model_id=model_id,
+            base_url=base_url,
+            api_key=api_key,
+            mcp_url=cfg.mcp_url,
+            mcp_config=cfg.mcp_config,
+            custom_skills_directory=cfg.custom_skills_directory,
+            ssl_verify=cfg.ssl_verify,
+            name="delegated-agent",
+            system_prompt=system_prompt,
+            tool_guard_mode="strict",
+            isolate_mcp=True,
+        )
+    except Exception:
+        print("Delegated agent configuration was rejected.", file=sys.stderr)
+        return 2
 
-    # Resolve MCP Config Reference
-    mcp_config = args.mcp_config
-    if mcp_config and not os.path.exists(mcp_config):
-        # Check in mcp-client references if it doesn't exist locally
-        try:
-            # Assuming we are running from the package root or standard install
-            import universal_skills
-
-            package_path = os.path.dirname(universal_skills.__file__)
-            ref_path = os.path.join(
-                package_path, "skills", "mcp-client", "references", mcp_config
-            )
-
-            if os.path.exists(ref_path):
-                mcp_config = ref_path
-            elif not mcp_config.endswith(".json"):
-                # Try adding .json extension
-                json_ref_path = ref_path + ".json"
-                if os.path.exists(json_ref_path):
-                    mcp_config = json_ref_path
-        except (ImportError, Exception):
-            pass
-
-    # Evaluate SSL Verify (Default: Check Global env config, fallback to True; command arg overrides to False)
-    ssl_verify = os.environ.get("SSL_VERIFY", "True").lower() not in (
-        "false",
-        "0",
-        "f",
-        "off",
-    )
-    if args.insecure:
-        ssl_verify = False
-
-    print(f"Spawning agent '{args.name}'...")
-    agent = create_agent(
-        provider=args.provider,
-        model_id=args.model_id,
-        base_url=args.base_url,
-        api_key=args.api_key,
-        mcp_url=args.mcp_url,
-        mcp_config=mcp_config,
-        custom_skills_directory=args.custom_skills_directory,
-        ssl_verify=ssl_verify,
-        name=args.name,
-        system_prompt=args.system_prompt,
-    )
-
-    print(f"Sending prompt to '{args.name}'...")
-    await chat(agent, args.prompt)
+    print("Delegated agent started.", file=sys.stderr)
+    try:
+        await chat(agent, prompt)
+    except Exception:
+        print("Delegated agent execution failed.", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    raise SystemExit(asyncio.run(main()))

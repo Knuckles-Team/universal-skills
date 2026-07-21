@@ -5,19 +5,19 @@ import os
 import sys
 
 try:
-    import requests
-    from agent_utilities.base_utilities import to_boolean
+    from http_runtime import fetch_json, validate_search_request
 except ImportError:
     print("Error: Missing required dependencies for the 'web-search' skill.")
     print("Please install them by running: pip install 'universal-skills[web-search]'")
     sys.exit(1)
 
 
-def search(query: str, api_key: str, max_results: int = 10, ssl_verify: bool = True):
+def search(query: str, api_key: str, max_results: int = 10):
     url = "https://api.bing.microsoft.com/v7.0/search"
     results = []
 
     try:
+        query, max_results = validate_search_request(query, max_results)
         headers = {"Ocp-Apim-Subscription-Key": api_key}
         params = {
             "q": query,
@@ -26,11 +26,7 @@ def search(query: str, api_key: str, max_results: int = 10, ssl_verify: bool = T
             "textFormat": "HTML",
         }
 
-        response = requests.get(
-            url, headers=headers, params=params, verify=ssl_verify, timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
+        data = fetch_json(url, headers=headers, params=params)
 
         items = data.get("webPages", {}).get("value", [])
         for item in items:
@@ -43,13 +39,8 @@ def search(query: str, api_key: str, max_results: int = 10, ssl_verify: bool = T
             )
 
         return results
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP Error: {e.response.status_code}", file=sys.stderr)
-        print(f"Response: {e.response.text}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error performing Bing search: {e}", file=sys.stderr)
-        sys.exit(1)
+    except Exception as exc:
+        raise RuntimeError("Bing search failed") from exc
 
 
 def main():
@@ -65,12 +56,6 @@ def main():
     parser.add_argument(
         "--json", action="store_true", help="Output results in JSON format"
     )
-    parser.add_argument(
-        "--insecure",
-        action="store_true",
-        help="Disable SSL verification (Use with caution)",
-    )
-
     args = parser.parse_args()
 
     api_key = os.environ.get("BING_API_KEY")
@@ -79,16 +64,11 @@ def main():
         print("Error: BING_API_KEY environment variable is required.", file=sys.stderr)
         sys.exit(1)
 
-    # Precedence: Env Var SSL_VERIFY > CLI --insecure > Default (True)
-    ssl_verify_env = os.getenv("SSL_VERIFY")
-    if ssl_verify_env is not None:
-        ssl_verify = to_boolean(ssl_verify_env)
-    elif args.insecure:
-        ssl_verify = False
-    else:
-        ssl_verify = True
-
-    results = search(args.query, api_key, args.max_results, ssl_verify=ssl_verify)
+    try:
+        results = search(args.query, api_key, args.max_results)
+    except Exception as exc:
+        print(f"Search failed ({type(exc).__name__})", file=sys.stderr)
+        sys.exit(1)
 
     if args.json:
         print(json.dumps(results, indent=2))

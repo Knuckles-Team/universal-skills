@@ -1,0 +1,22 @@
+name: MCP Endpoint OIDC TLS Hardening Team
+task_pattern: Apply profile-driven OIDC resource-server and TLS enforcement to an MCP endpoint
+specialist_ids:
+  - config-agent
+  - identity-agent
+  - deployer-agent
+  - tls-agent
+  - verify-agent
+  - evidence-agent
+tool_assignments:
+  config-agent:
+    - graph_configure
+  identity-agent:
+    - tun_tm_remote
+  deployer-agent:
+    - cnt_cm_k8s_config
+  tls-agent:
+    - cnt_cm_k8s_config
+  verify-agent:
+    - tun_tm_remote
+  evidence-agent:
+    - graph_write

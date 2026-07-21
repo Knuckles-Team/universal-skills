@@ -28,7 +28,6 @@ def get_tool_paths() -> Dict[str, Path]:
         "claude": Path("~/.claude.json").expanduser(),
         "antigravity": Path("~/.gemini/antigravity/mcp_config.json").expanduser(),
         "devin": Path("~/.config/devin/mcp_config.json").expanduser(),
-        "codex": Path("~/.codex/mcp_config.json").expanduser(),
     }
 
     # Claude Desktop
@@ -77,8 +76,8 @@ def detect_present_tools() -> Dict[str, Path]:
     """Return the subset of TOOL_PATHS whose tool is installed on this host.
 
     A tool counts as present when the parent directory of its config file
-    exists (e.g. ``~/.codex`` for codex). Claude Code's config is ``~/.claude.json``
-    whose parent is ``$HOME`` (always present), so it is gated on ``~/.claude``.
+    exists. Claude Code's config is ``~/.claude.json`` whose parent is ``$HOME``
+    (always present), so it is gated on ``~/.claude``.
     Duplicate destinations (agent-utilities/agent-terminal-ui share a file) are
     collapsed so the config is merged once.
     """
@@ -108,10 +107,10 @@ def load_json(filepath: Path) -> Dict[str, Any]:
             return {}
         return json.loads(content)
     except json.JSONDecodeError as e:
-        logger.error(f"Error parsing JSON from {filepath}: {e}")
+        logger.error("Error parsing configured JSON: %s", type(e).__name__)
         return {}
     except Exception as e:
-        logger.error(f"Error reading {filepath}: {e}")
+        logger.error("Error reading configured file: %s", type(e).__name__)
         return {}
 
 
@@ -122,7 +121,7 @@ def save_json(filepath: Path, data: Dict[str, Any]) -> bool:
         filepath.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         return True
     except Exception as e:
-        logger.error(f"Error writing to {filepath}: {e}")
+        logger.error("Error writing configured file: %s", type(e).__name__)
         return False
 
 
@@ -158,7 +157,7 @@ def install_mcp_config(
 ) -> bool:
     """Install the MCP configuration into the target path."""
     if not source_path.exists():
-        logger.error(f"Source configuration file not found: {source_path}")
+        logger.error("Source configuration file was not found")
         return False
 
     source_data = load_json(source_path)
@@ -179,7 +178,7 @@ def install_mcp_config(
         shutil.copy2(target_path, backup_path)
         logger.info(f"Created backup at {backup_path}")
     except Exception as e:
-        logger.warning(f"Failed to create backup: {e}")
+        logger.warning(f"Failed to create backup: {type(e).__name__}")
 
     target_data = load_json(target_path)
     merged_data = merge_mcp_configs(source_data, target_data)
@@ -197,7 +196,7 @@ def main():
     parser.add_argument(
         "--tool",
         choices=list(TOOL_PATHS.keys()),
-        help="Target tool (windsurf, claude, claude-desktop, opencode, antigravity, devin, codex)",
+        help="Target JSON-config tool (windsurf, claude, claude-desktop, opencode, antigravity, devin)",
     )
     parser.add_argument(
         "--all-detected",

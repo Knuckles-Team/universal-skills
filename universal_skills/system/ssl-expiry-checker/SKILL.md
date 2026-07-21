@@ -27,7 +27,8 @@ Stateless atomic operation to query target domain endpoints, establish TLS hands
 ### Step 1: resolve_target_endpoints
 Parse and prepare the target network addresses for connection:
 - Parse the input parameters which must contain:
-  - `domains`: List of domain names or hostnames to check (e.g. `gitlab.arpa`, `google.com`)
+  - `domains`: Runtime-resolved domain references to check (for example, a public
+    test endpoint and an AgentConfig-managed private service)
   - `port`: Optional integer target port (default: 443)
   - `timeout_seconds`: Optional integer connection timeout (default: 5)
 - Perform DNS lookup / resolution check for each target domain to verify it is reachable and active.

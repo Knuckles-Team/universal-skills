@@ -8,12 +8,17 @@ import argparse
 import json
 import re
 import sys
-import urllib.request
-import urllib.error
 import urllib.parse
 from typing import Optional
+from urllib.request import Request
 
 from auth import get_valid_access_token
+from universal_skills._security.http import (
+    SafeHttpError,
+    SafeHttpStatus,
+    UrlPolicy,
+    open_json,
+)
 
 SLIDES_API_BASE = "https://slides.googleapis.com/v1"
 DRIVE_API_BASE = "https://www.googleapis.com/drive/v3"
@@ -49,16 +54,20 @@ def api_request(
     body = json.dumps(data).encode("utf-8") if data else None
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        return {"error": f"HTTP {e.code}: {error_body}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Request failed: {e.reason}"}
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response"}
+        req = Request(url, data=body, headers=headers, method=method)
+        payload, _ = open_json(
+            req,
+            policy=UrlPolicy(
+                frozenset({"slides.googleapis.com", "www.googleapis.com"})
+            ),
+            timeout=30,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else {"success": True}
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def extract_text_from_text_content(text_content: dict) -> str:

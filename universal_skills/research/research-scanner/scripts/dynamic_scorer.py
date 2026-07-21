@@ -131,26 +131,17 @@ def main():
             if "domains" in taxonomy:
                 taxonomy = taxonomy["domains"]
         except Exception as e:
-            print(f"❌ Error reading taxonomy JSON: {e}", file=sys.stderr)
+            print(f"❌ Error reading taxonomy JSON: {type(e).__name__}", file=sys.stderr)
             sys.exit(1)
     else:
         # Auto-detect from KG if taxonomy not provided
-        try:
-            import agent_utilities.knowledge_graph.core.engine
-
-            print("ℹ️ Auto-detecting taxonomy from Knowledge Graph...")
-            taxonomy = build_taxonomy_from_kg()
-        except ImportError:
-            print(
-                "❌ No --taxonomy provided and agent-utilities is not installed.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+        print("ℹ️ Auto-detecting taxonomy from Knowledge Graph...")
+        taxonomy = build_taxonomy_from_kg()
 
     try:
         papers_data = json.loads(papers_path.read_text())
     except Exception as e:
-        print(f"❌ Error reading papers JSON: {e}", file=sys.stderr)
+        print(f"❌ Error reading papers JSON: {type(e).__name__}", file=sys.stderr)
         sys.exit(1)
 
     # Handle standard MCP output format from get_recent_papers

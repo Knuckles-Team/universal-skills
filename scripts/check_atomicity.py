@@ -273,7 +273,7 @@ def main() -> int:
     if errors:
         print(f"\n❌ {len(errors)} atomicity error(s):")
         for e in errors:
-            print(f"   - {e}")
+            print(f"   - {type(e).__name__}")
 
     if errors or (args.strict and warnings):
         print("\nAtomicity gate FAILED.")

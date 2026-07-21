@@ -17,6 +17,11 @@ except ImportError:
 import re
 from pathlib import Path
 
+from safe_lxml import secure_lxml_defaults
+from safe_zip import safe_extract_zip
+
+secure_lxml_defaults(lxml.etree)
+
 
 class BaseSchemaValidator:
     IGNORED_VALIDATION_ERRORS = [
@@ -112,7 +117,7 @@ class BaseSchemaValidator:
         ]
 
         if not self.xml_files:
-            print(f"Warning: No XML files found in {self.unpacked_dir}")
+            print("Warning: no XML files found in configured input")
 
     def validate(self):
         """Validate the document. Must be overridden by subclasses."""
@@ -171,7 +176,7 @@ class BaseSchemaValidator:
             except Exception as e:
                 errors.append(
                     f"  {xml_file.relative_to(self.unpacked_dir)}: "
-                    f"Unexpected error: {str(e)}"
+                    f"Unexpected error: {type(e).__name__}"
                 )
 
         if errors:
@@ -291,7 +296,7 @@ class BaseSchemaValidator:
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
                 errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
+                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {type(e).__name__}"
                 )
 
         if errors:
@@ -372,7 +377,7 @@ class BaseSchemaValidator:
 
             except Exception as e:
                 rel_path = rels_file.relative_to(self.unpacked_dir)
-                errors.append(f"  Error parsing {rel_path}: {e}")
+                errors.append(f"  XML parse error: {type(e).__name__}")
 
         unreferenced_files = set(all_files) - all_referenced_files
 
@@ -468,7 +473,7 @@ class BaseSchemaValidator:
 
             except Exception as e:
                 xml_rel_path = xml_file.relative_to(self.unpacked_dir)
-                errors.append(f"  Error processing {xml_rel_path}: {e}")
+                errors.append(f"  XML processing error: {type(e).__name__}")
 
         if errors:
             print(f"FAILED - Found {len(errors)} relationship ID reference errors:")
@@ -596,7 +601,7 @@ class BaseSchemaValidator:
                         )
 
         except Exception as e:
-            errors.append(f"  Error parsing [Content_Types].xml: {e}")
+            errors.append(f"  Error parsing [Content_Types].xml: {type(e).__name__}")
 
         if errors:
             print(f"FAILED - Found {len(errors)} content type declaration errors:")
@@ -636,8 +641,7 @@ class BaseSchemaValidator:
 
         if new_errors:
             if verbose:
-                relative_path = xml_file.relative_to(unpacked_dir)
-                print(f"FAILED - {relative_path}: {len(new_errors)} new error(s)")
+                print(f"FAILED - {len(new_errors)} new error(s)")
                 for error in list(new_errors)[:3]:
                     truncated = error[:250] + "..." if len(error) > 250 else error
                     print(f"  - {truncated}")
@@ -770,7 +774,13 @@ class BaseSchemaValidator:
 
         try:
             with open(schema_path, "rb") as xsd_file:
-                parser = lxml.etree.XMLParser()
+                parser = lxml.etree.XMLParser(
+                    resolve_entities=False,
+                    load_dtd=False,
+                    no_network=True,
+                    recover=False,
+                    huge_tree=False,
+                )
                 xsd_doc = lxml.etree.parse(
                     xsd_file, parser=parser, base_url=str(schema_path)
                 )
@@ -798,7 +808,7 @@ class BaseSchemaValidator:
                 return False, errors
 
         except Exception as e:
-            return False, {str(e)}
+            return False, {type(e).__name__}
 
     def _get_original_file_errors(self, xml_file):
         if self.original_file is None:
@@ -815,7 +825,7 @@ class BaseSchemaValidator:
             temp_path = Path(temp_dir)
 
             with zipfile.ZipFile(self.original_file, "r") as zip_ref:
-                zip_ref.extractall(temp_path)
+                safe_extract_zip(zip_ref, temp_path)
 
             original_xml_file = temp_path / relative_path
 

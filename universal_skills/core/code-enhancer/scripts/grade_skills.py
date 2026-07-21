@@ -19,7 +19,6 @@ CONCEPT:CE-026 — Agent Skill Quality
 """
 
 import json
-import os
 import re
 import sys
 from pathlib import Path

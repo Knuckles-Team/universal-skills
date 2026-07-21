@@ -89,7 +89,7 @@ You will enter a continuous loop of fixing issues based on the JSON hook outputs
 ## Worktree & Git-State Hygiene Audit
 
 Many concurrent agent sessions work the `agent-packages/*` repos in their own git
-worktrees under `/home/apps/worktrees/<repo>/<branch>` (CONCEPT:RM-WORKTREE). Over
+worktrees under `${AGENT_WORKTREE_ROOT}/<repo>/<branch>` (CONCEPT:RM-WORKTREE). Over
 time these accumulate: some are already merged into `main` and just clutter, some
 hold live in-flight work that must NOT be disturbed, and some go stale or dangling.
 Use the audit to see the whole picture before pruning or releasing — it answers

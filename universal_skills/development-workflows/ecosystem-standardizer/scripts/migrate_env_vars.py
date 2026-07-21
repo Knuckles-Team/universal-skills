@@ -7,10 +7,20 @@ but the new standard name is checked first.
 Standard: {SERVICE}_URL, {SERVICE}_TOKEN, {SERVICE}_SSL_VERIFY
 """
 
+import os
 import re
 from pathlib import Path
 
-AGENTS_DIR = Path("/home/apps/workspace/agent-packages/agents")
+
+def _agents_dir() -> Path:
+    package_root = os.environ.get("AGENT_PACKAGES_ROOT")
+    if package_root:
+        return Path(package_root).expanduser().resolve() / "agents"
+    workspace = Path(os.environ.get("AGENT_UTILITIES_WORKSPACE_ROOT", Path.cwd()))
+    return workspace.expanduser().resolve() / "agent-packages" / "agents"
+
+
+AGENTS_DIR = _agents_dir()
 
 # Map: (project, old_env_var) -> new_env_var
 # Only change vars that deviate from the standard
@@ -71,7 +81,6 @@ def migrate_auth_file(project: str, migrations: list[tuple[str, str]]) -> int:
         return 0
 
     content = auth_file.read_text()
-    original = content
     changes = 0
 
     for old_var, new_var in migrations:

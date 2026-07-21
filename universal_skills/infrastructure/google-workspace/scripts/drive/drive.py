@@ -9,12 +9,18 @@ import json
 import os
 import re
 import sys
-import urllib.request
-import urllib.error
 import urllib.parse
 from typing import Optional
+from urllib.request import Request
 
 from auth import get_valid_access_token
+from universal_skills._security.http import (
+    SafeHttpError,
+    SafeHttpStatus,
+    UrlPolicy,
+    open_bounded,
+    open_json,
+)
 
 DRIVE_API_BASE = "https://www.googleapis.com/drive/v3"
 
@@ -54,18 +60,26 @@ def api_request(
     }
 
     try:
-        req = urllib.request.Request(url, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=60) as response:
-            if stream:
-                return response.read()
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        return {"error": f"HTTP {e.code}: {error_body}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Request failed: {e.reason}"}
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON response"}
+        req = Request(url, headers=headers, method=method)
+        policy = UrlPolicy(frozenset({"www.googleapis.com"}))
+        if stream:
+            return open_bounded(
+                req,
+                policy=policy,
+                timeout=60,
+                max_bytes=64 * 1024 * 1024,
+            ).body
+        payload, _ = open_json(
+            req,
+            policy=policy,
+            timeout=60,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else {"error": "Invalid response"}
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def extract_id_from_url(url: str) -> tuple[Optional[str], str]:
@@ -311,7 +325,7 @@ def download(file_id: str, local_path: str) -> dict:
             "fileId": file_id,
         }
     except IOError as e:
-        return {"error": f"Failed to write file: {e}"}
+        return {"error": f"Failed to write file: {type(e).__name__}"}
 
 
 def api_write_request(
@@ -334,17 +348,18 @@ def api_write_request(
     body = json.dumps(data).encode("utf-8") if data else None
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=60) as response:
-            response_data = response.read().decode("utf-8")
-            return json.loads(response_data) if response_data else {"success": True}
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        return {"error": f"HTTP {e.code}: {error_body}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Request failed: {e.reason}"}
-    except json.JSONDecodeError:
-        return {"success": True}
+        req = Request(url, data=body, headers=headers, method=method)
+        payload, _ = open_json(
+            req,
+            policy=UrlPolicy(frozenset({"www.googleapis.com"})),
+            timeout=60,
+            max_bytes=8 * 1024 * 1024,
+        )
+        return payload if isinstance(payload, dict) else {"success": True}
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def upload(
@@ -362,8 +377,11 @@ def upload(
 
     abs_path = os.path.abspath(os.path.expanduser(local_path))
 
-    if not os.path.exists(abs_path):
-        return {"error": f"File not found: {abs_path}"}
+    if not os.path.isfile(abs_path) or os.path.islink(abs_path):
+        return {"error": "Configured file was not found"}
+
+    if os.path.getsize(abs_path) > 32 * 1024 * 1024:
+        return {"error": "Configured file exceeds the upload boundary"}
 
     file_name = name or os.path.basename(abs_path)
     mime_type = mimetypes.guess_type(abs_path)[0] or "application/octet-stream"
@@ -373,7 +391,7 @@ def upload(
         with open(abs_path, "rb") as f:
             file_content = f.read()
     except IOError as e:
-        return {"error": f"Failed to read file: {e}"}
+        return {"error": f"Failed to read file: {type(e).__name__}"}
 
     # Build metadata
     metadata = {"name": file_name}
@@ -405,20 +423,25 @@ def upload(
     }
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=120) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            return {
-                "success": True,
-                "fileId": result.get("id"),
-                "name": result.get("name"),
-                "mimeType": result.get("mimeType"),
-            }
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8") if e.fp else str(e)
-        return {"error": f"HTTP {e.code}: {error_body}"}
-    except urllib.error.URLError as e:
-        return {"error": f"Upload failed: {e.reason}"}
+        req = Request(url, data=body, headers=headers, method="POST")
+        result, _ = open_json(
+            req,
+            policy=UrlPolicy(frozenset({"www.googleapis.com"})),
+            timeout=120,
+            max_bytes=8 * 1024 * 1024,
+        )
+        if not isinstance(result, dict):
+            return {"error": "Invalid response"}
+        return {
+            "success": True,
+            "fileId": result.get("id"),
+            "name": result.get("name"),
+            "mimeType": result.get("mimeType"),
+        }
+    except SafeHttpStatus as e:
+        return {"error": f"Remote service returned HTTP {e.status}"}
+    except SafeHttpError:
+        return {"error": "Remote service request failed"}
 
 
 def create_folder(folder_name: str, parent_id: Optional[str] = None) -> dict:

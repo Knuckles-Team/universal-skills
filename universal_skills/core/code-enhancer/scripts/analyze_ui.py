@@ -179,7 +179,6 @@ def _web_user_control(content: str, files: list[Path]) -> tuple[bool, str]:
 
 def _web_consistency(content: str, files: list[Path]) -> tuple[bool, str]:
     """H4: CSS variables, component reuse, design tokens."""
-    css_files = [f for f in files if f.suffix in (".css", ".scss")]
     css_vars = content.count("var(--")
     component_files = [
         f for f in files if f.suffix in (".jsx", ".tsx", ".vue", ".svelte")

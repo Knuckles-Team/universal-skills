@@ -140,8 +140,9 @@ ingested through the full KBIngestionEngine pipeline, producing:
 
 ## References
 
-- [knowledge-assimilation](../../research/knowledge-assimilation/SKILL.md) — Full evolution pipeline
-- [x-assistant guide](../../../../agent-utilities/docs/guides/x-assistant.md) — Architecture docs
+- [knowledge-assimilation](../../research-workflows/knowledge-assimilation/SKILL.md) — Full evolution pipeline
+- The package-specific X architecture guide is owned by `agent-utilities` at
+  `docs/guides/x-assistant.md`; it is not bundled with this workflow.
 
 ## Execution
 

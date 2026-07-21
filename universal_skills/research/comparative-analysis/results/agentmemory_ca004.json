@@ -1,7 +1,7 @@
 {
   "domain": "CA-004",
   "domain_name": "Code Quality",
-  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "project": "${WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
   "quality_metrics": {
     "file_count": 1,
     "total_loc": 294,

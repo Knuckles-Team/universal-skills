@@ -1,11 +1,9 @@
-name: Academic Alpha Scanner Swarm
-task_pattern: Perform Academic Alpha Scanner operations concurrently across all target layers
+name: academic-alpha-scanner-team
+task_pattern: evidence-linked academic alpha screening
+execution_mode: sequential
 specialist_ids:
-  - researcher
-  - quant-research-analyst
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - scholarx-operations
+  - citation-auditor
+  - factor-hypothesis-extractor
+  - quant-data-ingest
+  - qlib-backtester

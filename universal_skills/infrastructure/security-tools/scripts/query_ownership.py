@@ -461,7 +461,7 @@ def main() -> int:
     args = parse_args()
     data_dir = Path(args.data_dir)
     if not data_dir.exists():
-        print(f"Data directory not found: {data_dir}", file=sys.stderr)
+        print("Configured data directory was not found", file=sys.stderr)
         return 1
 
     try:
@@ -486,7 +486,7 @@ def main() -> int:
         else:
             raise ValueError(f"Unknown command: {args.command}")
     except (FileNotFoundError, ValueError) as exc:
-        print(str(exc), file=sys.stderr)
+        print(type(exc).__name__, file=sys.stderr)
         return 2
 
     return 0

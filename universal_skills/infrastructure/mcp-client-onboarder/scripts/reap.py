@@ -26,12 +26,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import keycloak_client as kc  # noqa: E402
 import policy_rules as pr  # noqa: E402
 
+_CONFIG_ROOT = Path(
+    os.environ.get("AGENT_UTILITIES_CONFIG_DIR")
+    or Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    / "agent-utilities"
+)
+_MULTIPLEXER_CONFIG = _CONFIG_ROOT / "mcp-multiplexer"
 DEFAULT_POLICY = os.environ.get(
-    "MCP_POLICY_FILE", "/home/apps/workspace/services/mcp-multiplexer/eunomia_policy.json"
+    "MCP_POLICY_FILE", str(_MULTIPLEXER_CONFIG / "eunomia_policy.json")
 )
 DEFAULT_EPHEMERAL = os.environ.get(
     "MCP_EPHEMERAL_FILE",
-    "/home/apps/workspace/services/mcp-multiplexer/ephemeral_clients.json",
+    str(_MULTIPLEXER_CONFIG / "ephemeral_clients.json"),
 )
 
 
@@ -65,16 +71,19 @@ def main() -> int:
     revoked = 0
     for cid in expired:
         if args.dry_run:
-            print(f"  would revoke: {cid} (expired {eph[cid]['expires_at']})")
+            print("  would revoke one expired configured client")
             continue
         n = pr.remove_client_rules(Path(args.policy_file), cid)
         deleted = kc.delete_client(cid, token) if token else False
         eph.pop(cid, None)
         revoked += 1
-        print(f"  revoked {cid}: {n} policy rule(s) removed, keycloak={'yes' if deleted else 'no'}")
+        print(
+            f"  revoked configured client: {n} policy rule(s) removed; "
+            f"identity-provider deletion={'yes' if deleted else 'no'}"
+        )
 
     if not args.dry_run:
-        eph_path.write_text(json.dumps(eph, indent=2) + "\n")
+        pr.write_private_json(eph_path, eph)
         if revoked:
             print(f"revoked {revoked} client(s). RESTART the mcp-multiplexer to reload policy.")
     return 0

@@ -291,7 +291,7 @@ if __name__ == "__main__":
     unpacked_dir = Path(sys.argv[1])
 
     if not unpacked_dir.exists():
-        print(f"Error: {unpacked_dir} not found", file=sys.stderr)
+        print("Error: configured unpacked directory was not found", file=sys.stderr)
         sys.exit(1)
 
     removed = clean_unused_files(unpacked_dir)

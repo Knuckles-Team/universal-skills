@@ -74,7 +74,7 @@ exhaustion + top swap holders and D-state blockers, and attribute culprit PIDs t
 tmux session where possible. Produces the prioritized **kill/reap/tune candidate** list.
 Expected: `runaways, zombies, swap, candidates`
 
-### Step 2b: storage_bmc_health
+### Step 3: storage_bmc_health
 **Agent**: `inspector-agent`
 **Tools**: `sm_storage_health, fan_manager_sel, fan_manager_sensors`
 
@@ -90,7 +90,7 @@ sensor_type `Drive Slot`). Flags failed/predicted-fail/faulted drives as **repla
 candidates** (hardware action — never auto-remediated).
 Expected: `disks, bmc_drive_faults, faults`
 
-### Step 3: present_and_gate [depends_on: 0, 1, 2, 2b]
+### Step 4: present_and_gate [depends_on: 0, 1, 2, 3]
 **Agent**: `inspector-agent`
 **Tools**: `tun_tm_remote`
 
@@ -101,7 +101,7 @@ not auto-remediated). **No
 change proceeds without an explicit, per-host choice.** Safest-first ordering: orphaned
 runaways → reclaim swap → reap zombies (via parents) → wind down stale sessions.
 
-### Step 4: remediate [depends_on: 3]
+### Step 5: remediate [depends_on: 4]
 **Agent**: `remediation-agent`
 **Tools**: `sm_process_operations, sm_system_operations`
 
@@ -111,7 +111,7 @@ workflow (`kill_process` for confirmed rogue/orphan PIDs, `clean_temp_files` /
 killing — PIDs recycle. Never kill a process still owned by a live interactive session
 without naming the session and getting per-session confirmation.
 
-### Step 5: verify_and_persist [depends_on: 4]
+### Step 6: verify_and_persist [depends_on: 5]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, graph_write`
 
@@ -129,9 +129,9 @@ taken, before/after metrics) to the Knowledge Graph via `graph_write`.
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in
 parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — hardware_profile_sweep; Step 1 — host_resource_sampler; Step 2 — host_process_inspector; Step 2b — storage_bmc_health
-- **After level 0:** Step 3 — present_and_gate (user decision)
-- **After Step 3:** Step 4 — remediate (only approved actions, via systems-issue-troubleshooter)
-- **After Step 4:** Step 5 — verify_and_persist
+- **Run first (in parallel):** Step 0 — hardware_profile_sweep; Step 1 — host_resource_sampler; Step 2 — host_process_inspector; Step 3 — storage_bmc_health
+- **After level 0:** Step 4 — present_and_gate (user decision)
+- **After Step 4:** Step 5 — remediate (only approved actions, via systems-issue-troubleshooter)
+- **After Step 5:** Step 6 — verify_and_persist
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

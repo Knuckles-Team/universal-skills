@@ -3,84 +3,60 @@ name: rotate-credentials
 domain: infrastructure
 skill_type: skill
 description: >-
-  Set one unified OS-account password across many hosts over SSH (and optionally the
-  in-band iDRAC/BMC user), verifying each and reporting a per-host summary. Use when the
-  user wants to rotate/unify/change login passwords across a fleet, set a shared recovery
-  credential, onboard hosts to a common password, or rotate BMC passwords. Triggers:
-  "rotate passwords", "unified password across hosts", "change my password everywhere",
-  "set a shared console password". Do NOT use for SSH key distribution (use ssh-bootstrap),
-  app/secret-store secrets (use secret-vault-manager), or single-host one-off passwd.
+  Rotate operating-system account or BMC credentials across an AgentConfig-managed
+  host selection through governed remote and secret-provider profiles. Use for an
+  approved fleet credential rotation, recovery-credential change, or BMC credential
+  campaign. Do not use for SSH keys, application tokens, OIDC clients, or raw
+  one-host password commands.
 license: MIT
-tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation]
+tags: [infra, security, credentials, password, bmc, fleet, rotation]
+requires:
+  - systems-manager-mcp
+  - tunnel-manager-mcp
 metadata:
   version: '1.2.1'
-  author: Genius
 ---
 
-# Rotate Credentials
+# Rotate host credentials
 
-Set a single **unified password** for an OS account (default `genius`) across an entire
-fleet over SSH, verify each host, and report OK/FAILED per host. Optionally rotate the
-**in-band iDRAC/BMC** user-2 password in the same pass. Built to never abort on a bad
-host — unreachable / sudo-prompting / crashing hosts are reported and skipped.
+Perform one governed host-credential rotation campaign. Keep inventory details,
+account identities, credentials, connection data, and provider-specific quirks in
+deployment-owned AgentConfig profiles rather than this skill.
 
-## When to use / not use
-- **Use**: unify or rotate the login password across many hosts; set a shared recovery /
-  console credential; rotate BMC user passwords; periodic credential rotation.
-- **Skip**: SSH **key** setup (`ssh-bootstrap`); application/vault secrets
-  (`secret-vault-manager`); a single host (`passwd` directly).
+## Runtime contract
 
-## Prerequisites
-- `--ssh-user` (default `genius`) has **passwordless sudo** + SSH-key access on every host.
-- `--idrac` additionally needs `ipmitool` + `/dev/ipmi0` on the target (in-band, no creds).
+Require a `rotation_profile_ref` that resolves to:
 
-## Bundled resources
-- `scripts/rotate-credentials.sh` — the rotation tool (SSH + `chpasswd` + `passwd -S`
-  verify, optional `ipmitool` BMC rotation). Idempotent, fail-soft.
-- `references/usage.md` — invocations, safety model, host quirks, recovery. **Read it**
-  before a fleet-wide rotation or when a host reports FAILED.
+- an inventory and target-selector reference;
+- an authorized remote-execution provider profile;
+- an account-selector reference;
+- a secret generator/store reference;
+- a verification and rollback policy;
+- an optional BMC provider profile when BMC rotation is requested.
 
-## Procedure
+Reject unresolved references and profiles that expose secret values to the agent.
+Do not accept credentials in chat, command arguments, environment variables,
+plaintext files, or workflow output. Prefer unique credentials per target; a shared
+recovery credential requires an explicit policy and approval recorded by the
+provider.
 
-### 1. Choose hosts + password
-Hosts come from `--hosts "ip1 ip2 ..."` or `--inventory <ansible-inventory>` (parses
-`ansible_host:` lines). Password from `--password PW` or `--generate` (strong 20-char alnum,
-printed once).
+## Operation
 
-### 2. Dry-run first
-```bash
-scripts/rotate-credentials.sh --generate --inventory ~/.config/agent-utilities/inventory.yaml --dry-run
-```
-Confirm the host list and intended action — nothing is changed.
+Ask the configured provider for a value-free dry-run containing the target count,
+credential classes, provider capability status, policy digests, and rollback
+readiness. Require explicit approval for the exact dry-run digest. Then invoke the
+provider's credential-rotation capability using only the profile reference and
+approval reference.
 
-### 3. Rotate
-```bash
-scripts/rotate-credentials.sh --generate \
-    --inventory ~/.config/agent-utilities/inventory.yaml \
-    --user genius [--idrac] [--out ~/Workspace/inventory/.env]
-```
-Each host: `chpasswd` the account → verify `passwd -S` shows `P` → (if `--idrac`) set BMC
-user-2 + `ipmitool user test`. Capture the printed password. With `--out`, the credential
-record is appended to a file — **that file must be gitignored** (plaintext secret).
+The provider must generate and transport secret material without returning it,
+rotate one governed target at a time, verify the new credential through a separate
+provider check, and retain the previous secret version until verification succeeds.
+Stop on an indeterminate result. Do not improvise shell commands or fall back to a
+bundled fleet script when the configured provider lacks the required capability.
 
-### 4. Review the summary
-`=== rotated N OK, M failed ===` plus per-host lines. Investigate any FAILED host (common
-causes: sudo prompts, unreachable, or password tools crashing — see `references/usage.md`),
-fix it, and re-run targeting just that host with the same `--password`.
+## Retained output
 
-## Safety notes
-- SSH **key** auth is independent of the OS password, so a rotation never locks you out of
-  SSH — only of console login. Recovery = re-run with a known `--password`.
-- iDRAC IPMI user passwords cap at 16 bytes; use a 16-char password if `--idrac` and you
-  need the full BMC password to match.
-- Never commit the creds file. Add `.env`/secrets to `.gitignore`.
-
-## See also — OIDC / service-account secret rotation
-This skill rotates **host/OS (and iDRAC) passwords**. Rotating an **OIDC client secret**
-(e.g. the `mcp-multiplexer` Keycloak client used for fleet service-account auth) is a
-different runbook: the new secret — with the correct **`homelab`** realm in `OIDC_TOKEN_URL`,
-not `master` — must fan to **every** consumer in one pass or you get a confusing partial
-outage (a fleet-wide child 401 while the deployed mux looks fine): the swarm
-`mcp-multiplexer` + `graph-os` (server+host) service envs, OpenBao `apps/mcp-multiplexer`,
-and **every local `~/.claude.json`**. Full procedure + diagnosis: the agent-os-genesis
-`references/homelab-ops-learnings.md` playbook ("Multiplexer → child service-account auth").
+Return aggregate success/partial/failure counts, opaque target references for any
+failures, secret-version references, provider and policy digests, timestamps, and
+an audit reference. Never retain account names, hostnames, addresses, local paths,
+credential values, command output, or operator identity.

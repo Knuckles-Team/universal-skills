@@ -1,92 +1,80 @@
 ---
 name: sdd-full-lifecycle
+domain: development-workflows
 skill_type: workflow
 description: >-
-  End-to-end Spec-Driven Development: requirements parsing, concurrent implementation, QA test generation, and walkthrough verification.
-domain: development-workflows
-agent: dev_ops_engineer
+  Turn a feature request into verified implementation results by composing the
+  catalog's atomic specification, planning, implementation, and test skills. Use
+  when a user wants the complete spec-driven development lifecycle for an approved
+  repository change rather than one isolated SDD phase.
+license: MIT
+requires: []
+agent: sdd-lifecycle-orchestrator
 team_config:
-  name: development_operations_team
-  task_pattern: development workflow automation
-  execution_mode: parallel
+  name: sdd-full-lifecycle-team
+  task_pattern: spec-driven development from intake through automated verification
+  execution_mode: sequential
   specialist_ids:
-    - scanner-agent
-    - builder-agent
-    - validator-agent
-    - publisher-agent
-  tool_assignments:
-    scanner-agent: [rep_rm_workspace, rep_rm_git]
-    builder-agent: [rep_rm_projects]
-    validator-agent: [rep_rm_projects, gl_pipelines]
-    publisher-agent: [rep_rm_git, gl_merge_requests]
-tags: [sdd, backend, frontend, qa, devops, verification]
+    - spec-intake-wizard
+    - spec-generator
+    - spec-verifier
+    - task-planner
+    - sdd-implementer
+    - automated-test-runner
+tags: [sdd, specification, planning, implementation, testing]
 concept: CONCEPT:DEV-001
 metadata:
   version: '1.2.1'
+  author: Genius
 ---
 
-# Sdd Full Lifecycle Workflow
-
-**CONCEPT:DEV-001**
-
-End-to-end Spec-Driven Development: requirements parsing, concurrent implementation, QA test generation, and walkthrough verification.
+# SDD Full Lifecycle Workflow
 
 ## Steps
 
-### Step 1: Spec Generator
-**Agent**: `scanner-agent`
-**Tools**: `rep_rm_workspace, rep_rm_git`
+### Step 0: spec-intake-wizard [skill: spec-intake-wizard]
 
-Create robust functional specifications, user story maps, and detailed acceptance criteria from raw requirements.
-Expected: `design-spec-produced`
+Invoke `$spec-intake-wizard` with the workflow request.
 
-### Step 2: Python Backend Engineer [depends_on: spec-generator]
-**Agent**: `builder-agent`
-**Tools**: `rep_rm_projects`
+Expected: `intake_result`
 
-Implement stable database schemas, REST or gRPC controller endpoints, and business service validations matching the specification.
-Expected: `backend-built`
+### Step 1: spec-generator [skill: spec-generator] [depends_on: Step 0]
 
-### Step 3: Typescript Frontend Developer [depends_on: spec-generator]
-**Agent**: `validator-agent`
-**Tools**: `rep_rm_projects, gl_pipelines`
+Invoke `$spec-generator` with `intake_result`.
 
-Develop modern, beautiful reactive UI page layouts, state managers, and network fetch hooks based on the specification.
-Expected: `frontend-built`
+Expected: `specification`
 
-### Step 4: Qa Test Engineer [depends_on: spec-generator]
-**Agent**: `publisher-agent`
-**Tools**: `rep_rm_git, gl_merge_requests`
+### Step 2: spec-verifier [skill: spec-verifier] [depends_on: Step 1]
 
-Write extensive pytest unit suites, backend endpoint test modules, and frontend integration or end-to-end browser tests.
-Expected: `tests-written`
+Invoke `$spec-verifier` with `specification`.
 
-### Step 5: Verification Gate [depends_on: python-backend-engineer, typescript-frontend-developer, qa-test-engineer]
-**Agent**: `scanner-agent`
-**Tools**: `rep_rm_workspace, rep_rm_git`
+Expected: `verified_specification`
 
-Execute the test suites, perform code coverage checks, run security audits, and generate a final walkthrough presentation.
-Expected: `product-verified`
+### Step 3: task-planner [skill: task-planner] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: Verification Gate]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$task-planner` with `verified_specification`.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `implementation_plan`
 
-## Output
-- Sdd Full Lifecycle results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+### Step 4: sdd-implementer [skill: sdd-implementer] [depends_on: Step 3]
+
+Invoke `$sdd-implementer` with `implementation_plan`.
+
+Expected: `implementation_result`
+
+### Step 5: automated-test-runner [skill: automated-test-runner] [depends_on: Step 4]
+
+Invoke `$automated-test-runner` with `implementation_result`.
+
+Expected: `test_result`
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Spec Generator
-- **After level 0:** Step 2 — Python Backend Engineer; Step 3 — Typescript Frontend Developer; Step 4 — Qa Test Engineer
-- **After level 1:** Step 5 — Verification Gate
-- **After level 2:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$spec-intake-wizard`.
+- **After Step 0:** Step 1 — `$spec-generator`.
+- **After Step 1:** Step 2 — `$spec-verifier`.
+- **After Step 2:** Step 3 — `$task-planner`.
+- **After Step 3:** Step 4 — `$sdd-implementer`.
+- **After Step 4:** Step 5 — `$automated-test-runner`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

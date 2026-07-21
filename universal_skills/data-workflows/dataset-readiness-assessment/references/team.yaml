@@ -1,0 +1,16 @@
+name: dataset_readiness_assessment_team
+task_pattern: Profile a dataset, validate it against reviewed quality rules, and produce
+  an owner-confirmed data dictionary. Use when a local CSV, TSV, JSON, or JSON Lines
+  dataset must be assessed before analysis, ingestion, governance review, or handoff.
+execution_mode: parallel
+specialist_ids:
+- profiling-specialist
+- quality-specialist
+- documentation-specialist
+tool_assignments:
+  profiling-specialist:
+  - dataset-profiler
+  quality-specialist:
+  - data-quality-auditor
+  documentation-specialist:
+  - data-dictionary-builder

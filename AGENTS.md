@@ -116,7 +116,8 @@ ruff check --fix .
 ruff format .
 
 ## Project Structure Quick Reference
-- `universal_skills/skills/` → The core repository of skills. Each subdirectory is a unique skill.
+- `universal_skills/<domain>/<skill>/` → Atomic skills grouped by domain.
+- `universal_skills/<domain>-workflows/<workflow>/` → Pure dependency DAGs over atomic skills or exact MCP tools.
 - `universal_skills/skill_utilities.py` → Logic for discovering skill paths and checking ENABLE/DISABLE flags.
 - `pyproject.toml` → Defines optional dependencies for every individual skill.
 
@@ -124,12 +125,12 @@ ruff format .
 ```text
 .
 ├── universal_skills/
-│   ├── skills/                # All universal skills
-│   │   ├── agent-browser/
-│   │   ├── agent-workflows/
-│   │   ├── code-enhancer/         # 12-domain code analysis & grading
-│   │   ├── systems-manager/
-│   │   └── ... (40+ skills)
+│   ├── development/           # Atomic development capabilities
+│   ├── development-workflows/ # Pure development compositions
+│   ├── research/
+│   ├── content/
+│   ├── data/
+│   └── ...                    # Other domain and workflow categories
 │   ├── skill_utilities.py     # Utilities for loading skills
 │   └── __init__.py
 ├── tests/                     # Skill validation tests
@@ -142,8 +143,11 @@ ruff format .
 - Include a `SKILL.md` in every new skill directory.
 - Ensure any new `SKILL.md` is tracked in `.bumpversion.cfg` to maintain version parity.
 - Use the standard `try/except ImportError` guardrail for all external library imports.
-- Implement the `--insecure` flag and `SSL_VERIFY` env var check in all network-calling scripts.
-- Follow the directory structure: `SKILL.md`, `scripts/`, `resources/` (optional).
+- Verify TLS by default in every network script. Add an explicit, warned
+  `--insecure`/`SSL_VERIFY` override only when the target protocol genuinely needs a
+  diagnostic escape hatch; never make it the default.
+- Create `scripts/`, `references/`, or `assets/` only when the skill uses them; never
+  seed empty placeholder resource trees.
 
 **Good example (Skill Script Header):**
 ```python
@@ -247,23 +251,23 @@ why rather than bypassing it.
 ## Working with Git Worktrees (multi-session)
 
 Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
-edit the canonical checkout** (`/home/apps/workspace/agent-packages/<repo>`) — a
+edit the canonical checkout** (`${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/<repo>`) — a
 background `repository-manager` sync can reset its working tree and discard
 uncommitted edits. Take your own git worktree on your own branch instead:
 
 ```bash
 # preferred — repository-manager MCP:
-rm_worktree add <repo> <your-branch>      # -> /home/apps/worktrees/<repo>/<your-branch>
+rm_worktree add <repo> <your-branch>      # -> ${AGENT_WORKTREE_ROOT}/<repo>/<your-branch>
 
 # raw-git fallback:
 git -C agent-packages/<repo> checkout main
-git -C agent-packages/<repo> worktree add /home/apps/worktrees/<repo>/<branch> -b <branch>
+git -C agent-packages/<repo> worktree add ${AGENT_WORKTREE_ROOT}/<repo>/<branch> -b <branch>
 ```
 
 Work in the worktree and **commit often** (commits survive a working-tree reset).
 Each session must use a **distinct branch** — git allows a branch in only one
 worktree, which is what keeps concurrent sessions from colliding. Worktrees live
-under `/home/apps/worktrees/` (outside the workspace scan, so the sync leaves them
+under `${AGENT_WORKTREE_ROOT}/` (outside the workspace scan, so the sync leaves them
 alone).
 
 **Finishing work in a worktree** — run this sequence before calling it done:

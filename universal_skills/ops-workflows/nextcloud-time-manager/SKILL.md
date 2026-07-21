@@ -31,7 +31,7 @@ Connects to Nextcloud using nextcloud-agent, retrieves latest calendar events an
 
 ## Steps
 
-### Step 0: Nextcloud Agent
+### Step 0: Nextcloud Schedule Retrieval [skill: nextcloud-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
@@ -45,14 +45,14 @@ Expected: `calendars, events, tasks`
 Analyze the retrieved calendar events and tasks. Present a summary of the current schedule to the user, and prompt them to specify any new events/tasks to add, modify, or remove.
 Expected: `user_schedule_instructions`
 
-### Step 2: Nextcloud Agent
+### Step 2: Nextcloud Schedule Mutation [skill: nextcloud-agent]
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
 Apply requested scheduling modifications to Nextcloud. Call nextcloud_calendar create_calendar_event to register new events, or call nextcloud_files tools to write/update/delete task records as instructed.
 Expected: `nextcloud_sync_results`
 
-### Step 3: KG Persistence [depends_on: nextcloud-agent]
+### Step 3: KG Persistence [depends_on: Step 2]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Nextcloud Agent; Step 1 — User Interaction; Step 2 — Nextcloud Agent
+- **Run first (in parallel):** Step 0 — Nextcloud Schedule Retrieval; Step 1 — User Interaction; Step 2 — Nextcloud Schedule Mutation
 - **After level 0:** Step 3 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

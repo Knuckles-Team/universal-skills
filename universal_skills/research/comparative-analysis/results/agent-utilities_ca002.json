@@ -1,7 +1,7 @@
 {
   "domain": "CA-002",
   "domain_name": "Ecosystem Health",
-  "project": "/home/apps/workspace/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
   "git_activity": {
     "last_commit": "2026-05-07 07:10:44 -0500",
     "days_since_last_commit": null,

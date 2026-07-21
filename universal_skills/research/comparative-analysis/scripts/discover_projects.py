@@ -86,7 +86,7 @@ def extract_python_metadata(project_path: Path) -> dict:
             "python_requires": proj.get("requires-python", ""),
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def extract_node_metadata(project_path: Path) -> dict:
@@ -108,7 +108,7 @@ def extract_node_metadata(project_path: Path) -> dict:
             "dep_count": len(deps),
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def count_structure(project_path: Path) -> dict:
@@ -420,7 +420,7 @@ def _resolve_kg_sources(query: str) -> list[dict]:
         )
         return []
     except Exception as e:
-        print(json.dumps({"kg_warning": f"KG resolution failed: {e}"}), file=sys.stderr)
+        print(json.dumps({"kg_warning": f"KG resolution failed: {type(e).__name__}"}), file=sys.stderr)
         return []
 
 

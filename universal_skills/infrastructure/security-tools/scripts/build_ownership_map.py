@@ -999,7 +999,7 @@ def main() -> int:
     try:
         out_dir = build_ownership_map(args)
     except RuntimeError as exc:
-        print(str(exc), file=sys.stderr)
+        print(type(exc).__name__, file=sys.stderr)
         return 1
 
     print(f"Ownership map written to {out_dir}")

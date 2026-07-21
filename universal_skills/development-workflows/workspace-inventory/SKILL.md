@@ -29,21 +29,21 @@ Full workspace discovery — list available workspace actions, repositories, and
 
 ## Steps
 
-### Step 0: Repository Manager Mcp
+### Step 0: list-workspace-actions [skill: repository-manager-mcp]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
 
 Use the rm_workspace tool to list the available actions for the workspace
 Expected: `list, setup`
 
-### Step 1: Repository Manager Mcp
+### Step 1: list-managed-repositories [skill: repository-manager-mcp]
 **Agent**: `builder-agent`
 **Tools**: `rep_rm_projects`
 
 List all managed repositories in the workspace with their status
 Expected: `repository`
 
-### Step 2: KG Persistence [depends_on: repository-manager-mcp]
+### Step 2: KG Persistence [depends_on: Step 0, Step 1]
 **Agent**: `builder-agent`
 **Tools**: `graph_write`
 
@@ -59,7 +59,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Repository Manager Mcp; Step 1 — Repository Manager Mcp
+- **Run first (in parallel):** Step 0 — list-workspace-actions; Step 1 — list-managed-repositories
 - **After level 0:** Step 2 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

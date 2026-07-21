@@ -13,9 +13,9 @@ The user points at four sources:
 
 ```jsonc
 [
-  {"path_or_url": "/home/genius/obsidian-vault/projects/", "kind": "dir"},
-  {"path_or_url": "/home/genius/Downloads/rl-survey-2026.pdf", "kind": "file"},
-  {"path_or_url": "/home/apps/workspace/agent-packages/agent-utilities", "kind": "repo"},
+  {"path_or_url": "${HOME}/obsidian-vault/projects/", "kind": "dir"},
+  {"path_or_url": "${HOME}/Downloads/rl-survey-2026.pdf", "kind": "file"},
+  {"path_or_url": "${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities", "kind": "repo"},
   {"path_or_url": "https://example.com/articles/epistemic-graphs", "kind": "url"}
 ]
 ```
@@ -23,15 +23,15 @@ The user points at four sources:
 ## 1. Ingest
 
 ```text
-graph_ingest(action="ingest", target_path="/home/genius/obsidian-vault/projects/")
-# -> "Started ingestion job job:9f21 for /home/genius/obsidian-vault/projects/"
+graph_ingest(action="ingest", target_path="${HOME}/obsidian-vault/projects/")
+# -> "Started ingestion job job:9f21 for ${HOME}/obsidian-vault/projects/"
 # (a directory of notes classifies as DOCUMENT -> async job; poll with:)
 graph_ingest(action="job_status", job_id="job:9f21")
 
-graph_ingest(action="ingest", target_path="/home/genius/Downloads/rl-survey-2026.pdf")
+graph_ingest(action="ingest", target_path="${HOME}/Downloads/rl-survey-2026.pdf")
 # -> "Started ingestion job job:9f22 for rl-survey-2026.pdf"
 
-graph_ingest(action="ingest", target_path="/home/apps/workspace/agent-packages/agent-utilities")
+graph_ingest(action="ingest", target_path="${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities")
 # -> classifies CODEBASE -> async job:9f23 (tree-sitter parse)
 
 graph_ingest(action="ingest_url", target_path="https://example.com/articles/epistemic-graphs")
@@ -50,7 +50,7 @@ Say ingestion yields: `doc:note-eg-roadmap`, `doc:note-project-x`,
 For each Document node, extract atomic facts and claims. Two examples:
 
 ```text
-graph_ingest(action="fact_extract", target_path="/home/genius/obsidian-vault/projects/note-eg-roadmap.md")
+graph_ingest(action="fact_extract", target_path="${HOME}/obsidian-vault/projects/note-eg-roadmap.md")
 ```
 Response (trimmed):
 ```jsonc
@@ -82,7 +82,7 @@ summary.
 
 For the large PDF, prefer the GPU-scheduled path instead of blocking inline:
 ```text
-graph_ingest(action="extract_submit", target_path="/home/genius/Downloads/rl-survey-2026.pdf", max_depth=2)
+graph_ingest(action="extract_submit", target_path="${HOME}/Downloads/rl-survey-2026.pdf", max_depth=2)
 # -> {"job_id": "extract:7a1"}
 graph_ingest(action="extract_status", job_id="extract:7a1")
 # ... poll until completed ...

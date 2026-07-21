@@ -20,9 +20,10 @@ except ImportError:
     import sys
 
     sys.exit(1)
-import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+
+from safe_xml import SafeXmlError, parse_xml
 
 WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -49,7 +50,7 @@ def simplify_redlines(input_dir: str) -> tuple[int, str]:
         return merge_count, f"Simplified {merge_count} tracked changes"
 
     except Exception as e:
-        return 0, f"Error: {e}"
+        return 0, f"Error: {type(e).__name__}"
 
 
 def _merge_tracked_changes_in(container, tag: str) -> int:
@@ -136,9 +137,9 @@ def get_tracked_change_authors(doc_xml_path: Path) -> dict[str, int]:
         return {}
 
     try:
-        tree = ET.parse(doc_xml_path)
+        tree = parse_xml(doc_xml_path)
         root = tree.getroot()
-    except ET.ParseError:
+    except SafeXmlError:
         return {}
 
     namespaces = {"w": WORD_NS}
@@ -160,7 +161,7 @@ def _get_authors_from_docx(docx_path: Path) -> dict[str, int]:
             if "word/document.xml" not in zf.namelist():
                 return {}
             with zf.open("word/document.xml") as f:
-                tree = ET.parse(f)
+                tree = parse_xml(f)
                 root = tree.getroot()
 
                 namespaces = {"w": WORD_NS}
@@ -173,7 +174,7 @@ def _get_authors_from_docx(docx_path: Path) -> dict[str, int]:
                         if author:
                             authors[author] = authors.get(author, 0) + 1
                 return authors
-    except (zipfile.BadZipFile, ET.ParseError):
+    except (zipfile.BadZipFile, SafeXmlError):
         return {}
 
 

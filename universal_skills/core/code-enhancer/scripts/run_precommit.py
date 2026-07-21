@@ -83,12 +83,10 @@ def _detect_pytest_hooks_in_config(config_path: Path) -> list[str]:
 
     pytest_hooks: list[str] = []
     # Simple YAML parsing — look for id: lines under hooks:
-    in_hooks = False
     for line in content.splitlines():
         stripped = line.strip()
         if stripped.startswith("- id:"):
             hook_id = stripped.split(":", 1)[1].strip()
-            in_hooks = True
         elif stripped.startswith("id:"):
             hook_id = stripped.split(":", 1)[1].strip()
         else:

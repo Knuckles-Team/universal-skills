@@ -42,7 +42,7 @@ def convert_file(file_path: Path, output_dir: Path) -> bool:
     if suffix not in [".docx", ".doc", ".pdf"]:
         return False
 
-    logger.info(f"Converting {file_path}...")
+    logger.info("Converting configured document")
     try:
         if suffix in [".docx", ".doc"]:
             # Note: .doc usually needs something like antiword or pandoc,
@@ -51,19 +51,17 @@ def convert_file(file_path: Path, output_dir: Path) -> bool:
             try:
                 content = convert_docx_to_md(file_path)
             except Exception as e:
-                logger.error(
-                    f"Failed to convert {file_path} (maybe it's an old .doc format?): {e}"
-                )
+                logger.error("Document conversion failed: %s", type(e).__name__)
                 return False
         elif suffix == ".pdf":
             content = convert_pdf_to_md(file_path)
 
         output_file = output_dir / f"{file_path.stem}.md"
         output_file.write_text(content, encoding="utf-8")
-        logger.info(f"Saved to {output_file}")
+        logger.info("Converted document saved")
         return True
     except Exception as e:
-        logger.error(f"Error converting {file_path}: {e}")
+        logger.error("Document conversion failed: %s", type(e).__name__)
         return False
 
 
@@ -79,7 +77,7 @@ def main():
 
     source_path = Path(args.path)
     if not source_path.exists():
-        logger.error(f"Path not found: {source_path}")
+        logger.error("Configured source path was not found")
         sys.exit(1)
 
     output_dir = (

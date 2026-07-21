@@ -33,14 +33,14 @@ Automatically discovers and queries configured trackers (Jira/atlassian-agent, P
 
 ## Steps
 
-### Step 0: Atlassian Agent
+### Step 0: Atlassian Issue Discovery [skill: atlassian-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
 Detect configuration and query Jira for issues assigned to currentUser() that are active or stale (updated <= -7d) using atlassian_jira_issue tool.
 Expected: `jira_issues`
 
-### Step 1: Plane Agent
+### Step 1: Plane Work-Item Discovery [skill: plane-agent]
 **Agent**: `processor-agent`
 **Tools**: `graph_analyze, document_tools`
 
@@ -54,21 +54,21 @@ Expected: `plane_work_items`
 Present a unified dashboard consolidating the active and stale tasks from both Jira and Plane. Prompt the user for progress comments, status updates, or task additions.
 Expected: `progress_updates, stale_resolutions`
 
-### Step 3: Atlassian Agent
+### Step 3: Atlassian Issue Update [skill: atlassian-agent]
 **Agent**: `report-agent`
 **Tools**: `graph_write, document_tools`
 
 Push selected comment updates or status changes back to Jira using the atlassian_jira_comment and atlassian_jira_issue tools.
 Expected: `jira_update_results`
 
-### Step 4: Plane Agent
+### Step 4: Plane Work-Item Update [skill: plane-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
 Push selected comment updates or status changes back to Plane using the plane_work_items tool with create_work_item_comment or update_work_item actions.
 Expected: `plane_update_results`
 
-### Step 5: KG Persistence [depends_on: plane-agent]
+### Step 5: KG Persistence [depends_on: Step 4]
 **Agent**: `report-agent`
 **Tools**: `graph_write`
 
@@ -87,7 +87,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Atlassian Agent; Step 1 — Plane Agent; Step 2 — User Interaction; Step 3 — Atlassian Agent; Step 4 — Plane Agent
+- **Run first (in parallel):** Step 0 — Atlassian Issue Discovery; Step 1 — Plane Work-Item Discovery; Step 2 — User Interaction; Step 3 — Atlassian Issue Update; Step 4 — Plane Work-Item Update
 - **After level 0:** Step 5 — KG Persistence
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

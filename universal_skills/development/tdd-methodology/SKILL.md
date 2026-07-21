@@ -177,19 +177,6 @@ Running all tests... ✅ PASS
 Ready to commit this increment.
 ```
 
----
-
-## Reference Files
-
-Load these when deeper context is needed:
-
-- [references/tdd-principles.md](references/tdd-principles.md) — The complete Red-Green-Refactor philosophy, benefits, and best practices
-- [references/code-smells.md](references/code-smells.md) — Catalog of code smells indicating test-after development; detection and refactoring strategies
-- [references/testing-patterns.md](references/testing-patterns.md) — Language-agnostic patterns: AAA, Given-When-Then, fixtures, test doubles, parameterized tests
-
-## Scripts
-
-- `scripts/check_tdd_compliance.py` — Analyze code for TDD compliance issues (nested conditionals, long methods, missing test coverage)
-- `scripts/validate_tests.py` — Validate test structure, AAA pattern, naming, and complexity
-
-Run scripts with `--help` first to see usage options.
+The guidance above is self-contained. Use the target repository's own test runner,
+coverage tooling, and static analysis rather than assuming this skill bundles
+language-specific validation scripts.

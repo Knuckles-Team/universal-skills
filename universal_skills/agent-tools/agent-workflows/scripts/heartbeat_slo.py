@@ -398,7 +398,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             until=until,
         )
     except ValueError as exc:
-        print(f"❌ {exc}")
+        print(f"❌ {type(exc).__name__}")
         return 1
 
     if getattr(args, "json", False):

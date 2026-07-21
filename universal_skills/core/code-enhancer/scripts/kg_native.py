@@ -35,10 +35,12 @@ import ast
 import asyncio
 import json
 import os
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+from urllib.request import Request
+
+from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
 SKIP_DIRS = frozenset(
     {
@@ -74,6 +76,15 @@ def _auth_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"} if token else {}
 
 
+def _endpoint_policy(url: str) -> UrlPolicy:
+    host = (urlsplit(url).hostname or "").lower().rstrip(".")
+    return UrlPolicy(
+        frozenset({host}),
+        allow_private_hosts=frozenset({host}),
+        allow_http_loopback=True,
+    )
+
+
 def _post(
     path: str, body: dict[str, Any], endpoint: str | None, timeout: int = 20
 ) -> Any:
@@ -82,16 +93,20 @@ def _post(
     url = endpoint or graph_os_endpoint()
     if not url:
         return None
-    req = urllib.request.Request(
+    req = Request(
         url.rstrip("/") + path,
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", **_auth_headers()},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - operator-configured URL
-            payload = json.loads(resp.read().decode() or "{}")
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        payload, _ = open_json(
+            req,
+            policy=_endpoint_policy(url),
+            timeout=timeout,
+            max_bytes=4 * 1024 * 1024,
+        )
+    except (SafeHttpError, ValueError):
         return None
     if not isinstance(payload, dict) or payload.get("status") != "success":
         return None

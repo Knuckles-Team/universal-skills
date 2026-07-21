@@ -1,76 +1,33 @@
 #!/usr/bin/env python3
+import argparse
+import asyncio
+import hashlib
+import logging
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Any
+from urllib.parse import urldefrag, urljoin, urlparse
+from xml.etree import ElementTree
+
 try:
-    import psutil
-    import requests
-    from crawl4ai import (
-        AsyncWebCrawler,
-        BrowserConfig,
-        CrawlerRunConfig,
-        CacheMode,
-        MemoryAdaptiveDispatcher,
-        DefaultMarkdownGenerator,
-        PruningContentFilter,
+    from security_runtime import (
+        MAX_LINKS_PER_PAGE,
+        MAX_SEED_URLS,
+        MAX_SITEMAP_BYTES,
+        MAX_SITEMAP_DEPTH,
+        MAX_SITEMAP_URLS,
+        CrawlerSecurityError,
+        CrawlerSecurityPolicy,
+        OutputBudget,
+        SafeMCPClient,
     )
 except ImportError:
-    print("Error: Missing required dependencies for the 'web-crawler' skill.")
-    print("Please install them by running: pip install 'universal-skills[web-crawler]'")
-    import sys
-
+    print("Web crawler security runtime is unavailable.", file=sys.stderr)
     sys.exit(1)
-
-
-def to_boolean(string=None):
-    if isinstance(string, bool):
-        return string
-    if not string:
-        return False
-    normalized = str(string).strip().lower()
-    return normalized in {"t", "true", "y", "yes", "1"}
-
-
-import os
-import asyncio
-import argparse
-import hashlib
-import re
-import logging
-import sys
-from typing import List
-from xml.etree import ElementTree
-from urllib.parse import urlparse, urldefrag, urljoin
-
-# Cross-platform-safe filename generation. Prefer the shared util; fall back to a
-# compact local copy when this script runs outside the installed package.
-try:
-    from universal_skills.skill_utilities import portable_name
-except Exception:  # pragma: no cover - standalone execution
-    _ILLEGAL = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-    _RESERVED = {
-        "CON",
-        "PRN",
-        "AUX",
-        "NUL",
-        *(f"COM{i}" for i in range(1, 10)),
-        *(f"LPT{i}" for i in range(1, 10)),
-    }
-
-    def portable_name(name: str, max_len: int = 80) -> str:
-        if not name:
-            return "_"
-        cleaned = (
-            _ILLEGAL.sub("-", name).rstrip(". ").lstrip(" ").replace("~", "-")
-        ) or "_"
-        stem, dot, ext = cleaned.rpartition(".")
-        base, suffix = (stem, dot + ext) if dot and stem else (cleaned, "")
-        if base.upper() in _RESERVED:
-            base = f"{base}_"
-        full = f"{base}{suffix}"
-        if len(full) > max_len:
-            digest = hashlib.sha1(name.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
-            keep = max(1, max_len - len(suffix) - 9)
-            full = f"{base[:keep]}-{digest}{suffix}"
-        return full or "_"
-
 
 # Setup logging
 logging.basicConfig(
@@ -78,28 +35,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-try:
-    import psutil
-    import requests
+try:  # Browser dependencies are optional and gated by AgentConfig.
     from crawl4ai import (
         AsyncWebCrawler,
         BrowserConfig,
-        CrawlerRunConfig,
         CacheMode,
-        MemoryAdaptiveDispatcher,
+        CrawlerRunConfig,
         DefaultMarkdownGenerator,
+        MemoryAdaptiveDispatcher,
         PruningContentFilter,
     )
 except ImportError:
-    logger.error("Missing required dependencies for the 'web-crawler' skill.")
-    logger.error(
-        "Please install them by running: pip install 'universal-skills[web-crawler]'"
-    )
-    sys.exit(1)
+    AsyncWebCrawler = None
+    BrowserConfig = None
+    CacheMode = None
+    CrawlerRunConfig = None
+    DefaultMarkdownGenerator = None
+    MemoryAdaptiveDispatcher = None
+    PruningContentFilter = None
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 
 def log_memory(process, peak_memory, prefix: str = ""):
-    current_mem = process.memory_info().rss  # in bytes
+    if process is None:
+        return
+    try:
+        current_mem = process.memory_info().rss  # in bytes
+    except Exception:
+        return
     if current_mem > peak_memory[0]:
         peak_memory[0] = current_mem
     logger.info(
@@ -124,7 +91,7 @@ def _prefer_fit(markdown_obj) -> str:
     return getattr(markdown_obj, "raw_markdown", "") or str(markdown_obj)
 
 
-def extract_markdown(result):
+def extract_markdown(result, policy: CrawlerSecurityPolicy) -> str:
     md = ""
     if hasattr(result, "markdown_v2") and result.markdown_v2:
         md = _prefer_fit(result.markdown_v2)
@@ -135,12 +102,18 @@ def extract_markdown(result):
     else:
         md = str(getattr(result, "markdown", ""))
 
-    return clean_markdown(md.strip())
+    clean, redactions = policy.sanitize_content(clean_markdown(md.strip()))
+    if redactions:
+        logger.info("Applied %d privacy redaction(s) to crawled content", redactions)
+    return clean
 
 
 _MULTI_BLANK_RE = re.compile(r"\n{3,}")
 _TRAILING_WS_RE = re.compile(r"[ \t]+\n")
 _FINGERPRINT_WS_RE = re.compile(r"\s+")
+_MAX_XML_ELEMENTS = 30_000
+_MAX_XML_DEPTH = 64
+_MAX_CHUNKS_PER_PAGE = 512
 
 
 def clean_markdown(md: str) -> str:
@@ -168,7 +141,9 @@ def content_fingerprint(md: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8", "surrogatepass")).hexdigest()
 
 
-def is_duplicate_content(md: str, seen_fingerprints: set, *, min_chars: int = 40) -> bool:
+def is_duplicate_content(
+    md: str, seen_fingerprints: set, *, min_chars: int = 40
+) -> bool:
     """True (and records the fingerprint) if ``md`` duplicates an already-seen page.
 
     Short/empty pages (below ``min_chars``) are never deduped by content — they're
@@ -183,197 +158,97 @@ def is_duplicate_content(md: str, seen_fingerprints: set, *, min_chars: int = 40
     return False
 
 
-def save_markdown(content: str, url: str, output_dir: str, prefix: str = ""):
+def parse_bounded_sitemap_xml(body: bytes) -> Any:
+    """Parse sitemap XML with explicit entity, element, and depth ceilings."""
+
+    upper_body = body.upper()
+    if b"<!DOCTYPE" in upper_body or b"<!ENTITY" in upper_body:
+        raise CrawlerSecurityError("crawler_sitemap_unsafe_xml")
+    parser = ElementTree.XMLPullParser(events=("start", "end"))
+    depth = 0
+    elements = 0
+    root = None
+
+    def consume_events() -> None:
+        nonlocal depth, elements, root
+        for event, element in parser.read_events():
+            if event == "start":
+                depth += 1
+                elements += 1
+                if root is None:
+                    root = element
+                if depth > _MAX_XML_DEPTH or elements > _MAX_XML_ELEMENTS:
+                    raise CrawlerSecurityError("crawler_sitemap_structure_too_large")
+            else:
+                depth -= 1
+                if depth < 0:
+                    raise CrawlerSecurityError("crawler_sitemap_invalid")
+
+    for offset in range(0, len(body), 64 * 1024):
+        parser.feed(body[offset : offset + 64 * 1024])
+        consume_events()
+    parser.close()
+    consume_events()
+    if root is None or depth != 0:
+        raise CrawlerSecurityError("crawler_sitemap_invalid")
+    return root
+
+
+def save_markdown(
+    content: str,
+    url: str,
+    output_dir: Path | None,
+    policy: CrawlerSecurityPolicy,
+    prefix: str = "",
+) -> bool:
     if not output_dir:
-        print(f"\n--- Output for {url} ---\n{content}\n")
-        return
-
-    os.makedirs(output_dir, exist_ok=True)
-    parsed = urlparse(url)
-
-    # Clean slug generation (cross-platform safe: length-bounded, no illegal chars).
-    path_slug = parsed.path.strip("/").replace("/", "_") or "index"
-    if not path_slug.endswith(".md"):
-        path_slug += ".md"
-
-    if prefix:
-        path_slug = f"{prefix}_{path_slug}"
-    filename = portable_name(path_slug)
-
-    filepath = os.path.join(output_dir, filename)
+        try:
+            clean = policy.reserve_output(content)
+            print(f"\n--- Crawled output ---\n{clean}\n")
+            return True
+        except Exception:
+            logger.error("Crawler output budget was exceeded")
+            return False
     try:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(content)
-        return True
-    except Exception as e:
-        logger.error(f"Failed to save {url} to {filepath}: {e}")
+        return policy.write_markdown(output_dir, content, url, suffix=prefix)
+    except Exception:
+        logger.error("Failed to save crawled content")
         return False
 
 
-def cleanup_filenames(output_dir: str):
-    """
-    Scans the output_dir for .md files and removes common redundant prefixes.
-    A prefix is considered redundant if it's present in a majority of files
-    (> 50% and at least 5 files).
-    """
-    if not output_dir or not os.path.isdir(output_dir):
-        return
-
-    files = [f for f in os.listdir(output_dir) if f.endswith(".md")]
-    if len(files) < 5:
-        return
-
-    # Count prefix occurrences
-    prefix_counts = {}
-    for f in files:
-        parts = f.split("_")
-        if len(parts) > 1:
-            # We check prefixes of increasing length (token by token)
-            current_prefix = ""
-            for i in range(len(parts) - 1):
-                if current_prefix:
-                    current_prefix += "_"
-                current_prefix += parts[i]
-                prefix_counts[current_prefix] = prefix_counts.get(current_prefix, 0) + 1
-
-    # Find the longest prefix that appears in > 50% of files
-    best_prefix = None
-    threshold = len(files) / 2
-    for prefix, count in sorted(
-        prefix_counts.items(), key=lambda x: len(x[0]), reverse=True
-    ):
-        if count > threshold:
-            best_prefix = prefix
-            break
-
-    if not best_prefix:
-        return
-
-    logger.info(f"Cleaning up redundant prefix: '{best_prefix}_'")
-    prefix_with_underscore = f"{best_prefix}_"
-
-    for f in files:
-        if f.startswith(prefix_with_underscore):
-            new_name = f[len(prefix_with_underscore) :]
-            if not new_name or new_name == ".md":
-                new_name = "index.md"
-
-            old_path = os.path.join(output_dir, f)
-            new_path = os.path.join(output_dir, new_name)
-
-            # Avoid collisions
-            if os.path.exists(new_path) and old_path != new_path:
-                logger.warning(f"Skipping rename of {f} to {new_name}: target exists.")
-                continue
-
-            try:
-                os.rename(old_path, new_path)
-            except Exception as e:
-                logger.error(f"Failed to rename {f} to {new_name}: {e}")
-
-
 class KGIngestor:
-    """Natively ingests each crawled page into graph-os / epistemic-graph over MCP.
-
-    CONCEPT:AU-KG.ingest.chunk-overlap-stage — graph-os is reached exactly the way
-    the platform does: over its **MCP streamable-http surface** (``<endpoint>/mcp``,
-    a JSON-RPC ``tools/call`` after an ``initialize`` handshake). graph-os is a
-    dynamic multiplexer, so the tool is mounted on the session with ``load_tools``
-    first. No extra dependency: stdlib ``urllib`` only (the crawler already ships
-    ``requests``, but the MCP handshake is kept dependency-light). Two native modes:
-
-    * ``content`` (DEFAULT) — call the ``document_process`` tool with the crawler's
-      OWN cleaned ``fit_markdown`` (``document=<md>``, ``source=<url>``). graph-os
-      chunks + embeds + (contextual-)enriches OUR refined markdown into a
-      ``:Document`` + ``:Chunk`` objects with a content hash. This GUARANTEES the
-      clean/refined content is what lands in the KG regardless of the graph-os
-      pod's own fetch backend — the crux of "ingest a clean and refined set of
-      markdown scraped documents". The Document title is the page's first ``#``
-      heading; ``source`` carries the page URL for provenance.
-    * ``url`` — call ``graph_ingest`` with ``action='ingest_url'``, ``target_path=<url>``.
-      graph-os RE-FETCHES via its own unified resolver (ArchiveBox→crawl4ai→requests)
-      into a Document+Concept(+Chunk) with ``source_url``/``ast_hash`` provenance.
-      Best when you want graph-os's ArchiveBox snapshot / server-side fetch + its
-      concept extraction, and the gateway pod has a strong fetch backend.
-
-    Sticky-disables itself after the first unreachable/failed handshake so a downed
-    gateway degrades once (loud) → file-only output, rather than retrying every
-    page. Best-effort throughout: a submission failure never aborts the crawl.
-    """
+    """Best-effort, bounded MCP ingestion of privacy-sanitized page content."""
 
     def __init__(
         self,
         endpoint: str,
+        policy: CrawlerSecurityPolicy,
         token: str = "",
         timeout: float = 60.0,
-        ssl_verify: bool = True,
-        mode: str = "content",
     ):
-        base = endpoint.rstrip("/")
-        # Accept either a bare gateway URL or one already ending in /mcp.
-        self.mcp_url = base if base.endswith("/mcp") else base + "/mcp"
-        self.token = token
-        self.timeout = timeout
-        self.ssl_verify = ssl_verify
-        self.mode = mode if mode in ("content", "url") else "content"
-        self.submitted: list[str] = []
-        self.errors: list[str] = []
+        self.policy = policy
+        self.client = SafeMCPClient(
+            endpoint,
+            policy=policy,
+            token=token,
+            timeout=timeout,
+        )
+        self.submitted = 0
+        self.errors = 0
         self.reachable = True
-        self._session_id: str | None = None
         self._rid = 0
-
-    # -- MCP streamable-http plumbing (stdlib only) ------------------------
+        self._submission_budget = OutputBudget()
 
     def _rpc(self, method: str, params: dict, notify: bool = False):
-        """One JSON-RPC call over MCP streamable-http; returns parsed result dict."""
-        import ssl as _ssl
-        import urllib.request
-
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json, text/event-stream",
-        }
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-        if self._session_id:
-            headers["mcp-session-id"] = self._session_id
         body: dict = {"jsonrpc": "2.0", "method": method, "params": params}
         if not notify:
             self._rid += 1
             body["id"] = self._rid
-        req = urllib.request.Request(
-            self.mcp_url,
-            data=json.dumps(body).encode(),
-            headers=headers,
-            method="POST",
-        )
-        ctx = None
-        if self.mcp_url.startswith("https") and not self.ssl_verify:
-            ctx = _ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = _ssl.CERT_NONE
-        resp = urllib.request.urlopen(req, timeout=self.timeout, context=ctx)  # noqa: S310
-        sid = resp.headers.get("mcp-session-id")
-        if sid:
-            self._session_id = sid
-        raw = resp.read().decode()
-        if notify:
-            return None
-        # streamable-http replies as SSE ("data: {json}") or plain JSON.
-        data = None
-        for line in raw.splitlines():
-            if line.startswith("data:"):
-                try:
-                    data = json.loads(line[5:].strip())
-                except ValueError:
-                    pass
-        if data is None and raw.strip():
-            data = json.loads(raw)
-        return data
+        return self.client.post(body, notify=notify)
 
     def _ensure_session(self) -> None:
         """Lazy MCP handshake + mount the tool we need (idempotent)."""
-        if self._session_id:
+        if self.client.session_id:
             return
         self._rpc(
             "initialize",
@@ -384,172 +259,428 @@ class KGIngestor:
             },
         )
         self._rpc("notifications/initialized", {}, notify=True)
-        tool = "document_process" if self.mode == "content" else "graph_ingest"
-        self._rpc("tools/call", {"name": "load_tools", "arguments": {"tools": [tool]}})
+        self._rpc(
+            "tools/call",
+            {"name": "load_tools", "arguments": {"tools": ["document_process"]}},
+        )
 
     @staticmethod
     def _tool_error(result: dict) -> str | None:
-        """Return an error string if the tools/call result is an error, else None."""
+        """Return a stable error code without retaining upstream output."""
         if not isinstance(result, dict):
-            return f"unexpected result: {str(result)[:120]}"
+            return "kg_result_invalid"
         if "error" in result:
-            return str(result["error"])[:200]
+            return "kg_rpc_error"
         inner = result.get("result", {})
         if isinstance(inner, dict) and inner.get("isError"):
-            texts = [c.get("text", "") for c in inner.get("content", []) if isinstance(c, dict)]
-            return ("; ".join(t for t in texts if t))[:200] or "isError"
+            return "kg_tool_error"
         return None
 
     def submit(self, url: str, markdown: str = "") -> None:
         """Ingest one crawled page into the KG over MCP (best-effort, never raises)."""
         if not self.reachable:
             return
-        # 'content' mode needs the cleaned markdown; without it (e.g. an HTTP
-        # fallback path that only has the URL) transparently use 'url' mode.
-        use_content = self.mode == "content" and bool(markdown.strip())
+        if not markdown.strip():
+            return
         try:
             self._ensure_session()
-            if use_content:
-                name = "document_process"
-                arguments = {"document": markdown, "source": url, "contextual": True}
-            else:
-                name = "graph_ingest"
-                arguments = {"action": "ingest_url", "target_path": url}
-                # graph_ingest may not be mounted if mode started as 'content'.
-                self._rpc(
-                    "tools/call",
-                    {"name": "load_tools", "arguments": {"tools": [name]}},
-                )
-            result = self._rpc("tools/call", {"name": name, "arguments": arguments})
+            clean, _ = self.policy.sanitize_content(markdown)
+            self._submission_budget.consume(len(clean.encode("utf-8")))
+            arguments = {
+                "document": clean,
+                "source": self.policy.source_reference(url),
+                "contextual": True,
+            }
+            result = self._rpc(
+                "tools/call",
+                {"name": "document_process", "arguments": arguments},
+            )
             err = self._tool_error(result)
             if err:
                 raise RuntimeError(err)
-            self.submitted.append(url)
-            logger.info(
-                f"KG ingest ({'content' if use_content else 'url'}) ok for {url}"
-            )
-        except Exception as e:  # noqa: BLE001 - best-effort, must not abort the crawl
+            self.submitted += 1
+            logger.info("Knowledge Graph ingestion succeeded")
+        except Exception:  # noqa: BLE001 - best-effort must not abort the crawl
             self.reachable = False
-            self.errors.append(f"{url}: {e}")
+            self.errors += 1
             logger.warning(
-                f"KG ingestion unreachable at {self.mcp_url} ({e}); falling back "
-                "to file-only output for the remainder of this crawl."
+                "Knowledge Graph ingestion is unavailable; continuing with local output"
             )
 
     def summary(self) -> str:
-        if not self.submitted and not self.errors:
+        if self.submitted == 0 and self.errors == 0:
             return "KG ingestion: no pages submitted."
-        parts = [
-            f"KG ingestion ({self.mode}): {len(self.submitted)} page(s) "
-            f"ingested via {self.mcp_url}"
-        ]
+        parts = [f"KG ingestion: {self.submitted} page(s) ingested"]
         if self.errors:
-            parts.append(f"{len(self.errors)} submission(s) failed (first: {self.errors[0]})")
+            parts.append(f"{self.errors} submission(s) failed")
         return "; ".join(parts)
 
 
-async def crawl_single(crawler, url: str, crawl_config, output_dir: str, kg_ingestor=None):
-    logger.info(f"Crawling single page: {url}")
+class _HTMLTextExtractor(HTMLParser):
+    """Small dependency-free HTML-to-text/link extractor for the safe HTTP path."""
+
+    _BLOCK_TAGS = frozenset(
+        {
+            "article",
+            "br",
+            "div",
+            "footer",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "header",
+            "li",
+            "main",
+            "p",
+            "section",
+            "tr",
+        }
+    )
+    _IGNORED_TAGS = frozenset({"script", "style", "noscript", "template"})
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.links: list[str] = []
+        self._ignored_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        normalized = tag.casefold()
+        if normalized in self._IGNORED_TAGS:
+            self._ignored_depth += 1
+            return
+        if self._ignored_depth:
+            return
+        if normalized in self._BLOCK_TAGS:
+            self.parts.append("\n")
+        if normalized == "a" and len(self.links) < MAX_LINKS_PER_PAGE:
+            href = next(
+                (value for key, value in attrs if key.casefold() == "href"), None
+            )
+            if href:
+                self.links.append(href)
+
+    def handle_endtag(self, tag: str) -> None:
+        normalized = tag.casefold()
+        if normalized in self._IGNORED_TAGS:
+            self._ignored_depth = max(0, self._ignored_depth - 1)
+            return
+        if not self._ignored_depth and normalized in self._BLOCK_TAGS:
+            self.parts.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        if not self._ignored_depth and data:
+            self.parts.append(data)
+
+
+@dataclass
+class _CrawlResult:
+    success: bool
+    url: str
+    markdown: str = ""
+    links: dict[str, list[dict[str, str]]] = field(
+        default_factory=lambda: {"internal": []}
+    )
+
+
+class SafeHttpCrawler:
+    """Default crawler: bounded HTTP fetches with no browser execution surface."""
+
+    def __init__(self, policy: CrawlerSecurityPolicy, max_concurrent: int) -> None:
+        self.policy = policy
+        self._semaphore = asyncio.Semaphore(max_concurrent)
+        self._batch_size = max_concurrent * 2
+
+    async def __aenter__(self) -> "SafeHttpCrawler":
+        return self
+
+    async def __aexit__(self, *_args: Any) -> None:
+        return None
+
+    async def arun(
+        self, *, url: str, config: Any = None, **_kwargs: Any
+    ) -> _CrawlResult:
+        del config
+        try:
+            normalized = self.policy.validate_url(url)
+            async with self._semaphore:
+                html = await asyncio.to_thread(self.policy.fetch_text, normalized)
+            parser = _HTMLTextExtractor()
+            parser.feed(html)
+            markdown = clean_markdown("".join(parser.parts))
+            origin = self.policy.origin(normalized)
+            links: list[dict[str, str]] = []
+            for raw_href in parser.links[:MAX_LINKS_PER_PAGE]:
+                try:
+                    resolved = self.policy.require_scoped_url(
+                        urljoin(normalized, raw_href),
+                        allowed_origins={origin},
+                        resolve_dns=False,
+                    )
+                except CrawlerSecurityError:
+                    continue
+                links.append({"href": resolved})
+            return _CrawlResult(
+                success=True,
+                url=normalized,
+                markdown=markdown,
+                links={"internal": links},
+            )
+        except Exception:
+            return _CrawlResult(success=False, url="")
+
+    async def arun_many(
+        self,
+        *,
+        urls: list[str],
+        config: Any = None,
+        dispatcher: Any = None,
+    ) -> list[_CrawlResult]:
+        del dispatcher
+        results: list[_CrawlResult] = []
+        for offset in range(0, len(urls), self._batch_size):
+            results.extend(
+                await asyncio.gather(
+                    *(
+                        self.arun(url=url, config=config)
+                        for url in urls[offset : offset + self._batch_size]
+                    ),
+                )
+            )
+        return results
+
+
+class GuardedBrowserCrawler:
+    """Browser adapter with safe top-level preflight and post-navigation checks."""
+
+    def __init__(
+        self,
+        crawler: Any,
+        policy: CrawlerSecurityPolicy,
+        max_concurrent: int,
+    ) -> None:
+        self.crawler = crawler
+        self.policy = policy
+        self._semaphore = asyncio.Semaphore(max_concurrent)
+        self._batch_size = max_concurrent * 2
+
+    async def arun(self, *, url: str, config: Any = None, **kwargs: Any) -> Any:
+        try:
+            normalized = self.policy.validate_url(url)
+            # Central HTTP preflight validates DNS and every redirect before the
+            # more privileged browser is allowed to navigate.
+            await asyncio.to_thread(self.policy.fetch_bytes, normalized)
+            async with self._semaphore:
+                result = await self.crawler.arun(
+                    url=normalized,
+                    config=config,
+                    **kwargs,
+                )
+            if not getattr(result, "success", False):
+                return result
+            final_url = self.policy.require_scoped_url(
+                getattr(result, "url", normalized),
+                allowed_origins={self.policy.origin(normalized)},
+            )
+            result.url = final_url
+            return result
+        except Exception:
+            return _CrawlResult(success=False, url="")
+
+    async def arun_many(
+        self,
+        *,
+        urls: list[str],
+        config: Any = None,
+        dispatcher: Any = None,
+    ) -> list[Any]:
+        del dispatcher
+        results: list[Any] = []
+        for offset in range(0, len(urls), self._batch_size):
+            results.extend(
+                await asyncio.gather(
+                    *(
+                        self.arun(url=url, config=config)
+                        for url in urls[offset : offset + self._batch_size]
+                    ),
+                )
+            )
+        return results
+
+
+async def crawl_single(
+    crawler,
+    url: str,
+    crawl_config,
+    output_dir: Path | None,
+    policy: CrawlerSecurityPolicy,
+    kg_ingestor=None,
+):
+    logger.info("Crawling one configured page")
     result = await crawler.arun(url=url, config=crawl_config)
     if result.success:
-        md = extract_markdown(result)
-        save_markdown(md, url, output_dir)
+        md = extract_markdown(result, policy)
+        save_markdown(md, result.url, output_dir, policy)
         if kg_ingestor and md.strip():
-            kg_ingestor.submit(url, md)
+            kg_ingestor.submit(result.url, md)
     else:
-        logger.error(f"Failed to crawl {url}: {result.error_message}")
+        logger.error("Crawl failed; upstream details omitted")
 
 
-async def crawl_chunked(crawler, url: str, crawl_config, output_dir: str, kg_ingestor=None):
-    logger.info(f"Crawling and chunking: {url}")
+async def crawl_chunked(
+    crawler,
+    url: str,
+    crawl_config,
+    output_dir: Path | None,
+    policy: CrawlerSecurityPolicy,
+    kg_ingestor=None,
+):
+    logger.info("Crawling and chunking one configured page")
     result = await crawler.arun(url=url, config=crawl_config)
     if not result.success:
-        logger.error(f"Failed to crawl {url}: {result.error_message}")
+        logger.error("Crawl failed; upstream details omitted")
         return
 
-    markdown = extract_markdown(result)
+    markdown = extract_markdown(result, policy)
     if kg_ingestor and markdown.strip():
         # The header-chunking below is a local file-splitting convenience; graph-os
         # ingests the whole cleaned page as one Document (it does its own chunking).
-        kg_ingestor.submit(url, markdown)
+        kg_ingestor.submit(result.url, markdown)
     header_pattern = re.compile(r"^(# .+|## .+)$", re.MULTILINE)
-    headers = [m.start() for m in header_pattern.finditer(markdown)] + [len(markdown)]
+    headers: list[int] = []
+    for match in header_pattern.finditer(markdown):
+        headers.append(match.start())
+        if len(headers) >= _MAX_CHUNKS_PER_PAGE - 1:
+            break
+    if not headers or headers[0] != 0:
+        headers.insert(0, 0)
+    headers.append(len(markdown))
     chunks = []
     for i in range(len(headers) - 1):
         chunk = markdown[headers[i] : headers[i + 1]].strip()
         if chunk:
             chunks.append(chunk)
 
-    logger.info(f"Split into {len(chunks)} chunks.")
+    logger.info("Split content into %d chunk(s)", len(chunks))
+    for idx, chunk in enumerate(chunks):
+        save_markdown(
+            chunk,
+            result.url,
+            output_dir,
+            policy,
+            prefix=f"chunk-{idx + 1}",
+        )
     if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-        parsed = urlparse(url)
-        safe_name = parsed.path.strip("/").replace("/", "_") or "index"
-        for idx, chunk in enumerate(chunks):
-            filepath = os.path.join(
-                output_dir, portable_name(f"{safe_name}_chunk_{idx + 1}.md")
-            )
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(chunk)
-            logger.info(f"Saved chunk {idx + 1} to {filepath}")
-    else:
-        for idx, chunk in enumerate(chunks):
-            print(f"\n--- Chunk {idx + 1} ---\n{chunk}\n")
+        logger.info("Saved %d chunk(s)", len(chunks))
 
 
 def fetch_sitemap_urls(
-    sitemap_url: str, ssl_verify: bool = True, _depth: int = 0
-) -> List[str]:
-    if _depth > 3:  # Guard against infinite recursion
+    sitemap_url: str,
+    policy: CrawlerSecurityPolicy,
+    *,
+    max_urls: int = MAX_SITEMAP_URLS,
+    _depth: int = 0,
+    _visited: set[str] | None = None,
+    _allowed_origins: set[str] | None = None,
+) -> list[str]:
+    """Fetch bounded sitemap XML while retaining the seed origin boundary."""
+
+    max_urls = max(1, min(int(max_urls), MAX_SITEMAP_URLS))
+    if _depth > MAX_SITEMAP_DEPTH:
         return []
+    visited = _visited if _visited is not None else set()
     try:
-        response = requests.get(sitemap_url, verify=ssl_verify, timeout=15)
-        response.raise_for_status()
-        root = ElementTree.fromstring(response.content)
+        normalized = policy.validate_url(sitemap_url)
+        if normalized in visited or len(visited) >= MAX_SITEMAP_URLS:
+            return []
+        visited.add(normalized)
+        origins = _allowed_origins or {policy.origin(normalized)}
+        normalized = policy.require_scoped_url(
+            normalized,
+            allowed_origins=origins,
+        )
+        body = policy.fetch_bytes(normalized, max_bytes=MAX_SITEMAP_BYTES)
+        root = parse_bounded_sitemap_xml(body)
         namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
         # Sitemap index: recursively fetch child sitemaps
         child_sitemaps = root.findall(".//ns:sitemap/ns:loc", namespace)
         if child_sitemaps:
-            all_urls = []
-            for child_loc in child_sitemaps:
+            all_urls: list[str] = []
+            for child_loc in child_sitemaps[:max_urls]:
+                if not child_loc.text:
+                    continue
+                try:
+                    child_url = policy.require_scoped_url(
+                        child_loc.text,
+                        allowed_origins=origins,
+                        resolve_dns=False,
+                    )
+                except CrawlerSecurityError:
+                    continue
                 child_urls = fetch_sitemap_urls(
-                    child_loc.text, ssl_verify=ssl_verify, _depth=_depth + 1
+                    child_url,
+                    policy,
+                    max_urls=max_urls - len(all_urls),
+                    _depth=_depth + 1,
+                    _visited=visited,
+                    _allowed_origins=origins,
                 )
                 all_urls.extend(child_urls)
-            return all_urls
+                if len(all_urls) >= max_urls:
+                    break
+            return list(dict.fromkeys(all_urls))[:max_urls]
 
-        # Regular sitemap: return all <url><loc> entries (skip .xml files)
-        urls = [
-            loc.text
-            for loc in root.findall(".//ns:loc", namespace)
-            if loc.text and not loc.text.rstrip("/").endswith(".xml")
-        ]
+        urls: list[str] = []
+        for loc in root.findall(".//ns:url/ns:loc", namespace)[:max_urls]:
+            if not loc.text:
+                continue
+            try:
+                candidate = policy.require_scoped_url(
+                    loc.text,
+                    allowed_origins=origins,
+                    resolve_dns=False,
+                )
+            except CrawlerSecurityError:
+                continue
+            urls.append(candidate)
         return urls
-    except Exception as e:
-        logger.error(f"Error fetching sitemap {sitemap_url}: {e}")
+    except Exception:
+        logger.error("Sitemap fetch failed")
         return []
 
 
-def discover_sitemap(start_url: str, ssl_verify: bool = True) -> str | None:
-    """Check robots.txt for Sitemap: line, fallback to /sitemap.xml"""
-    parsed = urlparse(start_url)
+def discover_sitemap(
+    start_url: str,
+    policy: CrawlerSecurityPolicy,
+) -> str | None:
+    """Check bounded robots.txt and sitemap.xml inside the seed trust scope."""
+
+    try:
+        normalized = policy.validate_url(start_url)
+    except Exception:
+        return None
+    parsed = urlparse(normalized)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
+    origins = {policy.origin(normalized)}
     robots_url = f"{base_url}/robots.txt"
     try:
-        r = requests.get(robots_url, verify=ssl_verify, timeout=10)
-        if r.status_code == 200:
-            for line in r.text.splitlines():
-                if line.lower().startswith("sitemap:"):
-                    return line.split(":", 1)[1].strip()
+        robots = policy.fetch_text(robots_url, max_bytes=512 * 1024)
+        for line in robots.splitlines()[:10_000]:
+            if line.casefold().startswith("sitemap:"):
+                return policy.require_scoped_url(
+                    line.split(":", 1)[1].strip(),
+                    allowed_origins=origins,
+                )
     except Exception:
         pass
-    # Fallback
     candidate = f"{base_url}/sitemap.xml"
     try:
-        r = requests.head(candidate, verify=ssl_verify, timeout=5)
-        if r.status_code in (200, 301, 302):
-            return candidate
+        policy.fetch_bytes(candidate, max_bytes=MAX_SITEMAP_BYTES)
+        return policy.require_scoped_url(candidate, allowed_origins=origins)
     except Exception:
         pass
     return None
@@ -559,19 +690,20 @@ async def crawl_sitemap_sequential(
     crawler,
     sitemap_url: str,
     crawl_config,
-    output_dir: str,
-    ssl_verify: bool = True,
-    allowed_prefixes: List[str] = None,
+    output_dir: Path | None,
+    policy: CrawlerSecurityPolicy,
+    max_pages: int,
+    allowed_prefixes: list[str] | None = None,
     kg_ingestor=None,
-    seen_fingerprints: set = None,
+    seen_fingerprints: set | None = None,
 ):
-    urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
+    urls = fetch_sitemap_urls(sitemap_url, policy, max_urls=max_pages)
     if not urls:
         logger.warning("No URLs found in sitemap.")
-        return
+        return 0
 
     if allowed_prefixes:
-        logger.info(f"Filtering sitemap URLs by prefixes: {allowed_prefixes}")
+        logger.info("Filtering sitemap URLs by configured path scope")
         original_count = len(urls)
         urls = [
             u
@@ -582,7 +714,7 @@ async def crawl_sitemap_sequential(
 
     if not urls:
         logger.warning("No URLs remaining after filtering.")
-        return
+        return 0
 
     logger.info(f"Found {len(urls)} URLs to crawl sequentially.")
     session_id = "sitemap_session"
@@ -590,19 +722,20 @@ async def crawl_sitemap_sequential(
     for url in urls:
         result = await crawler.arun(url=url, config=crawl_config, session_id=session_id)
         if result.success:
-            md = extract_markdown(result)
+            md = extract_markdown(result, policy)
             if not md.strip():
-                logger.warning(f"Empty content, skipping: {url}")
+                logger.warning("Empty content; skipping configured URL")
                 continue
             if is_duplicate_content(md, seen):
-                logger.info(f"Skipping near-duplicate page: {url}")
+                logger.info("Skipping near-duplicate page")
                 continue
-            logger.info(f"Successfully crawled: {url}")
-            save_markdown(md, url, output_dir)
+            logger.info("Page crawl succeeded")
+            save_markdown(md, result.url, output_dir, policy)
             if kg_ingestor:
-                kg_ingestor.submit(url, md)
+                kg_ingestor.submit(result.url, md)
         else:
-            logger.error(f"Failed: {url} - Error: {result.error_message}")
+            logger.error("Crawl failed; upstream details omitted")
+    return len(urls)
 
 
 async def crawl_sitemap_parallel(
@@ -610,21 +743,22 @@ async def crawl_sitemap_parallel(
     sitemap_url: str,
     crawl_config,
     dispatcher,
-    output_dir: str,
+    output_dir: Path | None,
     process,
     peak_memory,
-    ssl_verify: bool = True,
-    allowed_prefixes: List[str] = None,
+    policy: CrawlerSecurityPolicy,
+    max_pages: int,
+    allowed_prefixes: list[str] | None = None,
     kg_ingestor=None,
-    seen_fingerprints: set = None,
+    seen_fingerprints: set | None = None,
 ):
-    urls = fetch_sitemap_urls(sitemap_url, ssl_verify=ssl_verify)
+    urls = fetch_sitemap_urls(sitemap_url, policy, max_urls=max_pages)
     if not urls:
         logger.warning("No URLs found in sitemap.")
-        return
+        return 0
 
     if allowed_prefixes:
-        logger.info(f"Filtering sitemap URLs by prefixes: {allowed_prefixes}")
+        logger.info("Filtering sitemap URLs by configured path scope")
         original_count = len(urls)
         urls = [
             u
@@ -635,7 +769,7 @@ async def crawl_sitemap_parallel(
 
     if not urls:
         logger.warning("No URLs remaining after filtering.")
-        return
+        return 0
 
     logger.info(f"Found {len(urls)} URLs to crawl in parallel.")
 
@@ -650,20 +784,20 @@ async def crawl_sitemap_parallel(
     duplicate_count = 0
     for result in results:
         if result.success:
-            md = extract_markdown(result)
+            md = extract_markdown(result, policy)
             if not md.strip():
                 fail_count += 1
                 continue
             if is_duplicate_content(md, seen):
                 duplicate_count += 1
-                logger.info(f"Skipping near-duplicate page: {result.url}")
+                logger.info("Skipping near-duplicate page")
                 continue
             success_count += 1
-            save_markdown(md, result.url, output_dir)
+            save_markdown(md, result.url, output_dir, policy)
             if kg_ingestor:
                 kg_ingestor.submit(result.url, md)
         else:
-            logger.error(f"Error crawling {result.url}: {result.error_message}")
+            logger.error("Crawl failed; upstream details omitted")
             fail_count += 1
 
     logger.info("\nSummary:")
@@ -671,6 +805,7 @@ async def crawl_sitemap_parallel(
     logger.info(f"  - Duplicates skipped: {duplicate_count}")
     logger.info(f"  - Failed: {fail_count}")
     log_memory(process, peak_memory, "After crawl:")
+    return len(urls)
 
 
 def normalize_url(url):
@@ -679,21 +814,21 @@ def normalize_url(url):
 
 async def crawl_recursive_high_speed(
     crawler,
-    start_urls: List[str],
+    start_urls: list[str],
     max_depth: int,
     crawl_config,
     dispatcher,
-    output_dir: str,
+    output_dir: Path | None,
+    policy: CrawlerSecurityPolicy,
     max_pages: int = 1000,
     ignore_prefix_restriction: bool = False,
-    ssl_verify: bool = True,
     kg_ingestor=None,
 ):
     seen_fingerprints: set = set()
     duplicate_count = 0
     visited = set()
-    current_urls = {normalize_url(u) for u in start_urls}
-    allowed_domains = {urlparse(u).netloc for u in start_urls}
+    current_urls = {policy.validate_url(normalize_url(u)) for u in start_urls}
+    allowed_origins = {policy.origin(u) for u in current_urls}
 
     # Compute the common path prefix across start URLs to stay focused.
     # E.g. for "/docs/r/api-reference/foo.html" the prefix becomes "/docs/".
@@ -704,26 +839,29 @@ async def crawl_recursive_high_speed(
         return "/" + parts[0] + "/" if parts and parts[0] else "/"
 
     allowed_prefixes = {_path_prefix(u) for u in start_urls}
-    logger.info(f"Restricting crawl to path prefixes: {allowed_prefixes}")
+    logger.info("Restricting recursive crawl to configured origin and path scope")
 
     total_saved = 0
-    max_pages = max_pages
     ignore_prefix = ignore_prefix_restriction
 
     for depth in range(max_depth):
-        if total_saved >= max_pages:
-            logger.warning(f"Reached max pages limit ({max_pages}). Stopping.")
+        if len(visited) >= max_pages:
+            logger.warning("Reached configured page limit; stopping")
             break
-        logger.info(f"Crawling Depth {depth + 1}, URLs: {len(current_urls)}")
+        logger.info("Crawling depth %d with %d URL(s)", depth + 1, len(current_urls))
 
         urls_to_crawl = []
         for u in current_urls:
             if u not in visited:
-                if depth == 0 or urlparse(u).netloc in allowed_domains:
+                if policy.origin(u) in allowed_origins:
                     urls_to_crawl.append(u)
 
         if not urls_to_crawl:
             break
+        urls_to_crawl = urls_to_crawl[: max_pages - len(visited)]
+        # Count attempts, not only successful writes, so failures and blocked
+        # pages cannot bypass the global crawl budget.
+        visited.update(urls_to_crawl)
 
         results = await crawler.arun_many(
             urls=urls_to_crawl, config=crawl_config, dispatcher=dispatcher
@@ -731,11 +869,18 @@ async def crawl_recursive_high_speed(
 
         next_level_urls = set()
         for result in results:
-            norm_url = normalize_url(result.url)
+            try:
+                norm_url = policy.require_scoped_url(
+                    normalize_url(result.url),
+                    allowed_origins=allowed_origins,
+                )
+            except CrawlerSecurityError:
+                logger.error("Crawl result violated the configured origin policy")
+                continue
             visited.add(norm_url)
 
             if result.success:
-                md = extract_markdown(result)
+                md = extract_markdown(result, policy)
 
                 # Filter out access-denied pages
                 if (
@@ -745,19 +890,19 @@ async def crawl_recursive_high_speed(
                 ):
                     if is_duplicate_content(md, seen_fingerprints):
                         duplicate_count += 1
-                        logger.info(f"Skipping near-duplicate page: {norm_url}")
-                    elif save_markdown(md, norm_url, output_dir):
+                        logger.info("Skipping near-duplicate page")
+                    elif save_markdown(md, norm_url, output_dir, policy):
                         total_saved += 1
                         if kg_ingestor:
                             kg_ingestor.submit(norm_url, md)
                 else:
                     logger.warning(
-                        f"Skipping {norm_url}: Access Denied or content blocked"
+                        "Skipping URL because access was denied or content was blocked"
                     )
 
                 # Collect internal links for next depth, resolving relative hrefs
-                links = result.links.get("internal", [])
-                logger.info(f"DEBUG: Found {len(links)} internal links for {norm_url}")
+                links = result.links.get("internal", [])[:MAX_LINKS_PER_PAGE]
+                logger.info("Found %d bounded internal link(s)", len(links))
                 for link in links:
                     href = link.get("href", "")
                     if not href:
@@ -765,11 +910,18 @@ async def crawl_recursive_high_speed(
                     # Resolve relative URLs against the current page URL
                     if not href.startswith(("http://", "https://")):
                         href = urljoin(norm_url, href)
-                    next_url = normalize_url(href)
+                    try:
+                        next_url = policy.require_scoped_url(
+                            normalize_url(href),
+                            allowed_origins=allowed_origins,
+                            resolve_dns=False,
+                        )
+                    except CrawlerSecurityError:
+                        continue
                     if next_url not in visited:
                         next_level_urls.add(next_url)
             else:
-                logger.error(f"Failed to crawl {norm_url}: {result.error_message}")
+                logger.error("Crawl failed; upstream details omitted")
 
         # Filter internal links to allowed prefixes (fixes the dead code)
         if not ignore_prefix and allowed_prefixes and next_level_urls:
@@ -780,9 +932,10 @@ async def crawl_recursive_high_speed(
             }
 
         logger.info(
-            f"DEBUG: Extracted {len(next_level_urls)} unique new links for next depth"
+            "Extracted %d bounded unique link(s) for the next depth",
+            len(next_level_urls),
         )
-        current_urls = next_level_urls
+        current_urls = set(list(next_level_urls)[:max_pages])
 
     logger.info(
         f"Crawl complete. Total files saved: {total_saved} "
@@ -826,19 +979,14 @@ async def main():
         "--max-concurrent",
         "--max_concurrent",
         type=int,
-        default=10,
+        default=4,
         help="Max concurrent sessions for parallel strategies.",
     )
     parser.add_argument(
         "--output-dir",
         "--output_dir",
         type=str,
-        help="Directory to save markdown files. If not provided, prints to stdout.",
-    )
-    parser.add_argument(
-        "--insecure",
-        action="store_true",
-        help="Disable SSL verification (Use with caution)",
+        help="Workspace-relative or approved XDG/workspace directory for markdown.",
     )
     parser.add_argument(
         "--disable-magic-js",
@@ -848,7 +996,7 @@ async def main():
     parser.add_argument(
         "--max-pages",
         type=int,
-        default=1000,
+        default=500,
         help="Limit the total number of pages crawled in recursive mode.",
     )
     parser.add_argument(
@@ -859,7 +1007,7 @@ async def main():
     parser.add_argument(
         "--wait-for",
         type=str,
-        help="Custom CSS selector or JS expression to wait for.",
+        help="Custom CSS selector to wait for in explicitly enabled browser mode.",
     )
     parser.add_argument(
         "--no-kg-ingest",
@@ -872,44 +1020,49 @@ async def main():
         "warning) if graph-os is unreachable.",
     )
     parser.add_argument(
-        "--kg-mode",
-        "--kg_mode",
-        choices=["content", "url"],
-        default="content",
-        help="How to ingest into the KG. 'content' (default) pushes THIS "
-        "crawler's cleaned fit_markdown via document_process → a clean "
-        "Document+Chunk regardless of graph-os's own fetch backend. 'url' "
-        "submits just the URL via graph_ingest ingest_url → graph-os re-fetches "
-        "(ArchiveBox/crawl4ai/requests) and also extracts Concepts.",
-    )
-    parser.add_argument(
         "--kg-endpoint",
         "--kg_endpoint",
         type=str,
         default="",
-        help="graph-os gateway base URL for KG ingestion (else $GRAPH_OS_URL, "
-        "default http://graph-os.arpa).",
+        help="graph-os gateway base URL for KG ingestion (else $GRAPH_OS_URL).",
     )
 
     args = parser.parse_args()
 
-    # Precedence: Env Var SSL_VERIFY > CLI --insecure > Default (True)
-    ssl_verify_env = os.getenv("SSL_VERIFY")
-    if ssl_verify_env is not None:
-        ssl_verify = to_boolean(ssl_verify_env)
-    elif args.insecure:
-        ssl_verify = False
-    else:
-        ssl_verify = True
+    try:
+        policy = CrawlerSecurityPolicy.from_agent_config()
+        if not 1 <= len(args.urls) <= MAX_SEED_URLS:
+            raise CrawlerSecurityError("crawler_seed_count_invalid")
+        if not 1 <= args.max_depth <= 8:
+            raise CrawlerSecurityError("crawler_depth_invalid")
+        if not 1 <= args.max_concurrent <= 16:
+            raise CrawlerSecurityError("crawler_concurrency_invalid")
+        if not 1 <= args.max_pages <= MAX_SITEMAP_URLS:
+            raise CrawlerSecurityError("crawler_page_limit_invalid")
+        if args.wait_for:
+            selector = str(args.wait_for).strip()
+            if (
+                not selector
+                or len(selector.encode("utf-8")) > 256
+                or selector.casefold().startswith("js:")
+                or any(ord(character) < 32 for character in selector)
+            ):
+                raise CrawlerSecurityError("crawler_wait_selector_invalid")
+            args.wait_for = "css:" + selector.removeprefix("css:")
+        args.urls = [policy.validate_url(url) for url in args.urls][: args.max_pages]
+        output_dir = policy.resolve_output_dir(args.output_dir)
+    except Exception:
+        logger.error("Crawler configuration was rejected by the security policy")
+        return
 
     # Auto-discovery of sitemap
     original_seed_urls = list(args.urls)
     discovered_sitemap = None
     if not args.no_sitemap:
         for url in args.urls:
-            sitemap = discover_sitemap(url, ssl_verify=ssl_verify)
+            sitemap = discover_sitemap(url, policy)
             if sitemap:
-                logger.info(f"Auto-discovered sitemap: {sitemap}")
+                logger.info("Auto-discovered an approved sitemap")
                 if args.strategy == "recursive":
                     logger.info(
                         "Switching to sitemap-parallel strategy for complete coverage."
@@ -936,14 +1089,13 @@ async def main():
 
         allowed_prefixes = [_path_prefix(u) for u in original_seed_urls]
 
-    process = psutil.Process(os.getpid())
+    try:
+        process = psutil.Process(os.getpid()) if psutil is not None else None
+    except Exception:
+        process = None
     peak_memory = [0]
 
-    browser_config = BrowserConfig(
-        headless=True,
-        verbose=False,
-        extra_args=["--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"],
-    )
+    browser_config = None
     MAGIC_JS = """
     (async () => {
         // 1. Initial scrolls to trigger lazy loading
@@ -1037,42 +1189,57 @@ async def main():
         return document.body && document.body.innerText.length > 100;
     }"""
 
-    crawl_config = CrawlerRunConfig(
-        cache_mode=CacheMode.BYPASS,
-        # Clean & refined markdown (CONCEPT:AU-KG.ingest.web-fetch-front-door): score out nav/sidebar/
-        # cookie-banner/footer chrome via crawl4ai's pruning content filter so
-        # ``result.markdown.fit_markdown`` (preferred by extract_markdown()) is
-        # substantive content, not raw HTML→markdown of the whole page.
-        markdown_generator=DefaultMarkdownGenerator(
-            content_filter=PruningContentFilter()
-        ),
-        # Enable basic anti-bot evasion techniques (simulates human, sets headers, hides webdriver flags)
-        magic=True,
-        wait_until="networkidle",
-        # Wait for the main body/article to explicitly populate with text, bypassing cookie banner race conditions
-        wait_for=args.wait_for or default_wait_for,
-        # Execute JS to clear popups, remove fixed navigation/modals, and explicitly blast headers/footers
-        js_code=None if args.disable_magic_js else MAGIC_JS,
-        # Process iframes natively, which many enterprise techdocs use (e.g. ServiceNow)
-        process_iframes=True,
-        page_timeout=90000,
-        wait_for_timeout=30000,
-        delay_before_return_html=3.0,
-        # Exclude common noise elements (Notice: 'nav' is intentionally omitted to protect the API Index which resides in a <nav>)
-        # excluded_tags=["footer", "header"],
-        exclude_external_links=True,
-    )
-
-    dispatcher = MemoryAdaptiveDispatcher(
-        memory_threshold_percent=70.0,
-        check_interval=1.0,
-        max_session_permit=args.max_concurrent,
-    )
+    crawl_config = None
+    dispatcher = None
+    if policy.allow_browser_fetch:
+        browser_dependencies = (
+            AsyncWebCrawler,
+            BrowserConfig,
+            CacheMode,
+            CrawlerRunConfig,
+            DefaultMarkdownGenerator,
+            MemoryAdaptiveDispatcher,
+            PruningContentFilter,
+        )
+        if any(dependency is None for dependency in browser_dependencies):
+            logger.error("Browser fetching is enabled but its runtime is unavailable")
+            return
+        try:
+            browser_arguments = policy.browser_arguments(args.urls)
+            browser_config = BrowserConfig(
+                headless=True,
+                verbose=False,
+                # Chromium sandboxing remains enabled.
+                extra_args=browser_arguments,
+            )
+            crawl_config = CrawlerRunConfig(
+                cache_mode=CacheMode.BYPASS,
+                markdown_generator=DefaultMarkdownGenerator(
+                    content_filter=PruningContentFilter()
+                ),
+                magic=True,
+                wait_until="networkidle",
+                wait_for=args.wait_for or default_wait_for,
+                js_code=None if args.disable_magic_js else MAGIC_JS,
+                # Iframes can silently expand the browser's egress boundary.
+                process_iframes=False,
+                page_timeout=45_000,
+                wait_for_timeout=15_000,
+                delay_before_return_html=1.0,
+                exclude_external_links=True,
+            )
+            dispatcher = MemoryAdaptiveDispatcher(
+                memory_threshold_percent=70.0,
+                check_interval=1.0,
+                max_session_permit=args.max_concurrent,
+            )
+        except Exception:
+            logger.error("Browser transport configuration is unsupported")
+            return
 
     # Native Knowledge Graph ingestion (CONCEPT:AU-KG.ingest.chunk-overlap-stage) — default ON. Every
     # crawled, cleaned, deduped page is ingested into graph-os / epistemic-graph
-    # as it's found (default 'content' mode → push cleaned markdown via
-    # document_process; 'url' mode → graph_ingest ingest_url). Disabled with
+    # as it's found (privacy-sanitized content via document_process). Disabled with
     # --no-kg-ingest, and this internal crawl subprocess (invoked by
     # agent-utilities as ITS OWN crawl4ai fetch backend, e.g.
     # web_fetch._fetch_via_crawl4ai / skill_graph_pipeline) always passes
@@ -1080,115 +1247,110 @@ async def main():
     # a corpus that pipeline already ingests itself.
     kg_ingestor = None
     if not args.no_kg_ingest:
-        kg_endpoint = (
-            args.kg_endpoint
-            or os.getenv("GRAPH_OS_URL", "").strip()
-            or "http://graph-os.arpa"
-        )
-        kg_ingestor = KGIngestor(
-            kg_endpoint,
-            token=os.getenv("GRAPH_OS_TOKEN", "").strip(),
-            ssl_verify=ssl_verify,
-            mode=args.kg_mode,
-        )
+        kg_endpoint = args.kg_endpoint or os.getenv("GRAPH_OS_URL", "").strip()
+        if kg_endpoint:
+            try:
+                kg_ingestor = KGIngestor(
+                    kg_endpoint,
+                    policy=policy,
+                    token=os.getenv("GRAPH_OS_TOKEN", "").strip(),
+                )
+            except Exception:
+                logger.warning("Knowledge Graph endpoint configuration was rejected")
+        else:
+            print(
+                "Knowledge Graph ingestion skipped: no graph endpoint configured.",
+                file=sys.stderr,
+            )
     seen_fingerprints: set = set()
 
-    try:
-        async with AsyncWebCrawler(config=browser_config) as crawler:
-            if args.strategy == "single":
-                for url in args.urls:
-                    await crawl_single(
-                        crawler, url, crawl_config, args.output_dir, kg_ingestor=kg_ingestor
-                    )
-            elif args.strategy == "chunked":
-                for url in args.urls:
-                    await crawl_chunked(
-                        crawler, url, crawl_config, args.output_dir, kg_ingestor=kg_ingestor
-                    )
-            elif args.strategy == "sitemap-sequential":
-                for url in args.urls:
-                    await crawl_sitemap_sequential(
-                        crawler,
-                        url,
-                        crawl_config,
-                        args.output_dir,
-                        ssl_verify=ssl_verify,
-                        allowed_prefixes=allowed_prefixes
-                        if discovered_sitemap
-                        else None,
-                        kg_ingestor=kg_ingestor,
-                        seen_fingerprints=seen_fingerprints,
-                    )
-            elif args.strategy == "sitemap-parallel":
-                for url in args.urls:
-                    await crawl_sitemap_parallel(
-                        crawler,
-                        url,
-                        crawl_config,
-                        dispatcher,
-                        args.output_dir,
-                        process,
-                        peak_memory,
-                        ssl_verify=ssl_verify,
-                        allowed_prefixes=allowed_prefixes
-                        if discovered_sitemap
-                        else None,
-                        kg_ingestor=kg_ingestor,
-                        seen_fingerprints=seen_fingerprints,
-                    )
-            elif args.strategy == "recursive":
-                await crawl_recursive_high_speed(
+    async def run_selected_strategy(crawler: Any) -> None:
+        scoped_prefixes = allowed_prefixes if discovered_sitemap else None
+        if args.strategy == "single":
+            for url in args.urls:
+                await crawl_single(
                     crawler,
-                    args.urls,
-                    args.max_depth,
+                    url,
                     crawl_config,
-                    dispatcher,
-                    args.output_dir,
-                    max_pages=args.max_pages,
-                    ignore_prefix_restriction=args.ignore_prefix_restriction,
-                    ssl_verify=ssl_verify,
+                    output_dir,
+                    policy,
                     kg_ingestor=kg_ingestor,
                 )
-    except Exception as e:
-        logger.warning(f"crawl4ai/Playwright execution failed: {e}")
-        logger.warning("Attempting graceful fallback using standard HTTP requests...")
-        import requests
-
-        # Fallback is currently best-effort for single/chunked URLs.
-        # Complex recursion/sitemap logic requires the full headless browser engine.
-        if args.strategy in ("single", "chunked"):
+        elif args.strategy == "chunked":
             for url in args.urls:
-                try:
-                    logger.info(f"Fallback fetching: {url}")
-                    resp = requests.get(url, verify=ssl_verify, timeout=15)
-                    resp.raise_for_status()
-
-                    content = resp.text
-                    # Try to strip HTML if BeautifulSoup is available
-                    try:
-                        from bs4 import BeautifulSoup
-
-                        soup = BeautifulSoup(content, "html.parser")
-                        content = soup.get_text(separator="\n", strip=True)
-                    except ImportError:
-                        pass
-
-                    save_markdown(content, url, args.output_dir)
-                    if kg_ingestor and content.strip():
-                        # Our local fetch degraded to plain HTTP; still hand the
-                        # URL to graph-os's own resolver chain (which may reach
-                        # ArchiveBox/crawl4ai server-side) rather than pushing
-                        # this low-quality extraction into the KG ourselves.
-                        kg_ingestor.submit(url)
-                except Exception as ex:
-                    logger.error(f"Fallback fetch failed for {url}: {ex}")
-        else:
-            logger.error(
-                f"Fallback extraction is not supported for strategy '{args.strategy}'. Please run 'playwright install' to fix the browser dependencies."
+                await crawl_chunked(
+                    crawler,
+                    url,
+                    crawl_config,
+                    output_dir,
+                    policy,
+                    kg_ingestor=kg_ingestor,
+                )
+        elif args.strategy == "sitemap-sequential":
+            remaining = args.max_pages
+            for url in args.urls:
+                if remaining <= 0:
+                    break
+                attempted = await crawl_sitemap_sequential(
+                    crawler,
+                    url,
+                    crawl_config,
+                    output_dir,
+                    policy,
+                    remaining,
+                    allowed_prefixes=scoped_prefixes,
+                    kg_ingestor=kg_ingestor,
+                    seen_fingerprints=seen_fingerprints,
+                )
+                remaining -= attempted
+        elif args.strategy == "sitemap-parallel":
+            remaining = args.max_pages
+            for url in args.urls:
+                if remaining <= 0:
+                    break
+                attempted = await crawl_sitemap_parallel(
+                    crawler,
+                    url,
+                    crawl_config,
+                    dispatcher,
+                    output_dir,
+                    process,
+                    peak_memory,
+                    policy,
+                    remaining,
+                    allowed_prefixes=scoped_prefixes,
+                    kg_ingestor=kg_ingestor,
+                    seen_fingerprints=seen_fingerprints,
+                )
+                remaining -= attempted
+        elif args.strategy == "recursive":
+            await crawl_recursive_high_speed(
+                crawler,
+                args.urls,
+                args.max_depth,
+                crawl_config,
+                dispatcher,
+                output_dir,
+                policy,
+                max_pages=args.max_pages,
+                ignore_prefix_restriction=args.ignore_prefix_restriction,
+                kg_ingestor=kg_ingestor,
             )
 
-    if args.output_dir:
-        cleanup_filenames(args.output_dir)
+    try:
+        if policy.allow_browser_fetch:
+            async with AsyncWebCrawler(config=browser_config) as browser:
+                crawler = GuardedBrowserCrawler(
+                    browser,
+                    policy,
+                    args.max_concurrent,
+                )
+                await run_selected_strategy(crawler)
+        else:
+            async with SafeHttpCrawler(policy, args.max_concurrent) as crawler:
+                await run_selected_strategy(crawler)
+    except Exception:
+        logger.error("Crawler execution failed")
 
     if kg_ingestor:
         logger.info(kg_ingestor.summary())

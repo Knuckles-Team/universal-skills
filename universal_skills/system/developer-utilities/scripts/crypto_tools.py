@@ -38,7 +38,7 @@ def hash_text(text, algorithm="sha256"):
         m.update(text.encode("utf-8"))
         return {"hash": m.hexdigest(), "algorithm": algorithm}
     except ValueError as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def generate_hmac(key, message, algorithm="sha256"):
@@ -48,7 +48,7 @@ def generate_hmac(key, message, algorithm="sha256"):
         )
         return {"hmac": h.hexdigest(), "algorithm": algorithm}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": type(e).__name__}
 
 
 def generate_rsa_keypair(key_size=2048):

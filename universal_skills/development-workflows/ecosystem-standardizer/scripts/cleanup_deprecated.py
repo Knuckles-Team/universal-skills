@@ -6,9 +6,19 @@ Deprecated files:
 - Any other files that shouldn't exist per the ecosystem standard
 """
 
+import os
 from pathlib import Path
 
-AGENTS_DIR = Path("/home/apps/workspace/agent-packages/agents")
+
+def _agents_dir() -> Path:
+    package_root = os.environ.get("AGENT_PACKAGES_ROOT")
+    if package_root:
+        return Path(package_root).expanduser().resolve() / "agents"
+    workspace = Path(os.environ.get("AGENT_UTILITIES_WORKSPACE_ROOT", Path.cwd()))
+    return workspace.expanduser().resolve() / "agent-packages" / "agents"
+
+
+AGENTS_DIR = _agents_dir()
 
 # Files that should NOT exist (relative to project root)
 DEPRECATED_FILES = [

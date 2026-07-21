@@ -1,9 +1,11 @@
 ---
 name: service-deployment-orchestrator
 skill_type: workflow
-description: Stateless parallel orchestrator workflow to deploy containerized swarm
-  services with native Caddy routing, Keycloak OIDC SSO, Technitium DNS, GitLab GitOps
-  seeding, Portainer deployment, Grafana observability, and Uptime Kuma monitoring.
+description: >-
+  Deploy a containerized service through configured source-control, DNS, routing,
+  OIDC, registry, orchestrator, observability, and health-monitor providers. Use
+  when a new service must be provisioned end-to-end from AgentConfig profile
+  references. Do not use for an ad hoc local container or raw endpoint setup.
 domain: infrastructure-workflows
 tags:
 - infra
@@ -25,10 +27,14 @@ metadata:
 
 # service-deployment-orchestrator Workflow
 
-Stateless parallel orchestrator workflow to deploy containerized swarm services with native Caddy routing, Keycloak OIDC SSO, Technitium DNS, GitLab GitOps seeding, Portainer deployment, Grafana observability, and Uptime Kuma monitoring.
+Deploy a containerized service without embedding deployment topology. Every step
+accepts named AgentConfig connection or policy references; provider URLs, realms,
+namespaces, node identities, credentials, and local paths remain external.
 
 ### Step 0: user-interaction
-Gather user specifications for the new service, including naming, ports, DNS subdomains, auth (SSO/Keycloak), Portainer nodes, and observability preferences.
+Gather the service contract and named source-control, DNS, routing, identity,
+registry, orchestrator, observability, and monitoring profile references. Reject
+raw endpoints, credentials, hostnames, nodes, namespaces, and local paths.
 Expected: service_specifications
 
 ### Step 1: gitlab-repository-seeder [depends_on: Step 0]
@@ -44,11 +50,12 @@ Generate proxy route configuration blocks, append them to Caddyfile, and perform
 Expected: caddy_route_status
 
 ### Step 4: keycloak-client-onboarder [depends_on: Step 0]
-Onboard the new service by creating and configuring an OIDC client within the homelab realm in Keycloak.
+Onboard the service through the configured OIDC provider and realm reference.
 Expected: oidc_client_credentials
 
 ### Step 5: portainer-sync-agent [depends_on: Step 1, Step 2, Step 3, Step 4]
-Deploy/update the Docker Swarm stack via Portainer utilizing the newly populated GitLab repository, linking it to the insecure local registry.
+Deploy or update the stack through the configured orchestrator and verified
+registry connection/trust profile. Never enable an insecure registry fallback.
 Expected: swarm_stack_status
 
 ### Step 6: service-observability-provisioner [depends_on: Step 5]

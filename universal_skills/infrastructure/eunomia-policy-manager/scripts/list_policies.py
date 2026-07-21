@@ -16,8 +16,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="List Eunomia authorization policies.")
     parser.add_argument(
         "--endpoint",
-        default=os.environ.get("EUNOMIA_ENDPOINT", "http://eunomia.arpa"),
-        help="Eunomia server URL (default: http://eunomia.arpa)",
+        default=os.environ.get("EUNOMIA_ENDPOINT"),
+        required=not bool(os.environ.get("EUNOMIA_ENDPOINT")),
+        help="Eunomia server URL (or set EUNOMIA_ENDPOINT)",
     )
     args = parser.parse_args()
 
@@ -34,14 +35,14 @@ def main() -> None:
     try:
         policies = client.get_policies()
     except Exception as e:
-        print(f"Error connecting to Eunomia at {args.endpoint}: {e}", file=sys.stderr)
+        print(f"Eunomia connection failed ({type(e).__name__})", file=sys.stderr)
         sys.exit(1)
 
     if not policies:
         print("No policies registered on the Eunomia server.")
         return
 
-    print(f"Retrieved {len(policies)} policy(ies) from {args.endpoint}:\n")
+    print(f"Retrieved {len(policies)} policy(ies):\n")
     for p in policies:
         effect_str = getattr(p, "default_effect", "unknown")
         print(f"  📋 {p.name}")

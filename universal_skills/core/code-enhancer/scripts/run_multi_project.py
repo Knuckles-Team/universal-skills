@@ -20,7 +20,7 @@ def _discover_projects(pattern: str) -> list[str]:
     """Discover project directories matching a glob pattern.
 
     Supports:
-        - Direct paths: "/home/apps/workspace/agent-packages/agent-utilities"
+        - Direct paths: "${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities"
         - Glob patterns: "agent-packages/agents/*"
         - Comma-separated: "agent-packages/agents/*,agent-packages/skills/*"
     """
@@ -117,7 +117,7 @@ def _run_single_project(project_dir: str) -> dict:
                     "domain": module_name,
                     "score": 0,
                     "grade": "F",
-                    "findings": [f"Analysis error: {str(e)[:200]}"],
+                    "findings": [f"Analysis error: {type(e).__name__[:200]}"],
                     "justifications": [],
                 }
             )
@@ -224,7 +224,7 @@ async def run_multi_project(
                         [p["path"] for p in successful]
                     )
             except Exception as e:
-                integration_result = {"error": str(e)}
+                integration_result = {"error": type(e).__name__}
 
     # Write per-project reports and SDD handoffs to each project's own .specify/
     if output_dir:

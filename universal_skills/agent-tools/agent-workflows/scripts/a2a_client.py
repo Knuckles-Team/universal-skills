@@ -27,7 +27,7 @@ def parse_agents_md(agents_file_path: str, target_agent_name: str) -> Optional[s
     Expects a markdown table format with 'Name' and 'Endpoint URL' columns.
     """
     if not os.path.exists(agents_file_path):
-        print(f"Error: AGENTS file not found at {agents_file_path}")
+        print("Error: configured AGENTS file was not found")
         return None
 
     try:
@@ -48,11 +48,11 @@ def parse_agents_md(agents_file_path: str, target_agent_name: str) -> Optional[s
             if match:
                 return match.group(1).strip()
 
-        print(f"Error: Agent '{target_agent_name}' not found in {agents_file_path}")
+        print("Error: configured agent was not found")
         return None
 
     except Exception as e:
-        print(f"Error reading AGENTS file: {e}")
+        print(f"Error reading AGENTS file ({type(e).__name__})")
         return None
 
 
@@ -63,7 +63,7 @@ async def validate_agent_card(client, agent_url, print_card=False):
     """
     card_url = f"{agent_url.rstrip('/')}/.well-known/agent-card.json"
     if print_card:
-        print(f"Fetching agent card from: {card_url}\n")
+        print("Fetching the configured agent card.\n")
     try:
         resp = await client.get(card_url)
         if resp.status_code == 200:
@@ -74,13 +74,13 @@ async def validate_agent_card(client, agent_url, print_card=False):
                     print(json.dumps(card_data, indent=2))
                 return True
             except json.JSONDecodeError:
-                print(f"Failed to decode agent card JSON from {card_url}")
+                print("Failed to decode agent card JSON")
                 return False
         else:
             print(f"Failed to fetch agent card. Status Code: {resp.status_code}")
             return False
     except httpx.RequestError as e:
-        print(f"Connection failed to {card_url}: {e}")
+        print(f"Agent-card connection failed ({type(e).__name__})")
         return False
 
 
@@ -88,7 +88,7 @@ async def list_tasks(client, agent_url):
     """
     Fetches the queue of tasks from the backend.
     """
-    print(f"Fetching task queue from {agent_url}...\n")
+    print("Fetching the configured agent task queue.\n")
     payload = {
         "jsonrpc": "2.0",
         "method": "tasks/list",
@@ -103,7 +103,7 @@ async def list_tasks(client, agent_url):
 
         if resp.status_code != 200:
             print(f"Error fetching tasks. Status Code: {resp.status_code}")
-            print(resp.text)
+            print(f"Response body omitted (HTTP {resp.status_code}).")
             return
 
         data = resp.json()
@@ -111,7 +111,7 @@ async def list_tasks(client, agent_url):
             if data["error"].get("code") == -32601:
                 print("Error: The agent does not support the 'tasks/list' method.")
             else:
-                print(f"JSON-RPC Error: {data['error']}")
+                print(f"JSON-RPC error code: {data['error'].get('code', 'unknown')}")
             return
 
         tasks = data.get("result", {}).get("tasks", [])
@@ -126,16 +126,16 @@ async def list_tasks(client, agent_url):
             print(f"Task ID: {t_id} | State: {state}")
 
     except httpx.RequestError as e:
-        print(f"Connection failed during tasks/list: {e}")
+        print(f"Connection failed during tasks/list ({type(e).__name__})")
     except json.JSONDecodeError:
-        print(f"Failed to decode response JSON: {resp.text}")
+        print("Failed to decode tasks/list response JSON")
 
 
 async def send_message(client, agent_url, message_text) -> Optional[str]:
     """
     Sends a message to the agent via JSON-RPC.
     """
-    print(f"\nSending Message: '{message_text}' to {agent_url}")
+    print("\nSending a message to the configured agent.")
 
     payload = {
         "jsonrpc": "2.0",
@@ -158,27 +158,27 @@ async def send_message(client, agent_url, message_text) -> Optional[str]:
 
         if resp.status_code != 200:
             print(f"Error sending message. Status Code: {resp.status_code}")
-            print(resp.text)
+            print(f"Response body omitted (HTTP {resp.status_code}).")
             return None
 
         data = resp.json()
         if "error" in data:
-            print(f"JSON-RPC Error: {data['error']}")
+            print(f"JSON-RPC error code: {data['error'].get('code', 'unknown')}")
             return None
 
         if "result" in data and "id" in data["result"]:
             task_id = data["result"]["id"]
-            print(f"Task Submitted with ID: {task_id}")
+            print("Task submitted.")
             return task_id
         else:
-            print(f"Unexpected response format: {data}")
+            print("Unexpected response format.")
             return None
 
     except httpx.RequestError as e:
-        print(f"Connection failed during message send: {e}")
+        print(f"Connection failed during message send ({type(e).__name__})")
         return None
     except json.JSONDecodeError:
-        print(f"Failed to decode response JSON: {resp.text}")
+        print("Failed to decode message response JSON")
         return None
 
 
@@ -186,7 +186,7 @@ async def poll_task(client, agent_url, task_id):
     """
     Polls the task status until completion.
     """
-    print(f"Polling for result for Task ID: {task_id}...")
+    print("Polling for the configured task result.")
 
     while True:
         await asyncio.sleep(2)
@@ -206,13 +206,16 @@ async def poll_task(client, agent_url, task_id):
 
             if poll_resp.status_code != 200:
                 print(f"Polling Failed: {poll_resp.status_code}")
-                print(f"Details: {poll_resp.text}")
+                print("Polling response body omitted.")
                 break
 
             poll_data = poll_resp.json()
 
             if "error" in poll_data:
-                print(f"Polling Error: {poll_data['error']}")
+                print(
+                    f"Polling JSON-RPC error code: "
+                    f"{poll_data['error'].get('code', 'unknown')}"
+                )
                 break
 
             if "result" in poll_data:
@@ -224,14 +227,14 @@ async def poll_task(client, agent_url, task_id):
                     print(f"\nTask Finished with state: {state}")
                     return poll_data["result"]
             else:
-                print(f"Unexpected polling response: {poll_data}")
+                print("Unexpected polling response format.")
                 break
 
         except httpx.RequestError as e:
-            print(f"Connection failed during polling: {e}")
+            print(f"Connection failed during polling ({type(e).__name__})")
             break
         except json.JSONDecodeError:
-            print(f"Failed to decode polling response: {poll_resp.text}")
+            print("Failed to decode polling response JSON")
             break
 
 
@@ -239,7 +242,7 @@ async def stream_task(client, agent_url, task_id):
     """
     Streams Server-Sent Events (SSE) updates for the task.
     """
-    print(f"Streaming updates for Task ID: {task_id}...\n")
+    print("Streaming updates for the configured task.\n")
 
     payload = {
         "jsonrpc": "2.0",
@@ -280,21 +283,19 @@ async def stream_task(client, agent_url, task_id):
                     try:
                         event_data = json.loads(data_str)
                         # Minimal rendering of incoming events
-                        print(
-                            f"Event: {event_data.get('type', 'update')} - {json.dumps(event_data.get('data', {}))}"
-                        )
+                        print(f"Event type: {event_data.get('type', 'update')}")
 
                         if event_data.get("type") == "completed":
                             print("\nTask marked completed via stream.")
                             break
                     except json.JSONDecodeError:
-                        print(f"Stream raw: {data_str}")
+                        print("Stream event was not valid JSON; body omitted.")
 
         print("\nStream finished, fetching final result...")
         return await poll_task(client, agent_url, task_id)
 
     except httpx.RequestError as e:
-        print(f"Connection failed during streaming: {e}")
+        print(f"Connection failed during streaming ({type(e).__name__})")
         return None
 
 
@@ -343,7 +344,7 @@ async def main():
     parser.add_argument(
         "--url",
         required=False,
-        help="The base URL of the A2A Agent (e.g., http://agent.arpa/a2a/). Use this OR --agent-name.",
+        help="The base URL of the A2A Agent (e.g., https://agent.example/a2a/). Use this OR --agent-name.",
     )
     parser.add_argument(
         "--agent-name",
@@ -386,13 +387,13 @@ async def main():
     elif args.url:
         agent_url = args.url
     else:
-        print(f"Looking up agent '{args.agent_name}' in {args.agents_file}...")
+        print("Looking up the configured agent.")
         agent_url = parse_agents_md(args.agents_file, args.agent_name)
         if not agent_url:
             sys.exit(1)
 
     print("Initializing A2A Client...")
-    print(f"Target Agent: {agent_url}")
+    print("Target agent configured.")
     print(f"Action: {args.action}")
     if args.insecure:
         print("Warning: SSL verification is disabled (--insecure)")
@@ -411,7 +412,7 @@ async def main():
 
         elif args.action == "chat":
             query = args.query
-            print(f"Query: {query}")
+            print("Query configured.")
 
             # 1. Validate Agent (Silently)
             if not await validate_agent_card(client, agent_url, print_card=False):

@@ -97,7 +97,7 @@ def main():
                 print(f"  {grid_file}")
 
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: {type(e).__name__}", file=sys.stderr)
         sys.exit(1)
 
 

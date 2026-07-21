@@ -23,8 +23,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--endpoint",
-        default=os.environ.get("EUNOMIA_ENDPOINT", "http://eunomia.arpa"),
-        help="Eunomia server URL (default: http://eunomia.arpa)",
+        default=os.environ.get("EUNOMIA_ENDPOINT"),
+        required=not bool(os.environ.get("EUNOMIA_ENDPOINT")),
+        help="Eunomia server URL (or set EUNOMIA_ENDPOINT)",
     )
     parser.add_argument(
         "--policy-dir",
@@ -49,19 +50,19 @@ def main() -> None:
         sys.exit(1)
 
     if not os.path.isdir(args.policy_dir):
-        print(f"Error: Policy directory not found: {args.policy_dir}", file=sys.stderr)
+        print("Error: configured policy directory was not found", file=sys.stderr)
         sys.exit(1)
 
     client = EunomiaClient(endpoint=args.endpoint)
 
     json_files = sorted(f for f in os.listdir(args.policy_dir) if f.endswith(".json"))
     if not json_files:
-        print(f"No .json policy files found in {args.policy_dir}")
+        print("No JSON policy files found in the configured directory")
         return
 
-    print(f"Found {len(json_files)} policy file(s) in {args.policy_dir}/")
+    print(f"Found {len(json_files)} policy file(s)")
     mode = "DRY RUN" if args.dry_run else "LIVE"
-    print(f"Pushing policies ({mode}) to {args.endpoint}...\n")
+    print(f"Pushing policies ({mode}) to the configured endpoint...\n")
 
     success = 0
     errors = 0
@@ -89,7 +90,7 @@ def main() -> None:
             success += 1
 
         except Exception as e:
-            print(f"  [error]  {filename}: {e}", file=sys.stderr)
+            print(f"  [error]  {filename}: {type(e).__name__}", file=sys.stderr)
             errors += 1
 
     print(f"\nDone. {success} succeeded, {errors} failed.")

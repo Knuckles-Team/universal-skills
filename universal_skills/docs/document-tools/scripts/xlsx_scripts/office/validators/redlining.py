@@ -7,6 +7,9 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from safe_xml import SafeXmlError, parse_xml
+from safe_zip import safe_extract_zip
+
 
 class RedliningValidator:
     def __init__(self, unpacked_dir, original_docx, verbose=False, author="Agent"):
@@ -24,13 +27,11 @@ class RedliningValidator:
     def validate(self):
         modified_file = self.unpacked_dir / "word" / "document.xml"
         if not modified_file.exists():
-            print(f"FAILED - Modified document.xml not found at {modified_file}")
+            print("FAILED - modified document.xml was not found")
             return False
 
         try:
-            import xml.etree.ElementTree as ET
-
-            tree = ET.parse(modified_file)
+            tree = parse_xml(modified_file)
             root = tree.getroot()
 
             del_elements = root.findall(".//w:del", self.namespaces)
@@ -60,9 +61,9 @@ class RedliningValidator:
 
             try:
                 with zipfile.ZipFile(self.original_docx, "r") as zip_ref:
-                    zip_ref.extractall(temp_path)
+                    safe_extract_zip(zip_ref, temp_path)
             except Exception as e:
-                print(f"FAILED - Error unpacking original docx: {e}")
+                print(f"FAILED - Error unpacking original docx: {type(e).__name__}")
                 return False
 
             original_file = temp_path / "word" / "document.xml"
@@ -73,14 +74,12 @@ class RedliningValidator:
                 return False
 
             try:
-                import xml.etree.ElementTree as ET
-
-                modified_tree = ET.parse(modified_file)
+                modified_tree = parse_xml(modified_file)
                 modified_root = modified_tree.getroot()
-                original_tree = ET.parse(original_file)
+                original_tree = parse_xml(original_file)
                 original_root = original_tree.getroot()
-            except ET.ParseError as e:
-                print(f"FAILED - Error parsing XML files: {e}")
+            except SafeXmlError as e:
+                print(f"FAILED - Error parsing XML files: {type(e).__name__}")
                 return False
 
             self._remove_author_tracked_changes(original_root)

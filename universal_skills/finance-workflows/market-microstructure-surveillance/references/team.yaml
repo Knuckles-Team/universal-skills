@@ -1,0 +1,5 @@
+name: market-microstructure-surveillance-team
+task_pattern: defensive market microstructure surveillance
+execution_mode: sequential
+specialist_ids:
+  - quant-analyst

@@ -186,7 +186,7 @@ def cmd_start(args, *, deps: Any):
     try:
         mcp_config_json = build_mcp_config_json(agent_config)
     except ValueError as e:
-        print(f"❌ {e}")
+        print(f"❌ {type(e).__name__}")
         return 1
 
     use_cli_system_prompt = bool(
@@ -240,7 +240,7 @@ def cmd_start(args, *, deps: Any):
                 session_layout=getattr(args, "tmux_layout", "sessions"),
             )
         except ValueError as e:
-            print(f"❌ {e}")
+            print(f"❌ {type(e).__name__}")
             return 1
     else:
         if not start_session(
@@ -544,7 +544,7 @@ def cmd_assign(args, *, deps: Any, start_handler: Callable | None = None):
             with open(args.task_file, "r") as f:
                 task = f.read()
         except FileNotFoundError:
-            print(f"❌ Task file not found: {args.task_file}")
+            print("❌ Configured task file was not found")
             return 1
     else:
         task = sys.stdin.read()

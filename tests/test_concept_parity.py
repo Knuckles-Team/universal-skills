@@ -1,32 +1,53 @@
 import os
 import re
+import subprocess
+from pathlib import Path
 
 import pytest
 
+
 # Paths
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(TEST_DIR)
-WORKSPACE_DIR = os.path.dirname(os.path.dirname(ROOT_DIR))
-MASTER_OVERVIEW_PATH = os.path.join(
-    WORKSPACE_DIR, "agent-utilities", "docs", "overview.md"
-)
-if not os.path.exists(MASTER_OVERVIEW_PATH):
-    # A git worktree (the mandated workflow — see AGENTS.md "Working with Git
-    # Worktrees") doesn't sit at the canonical
-    # workspace/agent-packages/skills/<repo> depth this relative computation
-    # assumes (it lives under /home/apps/worktrees/<repo>/<branch> instead) —
-    # fall back to the canonical checkout so the gate still resolves real
-    # registered concepts instead of silently treating everything as unregistered.
-    _CANONICAL_OVERVIEW = (
-        "/home/apps/workspace/agent-packages/agent-utilities/docs/overview.md"
-    )
-    if os.path.exists(_CANONICAL_OVERVIEW):
-        MASTER_OVERVIEW_PATH = _CANONICAL_OVERVIEW
+TEST_DIR = Path(__file__).resolve().parent
+ROOT_DIR = TEST_DIR.parent
+
+
+def resolve_master_overview() -> Path | None:
+    """Locate the sibling registry from a monorepo checkout or Git worktree."""
+    candidates: list[Path] = []
+    if configured := os.environ.get("AGENT_UTILITIES_OVERVIEW"):
+        candidates.append(Path(configured).expanduser())
+    for parent in ROOT_DIR.parents:
+        candidates.append(parent / "agent-utilities" / "docs" / "overview.md")
+    try:
+        common_dir = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=ROOT_DIR,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        common_path = Path(common_dir)
+        if not common_path.is_absolute():
+            common_path = (ROOT_DIR / common_path).resolve()
+        canonical_repo = common_path.parent if common_path.name == ".git" else common_path
+        if len(canonical_repo.parents) >= 2:
+            candidates.append(
+                canonical_repo.parents[1]
+                / "agent-utilities"
+                / "docs"
+                / "overview.md"
+            )
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return next((candidate for candidate in candidates if candidate.is_file()), None)
+
+
+MASTER_OVERVIEW_PATH = resolve_master_overview()
 
 
 def extract_concepts_from_overview(filepath):
     """Extracts concepts from the markdown table in the master overview.md"""
-    if not os.path.exists(filepath):
+    if filepath is None or not Path(filepath).is_file():
         return set()
 
     concepts = set()
@@ -76,6 +97,11 @@ def test_concept_parity():
     Enforces that all concepts documented or used in universal-skills
     exist in the master agent-utilities registry.
     """
+    if MASTER_OVERVIEW_PATH is None:
+        pytest.skip(
+            "agent-utilities concept registry is not available; set "
+            "AGENT_UTILITIES_OVERVIEW for a standalone checkout"
+        )
     master_concepts = extract_concepts_from_overview(MASTER_OVERVIEW_PATH)
 
     # Extract concepts from this project

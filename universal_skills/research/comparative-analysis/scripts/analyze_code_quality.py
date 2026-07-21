@@ -129,7 +129,7 @@ def analyze_python_quality(project_path: Path) -> dict:
         "function_length": {
             "avg": round(sum(lengths) / max(len(lengths), 1), 1),
             "max": max(lengths),
-            "long_functions": len([l for l in lengths if l > 50]),
+            "long_functions": len([length for length in lengths if length > 50]),
         },
         "stubs": {"stub_count": stub_count, "todo_count": todo_count},
         "top_complex": sorted(all_functions, key=lambda x: -x["complexity"])[:5],

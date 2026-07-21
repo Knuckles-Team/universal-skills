@@ -5,7 +5,6 @@ Assigns unique CONCEPT prefixes, creates concept registries, and
 links back to agent-utilities via ECO-4.0 bridge.
 """
 
-import os
 import re
 import tomllib
 from pathlib import Path
@@ -144,7 +143,7 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
         "",
         f"> **Prefix**: `CONCEPT:{prefix}-*`",
         f"> **Version**: {version}",
-        f"> **Bridge**: [`CONCEPT:ECO-4.0`](../../agent-utilities/docs/concepts.md) (Unified Toolkit Ingestion)",
+        "> **Bridge**: [`CONCEPT:ECO-4.0`](../../agent-utilities/docs/concepts.md) (Unified Toolkit Ingestion)",
         "",
         "---",
         "",
@@ -240,7 +239,7 @@ def main():
         print(f"  ✅ {name} → CONCEPT:{prefix}-*")
 
     print(f"\n📊 Created {created} concepts.md files")
-    print(f"📋 Prefix collision check:")
+    print("📋 Prefix collision check:")
     prefixes = list(PREFIX_MAP.values())
     dupes = [p for p in prefixes if prefixes.count(p) > 1]
     if dupes:

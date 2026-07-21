@@ -1,7 +1,7 @@
 {
   "domain": "CA-008",
   "domain_name": "Performance",
-  "project": "/home/apps/workspace/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
+  "project": "${WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",
   "benchmarks": {
     "benchmark_dir": false,
     "pytest_benchmark": false,

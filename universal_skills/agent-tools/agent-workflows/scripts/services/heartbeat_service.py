@@ -165,7 +165,7 @@ def notify_heartbeat_failure(
             print(f"   {stderr}")
         return False
     except Exception as e:
-        print(f"⚠️  notifier command error: {e}")
+        print(f"⚠️  notifier command error: {type(e).__name__}")
         return False
 
 

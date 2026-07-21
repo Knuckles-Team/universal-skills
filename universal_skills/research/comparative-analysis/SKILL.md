@@ -336,7 +336,7 @@ Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this st
 # - [ ] Design Consistent: Does the implementation follow the same patterns as sibling modules?
 # - [ ] Tests Exist: Is there at least one test that exercises the hot path through this feature?
 
-rm -rf /home/apps/workspace/.specify/ca_repos/<session_id>
+rm -rf ${AGENT_UTILITIES_WORKSPACE_ROOT}/.specify/ca_repos/<session_id>
 ```
 
 ## Output Location Rules
