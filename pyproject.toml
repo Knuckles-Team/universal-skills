@@ -14,68 +14,68 @@ dependencies = [ ]
 
 [project.optional-dependencies]
 test = [
-    "build>=1.2.2",
-    "setuptools>=80.9.0",
-    "wheel",
-    "pytest-xdist>=3.6.0",
-    "pytest",
-    "pytest-asyncio", "pytest-cov",
-    "pytest-timeout",
-    "PyYAML",
-    "httpx"
+    "build>=1.5.0",
+    "setuptools>=83.0.0",
+    "wheel>=0.47.0",
+    "pytest-xdist>=3.8.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",
+    "pytest-timeout>=2.4.0",
+    "PyYAML>=6.0.3",
+    "httpx>=0.28.1"
 ]
 agent-browser = []
-agent-builder = ["PyYAML"]
+agent-builder = ["PyYAML>=6.0.3"]
 agent-package-builder = []
 agent-spawner = []
-mcp-client = ["fastmcp", "python-dotenv"]
-agent-workflows = ["httpx", "PyYAML"]
+mcp-client = ["fastmcp>=3.4.4", "python-dotenv>=1.2.2"]
+agent-workflows = ["httpx>=0.28.1", "PyYAML>=6.0.3"]
 automated-credential-rotation = []
 algorithmic-art = []
-api-wrapper-builder = ["requests", "pydantic"]
+api-wrapper-builder = ["requests>=2.34.2", "pydantic>=2.13.4"]
 brainstorming = []
 brand-guidelines = []
-browser-tools = ["playwright", "Pillow>=12.3.0"]
+browser-tools = ["playwright>=1.61.0", "Pillow>=12.3.0"]
 c4-architecture = []
 canvas-design = []
-cloudflare-deploy = ["requests", "python-dotenv"]
+cloudflare-deploy = ["requests>=2.34.2", "python-dotenv>=1.2.2"]
 creative-media = ["Pillow>=12.3.0"]
-database-tools = ["mysql-connector-python", "psycopg2-binary", "pymssql"]
-document-converter = ["mammoth", "markdownify", "pymupdf4llm"]
-developer-utilities = ["bcrypt", "cryptography>=48.0.1", "sqlparse", "toml", "user-agents", "PyYAML"]
-document-tools = ["Pillow>=12.3.0", "defusedxml", "python-docx", "EbookLib", "lxml>=6.1.0", "openpyxl", "pdf2image", "pdfplumber", "python-pptx", "Pygments", "pypdf>=6.13.3", "validators"]
+database-tools = ["mysql-connector-python>=9.7.0", "psycopg2-binary>=2.9.12", "pymssql>=2.3.13"]
+document-converter = ["mammoth>=1.12.0", "markdownify>=1.2.3", "pymupdf4llm>=1.28.0"]
+developer-utilities = ["bcrypt>=5.0.0", "cryptography>=49.0.0", "sqlparse>=0.5.5", "toml>=0.10.2", "user-agents>=2.2.0", "PyYAML>=6.0.3"]
+document-tools = ["Pillow>=12.3.0", "defusedxml>=0.7.1", "python-docx>=1.2.0", "EbookLib>=0.20", "lxml>=6.1.1", "openpyxl>=3.1.5", "pdf2image>=1.17.0", "pdfplumber>=0.11.10", "python-pptx>=1.0.2", "Pygments>=2.20.0", "pypdf>=6.14.2", "validators>=0.35.0"]
 github-backlog-planner = []
 github-ci-failure-sweep = []
-github-tools = ["requests", "python-dotenv"]
-google-workspace = ["keyring", "requests"]
+github-tools = ["requests>=2.34.2", "python-dotenv>=1.2.2"]
+google-workspace = ["keyring>=25.7.0", "requests>=2.34.2"]
 internal-comms = []
-jupyter-notebook = ["nbformat", "nbconvert"]
+jupyter-notebook = ["nbformat>=5.10.4", "nbconvert>=7.17.1"]
 marp-presentations = []
-mcp-builder = ["defusedxml>=0.7.1", "fastmcp"]
+mcp-builder = ["defusedxml>=0.7.1", "fastmcp>=3.4.4"]
 mermaid-diagrams = []
 product-strategy = []
 pre-mortem = []
 react-development = []
 react-native-skills = []
-security-tools = ["networkx", "requests"]
+security-tools = ["networkx>=3.6.1", "requests>=2.34.2"]
 session-handoff = []
-skill-builder = ["PyYAML"]
-skill-catalog-auditor = ["PyYAML"]
+skill-builder = ["PyYAML>=6.0.3"]
+skill-catalog-auditor = ["PyYAML>=6.0.3"]
 universal-installer = []
-skill-graph-builder = ["crawl4ai>=0.9.0", "playwright", "psutil", "requests", "pymupdf4llm>=0.0.17", "pyyaml>=6.0"]
-skill-workflow-builder = ["PyYAML"]
-system-tools = ["psutil"]
+skill-graph-builder = ["crawl4ai>=0.9.2", "playwright>=1.61.0", "psutil>=7.2.2", "requests>=2.34.2", "pymupdf4llm>=1.28.0", "pyyaml>=6.0.3"]
+skill-workflow-builder = ["PyYAML>=6.0.3"]
+system-tools = ["psutil>=7.2.2"]
 tdd-methodology = []
 theme-factory = []
 user-research = []
-web-artifacts = ["requests"]
-web-crawler = ["crawl4ai>=0.9.0", "playwright", "psutil", "requests"]
+web-artifacts = ["requests>=2.34.2"]
+web-crawler = ["crawl4ai>=0.9.2", "playwright>=1.61.0", "psutil>=7.2.2", "requests>=2.34.2"]
 web-design-guidelines = []
-web-search = ["ddgs", "requests"]
+web-search = ["ddgs>=9.14.4", "requests>=2.34.2"]
 web-fetch = []
 website-builder = []
 website-cloner = []
-code-enhancer = ["requests", "packaging", "keepachangelog>=2.0.0", "psutil>=5.9.0"]
+code-enhancer = ["requests>=2.34.2", "packaging>=26.2", "keepachangelog>=2.0.0", "psutil>=7.2.2"]
 
 
 
