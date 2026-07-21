@@ -305,6 +305,12 @@ repos:
     language: system
     pass_filenames: false
     files: ^(README\\.md|\\.env\\.example|mcp_config.*\\.json|.*/mcp_config.*\\.json|docker/.*compose.*\\.ya?ml|.*/auth\\.py|.*/mcp_server\\.py)$
+  - id: workspace-source-drift
+    name: check uv workspace-source drift (no path source for a workspace member)
+    entry: python scripts/check_workspace_source_drift.py --check
+    language: system
+    pass_filenames: false
+    files: ^pyproject\\.toml$
   - id: check-bumpversion
     name: validate bumpversion config
     entry: |-
@@ -3278,6 +3284,18 @@ def scaffold(
                 "agents/gitlab-api/scripts/ manually"
             )
 
+    # Bundled workspace-source drift guard (CONCEPT:OS-5.72-workspace-uv-sources) —
+    # sourced from this scaffolder's own scripts/ dir, not templates/, since it is
+    # the scaffolder's own tooling, not a per-package golden reference.
+    _scaffolder_scripts_dir = Path(__file__).resolve().parent
+    for script_name in ("workspace_sources.py", "check_workspace_source_drift.py"):
+        src = _scaffolder_scripts_dir / script_name
+        dst = root / "scripts" / script_name
+        if src.is_file():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+            print(f"  ✅ {dst.relative_to(root.parent)} (bundled workspace-source guard)")
+
     # requirements.txt mirrors [project].dependencies
     import tomllib
 
@@ -3288,6 +3306,18 @@ def scaffold(
     req_path = root / "requirements.txt"
     req_path.write_text("\n".join(deps) + "\n", encoding="utf-8")
     print(f"  ✅ {req_path.relative_to(root.parent)}")
+
+    # Auto-emit the root uv workspace [tool.uv.sources] entry for the new package
+    # (CONCEPT:OS-5.72-workspace-uv-sources) — never a hand-edit, never a path
+    # source for a sibling. No-op (prints nothing further) if this scaffold isn't
+    # under a `[tool.uv.workspace]` root.
+    from workspace_sources import find_workspace_root, sync_uv_sources
+
+    workspace_root = find_workspace_root(root)
+    if workspace_root is not None:
+        changed = sync_uv_sources(workspace_root)
+        verb = "Synced" if changed else "Already in sync:"
+        print(f"  ✅ {verb} {workspace_root / 'pyproject.toml'} [tool.uv.sources]")
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")
