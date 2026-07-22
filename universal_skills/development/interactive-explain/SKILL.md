@@ -14,8 +14,11 @@ metadata:
 
 Generates interactive HTML/JS artifacts to explain logic or concepts.
 
-## Tools
-- `generate_interactive_explanation`: Produces a self-contained HTML/JS explanation.
+## Capability
+
+**generate_interactive_explanation** — produce a self-contained HTML/JS
+explanation. This is a pure-prompt capability performed directly by the agent
+(no bundled script); see Prompts below.
 
 ## Prompts
 You are an expert at educational web design.

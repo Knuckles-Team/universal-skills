@@ -14,10 +14,12 @@ metadata:
 
 Specialized skill for exploratory testing, curl verification, and structured execution logging.
 
-## Tools
-- `run_manual_test`: Orchestrates a manual testing cycle with structured notes.
-- `python_executor`: Runs python code for verification.
-- `curl_explorer`: Performs HTTP requests for API verification.
+## Capability
+
+**run_manual_test** — orchestrate a manual testing cycle with structured
+notes, using the agent's own shell/Python execution (`python_executor`,
+`curl_explorer`) for verification. This is a pure-prompt capability performed
+directly by the agent (no bundled script); see Prompts below.
 
 ## Prompts
 You are an expert at exploratory testing. When asked to verify a feature:

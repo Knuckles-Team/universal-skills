@@ -14,8 +14,11 @@ metadata:
 
 Generates linear, step-by-step walkthroughs of a codebase or implementation.
 
-## Tools
-- `generate_walkthrough`: Produces a markdown walkthrough of a given path.
+## Capability
+
+**generate_walkthrough** — produce a markdown walkthrough of a given path. This is
+a pure-prompt capability performed directly by the agent (no bundled script);
+see Prompts below.
 
 ## Prompts
 You are an expert technical writer. Your goal is to make complex codebases understandable.
