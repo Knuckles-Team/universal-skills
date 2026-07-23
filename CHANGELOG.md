@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **`second-brain-sync` now drives the real one-call sync (W3.9).** Rewired
+  the primary flow onto `graph_ingest action="sync_second_brain"` — a single
+  call that ingests a notes directory/file with full provenance, extracts
+  evidence-spanned facts and typed claims (each PROPOSED into the governed
+  `ClaimFlywheel` lifecycle `graph_claims` drives — never silently accepted),
+  and scans every new claim against existing graph content, persisting any
+  contradiction as a propose-only `:BeliefRevisionProposal` (the exact node
+  shape agent-utilities' loop-controller belief-revision pass already writes,
+  so existing review tooling picks it up with zero new UI). Documents where
+  Nextcloud/Paperless-ngx sources land before this call (their own existing
+  connector presets/skills materialize the notes locally first — one reuse
+  path, never a new connector). The multi-tool per-source path (PDFs, repos,
+  bookmarked pages) is retained under "Larger or non-note sources". Also
+  corrected `references/walkthrough.md`'s friction-scan example, which
+  documented a `severity: "none"` "corroborating" row the real
+  `ContradictionDetector` never emits (it only ever returns a genuine
+  detected opposition) — replaced with an accurate contradiction example and
+  a full one-call walkthrough (§A) alongside the existing multi-source one
+  (§B). See agent-utilities' own CHANGELOG for the underlying
+  `sync_second_brain` primitive.
 - **Collapsed the overlapping deployment skills into one canonical workflow.** `agent-os-deployment` and `infrastructure-orchestrator` were subsets of `agent-os-genesis` (the day0 superset) — folded `dns-migration-utility` into genesis as a conditional Step 12, preserved `migrate_dns.py` into the `dns-migration-utility` atomic skill, and deleted both redundant workflows (No-Legacy). Unified deployment = `agent-utilities-deployment` (tiny/single-node) + `agent-os-genesis` (enterprise), both composed from shared atomic skills.
 
 ### Added
