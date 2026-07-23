@@ -49,7 +49,7 @@ Present the list of prioritized incidents to the user. Request selection of a sp
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
-Fetch full details for the selected incident ID using the `servicenow_incidents` action with `action='get_incident'` and the incident's sys_id.
+Fetch full details for the selected incident ID using the `servicenow_incidents` action with `action='get_incident'` and `params_json` containing `{"incident_id": "<sys_id>"}` — the underlying `IncidentModel` field is `incident_id`, not `sys_id`; passing `sys_id` is silently dropped and the call fails with `MissingParameterError`.
 
 ### Step 3: Incident-Detail Presentation [skill: user-interaction]
 **Agent**: `report-agent`

@@ -49,7 +49,7 @@ Display the chronological change log and scheduled maintenance windows to the us
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
-Retrieve comprehensive details for the selected change request ID using `servicenow_change_management` with `action='get_change_request'` and `action='get_change_request_conflict'` to detect environmental schedule clashes.
+Retrieve comprehensive details for the selected change request ID using `servicenow_change_management` with `action='get_change_request'` and `action='get_change_request_conflict'` to detect environmental schedule clashes. Both actions key on `params_json` containing `{"change_request_sys_id": "<sys_id>"}` — the underlying `ChangeManagementModel` field is `change_request_sys_id`, not `sys_id`; passing `sys_id` is silently dropped and the call fails with `MissingParameterError`.
 
 ### Step 3: Change-Detail Presentation [skill: user-interaction]
 **Agent**: `report-agent`
