@@ -8,7 +8,7 @@ must remain environment-neutral, current-only, and deterministic.
 
 | Path | Status | Contract |
 |---|:---:|---|
-| `pyproject.toml` | R | Python 3.11–3.14; `agent-utilities[mcp]>=1.27.1,<2.0.0` and `epistemic-graph[full]>=2.23.1,<3.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
+| `pyproject.toml` | R | Python 3.11–3.14; `agent-utilities[mcp]>=2.0.0,<3.0.0` and `epistemic-graph[full]>=3.0.0,<4.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
 | `requirements.txt` | R | Exact newline rendering of `[project].dependencies`; no optional or recursive dependency. |
 | `.bumpversion.cfg` | R | Version fields and installed Docker targets only; no self-referencing-extra target. |
 | `.pre-commit-config.yaml` | R | Reviewed immutable hook revisions plus formatting, typing, tests, supply-chain, docs, privacy, skill, environment-drift, and generated-readme gates. |

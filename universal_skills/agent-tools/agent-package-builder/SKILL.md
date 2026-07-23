@@ -73,14 +73,14 @@ Every generated distribution uses bounded current ranges:
 ```toml
 [project]
 dependencies = [
-  "agent-utilities[mcp]>=1.27.1,<2.0.0",
-  "epistemic-graph[full]>=2.23.1,<3.0.0",
+  "agent-utilities[mcp]>=2.0.0,<3.0.0",
+  "epistemic-graph[full]>=3.0.0,<4.0.0",
 ]
 
 [project.optional-dependencies]
-mcp = ["agent-utilities[mcp]>=1.27.1,<2.0.0"]
-agent = ["agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0"]
-all = ["agent-utilities[mcp,agent-runtime,logfire]>=1.27.1,<2.0.0"]
+mcp = ["agent-utilities[mcp]>=2.0.0,<3.0.0"]
+agent = ["agent-utilities[agent-runtime,logfire]>=2.0.0,<3.0.0"]
+all = ["agent-utilities[mcp,agent-runtime,logfire]>=2.0.0,<3.0.0"]
 ```
 
 GraphQL packages add `gql[requests]>=4.0.0` directly to the applicable dependency

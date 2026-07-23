@@ -28,7 +28,7 @@ Follow these steps when defining a new agent package:
 
 ### 1. Initialize the Package
 1. Create a `my_agent/agent_data` directory within the package.
-2. Ensure `pyproject.toml` depends on `agent-utilities>=0.2.23` (and includes `agent` under optional dependencies).
+2. Ensure `pyproject.toml` depends on `agent-utilities>=2.0.0` (and includes `agent` under optional dependencies).
 3. Configure `project.scripts` in `pyproject.toml` to expose the agent entry point (e.g., `my-agent = "my_package.agent_server:agent_server"`).
 
 ### 2. Configure Agent Workspace Files
