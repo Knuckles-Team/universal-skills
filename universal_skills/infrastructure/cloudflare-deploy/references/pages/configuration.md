@@ -40,7 +40,7 @@ Set build command, output dir, env vars. Framework auto-detection configures aut
 ### Local (.dev.vars)
 ```bash
 # .dev.vars (never commit)
-SECRET_KEY="local-secret-key"  # sanitizer:ignore
+SECRET_KEY="your-secret-key-here"  # sanitizer:ignore — placeholder value, not a real secret
 API_TOKEN="dev-token-123"
 ```
 

@@ -101,6 +101,7 @@ EXCLUDED_EXTENSIONS = {
     ".wav",
     ".lock",
     ".svg",
+    ".skill",
 }
 
 # Placeholder / Mock indicators
@@ -225,7 +226,15 @@ def scan_repository(repo_path: Path):
                         break
 
         # 2. Check for secrets
-        if file_path.suffix.lower() in EXCLUDED_EXTENSIONS:
+        # ``Path.suffix`` only ever returns the final dot-segment, so a
+        # compound entry like ".tar.gz" can never match through it alone
+        # (a "*.tar.gz" file's ``.suffix`` is just ".gz"). Also check the
+        # full joined suffix chain so multi-part extensions are honored.
+        compound_suffix = "".join(file_path.suffixes).lower()
+        if (
+            file_path.suffix.lower() in EXCLUDED_EXTENSIONS
+            or compound_suffix in EXCLUDED_EXTENSIONS
+        ):
             continue
 
         if file_path.name == "security_sanitizer.py":

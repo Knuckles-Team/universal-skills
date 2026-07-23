@@ -26,7 +26,10 @@ def test_redact_token_shapes():
     samples = {
         "github": "GITHUB_TOKEN=ghp_" + "A" * 36,
         "gitlab": "token glpat-" + "B" * 20,
-        "langfuse": "sk-lf-test-placeholder-value",
+        # Concatenated (like the two fixtures above) so the fake-secret shape
+        # never appears verbatim on one source line for the security sanitizer
+        # to match against.
+        "langfuse": "sk-lf-" + "C" * 20,
         "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
         "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ."
         "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",

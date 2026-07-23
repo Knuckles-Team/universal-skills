@@ -104,7 +104,7 @@ secrets (Keycloak, DB, registry).
 ## Verification (of this skill)
 
 - `python scripts/rotation_lib.py gen --kind password` → a strong value (used once).
-- `echo 'GITHUB_TOKEN=ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' | python scripts/rotation_lib.py redact`  <!-- # sanitizer:ignore — illustrative non-secret demo token (all-A's), not a real PAT -->
+- `echo 'GITHUB_TOKEN=your_github_token_here' | python scripts/rotation_lib.py redact`  <!-- sanitizer:ignore — placeholder value ("your_..."), not a real PAT; rotation_lib's KV redactor matches on the TOKEN= key, not the ghp_ shape, so this still demonstrates real redaction behavior -->
   → the value is `***REDACTED***`.
 - `python scripts/rotation_lib.py plan --catalog references/catalog.example.json` → a
   value-free plan. Confirm no secret material appears anywhere in output.
