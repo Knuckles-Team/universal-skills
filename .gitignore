@@ -205,7 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-\n# Skill artifacts\n*.skill
+
+# Skill artifacts
+*.skill
 
 # Model-generated transient scripts at root level
 /test_*.py
