@@ -1,5 +1,7 @@
 ---
-name: rotate-credentials
+name: rotate-fleet-passwords
+domain: infrastructure
+skill_type: skill
 description: >-
   Set one unified OS-account password across many hosts over SSH (and optionally the
   in-band iDRAC/BMC user), verifying each and reporting a per-host summary. Use when the
