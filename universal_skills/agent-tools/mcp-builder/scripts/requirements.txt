@@ -1,2 +1,1 @@
-ai_provider>=0.39.0
-mcp>=1.1.0
+agent-utilities[mcp]>=2.0.0,<3.0.0
