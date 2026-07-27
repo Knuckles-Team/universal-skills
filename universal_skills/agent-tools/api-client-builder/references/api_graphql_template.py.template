@@ -12,14 +12,13 @@ Dependencies:
 """
 
 import logging
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from agent_utilities.decorators import require_auth
 from agent_utilities.exceptions import (
     MissingParameterError,
     ParameterError,
-    AuthError,
 )
 
 
@@ -72,9 +71,7 @@ class GraphQL:
             verify=verify,
             proxies=proxies,
         )
-        self.client = Client(
-            transport=self.transport, fetch_schema_from_transport=True
-        )
+        self.client = Client(transport=self.transport, fetch_schema_from_transport=True)
 
     @require_auth
     def execute_gql(
@@ -204,9 +201,7 @@ class GraphQL:
         input_data = {"name": name}
         if description:
             input_data["description"] = description
-        return self.execute_gql(
-            mutation_str, variables={"input": input_data}
-        )
+        return self.execute_gql(mutation_str, variables={"input": input_data})
 
     @require_auth
     def delete_item(self, item_id: Union[int, str]) -> Dict[str, Any]:
@@ -226,6 +221,4 @@ class GraphQL:
             }
         }
         """
-        return self.execute_gql(
-            mutation_str, variables={"input": {"id": str(item_id)}}
-        )
+        return self.execute_gql(mutation_str, variables={"input": {"id": str(item_id)}})

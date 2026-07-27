@@ -7,11 +7,7 @@ import requests
 import urllib3
 from pydantic import ValidationError
 
-from models import (
-    ExampleResourceModel,
-    ExampleResourceResponse,
-    Response
-)
+from models import ExampleResourceModel, ExampleResourceResponse, Response
 from agent_utilities.decorators import require_auth
 from agent_utilities.exceptions import (
     AuthError,
@@ -22,8 +18,8 @@ from agent_utilities.exceptions import (
 
 logger = logging.getLogger(__name__)
 
-class Api(object):
 
+class Api(object):
     def __init__(
         self,
         url: str = None,
@@ -55,7 +51,7 @@ class Api(object):
             }
         elif username and password:
             self.headers = {
-                "Authorization": f"Basic ..." # Encode if basic auth is used
+                "Authorization": "Basic ..."  # Encode if basic auth is used
             }
         else:
             raise MissingParameterError
@@ -91,7 +87,7 @@ class Api(object):
         try:
             model = ExampleResourceModel(**kwargs)
             if model.resource_id is None:
-                 raise MissingParameterError
+                raise MissingParameterError
 
             response = self._session.get(
                 url=f"{self.url}/resources/{model.resource_id}",
