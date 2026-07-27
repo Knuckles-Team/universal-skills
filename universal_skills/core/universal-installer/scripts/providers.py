@@ -28,6 +28,7 @@ import logging
 import os
 import shutil
 import sys
+from inspect import signature
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -197,7 +198,14 @@ def install_ontologies_and_prompts(
     try:
         from agent_utilities.core.unified_install import install_unified
 
-        report = install_unified(force=force)
+        # agent-utilities releases before the ``force`` parameter materialize
+        # their unified tree unconditionally.  Prefer the current explicit API,
+        # while retaining that compatible authoritative path instead of treating
+        # a harmless signature difference as a failed provider installation.
+        if "force" in signature(install_unified).parameters:
+            report = install_unified(force=force)
+        else:
+            report = install_unified()
         out: Dict[str, Any] = {}
         if install_prompts:
             out["prompts"] = report.get("prompts", {})

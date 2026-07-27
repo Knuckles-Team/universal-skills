@@ -97,6 +97,14 @@ def test_description_sanitization_strips_angle_brackets():
     assert "[a thing]" in data["description"]
 
 
+def test_transform_normalizes_name_for_the_installed_codex_directory():
+    out = adapters.transform_frontmatter(
+        SAMPLE_SKILL_MD, CODEX, installed_name="installed-skill"
+    )
+    data = yaml.safe_load(adapters._split_frontmatter(out)[0])
+    assert data["name"] == "installed-skill"
+
+
 def test_rename_map_is_a_general_mechanism_currently_empty_for_codex():
     # No current name collision with a Codex built-in — universal-installer (the
     # renamed skill-installer) installs under its own name unchanged. The

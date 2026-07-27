@@ -71,6 +71,11 @@ _ALLOWLISTED_SUFFIXES = (
     # A cross-tool skill-DISCOVERY glob list (searches many tools' dirs to find
     # already-installed skills to grade) — not a hardcoded install default.
     "code-enhancer/scripts/grade_skills.py",
+    # These are validation/normalization tools that inspect skill-root examples;
+    # they do not choose an installation destination.
+    "scripts/check_atomicity.py",
+    "scripts/check_frontmatter_portability.py",
+    "scripts/normalize_names.py",
 )
 _SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "build", "dist"}
 
@@ -90,7 +95,9 @@ def _check_skill_md(skill_md: Path, root: Path) -> list[str]:
     if yaml is None or transform_frontmatter is None or _CONTRACT is None:
         return violations
     text = skill_md.read_text(encoding="utf-8", errors="replace")
-    transformed = transform_frontmatter(text, _CONTRACT)
+    transformed = transform_frontmatter(
+        text, _CONTRACT, installed_name=skill_md.parent.name
+    )
     fm_text, _ = _split_frontmatter(transformed)
     if not fm_text.strip():
         violations.append(f"{rel}: no frontmatter block (Codex cannot read it)")

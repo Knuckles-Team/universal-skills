@@ -151,7 +151,9 @@ def iter_promotable_nested(skill_src: Path) -> list:
     return out
 
 
-def transform_frontmatter(text: str, contract: AgentContract) -> str:
+def transform_frontmatter(
+    text: str, contract: AgentContract, *, installed_name: str | None = None
+) -> str:
     """Adapt a SKILL.md's frontmatter to ``contract``; body is preserved byte-for-byte.
 
     Returns ``text`` unchanged when it has no frontmatter block, when the contract
@@ -196,6 +198,12 @@ def transform_frontmatter(text: str, contract: AgentContract) -> str:
 
     if contract.sanitize_description and data.get("description"):
         data["description"] = str(data["description"]).replace("<", "[").replace(">", "]")
+
+    # Codex requires a skill's ``name`` to match the directory it discovers.
+    # The source name remains canonical; only the installed, target-specific
+    # copy is normalized to its actual destination.
+    if installed_name and "name" in data:
+        data["name"] = installed_name
 
     dumped = yaml.safe_dump(
         data, sort_keys=False, allow_unicode=True, default_flow_style=False

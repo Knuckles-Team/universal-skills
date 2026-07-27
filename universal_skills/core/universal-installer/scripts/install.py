@@ -419,7 +419,9 @@ def _transform_skill_md(skill_dst: Path, contract) -> None:
     if adapters is None or not skill_md.is_file():
         return
     original = skill_md.read_text(encoding="utf-8", errors="replace")
-    transformed = adapters.transform_frontmatter(original, contract)
+    transformed = adapters.transform_frontmatter(
+        original, contract, installed_name=skill_dst.name
+    )
     if transformed != original:
         skill_md.write_text(transformed, encoding="utf-8")
 
@@ -607,7 +609,7 @@ def install_skills(
     if prune and not skill_names and not group:
         _prune_broken_symlinks(target_path)
 
-    mode = "symlinked" if symlink else "installed"
+    mode = "symlinked" if effective_symlink else "installed"
     logger.info(f"Successfully {mode} {installed_count} items.")
     return True
 
