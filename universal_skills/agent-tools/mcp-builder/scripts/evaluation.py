@@ -9,13 +9,15 @@ import json
 import re
 import sys
 import time
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ai_provider import AIProvider
+from agent_utilities import create_model
 from connections import create_connection
 from defusedxml import ElementTree as DefusedET
 from defusedxml.common import DefusedXmlException
+from pydantic_ai import Agent, ModelSettings, RunContext, Tool
 
 EVALUATION_PROMPT = """You are an AI assistant with access to tools.
 
@@ -119,37 +121,26 @@ def extract_xml_content(text: str, tag: str) -> str | None:
     return matches[-1].strip() if matches else None
 
 
-async def agent_loop(
-    client: AIProvider,
-    model: str,
-    question: str,
-    tools: list[dict[str, Any]],
-    connection: Any,
-) -> tuple[str, dict[str, Any]]:
-    """Run the agent loop with MCP tools."""
-    messages = [{"role": "user", "content": question}]
+@dataclass
+class _ToolCallDeps:
+    """Per-run dependencies for a bound MCP tool call: the live MCP connection
+    and this run's tool-timing accumulator."""
 
-    response = await asyncio.to_thread(
-        client.messages.create,
-        model=model,
-        max_tokens=4096,
-        system=EVALUATION_PROMPT,
-        messages=messages,
-        tools=tools,
-    )
+    connection: Any
+    tool_metrics: dict[str, dict[str, Any]] = field(default_factory=dict)
 
-    messages.append({"role": "assistant", "content": response.content})
 
-    tool_metrics = {}
+def _build_evaluation_tool(tool: dict[str, Any]) -> Tool:
+    """Wrap one MCP tool definition as a pydantic-ai Tool that proxies calls to
+    the live MCP connection supplied via ``RunContext.deps``, timing every call
+    into ``deps.tool_metrics`` (same shape the original raw loop recorded)."""
+    tool_name = tool["name"]
 
-    while response.stop_reason == "tool_use":
-        tool_use = next(block for block in response.content if block.type == "tool_use")
-        tool_name = tool_use.name
-        tool_input = tool_use.input
-
+    async def call_mcp_tool(ctx: RunContext[_ToolCallDeps], **kwargs: Any) -> str:
+        """Invoke the MCP tool and record its duration/count."""
         tool_start_ts = time.time()
         try:
-            tool_result = await connection.call_tool(tool_name, tool_input)
+            tool_result = await ctx.deps.connection.call_tool(tool_name, kwargs)
             tool_response = (
                 json.dumps(tool_result)
                 if isinstance(tool_result, (dict, list))
@@ -159,46 +150,54 @@ async def agent_loop(
             tool_response = f"Tool execution failed ({type(e).__name__})"
         tool_duration = time.time() - tool_start_ts
 
-        if tool_name not in tool_metrics:
-            tool_metrics[tool_name] = {"count": 0, "durations": []}
-        tool_metrics[tool_name]["count"] += 1
-        tool_metrics[tool_name]["durations"].append(tool_duration)
-
-        messages.append(
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use.id,
-                        "content": tool_response,
-                    }
-                ],
-            }
+        metrics = ctx.deps.tool_metrics.setdefault(
+            tool_name, {"count": 0, "durations": []}
         )
+        metrics["count"] += 1
+        metrics["durations"].append(tool_duration)
+        return tool_response
 
-        response = await asyncio.to_thread(
-            client.messages.create,
-            model=model,
-            max_tokens=4096,
-            system=EVALUATION_PROMPT,
-            messages=messages,
-            tools=tools,
-        )
-        messages.append({"role": "assistant", "content": response.content})
-
-    response_text = next(
-        (block.text for block in response.content if hasattr(block, "text")),
-        None,
+    return Tool.from_schema(
+        call_mcp_tool,
+        name=tool_name,
+        description=tool.get("description"),
+        json_schema=tool.get("input_schema") or {"type": "object", "properties": {}},
+        takes_ctx=True,
     )
-    return response_text, tool_metrics
+
+
+def build_evaluation_agent(
+    model: str, tools: list[dict[str, Any]]
+) -> Agent[_ToolCallDeps, str]:
+    """Build the agent-utilities-backed evaluator: the configured model, the
+    EVALUATION_PROMPT as its system prompt, and every MCP tool bound (each call
+    proxies to the live connection supplied per-run via ``deps``)."""
+    return Agent(
+        create_model(model_id=model),
+        system_prompt=EVALUATION_PROMPT,
+        tools=[_build_evaluation_tool(tool) for tool in tools],
+        deps_type=_ToolCallDeps,
+        model_settings=ModelSettings(max_tokens=4096),
+    )
+
+
+async def agent_loop(
+    agent: Agent[_ToolCallDeps, str],
+    question: str,
+    connection: Any,
+) -> tuple[str, dict[str, Any]]:
+    """Run the agent loop with MCP tools."""
+    tool_metrics: dict[str, dict[str, Any]] = {}
+    result = await agent.run(
+        question,
+        deps=_ToolCallDeps(connection=connection, tool_metrics=tool_metrics),
+    )
+    return result.output, tool_metrics
 
 
 async def evaluate_single_task(
-    client: AIProvider,
-    model: str,
+    agent: Agent[_ToolCallDeps, str],
     qa_pair: dict[str, Any],
-    tools: list[dict[str, Any]],
     connection: Any,
     task_index: int,
 ) -> dict[str, Any]:
@@ -206,9 +205,7 @@ async def evaluate_single_task(
     start_time = time.time()
 
     print(f"Task {task_index + 1}: Running task with question: {qa_pair['question']}")
-    response, tool_metrics = await agent_loop(
-        client, model, qa_pair["question"], tools, connection
-    )
+    response, tool_metrics = await agent_loop(agent, qa_pair["question"], connection)
 
     response_value = extract_xml_content(response, "response")
     summary = extract_xml_content(response, "summary")
@@ -272,10 +269,10 @@ async def run_evaluation(
     """Run evaluation with MCP server tools."""
     print("🚀 Starting Evaluation")
 
-    client = AIProvider()
-
     tools = await connection.list_tools()
     print(f"📋 Loaded {len(tools)} tools from MCP server")
+
+    agent = build_evaluation_agent(model, tools)
 
     qa_pairs = parse_evaluation_file(eval_path)
     print(f"📋 Loaded {len(qa_pairs)} evaluation tasks")
@@ -283,9 +280,7 @@ async def run_evaluation(
     results = []
     for i, qa_pair in enumerate(qa_pairs):
         print(f"Processing task {i + 1}/{len(qa_pairs)}")
-        result = await evaluate_single_task(
-            client, model, qa_pair, tools, connection, i
-        )
+        result = await evaluate_single_task(agent, qa_pair, connection, i)
         results.append(result)
 
     correct = sum(r["score"] for r in results)

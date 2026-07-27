@@ -389,14 +389,22 @@ After creating your evaluation file, you can use the provided evaluation harness
 
    Or install manually:
    ```bash
-   pip install ai_provider mcp
+   pip install 'agent-utilities[mcp]>=2.0.0,<3.0.0'
    ```
 
 2. **Set API Key**
 
+   The harness resolves its model through agent-utilities' model factory, which
+   defaults to the OpenAI-compatible provider (also how local vLLM/Ollama
+   endpoints are reached):
+
    ```bash
-   export ANTHROPIC_API_KEY=your_api_key_here
+   export OPENAI_API_KEY=your_api_key_here
    ```
+
+   To use a different provider (Anthropic, Google, Groq, Mistral, ...) or a
+   self-hosted endpoint, configure it through agent-utilities' model registry
+   /`AgentConfig` instead of this environment variable.
 
 ## Evaluation File Format
 
