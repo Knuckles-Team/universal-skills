@@ -32,6 +32,7 @@ Exit code is non-zero when a ``--baseline`` is supplied and any category REGRESS
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import re
 import sys
@@ -157,6 +158,45 @@ def _is_environ_get(call: ast.Call) -> bool:
         if isinstance(recv, ast.Attribute) and recv.attr == "environ":
             return True
     return False
+
+
+def _stable_finding_id(text: str) -> str:
+    """An 8-hex-char content hash of *text* (stripped) — used as a finding's
+    identity INSTEAD of a raw line number, so it survives unrelated code
+    landing above the flagged site.
+
+    A finding string that embeds a raw line number (``f"{mod}:{i}"``,
+    ``f"{mod}:{n.name}@{line}"``) looks stable across one run but is not: any
+    diff of two runs' finding lists (before/after a change, or a future
+    baseline ratchet built on top of this analyzer's raw output — the same
+    shape ``check_liveness.py``'s own ``--baseline`` counts-only ratchet
+    could grow into) treats a pure line-shift as a brand-new finding.
+    Verified live: re-running this analyzer before/after an unrelated
+    30-line insertion above existing findings inflated an apparent 125/58
+    new placeholder/facade findings down to the 2 that were genuinely new
+    once line numbers were dropped from the identity. Mirrors
+    agent-utilities' identical fix for this same defect class
+    (``check_cypher_write_subset.py``/``check_log_exception_redaction.py``'s
+    D-F6-2/D-MT-2 ``(path, symbol, shape, content_hash)`` baseline key) —
+    reused here rather than inventing a second scheme.
+    """
+    return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:8]
+
+
+def _dedupe_stable_ids(prefix: str, texts: list[str]) -> list[str]:
+    """``f"{prefix}:{content_hash}"`` per text in *texts*, in order, with a
+    ``#N`` ordinal suffix (N >= 1) appended only when the SAME content hash
+    already occurred earlier in this same call — so two genuinely identical
+    findings in the same scope still produce two distinct, but still
+    content-stable (not line-stable), identities."""
+    seen: dict[str, int] = {}
+    out: list[str] = []
+    for text in texts:
+        key = _stable_finding_id(text)
+        ordinal = seen.get(key, 0)
+        seen[key] = ordinal + 1
+        out.append(f"{prefix}:{key}" if ordinal == 0 else f"{prefix}:{key}#{ordinal}")
+    return out
 
 
 # ── Facade detection (Layer 4): "invoked but fake" ────────────────────────────
@@ -670,13 +710,18 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
             continue
         mod = _module_name(root, p)
         is_surface_mod = bool(set(p.parts) & _SURFACE_PARTS)
-        # admitted placeholder/stub tells in raw source (comments + strings)
+        # admitted placeholder/stub tells in raw source (comments + strings).
+        # Identity is the MATCHED LINE'S OWN TEXT (content-hashed), not its
+        # line number -- see _stable_finding_id.
         try:
-            for i, line in enumerate(
-                p.read_text(encoding="utf-8", errors="ignore").splitlines(), 1
-            ):
-                if _PLACEHOLDER_RE.search(line):
-                    placeholder_hits.append(f"{mod}:{i}")
+            matched_lines = [
+                line
+                for line in p.read_text(
+                    encoding="utf-8", errors="ignore"
+                ).splitlines()
+                if _PLACEHOLDER_RE.search(line)
+            ]
+            placeholder_hits.extend(_dedupe_stable_ids(mod, matched_lines))
         except OSError:
             pass
         # live-surface handlers that return a canned payload doing NO real work —
@@ -691,11 +736,18 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
             if not _does_real_work(n) and _returns_canned_payload(n):
                 facade_handlers.append(f"{mod}:{n.name}")
                 continue  # whole function is a facade; don't double-count its branches
-            for line in _facade_branches(n):
-                facade_handlers.append(f"{mod}:{n.name}@{line}")
+            # Identity is "symbol@ordinal" (deterministic AST discovery
+            # order within this ONE function), not "symbol@line" -- a
+            # branch/handler's position among its own function's siblings is
+            # stable under code landing elsewhere; its raw line number is
+            # not. Mirrors the (path, symbol, ordinal) half of the same
+            # content-anchoring convention used above and in
+            # agent-utilities' check_wiring.py (D-OP-11).
+            for ordinal, _line in enumerate(_facade_branches(n)):
+                facade_handlers.append(f"{mod}:{n.name}@{ordinal}")
             # deceptive except-fallbacks: real try, fabricated/fake-success except
-            for line in _facade_except_handlers(n):
-                facade_handlers.append(f"{mod}:{n.name}@{line}")
+            for ordinal, _line in enumerate(_facade_except_handlers(n)):
+                facade_handlers.append(f"{mod}:{n.name}#except@{ordinal}")
 
     # ── Score + report ───────────────────────────────────────────────────────
     counts = {
