@@ -164,6 +164,12 @@ replace = __version__ = "{{new_version}}"
 PRECOMMIT_CONFIG = """\
 default_language_version:
   python: python3
+# Phase 0 dev-velocity contract (graph-os-completion-program, PHASE-0-DEV-VELOCITY.md
+# section 2): pre-commit = FAST (<=5s warm), pre-push = HEAVY (pytest, cargo, uv
+# lock verification, ...). A hook with no explicit `stages:` below is commit-only —
+# never both, which was the "default_stages: [pre-commit, pre-push]" trap four repos
+# fell into (any unstaged hook silently ran at BOTH stages).
+default_stages: [pre-commit]
 exclude: 'dotnet|node_modules'
 ci:
   autofix_prs: true
@@ -228,10 +234,36 @@ repos:
   hooks:
   - id: nbqa-ruff
     args: ["--fix"]
-- repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 659a7789596d520c849e9c96525119e9fbaa731f # 0.11.8
+- repo: local
   hooks:
   - id: uv-lock
+    name: uv-lock (verify, never mutate)
+    # HEAVY / pre-push (graph-os-completion-program P0.1/P0.2): the astral-sh
+    # mirror hook's default entry is a bare `uv lock`, which resolves over the
+    # network and REWRITES uv.lock in place during the commit that is supposed
+    # to be gating it -- the single worst hook in the fleet for concurrent
+    # agents. `--check` only verifies. Converted from the astral-sh mirror hook
+    # to `repo: local` because a plain `uv lock --check` fails in under a
+    # second in every repo nested under the ecosystem uv workspace at
+    # /home/apps/workspace/pyproject.toml, whose agent-utilities member is ALSO
+    # its own self-contained uv workspace root ("Nested workspaces are not
+    # supported"). The upward search below (same class of fix as INFRA-1's
+    # lane-guard/check-stubs/check-mermaid repair) locates the real
+    # agent-utilities checkout regardless of nesting depth and materializes a
+    # gitignored `.uv-workspace-siblings/agent-utilities` symlink; this repo's
+    # own `[tool.uv.sources]` must point `agent-utilities` at that path as an
+    # editable dependency (see the agent-webui/geniusbot/repository-manager
+    # BUG-074/B6 fix) instead of a bare version-range dependency, so `uv lock`
+    # resolves standalone against THIS repo's own tracked lock instead of the
+    # larger, untracked ecosystem workspace lock. Only fires from a worktree
+    # outside /home/apps/workspace (the fleet's own concurrent-development
+    # convention) -- the ecosystem root is never discovered as an ancestor
+    # workspace from there, so the nesting conflict cannot arise.
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); if [ -n "$AGENT_UTILITIES_ROOT" ]; then root="$AGENT_UTILITIES_ROOT"; else au_d="$repo"; root=""; while [ "$au_d" != "/" ]; do if [ -d "$au_d/agent-utilities/scripts" ]; then root="$au_d/agent-utilities"; break; fi; au_d=$(dirname "$au_d"); done; fi; if [ -d "$root" ] && [ "$repo" != "$root" ]; then mkdir -p .uv-workspace-siblings && ln -sfn "$root" .uv-workspace-siblings/agent-utilities; fi; uv lock --check'
+    language: system
+    files: ^(uv\\.lock|pyproject\\.toml|uv\\.toml)$
+    pass_filenames: false
+    stages: [pre-push, manual]
 - repo: local
   hooks:
   - id: supply-chain-source-contract
@@ -322,11 +354,35 @@ repos:
   hooks:
   - id: pytest
     name: pytest
-    entry: bash -c 'test_target="tests"; for d in tests/unit test/unit tests test; do if [ -d "$d" ]; then test_target="$d"; break; fi; done; if [ -f uv.lock ]; then uv run --all-extras pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; else pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; fi'
+    # HEAVY / pre-push (graph-os-completion-program P0.1/P0.2). Root cause of
+    # this hook never having executed a single test outside agent-utilities:
+    # every other repo lives nested under the ecosystem uv workspace at
+    # /home/apps/workspace/pyproject.toml, whose agent-utilities member is ALSO
+    # its own self-contained uv workspace root -- uv refuses that nesting
+    # unconditionally ("Nested workspaces are not supported"), so a bare
+    # `uv run` failed here in under a second. The upward search below (same
+    # fix class as INFRA-1's lane-guard/check-stubs/check-mermaid repair, NOT
+    # the one-level `$(dirname "$repo")/agent-utilities` shortcut, which is
+    # wrong for any repo two levels under agent-packages/ -- agents/*,
+    # skills/*) locates the real agent-utilities checkout regardless of
+    # nesting depth and materializes a gitignored
+    # `.uv-workspace-siblings/agent-utilities` symlink; this repo's own
+    # `[tool.uv.sources]` must point `agent-utilities` at that path as an
+    # editable dependency (the agent-webui/geniusbot/repository-manager
+    # BUG-074/B6 fix) instead of a bare version-range one, so `uv run` resolves
+    # standalone against THIS repo's own tracked uv.lock instead of the
+    # larger, untracked ecosystem workspace lock. Only fires from a worktree
+    # outside /home/apps/workspace (the fleet's own concurrent-development
+    # convention) -- the ecosystem root is never discovered as an ancestor
+    # workspace from there, so the nesting conflict cannot arise. Verified
+    # sys.executable resolves inside THIS repo's own `.venv`, never the system
+    # or an ambient interpreter (the historical `uv run` silent-fallback trap).
+    entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); if [ -n "$AGENT_UTILITIES_ROOT" ]; then root="$AGENT_UTILITIES_ROOT"; else au_d="$repo"; root=""; while [ "$au_d" != "/" ]; do if [ -d "$au_d/agent-utilities/scripts" ]; then root="$au_d/agent-utilities"; break; fi; au_d=$(dirname "$au_d"); done; fi; if [ -d "$root" ] && [ "$repo" != "$root" ]; then mkdir -p .uv-workspace-siblings && ln -sfn "$root" .uv-workspace-siblings/agent-utilities; fi; test_target="tests"; for d in tests/unit test/unit tests test; do if [ -d "$d" ]; then test_target="$d"; break; fi; done; if [ -f uv.lock ]; then uv run --all-extras pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; else pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; fi'
     language: system
     types: [python]
     pass_filenames: false
     always_run: true
+    stages: [pre-push, manual]
 - repo: https://github.com/AleksaC/hadolint-py
   rev: 458cb25edf664682e3e856a53a2f9af33e068297 # v2.14.0
   hooks:
