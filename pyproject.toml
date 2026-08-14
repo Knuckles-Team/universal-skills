@@ -139,6 +139,9 @@ install-skills = "universal_skills.core.skill_installer:main"
 [[project.authors]]
 name = "Repository Maintainers"
 
+[tool.uv.workspace]
+members = ["."]
+
 [tool.setuptools]
 include-package-data = true
 

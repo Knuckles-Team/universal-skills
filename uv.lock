@@ -835,7 +835,7 @@ toml = [
 
 [[package]]
 name = "crawl4ai"
-version = "0.9.1"
+version = "0.9.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -873,9 +873,9 @@ dependencies = [
     { name = "unclecode-litellm" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/95/a307119201f09a5136be1e394282ee4d4d6e3816cbc3c73f370aaa4b5e56/crawl4ai-0.9.1.tar.gz", hash = "sha256:d04251f13ba180107324bb7bbe12029a63d95cc50248f05085743739f38404fc", size = 575249, upload-time = "2026-07-08T14:29:15.247Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/7f/b32541be7b0a4d69574054a07d05c3c36aa1a935914a661b26099db34d4a/crawl4ai-0.9.2.tar.gz", hash = "sha256:58dbfa05a82c1cfa667a20383a1d0f7a42187304da5e4d0661a6f59b0ed6a406", size = 577156, upload-time = "2026-07-15T08:27:24.192Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/61/fd08ea5870bb7d5b3e028b784fb2e18343cc20b9aabdd4771df35c1a1642/crawl4ai-0.9.1-py3-none-any.whl", hash = "sha256:e154c3219d0cd46b4e06771a725bf35e6c31b19a5c2981afbcdba4574bd0a9dc", size = 479911, upload-time = "2026-07-08T14:29:14.038Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/fe/84960a1747d64d12b4a0d6d9954ee919e44a92dd62e64152552c4e5bf437/crawl4ai-0.9.2-py3-none-any.whl", hash = "sha256:4efb2d0688aa3d66b48721a9031f7257bd2acb52b78d0a89d072741ac685f3f8", size = 480585, upload-time = "2026-07-15T08:27:22.834Z" },
 ]
 
 [[package]]
@@ -4151,8 +4151,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography" },
-    { name = "jeepney" },
+    { name = "cryptography", marker = "python_full_version < '3.13' or sys_platform != 'win32'" },
+    { name = "jeepney", marker = "python_full_version < '3.13' or sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -4161,11 +4161,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "83.0.0"
+version = "82.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/db/cfac1baf10650ab4d1c111714410d2fbb77ac5a616db26775db562c8fab2/setuptools-82.0.1.tar.gz", hash = "sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9", size = 1152316, upload-time = "2026-03-09T12:47:17.221Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/76/f789f7a86709c6b087c5a2f52f911838cad707cc613162401badc665acfe/setuptools-82.0.1-py3-none-any.whl", hash = "sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb", size = 1006223, upload-time = "2026-03-09T12:47:15.026Z" },
 ]
 
 [[package]]
@@ -4774,80 +4774,80 @@ web-search = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bcrypt", marker = "extra == 'developer-utilities'" },
-    { name = "build", marker = "extra == 'test'", specifier = ">=1.2.2" },
-    { name = "crawl4ai", marker = "extra == 'skill-graph-builder'", specifier = ">=0.9.0" },
-    { name = "crawl4ai", marker = "extra == 'web-crawler'", specifier = ">=0.9.0" },
-    { name = "cryptography", marker = "extra == 'developer-utilities'", specifier = ">=48.0.1" },
-    { name = "ddgs", marker = "extra == 'web-search'" },
-    { name = "defusedxml", marker = "extra == 'document-tools'" },
+    { name = "bcrypt", marker = "extra == 'developer-utilities'", specifier = ">=5.0.0" },
+    { name = "build", marker = "extra == 'test'", specifier = ">=1.5.0" },
+    { name = "crawl4ai", marker = "extra == 'skill-graph-builder'", specifier = ">=0.9.2" },
+    { name = "crawl4ai", marker = "extra == 'web-crawler'", specifier = ">=0.9.2" },
+    { name = "cryptography", marker = "extra == 'developer-utilities'", specifier = ">=49.0.0" },
+    { name = "ddgs", marker = "extra == 'web-search'", specifier = ">=9.14.4" },
+    { name = "defusedxml", marker = "extra == 'document-tools'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'mcp-builder'", specifier = ">=0.7.1" },
-    { name = "ebooklib", marker = "extra == 'document-tools'" },
-    { name = "fastmcp", marker = "extra == 'mcp-builder'" },
-    { name = "fastmcp", marker = "extra == 'mcp-client'" },
-    { name = "httpx", marker = "extra == 'agent-workflows'" },
-    { name = "httpx", marker = "extra == 'test'" },
+    { name = "ebooklib", marker = "extra == 'document-tools'", specifier = ">=0.20" },
+    { name = "fastmcp", marker = "extra == 'mcp-builder'", specifier = ">=3.4.4" },
+    { name = "fastmcp", marker = "extra == 'mcp-client'", specifier = ">=3.4.4" },
+    { name = "httpx", marker = "extra == 'agent-workflows'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'test'", specifier = ">=0.28.1" },
     { name = "keepachangelog", marker = "extra == 'code-enhancer'", specifier = ">=2.0.0" },
-    { name = "keyring", marker = "extra == 'google-workspace'" },
-    { name = "lxml", marker = "extra == 'document-tools'", specifier = ">=6.1.0" },
-    { name = "mammoth", marker = "extra == 'document-converter'" },
-    { name = "markdownify", marker = "extra == 'document-converter'" },
-    { name = "mysql-connector-python", marker = "extra == 'database-tools'" },
-    { name = "nbconvert", marker = "extra == 'jupyter-notebook'" },
-    { name = "nbformat", marker = "extra == 'jupyter-notebook'" },
-    { name = "networkx", marker = "extra == 'security-tools'" },
-    { name = "openpyxl", marker = "extra == 'document-tools'" },
-    { name = "packaging", marker = "extra == 'code-enhancer'" },
-    { name = "pdf2image", marker = "extra == 'document-tools'" },
-    { name = "pdfplumber", marker = "extra == 'document-tools'" },
+    { name = "keyring", marker = "extra == 'google-workspace'", specifier = ">=25.7.0" },
+    { name = "lxml", marker = "extra == 'document-tools'", specifier = ">=6.1.1" },
+    { name = "mammoth", marker = "extra == 'document-converter'", specifier = ">=1.12.0" },
+    { name = "markdownify", marker = "extra == 'document-converter'", specifier = ">=1.2.3" },
+    { name = "mysql-connector-python", marker = "extra == 'database-tools'", specifier = ">=9.7.0" },
+    { name = "nbconvert", marker = "extra == 'jupyter-notebook'", specifier = ">=7.17.1" },
+    { name = "nbformat", marker = "extra == 'jupyter-notebook'", specifier = ">=5.10.4" },
+    { name = "networkx", marker = "extra == 'security-tools'", specifier = ">=3.6.1" },
+    { name = "openpyxl", marker = "extra == 'document-tools'", specifier = ">=3.1.5" },
+    { name = "packaging", marker = "extra == 'code-enhancer'", specifier = ">=26.2" },
+    { name = "pdf2image", marker = "extra == 'document-tools'", specifier = ">=1.17.0" },
+    { name = "pdfplumber", marker = "extra == 'document-tools'", specifier = ">=0.11.10" },
     { name = "pillow", marker = "extra == 'browser-tools'", specifier = ">=12.3.0" },
     { name = "pillow", marker = "extra == 'creative-media'", specifier = ">=12.3.0" },
     { name = "pillow", marker = "extra == 'document-tools'", specifier = ">=12.3.0" },
-    { name = "playwright", marker = "extra == 'browser-tools'" },
-    { name = "playwright", marker = "extra == 'skill-graph-builder'" },
-    { name = "playwright", marker = "extra == 'web-crawler'" },
-    { name = "psutil", marker = "extra == 'code-enhancer'", specifier = ">=5.9.0" },
-    { name = "psutil", marker = "extra == 'skill-graph-builder'" },
-    { name = "psutil", marker = "extra == 'system-tools'" },
-    { name = "psutil", marker = "extra == 'web-crawler'" },
-    { name = "psycopg2-binary", marker = "extra == 'database-tools'" },
-    { name = "pydantic", marker = "extra == 'api-wrapper-builder'" },
-    { name = "pygments", marker = "extra == 'document-tools'" },
-    { name = "pymssql", marker = "extra == 'database-tools'" },
-    { name = "pymupdf4llm", marker = "extra == 'document-converter'" },
-    { name = "pymupdf4llm", marker = "extra == 'skill-graph-builder'", specifier = ">=0.0.17" },
-    { name = "pypdf", marker = "extra == 'document-tools'", specifier = ">=6.13.3" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-asyncio", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-timeout", marker = "extra == 'test'" },
-    { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.6.0" },
-    { name = "python-docx", marker = "extra == 'document-tools'" },
-    { name = "python-dotenv", marker = "extra == 'cloudflare-deploy'" },
-    { name = "python-dotenv", marker = "extra == 'github-tools'" },
-    { name = "python-dotenv", marker = "extra == 'mcp-client'" },
-    { name = "python-pptx", marker = "extra == 'document-tools'" },
-    { name = "pyyaml", marker = "extra == 'agent-builder'" },
-    { name = "pyyaml", marker = "extra == 'agent-workflows'" },
-    { name = "pyyaml", marker = "extra == 'developer-utilities'" },
-    { name = "pyyaml", marker = "extra == 'skill-builder'" },
-    { name = "pyyaml", marker = "extra == 'skill-catalog-auditor'" },
-    { name = "pyyaml", marker = "extra == 'skill-graph-builder'", specifier = ">=6.0" },
-    { name = "pyyaml", marker = "extra == 'skill-workflow-builder'" },
-    { name = "pyyaml", marker = "extra == 'test'" },
-    { name = "requests", marker = "extra == 'api-wrapper-builder'" },
-    { name = "requests", marker = "extra == 'cloudflare-deploy'" },
-    { name = "requests", marker = "extra == 'code-enhancer'" },
-    { name = "requests", marker = "extra == 'github-tools'" },
-    { name = "requests", marker = "extra == 'google-workspace'" },
-    { name = "requests", marker = "extra == 'security-tools'" },
-    { name = "requests", marker = "extra == 'skill-graph-builder'" },
-    { name = "requests", marker = "extra == 'web-artifacts'" },
-    { name = "requests", marker = "extra == 'web-crawler'" },
-    { name = "requests", marker = "extra == 'web-search'" },
-    { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0" },
-    { name = "sqlparse", marker = "extra == 'developer-utilities'" },
-    { name = "toml", marker = "extra == 'developer-utilities'" },
+    { name = "playwright", marker = "extra == 'browser-tools'", specifier = ">=1.61.0" },
+    { name = "playwright", marker = "extra == 'skill-graph-builder'", specifier = ">=1.61.0" },
+    { name = "playwright", marker = "extra == 'web-crawler'", specifier = ">=1.61.0" },
+    { name = "psutil", marker = "extra == 'code-enhancer'", specifier = ">=7.2.2" },
+    { name = "psutil", marker = "extra == 'skill-graph-builder'", specifier = ">=7.2.2" },
+    { name = "psutil", marker = "extra == 'system-tools'", specifier = ">=7.2.2" },
+    { name = "psutil", marker = "extra == 'web-crawler'", specifier = ">=7.2.2" },
+    { name = "psycopg2-binary", marker = "extra == 'database-tools'", specifier = ">=2.9.12" },
+    { name = "pydantic", marker = "extra == 'api-wrapper-builder'", specifier = ">=2.13.4" },
+    { name = "pygments", marker = "extra == 'document-tools'", specifier = ">=2.20.0" },
+    { name = "pymssql", marker = "extra == 'database-tools'", specifier = ">=2.3.13" },
+    { name = "pymupdf4llm", marker = "extra == 'document-converter'", specifier = ">=1.28.0" },
+    { name = "pymupdf4llm", marker = "extra == 'skill-graph-builder'", specifier = ">=1.28.0" },
+    { name = "pypdf", marker = "extra == 'document-tools'", specifier = ">=6.14.2" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
+    { name = "pytest-timeout", marker = "extra == 'test'", specifier = ">=2.4.0" },
+    { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
+    { name = "python-docx", marker = "extra == 'document-tools'", specifier = ">=1.2.0" },
+    { name = "python-dotenv", marker = "extra == 'cloudflare-deploy'", specifier = ">=1.2.2" },
+    { name = "python-dotenv", marker = "extra == 'github-tools'", specifier = ">=1.2.2" },
+    { name = "python-dotenv", marker = "extra == 'mcp-client'", specifier = ">=1.2.2" },
+    { name = "python-pptx", marker = "extra == 'document-tools'", specifier = ">=1.0.2" },
+    { name = "pyyaml", marker = "extra == 'agent-builder'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'agent-workflows'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'developer-utilities'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'skill-builder'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'skill-catalog-auditor'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'skill-graph-builder'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'skill-workflow-builder'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6.0.3" },
+    { name = "requests", marker = "extra == 'api-wrapper-builder'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'cloudflare-deploy'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'code-enhancer'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'github-tools'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'google-workspace'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'security-tools'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'skill-graph-builder'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'web-artifacts'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'web-crawler'", specifier = ">=2.34.2" },
+    { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
+    { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
+    { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },
+    { name = "toml", marker = "extra == 'developer-utilities'", specifier = ">=0.10.2" },
     { name = "universal-skills", extras = ["agent-browser"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["agent-builder"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["agent-package-builder"], marker = "extra == 'all'", specifier = ">=1.0.0" },
@@ -4893,9 +4893,9 @@ requires-dist = [
     { name = "universal-skills", extras = ["web-search"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["website-builder"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["website-cloner"], marker = "extra == 'all'", specifier = ">=1.0.0" },
-    { name = "user-agents", marker = "extra == 'developer-utilities'" },
-    { name = "validators", marker = "extra == 'document-tools'" },
-    { name = "wheel", marker = "extra == 'test'" },
+    { name = "user-agents", marker = "extra == 'developer-utilities'", specifier = ">=2.2.0" },
+    { name = "validators", marker = "extra == 'document-tools'", specifier = ">=0.35.0" },
+    { name = "wheel", marker = "extra == 'test'", specifier = ">=0.47.0" },
 ]
 provides-extras = ["test", "agent-browser", "agent-builder", "agent-package-builder", "agent-spawner", "mcp-client", "agent-workflows", "automated-credential-rotation", "algorithmic-art", "api-wrapper-builder", "brainstorming", "brand-guidelines", "browser-tools", "c4-architecture", "canvas-design", "cloudflare-deploy", "creative-media", "database-tools", "document-converter", "developer-utilities", "document-tools", "github-backlog-planner", "github-ci-failure-sweep", "github-tools", "google-workspace", "internal-comms", "jupyter-notebook", "marp-presentations", "mcp-builder", "mermaid-diagrams", "product-strategy", "pre-mortem", "react-development", "react-native-skills", "security-tools", "session-handoff", "skill-builder", "skill-catalog-auditor", "universal-installer", "skill-graph-builder", "skill-workflow-builder", "system-tools", "tdd-methodology", "theme-factory", "user-research", "web-artifacts", "web-crawler", "web-design-guidelines", "web-search", "web-fetch", "website-builder", "website-cloner", "code-enhancer", "all"]
 
