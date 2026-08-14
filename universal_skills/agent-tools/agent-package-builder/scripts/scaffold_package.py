@@ -93,6 +93,29 @@ test = [
 [project.entry-points."agent_utilities.source_connector_providers"]
 {package_name} = "{pkg_dir}.connectors"
 
+# CONCEPT:P0.2-nested-uv-workspace-fix — self-declare this package as its own uv
+# workspace root. Without this, uv's workspace discovery walks upward from this
+# package's directory, finds the outer ecosystem workspace at
+# /home/apps/workspace/pyproject.toml, and unconditionally refuses because
+# agent-utilities -- also a member of that outer workspace -- is itself a
+# self-contained uv workspace root ("Nested workspaces are not supported"). This
+# stops discovery here instead, independent of whether uv is invoked from the
+# canonical checkout or an external worktree. The path-dependency source below
+# (rather than `agent-utilities = {{ workspace = true }}`) is required for the same
+# reason: agent-utilities isn't published on PyPI past 1.26.4, so this package must
+# resolve it from the local sibling checkout via a gitignored symlink, not a
+# version-range dependency.
+[tool.uv.workspace]
+members = ["."]
+
+[tool.uv]
+override-dependencies = [
+    "fastmcp-slim[client,server]>=4.0.0b1",
+]
+
+[tool.uv.sources]
+agent-utilities = {{ path = ".uv-workspace-siblings/agent-utilities", editable = true }}
+
 [tool.setuptools]
 include-package-data = true
 
@@ -922,6 +945,12 @@ dmypy.json
 *errors*.txt
 failed_tests.txt
 trace.txt
+
+# P0.2 (graph-os-completion-program): materialized, dev-machine-only symlink to
+# the real agent-utilities checkout, used so this package resolves standalone
+# against its own tracked lock instead of the outer ecosystem workspace. Never
+# tracked.
+.uv-workspace-siblings/
 """
 
 GITATTRIBUTES = """\
