@@ -289,6 +289,27 @@ repos:
     entry: bash -c 'repo=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)"); root=${AGENT_UTILITIES_ROOT:-"$(dirname "$repo")/agent-utilities"}; python3 "$root/scripts/check_stubs.py" "$@"' --
     language: system
     types: [python]
+  - id: check-import-safety
+    name: Cross-platform import safety (native + simulated-Windows fcntl/termios/pwd/resource)
+    # Bundled golden script (scripts/check_import_safety.py, copied above,
+    # verbatim from gitlab-api's templates/ copy) -- walks every module of
+    # this package (auto-detected from pyproject.toml's [project].name) and
+    # fails on ImportError, with --simulate-windows poisoning fcntl/
+    # termios/pwd/resource via sys.modules first so a POSIX dev machine
+    # catches the "unconditional top-level import of a POSIX-only stdlib
+    # module" defect class before Windows CI does. Stdlib-only, no
+    # environment sync needed to run this hook itself. If this package
+    # legitimately needs to guard fcntl/termios/pwd/resource behind
+    # `sys.platform == "win32"` (see agent_utilities/knowledge_graph/core
+    # /file_lock.py for the canonical pattern), add
+    # `--exclude <dotted.module.name>` to the entry below -- a module
+    # ALREADY correctly guarded that way is a known false positive of this
+    # shim (it blocks the module but does not flip sys.platform), not a
+    # real defect; see the script's own docstring for why.
+    entry: python3 scripts/check_import_safety.py --simulate-windows
+    language: system
+    pass_filenames: false
+    always_run: true
   - id: mermaid-validate
     name: mermaid-validate
     entry: mermaid-validate
@@ -1323,6 +1344,94 @@ jobs:
       contents: read
       pages: write
       id-token: write
+"""
+
+# 2026-08-13 Windows-coverage program: pipeline.yml/pages.yml never ran a
+# single test on this package -- pipeline.yml only builds/publishes via a
+# self-hosted runner, pages.yml only builds docs. This is the first workflow
+# scaffolded packages get that actually imports and exercises the code, on
+# BOTH platforms it runs on (ubuntu here for a real green baseline, windows
+# for the coverage this whole file exists to add). Report-only
+# (continue-on-error everywhere) so it never blocks the publish pipeline.
+WINDOWS_CI_YML = """\
+name: Cross-platform coverage
+
+# Report-only (continue-on-error on every step) -- does not touch
+# pipeline.yml/pages.yml. scripts/check_import_safety.py auto-detects this
+# package's import name from pyproject.toml's [project].name, so this file
+# needs no per-package templating. See that script's own docstring for
+# exactly what --simulate-windows does and does not model, and its
+# sys.platform-guard false-positive limitation -- if this package
+# legitimately guards a POSIX-only import behind
+# `sys.platform == "win32"`, add `--exclude <dotted.module.name>` to BOTH
+# this file's windows job below and .pre-commit-config.yaml's
+# check-import-safety hook.
+
+on:
+  pull_request:
+    paths:
+      - '{pkg_dir}/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/windows-ci.yml'
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows coverage (report only, never blocks)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.11.7'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync test environment
+        id: sync
+        continue-on-error: true
+        run: |
+          uv sync --extra test
+          echo "$PWD/.venv/Scripts" >> "$GITHUB_PATH"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Cross-platform import safety (real Windows interpreter)
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: python3 scripts/check_import_safety.py
+
+      - name: Unit tests
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: python3 -m pytest tests -q --tb=short --timeout=120
+
+      - name: Windows coverage summary
+        if: always()
+        run: |
+          echo "## Windows coverage ran in report-only mode" >> "$GITHUB_STEP_SUMMARY"
+          echo "Both steps above use continue-on-error: true -- a red step" >> "$GITHUB_STEP_SUMMARY"
+          echo "here is a real Windows regression and never blocks the" >> "$GITHUB_STEP_SUMMARY"
+          echo "publish pipeline." >> "$GITHUB_STEP_SUMMARY"
 """
 
 # ── AGENTS.md (golden pattern, incl. Quality Bar + worktree sections) ─────────
@@ -3207,6 +3316,7 @@ def scaffold(
         # GitHub workflows
         root / ".github/workflows/pipeline.yml": (PIPELINE_YML, False),
         root / ".github/workflows/pages.yml": (PAGES_YML, False),
+        root / ".github/workflows/windows-ci.yml": (WINDOWS_CI_YML, True),
         # Docs site (7 standard pages)
         root / "mkdocs.yml": (MKDOCS_YML, True),
         root / "docs/index.md": (DOCS_INDEX_MD, True),
@@ -3327,6 +3437,16 @@ def scaffold(
         "security_sanitizer.py",
         "verify_api_integration.py",
         "validate_a2a_agent.py",
+        # Cross-platform import-safety gate (2026-08-13 Windows-coverage
+        # program): walks every module in the scaffolded package and fails
+        # on ImportError, with --simulate-windows poisoning fcntl/termios/
+        # pwd/resource via sys.modules so a POSIX dev machine catches the
+        # "unconditional top-level import of a POSIX-only stdlib module"
+        # defect class before Windows CI does. Stdlib-only, no dependency
+        # to add. See its own docstring for the documented sys.platform
+        # false-positive limitation. Wired into .pre-commit-config.yaml's
+        # check-import-safety hook below.
+        "check_import_safety.py",
     ):
         src = TEMPLATES_DIR / script_name
         dst = root / "scripts" / script_name
