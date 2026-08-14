@@ -4,7 +4,7 @@ try:
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.sse import sse_client
     from mcp.client.stdio import stdio_client
-    from mcp.client.streamable_http import streamablehttp_client
+    from mcp.client.streamable_http import streamable_http_client
 except ImportError:
     print("Error: Missing required dependencies for the 'mcp-builder' skill.")
     print("Please install them by running: pip install 'universal-skills[mcp-builder]'")
@@ -114,7 +114,14 @@ class MCPConnectionHTTP(MCPConnection):
         self.headers = headers or {}
 
     def _create_context(self):
-        return streamablehttp_client(url=self.url, headers=self.headers)
+        # mcp SDK v2 replaced this transport's `headers=` keyword with a
+        # pre-configured `http_client=`; build one carrying the headers.
+        import httpx
+
+        return streamable_http_client(
+            self.url,
+            http_client=httpx.AsyncClient(headers=self.headers, timeout=30.0),
+        )
 
 
 def create_connection(
