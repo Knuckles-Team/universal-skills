@@ -29,6 +29,10 @@ provenance manifest. The generator reads exact MkDocs navigation/source Markdown
 it never imports provider runtimes or scrapes generated HTML. `llms-full.txt` is
 opt-in and requires an explicit context budget. Content Signals remain an
 operator choice (`unset` or `operator-reviewed`), never an inferred default.
+Use `python scripts/generate_agent_readiness.py --root . --check` for a
+read-only preview. Existing artifacts are adopted only with the explicit
+`--adopt-existing` flag; normal generation requires the prior provenance
+manifest to prove ownership before replacement or pruning.
 
 ## Invocation
 

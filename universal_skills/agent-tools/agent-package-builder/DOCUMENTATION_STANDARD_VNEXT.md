@@ -39,7 +39,9 @@ modules and never scrapes generated HTML. A release may contain:
 - `llms-sections/<slug>/llms.txt`, one bounded index per current navigation
   section;
 - `llms-full.txt`, only when an operator supplies an explicit context budget;
-- `markdown-mirror-manifest.json`, a raw-Markdown source/URL/digest map; and
+- `markdown-mirror-manifest.json`, a raw-Markdown source/digest map carrying
+  both the canonical negotiated route and an explicit static Markdown fallback
+  (`index.md` at the root or `<route>/index.md`); and
 - `agent-readiness-manifest.json`, the deterministic applicability, maturity,
   budget, capability, and provenance record.
 
@@ -47,7 +49,11 @@ Only pages currently selected by MkDocs are emitted. Source paths must stay unde
 the documented root and may not be symlinks, traversal paths, or duplicate URLs.
 Generated artifacts are stable JSON/text with sorted manifest keys and SHA-256
 digests for the exact inputs. Summaries and full context are bounded before they
-are written; oversized or malformed content fails closed.
+are written; oversized or malformed content fails closed. Generation first
+builds an in-memory plan and supports a read-only `--check` preview. Files are
+published through same-directory atomic replacements only after the complete
+plan validates; stale files are pruned only from a prior provenance manifest.
+Unowned pre-existing outputs require explicit adoption.
 
 ## Access, capability, and privacy policy
 

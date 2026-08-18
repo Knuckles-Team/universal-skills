@@ -115,6 +115,10 @@ def test_generation_is_current_bounded_and_idempotent(tmp_path):
     assert (root / "llms-sections" / "guides" / "llms.txt").is_file()
     assert (root / "markdown-mirror-manifest.json").is_file()
     assert "Guide" in (root / "llms.txt").read_text(encoding="utf-8")
+    assert "https://docs.example.invalid/guide/" in (root / "llms.txt").read_text(
+        encoding="utf-8"
+    )
+    assert ".md" not in (root / "llms.txt").read_text(encoding="utf-8")
 
     # A removed navigation section is not retained as stale discovery context.
     (root / "mkdocs.yml").write_text(
@@ -124,6 +128,39 @@ def test_generation_is_current_bounded_and_idempotent(tmp_path):
     )
     module.generate(root)
     assert not (root / "llms-sections" / "guides" / "llms.txt").exists()
+
+
+def test_failed_late_plan_leaves_prior_outputs_byte_identical(tmp_path, monkeypatch):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    module.generate(root)
+    before = _generated_bytes(root)
+
+    def fail_after_source_validation(*args, **kwargs):
+        raise module.ReadinessError("late-render-failure")
+
+    monkeypatch.setattr(module, "_render_full", fail_after_source_validation)
+    with pytest.raises(module.ReadinessError, match="late-render-failure"):
+        module.generate(root, include_full=True, full_budget=8_000)
+    assert before == _generated_bytes(root)
+
+
+def test_check_and_adoption_controls_output_ownership(tmp_path):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    (root / "llms.txt").write_text("operator-owned\n", encoding="utf-8")
+    with pytest.raises(module.ReadinessError, match="output-unowned"):
+        module.generate(root)
+    assert (root / "llms.txt").read_text(encoding="utf-8") == "operator-owned\n"
+
+    result = module.generate(root, check=True, adopt_existing=True)
+    assert result["generated"]
+    assert "llms.txt" in result["planned"]
+    assert result["pruned"] == []
+    assert (root / "llms.txt").read_text(encoding="utf-8") == "operator-owned\n"
+    assert not (root / "agent-readiness-manifest.json").exists()
+    module.generate(root, adopt_existing=True)
+    assert (root / "llms.txt").read_text(encoding="utf-8") != "operator-owned\n"
 
 
 def test_full_context_requires_explicit_budget_and_is_bounded(tmp_path):
@@ -138,6 +175,65 @@ def test_full_context_requires_explicit_budget_and_is_bounded(tmp_path):
     _write_json(root / "docs" / "agent-readiness.json", readiness)
     result = module.generate(root, include_full=True, full_budget=8_000)
     assert "llms-full.txt" in result["generated"]
+
+
+def test_nested_index_sources_map_to_static_directory_urls(tmp_path):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    (root / "docs" / "nested").mkdir()
+    (root / "docs" / "nested" / "index.md").write_text(
+        "# Nested\n\nNested source.\n", encoding="utf-8"
+    )
+    (root / "mkdocs.yml").write_text(
+        "site_name: Provider\nsite_url: https://docs.example.invalid/base/\n"
+        "nav:\n"
+        "  - Home: index.md\n"
+        "  - Guides:\n"
+        "      - Guide: guide.md\n"
+        "      - Nested: nested/index.md\n",
+        encoding="utf-8",
+    )
+    module.generate(root)
+    mirror = json.loads(
+        (root / "markdown-mirror-manifest.json").read_text(encoding="utf-8")
+    )
+    urls = {entry["source"]: entry["url"] for entry in mirror["entries"]}
+    markdown_urls = {
+        entry["source"]: entry["markdown_url"] for entry in mirror["entries"]
+    }
+    assert urls["docs/index.md"] == "https://docs.example.invalid/base/"
+    assert urls["docs/nested/index.md"] == "https://docs.example.invalid/base/nested/"
+    assert (
+        markdown_urls["docs/index.md"] == "https://docs.example.invalid/base/index.md"
+    )
+    assert (
+        markdown_urls["docs/nested/index.md"]
+        == "https://docs.example.invalid/base/nested/index.md"
+    )
+    assert (
+        markdown_urls["docs/guide.md"]
+        == "https://docs.example.invalid/base/guide/index.md"
+    )
+    assert all(not url.endswith(".md") for url in urls.values())
+
+
+def test_source_route_and_index_collisions_fail_closed(tmp_path):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    (root / "docs" / "guide").mkdir()
+    (root / "docs" / "guide" / "index.md").write_text(
+        "# Guide index\n\nDuplicate route.\n", encoding="utf-8"
+    )
+    (root / "mkdocs.yml").write_text(
+        "site_name: Provider\nsite_url: https://docs.example.invalid/\n"
+        "nav:\n"
+        "  - Home: index.md\n"
+        "  - Guide: guide.md\n"
+        "  - Guide Index: guide/index.md\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(module.ReadinessError, match="url-duplicate"):
+        module.generate(root)
 
 
 @pytest.mark.parametrize(
@@ -206,7 +302,20 @@ def test_secret_private_endpoint_and_false_capability_claims_are_rejected(tmp_pa
 
     (root / "docs" / "index.md").write_text("# Home\n\nSafe text.\n", encoding="utf-8")
     artifact = root / "mcp.json"
-    _write_json(artifact, {"applicable": True, "name": "mcp"})
+    _write_json(artifact, {"applicable": True})
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "endpoint": "https://docs.example.invalid/mcp",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    with pytest.raises(module.ReadinessError, match="artifact-schema"):
+        module.generate(root)
+
+    _write_json(
+        artifact,
+        {"applicable": True, "surface": "mcp", "source": "docs/index.md"},
+    )
     readiness["capabilities"]["mcp"] = {
         "applicable": True,
         "artifact": "mcp.json",

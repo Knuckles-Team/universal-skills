@@ -14,8 +14,10 @@ import argparse
 import hashlib
 import ipaddress
 import json
+import os
 import re
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -86,6 +88,7 @@ class Page:
     title: str
     source: str
     url: str
+    markdown_url: str
     summary: str
     digest: str
     size: int
@@ -272,19 +275,31 @@ def _validate_capability_artifact(root: Path, name: str, artifact: str) -> None:
         raise ReadinessError(f"{name}-artifact-invalid-json") from exc
     if not isinstance(metadata, dict):
         _fail(f"{name}-artifact-invalid")
-    if not (metadata.get("applicable") is True or metadata.get("enabled") is True):
+    allowed_keys = {"applicable", "surface", "source", "version"}
+    if set(metadata) - allowed_keys:
+        _fail(f"{name}-artifact-schema-invalid")
+    if metadata.get("applicable") is not True:
         _fail(f"{name}-capability-not-proven")
+    if metadata.get("surface") != name:
+        _fail(f"{name}-artifact-schema-invalid")
+    if "version" in metadata and (
+        not isinstance(metadata["version"], str) or not metadata["version"]
+    ):
+        _fail(f"{name}-artifact-schema-invalid")
     source = metadata.get("source")
-    if source is not None:
-        if not isinstance(source, str):
-            _fail(f"{name}-artifact-source-invalid")
-        source_path = _safe_relative(root, source, f"{name}-artifact-source")
-        try:
-            source_metadata = source_path.lstat()
-        except OSError as exc:
-            raise ReadinessError(f"{name}-artifact-source-unavailable") from exc
-        if source_path.is_symlink() or source_metadata.st_nlink != 1:
-            _fail(f"{name}-artifact-source-invalid")
+    if not isinstance(source, str):
+        _fail(f"{name}-artifact-source-invalid")
+    source_path = _safe_relative(root, source, f"{name}-artifact-source")
+    try:
+        source_metadata = source_path.lstat()
+    except OSError as exc:
+        raise ReadinessError(f"{name}-artifact-source-unavailable") from exc
+    if (
+        source_path.is_symlink()
+        or not source_path.is_file()
+        or source_metadata.st_nlink != 1
+    ):
+        _fail(f"{name}-artifact-source-invalid")
     _scan_json_strings(metadata, f"{name}-artifact")
 
 
@@ -336,6 +351,30 @@ def _summary(markdown: str, limit: int) -> str:
     value = re.sub(r"[`*_]", "", " ".join(chunks))
     value = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", value)
     return value[:limit].strip()
+
+
+def _static_page_url(site_url: str, source: str) -> str:
+    """Map a Markdown source to MkDocs directory-style output URLs."""
+
+    parts = list(PurePosixPath(source).parts)
+    if parts[-1] == "index.md":
+        parts.pop()
+    else:
+        parts[-1] = PurePosixPath(parts[-1]).with_suffix("").name
+    static_path = "/".join(parts)
+    if static_path:
+        static_path += "/"
+    return urljoin(site_url, static_path)
+
+
+def _static_markdown_url(site_url: str, source: str) -> str:
+    """Map a source to an unambiguous static Markdown fallback target."""
+
+    parts = list(PurePosixPath(source).parts)
+    if parts[-1] != "index.md":
+        parts[-1] = PurePosixPath(parts[-1]).with_suffix("").name
+        parts.append("index.md")
+    return urljoin(site_url, "/".join(parts))
 
 
 def _load_mkdocs(root: Path) -> tuple[dict[str, Any], bytes]:
@@ -537,6 +576,7 @@ def _page_records(
     pages: list[Page] = []
     seen_sources: set[str] = set()
     seen_urls: set[str] = set()
+    seen_markdown_urls: set[str] = set()
     section_pages: dict[str, list[Page]] = {}
     for title, raw_source, section_title in leaves:
         source_path = _safe_relative(docs_root, raw_source, "nav-source")
@@ -546,14 +586,18 @@ def _page_records(
         payload = _regular_file(source_path, "nav-source")
         text = payload.decode("utf-8")
         _scan_safe_text(text, "markdown")
-        url = urljoin(site_url, raw_source.lstrip("/").replace("\\", "/"))
+        url = _static_page_url(site_url, raw_source)
         if url in seen_urls:
             _fail("mkdocs-nav-url-duplicate")
+        markdown_url = _static_markdown_url(site_url, raw_source)
+        if markdown_url in seen_markdown_urls:
+            _fail("mkdocs-nav-markdown-url-duplicate")
         section = section_title or "Documentation"
         page = Page(
             title=title,
             source=relative_source,
             url=url,
+            markdown_url=markdown_url,
             summary=_summary(text, summary_limit),
             digest=hashlib.sha256(payload).hexdigest(),
             size=len(payload),
@@ -563,6 +607,7 @@ def _page_records(
         section_pages.setdefault(section, []).append(page)
         seen_sources.add(relative_source)
         seen_urls.add(url)
+        seen_markdown_urls.add(markdown_url)
     sections: list[Section] = []
     seen_slugs: set[str] = set()
     for title, section_items in section_pages.items():
@@ -621,14 +666,53 @@ def _render_full(config: dict[str, Any], pages: tuple[Page, ...], budget: int) -
     return output
 
 
-def _ensure_output_parent(path: Path) -> None:
-    missing: list[Path] = []
-    cursor = path
-    while not cursor.exists():
-        missing.append(cursor)
-        cursor = cursor.parent
-    if cursor.is_symlink() or not cursor.is_dir():
+def _check_output_components(path: Path) -> None:
+    """Reject symlink/non-directory ancestors without changing the tree."""
+
+    absolute = path.absolute()
+    cursor = Path(absolute.anchor)
+    for part in absolute.parts[1:]:
+        cursor /= part
+        try:
+            metadata = cursor.lstat()
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            raise ReadinessError("output-unavailable") from exc
+        if cursor.is_symlink():
+            _fail("output-symlink")
+        if cursor != absolute and not cursor.is_dir():
+            _fail("output-parent-invalid")
+        if cursor == absolute and not cursor.is_dir() and path.is_dir():
+            _fail("output-parent-invalid")
+        if metadata.st_nlink < 1:
+            _fail("output-unavailable")
+
+
+def _validate_output_target(target: Path) -> None:
+    _check_output_components(target)
+    if target.exists() and not target.is_dir():
         _fail("output-parent-invalid")
+
+
+def _ensure_output_parent(path: Path) -> None:
+    """Create only missing, non-symlink output directories at publish time."""
+
+    absolute = path.absolute()
+    missing: list[Path] = []
+    cursor = absolute
+    while True:
+        try:
+            metadata = cursor.lstat()
+        except FileNotFoundError:
+            missing.append(cursor)
+            cursor = cursor.parent
+            continue
+        except OSError as exc:
+            raise ReadinessError("output-parent-unavailable") from exc
+        if cursor.is_symlink() or not cursor.is_dir() or metadata.st_nlink < 1:
+            _fail("output-parent-invalid")
+        break
     for directory in reversed(missing):
         try:
             directory.mkdir()
@@ -638,68 +722,119 @@ def _ensure_output_parent(path: Path) -> None:
             raise ReadinessError("output-parent-unavailable") from exc
 
 
-def _write(path: Path, payload: str | bytes) -> None:
+def _validate_output_file(
+    path: Path,
+    relative: str,
+    previous: set[str],
+    previous_manifest: bool,
+    adopt: bool,
+) -> None:
+    _check_output_components(path)
     if path.is_symlink():
         _fail("output-symlink")
+    if not path.exists():
+        return
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ReadinessError("output-unavailable") from exc
+    if not path.is_file() or metadata.st_nlink != 1:
+        _fail("output-not-regular")
+    owned = relative in previous or (
+        relative == "agent-readiness-manifest.json" and previous_manifest
+    )
+    if not owned and not adopt:
+        _fail("output-unowned")
+
+
+def _ensure_plan_output(
+    target: Path,
+    relative: str,
+    payload: str | bytes,
+    previous: set[str],
+    previous_manifest: bool,
+    adopt: bool,
+    plan: dict[str, bytes],
+) -> None:
+    path = target / relative
+    _validate_output_file(path, relative, previous, previous_manifest, adopt)
+    plan[relative] = payload.encode("utf-8") if isinstance(payload, str) else payload
+
+
+def _plan_delete(
+    target: Path,
+    relative: str,
+    previous: set[str],
+    previous_manifest: bool,
+    adopt: bool,
+    deletions: set[str],
+) -> None:
+    path = target / relative
+    _validate_output_file(path, relative, previous, previous_manifest, adopt)
     if path.exists():
-        try:
-            metadata = path.lstat()
-        except OSError as exc:
-            raise ReadinessError("output-unavailable") from exc
-        if not path.is_file() or metadata.st_nlink != 1:
-            _fail("output-not-regular")
+        deletions.add(relative)
+
+
+def _atomic_write(path: Path, payload: bytes) -> None:
     _ensure_output_parent(path.parent)
-    if isinstance(payload, str):
-        path.write_text(payload, encoding="utf-8")
-    else:
-        path.write_bytes(payload)
+    temporary: str | None = None
+    try:
+        descriptor, temporary = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        temporary = None
+    except OSError as exc:
+        raise ReadinessError("output-publish-failed") from exc
+    finally:
+        if temporary is not None:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
 
 
-def _previous_generated(target: Path) -> set[str]:
+def _publish(target: Path, plan: dict[str, bytes], deletions: set[str]) -> None:
+    _ensure_output_parent(target)
+    for relative in sorted(plan):
+        _atomic_write(target / relative, plan[relative])
+    for relative in sorted(deletions):
+        try:
+            (target / relative).unlink()
+        except OSError as exc:
+            raise ReadinessError("output-prune-failed") from exc
+
+
+def _previous_generated(target: Path) -> tuple[set[str], bool]:
     manifest_path = target / "agent-readiness-manifest.json"
+    _check_output_components(manifest_path)
     if not manifest_path.exists():
-        return set()
+        return set(), False
     payload = _regular_file(manifest_path, "previous-manifest")
     try:
         manifest = json.loads(payload.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ReadinessError("previous-manifest-invalid") from exc
     generated = manifest.get("generated") if isinstance(manifest, dict) else None
-    if not isinstance(generated, list) or any(
-        not isinstance(path, str)
-        or not path
-        or "\\" in path
-        or PurePosixPath(path).is_absolute()
-        or any(part in {"", ".", ".."} for part in PurePosixPath(path).parts)
-        for path in generated
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema_version") != SCHEMA_VERSION
+        or not isinstance(generated, list)
+        or any(
+            not isinstance(path, str)
+            or not path
+            or "\\" in path
+            or PurePosixPath(path).is_absolute()
+            or any(part in {"", ".", ".."} for part in PurePosixPath(path).parts)
+            for path in generated
+        )
     ):
         _fail("previous-manifest-invalid")
-    return set(generated)
-
-
-def _prune_stale_sections(target: Path, current: set[str], previous: set[str]) -> None:
-    section_root = target / "llms-sections"
-    if not section_root.exists():
-        return
-    if section_root.is_symlink() or not section_root.is_dir():
-        _fail("output-sections-invalid")
-    for section in section_root.iterdir():
-        if section.is_symlink() or not section.is_dir():
-            _fail("output-sections-entry-invalid")
-        stale = section / "llms.txt"
-        relative = stale.relative_to(target).as_posix()
-        if relative in current or relative not in previous or not stale.exists():
-            continue
-        if stale.is_symlink():
-            _fail("output-symlink")
-        metadata = stale.lstat()
-        if not stale.is_file() or metadata.st_nlink != 1:
-            _fail("output-not-regular")
-        stale.unlink()
-        try:
-            section.rmdir()
-        except OSError:
-            pass
+    return set(generated), True
 
 
 def generate(
@@ -709,8 +844,16 @@ def generate(
     output_dir: Path | None = None,
     include_full: bool = False,
     full_budget: int | None = None,
+    check: bool = False,
+    adopt_existing: bool = False,
 ) -> dict[str, Any]:
-    """Generate the readiness artifacts and return the deterministic manifest."""
+    """Validate, plan, and optionally publish readiness artifacts.
+
+    All source, capability, URL, budget, and output-ownership checks happen
+    before publication.  ``check`` returns the same manifest without changing
+    the output tree; ``adopt_existing`` is the explicit escape hatch for a
+    first run over already-present, unowned artifact paths.
+    """
 
     root = root.resolve(strict=True)
     applicability_path = applicability or root / "docs" / "agent-readiness.json"
@@ -727,18 +870,7 @@ def generate(
     pages, sections = _page_records(root, config, readiness["budgets"]["summary_chars"])
     config = {**config, "_root": str(root)}
     curated = _render_curated(config, readiness, sections)
-    target = (output_dir or root).absolute()
-    if target.is_symlink():
-        _fail("output-symlink")
-    if target.exists() and not target.is_dir():
-        _fail("output-parent-invalid")
-    _ensure_output_parent(target)
-    previous_generated = _previous_generated(target)
-    current_section_paths = {
-        f"llms-sections/{section.slug}/llms.txt" for section in sections
-    }
-    _prune_stale_sections(target, current_section_paths, previous_generated)
-    _write(target / "llms.txt", curated)
+    section_payloads: dict[str, str] = {}
     for section in sections:
         section_text = _render_curated(
             {
@@ -748,36 +880,27 @@ def generate(
             readiness,
             (section,),
         )
-        _write(target / "llms-sections" / section.slug / "llms.txt", section_text)
+        section_payloads[f"llms-sections/{section.slug}/llms.txt"] = section_text
 
-    full_path = target / "llms-full.txt"
     effective_full_budget = (
         full_budget if full_budget is not None else readiness["budgets"]["full_chars"]
     )
+    full_payload: str | None = None
     if include_full:
         if (
             type(effective_full_budget) is not int
             or not 0 < effective_full_budget <= MAX_FULL_CHARS
         ):
             _fail("full-context-budget-required")
-        _write(full_path, _render_full(config, pages, effective_full_budget))
-    elif full_path.exists():
-        if full_path.is_symlink():
-            _fail("output-symlink")
-        try:
-            full_metadata = full_path.lstat()
-        except OSError as exc:
-            raise ReadinessError("output-unavailable") from exc
-        if not full_path.is_file() or full_metadata.st_nlink != 1:
-            _fail("output-not-regular")
-        if "llms-full.txt" in previous_generated:
-            full_path.unlink()
+        full_payload = _render_full(config, pages, effective_full_budget)
 
     mirror_applicable = readiness["applicability"]["discoverability"]
     mirror_entries = [
         {
             "source": page.source,
             "url": page.url if mirror_applicable else None,
+            "canonical_url": page.url if mirror_applicable else None,
+            "markdown_url": page.markdown_url if mirror_applicable else None,
             "sha256": page.digest,
             "bytes": page.size,
         }
@@ -785,11 +908,11 @@ def generate(
     ]
     mirror = {
         "schema_version": SCHEMA_VERSION,
+        "url_contract": "mkdocs-static/v2",
         "applicable": mirror_applicable,
         "entries": mirror_entries,
     }
     mirror_payload = json.dumps(mirror, indent=2, sort_keys=True) + "\n"
-    _write(target / "markdown-mirror-manifest.json", mirror_payload)
     provenance = {
         "schema_version": SCHEMA_VERSION,
         "generator_version": GENERATOR_VERSION,
@@ -804,6 +927,7 @@ def generate(
             "full_effective_chars": effective_full_budget if include_full else 0,
         },
         "provenance": {
+            "url_contract": "mkdocs-static/v2",
             "mkdocs_sha256": hashlib.sha256(mkdocs_bytes).hexdigest(),
             "applicability_sha256": hashlib.sha256(applicability_bytes).hexdigest(),
             "pages": [
@@ -819,8 +943,101 @@ def generate(
         ],
     }
     manifest_payload = json.dumps(provenance, indent=2, sort_keys=True) + "\n"
-    _write(target / "agent-readiness-manifest.json", manifest_payload)
-    return provenance
+    target = (output_dir or root).absolute()
+    _validate_output_target(target)
+    previous_generated, previous_manifest = _previous_generated(target)
+    plan: dict[str, bytes] = {}
+    deletions: set[str] = set()
+    _ensure_plan_output(
+        target,
+        "llms.txt",
+        curated,
+        previous_generated,
+        previous_manifest,
+        adopt_existing,
+        plan,
+    )
+    for relative, payload in section_payloads.items():
+        _ensure_plan_output(
+            target,
+            relative,
+            payload,
+            previous_generated,
+            previous_manifest,
+            adopt_existing,
+            plan,
+        )
+    if full_payload is not None:
+        _ensure_plan_output(
+            target,
+            "llms-full.txt",
+            full_payload,
+            previous_generated,
+            previous_manifest,
+            adopt_existing,
+            plan,
+        )
+    elif "llms-full.txt" in previous_generated:
+        _plan_delete(
+            target,
+            "llms-full.txt",
+            previous_generated,
+            previous_manifest,
+            adopt_existing,
+            deletions,
+        )
+    else:
+        _check_output_components(target / "llms-full.txt")
+    if full_payload is None and "llms-full.txt" not in previous_generated:
+        if (target / "llms-full.txt").exists():
+            _validate_output_file(
+                target / "llms-full.txt",
+                "llms-full.txt",
+                previous_generated,
+                previous_manifest,
+                adopt_existing,
+            )
+    current_section_paths = set(section_payloads)
+    for relative in sorted(previous_generated):
+        if (
+            relative.startswith("llms-sections/")
+            and relative.endswith("/llms.txt")
+            and relative not in current_section_paths
+        ):
+            _plan_delete(
+                target,
+                relative,
+                previous_generated,
+                previous_manifest,
+                adopt_existing,
+                deletions,
+            )
+    _ensure_plan_output(
+        target,
+        "markdown-mirror-manifest.json",
+        mirror_payload,
+        previous_generated,
+        previous_manifest,
+        adopt_existing,
+        plan,
+    )
+    _ensure_plan_output(
+        target,
+        "agent-readiness-manifest.json",
+        manifest_payload,
+        previous_generated,
+        previous_manifest,
+        adopt_existing,
+        plan,
+    )
+    if not check:
+        _publish(target, plan, deletions)
+        return provenance
+    return {
+        **provenance,
+        "planned": sorted(plan),
+        "pruned": sorted(deletions),
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -830,6 +1047,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--full", action="store_true", help="emit full context")
     parser.add_argument("--full-budget", type=int)
+    parser.add_argument(
+        "--check", action="store_true", help="validate and preview without writing"
+    )
+    parser.add_argument(
+        "--adopt-existing",
+        action="store_true",
+        help="explicitly adopt pre-existing unowned output artifacts",
+    )
     args = parser.parse_args(argv)
     try:
         manifest = generate(
@@ -838,11 +1063,18 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=args.output_dir,
             include_full=args.full,
             full_budget=args.full_budget,
+            check=args.check,
+            adopt_existing=args.adopt_existing,
         )
     except (OSError, ReadinessError, UnicodeError, ValueError) as exc:
         print(f"agent-readiness generation failed: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps({"generated": manifest["generated"]}, sort_keys=True))
+    result = {"check": args.check, "generated": manifest["generated"]}
+    if args.check:
+        result.update(
+            planned=manifest.get("planned", []), pruned=manifest.get("pruned", [])
+        )
+    print(json.dumps(result, sort_keys=True))
     return 0
 
 
