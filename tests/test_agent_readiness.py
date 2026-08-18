@@ -145,6 +145,33 @@ def test_failed_late_plan_leaves_prior_outputs_byte_identical(tmp_path, monkeypa
     assert before == _generated_bytes(root)
 
 
+def test_mid_publish_failure_rolls_back_the_complete_artifact_set(
+    tmp_path, monkeypatch
+):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    module.generate(root)
+    before = _generated_bytes(root)
+    (root / "docs" / "guide.md").write_text(
+        "# Guide\n\nChanged source that must not be partially published.\n",
+        encoding="utf-8",
+    )
+    real_atomic_write = module._atomic_write
+    failed = False
+
+    def fail_one_replacement(path, payload):
+        nonlocal failed
+        if path.name == "markdown-mirror-manifest.json" and not failed:
+            failed = True
+            raise module.ReadinessError("injected-publish-failure")
+        return real_atomic_write(path, payload)
+
+    monkeypatch.setattr(module, "_atomic_write", fail_one_replacement)
+    with pytest.raises(module.ReadinessError, match="injected-publish-failure"):
+        module.generate(root)
+    assert before == _generated_bytes(root)
+
+
 def test_check_and_adoption_controls_output_ownership(tmp_path):
     module = _load_generator()
     root, _ = _fixture(tmp_path)
@@ -215,6 +242,18 @@ def test_nested_index_sources_map_to_static_directory_urls(tmp_path):
         == "https://docs.example.invalid/base/guide/index.md"
     )
     assert all(not url.endswith(".md") for url in urls.values())
+
+
+def test_site_url_requires_a_directory_style_path(tmp_path):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    (root / "mkdocs.yml").write_text(
+        "site_name: Provider\nsite_url: https://docs.example.invalid/base\n"
+        "nav:\n  - Home: index.md\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(module.ReadinessError, match="url-invalid"):
+        module.generate(root)
 
 
 def test_source_route_and_index_collisions_fail_closed(tmp_path):
@@ -330,6 +369,31 @@ def test_secret_private_endpoint_and_false_capability_claims_are_rejected(tmp_pa
     _write_json(root / "docs" / "agent-readiness.json", readiness)
     with pytest.raises(module.ReadinessError, match="library-capability"):
         module.generate(root)
+
+
+def test_capability_provenance_binds_artifact_and_source_digests(tmp_path):
+    module = _load_generator()
+    root, readiness = _fixture(tmp_path)
+    source = root / "provider.py"
+    source.write_text("def serve():\n    return 'ready'\n", encoding="utf-8")
+    artifact = root / "mcp.json"
+    _write_json(
+        artifact,
+        {"applicable": True, "surface": "mcp", "source": "provider.py"},
+    )
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "endpoint": "https://docs.example.invalid/mcp/",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+
+    result = module.generate(root)
+    evidence = result["capability_evidence"]["mcp"]
+    assert evidence["artifact"] == "mcp.json"
+    assert evidence["source"] == "provider.py"
+    assert len(evidence["artifact_sha256"]) == 64
+    assert len(evidence["source_sha256"]) == 64
 
 
 def test_maturity_content_signal_and_schema_contracts_are_explicit(tmp_path):

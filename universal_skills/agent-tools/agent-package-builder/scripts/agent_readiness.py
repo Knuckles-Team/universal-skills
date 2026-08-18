@@ -177,7 +177,7 @@ def _safe_existing_path(root: Path, path: Path, label: str) -> Path:
     return _safe_relative(root, raw, label)
 
 
-def _public_url(raw: object, label: str) -> str:
+def _public_url(raw: object, label: str, *, directory: bool = False) -> str:
     if not isinstance(raw, str) or len(raw) > 2048:
         _fail(f"{label}-url-invalid")
     try:
@@ -207,9 +207,11 @@ def _public_url(raw: object, label: str) -> str:
         or address.is_multicast
     ):
         _fail(f"{label}-private-url")
-    if not parsed.netloc or not parsed.path.endswith(("/", "")):
+    if not parsed.netloc or (
+        directory and parsed.path and not parsed.path.endswith("/")
+    ):
         _fail(f"{label}-url-invalid")
-    return raw.rstrip("/") + "/"
+    return raw.rstrip("/") + "/" if directory else raw
 
 
 def _scan_safe_text(text: str, label: str) -> None:
@@ -266,7 +268,9 @@ def _scan_json_strings(value: object, label: str) -> None:
         _fail(f"{label}-metadata-invalid")
 
 
-def _validate_capability_artifact(root: Path, name: str, artifact: str) -> None:
+def _validate_capability_artifact(
+    root: Path, name: str, artifact: str
+) -> dict[str, str]:
     artifact_path = _safe_relative(root, artifact, f"{name}-artifact")
     payload = _regular_file(artifact_path, f"{name}-artifact")
     try:
@@ -300,7 +304,14 @@ def _validate_capability_artifact(root: Path, name: str, artifact: str) -> None:
         or source_metadata.st_nlink != 1
     ):
         _fail(f"{name}-artifact-source-invalid")
+    source_payload = _regular_file(source_path, f"{name}-artifact-source")
     _scan_json_strings(metadata, f"{name}-artifact")
+    return {
+        "artifact": artifact,
+        "artifact_sha256": hashlib.sha256(payload).hexdigest(),
+        "source": source,
+        "source_sha256": hashlib.sha256(source_payload).hexdigest(),
+    }
 
 
 def _validate_skills_path(root: Path, raw: object) -> str:
@@ -512,6 +523,7 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(capabilities, dict) or set(capabilities) != CAPABILITY_NAMES:
         _fail("capabilities-invalid")
     normalized_capabilities: dict[str, dict[str, Any]] = {}
+    capability_evidence: dict[str, dict[str, str]] = {}
     for name, entry in capabilities.items():
         if not isinstance(entry, dict) or not isinstance(entry.get("applicable"), bool):
             _fail("capability-entry-invalid")
@@ -534,7 +546,9 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
         if applicable and name in {"api", "mcp", "a2a"}:
             if not isinstance(artifact, str):
                 _fail("capability-authority-required")
-            _validate_capability_artifact(root, name, artifact)
+            capability_evidence[name] = _validate_capability_artifact(
+                root, name, artifact
+            )
             if name in {"mcp", "a2a"} or endpoint is not None:
                 _public_url(endpoint, f"{name}-endpoint")
         if applicable and name == "skills":
@@ -563,13 +577,14 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
             "full_chars": full,
         },
         "capabilities": normalized_capabilities,
+        "capability_evidence": capability_evidence,
     }
 
 
 def _page_records(
     root: Path, config: dict[str, Any], summary_limit: int
 ) -> tuple[tuple[Page, ...], tuple[Section, ...]]:
-    site_url = _public_url(config.get("site_url"), "mkdocs-site")
+    site_url = _public_url(config.get("site_url"), "mkdocs-site", directory=True)
     docs_dir_raw = config.get("docs_dir", "docs")
     docs_root = _safe_relative(root, docs_dir_raw, "docs-dir")
     leaves = _flatten_nav(config["nav"])
@@ -783,6 +798,7 @@ def _atomic_write(path: Path, payload: bytes) -> None:
             prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
         )
         with os.fdopen(descriptor, "wb") as handle:
+            os.fchmod(handle.fileno(), 0o644)
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
@@ -799,14 +815,49 @@ def _atomic_write(path: Path, payload: bytes) -> None:
 
 
 def _publish(target: Path, plan: dict[str, bytes], deletions: set[str]) -> None:
+    """Publish one artifact set with the provenance manifest as commit record.
+
+    Individual replacements are atomic, but a set spans several paths. Snapshot
+    the owned prior state and roll it back on a mid-publication failure so a new
+    manifest can never attest to a partial set. The manifest is always replaced
+    last, after stale owned artifacts have been pruned successfully.
+    """
+
     _ensure_output_parent(target)
-    for relative in sorted(plan):
-        _atomic_write(target / relative, plan[relative])
-    for relative in sorted(deletions):
+    manifest = "agent-readiness-manifest.json"
+    ordered = [relative for relative in sorted(plan) if relative != manifest]
+    if manifest in plan:
+        ordered.append(manifest)
+    affected = set(plan) | deletions
+    prior: dict[str, bytes | None] = {}
+    for relative in affected:
+        path = target / relative
+        prior[relative] = _regular_file(path, "output-prior") if path.exists() else None
+    try:
+        for relative in ordered[:-1] if ordered[-1:] == [manifest] else ordered:
+            _atomic_write(target / relative, plan[relative])
+        for relative in sorted(deletions):
+            try:
+                (target / relative).unlink()
+            except OSError as exc:
+                raise ReadinessError("output-prune-failed") from exc
+        if ordered[-1:] == [manifest]:
+            _atomic_write(target / manifest, plan[manifest])
+    except (OSError, ReadinessError) as exc:
         try:
-            (target / relative).unlink()
-        except OSError as exc:
-            raise ReadinessError("output-prune-failed") from exc
+            for relative in sorted(affected):
+                path = target / relative
+                payload = prior[relative]
+                if payload is None:
+                    if path.exists():
+                        path.unlink()
+                else:
+                    _atomic_write(path, payload)
+        except (OSError, ReadinessError) as rollback_exc:
+            raise ReadinessError("output-rollback-failed") from rollback_exc
+        if isinstance(exc, ReadinessError):
+            raise
+        raise ReadinessError("output-publish-failed") from exc
 
 
 def _previous_generated(target: Path) -> tuple[set[str], bool]:
@@ -921,6 +972,7 @@ def generate(
         "standards": readiness["standards"],
         "content_signals": readiness["content_signals"],
         "capabilities": readiness["capabilities"],
+        "capability_evidence": readiness["capability_evidence"],
         "budgets": {
             **readiness["budgets"],
             "full_requested": include_full,
