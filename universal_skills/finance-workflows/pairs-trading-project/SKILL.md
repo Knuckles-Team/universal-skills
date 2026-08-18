@@ -12,7 +12,7 @@ agent: quant_developer
 team_config: quantitative_trading_team
 tags: [quant, pairs-trading, cointegration, mean-reversion, portfolio, workflow]
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

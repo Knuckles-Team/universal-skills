@@ -22,7 +22,7 @@ team_config:
 tags: [finance, model-retraining-pipeline]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Model Retraining Pipeline Workflow

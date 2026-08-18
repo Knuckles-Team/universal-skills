@@ -20,7 +20,7 @@ team_config:
 tags: [finance, analysis, portfolio]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Portfolio Analysis Workflow

@@ -22,7 +22,7 @@ team_config:
 tags: [social, brand-identity-generator]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Brand Identity Generator Workflow

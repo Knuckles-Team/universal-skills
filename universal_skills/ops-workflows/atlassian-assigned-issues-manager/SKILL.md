@@ -20,7 +20,7 @@ team_config:
 tags: ['atlassian', 'jira', 'tasks', 'agile', 'atlassian-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Atlassian Assigned Issues Manager Workflow

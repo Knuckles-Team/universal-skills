@@ -20,7 +20,7 @@ team_config:
 tags: [health, port-scan-audit]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Port Scan Audit Workflow

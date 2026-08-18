@@ -11,7 +11,7 @@ description: >
   Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk",
   "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # RustDesk Client Installation Skill

@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [research, citations, evidence, fact-checking, provenance]
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
   author: Genius
 ---
 

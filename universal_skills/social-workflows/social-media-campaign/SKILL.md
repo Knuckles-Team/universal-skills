@@ -22,7 +22,7 @@ team_config:
 tags: [social, social-media-campaign]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Social Media Campaign Workflow

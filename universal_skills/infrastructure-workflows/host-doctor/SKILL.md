@@ -31,7 +31,7 @@ team_config:
 tags: [infra, host, diagnostics, onboarding, process, zombie, swap, storage, smart, bmc, ipmi, drive-fault, remediation]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Host Doctor Workflow

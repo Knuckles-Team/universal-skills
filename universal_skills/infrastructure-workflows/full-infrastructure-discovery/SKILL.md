@@ -6,7 +6,7 @@ domain: infrastructure-workflows
 tags: ['discovery', 'topology', 'inventory', 'self-hosted', 'enterprise']
 requires: ['tunnel-manager-mcp', 'container-manager-mcp', 'portainer-mcp', 'technitium-dns-mcp']
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # full-infrastructure-discovery Workflow

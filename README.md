@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/universal-skills)](https://pypi.org/project/universal-skills/)
 [![License](https://img.shields.io/github/license/Knuckles-Team/universal-skills)](LICENSE)
 
-*Version: 1.2.1*
+*Version: 1.3.0*
 
 Universal Skills is a portable catalog of agent capabilities and dependency-ordered
 skill workflows. It supports Claude-compatible `SKILL.md` discovery and the

@@ -22,7 +22,7 @@ team_config:
 tags: [tracking-error, active-share, style-attribution, drift]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Benchmark Tracking Error Workflow

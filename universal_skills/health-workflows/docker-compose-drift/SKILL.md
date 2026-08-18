@@ -20,7 +20,7 @@ team_config:
 tags: [health, docker-compose-drift]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Docker Compose Drift Workflow

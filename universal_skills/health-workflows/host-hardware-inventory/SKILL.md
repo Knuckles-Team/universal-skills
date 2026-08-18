@@ -22,7 +22,7 @@ team_config:
 tags: [health, host-hardware-inventory]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Host Hardware Inventory Workflow

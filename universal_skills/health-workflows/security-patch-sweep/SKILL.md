@@ -22,7 +22,7 @@ team_config:
 tags: [health, security-patch-sweep]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.2.1'
+  version: '1.3.0'
 ---
 
 # Security Patch Sweep Workflow
