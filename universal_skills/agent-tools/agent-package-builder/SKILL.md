@@ -20,6 +20,16 @@ identity, endpoint, credential, certificate, or host-specific assumptions into s
 The definitive generated-file contract is
 [`PARITY_MANIFEST.md`](PARITY_MANIFEST.md).
 
+Documentation readiness follows the hybrid authority in
+[`DOCUMENTATION_STANDARD_VNEXT.md`](DOCUMENTATION_STANDARD_VNEXT.md). A scaffolded
+package carries explicit `docs/agent-readiness.json` applicability and maturity
+labels, then uses `scripts/generate_agent_readiness.py` to produce bounded,
+current-only `llms.txt`, section indexes, a raw-Markdown mirror manifest, and a
+provenance manifest. The generator reads exact MkDocs navigation/source Markdown;
+it never imports provider runtimes or scrapes generated HTML. `llms-full.txt` is
+opt-in and requires an explicit context budget. Content Signals remain an
+operator choice (`unset` or `operator-reviewed`), never an inferred default.
+
 ## Invocation
 
 ```bash

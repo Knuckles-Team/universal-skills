@@ -91,11 +91,13 @@ def resolve_workspace_members(root: Path) -> list[WorkspaceMember]:
 
     excluded_dirs: set[Path] = set()
     for pattern in excludes:
-        excluded_dirs.update(p.resolve() for p in root.glob(pattern) if p.is_dir())
+        candidates = [root] if pattern in {"", "."} else root.glob(pattern)
+        excluded_dirs.update(p.resolve() for p in candidates if p.is_dir())
 
     seen: dict[Path, WorkspaceMember] = {}
     for pattern in patterns:
-        for candidate in sorted(root.glob(pattern)):
+        candidates = [root] if pattern in {"", "."} else root.glob(pattern)
+        for candidate in sorted(candidates):
             if not candidate.is_dir():
                 continue
             resolved = candidate.resolve()

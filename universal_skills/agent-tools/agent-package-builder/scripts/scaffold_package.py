@@ -16,6 +16,7 @@ See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
 import argparse
 import datetime
 import shutil
+import sys
 from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
@@ -2928,7 +2929,7 @@ matching `mcp_config.json` below.
 
 ```bash
 {mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
-curl -s http://localhost:8000/health        # {{"status":"OK"}}
+curl -s http://loopback.invalid:8000/health        # {{"status":"OK"}}
 ```
 
 Connect to the running process by URL:
@@ -2936,7 +2937,7 @@ Connect to the running process by URL:
 ```json
 {{
   "mcpServers": {{
-    "{mcp_cmd}": {{ "url": "http://localhost:8000/mcp" }}
+    "{mcp_cmd}": {{ "url": "http://loopback.invalid:8000/mcp" }}
   }}
 }}
 ```
@@ -3072,6 +3073,46 @@ DOCS_CONCEPTS_MD = """\
 | `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |
 | `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |
 | `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |
+"""
+
+AGENT_READINESS_JSON = """\
+{{
+  "schema_version": "agent-readiness/v1",
+  "project": {{"name": "{package_name}", "kind": "package"}},
+  "applicability": {{
+    "content": true,
+    "discoverability": true,
+    "access_policy": true,
+    "capabilities": true,
+    "errors": false,
+    "provenance": true,
+    "measurement": false,
+    "deployment": false
+  }},
+  "standards": [
+    {{"id": "RFC 3986", "kind": "rfc", "level": "normative"}},
+    {{"id": "Agent Documentation Standard vNext", "kind": "draft", "level": "draft"}},
+    {{"id": "Concept IDs and AGENTS", "kind": "convention", "level": "advisory"}}
+  ],
+  "content_signals": {{"policy": "unset"}},
+  "budgets": {{"curated_chars": 24000, "summary_chars": 800, "full_chars": 0}},
+  "capabilities": {{
+    "api": {{"applicable": {api_applicable}{api_artifact}}},
+    "mcp": {{"applicable": {mcp_applicable}{mcp_artifact}{mcp_endpoint}}},
+    "a2a": {{"applicable": {a2a_applicable}{a2a_artifact}{a2a_endpoint}}},
+    "skills": {{"applicable": true, "path": "{pkg_dir}/skills"}}
+  }}
+}}
+"""
+
+CAPABILITY_API_JSON = """\
+{{"applicable": true, "surface": "api", "source": "{pkg_dir}/api/__init__.py"}}
+"""
+CAPABILITY_MCP_JSON = """\
+{{"applicable": true, "surface": "mcp", "source": "{pkg_dir}/mcp_server.py"}}
+"""
+CAPABILITY_A2A_JSON = """\
+{{"applicable": true, "surface": "a2a", "source": "{pkg_dir}/agent_server.py"}}
 """
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
@@ -3312,6 +3353,26 @@ def scaffold(
         "gql_all_dep": gql_all_dep,
         "gql_optional_module": gql_optional_module,
         "gql_all_extend": gql_all_extend,
+        "api_applicable": "true",
+        "mcp_applicable": "true" if "mcp" in types else "false",
+        "a2a_applicable": "true" if "agent" in types else "false",
+        "api_artifact": ', "artifact": "docs/capabilities/api.json"',
+        "mcp_artifact": (
+            ', "artifact": "docs/capabilities/mcp.json"' if "mcp" in types else ""
+        ),
+        "a2a_artifact": (
+            ', "artifact": "docs/capabilities/a2a.json"' if "agent" in types else ""
+        ),
+        "mcp_endpoint": (
+            ', "endpoint": "https://service.example.invalid/mcp"'
+            if "mcp" in types
+            else ""
+        ),
+        "a2a_endpoint": (
+            ', "endpoint": "https://service.example.invalid/.well-known/agent-card"'
+            if "agent" in types
+            else ""
+        ),
         "year": year,
         "date": date,
         "upper_name": upper_name,
@@ -3361,6 +3422,8 @@ def scaffold(
         root / "docs/usage.md": (DOCS_USAGE_MD, True),
         root / "docs/platform.md": (DOCS_PLATFORM_MD, True),
         root / "docs/concepts.md": (DOCS_CONCEPTS_MD, True),
+        root / "docs/agent-readiness.json": (AGENT_READINESS_JSON, True),
+        root / "docs/capabilities/api.json": (CAPABILITY_API_JSON, True),
         # Repo scripts
         root / "scripts/validate_agent.py": (VALIDATE_AGENT_PY, True),
     }
@@ -3439,10 +3502,12 @@ def scaffold(
 
     if "mcp" in types:
         files[pkg / "mcp_server.py"] = (MCP_SERVER_PY, True)
+        files[root / "docs/capabilities/mcp.json"] = (CAPABILITY_MCP_JSON, True)
 
     if "agent" in types:
         files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
         files[pkg / "__main__.py"] = (MAIN_PY, True)
+        files[root / "docs/capabilities/a2a.json"] = (CAPABILITY_A2A_JSON, True)
 
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
@@ -3505,7 +3570,38 @@ def scaffold(
         if src.is_file():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(src, dst)
-            print(f"  ✅ {dst.relative_to(root.parent)} (bundled workspace-source guard)")
+            print(
+                f"  ✅ {dst.relative_to(root.parent)} (bundled workspace-source guard)"
+            )
+
+    # Documentation readiness is a builder-owned contract.  Copy the exact
+    # generator/schema pair so every package inherits the same deterministic,
+    # source-only and privacy-safe implementation.
+    readiness_script = _scaffolder_scripts_dir / "agent_readiness.py"
+    readiness_schema = _scaffolder_scripts_dir / "agent_readiness_schema.json"
+    if not readiness_script.is_file() or not readiness_schema.is_file():
+        raise FileNotFoundError("agent-readiness builder contract is incomplete")
+    shutil.copyfile(readiness_script, root / "scripts" / "generate_agent_readiness.py")
+    shutil.copyfile(readiness_schema, root / "docs" / "agent-readiness.schema.json")
+    print(
+        f"  ✅ {(root / 'scripts/generate_agent_readiness.py').relative_to(root.parent)}"
+    )
+    print(
+        f"  ✅ {(root / 'docs/agent-readiness.schema.json').relative_to(root.parent)}"
+    )
+
+    # Generate current discovery artifacts only after all source pages and the
+    # explicit applicability input exist.  This calls the same reviewed
+    # function copied into the package and does not import provider code.
+    script_dir_text = str(_scaffolder_scripts_dir)
+    if script_dir_text not in sys.path:
+        sys.path.insert(0, script_dir_text)
+    from agent_readiness import generate as generate_readiness
+
+    generate_readiness(root, applicability=root / "docs" / "agent-readiness.json")
+    print(
+        f"  ✅ {(root / 'llms.txt').relative_to(root.parent)} (agent-readiness index)"
+    )
 
     # requirements.txt mirrors [project].dependencies
     import tomllib

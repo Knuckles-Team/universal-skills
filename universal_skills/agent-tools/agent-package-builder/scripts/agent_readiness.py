@@ -1,0 +1,850 @@
+#!/usr/bin/env python3
+"""Generate deterministic, privacy-safe agent documentation artifacts.
+
+The generator reads the source Markdown selected by ``mkdocs.yml``.  It never
+imports a provider package or parses generated HTML, so a documentation build
+cannot accidentally become a runtime capability oracle.  ``docs/agent-readiness.json``
+is an explicit operator input; its applicability and content-signal choices are
+copied into the provenance manifest rather than guessed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import ipaddress
+import json
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
+from typing import Any
+from urllib.parse import urljoin, urlsplit
+
+try:
+    import yaml
+except ImportError as exc:  # pragma: no cover - exercised by package users
+    yaml = None
+    _YAML_IMPORT_ERROR = exc
+else:
+    _YAML_IMPORT_ERROR = None
+
+
+if yaml is not None:
+
+    class _MkdocsLoader(yaml.SafeLoader):
+        """Safe YAML loader that treats MkDocs Python-name tags as strings."""
+
+    def _construct_python_name(loader: Any, suffix: str, node: Any) -> str:
+        if not isinstance(node, yaml.ScalarNode):
+            raise yaml.YAMLError("python-name tag must be scalar")
+        return suffix
+
+    _MkdocsLoader.add_multi_constructor(
+        "tag:yaml.org,2002:python/name:", _construct_python_name
+    )
+else:  # pragma: no cover - only used when the optional parser is absent
+    _MkdocsLoader = None
+
+
+SCHEMA_VERSION = "agent-readiness/v1"
+GENERATOR_VERSION = "1.0.0"
+MAX_CURATED_CHARS = 32_000
+MAX_FULL_CHARS = 500_000
+MAX_SUMMARY_CHARS = 1_200
+MAX_SOURCE_BYTES = 2_000_000
+STANDARD_KINDS = frozenset({"rfc", "draft", "convention"})
+APPLICABILITY_CATEGORIES = (
+    "content",
+    "discoverability",
+    "access_policy",
+    "capabilities",
+    "errors",
+    "provenance",
+    "measurement",
+    "deployment",
+)
+CAPABILITY_NAMES = frozenset({"api", "mcp", "a2a", "skills"})
+SAFE_SIGNAL_POLICIES = frozenset({"unset", "operator-reviewed"})
+SECRET_PATTERN = re.compile(
+    r"(?ix)(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|"
+    r"secret(?:[_-][a-z0-9]+)*|token(?:[_-][a-z0-9]+)*)"
+    r"[\"'`]?\s*[:=]\s*(?!<|\$|env://|\*|redacted\b|none\b|false\b|true\b)"
+    r"[\"']?[A-Za-z0-9_./+=:-]{12,}[\"']?"
+)
+BEARER_PATTERN = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{12,}")
+
+
+class ReadinessError(ValueError):
+    """A privacy, provenance, schema, or deterministic-generation rejection."""
+
+
+@dataclass(frozen=True)
+class Page:
+    """One leaf selected by the exact MkDocs navigation order."""
+
+    title: str
+    source: str
+    url: str
+    summary: str
+    digest: str
+    size: int
+    section: str
+
+
+@dataclass(frozen=True)
+class Section:
+    """A top-level MkDocs navigation section."""
+
+    title: str
+    slug: str
+    pages: tuple[Page, ...]
+
+
+def _fail(message: str) -> None:
+    raise ReadinessError(message)
+
+
+def _regular_file(path: Path, label: str) -> bytes:
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ReadinessError(f"{label}-unavailable") from exc
+    if path.is_symlink() or not path.is_file() or metadata.st_nlink != 1:
+        _fail(f"{label}-not-regular")
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise ReadinessError(f"{label}-unreadable") from exc
+    if len(payload) > MAX_SOURCE_BYTES:
+        _fail(f"{label}-oversize")
+    return payload
+
+
+def _safe_relative(root: Path, raw: object, label: str) -> Path:
+    if (
+        not isinstance(raw, str)
+        or not raw
+        or "\x00" in raw
+        or "\\" in raw
+        or "?" in raw
+        or "#" in raw
+    ):
+        _fail(f"{label}-path-invalid")
+    relative = PurePosixPath(raw)
+    if relative.is_absolute() or not relative.parts:
+        _fail(f"{label}-path-invalid")
+    if any(part in {"", ".", ".."} for part in relative.parts):
+        _fail(f"{label}-path-invalid")
+    try:
+        root_stat = root.lstat()
+    except OSError as exc:
+        raise ReadinessError(f"{label}-root-unavailable") from exc
+    if root.is_symlink() or not root.is_dir() or root_stat.st_nlink < 1:
+        _fail(f"{label}-root-invalid")
+    candidate = root.joinpath(*relative.parts)
+    cursor = root
+    for part in relative.parts:
+        cursor /= part
+        try:
+            if cursor.is_symlink():
+                _fail(f"{label}-symlink")
+        except OSError as exc:
+            raise ReadinessError(f"{label}-unavailable") from exc
+    try:
+        resolved_root = root.resolve(strict=True)
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(resolved_root)
+    except (OSError, ValueError) as exc:
+        raise ReadinessError(f"{label}-containment") from exc
+    return resolved
+
+
+def _safe_existing_path(root: Path, path: Path, label: str) -> Path:
+    """Resolve an input only after rejecting absolute escapes and symlinks."""
+
+    if path.is_absolute():
+        try:
+            relative = path.absolute().relative_to(root)
+        except ValueError as exc:
+            raise ReadinessError(f"{label}-containment") from exc
+        raw = relative.as_posix()
+    else:
+        raw = path.as_posix()
+    return _safe_relative(root, raw, label)
+
+
+def _public_url(raw: object, label: str) -> str:
+    if not isinstance(raw, str) or len(raw) > 2048:
+        _fail(f"{label}-url-invalid")
+    try:
+        parsed = urlsplit(raw)
+        host = parsed.hostname.rstrip(".").lower() if parsed.hostname else ""
+        port = parsed.port
+    except ValueError as exc:
+        raise ReadinessError(f"{label}-url-invalid") from exc
+    if parsed.scheme != "https" or parsed.username or parsed.password:
+        _fail(f"{label}-url-invalid")
+    if parsed.query or parsed.fragment or not host or port:
+        _fail(f"{label}-url-invalid")
+    if host in {"localhost", "local", "internal"} or host.endswith(
+        (".local", ".localhost", ".internal", ".home", ".arpa")
+    ):
+        _fail(f"{label}-private-url")
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        address = None
+    if address is not None and (
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+        or address.is_unspecified
+        or address.is_multicast
+    ):
+        _fail(f"{label}-private-url")
+    if not parsed.netloc or not parsed.path.endswith(("/", "")):
+        _fail(f"{label}-url-invalid")
+    return raw.rstrip("/") + "/"
+
+
+def _scan_safe_text(text: str, label: str) -> None:
+    if SECRET_PATTERN.search(text) or BEARER_PATTERN.search(text):
+        _fail(f"{label}-secret-like-value")
+    for match in re.finditer(r"https?://[^\s)\]>\"']+", text):
+        value = match.group(0).rstrip(".,;:")
+        try:
+            parsed = urlsplit(value)
+            host = parsed.hostname.rstrip(".").lower() if parsed.hostname else ""
+        except ValueError as exc:
+            raise ReadinessError(f"{label}-url-invalid") from exc
+        if parsed.username or parsed.password:
+            _fail(f"{label}-credential-url")
+        if parsed.query and re.search(
+            r"(?i)(?:token|secret|password|api[_-]?key|credential|auth)=",
+            parsed.query,
+        ):
+            _fail(f"{label}-credential-url")
+        if host:
+            if host in {"localhost", "local", "internal"} or host.endswith(
+                (".local", ".localhost", ".internal", ".home", ".arpa")
+            ):
+                _fail(f"{label}-private-url")
+            try:
+                address = ipaddress.ip_address(host)
+            except ValueError:
+                address = None
+            if address is not None and (
+                address.is_private
+                or address.is_loopback
+                or address.is_link_local
+                or address.is_reserved
+                or address.is_unspecified
+                or address.is_multicast
+            ):
+                _fail(f"{label}-private-url")
+
+
+def _scan_json_strings(value: object, label: str) -> None:
+    """Check capability metadata without importing the provider/runtime."""
+
+    if isinstance(value, str):
+        _scan_safe_text(value, label)
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            if not isinstance(key, str):
+                _fail(f"{label}-metadata-invalid")
+            _scan_json_strings(child, label)
+    elif isinstance(value, list):
+        for child in value:
+            _scan_json_strings(child, label)
+    elif value is not None and not isinstance(value, (bool, int, float)):
+        _fail(f"{label}-metadata-invalid")
+
+
+def _validate_capability_artifact(root: Path, name: str, artifact: str) -> None:
+    artifact_path = _safe_relative(root, artifact, f"{name}-artifact")
+    payload = _regular_file(artifact_path, f"{name}-artifact")
+    try:
+        metadata = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ReadinessError(f"{name}-artifact-invalid-json") from exc
+    if not isinstance(metadata, dict):
+        _fail(f"{name}-artifact-invalid")
+    if not (metadata.get("applicable") is True or metadata.get("enabled") is True):
+        _fail(f"{name}-capability-not-proven")
+    source = metadata.get("source")
+    if source is not None:
+        if not isinstance(source, str):
+            _fail(f"{name}-artifact-source-invalid")
+        source_path = _safe_relative(root, source, f"{name}-artifact-source")
+        try:
+            source_metadata = source_path.lstat()
+        except OSError as exc:
+            raise ReadinessError(f"{name}-artifact-source-unavailable") from exc
+        if source_path.is_symlink() or source_metadata.st_nlink != 1:
+            _fail(f"{name}-artifact-source-invalid")
+    _scan_json_strings(metadata, f"{name}-artifact")
+
+
+def _validate_skills_path(root: Path, raw: object) -> str:
+    if not isinstance(raw, str):
+        _fail("skills-path-required")
+    skills_root = _safe_relative(root, raw, "skills-path")
+    try:
+        entries = list(skills_root.iterdir())
+    except OSError as exc:
+        raise ReadinessError("skills-path-unavailable") from exc
+    if not any(
+        entry.is_dir()
+        and not entry.is_symlink()
+        and (entry / "SKILL.md").is_file()
+        and not (entry / "SKILL.md").is_symlink()
+        for entry in entries
+    ):
+        _fail("skills-path-not-proven")
+    return raw
+
+
+def _slug(value: str) -> str:
+    result = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    if not result:
+        _fail("nav-section-invalid")
+    return result
+
+
+def _summary(markdown: str, limit: int) -> str:
+    lines = markdown.splitlines()
+    in_frontmatter = bool(lines and lines[0].strip() == "---")
+    if in_frontmatter:
+        try:
+            end = next(
+                i for i, line in enumerate(lines[1:], 1) if line.strip() == "---"
+            )
+        except StopIteration:
+            _fail("markdown-frontmatter-invalid")
+        lines = lines[end + 1 :]
+    chunks: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "<!--", "```")):
+            if chunks:
+                break
+            continue
+        chunks.append(stripped)
+    value = re.sub(r"[`*_]", "", " ".join(chunks))
+    value = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", value)
+    return value[:limit].strip()
+
+
+def _load_mkdocs(root: Path) -> tuple[dict[str, Any], bytes]:
+    config_path = _safe_relative(root, "mkdocs.yml", "mkdocs")
+    payload = _regular_file(config_path, "mkdocs")
+    if yaml is None:
+        raise ReadinessError("mkdocs-yaml-parser-unavailable") from _YAML_IMPORT_ERROR
+    try:
+        config = yaml.load(payload.decode("utf-8"), Loader=_MkdocsLoader)
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise ReadinessError("mkdocs-invalid-yaml") from exc
+    if not isinstance(config, dict) or not isinstance(config.get("nav"), list):
+        _fail("mkdocs-nav-invalid")
+    return config, payload
+
+
+def _flatten_nav(nav: list[Any]) -> list[tuple[str, str, str]]:
+    leaves: list[tuple[str, str, str]] = []
+
+    def visit(items: list[Any], section: str) -> None:
+        for item in items:
+            if isinstance(item, str):
+                leaves.append(
+                    (Path(item).stem.replace("-", " ").title(), item, section)
+                )
+                continue
+            if not isinstance(item, dict) or len(item) != 1:
+                _fail("mkdocs-nav-entry-invalid")
+            title, child = next(iter(item.items()))
+            if not isinstance(title, str) or not title.strip():
+                _fail("mkdocs-nav-title-invalid")
+            if isinstance(child, str):
+                leaves.append((title, child, section or title))
+            elif isinstance(child, list):
+                visit(child, section or title)
+            else:
+                _fail("mkdocs-nav-entry-invalid")
+
+    visit(nav, "")
+    if not leaves:
+        _fail("mkdocs-nav-empty")
+    return leaves
+
+
+def _validate_standards(value: object) -> list[dict[str, str]]:
+    if not isinstance(value, list) or not value:
+        _fail("maturity-standards-required")
+    normalized: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for entry in value:
+        if not isinstance(entry, dict) or set(entry) != {"id", "kind", "level"}:
+            _fail("maturity-entry-invalid")
+        identifier = entry.get("id")
+        kind = entry.get("kind")
+        level = entry.get("level")
+        if (
+            not isinstance(identifier, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 .:_/-]{1,127}", identifier)
+            or identifier in seen
+            or kind not in STANDARD_KINDS
+            or not isinstance(level, str)
+            or level not in {"normative", "draft", "advisory"}
+        ):
+            _fail("maturity-entry-invalid")
+        if kind == "rfc" and level != "normative":
+            _fail("maturity-rfc-level-invalid")
+        if kind == "draft" and level == "normative":
+            _fail("maturity-draft-level-invalid")
+        seen.add(identifier)
+        normalized.append({"id": identifier, "kind": kind, "level": level})
+    return normalized
+
+
+def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
+    if value.get("schema_version") != SCHEMA_VERSION:
+        _fail("applicability-schema-version")
+    project = value.get("project")
+    if (
+        not isinstance(project, dict)
+        or set(project) != {"name", "kind"}
+        or not isinstance(project.get("name"), str)
+        or not 1 <= len(project["name"]) <= 200
+        or any(ord(char) < 32 for char in project["name"])
+    ):
+        _fail("applicability-project-invalid")
+    kind = project.get("kind")
+    if kind not in {"library", "package", "service", "docs-only"}:
+        _fail("applicability-project-kind-invalid")
+    applicability = value.get("applicability")
+    if not isinstance(applicability, dict) or set(applicability) != set(
+        APPLICABILITY_CATEGORIES
+    ):
+        _fail("applicability-categories-invalid")
+    if any(
+        not isinstance(applicability[key], bool) for key in APPLICABILITY_CATEGORIES
+    ):
+        _fail("applicability-category-value-invalid")
+    standards = _validate_standards(value.get("standards"))
+    signals = value.get("content_signals")
+    if (
+        not isinstance(signals, dict)
+        or set(signals) - {"policy", "values"}
+        or signals.get("policy") not in SAFE_SIGNAL_POLICIES
+    ):
+        _fail("content-signals-policy-required")
+    if signals["policy"] == "operator-reviewed":
+        if not isinstance(signals.get("values"), dict):
+            _fail("content-signals-values-required")
+        _scan_json_strings(signals["values"], "content-signals")
+    elif "values" in signals:
+        _fail("content-signals-values-unset")
+    normalized_signals = {"policy": signals["policy"]}
+    if signals["policy"] == "operator-reviewed":
+        normalized_signals["values"] = signals["values"]
+    budgets = value.get("budgets")
+    if not isinstance(budgets, dict) or set(budgets) - {
+        "curated_chars",
+        "summary_chars",
+        "full_chars",
+    }:
+        _fail("budgets-required")
+    curated = budgets.get("curated_chars")
+    summary = budgets.get("summary_chars")
+    full = budgets.get("full_chars", 0)
+    if (
+        type(curated) is not int
+        or not 1 <= curated <= MAX_CURATED_CHARS
+        or type(summary) is not int
+        or not 1 <= summary <= MAX_SUMMARY_CHARS
+        or type(full) is not int
+        or not 0 <= full <= MAX_FULL_CHARS
+    ):
+        _fail("budgets-invalid")
+    capabilities = value.get("capabilities")
+    if not isinstance(capabilities, dict) or set(capabilities) != CAPABILITY_NAMES:
+        _fail("capabilities-invalid")
+    normalized_capabilities: dict[str, dict[str, Any]] = {}
+    for name, entry in capabilities.items():
+        if not isinstance(entry, dict) or not isinstance(entry.get("applicable"), bool):
+            _fail("capability-entry-invalid")
+        allowed_keys = (
+            {"applicable", "path"}
+            if name == "skills"
+            else {
+                "applicable",
+                "artifact",
+                "endpoint",
+            }
+        )
+        if set(entry) - allowed_keys:
+            _fail("capability-entry-invalid")
+        applicable = entry["applicable"]
+        if kind == "library" and applicable and name in {"api", "mcp", "a2a"}:
+            _fail("library-capability-unsupported")
+        artifact = entry.get("artifact")
+        endpoint = entry.get("endpoint")
+        if applicable and name in {"api", "mcp", "a2a"}:
+            if not isinstance(artifact, str):
+                _fail("capability-authority-required")
+            _validate_capability_artifact(root, name, artifact)
+            if name in {"mcp", "a2a"} or endpoint is not None:
+                _public_url(endpoint, f"{name}-endpoint")
+        if applicable and name == "skills":
+            normalized_path = _validate_skills_path(root, entry.get("path"))
+        else:
+            normalized_path = None
+        if not applicable and set(entry) != {"applicable"}:
+            _fail("capability-entry-inapplicable-data")
+        if name == "skills" and applicable and set(entry) != {"applicable", "path"}:
+            _fail("skills-path-required")
+        normalized_capabilities[name] = {
+            "applicable": applicable,
+            **({"artifact": artifact} if isinstance(artifact, str) else {}),
+            **({"endpoint": endpoint} if isinstance(endpoint, str) else {}),
+            **({"path": normalized_path} if normalized_path is not None else {}),
+        }
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "project": {"name": project["name"], "kind": kind},
+        "applicability": {key: applicability[key] for key in APPLICABILITY_CATEGORIES},
+        "standards": standards,
+        "content_signals": normalized_signals,
+        "budgets": {
+            "curated_chars": curated,
+            "summary_chars": summary,
+            "full_chars": full,
+        },
+        "capabilities": normalized_capabilities,
+    }
+
+
+def _page_records(
+    root: Path, config: dict[str, Any], summary_limit: int
+) -> tuple[tuple[Page, ...], tuple[Section, ...]]:
+    site_url = _public_url(config.get("site_url"), "mkdocs-site")
+    docs_dir_raw = config.get("docs_dir", "docs")
+    docs_root = _safe_relative(root, docs_dir_raw, "docs-dir")
+    leaves = _flatten_nav(config["nav"])
+    pages: list[Page] = []
+    seen_sources: set[str] = set()
+    seen_urls: set[str] = set()
+    section_pages: dict[str, list[Page]] = {}
+    for title, raw_source, section_title in leaves:
+        source_path = _safe_relative(docs_root, raw_source, "nav-source")
+        relative_source = source_path.relative_to(root).as_posix()
+        if relative_source in seen_sources or not relative_source.endswith(".md"):
+            _fail("mkdocs-nav-source-duplicate-or-invalid")
+        payload = _regular_file(source_path, "nav-source")
+        text = payload.decode("utf-8")
+        _scan_safe_text(text, "markdown")
+        url = urljoin(site_url, raw_source.lstrip("/").replace("\\", "/"))
+        if url in seen_urls:
+            _fail("mkdocs-nav-url-duplicate")
+        section = section_title or "Documentation"
+        page = Page(
+            title=title,
+            source=relative_source,
+            url=url,
+            summary=_summary(text, summary_limit),
+            digest=hashlib.sha256(payload).hexdigest(),
+            size=len(payload),
+            section=section,
+        )
+        pages.append(page)
+        section_pages.setdefault(section, []).append(page)
+        seen_sources.add(relative_source)
+        seen_urls.add(url)
+    sections: list[Section] = []
+    seen_slugs: set[str] = set()
+    for title, section_items in section_pages.items():
+        slug = _slug(title)
+        if slug in seen_slugs:
+            _fail("mkdocs-nav-section-duplicate")
+        seen_slugs.add(slug)
+        sections.append(Section(title=title, slug=slug, pages=tuple(section_items)))
+    return tuple(pages), tuple(sections)
+
+
+def _render_curated(
+    config: dict[str, Any], readiness: dict[str, Any], sections: tuple[Section, ...]
+) -> str:
+    lines = [
+        f"# {config.get('site_name', readiness['project']['name'])}",
+        "",
+        "> Current documentation index generated from the exact MkDocs navigation.",
+        "> Capability and content-use claims are operator-scoped and provenance-bound.",
+        "",
+    ]
+    for section in sections:
+        lines.extend([f"## {section.title}", ""])
+        for page in section.pages:
+            suffix = f" — {page.summary}" if page.summary else ""
+            lines.append(f"- [{page.title}]({page.url}){suffix}")
+        lines.append("")
+    lines.extend(["## Standards maturity", ""])
+    for standard in readiness["standards"]:
+        lines.append(f"- {standard['id']}: {standard['kind']} ({standard['level']})")
+    lines.append("")
+    output = "\n".join(lines).rstrip() + "\n"
+    _scan_safe_text(output, "llms")
+    if len(output) > readiness["budgets"]["curated_chars"]:
+        _fail("curated-context-oversize")
+    return output
+
+
+def _render_full(config: dict[str, Any], pages: tuple[Page, ...], budget: int) -> str:
+    lines = [
+        f"# {config.get('site_name', 'Documentation')} — full current Markdown context",
+        "",
+        "> Generated only when an explicit full-context budget is supplied.",
+        "",
+    ]
+    root = Path(config["_root"])
+    for page in pages:
+        payload = _regular_file(root / page.source, "nav-source").decode("utf-8")
+        lines.extend(
+            [f"## {page.title}", f"Source: `{page.source}`", "", payload.rstrip(), ""]
+        )
+    output = "\n".join(lines).rstrip() + "\n"
+    _scan_safe_text(output, "llms-full")
+    if len(output) > budget:
+        _fail("full-context-oversize")
+    return output
+
+
+def _ensure_output_parent(path: Path) -> None:
+    missing: list[Path] = []
+    cursor = path
+    while not cursor.exists():
+        missing.append(cursor)
+        cursor = cursor.parent
+    if cursor.is_symlink() or not cursor.is_dir():
+        _fail("output-parent-invalid")
+    for directory in reversed(missing):
+        try:
+            directory.mkdir()
+            if directory.is_symlink() or not directory.is_dir():
+                _fail("output-parent-invalid")
+        except OSError as exc:
+            raise ReadinessError("output-parent-unavailable") from exc
+
+
+def _write(path: Path, payload: str | bytes) -> None:
+    if path.is_symlink():
+        _fail("output-symlink")
+    if path.exists():
+        try:
+            metadata = path.lstat()
+        except OSError as exc:
+            raise ReadinessError("output-unavailable") from exc
+        if not path.is_file() or metadata.st_nlink != 1:
+            _fail("output-not-regular")
+    _ensure_output_parent(path.parent)
+    if isinstance(payload, str):
+        path.write_text(payload, encoding="utf-8")
+    else:
+        path.write_bytes(payload)
+
+
+def _previous_generated(target: Path) -> set[str]:
+    manifest_path = target / "agent-readiness-manifest.json"
+    if not manifest_path.exists():
+        return set()
+    payload = _regular_file(manifest_path, "previous-manifest")
+    try:
+        manifest = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ReadinessError("previous-manifest-invalid") from exc
+    generated = manifest.get("generated") if isinstance(manifest, dict) else None
+    if not isinstance(generated, list) or any(
+        not isinstance(path, str)
+        or not path
+        or "\\" in path
+        or PurePosixPath(path).is_absolute()
+        or any(part in {"", ".", ".."} for part in PurePosixPath(path).parts)
+        for path in generated
+    ):
+        _fail("previous-manifest-invalid")
+    return set(generated)
+
+
+def _prune_stale_sections(target: Path, current: set[str], previous: set[str]) -> None:
+    section_root = target / "llms-sections"
+    if not section_root.exists():
+        return
+    if section_root.is_symlink() or not section_root.is_dir():
+        _fail("output-sections-invalid")
+    for section in section_root.iterdir():
+        if section.is_symlink() or not section.is_dir():
+            _fail("output-sections-entry-invalid")
+        stale = section / "llms.txt"
+        relative = stale.relative_to(target).as_posix()
+        if relative in current or relative not in previous or not stale.exists():
+            continue
+        if stale.is_symlink():
+            _fail("output-symlink")
+        metadata = stale.lstat()
+        if not stale.is_file() or metadata.st_nlink != 1:
+            _fail("output-not-regular")
+        stale.unlink()
+        try:
+            section.rmdir()
+        except OSError:
+            pass
+
+
+def generate(
+    root: Path,
+    *,
+    applicability: Path | None = None,
+    output_dir: Path | None = None,
+    include_full: bool = False,
+    full_budget: int | None = None,
+) -> dict[str, Any]:
+    """Generate the readiness artifacts and return the deterministic manifest."""
+
+    root = root.resolve(strict=True)
+    applicability_path = applicability or root / "docs" / "agent-readiness.json"
+    applicability_path = _safe_existing_path(root, applicability_path, "applicability")
+    applicability_bytes = _regular_file(applicability_path, "applicability")
+    try:
+        applicability_value = json.loads(applicability_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ReadinessError("applicability-invalid-json") from exc
+    if not isinstance(applicability_value, dict):
+        _fail("applicability-root-invalid")
+    readiness = _validate_input(root, applicability_value)
+    config, mkdocs_bytes = _load_mkdocs(root)
+    pages, sections = _page_records(root, config, readiness["budgets"]["summary_chars"])
+    config = {**config, "_root": str(root)}
+    curated = _render_curated(config, readiness, sections)
+    target = (output_dir or root).absolute()
+    if target.is_symlink():
+        _fail("output-symlink")
+    if target.exists() and not target.is_dir():
+        _fail("output-parent-invalid")
+    _ensure_output_parent(target)
+    previous_generated = _previous_generated(target)
+    current_section_paths = {
+        f"llms-sections/{section.slug}/llms.txt" for section in sections
+    }
+    _prune_stale_sections(target, current_section_paths, previous_generated)
+    _write(target / "llms.txt", curated)
+    for section in sections:
+        section_text = _render_curated(
+            {
+                **config,
+                "site_name": f"{config.get('site_name', 'Documentation')} — {section.title}",
+            },
+            readiness,
+            (section,),
+        )
+        _write(target / "llms-sections" / section.slug / "llms.txt", section_text)
+
+    full_path = target / "llms-full.txt"
+    effective_full_budget = (
+        full_budget if full_budget is not None else readiness["budgets"]["full_chars"]
+    )
+    if include_full:
+        if (
+            type(effective_full_budget) is not int
+            or not 0 < effective_full_budget <= MAX_FULL_CHARS
+        ):
+            _fail("full-context-budget-required")
+        _write(full_path, _render_full(config, pages, effective_full_budget))
+    elif full_path.exists():
+        if full_path.is_symlink():
+            _fail("output-symlink")
+        try:
+            full_metadata = full_path.lstat()
+        except OSError as exc:
+            raise ReadinessError("output-unavailable") from exc
+        if not full_path.is_file() or full_metadata.st_nlink != 1:
+            _fail("output-not-regular")
+        if "llms-full.txt" in previous_generated:
+            full_path.unlink()
+
+    mirror_applicable = readiness["applicability"]["discoverability"]
+    mirror_entries = [
+        {
+            "source": page.source,
+            "url": page.url if mirror_applicable else None,
+            "sha256": page.digest,
+            "bytes": page.size,
+        }
+        for page in pages
+    ]
+    mirror = {
+        "schema_version": SCHEMA_VERSION,
+        "applicable": mirror_applicable,
+        "entries": mirror_entries,
+    }
+    mirror_payload = json.dumps(mirror, indent=2, sort_keys=True) + "\n"
+    _write(target / "markdown-mirror-manifest.json", mirror_payload)
+    provenance = {
+        "schema_version": SCHEMA_VERSION,
+        "generator_version": GENERATOR_VERSION,
+        "project": readiness["project"],
+        "applicability": readiness["applicability"],
+        "standards": readiness["standards"],
+        "content_signals": readiness["content_signals"],
+        "capabilities": readiness["capabilities"],
+        "budgets": {
+            **readiness["budgets"],
+            "full_requested": include_full,
+            "full_effective_chars": effective_full_budget if include_full else 0,
+        },
+        "provenance": {
+            "mkdocs_sha256": hashlib.sha256(mkdocs_bytes).hexdigest(),
+            "applicability_sha256": hashlib.sha256(applicability_bytes).hexdigest(),
+            "pages": [
+                {"source": page.source, "sha256": page.digest, "bytes": page.size}
+                for page in pages
+            ],
+        },
+        "generated": [
+            "llms.txt",
+            *[f"llms-sections/{section.slug}/llms.txt" for section in sections],
+            "markdown-mirror-manifest.json",
+            *(["llms-full.txt"] if include_full else []),
+        ],
+    }
+    manifest_payload = json.dumps(provenance, indent=2, sort_keys=True) + "\n"
+    _write(target / "agent-readiness-manifest.json", manifest_payload)
+    return provenance
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--applicability", type=Path)
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--full", action="store_true", help="emit full context")
+    parser.add_argument("--full-budget", type=int)
+    args = parser.parse_args(argv)
+    try:
+        manifest = generate(
+            args.root,
+            applicability=args.applicability,
+            output_dir=args.output_dir,
+            include_full=args.full,
+            full_budget=args.full_budget,
+        )
+    except (OSError, ReadinessError, UnicodeError, ValueError) as exc:
+        print(f"agent-readiness generation failed: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps({"generated": manifest["generated"]}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
