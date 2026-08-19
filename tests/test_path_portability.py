@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
+
+import pytest
 
 from universal_skills.skill_utilities import (
     dedupe_caseless,
@@ -36,7 +39,57 @@ def test_portable_relpath_bounds_total_length():
     parts = ["dir" * 30, "sub" * 30, "leaf" * 40 + ".md"]
     rel = portable_relpath(parts, max_total=180)
     assert len(rel) <= 180
+    assert all(len(component) <= 80 for component in rel.split("/"))
     assert "/" in rel and rel.endswith(".md")
+
+
+def test_portable_relpath_boundary_and_one_under_keep_the_digest_floor():
+    original = "leaf" * 80 + ".md"
+    digest = hashlib.sha256(original.encode("utf-8")).hexdigest()[:32]
+
+    boundary = portable_relpath([original], max_name=80, max_total=80)
+    one_under = portable_relpath([original], max_name=80, max_total=79)
+
+    assert len(boundary) == 80
+    assert len(one_under) == 79
+    assert boundary.endswith(".md") and one_under.endswith(".md")
+    assert digest in boundary and digest in one_under
+
+
+def test_portable_relpath_unicode_and_case_folded_inputs_remain_distinct():
+    upper = "Ä" * 100 + ".md"
+    lower = "ä" * 100 + ".md"
+
+    upper_path = portable_relpath([upper], max_name=80, max_total=79)
+    lower_path = portable_relpath([lower], max_name=80, max_total=79)
+
+    assert len(upper_path) <= 79 and len(lower_path) <= 79
+    assert upper_path != lower_path
+    assert upper_path.casefold() != lower_path.casefold()
+
+
+def test_portable_relpath_reserved_component_and_component_budget():
+    rel = portable_relpath(["CON", "x" * 160 + ".md"], max_name=80, max_total=120)
+
+    components = rel.split("/")
+    assert components[0] == "CON_"
+    assert all(len(component) <= 80 for component in components)
+    assert len(rel) <= 120
+
+
+def test_portable_relpath_refuses_budget_below_digest_floor():
+    with pytest.raises(ValueError, match="budget"):
+        portable_relpath([], max_total=0)
+
+    with pytest.raises(ValueError, match="safe digest"):
+        portable_relpath(["x" * 100], max_name=80, max_total=33)
+
+    with pytest.raises(ValueError, match="safe digest"):
+        portable_relpath(
+            ["a" * 100, "b" * 100, "c" * 100],
+            max_name=80,
+            max_total=100,
+        )
 
 
 def test_dedupe_caseless_resolves_collisions():

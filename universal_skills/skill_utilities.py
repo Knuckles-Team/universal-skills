@@ -219,6 +219,9 @@ _WIN_RESERVED = {
 # common filesystem's 255-byte component limit.
 DEFAULT_MAX_NAME = 80
 DEFAULT_MAX_RELPATH = 180
+_DIGEST_HEX_LENGTH = 32  # 128 bits: collision-resistant but still portable.
+_DIGEST_SEPARATOR_LENGTH = 1  # the hyphen before the digest
+_MIN_DIGEST_PREFIX_LENGTH = 1  # retain one readable character before the digest
 
 
 def portable_name(name: str, *, max_len: int = DEFAULT_MAX_NAME) -> str:
@@ -240,10 +243,19 @@ def portable_name(name: str, *, max_len: int = DEFAULT_MAX_NAME) -> str:
         base = f"{base}_"
     full = f"{base}{suffix}"
     if len(full) > max_len:
-        if max_len < len(suffix) + 34:
+        digest_floor = (
+            _MIN_DIGEST_PREFIX_LENGTH
+            + _DIGEST_SEPARATOR_LENGTH
+            + _DIGEST_HEX_LENGTH
+            + len(suffix)
+        )
+        if max_len < digest_floor:
             raise ValueError("path component budget is too small for a safe digest")
-        digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:32]
-        keep = max(1, max_len - len(suffix) - 33)  # '-' + 128-bit digest
+        digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:_DIGEST_HEX_LENGTH]
+        keep = max(
+            _MIN_DIGEST_PREFIX_LENGTH,
+            max_len - len(suffix) - _DIGEST_SEPARATOR_LENGTH - _DIGEST_HEX_LENGTH,
+        )
         full = f"{base[:keep]}-{digest}{suffix}"
     return full or "_"
 
@@ -256,23 +268,72 @@ def portable_relpath(
 ) -> str:
     """Join path ``parts`` into a portable POSIX relative path within length caps.
 
-    Each component is run through :func:`portable_name`; if the joined path still
-    exceeds ``max_total`` the **last** component (the filename) is re-truncated
-    harder, preserving its extension, so the whole relative path fits even on
-    Windows MAX_PATH-constrained checkouts.
+    Each component is run through :func:`portable_name`.  If the joined path
+    exceeds ``max_total``, components are shortened from the filename toward the
+    root until the whole path fits.  Every shortened component retains its
+    extension and a 128-bit digest; when the caller's budget cannot retain that
+    floor, the function refuses rather than emitting a collision-prone name.
     """
-    safe = [portable_name(p, max_len=max_name) for p in parts if p not in ("", ".")]
+    if max_name < 1:
+        raise ValueError("path component budget must be positive")
+    if max_total < 1:
+        raise ValueError("relative path budget must be positive")
+
+    original = [p for p in parts if p not in ("", ".")]
+    safe = [portable_name(p, max_len=max_name) for p in original]
     if not safe:
+        if max_total < 1 or max_name < 1:
+            raise ValueError("path budget is too small for a safe relative path")
         return "_"
     joined = "/".join(safe)
     if len(joined) <= max_total:
         return joined
-    prefix = "/".join(safe[:-1])
-    budget = max_total - len(prefix) - 1
-    if budget < 34:
+
+    # A shortened component is ``<one readable char>-<32 hex chars><extension>``.
+    # Components already shorter than that remain intact, while longer ones can
+    # be reduced to this exact floor without weakening the digest.
+    minimums: list[int] = []
+    for component in safe:
+        stem, dot, ext = component.rpartition(".")
+        suffix_length = len(dot + ext) if dot and stem else 0
+        digest_floor = (
+            _MIN_DIGEST_PREFIX_LENGTH
+            + _DIGEST_SEPARATOR_LENGTH
+            + _DIGEST_HEX_LENGTH
+            + suffix_length
+        )
+        minimums.append(min(len(component), digest_floor))
+
+    separator_count = len(safe) - 1
+    minimum_total = sum(minimums) + separator_count
+    if minimum_total > max_total:
         raise ValueError("relative path budget is too small for a safe digest")
-    safe[-1] = portable_name(safe[-1], max_len=budget)
-    return "/".join(safe)
+
+    targets = [len(component) for component in safe]
+    excess = sum(targets) + separator_count - max_total
+    # Prefer shortening the filename first, then its parents.  The order is
+    # deterministic and preserves the most useful directory context whenever
+    # the budget permits it.
+    for index in range(len(targets) - 1, -1, -1):
+        reduction = min(excess, targets[index] - minimums[index])
+        targets[index] -= reduction
+        excess -= reduction
+        if excess == 0:
+            break
+    if excess:
+        # This is defensive: ``minimum_total`` above proves the allocation
+        # should fit, but refusing is safer than ever returning an over-budget
+        # path if the component accounting changes later.
+        raise ValueError("relative path budget cannot encode a safe unique path")
+
+    safe = [
+        portable_name(name, max_len=target)
+        for name, target in zip(original, targets, strict=True)
+    ]
+    result = "/".join(safe)
+    if len(result) > max_total or any(len(component) > max_name for component in safe):
+        raise ValueError("portable relative path exceeded the caller's budget")
+    return result
 
 
 def dedupe_caseless(names: Iterable[str]) -> dict[str, str]:
