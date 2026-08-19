@@ -67,6 +67,16 @@ APPLICABILITY_CATEGORIES = (
     "deployment",
 )
 CAPABILITY_NAMES = frozenset({"api", "mcp", "a2a", "skills"})
+CAPABILITY_DISCOVERY_VERSION = "capability-discovery/v1"
+API_CATALOG_PROFILE = "https://www.rfc-editor.org/info/rfc9727"
+API_CATALOG_REL = "api-catalog"
+API_CATALOG_MEDIA_TYPE = "application/linkset+json"
+MCP_SERVER_CARD_VERSION = "mcp-server-card/v1-experimental"
+AGENT_SKILLS_VERSION = "agent-skills/v1"
+_OAUTH_METADATA_FIELDS = {
+    "oauth_protected_resource": "oauth-protected-resource",
+    "oauth_authorization_server": "oauth-authorization-server",
+}
 SAFE_SIGNAL_POLICIES = frozenset({"unset", "operator-reviewed"})
 SECRET_PATTERN = re.compile(
     r"(?ix)(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|"
@@ -279,12 +289,22 @@ def _validate_capability_artifact(
         raise ReadinessError(f"{name}-artifact-invalid-json") from exc
     if not isinstance(metadata, dict):
         _fail(f"{name}-artifact-invalid")
-    allowed_keys = {"applicable", "surface", "source", "version"}
+    allowed_keys = {
+        "applicable",
+        "http_transport",
+        "source",
+        "surface",
+        "version",
+    }
     if set(metadata) - allowed_keys:
         _fail(f"{name}-artifact-schema-invalid")
     if metadata.get("applicable") is not True:
         _fail(f"{name}-capability-not-proven")
     if metadata.get("surface") != name:
+        _fail(f"{name}-artifact-schema-invalid")
+    if "http_transport" in metadata and (
+        name != "mcp" or type(metadata["http_transport"]) is not bool
+    ):
         _fail(f"{name}-artifact-schema-invalid")
     if "version" in metadata and (
         not isinstance(metadata["version"], str) or not metadata["version"]
@@ -306,12 +326,34 @@ def _validate_capability_artifact(
         _fail(f"{name}-artifact-source-invalid")
     source_payload = _regular_file(source_path, f"{name}-artifact-source")
     _scan_json_strings(metadata, f"{name}-artifact")
-    return {
+    evidence = {
         "artifact": artifact,
         "artifact_sha256": hashlib.sha256(payload).hexdigest(),
         "source": source,
         "source_sha256": hashlib.sha256(source_payload).hexdigest(),
     }
+    if metadata.get("http_transport") is True:
+        evidence["http_transport"] = "true"
+    return evidence
+
+
+def _validate_oauth_metadata(root: Path, field: str, raw: object) -> str:
+    """Bind optional OAuth discovery to the exact well-known JSON authority."""
+    if not isinstance(raw, str):
+        _fail(f"{field}-metadata-invalid")
+    expected = f".well-known/{_OAUTH_METADATA_FIELDS[field]}"
+    if raw != expected:
+        _fail(f"{field}-metadata-unbound")
+    path = _safe_relative(root, raw, f"{field}-metadata")
+    payload = _regular_file(path, f"{field}-metadata")
+    try:
+        metadata = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ReadinessError(f"{field}-metadata-invalid-json") from exc
+    if not isinstance(metadata, dict):
+        _fail(f"{field}-metadata-invalid")
+    _scan_json_strings(metadata, f"{field}-metadata")
+    return raw
 
 
 def _validate_skills_path(root: Path, raw: object) -> str:
@@ -331,6 +373,162 @@ def _validate_skills_path(root: Path, raw: object) -> str:
     ):
         _fail("skills-path-not-proven")
     return raw
+
+
+def _skill_entry(root: Path, skills_root: Path, directory: Path) -> dict[str, str]:
+    """Read only the bound skill identity/description for public discovery."""
+    skill_path = directory / "SKILL.md"
+    payload = _regular_file(skill_path, "skill")
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ReadinessError("skill-encoding-invalid") from exc
+    description = ""
+    lines = text.splitlines()
+    if lines and lines[0].strip() == "---":
+        try:
+            end = next(i for i, line in enumerate(lines[1:], 1) if line.strip() == "---")
+        except StopIteration as exc:
+            raise ReadinessError("skill-frontmatter-invalid") from exc
+        for line in lines[1:end]:
+            if line.strip().startswith("description:"):
+                description = line.split(":", 1)[1].strip().strip("\"'")
+                break
+    if not description:
+        for line in lines:
+            if line.startswith("#"):
+                description = line.lstrip("#").strip()
+                break
+    name = directory.name
+    relative = skill_path.relative_to(root).as_posix()
+    _scan_safe_text(name, "skill-discovery")
+    _scan_safe_text(relative, "skill-discovery")
+    _scan_safe_text(description, "skill-discovery")
+    entry = {"name": name, "path": relative}
+    if description:
+        entry["description"] = description[:400]
+    return entry
+
+
+def _render_agent_skills_index(root: Path, path: str) -> str:
+    skills_root = _safe_relative(root, path, "skills-path")
+    entries = []
+    for directory in sorted(skills_root.iterdir(), key=lambda item: item.name):
+        if (
+            directory.is_dir()
+            and not directory.is_symlink()
+            and not directory.name.startswith(".")
+            and (directory / "SKILL.md").is_file()
+            and not (directory / "SKILL.md").is_symlink()
+        ):
+            entries.append(_skill_entry(root, skills_root, directory))
+    if not entries:
+        _fail("skills-path-not-proven")
+    return json.dumps(
+        {
+            "schema_version": AGENT_SKILLS_VERSION,
+            "skills": entries,
+        },
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def _discovery_link(
+    href: str,
+    *,
+    rel: str = "item",
+    media_type: str = "application/json",
+    title: str | None = None,
+) -> dict[str, str]:
+    link = {"href": href, "rel": rel, "type": media_type}
+    if title:
+        link["title"] = title
+    return link
+
+
+def _render_mcp_server_card(
+    readiness: dict[str, Any], *, project_name: str
+) -> str | None:
+    mcp = readiness["capabilities"].get("mcp", {})
+    evidence = readiness["capability_evidence"].get("mcp", {})
+    if mcp.get("applicable") is not True or evidence.get("http_transport") != "true":
+        return None
+    _scan_safe_text(project_name, "mcp-server-card")
+    return json.dumps(
+        {
+            "schema_version": MCP_SERVER_CARD_VERSION,
+            "experimental": True,
+            "server": {"name": project_name},
+            "transports": ["streamable-http", "sse"],
+            "source": "docs/capabilities/mcp.json",
+        },
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def _render_api_catalog(readiness: dict[str, Any]) -> str | None:
+    capabilities = readiness["capabilities"]
+    evidence = readiness["capability_evidence"]
+    serves_http = capabilities["a2a"].get("applicable") is True or (
+        capabilities["mcp"].get("applicable") is True
+        and evidence.get("mcp", {}).get("http_transport") == "true"
+    )
+    if not serves_http:
+        return None
+    links: list[dict[str, str]] = []
+    if capabilities["api"].get("applicable") is True:
+        links.append(_discovery_link(capabilities["api"]["artifact"]))
+    if capabilities["a2a"].get("applicable") is True:
+        links.append(_discovery_link("a2a.json", title="A2A agent card"))
+        links.append(
+            _discovery_link(
+                capabilities["a2a"]["artifact"], title="A2A capability authority"
+            )
+        )
+    if evidence.get("mcp", {}).get("http_transport") == "true":
+        links.append(
+            _discovery_link(
+                ".well-known/mcp-server-card.json",
+                title="Experimental MCP Server Card",
+            )
+        )
+    if capabilities["skills"].get("applicable") is True:
+        links.append(_discovery_link(".well-known/agent-skills.json", title="Agent Skills"))
+    for field, rel in _OAUTH_METADATA_FIELDS.items():
+        for authority in evidence.values():
+            metadata_path = authority.get(field)
+            if metadata_path:
+                title = (
+                    "OAuth 2.0 Protected Resource Metadata (RFC 9728)"
+                    if field == "oauth_protected_resource"
+                    else "OAuth 2.0 Authorization Server Metadata (RFC 8414)"
+                )
+                links.append(
+                    _discovery_link(metadata_path, rel="describedby", title=title)
+                )
+                break
+    if not links:
+        return None
+    item_links = [
+        {key: value for key, value in link.items() if key != "rel"}
+        for link in links
+        if link["rel"] == "item"
+    ]
+    describedby_links = [
+        {key: value for key, value in link.items() if key != "rel"}
+        for link in links
+        if link["rel"] == "describedby"
+    ]
+    linkset: dict[str, Any] = {"anchor": ".", "item": item_links}
+    if describedby_links:
+        linkset["describedby"] = describedby_links
+    return json.dumps(
+        {"linkset": [linkset], "profile": API_CATALOG_PROFILE},
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
 
 
 def _slug(value: str) -> str:
@@ -534,13 +732,17 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
                 "applicable",
                 "artifact",
                 "endpoint",
+                *_OAUTH_METADATA_FIELDS,
             }
         )
         if set(entry) - allowed_keys:
             _fail("capability-entry-invalid")
         applicable = entry["applicable"]
-        if kind == "library" and applicable and name in {"api", "mcp", "a2a"}:
-            _fail("library-capability-unsupported")
+        if applicable and name in {"api", "mcp", "a2a"}:
+            if kind == "library":
+                _fail("library-capability-unsupported")
+            if kind == "docs-only":
+                _fail("docs-only-served-capability-unsupported")
         artifact = entry.get("artifact")
         endpoint = entry.get("endpoint")
         if applicable and name in {"api", "mcp", "a2a"}:
@@ -549,8 +751,14 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
             capability_evidence[name] = _validate_capability_artifact(
                 root, name, artifact
             )
-            if name in {"mcp", "a2a"} or endpoint is not None:
+            if endpoint is not None:
                 _public_url(endpoint, f"{name}-endpoint")
+            for field in _OAUTH_METADATA_FIELDS:
+                metadata_path = entry.get(field)
+                if metadata_path is not None:
+                    capability_evidence[name][field] = _validate_oauth_metadata(
+                        root, field, metadata_path
+                    )
         if applicable and name == "skills":
             normalized_path = _validate_skills_path(root, entry.get("path"))
         else:
@@ -562,7 +770,6 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
         normalized_capabilities[name] = {
             "applicable": applicable,
             **({"artifact": artifact} if isinstance(artifact, str) else {}),
-            **({"endpoint": endpoint} if isinstance(endpoint, str) else {}),
             **({"path": normalized_path} if normalized_path is not None else {}),
         }
     return {
@@ -945,6 +1152,22 @@ def generate(
             _fail("full-context-budget-required")
         full_payload = _render_full(config, pages, effective_full_budget)
 
+    discovery_payloads: dict[str, str] = {}
+    if readiness["applicability"]["discoverability"]:
+        skills = readiness["capabilities"].get("skills", {})
+        if skills.get("applicable") is True:
+            discovery_payloads[".well-known/agent-skills.json"] = (
+                _render_agent_skills_index(root, skills["path"])
+            )
+        mcp_card = _render_mcp_server_card(
+            readiness, project_name=readiness["project"]["name"]
+        )
+        if mcp_card is not None:
+            discovery_payloads[".well-known/mcp-server-card.json"] = mcp_card
+        api_catalog = _render_api_catalog(readiness)
+        if api_catalog is not None:
+            discovery_payloads[".well-known/api-catalog"] = api_catalog
+
     mirror_applicable = readiness["applicability"]["discoverability"]
     mirror_entries = [
         {
@@ -991,6 +1214,7 @@ def generate(
             "llms.txt",
             *[f"llms-sections/{section.slug}/llms.txt" for section in sections],
             "markdown-mirror-manifest.json",
+            *sorted(discovery_payloads),
             *(["llms-full.txt"] if include_full else []),
         ],
     }
@@ -1049,6 +1273,34 @@ def generate(
                 previous_manifest,
                 adopt_existing,
             )
+    discovery_paths = {
+        ".well-known/agent-skills.json",
+        ".well-known/api-catalog",
+        ".well-known/mcp-server-card.json",
+    }
+    for relative in sorted(discovery_paths):
+        payload = discovery_payloads.get(relative)
+        if payload is not None:
+            _ensure_plan_output(
+                target,
+                relative,
+                payload,
+                previous_generated,
+                previous_manifest,
+                adopt_existing,
+                plan,
+            )
+        elif relative in previous_generated:
+            _plan_delete(
+                target,
+                relative,
+                previous_generated,
+                previous_manifest,
+                adopt_existing,
+                deletions,
+            )
+        else:
+            _check_output_components(target / relative)
     current_section_paths = set(section_payloads)
     for relative in sorted(previous_generated):
         if (

@@ -34,6 +34,25 @@ read-only preview. Existing artifacts are adopted only with the explicit
 `--adopt-existing` flag; normal generation requires the prior provenance
 manifest to prove ownership before replacement or pruning.
 
+The same source-only generator publishes capability discovery when the explicit
+applicability contract proves it: an RFC 9727/RFC 9264 `application/linkset+json`
+API catalog, an experimental/versioned MCP Server Card only for a bound HTTP MCP
+authority, and a versioned Agent Skills index only for regular generated skills.
+It links optional RFC 8414/9728 metadata only when the exact well-known files are
+bound and validated. Discovery never publishes runtime endpoints, bearer values,
+provider profiles, private hosts, caller-supplied URLs, disabled capabilities, or
+unbound skill data.
+
+For a deployed surface, run the bundled `scripts/agent_readiness_tck.py` with an
+explicit `--origin` and matching repeated `--allow-origin` values. The adapter
+is a separate served-surface check: it requires HTTPS and exact origin
+allowlisting, never sends credentials or follows redirects, and reports
+structured `PASS`, `FAIL`, `UNAVAILABLE`, or `NOT_APPLICABLE` evidence. Use
+`--local-fixture` only for deterministic loopback/private fixtures. It checks
+Markdown/HTML negotiation, `Vary`/cache/Link behavior, capability discovery,
+RFC 9457 JSON/structured-Markdown parity, denial security negatives, and size or
+link budgets. Bodies are represented only by bounded metadata and digests.
+
 ## Invocation
 
 ```bash
@@ -140,6 +159,11 @@ provider's TLS profile. Fixed provider tokens are the referenced fallback.
 - Keep `api/` as the only public client module. Do not generate legacy import aliases.
 - For GraphQL, use the same TLS profile and bounded input/response behavior. Partial
   error handling must be explicit per operation.
+- Route public failures through the generated `<pkg>/error_authority.py`: negotiate
+  `application/problem+json` or structured `text/markdown` for agents, retain
+  browser `text/html`, and derive status/code/type/instance/retry metadata from one
+  RFC 9457 problem value. Details must be sanitized and bounded; intentional
+  denials are never retryable.
 
 ### 6. Build the MCP and agent surfaces
 

@@ -58,11 +58,37 @@ def test_generated_api_client_has_outbound_request_boundaries():
     assert "tls_profile.httpx_kwargs()" in rendered
     assert "timeout=_REQUEST_TIMEOUT_S" in rendered
     assert "follow_redirects=False" in rendered
+    assert "from ..error_authority import AGENT_ERROR_ACCEPT" in rendered
+    assert 'headers = {"Accept": AGENT_ERROR_ACCEPT}' in rendered
     assert (
         "pin_egress=not tls_profile.proxy_url and not tls_profile.trust_env" in rendered
     )
     assert "_MAX_RESPONSE_BYTES" in rendered
     assert "self.session.stream(" in rendered
+
+
+def test_generated_error_authority_has_agent_safe_negotiation():
+    module = _load_scaffold_module()
+    rendered = module.ERROR_AUTHORITY_PY
+
+    compile(rendered, "<generated-error-authority>", "exec")
+    assert "application/problem+json" in rendered
+    assert "text/markdown" in rendered
+    assert "text/html" in rendered
+    assert "AGENT_ERROR_ACCEPT" in rendered
+    assert "sanitize_for_persistence" in rendered
+    assert "MAX_DETAIL_CHARS" in rendered
+    assert "status in {401, 403}" in rendered
+    assert '"Vary": "Accept"' in rendered
+    assert "{pkg_dir}.error_authority" in module.INIT_PY
+
+
+def test_generated_capability_discovery_is_bound_and_endpoint_free():
+    module = _load_scaffold_module()
+
+    assert "http_transport" in module.CAPABILITY_MCP_JSON
+    assert "mcp_endpoint" not in module.AGENT_READINESS_JSON
+    assert "a2a_endpoint" not in module.AGENT_READINESS_JSON
 
 
 def test_generated_auth_uses_reference_only_runtime_without_pii_logs():
@@ -113,3 +139,12 @@ def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
     assert not (root / ".env").exists()
     assert "SSL_VERIFY" not in (root / "mcp_config.json").read_text(encoding="utf-8")
     assert not (root / "example_provider" / "api_client.py").exists()
+    assert (root / "example_provider" / "error_authority.py").is_file()
+    assert (root / "tests" / "test_error_authority.py").is_file()
+    assert (root / "scripts" / "agent_readiness_tck.py").is_file()
+    assert (root / ".well-known" / "api-catalog").is_file()
+    assert (root / ".well-known" / "mcp-server-card.json").is_file()
+    assert (root / ".well-known" / "agent-skills.json").is_file()
+    catalog = (root / ".well-known" / "api-catalog").read_text(encoding="utf-8")
+    assert "https://service.example.invalid" not in catalog
+    assert "https://www.rfc-editor.org/info/rfc9727" in catalog

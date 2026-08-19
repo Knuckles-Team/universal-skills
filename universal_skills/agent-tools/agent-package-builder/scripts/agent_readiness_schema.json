@@ -176,6 +176,14 @@
         "endpoint": {
           "type": "string",
           "minLength": 1
+        },
+        "oauth_protected_resource": {
+          "type": "string",
+          "const": ".well-known/oauth-protected-resource"
+        },
+        "oauth_authorization_server": {
+          "type": "string",
+          "const": ".well-known/oauth-authorization-server"
         }
       }
     }

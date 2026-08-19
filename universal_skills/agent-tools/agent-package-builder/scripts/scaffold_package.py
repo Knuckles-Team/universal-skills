@@ -1709,6 +1709,7 @@ __all__: List[str] = []
 
 CORE_MODULES = [
     "{pkg_dir}.api",
+    "{pkg_dir}.error_authority",
 ]
 
 OPTIONAL_MODULES = {{
@@ -2013,6 +2014,8 @@ from urllib.parse import SplitResult, urljoin, urlsplit
 from agent_utilities.core.http_client import create_http_client
 from agent_utilities.core.transport_security import ResolvedTLSProfile
 
+from ..error_authority import AGENT_ERROR_ACCEPT
+
 _MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 _MAX_RESPONSE_SECONDS = 60.0
 _REQUEST_TIMEOUT_S = 30.0
@@ -2071,7 +2074,9 @@ class ApiClientBase:
         self.base_url, self._origin, hostname = _validate_base_url(base_url)
         self.token = token
         self.tls_profile = tls_profile
-        headers = {{"Authorization": f"Bearer {{token}}"}} if token else {{}}
+        headers = {{"Accept": AGENT_ERROR_ACCEPT}}
+        if token:
+            headers["Authorization"] = f"Bearer {{token}}"
         tls_kwargs = tls_profile.httpx_kwargs()
         self.session = create_http_client(
             timeout=_REQUEST_TIMEOUT_S,
@@ -2137,6 +2142,342 @@ from .api_client_system import ApiClientSystem
 
 __all__ = ["ApiClientBase", "ApiClientSystem"]
 """
+
+ERROR_AUTHORITY_PY = '''\
+#!/usr/bin/python
+"""One representation authority for agent-readable HTTP errors.
+
+The generated module is deliberately framework-neutral.  HTTP, MCP, and A2A
+adapters construct one :class:`ProblemDetails` value and negotiate only its
+representation; they do not independently translate exceptions or retry
+metadata.  Browser HTML remains available, but agent clients receive RFC 9457
+JSON or structured Markdown when they ask for it.
+"""
+
+from __future__ import annotations
+
+import html
+import json
+import math
+import re
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+from agent_utilities.security.persistence_privacy import sanitize_for_persistence
+
+
+PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
+STRUCTURED_MARKDOWN_MEDIA_TYPE = "text/markdown"
+BROWSER_HTML_MEDIA_TYPE = "text/html"
+AGENT_ERROR_ACCEPT = (
+    f"{PROBLEM_JSON_MEDIA_TYPE}, "
+    f"{STRUCTURED_MARKDOWN_MEDIA_TYPE};q=0.9, "
+    f"{BROWSER_HTML_MEDIA_TYPE};q=0.5"
+)
+MAX_DETAIL_CHARS = 2048
+MAX_INSTANCE_CHARS = 512
+MAX_TYPE_CHARS = 256
+MAX_RETRY_AFTER_S = 3600.0
+
+_CODE_RE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,63}$")
+_DENIAL_CODES = frozenset(
+    {
+        "access_denied",
+        "authentication_required",
+        "forbidden",
+        "not_authorized",
+        "permission_denied",
+        "policy_denied",
+        "unauthorized",
+    }
+)
+_DEFAULT_TITLES = {
+    "dependency_unavailable": "Dependency unavailable",
+    "engine_degraded": "Service temporarily unavailable",
+    "invalid_request": "Invalid request",
+    "operation_failed": "Operation failed",
+    "permission_denied": "Permission denied",
+}
+_METADATA_FIELDS = (
+    "status",
+    "code",
+    "type",
+    "instance",
+    "retryable",
+    "retry_after_s",
+)
+
+
+def _safe_text(value: Any, *, limit: int, fallback: str) -> str:
+    """Sanitize and bound text before it crosses a public response boundary."""
+    candidate = "" if isinstance(value, BaseException) else str(value or "")
+    sanitized, _ = sanitize_for_persistence(candidate)
+    text = str(sanitized).replace("\x00", "").strip()
+    return text[:limit] or fallback
+
+
+def _safe_code(value: Any) -> str:
+    candidate = str(value or "operation_failed").strip().lower()
+    return candidate if _CODE_RE.fullmatch(candidate) else "operation_failed"
+
+
+def _bounded_retry_after(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        retry_after = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(retry_after) or retry_after < 0:
+        return None
+    return min(retry_after, MAX_RETRY_AFTER_S)
+
+
+@dataclass(frozen=True)
+class ProblemDetails:
+    """Canonical RFC 9457 problem details plus agent retry metadata."""
+
+    status: int
+    code: str
+    instance: str
+    detail: str
+    type_uri: str = ""
+    title: str = ""
+    retryable: bool = False
+    retry_after_s: float | None = None
+
+    def __post_init__(self) -> None:
+        status = int(self.status)
+        if not 100 <= status <= 599:
+            raise ValueError("problem status must be between 100 and 599")
+
+        code = _safe_code(self.code)
+        denied = status in {401, 403} or code in _DENIAL_CODES
+        type_uri = _safe_text(
+            self.type_uri,
+            limit=MAX_TYPE_CHARS,
+            fallback=f"urn:agent-error:{code}",
+        )
+        instance = _safe_text(
+            self.instance,
+            limit=MAX_INSTANCE_CHARS,
+            fallback="urn:agent-error-instance:unknown",
+        )
+        title = _safe_text(
+            self.title,
+            limit=256,
+            fallback=_DEFAULT_TITLES.get(code, "Operation failed"),
+        )
+        detail = _safe_text(
+            self.detail,
+            limit=MAX_DETAIL_CHARS,
+            fallback="The request could not be completed.",
+        )
+        retryable = bool(self.retryable) and not denied
+        retry_after_s = (
+            _bounded_retry_after(self.retry_after_s) if retryable else None
+        )
+
+        object.__setattr__(self, "status", status)
+        object.__setattr__(self, "code", code)
+        object.__setattr__(self, "type_uri", type_uri)
+        object.__setattr__(self, "instance", instance)
+        object.__setattr__(self, "title", title)
+        object.__setattr__(self, "detail", detail)
+        object.__setattr__(self, "retryable", retryable)
+        object.__setattr__(self, "retry_after_s", retry_after_s)
+
+    def metadata(self) -> dict[str, Any]:
+        """Return the representation-invariant agent metadata."""
+        return {
+            "status": self.status,
+            "code": self.code,
+            "type": self.type_uri,
+            "instance": self.instance,
+            "retryable": self.retryable,
+            "retry_after_s": self.retry_after_s,
+        }
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return an RFC 9457-compatible object with stable extension fields."""
+        return {
+            "type": self.type_uri,
+            "title": self.title,
+            "status": self.status,
+            "detail": self.detail,
+            "instance": self.instance,
+            "code": self.code,
+            "retryable": self.retryable,
+            "retry_after_s": self.retry_after_s,
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(
+            self.as_dict(), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+
+    def to_markdown(self) -> str:
+        """Render structured Markdown from the same metadata object as JSON."""
+        metadata = self.metadata()
+        lines = ["---"]
+        for field in _METADATA_FIELDS:
+            rendered = json.dumps(metadata[field], ensure_ascii=False)
+            lines.append(f"{field}: {rendered}")
+        lines.extend(
+            [
+                "---",
+                f"# {self.title}",
+                "",
+                "## Detail",
+            ]
+        )
+        lines.extend(
+            f"> {line}" if line else ">" for line in self.detail.splitlines()
+        )
+        return "\n".join(lines) + "\n"
+
+    def to_html(self) -> str:
+        """Render the retained browser surface with escaped bounded fields."""
+        metadata = self.metadata()
+        attrs = " ".join(
+            "data-error-{}=\"{}\"".format(
+                field.replace("_", "-"), html.escape(str(value), quote=True)
+            )
+            for field, value in metadata.items()
+        )
+        detail = html.escape(self.detail, quote=False).replace("\n", "<br>")
+        return (
+            "<!doctype html>\n<html lang=\"en\"><head>"
+            f"<meta name=\"error-status\" content=\"{self.status}\">"
+            f"<title>{html.escape(self.title)}</title></head>\n"
+            f"<body><main {attrs}><h1>{html.escape(self.title)}</h1>"
+            f"<p>{detail}</p></main></body></html>\n"
+        )
+
+
+@dataclass(frozen=True)
+class RenderedError:
+    """A transport-neutral response ready for an HTTP/MCP adapter."""
+
+    status_code: int
+    media_type: str
+    body: str
+    headers: Mapping[str, str]
+
+
+def _accept_quality(accept: str, offered: str) -> tuple[float, int, int]:
+    """Return q, specificity, and source order for one offered media type."""
+    best_match = (-1, 0.0, -10_000)
+    for order, item in enumerate(accept.split(",")):
+        bits = [part.strip() for part in item.split(";")]
+        token = bits[0].lower()
+        try:
+            quality = next(
+                float(part.split("=", 1)[1].strip())
+                for part in bits[1:]
+                if part.lower().startswith("q=")
+            )
+        except (StopIteration, ValueError):
+            quality = 1.0
+        if not 0.0 <= quality <= 1.0:
+            continue
+        if token == offered:
+            specificity = 2
+        elif token == "*/*" or token == offered.split("/", 1)[0] + "/*":
+            specificity = 1
+        else:
+            continue
+        candidate = (specificity, quality, -order)
+        if candidate > best_match:
+            best_match = candidate
+    specificity, quality, source_order = best_match
+    return quality, specificity, source_order
+
+
+def negotiate_media_type(accept: str | None) -> str:
+    """Prefer agent formats, while retaining HTML for browser Accept headers."""
+    if not accept or not accept.strip():
+        return PROBLEM_JSON_MEDIA_TYPE
+    offered = (
+        PROBLEM_JSON_MEDIA_TYPE,
+        STRUCTURED_MARKDOWN_MEDIA_TYPE,
+        BROWSER_HTML_MEDIA_TYPE,
+    )
+    ranked = [
+        (*_accept_quality(accept, media_type), -priority, media_type)
+        for priority, media_type in enumerate(offered)
+    ]
+    supported = [candidate for candidate in ranked if candidate[0] > 0]
+    return max(supported)[-1] if supported else PROBLEM_JSON_MEDIA_TYPE
+
+
+def render_error(
+    problem: ProblemDetails, *, accept: str | None = None
+) -> RenderedError:
+    """Negotiate one bounded representation without changing its semantics."""
+    media_type = negotiate_media_type(accept)
+    if media_type == STRUCTURED_MARKDOWN_MEDIA_TYPE:
+        body = problem.to_markdown()
+    elif media_type == BROWSER_HTML_MEDIA_TYPE:
+        body = problem.to_html()
+    else:
+        media_type = PROBLEM_JSON_MEDIA_TYPE
+        body = problem.to_json()
+    headers = {
+        "Content-Type": f"{media_type}; charset=utf-8",
+        "Vary": "Accept",
+    }
+    if problem.retry_after_s is not None:
+        headers["Retry-After"] = str(problem.retry_after_s)
+    return RenderedError(
+        status_code=problem.status,
+        media_type=media_type,
+        body=body,
+        headers=headers,
+    )
+
+
+def error_response(
+    *,
+    status: int,
+    code: str,
+    instance: str,
+    detail: str,
+    type_uri: str = "",
+    title: str = "",
+    retryable: bool = False,
+    retry_after_s: float | None = None,
+    accept: str | None = None,
+) -> RenderedError:
+    """Construct and render a problem through the single package authority."""
+    return render_error(
+        ProblemDetails(
+            status=status,
+            code=code,
+            instance=instance,
+            detail=detail,
+            type_uri=type_uri,
+            title=title,
+            retryable=retryable,
+            retry_after_s=retry_after_s,
+        ),
+        accept=accept,
+    )
+
+
+__all__ = [
+    "BROWSER_HTML_MEDIA_TYPE",
+    "AGENT_ERROR_ACCEPT",
+    "MAX_DETAIL_CHARS",
+    "PROBLEM_JSON_MEDIA_TYPE",
+    "ProblemDetails",
+    "RenderedError",
+    "STRUCTURED_MARKDOWN_MEDIA_TYPE",
+    "error_response",
+    "negotiate_media_type",
+    "render_error",
+]
+'''
 
 INPUT_MODELS_PY = """\
 #!/usr/bin/python
@@ -3084,13 +3425,17 @@ AGENT_READINESS_JSON = """\
     "discoverability": true,
     "access_policy": true,
     "capabilities": true,
-    "errors": false,
+    "errors": true,
     "provenance": true,
     "measurement": false,
     "deployment": false
   }},
   "standards": [
     {{"id": "RFC 3986", "kind": "rfc", "level": "normative"}},
+    {{"id": "RFC 9264", "kind": "rfc", "level": "normative"}},
+    {{"id": "RFC 9727", "kind": "rfc", "level": "normative"}},
+    {{"id": "RFC 8414", "kind": "rfc", "level": "normative"}},
+    {{"id": "RFC 9728", "kind": "rfc", "level": "normative"}},
     {{"id": "Agent Documentation Standard vNext", "kind": "draft", "level": "draft"}},
     {{"id": "Concept IDs and AGENTS", "kind": "convention", "level": "advisory"}}
   ],
@@ -3098,21 +3443,21 @@ AGENT_READINESS_JSON = """\
   "budgets": {{"curated_chars": 24000, "summary_chars": 800, "full_chars": 0}},
   "capabilities": {{
     "api": {{"applicable": {api_applicable}{api_artifact}}},
-    "mcp": {{"applicable": {mcp_applicable}{mcp_artifact}{mcp_endpoint}}},
-    "a2a": {{"applicable": {a2a_applicable}{a2a_artifact}{a2a_endpoint}}},
+    "mcp": {{"applicable": {mcp_applicable}{mcp_artifact}}},
+    "a2a": {{"applicable": {a2a_applicable}{a2a_artifact}}},
     "skills": {{"applicable": true, "path": "{pkg_dir}/skills"}}
   }}
 }}
 """
 
 CAPABILITY_API_JSON = """\
-{{"applicable": true, "surface": "api", "source": "{pkg_dir}/api/__init__.py"}}
+{{"applicable": true, "surface": "api", "version": "capability/v1", "source": "{pkg_dir}/api/__init__.py"}}
 """
 CAPABILITY_MCP_JSON = """\
-{{"applicable": true, "surface": "mcp", "source": "{pkg_dir}/mcp_server.py"}}
+{{"applicable": true, "surface": "mcp", "version": "capability/v1", "http_transport": true, "source": "{pkg_dir}/mcp_server.py"}}
 """
 CAPABILITY_A2A_JSON = """\
-{{"applicable": true, "surface": "a2a", "source": "{pkg_dir}/agent_server.py"}}
+{{"applicable": true, "surface": "a2a", "version": "capability/v1", "source": "{pkg_dir}/agent_server.py"}}
 """
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
@@ -3219,6 +3564,79 @@ def test_request_rejects_oversized_response():
         pytest.raises(RuntimeError, match="size limit"),
     ):
         client.request("GET", "/health")
+"""
+
+TESTS_ERROR_AUTHORITY = """\
+import json
+
+import pytest
+
+from {pkg_dir}.error_authority import (
+    BROWSER_HTML_MEDIA_TYPE,
+    MAX_DETAIL_CHARS,
+    PROBLEM_JSON_MEDIA_TYPE,
+    STRUCTURED_MARKDOWN_MEDIA_TYPE,
+    ProblemDetails,
+    render_error,
+)
+
+
+@pytest.mark.concept("{concept_prefix}-001")
+def test_agent_representations_share_metadata():
+    problem = ProblemDetails(
+        status=503,
+        code="dependency_unavailable",
+        type_uri="urn:agent-error:dependency-unavailable",
+        instance="urn:request:abc123",
+        detail="The upstream is temporarily unavailable.",
+        retryable=True,
+        retry_after_s=12,
+    )
+    json_response = render_error(problem, accept=PROBLEM_JSON_MEDIA_TYPE)
+    markdown_response = render_error(problem, accept=STRUCTURED_MARKDOWN_MEDIA_TYPE)
+    payload = json.loads(json_response.body)
+
+    assert json_response.media_type == PROBLEM_JSON_MEDIA_TYPE
+    assert markdown_response.media_type == STRUCTURED_MARKDOWN_MEDIA_TYPE
+    assert json_response.headers["Vary"] == "Accept"
+    assert json_response.headers["Retry-After"] == "12.0"
+    for field, value in problem.metadata().items():
+        assert payload[field] == value
+        assert field + ": " + json.dumps(value) in markdown_response.body
+
+
+def test_denial_is_never_retryable_and_detail_is_bounded():
+    denied = ProblemDetails(
+        status=403,
+        code="permission_denied",
+        instance="urn:request:denied",
+        detail=(
+            "/home/operator/private-token " + ("x" * (MAX_DETAIL_CHARS + 100))
+        ),
+        retryable=True,
+        retry_after_s=30,
+    )
+    response = render_error(denied, accept=PROBLEM_JSON_MEDIA_TYPE)
+    payload = json.loads(response.body)
+
+    assert payload["retryable"] is False
+    assert payload["retry_after_s"] is None
+    assert len(payload["detail"]) <= MAX_DETAIL_CHARS
+    assert "/home/operator" not in payload["detail"]
+
+
+def test_browser_html_is_retained_for_browser_accept_headers():
+    problem = ProblemDetails(
+        status=400,
+        code="invalid_request",
+        instance="urn:request:browser",
+        detail="The request is invalid.",
+    )
+    response = render_error(problem, accept="text/html,application/xhtml+xml")
+
+    assert response.media_type == BROWSER_HTML_MEDIA_TYPE
+    assert response.body.startswith("<!doctype html>")
+    assert "data-error-code=\"invalid_request\"" in response.body
 """
 
 TESTS_MCP_VALIDATION = """\
@@ -3353,25 +3771,19 @@ def scaffold(
         "gql_all_dep": gql_all_dep,
         "gql_optional_module": gql_optional_module,
         "gql_all_extend": gql_all_extend,
-        "api_applicable": "true",
+        "api_applicable": "true" if "api_client" in types else "false",
         "mcp_applicable": "true" if "mcp" in types else "false",
         "a2a_applicable": "true" if "agent" in types else "false",
-        "api_artifact": ', "artifact": "docs/capabilities/api.json"',
+        "api_artifact": (
+            ', "artifact": "docs/capabilities/api.json"'
+            if "api_client" in types
+            else ""
+        ),
         "mcp_artifact": (
             ', "artifact": "docs/capabilities/mcp.json"' if "mcp" in types else ""
         ),
         "a2a_artifact": (
             ', "artifact": "docs/capabilities/a2a.json"' if "agent" in types else ""
-        ),
-        "mcp_endpoint": (
-            ', "endpoint": "https://service.example.invalid/mcp"'
-            if "mcp" in types
-            else ""
-        ),
-        "a2a_endpoint": (
-            ', "endpoint": "https://service.example.invalid/.well-known/agent-card"'
-            if "agent" in types
-            else ""
         ),
         "year": year,
         "date": date,
@@ -3423,14 +3835,17 @@ def scaffold(
         root / "docs/platform.md": (DOCS_PLATFORM_MD, True),
         root / "docs/concepts.md": (DOCS_CONCEPTS_MD, True),
         root / "docs/agent-readiness.json": (AGENT_READINESS_JSON, True),
-        root / "docs/capabilities/api.json": (CAPABILITY_API_JSON, True),
         # Repo scripts
         root / "scripts/validate_agent.py": (VALIDATE_AGENT_PY, True),
     }
 
+    if "api_client" in types:
+        files[root / "docs/capabilities/api.json"] = (CAPABILITY_API_JSON, True)
+
     # Package files
     files[pkg / "__init__.py"] = (INIT_PY, True)
     files[pkg / "auth.py"] = (AUTH_PY, True)
+    files[pkg / "error_authority.py"] = (ERROR_AUTHORITY_PY, False)
     files[pkg / f"{to_pkg_dir(short_name)}_input_models.py"] = (INPUT_MODELS_PY, True)
     files[pkg / f"{to_pkg_dir(short_name)}_response_models.py"] = (
         RESPONSE_MODELS_PY,
@@ -3517,6 +3932,10 @@ def scaffold(
     files[root / "tests" / "conftest.py"] = (TESTS_CONFTEST, True)
     files[root / "tests" / "test_auth.py"] = (TESTS_AUTH, True)
     files[root / "tests" / "test_api_wrapper.py"] = (TESTS_API_WRAPPER, True)
+    files[root / "tests" / "test_error_authority.py"] = (
+        TESTS_ERROR_AUTHORITY,
+        True,
+    )
     files[root / "tests" / f"test_{to_pkg_dir(short_name)}_mcp_validation.py"] = (
         TESTS_MCP_VALIDATION,
         True,
@@ -3579,16 +3998,23 @@ def scaffold(
     # source-only and privacy-safe implementation.
     readiness_script = _scaffolder_scripts_dir / "agent_readiness.py"
     readiness_schema = _scaffolder_scripts_dir / "agent_readiness_schema.json"
-    if not readiness_script.is_file() or not readiness_schema.is_file():
+    readiness_tck = _scaffolder_scripts_dir / "agent_readiness_tck.py"
+    if (
+        not readiness_script.is_file()
+        or not readiness_schema.is_file()
+        or not readiness_tck.is_file()
+    ):
         raise FileNotFoundError("agent-readiness builder contract is incomplete")
     shutil.copyfile(readiness_script, root / "scripts" / "generate_agent_readiness.py")
     shutil.copyfile(readiness_schema, root / "docs" / "agent-readiness.schema.json")
+    shutil.copyfile(readiness_tck, root / "scripts" / "agent_readiness_tck.py")
     print(
         f"  ✅ {(root / 'scripts/generate_agent_readiness.py').relative_to(root.parent)}"
     )
     print(
         f"  ✅ {(root / 'docs/agent-readiness.schema.json').relative_to(root.parent)}"
     )
+    print(f"  ✅ {(root / 'scripts/agent_readiness_tck.py').relative_to(root.parent)}")
 
     # Generate current discovery artifacts only after all source pages and the
     # explicit applicability input exist.  This calls the same reviewed
