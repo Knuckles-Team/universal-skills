@@ -41,5 +41,10 @@ def test_redirect_handler_fails_closed():
     request = urllib.request.Request("https://api.example/v1")
     with pytest.raises(http.SafeHttpError, match="redirect"):
         handler.redirect_request(
-            request, None, 302, "Found", {}, "https://other.example"
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "https://user:secret@127.0.0.1/private-target",
         )
