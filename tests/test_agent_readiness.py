@@ -96,6 +96,7 @@ def _generated_bytes(root: Path) -> dict[str, bytes]:
         and (
             path.name in {"llms.txt", "llms-full.txt"}
             or path.name.endswith("manifest.json")
+            or ".well-known" in path.parts
         )
     }
 
@@ -128,6 +129,80 @@ def test_generation_is_current_bounded_and_idempotent(tmp_path):
     )
     module.generate(root)
     assert not (root / "llms-sections" / "guides" / "llms.txt").exists()
+
+
+def test_capability_discovery_is_bound_and_endpoint_free(tmp_path):
+    module = _load_generator()
+    root, readiness = _fixture(tmp_path)
+
+    result = module.generate(root)
+    assert ".well-known/agent-skills.json" in result["generated"]
+    assert ".well-known/api-catalog" not in result["generated"]
+    skills = json.loads(
+        (root / ".well-known" / "agent-skills.json").read_text(encoding="utf-8")
+    )
+    assert skills["schema_version"] == "agent-skills/v1"
+    assert skills["skills"][0]["path"] == "skills/provider-starter/SKILL.md"
+
+    mcp_artifact = root / "mcp.json"
+    _write_json(
+        mcp_artifact,
+        {
+            "applicable": True,
+            "surface": "mcp",
+            "version": "capability/v1",
+            "http_transport": True,
+            "source": "docs/index.md",
+        },
+    )
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "endpoint": "https://service.example.invalid/mcp",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+
+    result = module.generate(root)
+    assert ".well-known/api-catalog" in result["generated"]
+    assert ".well-known/mcp-server-card.json" in result["generated"]
+    catalog = json.loads(
+        (root / ".well-known" / "api-catalog").read_text(encoding="utf-8")
+    )
+    assert catalog["profile"] == "https://www.rfc-editor.org/info/rfc9727"
+    links = catalog["linkset"][0]["item"]
+    assert any(link["href"] == ".well-known/mcp-server-card.json" for link in links)
+    assert all("service.example.invalid" not in json.dumps(link) for link in links)
+    card = json.loads(
+        (root / ".well-known" / "mcp-server-card.json").read_text(encoding="utf-8")
+    )
+    assert card["schema_version"] == "mcp-server-card/v1-experimental"
+    assert "endpoint" not in card
+    manifest = json.loads(
+        (root / "agent-readiness-manifest.json").read_text(encoding="utf-8")
+    )
+    assert "endpoint" not in manifest["capabilities"]["mcp"]
+
+    oauth_path = root / ".well-known" / "oauth-protected-resource"
+    _write_json(oauth_path, {"resource": "https://service.example.invalid"})
+    readiness["capabilities"]["mcp"]["oauth_protected_resource"] = (
+        ".well-known/oauth-protected-resource"
+    )
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    module.generate(root)
+    catalog = json.loads(
+        (root / ".well-known" / "api-catalog").read_text(encoding="utf-8")
+    )
+    assert any(
+        link["href"] == ".well-known/oauth-protected-resource"
+        for link in catalog["linkset"][0]["describedby"]
+    )
+
+    readiness["project"]["kind"] = "docs-only"
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    with pytest.raises(
+        module.ReadinessError, match="docs-only-served-capability-unsupported"
+    ):
+        module.generate(root)
 
 
 def test_failed_late_plan_leaves_prior_outputs_byte_identical(tmp_path, monkeypatch):
@@ -441,6 +516,7 @@ def test_builder_scaffold_carries_the_readiness_contract(tmp_path):
     assert (root / "docs" / "agent-readiness.json").is_file()
     assert (root / "docs" / "agent-readiness.schema.json").is_file()
     assert (root / "scripts" / "generate_agent_readiness.py").is_file()
+    assert (root / "scripts" / "agent_readiness_tck.py").is_file()
     assert (root / "llms.txt").is_file()
     manifest = json.loads(
         (root / "agent-readiness-manifest.json").read_text(encoding="utf-8")
