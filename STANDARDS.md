@@ -173,3 +173,23 @@ must stay valid on Windows, macOS, and Linux:
 Enforced by `scripts/check_path_portability.py` (ratchet gate, ceiling 0) and the
 `skill-graph-builder`'s reference-file naming (flat, hash-named `reference/<hash>.md`
 files — see its `SKILL.md`).
+
+`portable_relpath` treats `max_total` as a hard bound, not merely a preferred
+filename budget.  When several components together exceed it, the filename is
+shortened first and parent components are shortened only as needed; every
+shortened component retains a 128-bit (32 hex-character) SHA-256 digest and its
+extension.  If the total budget cannot fit the digest floor for every component,
+the function raises instead of emitting a collision-prone path.  The allocator is
+deterministic for Unicode and case-distinct inputs; use `dedupe_caseless` when
+allocating multiple siblings in one case-insensitive directory.
+
+```mermaid
+flowchart LR
+    A[raw components] --> B[portable_name per component]
+    B --> C{total within max_total?}
+    C -- yes --> D[return bounded path]
+    C -- no --> E[allocate digest-preserving budgets]
+    E --> F{digest floor fits?}
+    F -- no --> G[fail closed]
+    F -- yes --> D
+```

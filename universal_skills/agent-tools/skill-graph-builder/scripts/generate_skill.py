@@ -47,25 +47,69 @@ try:
 except Exception:  # pragma: no cover - standalone execution
 
     def _portable_name(name: str, max_len: int = 80) -> str:
-        cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name or "").strip(". ") or "_"
-        if len(cleaned) <= max_len:
-            return cleaned
-        if max_len < 34:
+        if max_len < 1:
+            raise ValueError("path component budget must be positive")
+        cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name or "").rstrip(". ").lstrip(" ") or "_"
+        cleaned = cleaned.replace("~", "-") or "_"
+        stem, dot, ext = cleaned.rpartition(".")
+        base, suffix = (stem, dot + ext) if dot and stem else (cleaned, "")
+        if base.upper() in {
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            *(f"COM{i}" for i in range(1, 10)),
+            *(f"LPT{i}" for i in range(1, 10)),
+        }:
+            base = f"{base}_"
+        full = f"{base}{suffix}"
+        if len(full) <= max_len:
+            return full
+        if max_len < len(suffix) + 34:
             raise ValueError("path component budget is too small for a safe digest")
         digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:32]
-        return f"{cleaned[: max_len - 33]}-{digest}"
+        keep = max(1, max_len - len(suffix) - 33)
+        return f"{base[:keep]}-{digest}{suffix}"
 
-    def _portable_relpath(parts, max_total: int = 140) -> str:
-        safe = [_portable_name(p) for p in parts if p not in ("", ".")]
+    def _portable_relpath(
+        parts, max_total: int = 140, max_name: int = 80
+    ) -> str:
+        if max_name < 1 or max_total < 1:
+            raise ValueError("path budgets must be positive")
+        original = [p for p in parts if p not in ("", ".")]
+        safe = [_portable_name(p, max_len=max_name) for p in original]
+        if not safe:
+            return "_"
         joined = "/".join(safe)
         if len(joined) <= max_total:
             return joined
-        prefix = "/".join(safe[:-1])
-        budget = max_total - len(prefix) - 1
-        if budget < 34:
+        minimums = []
+        for component in safe:
+            stem, dot, ext = component.rpartition(".")
+            suffix_length = len(dot + ext) if dot and stem else 0
+            minimums.append(min(len(component), suffix_length + 34))
+        separator_count = len(safe) - 1
+        minimum_total = sum(minimums) + separator_count
+        if minimum_total > max_total:
             raise ValueError("relative path budget is too small for a safe digest")
-        safe[-1] = _portable_name(safe[-1], max_len=budget)
-        return "/".join(safe)
+        targets = [len(component) for component in safe]
+        excess = sum(targets) + separator_count - max_total
+        for index in range(len(targets) - 1, -1, -1):
+            reduction = min(excess, targets[index] - minimums[index])
+            targets[index] -= reduction
+            excess -= reduction
+            if excess == 0:
+                break
+        if excess:
+            raise ValueError("relative path budget cannot encode a safe unique path")
+        safe = [
+            _portable_name(name, max_len=target)
+            for name, target in zip(original, targets, strict=True)
+        ]
+        result = "/".join(safe)
+        if len(result) > max_total or any(len(part) > max_name for part in safe):
+            raise ValueError("portable relative path exceeded the caller's budget")
+        return result
 
 
 def _flatten_reference_tree(skill_dir: Path) -> None:
