@@ -70,6 +70,9 @@ class UrlPolicy:
 
 class _RejectRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        # ``newurl`` is intentionally not parsed: every redirect is denied before
+        # it can become a second URL-validation path or disclose target details.
+        del req, fp, code, msg, headers, newurl
         raise SafeHttpError("remote redirect was rejected")
 
 
