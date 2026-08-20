@@ -1,8 +1,7 @@
-name: Pnl Attribution Swarm
-task_pattern: Perform Pnl Attribution operations concurrently across all target layers
+name: pnl-attribution-team
+task_pattern: multi-factor backtest and P&L attribution report
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - qlib-backtester
+  - document-converter

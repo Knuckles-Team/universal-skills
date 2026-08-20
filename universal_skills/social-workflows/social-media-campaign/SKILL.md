@@ -2,85 +2,86 @@
 name: social-media-campaign
 skill_type: workflow
 description: >-
-  Parallel execution workflow for social media campaign using the Unified Parallel Engine
+  Outline, draft, and edit sourced social post copy, render matching visual
+  assets, and run a final readiness check. Use when a user has supplied a
+  campaign objective, audience, and voice constraints and wants review-ready
+  posts; this workflow never posts or schedules the campaign.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: social-media-campaign-team
+  task_pattern: sourced social post copy and visual-asset drafting
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, social-media-campaign]
+    - content-outline-builder
+    - content-draft-writer
+    - copy-editor
+    - canvas-design
+    - publication-preflight
+tags: [social, content, campaign, design]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Social Media Campaign Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding posting or scheduling logic
+here.
 
-Parallel execution workflow for social media campaign using the Unified Parallel Engine
+## Inputs
+
+Provide the campaign objective, audience, channel constraints, and voice guide.
 
 ## Steps
 
-### Step 1: Draft Post
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: content-outline-builder [skill: content-outline-builder]
 
-Execute draft post operations for the Social Media Campaign workflow.
-Expected: `draft_post_artifacts`
+Invoke `$content-outline-builder` with the workflow inputs.
 
-### Step 2: Format [depends_on: draft_post]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `approved_outline`
 
-Execute format operations for the Social Media Campaign workflow.
-Expected: `format_artifacts`
+### Step 1: content-draft-writer [skill: content-draft-writer] [depends_on: Step 0]
 
-### Step 3: Schedule [depends_on: format]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$content-draft-writer` with the workflow inputs and
+`approved_outline`.
 
-Execute schedule operations for the Social Media Campaign workflow.
-Expected: `schedule_artifacts`
+Expected: `post_drafts`
 
-### Step 4: Monitor Engagement [depends_on: schedule]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: copy-editor [skill: copy-editor] [depends_on: Step 1]
 
-Execute monitor engagement operations for the Social Media Campaign workflow.
-Expected: `monitor_engagement_artifacts`
+Invoke `$copy-editor` with `post_drafts` and the workflow inputs.
 
-### Step 5: KG Persistence [depends_on: monitor_engagement]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
+Expected: `edited_posts`
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+### Step 3: canvas-design [skill: canvas-design] [depends_on: Step 2]
+
+Invoke `$canvas-design` with `edited_posts` to render matching
+visual assets.
+
+Expected: `campaign_visual_assets`
+
+### Step 4: publication-preflight [skill: publication-preflight] [depends_on: Step 3]
+
+Invoke `$publication-preflight` with `edited_posts`,
+`campaign_visual_assets`, and the publication requirements.
+
+Expected: `readiness_decision`
 
 ## Output
-- Social Media Campaign results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `edited_posts`, `campaign_visual_assets`, and `readiness_decision`. Do
+not post or schedule the campaign.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Draft Post
-- **After level 0:** Step 2 — Format
-- **After level 1:** Step 3 — Schedule
-- **After level 2:** Step 4 — Monitor Engagement
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$content-outline-builder`.
+- **After level 0:** Step 1 — `$content-draft-writer`.
+- **After level 1:** Step 2 — `$copy-editor`.
+- **After level 2:** Step 3 — `$canvas-design`.
+- **After level 3:** Step 4 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

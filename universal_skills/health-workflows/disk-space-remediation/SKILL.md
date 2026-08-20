@@ -2,88 +2,59 @@
 name: disk-space-remediation
 skill_type: workflow
 description: >-
-  Parallel execution workflow for disk space remediation using the Unified Parallel Engine
+  Sample a host's current resource utilization and then discover and safely
+  reclaim disk space where it is under pressure. Use when a filesystem is full
+  or nearly full and a host needs a governed reclamation pass; this workflow
+  never deletes anything outside the reclaimer's own safety checks.
 domain: health-workflows
-agent: health_wellness_coordinator
+license: MIT
+requires: []
+agent: infra-health-orchestrator
 team_config:
-  name: health_wellness_team
-  task_pattern: health monitoring and wellness optimization
+  name: disk-space-remediation-team
+  task_pattern: host disk-pressure sampling and safe reclamation
   execution_mode: sequential
   specialist_ids:
-    - data-collector
-    - analyzer-agent
-    - planner-agent
-    - tracker-agent
-  tool_assignments:
-    data-collector: [graph_query]
-    analyzer-agent: [graph_analyze]
-    planner-agent: [graph_write]
-    tracker-agent: [nc_calendar, graph_write]
-tags: [health, disk-space-remediation]
+    - host-resource-sampler
+    - host-disk-reclaimer
+tags: [health, infrastructure, disk]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Disk Space Remediation Workflow
 
-**CONCEPT:HEALTH-001**
+Compose the named atomic skills without adding new deletion logic here.
 
-Parallel execution workflow for disk space remediation using the Unified Parallel Engine
+## Inputs
+
+Provide the target host(s) and the reclamation risk tolerance.
 
 ## Steps
 
-### Step 1: Sequential Scan
-**Agent**: `data-collector`
-**Tools**: `graph_query`
+### Step 0: host-resource-sampler [skill: host-resource-sampler]
 
-Execute sequential scan operations for the Disk Space Remediation workflow.
-Expected: `sequential_scan_artifacts`
+Invoke `$host-resource-sampler` with the workflow inputs to sample
+current CPU, memory, disk, and load metrics.
 
-### Step 2: Identify Bloat [depends_on: sequential_scan]
-**Agent**: `analyzer-agent`
-**Tools**: `graph_analyze`
+Expected: `resource_sample`
 
-Execute identify bloat operations for the Disk Space Remediation workflow.
-Expected: `identify_bloat_artifacts`
+### Step 1: host-disk-reclaimer [skill: host-disk-reclaimer] [depends_on: Step 0]
 
-### Step 3: Prune [depends_on: identify_bloat]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
+Invoke `$host-disk-reclaimer` with `resource_sample` to discover disk
+consumers and safely reclaim space.
 
-Execute prune operations for the Disk Space Remediation workflow.
-Expected: `prune_artifacts`
-
-### Step 4: Verify [depends_on: prune]
-**Agent**: `tracker-agent`
-**Tools**: `nc_calendar, graph_write`
-
-Execute verify operations for the Disk Space Remediation workflow.
-Expected: `verify_artifacts`
-
-### Step 5: KG Persistence [depends_on: verify]
-**Agent**: `tracker-agent`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `reclamation_report`
 
 ## Output
-- Disk Space Remediation results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
 
-## Human Oversight Required
-✅ Critical decisions require human review and approval.
+Return `resource_sample` and `reclamation_report`.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Sequential Scan
-- **After level 0:** Step 2 — Identify Bloat
-- **After level 1:** Step 3 — Prune
-- **After level 2:** Step 4 — Verify
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$host-resource-sampler`.
+- **After level 0:** Step 1 — `$host-disk-reclaimer`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

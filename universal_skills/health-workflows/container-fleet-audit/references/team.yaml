@@ -1,12 +1,6 @@
-name: Container Fleet Audit Swarm
-task_pattern: Perform Container Fleet Audit operations concurrently across all target layers
+name: container-fleet-audit-team
+task_pattern: fleet-wide compose drift audit and report
+execution_mode: sequential
 specialist_ids:
-  - devops-engineer
-  - portainer-specialist
-capability_overrides:
-  devops-engineer:
-    - stuck_loop_detection
-    - checkpointing
-  portainer-specialist:
-    - stuck_loop_detection
-    - checkpointing
+  - docker-compose-drift-detector
+  - document-converter

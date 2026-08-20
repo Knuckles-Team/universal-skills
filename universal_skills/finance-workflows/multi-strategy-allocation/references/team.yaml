@@ -1,8 +1,7 @@
-name: Multi Strategy Allocation Swarm
-task_pattern: Perform Multi Strategy Allocation operations concurrently across all target layers
+name: multi-strategy-allocation-team
+task_pattern: multi-strategy backtest and vetted allocation evidence
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - qlib-backtester
+  - trading-debate

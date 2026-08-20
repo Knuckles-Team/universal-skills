@@ -1,10 +1,9 @@
-name: Ebook Compiler Swarm
-task_pattern: Perform Ebook Compiler operations concurrently across all target layers
+name: ebook-compiler-team
+task_pattern: multi-chapter manuscript drafting and compilation
+execution_mode: sequential
 specialist_ids:
-  - researcher
-  - knowledge-graph
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
-  knowledge-graph:
-    - stuck_loop_detection
+  - content-outline-builder
+  - content-draft-writer
+  - copy-editor
+  - document-tools
+  - publication-preflight

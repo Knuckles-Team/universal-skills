@@ -1,7 +1,6 @@
-name: Disk Space Remediation Swarm
-task_pattern: Perform Disk Space Remediation operations concurrently across all target layers
+name: disk-space-remediation-team
+task_pattern: host disk-pressure sampling and safe reclamation
+execution_mode: sequential
 specialist_ids:
-  - systems-manager
-capability_overrides:
-  systems-manager:
-    - stuck_loop_detection
+  - host-resource-sampler
+  - host-disk-reclaimer

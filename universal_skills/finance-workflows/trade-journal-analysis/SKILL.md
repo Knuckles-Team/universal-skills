@@ -2,85 +2,60 @@
 name: trade-journal-analysis
 skill_type: workflow
 description: >-
-  Parallel execution workflow for trade journal analysis using the Unified Parallel Engine
+  Execute a supplied strategy via paper trading with freqtrade to produce a trade
+  execution log, then profile that log's structure and statistics. Use when a
+  researcher wants a structured trade journal ready for review; this workflow
+  only paper-trades and never places live orders.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: trade-journal-analysis-team
+  task_pattern: paper-trade execution log profiling
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, trade-journal-analysis]
+    - freqtrade-executor
+    - dataset-profiler
+tags: [finance, execution, journal]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Trade Journal Analysis Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding new journaling logic here.
 
-Parallel execution workflow for trade journal analysis using the Unified Parallel Engine
+## Inputs
+
+Provide the strategy definition, asset universe, and execution window.
 
 ## Steps
 
-### Step 1: Pull Trade Log
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: freqtrade-executor [skill: freqtrade-executor]
 
-Execute pull trade log operations for the Trade Journal Analysis workflow.
-Expected: `pull_trade_log_artifacts`
+Invoke `$freqtrade-executor` with the workflow inputs to paper-trade
+the strategy and produce a trade execution log.
 
-### Step 2: Classify Decisions [depends_on: pull_trade_log]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `trade_execution_log`
 
-Execute classify decisions operations for the Trade Journal Analysis workflow.
-Expected: `classify_decisions_artifacts`
+### Step 1: dataset-profiler [skill: dataset-profiler] [depends_on: Step 0]
 
-### Step 3: Ev Analysis [depends_on: classify_decisions]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$dataset-profiler` with `trade_execution_log` to produce a
+structural and statistical profile.
 
-Execute ev analysis operations for the Trade Journal Analysis workflow.
-Expected: `ev_analysis_artifacts`
-
-### Step 4: Parameter Update [depends_on: ev_analysis]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
-
-Execute parameter update operations for the Trade Journal Analysis workflow.
-Expected: `parameter_update_artifacts`
-
-### Step 5: KG Persistence [depends_on: parameter_update]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `trade_journal_profile`
 
 ## Output
-- Trade Journal Analysis results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `trade_execution_log` and `trade_journal_profile`. Only paper-trades;
+never places live orders.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Pull Trade Log
-- **After level 0:** Step 2 — Classify Decisions
-- **After level 1:** Step 3 — Ev Analysis
-- **After level 2:** Step 4 — Parameter Update
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$freqtrade-executor`.
+- **After level 0:** Step 1 — `$dataset-profiler`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

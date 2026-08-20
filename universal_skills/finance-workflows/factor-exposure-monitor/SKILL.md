@@ -2,90 +2,59 @@
 name: factor-exposure-monitor
 skill_type: workflow
 description: >-
-  Parallel execution workflow for factor exposure monitor using the Unified Parallel Engine
+  Ingest current market data and backtest a supplied, already-defined factor set
+  with Qlib to surface the portfolio's present exposure to those factors. Use
+  when a researcher wants an evidence-linked factor-exposure snapshot; this
+  workflow does not discover new factors or place trades.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: factor-exposure-monitor-team
+  task_pattern: defined-factor exposure snapshot via backtest
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, factor-exposure-monitor]
+    - quant-data-ingest
+    - qlib-backtester
+tags: [finance, factors, risk, monitoring]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Factor Exposure Monitor Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding factor-discovery logic here.
 
-Parallel execution workflow for factor exposure monitor using the Unified Parallel Engine
+## Inputs
+
+Provide the factor set definition, portfolio/holdings, and date range.
 
 ## Steps
 
-### Step 1: Momentum
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
-Execute momentum operations for the Factor Exposure Monitor workflow.
-Expected: `momentum_artifacts`
+Invoke `$quant-data-ingest` with the workflow inputs to ingest current
+market data for the portfolio's universe.
 
-### Step 2: Value
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `normalized_market_dataset`
 
-Execute value operations for the Factor Exposure Monitor workflow.
-Expected: `value_artifacts`
+### Step 1: qlib-backtester [skill: qlib-backtester] [depends_on: Step 0]
 
-### Step 3: Size
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$qlib-backtester` with `normalized_market_dataset` and the
+supplied factor set to measure exposure.
 
-Execute size operations for the Factor Exposure Monitor workflow.
-Expected: `size_artifacts`
-
-### Step 4: Quality
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
-
-Execute quality operations for the Factor Exposure Monitor workflow.
-Expected: `quality_artifacts`
-
-### Step 5: Drift Alerts [depends_on: momentum, value, size, quality]
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
-
-Execute drift alerts operations for the Factor Exposure Monitor workflow.
-Expected: `drift_alerts_artifacts`
-
-### Step 6: KG Persistence [depends_on: drift_alerts]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `factor_exposure_report`
 
 ## Output
-- Factor Exposure Monitor results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `factor_exposure_report`. Does not discover new factors or place trades.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Momentum; Step 2 — Value; Step 3 — Size; Step 4 — Quality
-- **After level 0:** Step 5 — Drift Alerts
-- **After level 1:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$quant-data-ingest`.
+- **After level 0:** Step 1 — `$qlib-backtester`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

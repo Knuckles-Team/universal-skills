@@ -2,85 +2,60 @@
 name: earnings-calendar-pipeline
 skill_type: workflow
 description: >-
-  Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
+  Locate publicly reported earnings-announcement dates for a supplied ticker
+  universe and ingest them into the Timeseries Memory backend. Use when a
+  researcher needs a structured earnings calendar as input to another pipeline;
+  this workflow does not forecast earnings surprises or trade around them.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: earnings-calendar-pipeline-team
+  task_pattern: earnings-date discovery and structured ingestion
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, earnings-calendar-pipeline]
+    - web-search
+    - quant-data-ingest
+tags: [finance, calendar, ingestion]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Earnings Calendar Pipeline Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding forecasting logic here.
 
-Parallel execution workflow for earnings calendar pipeline using the Unified Parallel Engine
+## Inputs
+
+Provide the ticker universe and the lookahead window.
 
 ## Steps
 
-### Step 1: Fetch Calendar
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: web-search [skill: web-search]
 
-Execute fetch calendar operations for the Earnings Calendar Pipeline workflow.
-Expected: `fetch_calendar_artifacts`
+Invoke `$web-search` with the workflow inputs to locate publicly
+reported earnings-announcement dates for the universe.
 
-### Step 2: Pre Earnings Analysis [depends_on: fetch_calendar]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `earnings_date_source_packet`
 
-Execute pre earnings analysis operations for the Earnings Calendar Pipeline workflow.
-Expected: `pre_earnings_analysis_artifacts`
+### Step 1: quant-data-ingest [skill: quant-data-ingest] [depends_on: Step 0]
 
-### Step 3: Position [depends_on: pre_earnings_analysis]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$quant-data-ingest` with `earnings_date_source_packet` to
+normalize the dates into the Timeseries Memory backend.
 
-Execute position operations for the Earnings Calendar Pipeline workflow.
-Expected: `position_artifacts`
-
-### Step 4: Post Earnings Review [depends_on: position]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
-
-Execute post earnings review operations for the Earnings Calendar Pipeline workflow.
-Expected: `post_earnings_review_artifacts`
-
-### Step 5: KG Persistence [depends_on: post_earnings_review]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `normalized_earnings_calendar`
 
 ## Output
-- Earnings Calendar Pipeline results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `normalized_earnings_calendar`. Does not forecast surprises or trade
+around the dates.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fetch Calendar
-- **After level 0:** Step 2 — Pre Earnings Analysis
-- **After level 1:** Step 3 — Position
-- **After level 2:** Step 4 — Post Earnings Review
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$web-search`.
+- **After level 0:** Step 1 — `$quant-data-ingest`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

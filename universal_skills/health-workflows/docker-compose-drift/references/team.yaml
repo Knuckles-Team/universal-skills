@@ -1,12 +1,6 @@
-name: Docker Compose Drift Swarm
-task_pattern: Perform Docker Compose Drift operations concurrently across all target layers
+name: docker-compose-drift-team
+task_pattern: compose drift detection and confirmed remediation
+execution_mode: sequential
 specialist_ids:
-  - portainer-specialist
-  - devops-engineer
-capability_overrides:
-  portainer-specialist:
-    - stuck_loop_detection
-    - checkpointing
-  devops-engineer:
-    - stuck_loop_detection
-    - checkpointing
+  - docker-compose-drift-detector
+  - docker-compose-operator

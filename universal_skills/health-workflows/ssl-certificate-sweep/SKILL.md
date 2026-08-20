@@ -2,77 +2,60 @@
 name: ssl-certificate-sweep
 skill_type: workflow
 description: >-
-  Parallel execution workflow for ssl certificate sweep using the Unified Parallel Engine
+  Connect to a supplied set of targets, parse their TLS certificates for
+  expiration and grade, and render the results as a formatted sweep report. Use
+  when a fleet operator needs a recurring certificate-expiry report; this
+  workflow is read-only and does not rotate or reissue certificates.
 domain: health-workflows
-agent: health_wellness_coordinator
+license: MIT
+requires: []
+agent: infra-health-orchestrator
 team_config:
-  name: health_wellness_team
-  task_pattern: health monitoring and wellness optimization
+  name: ssl-certificate-sweep-team
+  task_pattern: TLS expiry sweep and report generation
   execution_mode: sequential
   specialist_ids:
-    - data-collector
-    - analyzer-agent
-    - planner-agent
-  tool_assignments:
-    data-collector: [graph_query]
-    analyzer-agent: [graph_analyze]
-    planner-agent: [graph_write]
-tags: [health, ssl-certificate-sweep]
+    - ssl-expiry-checker
+    - document-converter
+tags: [health, infrastructure, ssl, security]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
-# Ssl Certificate Sweep Workflow
+# SSL Certificate Sweep Workflow
 
-**CONCEPT:HEALTH-001**
+Compose the named atomic skills without adding new certificate logic here.
 
-Parallel execution workflow for ssl certificate sweep using the Unified Parallel Engine
+## Inputs
+
+Provide the target host/endpoint list.
 
 ## Steps
 
-### Step 1: Fan Out Per Domain Check Expiry
-**Agent**: `data-collector`
-**Tools**: `graph_query`
+### Step 0: ssl-expiry-checker [skill: ssl-expiry-checker]
 
-Execute fan out per domain check expiry operations for the Ssl Certificate Sweep workflow.
-Expected: `fan_out_per_domain_check_expiry_artifacts`
+Invoke `$ssl-expiry-checker` with the workflow inputs to connect to
+the targets and parse expiration and security grade.
 
-### Step 2: Chain Validity
-**Agent**: `analyzer-agent`
-**Tools**: `graph_analyze`
+Expected: `expiry_report`
 
-Execute chain validity operations for the Ssl Certificate Sweep workflow.
-Expected: `chain_validity_artifacts`
+### Step 1: document-converter [skill: document-converter] [depends_on: Step 0]
 
-### Step 3: Renewal Queue [depends_on: fan_out_per_domain_check_expiry, chain_validity]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
+Invoke `$document-converter` with `expiry_report` to render it as a
+formatted Markdown/PDF sweep report.
 
-Execute renewal queue operations for the Ssl Certificate Sweep workflow.
-Expected: `renewal_queue_artifacts`
-
-### Step 4: KG Persistence [depends_on: renewal_queue]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `sweep_document`
 
 ## Output
-- Ssl Certificate Sweep results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
 
-## Human Oversight Required
-✅ Critical decisions require human review and approval.
+Return `expiry_report` and `sweep_document`. Does not rotate or reissue
+certificates.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fan Out Per Domain Check Expiry; Step 2 — Chain Validity
-- **After level 0:** Step 3 — Renewal Queue
-- **After level 1:** Step 4 — KG Persistence
+- **Run first:** Step 0 — `$ssl-expiry-checker`.
+- **After level 0:** Step 1 — `$document-converter`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

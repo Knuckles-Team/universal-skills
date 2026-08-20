@@ -2,85 +2,59 @@
 name: host-hardware-inventory
 skill_type: workflow
 description: >-
-  Parallel execution workflow for host hardware inventory using the Unified Parallel Engine
+  Collect hardware profile details (CPU, memory, disk, OS, GPU/accelerator) and
+  current resource utilization across reachable hardware nodes. Use when a fleet
+  operator needs a consolidated hardware and current-utilization inventory; this
+  workflow is read-only.
 domain: health-workflows
-agent: health_wellness_coordinator
+license: MIT
+requires: []
+agent: infra-health-orchestrator
 team_config:
-  name: health_wellness_team
-  task_pattern: health monitoring and wellness optimization
+  name: host-hardware-inventory-team
+  task_pattern: fleet hardware profile and utilization inventory
   execution_mode: sequential
   specialist_ids:
-    - data-collector
-    - analyzer-agent
-    - planner-agent
-    - tracker-agent
-  tool_assignments:
-    data-collector: [graph_query]
-    analyzer-agent: [graph_analyze]
-    planner-agent: [graph_write]
-    tracker-agent: [nc_calendar, graph_write]
-tags: [health, host-hardware-inventory]
+    - hardware-profile-sweep
+    - host-resource-sampler
+tags: [health, infrastructure, hardware, inventory]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Host Hardware Inventory Workflow
 
-**CONCEPT:HEALTH-001**
+Compose the named atomic skills without adding new discovery logic here.
 
-Parallel execution workflow for host hardware inventory using the Unified Parallel Engine
+## Inputs
+
+Provide the target hardware node selection.
 
 ## Steps
 
-### Step 1: Fan Out Per Host Cpu
-**Agent**: `data-collector`
-**Tools**: `graph_query`
+### Step 0: hardware-profile-sweep [skill: hardware-profile-sweep]
 
-Execute fan out per host cpu operations for the Host Hardware Inventory workflow.
-Expected: `fan_out_per_host_cpu_artifacts`
+Invoke `$hardware-profile-sweep` with the workflow inputs to collect
+CPU, memory, disk, OS, and GPU/accelerator details across the nodes.
 
-### Step 2: Gpu
-**Agent**: `analyzer-agent`
-**Tools**: `graph_analyze`
+Expected: `hardware_profile`
 
-Execute gpu operations for the Host Hardware Inventory workflow.
-Expected: `gpu_artifacts`
+### Step 1: host-resource-sampler [skill: host-resource-sampler] [depends_on: Step 0]
 
-### Step 3: Ram
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
+Invoke `$host-resource-sampler` with `hardware_profile`'s node
+selection to sample current utilization for the same nodes.
 
-Execute ram operations for the Host Hardware Inventory workflow.
-Expected: `ram_artifacts`
-
-### Step 4: Disk
-**Agent**: `tracker-agent`
-**Tools**: `nc_calendar, graph_write`
-
-Execute disk operations for the Host Hardware Inventory workflow.
-Expected: `disk_artifacts`
-
-### Step 5: Kg Ingest [depends_on: fan_out_per_host_cpu, gpu, ram, disk]
-**Agent**: `data-collector`
-**Tools**: `graph_query`
-
-Execute kg ingest operations for the Host Hardware Inventory workflow.
-Expected: `kg_ingest_artifacts`
+Expected: `resource_sample`
 
 ## Output
-- Host Hardware Inventory results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
 
-## Human Oversight Required
-✅ Critical decisions require human review and approval.
+Return `hardware_profile` and `resource_sample` as the consolidated inventory.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fan Out Per Host Cpu; Step 2 — Gpu; Step 3 — Ram; Step 4 — Disk
-- **After level 0:** Step 5 — Kg Ingest
+- **Run first:** Step 0 — `$hardware-profile-sweep`.
+- **After level 0:** Step 1 — `$host-resource-sampler`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

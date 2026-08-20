@@ -2,93 +2,76 @@
 name: presentation-builder
 skill_type: workflow
 description: >-
-  Parallel execution workflow for presentation builder using the Unified Parallel Engine
+  Outline and draft the talk track, render it as Marp presentation slides, and
+  run a final readiness check. Use when a user has supplied a topic, audience,
+  and voice constraints and wants review-ready slides; this workflow never
+  publishes or presents it.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: presentation-builder-team
+  task_pattern: sourced slide-deck drafting and readiness review
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, presentation-builder]
+    - content-outline-builder
+    - content-draft-writer
+    - marp-presentations
+    - publication-preflight
+tags: [social, content, presentation, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Presentation Builder Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding new slide-rendering logic here.
 
-Parallel execution workflow for presentation builder using the Unified Parallel Engine
+## Inputs
+
+Provide the topic, audience, objective, length constraints, and voice guide.
 
 ## Steps
 
-### Step 1: Research
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: content-outline-builder [skill: content-outline-builder]
 
-Execute research operations for the Presentation Builder workflow.
-Expected: `research_artifacts`
+Invoke `$content-outline-builder` with the workflow inputs.
 
-### Step 2: Outline [depends_on: research]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `approved_outline`
 
-Execute outline operations for the Presentation Builder workflow.
-Expected: `outline_artifacts`
+### Step 1: content-draft-writer [skill: content-draft-writer] [depends_on: Step 0]
 
-### Step 3: Generate Slides [depends_on: outline]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$content-draft-writer` with the workflow inputs and
+`approved_outline` to draft the talk track.
 
-Execute generate slides operations for the Presentation Builder workflow.
-Expected: `generate_slides_artifacts`
+Expected: `talk_track_draft`
 
-### Step 4: Design [depends_on: generate_slides]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: marp-presentations [skill: marp-presentations] [depends_on: Step 1]
 
-Execute design operations for the Presentation Builder workflow.
-Expected: `design_artifacts`
+Invoke `$marp-presentations` with `talk_track_draft` and
+`approved_outline` to render the Marp slide deck.
 
-### Step 5: Export [depends_on: design]
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+Expected: `slide_deck`
 
-Execute export operations for the Presentation Builder workflow.
-Expected: `export_artifacts`
+### Step 3: publication-preflight [skill: publication-preflight] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: export]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
+Invoke `$publication-preflight` with `slide_deck` and the publication
+requirements.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `readiness_decision`
 
 ## Output
-- Presentation Builder results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `slide_deck` and `readiness_decision`. Do not publish or present it.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Research
-- **After level 0:** Step 2 — Outline
-- **After level 1:** Step 3 — Generate Slides
-- **After level 2:** Step 4 — Design
-- **After level 3:** Step 5 — Export
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$content-outline-builder`.
+- **After level 0:** Step 1 — `$content-draft-writer`.
+- **After level 1:** Step 2 — `$marp-presentations`.
+- **After level 2:** Step 3 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

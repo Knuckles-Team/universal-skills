@@ -2,85 +2,60 @@
 name: slippage-analysis
 skill_type: workflow
 description: >-
-  Parallel execution workflow for slippage analysis using the Unified Parallel Engine
+  Ingest reference market data and execute a supplied strategy via paper trading
+  with freqtrade to capture its own fill/slippage report. Use when a researcher
+  wants evidence of execution slippage against reference prices for a candidate
+  strategy; this workflow only paper-trades and never places live orders.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: slippage-analysis-team
+  task_pattern: reference-priced paper execution for slippage evidence
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, slippage-analysis]
+    - quant-data-ingest
+    - freqtrade-executor
+tags: [finance, execution, slippage]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Slippage Analysis Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding new slippage math here.
 
-Parallel execution workflow for slippage analysis using the Unified Parallel Engine
+## Inputs
+
+Provide the strategy definition, asset universe, and execution window.
 
 ## Steps
 
-### Step 1: Pull Fills
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
-Execute pull fills operations for the Slippage Analysis workflow.
-Expected: `pull_fills_artifacts`
+Invoke `$quant-data-ingest` with the workflow inputs to ingest
+reference market prices for the universe and window.
 
-### Step 2: Compare To Signal Price [depends_on: pull_fills]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `normalized_market_dataset`
 
-Execute compare to signal price operations for the Slippage Analysis workflow.
-Expected: `compare_to_signal_price_artifacts`
+### Step 1: freqtrade-executor [skill: freqtrade-executor] [depends_on: Step 0]
 
-### Step 3: Calc Slippage Stats [depends_on: compare_to_signal_price]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$freqtrade-executor` with `normalized_market_dataset` and the
+strategy definition to paper-trade and capture the fill/slippage report.
 
-Execute calc slippage stats operations for the Slippage Analysis workflow.
-Expected: `calc_slippage_stats_artifacts`
-
-### Step 4: Optimize [depends_on: calc_slippage_stats]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
-
-Execute optimize operations for the Slippage Analysis workflow.
-Expected: `optimize_artifacts`
-
-### Step 5: KG Persistence [depends_on: optimize]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `execution_report`
 
 ## Output
-- Slippage Analysis results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `normalized_market_dataset` and `execution_report`, whose fills carry the
+slippage evidence. Only paper-trades; never places live orders.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Pull Fills
-- **After level 0:** Step 2 — Compare To Signal Price
-- **After level 1:** Step 3 — Calc Slippage Stats
-- **After level 2:** Step 4 — Optimize
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$quant-data-ingest`.
+- **After level 0:** Step 1 — `$freqtrade-executor`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

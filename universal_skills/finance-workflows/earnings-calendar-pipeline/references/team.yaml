@@ -1,12 +1,6 @@
-name: Earnings Calendar Pipeline Swarm
-task_pattern: Perform Earnings Calendar Pipeline operations concurrently across all target layers
+name: earnings-calendar-pipeline-team
+task_pattern: earnings-date discovery and structured ingestion
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-  - chief-trading-officer
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
-  chief-trading-officer:
-    - stuck_loop_detection
-    - checkpointing
+  - web-search
+  - quant-data-ingest

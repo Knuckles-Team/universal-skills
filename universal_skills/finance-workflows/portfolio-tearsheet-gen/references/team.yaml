@@ -1,8 +1,7 @@
-name: Portfolio Tearsheet Gen Swarm
-task_pattern: Perform Portfolio Tearsheet Gen operations concurrently across all target layers
+name: portfolio-tearsheet-gen-team
+task_pattern: existing-portfolio backtest and tearsheet generation
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - qlib-backtester
+  - document-converter

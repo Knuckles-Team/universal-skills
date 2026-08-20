@@ -324,7 +324,7 @@ def _body_evidence(response: TckResponse, *, max_bytes: int) -> dict[str, Any]:
     if len(response.body) > max_bytes:
         raise TckViolation("response-size-budget-exceeded")
     return {
-        "status": response.status,
+        "http_status": response.status,
         "bytes": len(response.body),
         "sha256": hashlib.sha256(response.body).hexdigest(),
         "content_type": _media_type(response),
@@ -912,14 +912,16 @@ def _run_error_parity(config: TckConfig, transport: TckTransport) -> list[dict[s
         if json_metadata["status"] in {401, 403} or json_metadata["code"] in _DENIAL_CODES:
             if json_metadata["retryable"] or json_metadata["retry_after_s"] is not None:
                 raise TckViolation("denial-marked-retryable")
-        return _check(
-            "error-parity",
-            PASS,
-            json=json_evidence,
-            markdown=_body_evidence(markdown_response, max_bytes=config.max_response_bytes),
-            denial_non_retryable=json_metadata["status"] in {401, 403}
-            or json_metadata["code"] in _DENIAL_CODES,
-        )
+        return [
+            _check(
+                "error-parity",
+                PASS,
+                json=json_evidence,
+                markdown=_body_evidence(markdown_response, max_bytes=config.max_response_bytes),
+                denial_non_retryable=json_metadata["status"] in {401, 403}
+                or json_metadata["code"] in _DENIAL_CODES,
+            )
+        ]
     except TckViolation as exc:
         return [_check("error-parity", FAIL, reason=str(exc))]
 

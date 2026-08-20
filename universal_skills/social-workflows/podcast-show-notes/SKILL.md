@@ -2,93 +2,79 @@
 name: podcast-show-notes
 skill_type: workflow
 description: >-
-  Parallel execution workflow for podcast show notes using the Unified Parallel Engine
+  Outline, draft, and edit show notes from a supplied episode transcript, then
+  run a final readiness check. Use when a user has an approved transcript,
+  audience, and voice constraints and wants review-ready show notes; this
+  workflow never publishes or uploads them.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: podcast-show-notes-team
+  task_pattern: transcript-sourced show-notes drafting and readiness review
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, podcast-show-notes]
+    - content-outline-builder
+    - content-draft-writer
+    - copy-editor
+    - publication-preflight
+tags: [social, content, podcast, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Podcast Show Notes Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding transcription logic here.
 
-Parallel execution workflow for podcast show notes using the Unified Parallel Engine
+## Inputs
+
+Provide the episode transcript, audience, voice guide, and publication
+requirements.
 
 ## Steps
 
-### Step 1: Transcribe
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: content-outline-builder [skill: content-outline-builder]
 
-Execute transcribe operations for the Podcast Show Notes workflow.
-Expected: `transcribe_artifacts`
+Invoke `$content-outline-builder` with the workflow inputs and the
+episode transcript.
 
-### Step 2: Summarize [depends_on: transcribe]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `approved_outline`
 
-Execute summarize operations for the Podcast Show Notes workflow.
-Expected: `summarize_artifacts`
+### Step 1: content-draft-writer [skill: content-draft-writer] [depends_on: Step 0]
 
-### Step 3: Extract Topics [depends_on: summarize]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$content-draft-writer` with the workflow inputs, the episode
+transcript, and `approved_outline`.
 
-Execute extract topics operations for the Podcast Show Notes workflow.
-Expected: `extract_topics_artifacts`
+Expected: `show_notes_draft`
 
-### Step 4: Generate Notes [depends_on: extract_topics]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: copy-editor [skill: copy-editor] [depends_on: Step 1]
 
-Execute generate notes operations for the Podcast Show Notes workflow.
-Expected: `generate_notes_artifacts`
+Invoke `$copy-editor` with `show_notes_draft` and the workflow
+inputs.
 
-### Step 5: Publish [depends_on: generate_notes]
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+Expected: `edited_show_notes`
 
-Execute publish operations for the Podcast Show Notes workflow.
-Expected: `publish_artifacts`
+### Step 3: publication-preflight [skill: publication-preflight] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: publish]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
+Invoke `$publication-preflight` with `edited_show_notes` and the
+publication requirements.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `readiness_decision`
 
 ## Output
-- Podcast Show Notes results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `edited_show_notes` and `readiness_decision`. Do not publish or upload
+them.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Transcribe
-- **After level 0:** Step 2 — Summarize
-- **After level 1:** Step 3 — Extract Topics
-- **After level 2:** Step 4 — Generate Notes
-- **After level 3:** Step 5 — Publish
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$content-outline-builder`.
+- **After level 0:** Step 1 — `$content-draft-writer`.
+- **After level 1:** Step 2 — `$copy-editor`.
+- **After level 2:** Step 3 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

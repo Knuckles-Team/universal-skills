@@ -1,12 +1,6 @@
-name: Slippage Analysis Swarm
-task_pattern: Perform Slippage Analysis operations concurrently across all target layers
+name: slippage-analysis-team
+task_pattern: reference-priced paper execution for slippage evidence
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-  - chief-trading-officer
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
-  chief-trading-officer:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - freqtrade-executor

@@ -1,10 +1,6 @@
-name: Brand Identity Generator Swarm
-task_pattern: Perform Brand Identity Generator operations concurrently across all target layers
+name: brand-identity-generator-team
+task_pattern: brand identity system and visual mockup generation
+execution_mode: sequential
 specialist_ids:
-  - researcher
-  - knowledge-graph
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
-  knowledge-graph:
-    - stuck_loop_detection
+  - brand-guidelines
+  - canvas-design

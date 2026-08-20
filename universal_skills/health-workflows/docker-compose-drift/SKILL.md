@@ -2,78 +2,60 @@
 name: docker-compose-drift
 skill_type: workflow
 description: >-
-  Parallel execution workflow for docker compose drift using the Unified Parallel Engine
+  Detect drift between a host's running Docker Compose/Swarm state and its git
+  configuration, then compile and redeploy the declared configuration where the
+  operator confirms remediation. Use when a stack's live state may have diverged
+  from its source of truth; this workflow never redeploys without the drift
+  report as evidence.
 domain: health-workflows
-agent: health_wellness_coordinator
+license: MIT
+requires: []
+agent: infra-health-orchestrator
 team_config:
-  name: health_wellness_team
-  task_pattern: health monitoring and wellness optimization
+  name: docker-compose-drift-team
+  task_pattern: compose drift detection and confirmed remediation
   execution_mode: sequential
   specialist_ids:
-    - data-collector
-    - analyzer-agent
-    - planner-agent
-  tool_assignments:
-    data-collector: [graph_query]
-    analyzer-agent: [graph_analyze]
-    planner-agent: [graph_write]
-tags: [health, docker-compose-drift]
+    - docker-compose-drift-detector
+    - docker-compose-operator
+tags: [health, infrastructure, docker, drift]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Docker Compose Drift Workflow
 
-**CONCEPT:HEALTH-001**
+Compose the named atomic skills without adding new comparison logic here.
 
-Parallel execution workflow for docker compose drift using the Unified Parallel Engine
+## Inputs
+
+Provide the target host(s)/stack(s) and the git configuration reference.
 
 ## Steps
 
-### Step 1: Fan Out Per Stack Get File
-**Agent**: `data-collector`
-**Tools**: `graph_query`
+### Step 0: docker-compose-drift-detector [skill: docker-compose-drift-detector]
 
-Execute fan out per stack get file operations for the Docker Compose Drift workflow.
-Expected: `fan_out_per_stack_get_file_artifacts`
+Invoke `$docker-compose-drift-detector` with the workflow inputs to
+compare running state against git configuration.
 
-### Step 2: Compare Running State [depends_on: fan_out_per_stack_get_file]
-**Agent**: `analyzer-agent`
-**Tools**: `graph_analyze`
+Expected: `drift_report`
 
-Execute compare running state operations for the Docker Compose Drift workflow.
-Expected: `compare_running_state_artifacts`
+### Step 1: docker-compose-operator [skill: docker-compose-operator] [depends_on: Step 0]
 
-### Step 3: Drift Report [depends_on: compare_running_state]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
+Invoke `$docker-compose-operator` with `drift_report` to compile and
+redeploy the declared configuration for confirmed drift.
 
-Execute drift report operations for the Docker Compose Drift workflow.
-Expected: `drift_report_artifacts`
-
-### Step 4: KG Persistence [depends_on: drift_report]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `remediation_result`
 
 ## Output
-- Docker Compose Drift results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
 
-## Human Oversight Required
-✅ Critical decisions require human review and approval.
+Return `drift_report` and `remediation_result`.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fan Out Per Stack Get File
-- **After level 0:** Step 2 — Compare Running State
-- **After level 1:** Step 3 — Drift Report
-- **After level 2:** Step 4 — KG Persistence
+- **Run first:** Step 0 — `$docker-compose-drift-detector`.
+- **After level 0:** Step 1 — `$docker-compose-operator`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

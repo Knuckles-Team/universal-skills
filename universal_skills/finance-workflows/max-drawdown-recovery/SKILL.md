@@ -2,93 +2,71 @@
 name: max-drawdown-recovery
 skill_type: workflow
 description: >-
-  Parallel execution workflow for max drawdown recovery using the Unified Parallel Engine
+  Ingest market data, backtest a supplied strategy to surface its maximum-drawdown
+  episodes, and run the TradingAgents swarm debate to vet a candidate recovery
+  hypothesis for the observed drawdown. Use when a researcher wants
+  evidence-linked drawdown analysis and a vetted recovery hypothesis; this
+  workflow does not place trades or guarantee recovery.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: max-drawdown-recovery-team
+  task_pattern: drawdown backtest and vetted recovery-hypothesis debate
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, max-drawdown-recovery]
+    - quant-data-ingest
+    - qlib-backtester
+    - trading-debate
+tags: [finance, risk, drawdown]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Max Drawdown Recovery Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding execution logic here.
 
-Parallel execution workflow for max drawdown recovery using the Unified Parallel Engine
+## Inputs
+
+Provide the strategy definition, asset universe, date range, and the candidate
+recovery hypothesis to vet.
 
 ## Steps
 
-### Step 1: Detect Dd
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
-Execute detect dd operations for the Max Drawdown Recovery workflow.
-Expected: `detect_dd_artifacts`
+Invoke `$quant-data-ingest` with the workflow inputs to ingest market
+data for the universe and date range.
 
-### Step 2: Pause Strategies [depends_on: detect_dd]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `normalized_market_dataset`
 
-Execute pause strategies operations for the Max Drawdown Recovery workflow.
-Expected: `pause_strategies_artifacts`
+### Step 1: qlib-backtester [skill: qlib-backtester] [depends_on: Step 0]
 
-### Step 3: Hedge [depends_on: pause_strategies]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$qlib-backtester` with `normalized_market_dataset` and the
+strategy definition to surface drawdown episodes.
 
-Execute hedge operations for the Max Drawdown Recovery workflow.
-Expected: `hedge_artifacts`
+Expected: `backtest_report`
 
-### Step 4: Monitor Recovery [depends_on: hedge]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
+### Step 2: trading-debate [skill: trading-debate] [depends_on: Step 1]
 
-Execute monitor recovery operations for the Max Drawdown Recovery workflow.
-Expected: `monitor_recovery_artifacts`
+Invoke `$trading-debate` with `backtest_report` and the candidate
+recovery hypothesis to run the TradingAgents swarm debate.
 
-### Step 5: Resume [depends_on: monitor_recovery]
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
-
-Execute resume operations for the Max Drawdown Recovery workflow.
-Expected: `resume_artifacts`
-
-### Step 6: KG Persistence [depends_on: resume]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `recovery_hypothesis_verdict`
 
 ## Output
-- Max Drawdown Recovery results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `backtest_report` and `recovery_hypothesis_verdict`. Does not place
+trades or guarantee recovery.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Detect Dd
-- **After level 0:** Step 2 — Pause Strategies
-- **After level 1:** Step 3 — Hedge
-- **After level 2:** Step 4 — Monitor Recovery
-- **After level 3:** Step 5 — Resume
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$quant-data-ingest`.
+- **After level 0:** Step 1 — `$qlib-backtester`.
+- **After level 1:** Step 2 — `$trading-debate`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

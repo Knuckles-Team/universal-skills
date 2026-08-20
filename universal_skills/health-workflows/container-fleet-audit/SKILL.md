@@ -2,88 +2,59 @@
 name: container-fleet-audit
 skill_type: workflow
 description: >-
-  Parallel execution workflow for container fleet audit using the Unified Parallel Engine
+  Detect drift between the fleet's running Docker Compose/Swarm state and its
+  git configuration across all registered stacks, then render the findings as a
+  formatted audit report. Use when a fleet operator needs a point-in-time
+  fleet-wide drift audit; this workflow is read-only and does not redeploy.
 domain: health-workflows
-agent: health_wellness_coordinator
+license: MIT
+requires: []
+agent: infra-health-orchestrator
 team_config:
-  name: health_wellness_team
-  task_pattern: health monitoring and wellness optimization
+  name: container-fleet-audit-team
+  task_pattern: fleet-wide compose drift audit and report
   execution_mode: sequential
   specialist_ids:
-    - data-collector
-    - analyzer-agent
-    - planner-agent
-    - tracker-agent
-  tool_assignments:
-    data-collector: [graph_query]
-    analyzer-agent: [graph_analyze]
-    planner-agent: [graph_write]
-    tracker-agent: [nc_calendar, graph_write]
-tags: [health, container-fleet-audit]
+    - docker-compose-drift-detector
+    - document-converter
+tags: [health, infrastructure, docker, fleet, audit]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Container Fleet Audit Workflow
 
-**CONCEPT:HEALTH-001**
+Compose the named atomic skills without adding new comparison logic here.
 
-Parallel execution workflow for container fleet audit using the Unified Parallel Engine
+## Inputs
+
+Provide the fleet's stack selection and the git configuration reference.
 
 ## Steps
 
-### Step 1: Fan Out Per Host List
-**Agent**: `data-collector`
-**Tools**: `graph_query`
+### Step 0: docker-compose-drift-detector [skill: docker-compose-drift-detector]
 
-Execute fan out per host list operations for the Container Fleet Audit workflow.
-Expected: `fan_out_per_host_list_artifacts`
+Invoke `$docker-compose-drift-detector` with the workflow inputs to
+compare each stack's running state against git configuration.
 
-### Step 2: Inspect Unhealthy [depends_on: fan_out_per_host_list]
-**Agent**: `analyzer-agent`
-**Tools**: `graph_analyze`
+Expected: `drift_report`
 
-Execute inspect unhealthy operations for the Container Fleet Audit workflow.
-Expected: `inspect_unhealthy_artifacts`
+### Step 1: document-converter [skill: document-converter] [depends_on: Step 0]
 
-### Step 3: Collect Logs [depends_on: inspect_unhealthy]
-**Agent**: `planner-agent`
-**Tools**: `graph_write`
+Invoke `$document-converter` with `drift_report` to render it as a
+formatted Markdown/PDF fleet audit report.
 
-Execute collect logs operations for the Container Fleet Audit workflow.
-Expected: `collect_logs_artifacts`
-
-### Step 4: Remediate [depends_on: collect_logs]
-**Agent**: `tracker-agent`
-**Tools**: `nc_calendar, graph_write`
-
-Execute remediate operations for the Container Fleet Audit workflow.
-Expected: `remediate_artifacts`
-
-### Step 5: KG Persistence [depends_on: remediate]
-**Agent**: `tracker-agent`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `audit_document`
 
 ## Output
-- Container Fleet Audit results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
 
-## Human Oversight Required
-✅ Critical decisions require human review and approval.
+Return `drift_report` and `audit_document`. Read-only; does not redeploy.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fan Out Per Host List
-- **After level 0:** Step 2 — Inspect Unhealthy
-- **After level 1:** Step 3 — Collect Logs
-- **After level 2:** Step 4 — Remediate
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$docker-compose-drift-detector`.
+- **After level 0:** Step 1 — `$document-converter`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

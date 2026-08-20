@@ -2,93 +2,69 @@
 name: meme-factory-pipeline
 skill_type: workflow
 description: >-
-  Parallel execution workflow for meme factory pipeline using the Unified Parallel Engine
+  Draft caption copy and render it composed onto a visual asset, then run a final
+  readiness check. Use when a user has supplied a topic/reference and voice
+  constraints and wants a review-ready meme image; this workflow never posts or
+  schedules it.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: meme-factory-pipeline-team
+  task_pattern: meme caption drafting and visual composition
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, meme-factory-pipeline]
+    - content-draft-writer
+    - canvas-design
+    - publication-preflight
+tags: [social, content, meme, design]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Meme Factory Pipeline Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding posting or scheduling logic
+here.
 
-Parallel execution workflow for meme factory pipeline using the Unified Parallel Engine
+## Inputs
+
+Provide the topic/reference, voice guide, and publication requirements.
 
 ## Steps
 
-### Step 1: Trend Scan
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: content-draft-writer [skill: content-draft-writer]
 
-Execute trend scan operations for the Meme Factory Pipeline workflow.
-Expected: `trend_scan_artifacts`
+Invoke `$content-draft-writer` with the workflow inputs to draft the
+caption copy.
 
-### Step 2: Template Select [depends_on: trend_scan]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `caption_draft`
 
-Execute template select operations for the Meme Factory Pipeline workflow.
-Expected: `template_select_artifacts`
+### Step 1: canvas-design [skill: canvas-design] [depends_on: Step 0]
 
-### Step 3: Generate Variants [depends_on: template_select]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$canvas-design` with `caption_draft` to render the composed
+meme image.
 
-Execute generate variants operations for the Meme Factory Pipeline workflow.
-Expected: `generate_variants_artifacts`
+Expected: `meme_image`
 
-### Step 4: A B Test [depends_on: generate_variants]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: publication-preflight [skill: publication-preflight] [depends_on: Step 1]
 
-Execute a b test operations for the Meme Factory Pipeline workflow.
-Expected: `a_b_test_artifacts`
+Invoke `$publication-preflight` with `meme_image` and the publication
+requirements.
 
-### Step 5: Post [depends_on: a_b_test]
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
-
-Execute post operations for the Meme Factory Pipeline workflow.
-Expected: `post_artifacts`
-
-### Step 6: KG Persistence [depends_on: post]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `readiness_decision`
 
 ## Output
-- Meme Factory Pipeline results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `meme_image` and `readiness_decision`. Do not post or schedule it.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Trend Scan
-- **After level 0:** Step 2 — Template Select
-- **After level 1:** Step 3 — Generate Variants
-- **After level 2:** Step 4 — A B Test
-- **After level 3:** Step 5 — Post
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$content-draft-writer`.
+- **After level 0:** Step 1 — `$canvas-design`.
+- **After level 1:** Step 2 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

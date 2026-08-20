@@ -1,8 +1,6 @@
-name: Factor Exposure Monitor Swarm
-task_pattern: Perform Factor Exposure Monitor operations concurrently across all target layers
+name: factor-exposure-monitor-team
+task_pattern: defined-factor exposure snapshot via backtest
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - qlib-backtester

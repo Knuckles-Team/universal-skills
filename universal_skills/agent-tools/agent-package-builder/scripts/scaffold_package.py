@@ -2212,7 +2212,7 @@ def _safe_text(value: Any, *, limit: int, fallback: str) -> str:
     """Sanitize and bound text before it crosses a public response boundary."""
     candidate = "" if isinstance(value, BaseException) else str(value or "")
     sanitized, _ = sanitize_for_persistence(candidate)
-    text = str(sanitized).replace("\x00", "").strip()
+    text = str(sanitized).replace("\\x00", "").strip()
     return text[:limit] or fallback
 
 
@@ -2334,24 +2334,24 @@ class ProblemDetails:
         lines.extend(
             f"> {line}" if line else ">" for line in self.detail.splitlines()
         )
-        return "\n".join(lines) + "\n"
+        return "\\n".join(lines) + "\\n"
 
     def to_html(self) -> str:
         """Render the retained browser surface with escaped bounded fields."""
         metadata = self.metadata()
         attrs = " ".join(
-            "data-error-{}=\"{}\"".format(
+            "data-error-{}=\\"{}\\"".format(
                 field.replace("_", "-"), html.escape(str(value), quote=True)
             )
             for field, value in metadata.items()
         )
-        detail = html.escape(self.detail, quote=False).replace("\n", "<br>")
+        detail = html.escape(self.detail, quote=False).replace("\\n", "<br>")
         return (
-            "<!doctype html>\n<html lang=\"en\"><head>"
-            f"<meta name=\"error-status\" content=\"{self.status}\">"
-            f"<title>{html.escape(self.title)}</title></head>\n"
+            "<!doctype html>\\n<html lang=\\"en\\"><head>"
+            f"<meta name=\\"error-status\\" content=\\"{self.status}\\">"
+            f"<title>{html.escape(self.title)}</title></head>\\n"
             f"<body><main {attrs}><h1>{html.escape(self.title)}</h1>"
-            f"<p>{detail}</p></main></body></html>\n"
+            f"<p>{detail}</p></main></body></html>\\n"
         )
 
 

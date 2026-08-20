@@ -1,8 +1,8 @@
-name: Feature Store Builder Swarm
-task_pattern: Perform Feature Store Builder operations concurrently across all target layers
+name: feature-store-builder-team
+task_pattern: curated, documented feature dataset assembly
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - data-quality-auditor
+  - data-dictionary-builder
+  - dataset-profiler

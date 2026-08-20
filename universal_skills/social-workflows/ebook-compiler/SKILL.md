@@ -2,93 +2,88 @@
 name: ebook-compiler
 skill_type: workflow
 description: >-
-  Parallel execution workflow for ebook compiler using the Unified Parallel Engine
+  Outline, draft, and edit a multi-chapter manuscript, then merge the chapters
+  into one compiled document and run a final readiness check. Use when a user has
+  an approved chapter list, audience, and voice constraints and wants a
+  review-ready compiled ebook; this workflow never publishes or uploads it.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: ebook-compiler-team
+  task_pattern: multi-chapter manuscript drafting and compilation
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, ebook-compiler]
+    - content-outline-builder
+    - content-draft-writer
+    - copy-editor
+    - document-tools
+    - publication-preflight
+tags: [social, content, ebook, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Ebook Compiler Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding new binding/formatting logic
+here.
 
-Parallel execution workflow for ebook compiler using the Unified Parallel Engine
+## Inputs
+
+Provide the chapter outline list, audience, voice guide, and publication
+requirements.
 
 ## Steps
 
-### Step 1: Outline
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: content-outline-builder [skill: content-outline-builder]
 
-Execute outline operations for the Ebook Compiler workflow.
-Expected: `outline_artifacts`
+Invoke `$content-outline-builder` with the workflow inputs for each
+chapter.
 
-### Step 2: Parallel Chapter Writing [depends_on: outline]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `approved_outline`
 
-Execute parallel chapter writing operations for the Ebook Compiler workflow.
-Expected: `parallel_chapter_writing_artifacts`
+### Step 1: content-draft-writer [skill: content-draft-writer] [depends_on: Step 0]
 
-### Step 3: Edit [depends_on: parallel_chapter_writing]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$content-draft-writer` with the workflow inputs and
+`approved_outline` to draft each chapter.
 
-Execute edit operations for the Ebook Compiler workflow.
-Expected: `edit_artifacts`
+Expected: `chapter_drafts`
 
-### Step 4: Format [depends_on: edit]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: copy-editor [skill: copy-editor] [depends_on: Step 1]
 
-Execute format operations for the Ebook Compiler workflow.
-Expected: `format_artifacts`
+Invoke `$copy-editor` with `chapter_drafts` and the workflow inputs.
 
-### Step 5: Epub Export [depends_on: format]
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+Expected: `edited_chapters`
 
-Execute epub export operations for the Ebook Compiler workflow.
-Expected: `epub_export_artifacts`
+### Step 3: document-tools [skill: document-tools] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: epub_export]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
+Invoke `$document-tools` with `edited_chapters` to merge them into
+one compiled manuscript document.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `compiled_manuscript`
+
+### Step 4: publication-preflight [skill: publication-preflight] [depends_on: Step 3]
+
+Invoke `$publication-preflight` with `compiled_manuscript` and the
+publication requirements.
+
+Expected: `readiness_decision`
 
 ## Output
-- Ebook Compiler results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `compiled_manuscript` and `readiness_decision`. Do not publish, schedule,
+send, or upload the ebook.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Outline
-- **After level 0:** Step 2 — Parallel Chapter Writing
-- **After level 1:** Step 3 — Edit
-- **After level 2:** Step 4 — Format
-- **After level 3:** Step 5 — Epub Export
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$content-outline-builder`.
+- **After level 0:** Step 1 — `$content-draft-writer`.
+- **After level 1:** Step 2 — `$copy-editor`.
+- **After level 2:** Step 3 — `$document-tools`.
+- **After level 3:** Step 4 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

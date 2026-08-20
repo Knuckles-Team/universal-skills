@@ -1,8 +1,7 @@
-name: Trading Signal Fusion Swarm
-task_pattern: Perform Trading Signal Fusion operations concurrently across all target layers
+name: trading-signal-fusion-team
+task_pattern: swarm-debated signal fusion and backtest
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - quant-data-ingest
+  - trading-debate
+  - qlib-backtester

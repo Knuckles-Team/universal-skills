@@ -1,7 +1,8 @@
-name: Presentation Builder Swarm
-task_pattern: Perform Presentation Builder operations concurrently across all target layers
+name: presentation-builder-team
+task_pattern: sourced slide-deck drafting and readiness review
+execution_mode: sequential
 specialist_ids:
-  - researcher
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
+  - content-outline-builder
+  - content-draft-writer
+  - marp-presentations
+  - publication-preflight

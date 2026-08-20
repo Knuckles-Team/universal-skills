@@ -1,7 +1,8 @@
-name: Video Content Pipeline Swarm
-task_pattern: Perform Video Content Pipeline operations concurrently across all target layers
+name: video-content-pipeline-team
+task_pattern: sourced video script drafting and asset production
+execution_mode: sequential
 specialist_ids:
-  - media-coordinator
-capability_overrides:
-  media-coordinator:
-    - stuck_loop_detection
+  - content-outline-builder
+  - content-draft-writer
+  - creative-media
+  - publication-preflight

@@ -2,97 +2,60 @@
 name: macro-indicator-tracker
 skill_type: workflow
 description: >-
-  Parallel execution workflow for macro indicator tracker using the Unified Parallel Engine
+  Locate publicly reported macroeconomic indicator releases (CPI, GDP, rates, and
+  similar) and ingest them into the Timeseries Memory backend. Use when a
+  researcher needs a structured macro-indicator time series as input to another
+  pipeline; this workflow does not interpret or forecast regime shifts.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: macro-indicator-tracker-team
+  task_pattern: macro-indicator discovery and structured ingestion
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, macro-indicator-tracker]
+    - web-search
+    - quant-data-ingest
+tags: [finance, macro, ingestion]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Macro Indicator Tracker Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding interpretation logic here.
 
-Parallel execution workflow for macro indicator tracker using the Unified Parallel Engine
+## Inputs
+
+Provide the indicator list (e.g. CPI, GDP, policy rate) and the geography/lookback
+window.
 
 ## Steps
 
-### Step 1: Gdp
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: web-search [skill: web-search]
 
-Execute gdp operations for the Macro Indicator Tracker workflow.
-Expected: `gdp_artifacts`
+Invoke `$web-search` with the workflow inputs to locate the latest
+publicly reported releases for the requested indicators.
 
-### Step 2: Cpi
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `macro_source_packet`
 
-Execute cpi operations for the Macro Indicator Tracker workflow.
-Expected: `cpi_artifacts`
+### Step 1: quant-data-ingest [skill: quant-data-ingest] [depends_on: Step 0]
 
-### Step 3: Pmi
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$quant-data-ingest` with `macro_source_packet` to normalize
+the releases into the Timeseries Memory backend.
 
-Execute pmi operations for the Macro Indicator Tracker workflow.
-Expected: `pmi_artifacts`
-
-### Step 4: Yields
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
-
-Execute yields operations for the Macro Indicator Tracker workflow.
-Expected: `yields_artifacts`
-
-### Step 5: Employment
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
-
-Execute employment operations for the Macro Indicator Tracker workflow.
-Expected: `employment_artifacts`
-
-### Step 6: Dashboard [depends_on: gdp, cpi, pmi, yields, employment]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
-
-Execute dashboard operations for the Macro Indicator Tracker workflow.
-Expected: `dashboard_artifacts`
-
-### Step 7: KG Persistence [depends_on: dashboard]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `normalized_macro_series`
 
 ## Output
-- Macro Indicator Tracker results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `normalized_macro_series`. Does not interpret or forecast a regime shift.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Gdp; Step 2 — Cpi; Step 3 — Pmi; Step 4 — Yields; Step 5 — Employment
-- **After level 0:** Step 6 — Dashboard
-- **After level 1:** Step 7 — KG Persistence
+- **Run first:** Step 0 — `$web-search`.
+- **After level 0:** Step 1 — `$quant-data-ingest`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

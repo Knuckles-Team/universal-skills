@@ -1,11 +1,8 @@
-name: Alternative Data Pipeline Swarm
-task_pattern: Perform Alternative Data Pipeline operations concurrently across all target layers
+name: alternative-data-pipeline-team
+task_pattern: alternative-data discovery and quality-checked ingestion
+execution_mode: sequential
 specialist_ids:
-  - researcher
-  - quant-research-analyst
-capability_overrides:
-  researcher:
-    - stuck_loop_detection
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - web-search
+  - web-crawler
+  - quant-data-ingest
+  - data-quality-auditor

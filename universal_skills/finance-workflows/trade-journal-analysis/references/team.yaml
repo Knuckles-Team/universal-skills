@@ -1,8 +1,6 @@
-name: Trade Journal Analysis Swarm
-task_pattern: Perform Trade Journal Analysis operations concurrently across all target layers
+name: trade-journal-analysis-team
+task_pattern: paper-trade execution log profiling
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - freqtrade-executor
+  - dataset-profiler

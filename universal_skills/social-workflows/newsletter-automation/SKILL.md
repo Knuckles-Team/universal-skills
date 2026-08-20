@@ -2,93 +2,96 @@
 name: newsletter-automation
 skill_type: workflow
 description: >-
-  Parallel execution workflow for newsletter automation using the Unified Parallel Engine
+  Research, outline, draft, verify, and edit a sourced newsletter issue, then run
+  a final readiness check. Use when a user has supplied a topic, audience, and
+  publication requirements and wants a review-ready issue; this workflow never
+  sends or schedules it.
 domain: social-workflows
-agent: content_strategist
+license: MIT
+requires: []
+agent: content-orchestrator
 team_config:
-  name: content_creation_team
-  task_pattern: content creation and social media management
+  name: newsletter-automation-team
+  task_pattern: sourced newsletter issue drafting and readiness review
   execution_mode: sequential
   specialist_ids:
-    - content-creator
-    - media-processor
-    - publisher-agent
-    - analytics-agent
-  tool_assignments:
-    content-creator: [graph_query, document_tools]
-    media-processor: [graph_analyze]
-    publisher-agent: [graph_write]
-    analytics-agent: [graph_query, graph_analyze]
-tags: [social, newsletter-automation]
+    - web-search
+    - content-outline-builder
+    - content-draft-writer
+    - citation-auditor
+    - copy-editor
+    - publication-preflight
+tags: [social, content, newsletter, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Newsletter Automation Workflow
 
-**CONCEPT:SOCIAL-001**
+Compose the named atomic skills without adding sending or scheduling logic
+here.
 
-Parallel execution workflow for newsletter automation using the Unified Parallel Engine
+## Inputs
+
+Provide the topic, audience, objective, voice guide, citation style, and
+publication requirements.
 
 ## Steps
 
-### Step 1: Curate Content
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+### Step 0: web-search [skill: web-search]
 
-Execute curate content operations for the Newsletter Automation workflow.
-Expected: `curate_content_artifacts`
+Invoke `$web-search` with the workflow inputs.
 
-### Step 2: Write Digest [depends_on: curate_content]
-**Agent**: `media-processor`
-**Tools**: `graph_analyze`
+Expected: `source_packet`
 
-Execute write digest operations for the Newsletter Automation workflow.
-Expected: `write_digest_artifacts`
+### Step 1: content-outline-builder [skill: content-outline-builder] [depends_on: Step 0]
 
-### Step 3: Design Template [depends_on: write_digest]
-**Agent**: `publisher-agent`
-**Tools**: `graph_write`
+Invoke `$content-outline-builder` with the workflow inputs and
+`source_packet`.
 
-Execute design template operations for the Newsletter Automation workflow.
-Expected: `design_template_artifacts`
+Expected: `approved_outline`
 
-### Step 4: Send [depends_on: design_template]
-**Agent**: `analytics-agent`
-**Tools**: `graph_query, graph_analyze`
+### Step 2: content-draft-writer [skill: content-draft-writer] [depends_on: Step 1]
 
-Execute send operations for the Newsletter Automation workflow.
-Expected: `send_artifacts`
+Invoke `$content-draft-writer` with the workflow inputs,
+`source_packet`, and `approved_outline`.
 
-### Step 5: Analytics [depends_on: send]
-**Agent**: `content-creator`
-**Tools**: `graph_query, document_tools`
+Expected: `sourced_draft`
 
-Execute analytics operations for the Newsletter Automation workflow.
-Expected: `analytics_artifacts`
+### Step 3: citation-auditor [skill: citation-auditor] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: analytics]
-**Agent**: `analytics-agent`
-**Tools**: `graph_write`
+Invoke `$citation-auditor` with `sourced_draft` and `source_packet`.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `citation_audit`
+
+### Step 4: copy-editor [skill: copy-editor] [depends_on: Step 3]
+
+Invoke `$copy-editor` with `sourced_draft`, `citation_audit`, and the
+workflow inputs.
+
+Expected: `edited_draft`
+
+### Step 5: publication-preflight [skill: publication-preflight] [depends_on: Step 4]
+
+Invoke `$publication-preflight` with `edited_draft`,
+`citation_audit`, and the publication requirements.
+
+Expected: `readiness_decision`
 
 ## Output
-- Newsletter Automation results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `edited_draft`, `citation_audit`, and `readiness_decision`. Do not send
+or schedule the issue.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Curate Content
-- **After level 0:** Step 2 — Write Digest
-- **After level 1:** Step 3 — Design Template
-- **After level 2:** Step 4 — Send
-- **After level 3:** Step 5 — Analytics
-- **After level 4:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$web-search`.
+- **After level 0:** Step 1 — `$content-outline-builder`.
+- **After level 1:** Step 2 — `$content-draft-writer`.
+- **After level 2:** Step 3 — `$citation-auditor`.
+- **After level 3:** Step 4 — `$copy-editor`.
+- **After level 4:** Step 5 — `$publication-preflight`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

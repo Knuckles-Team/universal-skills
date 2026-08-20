@@ -1,13 +1,6 @@
-name: Host Hardware Inventory Swarm
-task_pattern: Perform Host Hardware Inventory operations concurrently across all target layers
+name: host-hardware-inventory-team
+task_pattern: fleet hardware profile and utilization inventory
+execution_mode: sequential
 specialist_ids:
-  - systems-manager
-  - tunnel-specialist
-  - knowledge-graph
-capability_overrides:
-  systems-manager:
-    - stuck_loop_detection
-  tunnel-specialist:
-    - stuck_loop_detection
-  knowledge-graph:
-    - stuck_loop_detection
+  - hardware-profile-sweep
+  - host-resource-sampler

@@ -2,92 +2,78 @@
 name: feature-store-builder
 skill_type: workflow
 description: >-
-  Parallel execution workflow for feature store builder using the Unified Parallel Engine
+  Ingest market data, validate it, document it as a data dictionary, and profile
+  it, producing a curated, documented feature dataset. Use when a researcher
+  needs a reusable, documented feature store built from raw market data; this
+  workflow does not train or select a model.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: feature-store-builder-team
+  task_pattern: curated, documented feature dataset assembly
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, feature-store-builder]
+    - quant-data-ingest
+    - data-quality-auditor
+    - data-dictionary-builder
+    - dataset-profiler
+tags: [finance, data, feature-store]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
 # Feature Store Builder Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding model-training logic here.
 
-Parallel execution workflow for feature store builder using the Unified Parallel Engine
+## Inputs
+
+Provide the asset universe, date range, and desired feature fields.
 
 ## Steps
 
-### Step 1: Compute 100
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
-Execute compute 100 operations for the Feature Store Builder workflow.
-Expected: `compute_100_artifacts`
+Invoke `$quant-data-ingest` with the workflow inputs to ingest raw
+market data.
 
-### Step 2: Features Per Asset
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `normalized_market_dataset`
 
-Execute features per asset operations for the Feature Store Builder workflow.
-Expected: `features_per_asset_artifacts`
+### Step 1: data-quality-auditor [skill: data-quality-auditor] [depends_on: Step 0]
 
-### Step 3: Normalize [depends_on: compute_100, features_per_asset]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$data-quality-auditor` with `normalized_market_dataset` and
+the declared rule set.
 
-Execute normalize operations for the Feature Store Builder workflow.
-Expected: `normalize_artifacts`
+Expected: `quality_report`
 
-### Step 4: Version [depends_on: normalize]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
+### Step 2: data-dictionary-builder [skill: data-dictionary-builder] [depends_on: Step 1]
 
-Execute version operations for the Feature Store Builder workflow.
-Expected: `version_artifacts`
+Invoke `$data-dictionary-builder` with `normalized_market_dataset` and
+`quality_report` to document each field.
 
-### Step 5: Store [depends_on: version]
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+Expected: `feature_data_dictionary`
 
-Execute store operations for the Feature Store Builder workflow.
-Expected: `store_artifacts`
+### Step 3: dataset-profiler [skill: dataset-profiler] [depends_on: Step 2]
 
-### Step 6: KG Persistence [depends_on: store]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
+Invoke `$dataset-profiler` with `normalized_market_dataset` to produce
+a structural and statistical profile.
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `feature_profile`
 
 ## Output
-- Feature Store Builder results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `normalized_market_dataset`, `feature_data_dictionary`, and
+`feature_profile` as the assembled feature store. Does not train or select a model.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Compute 100; Step 2 — Features Per Asset
-- **After level 0:** Step 3 — Normalize
-- **After level 1:** Step 4 — Version
-- **After level 2:** Step 5 — Store
-- **After level 3:** Step 6 — KG Persistence
+- **Run first:** Step 0 — `$quant-data-ingest`.
+- **After level 0:** Step 1 — `$data-quality-auditor`.
+- **After level 1:** Step 2 — `$data-dictionary-builder`.
+- **After level 2:** Step 3 — `$dataset-profiler`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

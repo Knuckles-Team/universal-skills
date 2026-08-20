@@ -1,10 +1,6 @@
-name: Ssl Certificate Sweep Swarm
-task_pattern: Perform Ssl Certificate Sweep operations concurrently across all target layers
+name: ssl-certificate-sweep-team
+task_pattern: TLS expiry sweep and report generation
+execution_mode: sequential
 specialist_ids:
-  - tunnel-specialist
-  - systems-manager
-capability_overrides:
-  tunnel-specialist:
-    - stuck_loop_detection
-  systems-manager:
-    - stuck_loop_detection
+  - ssl-expiry-checker
+  - document-converter

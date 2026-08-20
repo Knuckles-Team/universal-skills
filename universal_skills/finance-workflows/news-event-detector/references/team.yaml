@@ -1,8 +1,7 @@
-name: News Event Detector Swarm
-task_pattern: Perform News Event Detector operations concurrently across all target layers
+name: news-event-detector-team
+task_pattern: sourced news-event discovery and citation audit
+execution_mode: sequential
 specialist_ids:
-  - quant-research-analyst
-capability_overrides:
-  quant-research-analyst:
-    - stuck_loop_detection
-    - checkpointing
+  - web-search
+  - web-crawler
+  - citation-auditor

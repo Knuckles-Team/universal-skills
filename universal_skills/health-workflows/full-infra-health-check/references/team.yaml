@@ -1,11 +1,9 @@
-name: Full Infra Health Check Swarm
-task_pattern: Perform Full Infra Health Check operations concurrently across all target layers
+name: full-infra-health-check-team
+task_pattern: consolidated multi-signal fleet health snapshot
+execution_mode: parallel
 specialist_ids:
-  - systems-manager
-  - devops-engineer
-capability_overrides:
-  systems-manager:
-    - stuck_loop_detection
-  devops-engineer:
-    - stuck_loop_detection
-    - checkpointing
+  - hardware-profile-sweep
+  - host-resource-sampler
+  - docker-compose-drift-detector
+  - ssl-expiry-checker
+  - document-converter

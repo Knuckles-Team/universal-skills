@@ -2,85 +2,70 @@
 name: multi-strategy-allocation
 skill_type: workflow
 description: >-
-  Parallel execution workflow for multi strategy allocation using the Unified Parallel Engine
+  Ingest market data, backtest a supplied set of candidate strategies with Qlib,
+  and run the TradingAgents swarm debate to vet the backtested evidence as input
+  to an allocation decision. Use when a researcher wants evidence-linked support
+  for weighting multiple strategies; this workflow does not execute the
+  allocation or place trades.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: multi-strategy-allocation-team
+  task_pattern: multi-strategy backtest and vetted allocation evidence
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-    - report-generator
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-    report-generator: [graph_write, document_tools]
-tags: [finance, multi-strategy-allocation]
+    - quant-data-ingest
+    - qlib-backtester
+    - trading-debate
+tags: [finance, allocation, backtesting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
-# Multi Strategy Allocation Workflow
+# Multi-Strategy Allocation Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding execution logic here.
 
-Parallel execution workflow for multi strategy allocation using the Unified Parallel Engine
+## Inputs
+
+Provide the candidate strategy definitions, asset universe, and date range.
 
 ## Steps
 
-### Step 1: Fan Out Per Strategy Performance
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
-Execute fan out per strategy performance operations for the Multi Strategy Allocation workflow.
-Expected: `fan_out_per_strategy_performance_artifacts`
+Invoke `$quant-data-ingest` with the workflow inputs to ingest market
+data for the universe and date range.
 
-### Step 2: Risk Metrics [depends_on: fan_out_per_strategy_performance]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `normalized_market_dataset`
 
-Execute risk metrics operations for the Multi Strategy Allocation workflow.
-Expected: `risk_metrics_artifacts`
+### Step 1: qlib-backtester [skill: qlib-backtester] [depends_on: Step 0]
 
-### Step 3: Kelly Sizing [depends_on: risk_metrics]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$qlib-backtester` with `normalized_market_dataset` and each
+candidate strategy definition.
 
-Execute kelly sizing operations for the Multi Strategy Allocation workflow.
-Expected: `kelly_sizing_artifacts`
+Expected: `strategy_backtest_reports`
 
-### Step 4: Combine [depends_on: kelly_sizing]
-**Agent**: `report-generator`
-**Tools**: `graph_write, document_tools`
+### Step 2: trading-debate [skill: trading-debate] [depends_on: Step 1]
 
-Execute combine operations for the Multi Strategy Allocation workflow.
-Expected: `combine_artifacts`
+Invoke `$trading-debate` with `strategy_backtest_reports` to vet the
+relative evidence via the TradingAgents swarm debate.
 
-### Step 5: KG Persistence [depends_on: combine]
-**Agent**: `report-generator`
-**Tools**: `graph_write`
-
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Expected: `allocation_evidence_verdict`
 
 ## Output
-- Multi Strategy Allocation results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `strategy_backtest_reports` and `allocation_evidence_verdict`. Does not
+execute the allocation or place trades.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Fan Out Per Strategy Performance
-- **After level 0:** Step 2 — Risk Metrics
-- **After level 1:** Step 3 — Kelly Sizing
-- **After level 2:** Step 4 — Combine
-- **After level 3:** Step 5 — KG Persistence
+- **Run first:** Step 0 — `$quant-data-ingest`.
+- **After level 0:** Step 1 — `$qlib-backtester`.
+- **After level 1:** Step 2 — `$trading-debate`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

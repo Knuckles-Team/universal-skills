@@ -2,75 +2,70 @@
 name: esg-screening-pipeline
 skill_type: workflow
 description: >-
-  Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
+  Gather publicly disclosed ESG (environmental, social, governance) signals for a
+  supplied company universe and structure them into a normalized, validated
+  dataset. Use when a researcher needs raw ESG disclosure data assembled for
+  downstream screening; this workflow does not compute a proprietary ESG score
+  or rating.
 domain: finance-workflows
-agent: quant_analyst
+license: MIT
+requires: []
+agent: quant-workflow-orchestrator
 team_config:
-  name: quantitative_trading_team
-  task_pattern: quantitative analysis and financial computation
-  execution_mode: parallel
+  name: esg-screening-pipeline-team
+  task_pattern: public ESG disclosure gathering and validated normalization
+  execution_mode: sequential
   specialist_ids:
-    - data-fetcher
-    - compute-engine
-    - risk-assessor
-  tool_assignments:
-    data-fetcher: [graph_query, sx_search]
-    compute-engine: [graph_analyze]
-    risk-assessor: [graph_query, graph_analyze]
-tags: [finance, esg-screening-pipeline]
+    - web-search
+    - quant-data-ingest
+    - data-quality-auditor
+tags: [finance, esg, screening, ingestion]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.3.0'
+  author: Genius
 ---
 
-# Esg Screening Pipeline Workflow
+# ESG Screening Pipeline Workflow
 
-**CONCEPT:EE-011**
+Compose the named atomic skills without adding scoring logic here.
 
-Parallel execution workflow for esg screening pipeline using the Unified Parallel Engine
+## Inputs
+
+Provide the company universe and the ESG disclosure categories of interest.
 
 ## Steps
 
-### Step 1: Esg Score Lookup
-**Agent**: `data-fetcher`
-**Tools**: `graph_query, sx_search`
+### Step 0: web-search [skill: web-search]
 
-Execute esg score lookup operations for the Esg Screening Pipeline workflow.
-Expected: `esg_score_lookup_artifacts`
+Invoke `$web-search` with the workflow inputs to locate publicly
+disclosed ESG reports and filings for the universe.
 
-### Step 2: Controversy Check [depends_on: esg_score_lookup]
-**Agent**: `compute-engine`
-**Tools**: `graph_analyze`
+Expected: `esg_source_packet`
 
-Execute controversy check operations for the Esg Screening Pipeline workflow.
-Expected: `controversy_check_artifacts`
+### Step 1: quant-data-ingest [skill: quant-data-ingest] [depends_on: Step 0]
 
-### Step 3: Exclusion Filter [depends_on: controversy_check]
-**Agent**: `risk-assessor`
-**Tools**: `graph_query, graph_analyze`
+Invoke `$quant-data-ingest` with `esg_source_packet` to normalize the
+disclosed data into the Timeseries Memory backend.
 
-Execute exclusion filter operations for the Esg Screening Pipeline workflow.
-Expected: `exclusion_filter_artifacts`
+Expected: `normalized_esg_dataset`
 
-### Step 4: KG Persistence [depends_on: exclusion_filter]
-**Agent**: `risk-assessor`
-**Tools**: `graph_write`
+### Step 2: data-quality-auditor [skill: data-quality-auditor] [depends_on: Step 1]
 
-Persist workflow results as nodes and edges in the Knowledge Graph.
-Create appropriate typed nodes with metadata and link to existing domain entities.
+Invoke `$data-quality-auditor` with `normalized_esg_dataset` and the
+declared rule set.
+
+Expected: `quality_report`
 
 ## Output
-- Esg Screening Pipeline results persisted in KG
-- Structured report (MD/PDF)
-- Audit trail with timestamps and agent attributions
+
+Return `normalized_esg_dataset` and `quality_report`. Does not compute or assert
+a proprietary ESG score.
 
 ## Execution
 
-Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
-
-- **Run first (in parallel):** Step 1 — Esg Score Lookup
-- **After level 0:** Step 2 — Controversy Check
-- **After level 1:** Step 3 — Exclusion Filter
-- **After level 2:** Step 4 — KG Persistence
+- **Run first:** Step 0 — `$web-search`.
+- **After level 0:** Step 1 — `$quant-data-ingest`.
+- **After level 1:** Step 2 — `$data-quality-auditor`.
 
 **Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

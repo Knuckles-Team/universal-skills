@@ -1,7 +1,8 @@
-name: Email Campaign Builder Swarm
-task_pattern: Perform Email Campaign Builder operations concurrently across all target layers
+name: email-campaign-builder-team
+task_pattern: sourced email campaign copy drafting and readiness review
+execution_mode: sequential
 specialist_ids:
-  - media-coordinator
-capability_overrides:
-  media-coordinator:
-    - stuck_loop_detection
+  - content-outline-builder
+  - content-draft-writer
+  - copy-editor
+  - publication-preflight
