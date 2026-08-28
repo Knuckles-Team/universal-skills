@@ -307,13 +307,36 @@ _ENVELOPE_KEYS = frozenset(
 # Handlers whose job IS to return static text — legitimately literal, not facades.
 _INFO_NAMES_RE = re.compile(r"help|usage|about|version|info|ping|menu|banner|readme")
 
+# Node types that open a NEW attribution scope. ast.walk(func) recurses through a
+# function's entire subtree, including any nested function/class defs — so a branch
+# inside a nested function got attributed to the nested function AND to every
+# enclosing one (BUG-CX-078 / Trap #11: extracting a closure out of a large
+# dispatcher inflated facade_handlers instead of leaving it unchanged, e.g.
+# au's `dispatch_intent` CCN 82->23 extracted four closures and its 12 reported
+# branch lines were exactly the union of the four helpers' own lines).
+_SCOPE_BOUNDARY = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
+
+
+def _walk_own_scope(node: ast.AST):
+    """Like ``ast.walk(node)``, but does not descend into a NESTED function/
+    async-function/lambda/class body. Makes a branch belong to exactly ONE
+    function: its innermost enclosing one. Nested scopes are still analyzed —
+    the caller's own top-level ``ast.walk(tree)`` in ``analyze_liveness`` visits
+    every ``FunctionDef``/``AsyncFunctionDef`` in the module already, nested ones
+    included, so each is attributed its own findings exactly once."""
+    yield node
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, _SCOPE_BOUNDARY):
+            continue
+        yield from _walk_own_scope(child)
+
 
 def _does_real_work(func: ast.AST) -> bool:
     """A handler does 'real work' if it awaits, or calls anything beyond pure
     string/list/dict formatting + builtins (i.e. it reaches a dependency, a service,
     or another function). A body that only builds literals/strings and returns does
     NO real work — a facade candidate."""
-    for n in ast.walk(func):
+    for n in _walk_own_scope(func):
         if isinstance(n, (ast.Await, ast.Yield, ast.YieldFrom)):
             return True
         if isinstance(n, ast.Call):
@@ -381,7 +404,7 @@ def _is_canned_value(v: ast.expr) -> bool:
 def _returns_canned_payload(func: ast.AST) -> bool:
     return any(
         isinstance(n, ast.Return) and n.value is not None and _is_canned_value(n.value)
-        for n in ast.walk(func)
+        for n in _walk_own_scope(func)
     )
 
 
@@ -393,7 +416,7 @@ def _stmts_return_canned(stmts: list[ast.stmt]) -> bool:
     return any(
         isinstance(n, ast.Return) and n.value is not None and _is_canned_value(n.value)
         for s in stmts
-        for n in ast.walk(s)
+        for n in _walk_own_scope(s)
     )
 
 
@@ -413,12 +436,12 @@ def _facade_branches(func: ast.AST) -> list[int]:
     while doing NO real work — the per-branch facade (e.g. a `/graph stats` arm that
     returns fabricated counts). Returns the branch line numbers."""
     lines: list[int] = []
-    for n in ast.walk(func):
+    for n in _walk_own_scope(func):
         if not isinstance(n, ast.If) or _if_tests_info_keyword(n.test):
             continue
         branches = [n.body]
         # n.orelse is an `else:` body unless it's a single nested If (an `elif`,
-        # which the outer ast.walk visits on its own).
+        # which the outer walk visits on its own).
         if n.orelse and not (len(n.orelse) == 1 and isinstance(n.orelse[0], ast.If)):
             branches.append(n.orelse)
         for b in branches:
@@ -491,14 +514,14 @@ def _facade_except_handlers(func: ast.AST) -> list[int]:
     marker word. Restricted to all-literal payloads so the legitimate
     ``except: return {..., 'text': response.text}`` parse-fallback is NOT flagged."""
     lines: list[int] = []
-    for n in ast.walk(func):
+    for n in _walk_own_scope(func):
         if not isinstance(n, ast.Try) or not _stmts_real_work(n.body):
             continue  # nothing real to mask → not a deceptive fallback
         for handler in n.handlers:
             if not _is_broad_except(handler):
                 continue  # a narrow, intentional recovery path → not a blanket fallback
             for s in handler.body:
-                for r in ast.walk(s):
+                for r in _walk_own_scope(s):
                     if (
                         isinstance(r, ast.Return)
                         and r.value is not None
@@ -716,9 +739,7 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         try:
             matched_lines = [
                 line
-                for line in p.read_text(
-                    encoding="utf-8", errors="ignore"
-                ).splitlines()
+                for line in p.read_text(encoding="utf-8", errors="ignore").splitlines()
                 if _PLACEHOLDER_RE.search(line)
             ]
             placeholder_hits.extend(_dedupe_stable_ids(mod, matched_lines))
