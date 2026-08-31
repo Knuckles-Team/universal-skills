@@ -16,7 +16,7 @@ requires:
 - mcp_strategy
 - mcp_orders
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
 ---
 
 # polymarket-multi-strategy-arb Workflow

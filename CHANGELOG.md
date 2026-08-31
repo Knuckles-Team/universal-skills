@@ -132,7 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `research/research-scanner/scripts/relevance_scanner.py` — Replaced by `dynamic_scorer.py` agentic workflow.
 
 ### Fixed
--
+- Packaging discovery and package-data exclusions now keep generated build, dist, and
+  egg-info trees out of distributions while preserving readiness resources.
 
 ## [0.1.58] - 2026-04-29
 

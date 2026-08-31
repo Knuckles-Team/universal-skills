@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [skills, audit, catalog, quality, atomicity, workflows]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 

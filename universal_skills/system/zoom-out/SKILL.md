@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [zoom out, meta, overview, context]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 

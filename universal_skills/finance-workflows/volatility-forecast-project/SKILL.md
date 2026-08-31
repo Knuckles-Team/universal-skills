@@ -10,7 +10,7 @@ agent: risk_analyst
 team_config: trading_department
 tags: [quant, volatility, garch, risk, forecasting, portfolio, workflow]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

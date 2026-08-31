@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [artifacts, frontend, docs, design-system]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Agent Utilities Contributors
 ---
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.

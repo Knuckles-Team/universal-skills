@@ -22,7 +22,7 @@ team_config:
 tags: ['ecosystem', 'health', 'canary', 'full-stack']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
 ---
 
 # Full Ecosystem Health Workflow

@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [github, issues, triage, bug tracking]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 

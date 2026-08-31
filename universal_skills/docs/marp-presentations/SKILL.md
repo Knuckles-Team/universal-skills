@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [marp, presentations, slides, markdown, design]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 # Marp Presentation Creator

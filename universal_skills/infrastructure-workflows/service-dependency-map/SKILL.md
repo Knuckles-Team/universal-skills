@@ -20,7 +20,7 @@ team_config:
 tags: ['services', 'dependencies', 'mapping', 'mcp', 'topology']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
 ---
 
 # Service Dependency Map Workflow

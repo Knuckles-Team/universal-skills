@@ -22,7 +22,7 @@ requires:
   - technitium-dns-mcp
   - uptime-kuma-agent
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
 ---
 
 # service-deployment-orchestrator Workflow
