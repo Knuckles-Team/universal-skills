@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [eunomia, authorization, policies, mcp, security, governance]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 

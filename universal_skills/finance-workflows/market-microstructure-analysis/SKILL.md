@@ -22,7 +22,7 @@ team_config:
 tags: [microstructure, order-book, vpin, slippage]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
 ---
 
 # Market Microstructure Analysis Workflow

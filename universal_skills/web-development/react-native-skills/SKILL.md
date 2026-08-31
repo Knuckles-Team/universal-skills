@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [react-native, mobile, expo, ui, performance]
 metadata:
-  version: '1.3.0'
+  version: '1.3.1'
   author: Genius
 ---
 # React Native Skills
