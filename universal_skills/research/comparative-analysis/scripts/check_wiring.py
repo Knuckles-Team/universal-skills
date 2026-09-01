@@ -25,13 +25,12 @@ kept on local stdlib ``ast`` for two reasons, not convenience. (1) It is designe
 to run standalone against ANY local checkout — including un-ingested third-party
 comparison targets — with zero graph-os/KG dependency, which is the whole point
 of a lightweight, offline Wire-First gate. (2) Even against an ingested target,
-the exact hop-count this CI gate pass/fails on needs precise relative-import
-dot-level resolution (``ast.ImportFrom.level``) that the engine's
-``RustASTParser`` wire protocol does not carry — its import edges are raw,
-unresolved module strings (see ``_kg_ast.py``'s module docstring); silently
-swapping to an approximate KG substitute risks changing PASS/FAIL results on a
-gate builds rely on. This module's ``ast`` usage (``Import``/``ImportFrom``) is
-fully modern — none of the Python-3.12-removed node types (``ast.Str``/
+the exact hop-count this CI gate pass/fails on needs the source-level
+``ast.ImportFrom.level`` value. Native inventory retains resolved and unresolved
+import-site evidence, but deliberately does not expose that Python AST node;
+silently swapping the gate to a different representation risks changing
+PASS/FAIL results on a gate builds rely on. This module's ``ast`` usage
+(``Import``/``ImportFrom``) is fully modern — none of the Python-3.12-removed node types (``ast.Str``/
 ``ast.Num``/``ast.NameConstant``/``ast.Ellipsis``) appear here.
 """
 
