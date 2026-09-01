@@ -11,15 +11,16 @@ this file have" prefers, in this order:
    wiring, and doc/architecture signals — no re-parsing needed. Best-effort and
    silently skipped when no gateway is configured or the target isn't ingested
    (comparative-analysis routinely targets un-ingested third-party repos).
-2. **epistemic-graph's own AST parser** — ``parse_symbols()`` calls
-   ``epistemic_graph.parser.RustASTParser().parse_file()`` (tree-sitter, multi-
-   language, version-independent — no ``ast.Str``-class breakage across Python
-   releases). Returns ``{FILE, SYMBOL}`` nodes + ``CONTAINS`` edges, each SYMBOL
-   carrying ``name``/``kind``/``line``.
-3. **Local stdlib ``ast``** — the final fallback, used only when the
-   ``epistemic_graph`` package itself isn't importable (comparative-analysis is a
-   standalone ``universal-skills`` tool and does not hard-depend on it). Mirrors
-   the engine's own local-parse fallback shape exactly, using the modern
+2. **epistemic-graph's native repository inventory** — ``parse_symbols()`` calls
+   ``SyncEpistemicGraphClient.graph.index_repository()`` with logical source
+   names and bytes. This is the sole clean-break EG 3.0 AST contract and returns
+   the strict ``eg-native-inventory/v1`` result: acknowledged files, qualified
+   symbols with exact ranges, graph nodes/edges, completeness evidence, and
+   resolved or unresolved call/import sites.
+3. **Local stdlib ``ast``** — the final fallback, used when the native client or
+   configured engine isn't available (comparative-analysis is a standalone
+   ``universal-skills`` tool and does not hard-depend on it). Returns the stable
+   FILE/SYMBOL node subset consumed by the analyzers, using the modern
    ``ast.Constant`` API (``ast.Str``/``ast.Num``/``ast.NameConstant``/``ast.Ellipsis``
    were removed in Python 3.8-3.12) so this tier never breaks on a current
    interpreter. Every result from this tier is tagged ``"tier": "stdlib_ast_fallback"``
@@ -33,16 +34,15 @@ analysis ever run (score trends, cross-project comparisons via Cypher), not just
 a pile of local JSON files. Both are best-effort and silently no-op without
 ``GRAPH_OS_URL`` configured.
 
-``RustASTParser`` itself already implements the engine-first/local-fallback split
-internally (service unavailable -> local ``ast``); this module adds the KG tier on
-top and guards the ``epistemic_graph`` import entirely, since comparative-analysis
-must keep working with neither graph-os nor epistemic-graph installed/reachable.
+The native client is optional because comparative-analysis remains a standalone
+``universal-skills`` tool. If the package cannot be imported or its configured
+engine endpoint cannot answer, this module degrades to local stdlib ``ast``. No
+legacy parser surface is imported or emulated.
 """
 
 from __future__ import annotations
 
 import ast
-import asyncio
 import hashlib
 import json
 import os
@@ -174,14 +174,32 @@ def kg_write_analysis(
 
 
 # ---------------------------------------------------------------------------
-# Tier 2 — epistemic-graph's own AST parser (RustASTParser, engine or local)
-# Tier 3 — local stdlib `ast` fallback when `epistemic_graph` isn't importable
+# Tier 2 — epistemic-graph's strict native repository inventory
+# Tier 3 — local stdlib `ast` when the native client/engine is unavailable
 # ---------------------------------------------------------------------------
 
 
+def _native_request_context() -> dict[str, Any]:
+    """Build the least-privilege identity for the native compute-only RPC."""
+    identity = "service:comparative-analysis"
+    return {
+        "principal": identity,
+        "tenant": os.environ.get("EPISTEMIC_GRAPH_TENANT", "tenant:default"),
+        "audience": os.environ.get("EPISTEMIC_GRAPH_AUDIENCE", "epistemic-graph"),
+        "agent_id": identity,
+        "roles": ["graph-client"],
+        "scopes": ["compute:parse"],
+        "policy_version": os.environ.get(
+            "EPISTEMIC_GRAPH_POLICY_VERSION", "policy:initial"
+        ),
+        "delegation": [],
+    }
+
+
 def _local_fallback_parse(file_path: str, source: str) -> dict[str, Any]:
-    """Tier 3: mirrors ``RustASTParser._parse_file_local``'s exact node/edge shape,
-    using the modern ``ast.Constant`` API (never ``ast.Str``/``ast.Num``/
+    """Tier 3: return the symbol-node subset comparative-analysis consumes.
+
+    Uses the modern ``ast.Constant`` API (never ``ast.Str``/``ast.Num``/
     ``ast.NameConstant``/``ast.Ellipsis``, all removed by Python 3.12).
     """
     try:
@@ -235,12 +253,12 @@ def _local_fallback_parse(file_path: str, source: str) -> dict[str, Any]:
 
 
 def parse_symbols(file_path: Path) -> dict[str, Any]:
-    """Tier 2 (RustASTParser, engine-or-local) with a tier-3 stdlib fallback.
+    """Use EG 3.0 native inventory with a dependency-free stdlib fallback.
 
-    Returns the parser's ``{nodes, edges, symbols_extracted}`` shape plus a
-    ``"tier"`` key: ``"engine_ast"`` when ``RustASTParser`` (its own live-service
-    path OR its internal local-``ast`` fallback) answered, ``"stdlib_ast_fallback"``
-    only when the ``epistemic_graph`` package itself could not be imported at all.
+    A successful native call is returned unchanged, preserving the strict
+    ``eg-native-inventory/v1`` contract. The degraded local result carries
+    ``tier=stdlib_ast_fallback`` so reports can surface that they did not receive
+    repository-wide resolution and completeness evidence.
     """
     try:
         source = file_path.read_bytes()
@@ -248,20 +266,24 @@ def parse_symbols(file_path: Path) -> dict[str, Any]:
         return {"nodes": [], "edges": [], "symbols_extracted": 0, "tier": "error"}
 
     try:
-        from epistemic_graph.parser import RustASTParser
+        from epistemic_graph import SyncEpistemicGraphClient
     except ImportError:
-        result = _local_fallback_parse(str(file_path), source.decode("utf-8", "replace"))
+        result = _local_fallback_parse(
+            str(file_path), source.decode("utf-8", "replace")
+        )
         return result
 
-    parser = RustASTParser()
     try:
-        result = asyncio.run(parser.parse_file(str(file_path), source))
-    except Exception:  # noqa: BLE001 - RustASTParser already degrades internally;
-        # this only catches something outside its own handled exception set
-        # (e.g. no running-loop edge cases) — degrade to the local tier here too.
-        result = _local_fallback_parse(str(file_path), source.decode("utf-8", "replace"))
+        with SyncEpistemicGraphClient.connect(
+            graph_name="agent:comparative-analysis",
+            verified_context=_native_request_context(),
+        ) as client:
+            result = client.graph.index_repository([(file_path.name, source)])
+    except Exception:  # noqa: BLE001 - optional native service boundary
+        result = _local_fallback_parse(
+            str(file_path), source.decode("utf-8", "replace")
+        )
         return result
-    result.setdefault("tier", "engine_ast")
     return result
 
 

@@ -396,8 +396,8 @@ research paper scoring dimensions and innovation extraction scoring.
 - **Ask before expensive operations**: If a project is very large (>100k LOC), warn the
   user that analysis may take longer and offer to skip heavy domains.
 - **Prefer the KG over re-parsing at scale**: `_kg_ast.py`'s layered design (KG →
-  `RustASTParser` → local `ast`, see its module docstring) means an already-ingested
-  target is answered from the KG instead of re-walking every file — running the same
+  EG 3.0 native inventory → local `ast`, see its module docstring) means an
+  already-ingested target is answered from the KG instead of re-walking every file — running the same
   corpus repeatedly gets cheaper, not more expensive, as the KG's `ComparativeAnalysisRun`
   library (Step 10) and ingested code/vendor-doc graphs grow. For a fleet-scale sweep
   (many projects), ingest once via `kg_ingest`, then prefer Phase -1's MCP tools over the
@@ -420,7 +420,7 @@ research paper scoring dimensions and innovation extraction scoring.
 - `scripts/extract_innovations.py` — CA-010: Biomimicry, analogical reasoning, synergies (+ `--concept-id`, `--kg-source`)
 - `scripts/concept_cross_reference.py` — CA-011: Concept-seeded cross-reference engine
 - `scripts/generate_comparison_report.py` — CA-009: Unified report with radar charts + best-effort KG persistence of every result (`ComparativeAnalysisRun` library)
-- `scripts/_kg_ast.py` — shared internal module (not a standalone CA step): the layered KG → `RustASTParser` → local `ast` symbol-extraction helper every script above can use, plus `kg_write_analysis`/`kg_code_context` for the KG read/write tier. See its module docstring.
+- `scripts/_kg_ast.py` — shared internal module (not a standalone CA step): the layered KG → strict `eg-native-inventory/v1` → local `ast` symbol-extraction helper every script above can use, plus `kg_write_analysis`/`kg_code_context` for the KG read/write tier. See its module docstring.
 
 **Lightweight-Mode inner loop (the fast CA→SDD pipeline):**
 - `scripts/pin_source.py` — CA-017: Source pinning (repo@sha), incremental diff vs prior ledger, analysis cache (`~/.scholarx/analysis/`)

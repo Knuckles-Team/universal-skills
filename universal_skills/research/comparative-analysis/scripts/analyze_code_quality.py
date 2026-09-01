@@ -7,11 +7,9 @@ CONCEPT:CA-004 — Code Quality & Maintainability
 
 Layered KG/engine-native design (see ``_kg_ast.py``): cyclomatic complexity and
 function length are deliberately computed via local stdlib ``ast`` (control-flow
-node walking + ``end_lineno``), not a fallback of convenience — the engine's
-``RustASTParser`` wire protocol emits flat SYMBOL nodes (``name``/``kind``/
-``line``, no ``end_line``, no nested If/While/For/BoolOp/Assert structure), so
-neither the KG nor the engine parser can answer "how complex is this function"
-today; see ``_kg_ast.py``'s module docstring for the exact gap. This module's
+node walking + ``end_lineno``), not a fallback of convenience. Native inventory
+provides exact symbol ranges but not nested If/While/For/BoolOp/Assert nodes, so
+it cannot reproduce this cyclomatic-complexity calculation. This module's
 ``ast`` usage is all modern (``NodeVisitor``, ``If``/``While``/``For``/
 ``ExceptHandler``/``BoolOp``/``Assert``/``FunctionDef``/``AsyncFunctionDef``) —
 none of the Python-3.12-removed node types (``ast.Str``/``ast.Num``/
