@@ -14,9 +14,9 @@ shared, three-tier mechanism, preferred in this order:
      callers, blast-radius, CONCEPT markers, docs). Zero re-parsing; the richest,
      most cross-repo-aware answer, when the target repo has already been ingested
      (``source_sync``/``kg_ingest_run.py``).
-  2. **The engine AST** (``epistemic_graph.parser.RustASTParser``) — on-demand
-     tree-sitter parsing via the Rust engine's out-of-process socket, for a
-     file/repo the KG doesn't already hold. Multi-language, version-independent.
+  2. **The engine AST** (``graph.index_repository``) — on-demand native inventory
+     via the Rust engine's out-of-process socket, for a file/repo the KG doesn't
+     already hold. Multi-language, version-independent.
   3. **Local stdlib ``ast`` parsing** — the final fallback, used only when neither
      the KG nor the engine socket is reachable (``epistemic_graph`` not installed,
      no socket, or the engine erroring) — Python-only and clearly degraded (the
@@ -32,7 +32,6 @@ CONCEPT:CE-045 — KG-native analysis mechanism hierarchy
 from __future__ import annotations
 
 import ast
-import asyncio
 import json
 import os
 from pathlib import Path
@@ -255,7 +254,9 @@ def _local_ast_symbols(file_path: Path, source: str) -> list[dict[str, Any]]:
         kind = "class" if isinstance(node, ast.ClassDef) else "function"
         end_line = getattr(node, "end_lineno", node.lineno)
         decorators = DECORATOR_SEP.join(
-            d for d in (_safe_unparse(d) for d in getattr(node, "decorator_list", [])) if d
+            d
+            for d in (_safe_unparse(d) for d in getattr(node, "decorator_list", []))
+            if d
         )
         props: dict[str, Any] = {
             "name": node.name,
@@ -267,9 +268,7 @@ def _local_ast_symbols(file_path: Path, source: str) -> list[dict[str, Any]]:
         }
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             body = "\n".join(lines[node.lineno - 1 : end_line])
-            params = [
-                a.arg for a in node.args.args if a.arg not in ("self", "cls")
-            ]
+            params = [a.arg for a in node.args.args if a.arg not in ("self", "cls")]
             props["params"] = ",".join(params)
             props["is_test"] = "true" if node.name.startswith("test_") else "false"
             props["assert_count"] = str(
@@ -288,56 +287,75 @@ def _local_ast_symbols(file_path: Path, source: str) -> list[dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Tier 2 — the engine AST (with transparent Tier 3 fallback)
+# Tier 2 — the native engine inventory (with transparent Tier 3 fallback)
 # ---------------------------------------------------------------------------
 
 
-def parse_file_symbols(file_path: Path) -> tuple[list[dict[str, Any]], str]:
-    """Per-file symbol extraction — Tier 2 (engine AST) with Tier 3 (local ``ast``)
-    fallback. Returns ``(symbols, tier)``, ``tier`` in ``{"engine", "local"}``.
-    Never raises — a missing ``epistemic_graph`` dependency or an unreachable
-    engine socket degrades straight to the local stdlib ``ast`` parse.
-    """
-    try:
-        source = file_path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return [], "local"
+def _engine_context() -> dict[str, Any]:
+    """Least-privilege claims for EG's read-only native parser operation."""
+    agent_id = "service:universal-skills:code-enhancer"
+    return {
+        "principal": agent_id,
+        "tenant": os.environ.get("EPISTEMIC_GRAPH_TENANT", "tenant:default"),
+        "audience": os.environ.get("EPISTEMIC_GRAPH_AUDIENCE", "epistemic-graph"),
+        "agent_id": agent_id,
+        "roles": ["graph-client"],
+        "scopes": ["compute:parse"],
+        "policy_version": os.environ.get(
+            "EPISTEMIC_GRAPH_POLICY_VERSION", "policy:current"
+        ),
+        "delegation": [],
+    }
 
-    try:
-        from epistemic_graph.parser import RustASTParser  # optional dependency
-    except ImportError:
-        return _local_ast_symbols(file_path, source), "local"
 
-    try:
-        result = asyncio.run(
-            RustASTParser().parse_file(str(file_path), source.encode("utf-8"))
-        )
-    except Exception:  # noqa: BLE001 - engine is best-effort, never abort the caller
-        return _local_ast_symbols(file_path, source), "local"
+def _native_symbols(file_path: Path, source: bytes) -> list[dict[str, Any]]:
+    """Extract symbols through EG 3's sole native-inventory contract."""
+    from epistemic_graph import SyncEpistemicGraphClient  # optional dependency
 
-    nodes = result.get("nodes") or []
+    logical_path = file_path.name
+    with SyncEpistemicGraphClient.connect(
+        graph_name="__commons__",
+        verified_context=_engine_context(),
+    ) as client:
+        result = client.graph.index_repository([(logical_path, source)])
+
+    ranges = {
+        symbol.get("engine_node_id"): symbol.get("range")
+        for symbol in result["symbols"]
+        if isinstance(symbol, dict) and symbol.get("engine_node_id")
+    }
     symbols: list[dict[str, Any]] = []
-    for n in nodes:
-        if n.get("node_type") != "SYMBOL":
+    for node in result["nodes"]:
+        if node.get("node_type") != "SYMBOL":
             continue
-        props = dict(n.get("properties") or {})
+        props = dict(node.get("properties") or {})
         props["file_path"] = str(file_path)
+        source_range = ranges.get(node.get("node_id"))
+        if isinstance(source_range, dict):
+            props.setdefault("line", source_range.get("start_line", 0))
+            props["end_line"] = source_range.get("end_line", props.get("line", 0))
         props.setdefault("kind_detail", props.get("kind", ""))
         symbols.append(props)
+    return symbols
 
-    # RustASTParser silently degrades to ITS OWN local ``ast`` fallback
-    # (name/kind/line only, no decorators/assert_count/...) when the engine socket
-    # is down, without raising — so a coarse result here does not necessarily mean
-    # "no symbols found", it means "no live engine". Detect that and re-run OUR
-    # richer local fallback (decorators/params/assert_count/...) instead of
-    # settling for the coarse one, so Tier 3 stays as useful as Tiers 1/2.
-    rich = any(
-        k in (symbols[0] if symbols else {})
-        for k in ("decorators", "assert_count", "calls")
-    )
-    if rich:
-        return symbols, "engine"
-    return _local_ast_symbols(file_path, source), "local"
+
+def parse_file_symbols(file_path: Path) -> tuple[list[dict[str, Any]], str]:
+    """Per-file symbols via Tier 2 native inventory, then Tier 3 local ``ast``.
+
+    Returns ``(symbols, tier)``, where tier is ``"engine"`` or ``"local"``.
+    A missing dependency or unreachable engine degrades to the local parser.
+    """
+    try:
+        source_bytes = file_path.read_bytes()
+    except OSError:
+        return [], "local"
+    source = source_bytes.decode("utf-8", errors="ignore")
+
+    try:
+        symbols = _native_symbols(file_path, source_bytes)
+    except Exception:  # noqa: BLE001 - engine is best-effort, never abort the caller
+        return _local_ast_symbols(file_path, source), "local"
+    return symbols, "engine"
 
 
 def repo_symbols(
@@ -380,9 +398,7 @@ def body_span(
         except (TypeError, ValueError):
             pass
     approx_end = (
-        _line(symbols[index + 1]) - 1
-        if index + 1 < len(symbols)
-        else len(source_lines)
+        _line(symbols[index + 1]) - 1 if index + 1 < len(symbols) else len(source_lines)
     )
     return line, max(approx_end, line)
 

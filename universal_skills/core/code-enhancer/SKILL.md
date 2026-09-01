@@ -126,9 +126,10 @@ tries three mechanisms **in this order** for every symbol/concept lookup:
    composed `code_context` answer (`POST /graph/code`, action=`code_context` — definition,
    callers, blast-radius, CONCEPT markers, docs — CONCEPT:AU-KG.retrieval.synthesized-cited-answer).
    Zero re-parsing when the target repo is already ingested (`source_sync`/`kg_ingest_run.py`).
-2. **The engine AST** (`epistemic_graph.parser.RustASTParser`) — on-demand tree-sitter parsing via
-   the Rust engine's out-of-process socket for a file/repo the KG doesn't hold yet. Multi-language,
-   version-independent (the fix for the `ast.Str`-on-3.12 class of breakage).
+2. **The engine AST** (`SyncEpistemicGraphClient.graph.index_repository`) — on-demand
+   `eg-native-inventory/v1` extraction through the Rust engine's out-of-process socket for a
+   file/repo the KG doesn't hold yet. Multi-language, version-independent (the fix for the
+   `ast.Str`-on-3.12 class of breakage), with exact native source ranges.
 3. **Local stdlib `ast`** — the final fallback, used only when neither the KG nor the engine socket
    answers (`epistemic_graph` not installed, no `GRAPH_OS_MCP_URL`, or the engine erroring). Keeps
    every script working completely standalone, with zero platform dependencies.
@@ -137,8 +138,8 @@ Every `kg_native` helper is **best-effort and never raises** — an unreachable 
 silently to the next tier, and the tier actually used is reported back (`"kg"` / `"engine"` /
 `"local"`) so a caller can note it was degraded. Set `GRAPH_OS_MCP_URL` (and optionally
 `GRAPH_OS_MCP_TOKEN` for an authenticated deployment) to enable Tier 1; Tier 2 activates
-automatically whenever `epistemic_graph` is installed and its engine socket is reachable — no
-configuration needed for either. **This degradation is real, not theoretical**: even a live
+automatically whenever `epistemic_graph` 3.x is installed, its engine socket is reachable, and
+`GRAPH_SERVICE_AUTH_SECRET` is configured. **This degradation is real, not theoretical**: even a live
 graph-os deployment may be on a protocol/tool surface that predates the REST contract above (fleet
 version drift) — the tiering means that never breaks the skill, it just quietly falls back.
 
