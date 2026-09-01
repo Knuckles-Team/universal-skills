@@ -10,7 +10,7 @@ CONCEPT:CE-TEST — Code Enhancer Test Suite
 import json
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -773,3 +773,92 @@ class TestDeceptiveExceptFallback:
                     return {"v": "default-value-string-fallback-content"}
         """
         assert self._flag_lines(src) == [], "narrow recovery is not a blanket fail-fake"
+
+
+# ---------------------------------------------------------------------------
+# CE-045: strict EG 3 native-inventory integration
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.concept("CE-045")
+class TestKgNativeInventory:
+    """The live engine tier uses EG 3's sole AST/index contract directly."""
+
+    def test_parse_file_uses_index_repository_contract(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import sys
+        import types
+
+        source_file = tmp_path / "sample.py"
+        source_bytes = b"def answer():\n    return 42\n"
+        source_file.write_bytes(source_bytes)
+
+        client = MagicMock()
+        client.__enter__.return_value = client
+        client.graph.index_repository.return_value = {
+            "schema": "eg-native-inventory/v1",
+            "nodes": [
+                {
+                    "node_id": "symbol:answer",
+                    "node_type": "SYMBOL",
+                    "properties": {
+                        "name": "answer",
+                        "kind_detail": "function",
+                        "file_path": "sample.py",
+                        "decorators": "",
+                    },
+                }
+            ],
+            "symbols": [
+                {
+                    "engine_node_id": "symbol:answer",
+                    "range": {"start_line": 1, "end_line": 2},
+                }
+            ],
+        }
+        sync_client = MagicMock()
+        sync_client.connect.return_value = client
+
+        fake_eg = types.ModuleType("epistemic_graph")
+        fake_eg.SyncEpistemicGraphClient = sync_client
+        monkeypatch.setitem(sys.modules, "epistemic_graph", fake_eg)
+
+        mod = _import_script("kg_native")
+        symbols, tier = mod.parse_file_symbols(source_file)
+
+        assert tier == "engine"
+        client.graph.index_repository.assert_called_once_with(
+            [("sample.py", source_bytes)]
+        )
+        connect_args = sync_client.connect.call_args.kwargs
+        assert connect_args["graph_name"] == "__commons__"
+        assert connect_args["verified_context"]["scopes"] == ["compute:parse"]
+        client.__exit__.assert_called_once()
+        assert symbols == [
+            {
+                "name": "answer",
+                "kind_detail": "function",
+                "file_path": str(source_file),
+                "decorators": "",
+                "line": 1,
+                "end_line": 2,
+            }
+        ]
+
+    def test_engine_failure_uses_rich_local_parser(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        source_file = tmp_path / "fallback.py"
+        source_file.write_text("@marker\ndef fallback(value):\n    assert value\n")
+        mod = _import_script("kg_native")
+        monkeypatch.setattr(
+            mod, "_native_symbols", lambda *_args: (_ for _ in ()).throw(OSError())
+        )
+
+        symbols, tier = mod.parse_file_symbols(source_file)
+
+        assert tier == "local"
+        assert symbols[0]["name"] == "fallback"
+        assert symbols[0]["decorators"] == "marker"
+        assert symbols[0]["assert_count"] == "1"
