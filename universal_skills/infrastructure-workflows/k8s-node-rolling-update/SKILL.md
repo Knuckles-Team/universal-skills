@@ -66,7 +66,7 @@ incomplete.
 
 Expected: `ordered_targets, baseline_conditions, resolved_reference_status`
 
-### Step 1: cordon_node [depends_on: list_nodes] [mcp_tool: cnt_cm_k8s_cluster.cordon_node]
+### Step 1: cordon_node [depends_on: Step 0] [mcp_tool: cnt_cm_k8s_cluster.cordon_node]
 
 Cordon only the current target. The per-node chain from Steps 1 through 8 is a
 strict serial map over `ordered_targets`; never start a second target while the
@@ -74,7 +74,7 @@ current target is cordoned or unverified.
 
 Expected: `cordoned`
 
-### Step 2: drain_node [depends_on: cordon_node] [mcp_tool: cnt_cm_k8s_cluster.drain_node]
+### Step 2: drain_node [depends_on: Step 1] [mcp_tool: cnt_cm_k8s_cluster.drain_node]
 
 Drain the current target with DaemonSets ignored and deployment-configured grace
 and timeout bounds. If eviction fails, stop the complete run and leave the node
@@ -82,7 +82,7 @@ cordoned for operator recovery.
 
 Expected: `drained`
 
-### Step 3: apply_patch [depends_on: drain_node] [mcp_tool: tun_tm_remote.execute]
+### Step 3: apply_patch [depends_on: Step 2] [mcp_tool: tun_tm_remote.execute]
 
 Execute the approved patch command profile through the target's resolved remote
 profile. Do not accept an endpoint, credential, username, or arbitrary shell
@@ -91,14 +91,14 @@ run with the node still cordoned.
 
 Expected: `patch_status, patch_profile_digest`
 
-### Step 4: check_reboot [depends_on: apply_patch] [mcp_tool: tun_tm_remote.execute]
+### Step 4: check_reboot [depends_on: Step 3] [mcp_tool: tun_tm_remote.execute]
 
 Run the approved reboot-required check from AgentConfig. Emit only a boolean
 decision and bounded status metadata.
 
 Expected: `reboot_required`
 
-### Step 5: reboot_if_required [depends_on: check_reboot] [mcp_tool: tun_tm_remote.execute]
+### Step 5: reboot_if_required [depends_on: Step 4] [mcp_tool: tun_tm_remote.execute]
 
 When `reboot_required` is true, execute the approved reboot action through the
 same resolved remote profile. Otherwise record a governed skip. Never treat the
@@ -106,28 +106,28 @@ expected transport disconnect during reboot as proof of success.
 
 Expected: `rebooted_or_skipped`
 
-### Step 6: wait_ready [depends_on: reboot_if_required] [mcp_tool: cnt_cm_k8s_cluster.get_node_conditions]
+### Step 6: wait_ready [depends_on: Step 5] [mcp_tool: cnt_cm_k8s_cluster.get_node_conditions]
 
 Wait within the configured bound for the current node to report `Ready`. Stop the
 run and leave it cordoned on timeout or an ambiguous condition.
 
 Expected: `ready`
 
-### Step 7: verify_node_service [depends_on: wait_ready] [mcp_tool: tun_tm_remote.execute]
+### Step 7: verify_node_service [depends_on: Step 6] [mcp_tool: tun_tm_remote.execute]
 
 Run the approved node-service health profile. Require an affirmative result
 before returning the node to service.
 
 Expected: `service_healthy, health_profile_digest`
 
-### Step 8: uncordon_node [depends_on: verify_node_service] [mcp_tool: cnt_cm_k8s_cluster.uncordon_node]
+### Step 8: uncordon_node [depends_on: Step 7] [mcp_tool: cnt_cm_k8s_cluster.uncordon_node]
 
 Uncordon the current target and verify it remains `Ready`. Advance the serial map
 to the next target only after this step succeeds.
 
 Expected: `uncordoned, settled`
 
-### Step 9: persist_outcome [depends_on: uncordon_node] [mcp_tool: graph_write]
+### Step 9: persist_outcome [depends_on: Step 8] [mcp_tool: graph_write]
 
 After every selected node completes, persist privacy-safe aggregate outcomes,
 profile digests, and timestamps. Do not retain connection values, endpoints,

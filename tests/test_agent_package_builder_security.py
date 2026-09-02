@@ -1,5 +1,6 @@
 """Security invariants for newly scaffolded agent packages."""
 
+import ast
 import importlib.util
 from pathlib import Path
 
@@ -11,6 +12,11 @@ SCAFFOLD = (
     / "agent-package-builder"
     / "scripts"
     / "scaffold_package.py"
+)
+PARITY_MANIFEST = SCAFFOLD.parent.parent / "PARITY_MANIFEST.md"
+PYTHON_312_BASE = (
+    "python:3.12-slim@sha256:"
+    "57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
 )
 
 
@@ -93,7 +99,20 @@ def test_generated_capability_discovery_is_bound_and_endpoint_free():
 
 def test_generated_auth_uses_reference_only_runtime_without_pii_logs():
     module = _load_scaffold_module()
+    rendered = module.AUTH_PY.format(short_name="example_provider")
+    tree = ast.parse(rendered)
+    imported_symbols = {
+        (node.module, alias.name)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom)
+        for alias in node.names
+    }
 
+    compile(rendered, "<generated-auth>", "exec")
+    assert "from agent_utilities.core import config as config_module" in rendered
+    assert "config_module.AgentConfig" in rendered
+    assert ("agent_utilities.core", "config") in imported_symbols
+    assert ("agent_utilities.core.config", "AgentConfig") not in imported_symbols
     assert "resolve_provider_runtime_profile(" in module.AUTH_PY
     assert "provider_configs.{short_name}" in module.AUTH_PY
     assert "resolve_tls_verify" not in module.AUTH_PY
@@ -131,10 +150,38 @@ def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
     module.scaffold("example-provider", output_dir=str(tmp_path))
     root = tmp_path / "example-provider"
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    agents_md = (root / "AGENTS.md").read_text(encoding="utf-8")
+    installation_md = (root / "docs" / "installation.md").read_text(encoding="utf-8")
+    dockerfile = (root / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    debug_dockerfile = (root / "docker" / "debug.Dockerfile").read_text(
+        encoding="utf-8"
+    )
+    parity_manifest = PARITY_MANIFEST.read_text(encoding="utf-8")
+    generated_text = "\n".join(
+        path.read_text(encoding="utf-8") for path in root.rglob("*") if path.is_file()
+    )
 
+    assert 'requires-python = ">=3.12, <3.15"' in pyproject
+    assert 'target-version = "py312"' in pyproject
+    assert 'python_version = "3.12"' in pyproject
+    assert "py310" not in pyproject
+    assert 'python_version = "3.10"' not in pyproject
+    assert "Language/Version: Python 3.12–3.14" in agents_md
+    assert "Python 3.12–3.14" in installation_md
+    assert "Python 3.11" not in agents_md
+    assert "Python 3.11" not in installation_md
+    assert dockerfile.count(PYTHON_312_BASE) == 2
+    assert debug_dockerfile.count(PYTHON_312_BASE) == 1
+    assert "Python 3.11" not in generated_text
+    assert "python:3.11" not in generated_text
     assert '"agent-utilities[mcp]>=1.27.1,<2.0.0"' in pyproject
     assert '"epistemic-graph[full]>=2.23.1,<3.0.0"' in pyproject
     assert '"agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0"' in pyproject
+    assert "`agent-utilities[mcp]>=1.27.1,<2.0.0`" in parity_manifest
+    assert "`epistemic-graph[full]>=2.23.1,<3.0.0`" in parity_manifest
+    assert "agent-utilities[mcp]>=2.0.0" not in parity_manifest
+    assert "epistemic-graph[full]>=3.0.0" not in parity_manifest
+    assert PYTHON_312_BASE.removeprefix("python:3.12-slim@") in parity_manifest
     assert "example-provider[" not in pyproject
     assert not (root / ".env").exists()
     assert "SSL_VERIFY" not in (root / "mcp_config.json").read_text(encoding="utf-8")

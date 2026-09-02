@@ -76,7 +76,7 @@ profile digests and capability status.
 
 Expected: `validated_profile_digests`
 
-### Step 1: verify_identity_provider [depends_on: validate_profiles] [mcp_tool: tun_tm_remote]
+### Step 1: verify_identity_provider [depends_on: Step 0] [mcp_tool: tun_tm_remote]
 
 Run the approved identity-provider check from `verification_profile_ref`. Require
 verified discovery metadata or JWKS retrieval, exact issuer matching, an allowed
@@ -86,7 +86,7 @@ responses.
 
 Expected: `identity_provider_verified`
 
-### Step 2: configure_bearer_validation [depends_on: verify_identity_provider] [mcp_tool: cnt_cm_k8s_config]
+### Step 2: configure_bearer_validation [depends_on: Step 1] [mcp_tool: cnt_cm_k8s_config]
 
 Apply the resource-server settings from `oidc_resource_server_profile_ref` to the
 workload selected by `endpoint_deployment_ref`. The deployment adapter resolves
@@ -94,7 +94,7 @@ all concrete values internally. Roll the workload and require healthy convergenc
 
 Expected: `bearer_validation_applied`
 
-### Step 3: configure_tls [depends_on: configure_bearer_validation] [mcp_tool: cnt_cm_k8s_config]
+### Step 3: configure_tls [depends_on: Step 2] [mcp_tool: cnt_cm_k8s_config]
 
 Materialize the certificate and ingress/service changes named by
 `certificate_profile_ref`, and bind client trust through
@@ -103,7 +103,7 @@ serving enabled unless that policy authorizes a bounded migration window.
 
 Expected: `certificate_ready, tls_route_ready, trust_profile_digest`
 
-### Step 4: verify_enforcement [depends_on: configure_tls] [mcp_tool: tun_tm_remote]
+### Step 4: verify_enforcement [depends_on: Step 3] [mcp_tool: tun_tm_remote]
 
 Run the approved end-to-end verifier. Require all of the following:
 
@@ -118,7 +118,7 @@ tokens, endpoints, certificate subjects, local trust paths, or response bodies.
 
 Expected: `enforcement_verified`
 
-### Step 5: persist_outcome [depends_on: verify_enforcement] [mcp_tool: graph_write]
+### Step 5: persist_outcome [depends_on: Step 4] [mcp_tool: graph_write]
 
 Persist the workflow status, profile digests, policy decisions, bounded aggregate
 checks, and timestamps. Never persist environment values, identities, credentials,

@@ -8,7 +8,7 @@ import urllib3
 from pydantic import ValidationError
 
 from models import ExampleResourceModel, ExampleResourceResponse, Response
-from agent_utilities.decorators import require_auth
+from agent_utilities.core.decorators import require_auth
 from agent_utilities.exceptions import (
     AuthError,
     UnauthorizedError,

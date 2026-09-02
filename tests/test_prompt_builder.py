@@ -55,7 +55,7 @@ def test_scaffold_main_agent_template_is_canonical():
     mod = _load_scaffold_module()
     rendered = mod.render_main_agent_json("Widget", "Widget Api Agent.", "widget-api")
     data = json.loads(rendered)
-    errs = validate_canonical(data, strict=True)
+    errs = validate_canonical(data)
     assert errs == [], f"scaffold main_agent template drifted from canonical: {errs}"
     assert data["source"] == "widget-api"
     assert data["instructions"]["core_directive"].strip()
@@ -92,5 +92,5 @@ def test_prompt_builder_build_then_validate():
             text=True,
         ).returncode
         assert rc == 0
-        errs = validate_canonical(json.loads(out.read_text()), strict=True)
+        errs = validate_canonical(json.loads(out.read_text()))
         assert errs == []

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import socket
 import sys
 from pathlib import Path
 
@@ -66,7 +67,30 @@ def test_discovered_cross_origin_url_is_rejected(tmp_path: Path) -> None:
         )
 
 
-def test_output_is_confined_and_written_with_opaque_filename(tmp_path: Path) -> None:
+def test_output_is_confined_and_written_with_opaque_filename(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _runtime()
+    http_safety = importlib.import_module(
+        "agent_utilities.protocols.source_connectors.http_safety"
+    )
+
+    def resolve_public_test_authority(host: str, port: int | None):
+        assert host == "source.example"
+        assert port is None
+        return [
+            (
+                socket.AF_INET,
+                socket.SOCK_STREAM,
+                socket.IPPROTO_TCP,
+                "",
+                ("93.184.216.34", 0),
+            )
+        ]
+
+    monkeypatch.setattr(
+        http_safety.socket, "getaddrinfo", resolve_public_test_authority
+    )
     policy = _policy(tmp_path)
     output = policy.resolve_output_dir("crawl-output")
     assert output is not None

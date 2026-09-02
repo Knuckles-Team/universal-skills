@@ -8,7 +8,7 @@ must remain environment-neutral, current-only, and deterministic.
 
 | Path | Status | Contract |
 |---|:---:|---|
-| `pyproject.toml` | R | Python 3.11–3.14; `agent-utilities[mcp]>=2.0.0,<3.0.0` and `epistemic-graph[full]>=3.0.0,<4.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
+| `pyproject.toml` | R | Python 3.12–3.14 with Ruff `py312` and mypy `3.12`; `agent-utilities[mcp]>=1.27.1,<2.0.0` and `epistemic-graph[full]>=2.23.1,<3.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
 | `requirements.txt` | R | Exact newline rendering of `[project].dependencies`; no optional or recursive dependency. |
 | `.bumpversion.cfg` | R | Version fields and installed Docker targets only; no self-referencing-extra target. |
 | `.pre-commit-config.yaml` | R | Reviewed immutable hook revisions plus formatting, typing, tests, supply-chain, docs, privacy, skill, environment-drift, and generated-readme gates. |
@@ -30,7 +30,7 @@ must remain environment-neutral, current-only, and deterministic.
 
 | Path | Status | Contract |
 |---|:---:|---|
-| `docker/Dockerfile` | R | Digest-pinned bases and tools; `mcp` target installs `[mcp]`; `agent` target installs `[agent]`. Both contain mandatory `epistemic-graph[full]`; only the optional agent orchestration stack differs. |
+| `docker/Dockerfile` | R | The workspace compatibility-matrix authority pins Python 3.12 slim at `sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de`; `mcp` target installs `[mcp]`; `agent` target installs `[agent]`. Both contain mandatory `epistemic-graph[full]`; only the optional agent orchestration stack differs. |
 | `docker/debug.Dockerfile` | R | Digest-pinned development image with no network-to-shell installer. |
 | `docker/mcp.compose.yml` | R | Immutable image input, loopback publication, configured authentication for network mode, and read-only operator AgentConfig mount; no `env_file`. |
 | `docker/agent.compose.yml` | R | Same controls for MCP and agent services; internal service traffic may use container-local HTTP, while external traffic requires authenticated TLS ingress. |

@@ -104,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
     blueprint = build(args)
 
     # Validate before writing (scaffold skeletons are allowed to be incomplete).
-    errs = validate_canonical(blueprint, strict=True)
+    errs = validate_canonical(blueprint)
     if errs and not args.scaffold:
         print("Refusing to write non-canonical prompt:", file=sys.stderr)
         for e in errs:

@@ -64,13 +64,12 @@ Or scaffold a placeholder skeleton to fill in: `python scripts/build_prompt.py
 ## Validate a prompt
 
 ```bash
-python scripts/validate_prompt.py prompts/main_agent.json --strict
+python scripts/validate_prompt.py prompts/main_agent.json
 ```
 
-`--strict` fails on any legacy `content`/`input` key and any non-canonical
-field; without it, those are warnings. This is the same `validate_canonical`
-the CI gate (`check_prompt_schema.py`) and per-package `test_prompt_parity.py`
-use, so "valid here" means "valid in CI".
+The validator fails on any non-canonical field. It is the same
+`validate_canonical` used by the CI gate (`check_prompt_schema.py`) and
+per-package `test_prompt_parity.py`, so "valid here" means "valid in CI".
 
 ## Notes
 

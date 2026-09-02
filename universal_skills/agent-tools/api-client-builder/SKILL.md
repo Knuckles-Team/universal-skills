@@ -19,12 +19,12 @@ This skill provides step-by-step guidance on how to build a robust, standardized
 
 ## Standard API Client Structure
 
-All API clients MUST use the `api/` subdirectory pattern (the monolithic `api_client.py` single-file approach is deprecated):
+All API clients MUST use the `api/` subdirectory pattern and expose their public
+classes from `api/__init__.py`:
 
 ```
 {pkg_dir}/
 ├── auth.py                      # Authentication setup
-├── api_client.py                 # Facade re-exporting from api/ (backward compat)
 ├── models.py                     # Pydantic input/output models
 ├── api/
 │   ├── __init__.py              # Expose ApiClientBase + all domain clients
@@ -73,18 +73,12 @@ Create `{pkg_dir}/models.py`:
 #### `{pkg_dir}/api/__init__.py`
 - Exposes all classes for clean imports: `from {pkg_dir}.api import ApiClientBase, ApiClientDocker`
 
-#### `{pkg_dir}/api_client.py` (Facade)
-- Re-exports from `api/` for backward compatibility:
-  ```python
-  from {pkg_dir}.api import ApiClientBase, ApiClientSystem  # noqa: F401
-  ```
-
 ### 4. Implement Methods and Decorators
 
 For each endpoint:
 - Unpack arguments using Pydantic models (`Model(**kwargs)`)
 - Check required parameters — raise `agent_utilities.exceptions.MissingParameterError` if absent
-- Use `@require_auth` decorator from `agent_utilities.decorators` on authenticated methods
+- Use `@require_auth` decorator from `agent_utilities.core.decorators` on authenticated methods
 - Make HTTP requests using the initialized session
 - Parse JSON responses with appropriate Pydantic response model
 - Handle errors: 401/403 → `AuthError`/`UnauthorizedError`, invalid params → `ParameterError`

@@ -15,7 +15,7 @@ import logging
 from typing import Dict, Any, Optional, Union
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
-from agent_utilities.decorators import require_auth
+from agent_utilities.core.decorators import require_auth
 from agent_utilities.exceptions import (
     MissingParameterError,
     ParameterError,

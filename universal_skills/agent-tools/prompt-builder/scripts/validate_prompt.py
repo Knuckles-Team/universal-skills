@@ -4,7 +4,7 @@
 CONCEPT:AU-ORCH.routing.resolve-body-single-canonical. Wraps the single shared validator
 ``agent_utilities.prompting.structured.validate_canonical`` so authoring,
 CI (``check_prompt_schema.py``), and per-package ``test_prompt_parity`` all
-agree. Exit code 0 == conformant, 1 == violations (in the chosen mode).
+agree. Exit code 0 == conformant, 1 == canonical violations.
 """
 
 from __future__ import annotations
@@ -28,11 +28,6 @@ except ImportError:  # pragma: no cover - install hint
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", help="Prompt JSON file(s) to validate.")
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Fail on legacy content/input keys too (default: warn).",
-    )
     args = parser.parse_args(argv)
 
     failed = 0
@@ -44,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"FAIL {path}: unreadable ({type(e).__name__})", file=sys.stderr)
             failed += 1
             continue
-        errs = validate_canonical(data, strict=args.strict)
+        errs = validate_canonical(data)
         if errs:
             print(f"FAIL {path}:", file=sys.stderr)
             for e in errs:

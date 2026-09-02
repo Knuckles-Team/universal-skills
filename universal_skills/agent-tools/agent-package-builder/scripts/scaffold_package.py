@@ -55,7 +55,7 @@ version = "0.1.0"
 description = "{description}"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
-requires-python = ">=3.11, <3.15"
+requires-python = ">=3.12, <3.15"
 dependencies = [
     "agent-utilities[mcp]>=1.27.1,<2.0.0",
     "epistemic-graph[full]>=2.23.1,<3.0.0",{gql_core_dep}
@@ -122,10 +122,10 @@ include-package-data = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py312"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true
 check_untyped_defs = true
 
@@ -507,7 +507,7 @@ DOCKERFILE = """\
 #   docker build --target agent -t {package_name}:local .
 #   docker build --target mcp   -t {package_name}:mcp    .
 # See agent-packages/CLAUDE.md "Connector recipe" for the tag contract.
-FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS builder-base
+FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS builder-base
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
@@ -529,7 +529,7 @@ FROM builder-base AS builder-agent
 RUN --mount=type=cache,target=/root/.cache/uv \\
     uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[agent]>=0.1.0
 
-FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS runtime-base
+FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS runtime-base
 ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
@@ -557,7 +557,7 @@ CMD ["{agent_cmd}"]
 """
 
 DEBUG_DOCKERFILE = """\
-FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3
+FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 
 ARG HOST=127.0.0.1
@@ -1479,7 +1479,7 @@ ROOT_AGENTS_MD = """\
 > in sync. Edit **this** file, not `CLAUDE.md`.
 
 ## Tech Stack & Architecture
-- Language/Version: Python 3.11+
+- Language/Version: Python 3.12–3.14
 - Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
 - Architecture:
@@ -1760,7 +1760,7 @@ AUTH_PY = """\
 \"\"\"Resolve reference-only provider configuration at the client boundary.\"\"\"
 
 from agent_utilities.base_utilities import get_logger
-from agent_utilities.core.config import AgentConfig
+from agent_utilities.core import config as config_module
 from agent_utilities.core.exceptions import AuthError, UnauthorizedError
 from agent_utilities.core.provider_runtime import (
     ResolvedProviderRuntime,
@@ -1774,13 +1774,13 @@ _client = None
 _provider_runtime: ResolvedProviderRuntime | None = None
 
 
-def get_client(config: AgentConfig | None = None) -> ApiClientSystem:
+def get_client(config: config_module.AgentConfig | None = None) -> ApiClientSystem:
     \"\"\"Build one client from ``provider_configs.{short_name}`` in AgentConfig.\"\"\"
     global _client, _provider_runtime
     if _client is not None:
         return _client
 
-    active_config = config or AgentConfig()
+    active_config = config or config_module.AgentConfig()
     runtime = resolve_provider_runtime_profile("{short_name}", config=active_config)
     if not runtime.endpoint or runtime.tls is None:
         runtime.close()
@@ -3195,7 +3195,7 @@ DOCS_INSTALLATION_MD = """\
 
 ## Requirements
 
-- **Python 3.11 – 3.14**.
+- **Python 3.12–3.14**.
 - A provider profile in `AgentConfig` containing endpoint, credential, and TLS references.
 
 ## From PyPI (recommended)

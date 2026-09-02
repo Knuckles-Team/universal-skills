@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agent_utilities.core.config import AgentConfig
+from agent_utilities.core import config as config_module
 from agent_utilities.protocols.source_connectors.http_safety import safe_get_bytes
 
 _SEARCH_RESPONSE_LIMIT = 4 * 1024 * 1024
@@ -24,7 +24,7 @@ def fetch_json(
 ) -> dict[str, Any]:
     """Fetch and decode one bounded JSON object through the shared egress policy."""
 
-    cfg = AgentConfig()
+    cfg = config_module.AgentConfig()
     body, encoding = safe_get_bytes(
         url,
         params=params,

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urldefrag, urlparse
 
-from agent_utilities.core.config import AgentConfig
+from agent_utilities.core import config as config_module
 from agent_utilities.core.http_client import create_http_client
 from agent_utilities.core.paths import data_dir
 from agent_utilities.core.transport_security import resolve_tls_profile
@@ -132,9 +132,9 @@ class CrawlerSecurityPolicy:
 
     @classmethod
     def from_agent_config(
-        cls, config: AgentConfig | None = None
+        cls, config: config_module.AgentConfig | None = None
     ) -> "CrawlerSecurityPolicy":
-        cfg = config or AgentConfig()
+        cfg = config or config_module.AgentConfig()
         private_hosts = normalize_allowed_hosts(cfg.source_http_allowed_private_hosts)
         redirect_hosts = normalize_allowed_hosts(cfg.source_http_allowed_redirect_hosts)
         if len(private_hosts | redirect_hosts) > 256:
