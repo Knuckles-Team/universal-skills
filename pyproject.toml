@@ -151,6 +151,14 @@ universal_skills = [
     "**/.*",
     "**/.*/**/*",
 ]
+# The documentation-readiness builder is loaded from the installed package by
+# repository-manager. Keep its two authority resources declared on their owning
+# namespace package as an explicit contract in addition to the catalog-wide
+# resource glob above.
+"universal_skills.agent-tools.agent-package-builder.scripts" = [
+    "agent_readiness.py",
+    "agent_readiness_schema.json",
+]
 
 [tool.setuptools.exclude-package-data]
 "*" = [
