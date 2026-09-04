@@ -85,9 +85,10 @@ def analyze_docstrings(project_path: Path) -> dict:
     """Analyze docstring coverage in Python files.
 
     Symbol discovery prefers the epistemic-graph AST parser (``_kg_ast.parse_symbols``
-    — engine tree-sitter service, or its own version-independent local ``ast``
-    fallback when the service is unreachable) over hand-walking stdlib ``ast``
-    here. Docstring presence is then a parser-agnostic line-based heuristic
+    — strict ``eg-native-inventory/v1``, or the helper's version-independent local
+    ``ast`` fallback when the native client/engine is unavailable) over
+    hand-walking stdlib ``ast`` here. Docstring presence is then a
+    parser-agnostic line-based heuristic
     (``has_docstring_near``), so this function never touches ``ast.Constant``/
     ``ast.Str``-class nodes directly — that logic lives once, in ``_kg_ast.py``'s
     tier-3 fallback, guarded to the modern (post-3.12) ``ast.Constant`` API.
