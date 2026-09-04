@@ -89,7 +89,7 @@ Python gates below were re-run by this skill on `1d83cf4b`:
 | `exact-fault-restart-harness-architecture` | **FAIL** — 18 missing literals across the fault seam (`MutationCommitPhase`, `CertificationFaultSpec`, `EPISTEMIC_GRAPH_CERTIFICATION_FAULT`, `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)`, …). |
 | `p2-modality-architecture` | **FAIL** — `KnowledgeStream retains a claims-only or conditionally fenced served path`. Real defect; owner is the KnowledgeStream/lease owner. Do not relax the gate. |
 | `rust-arch-lint` | **FAIL** — see below. |
-| `dependency-cruiser-architecture` | Not re-measured. Its recorded failure (`no-unresolved: @msgpack/msgpack`) is an invalid metric anyway: the dep is declared and lockfile-pinned but `node_modules` is uncommitted and the hook runs no `npm ci`, so it cannot pass in any clean checkout. |
+| `dependency-cruiser-architecture` | **PASSES.** Measured 2026-09-04: `pre-commit run dependency-cruiser-architecture --all-files` -> Passed, with `clients/js/node_modules` ABSENT. This row previously recorded the gate as unable to pass in any clean checkout because `node_modules` is uncommitted and the hook runs no `npm ci`. That reasoning was plausible and wrong -- the gate resolves `4 modules, 3 dependencies` without installed deps. **Re-run a gate before repeating what a document says about it, including this one.** This row was stale within hours of being written. |
 
 Heavy hooks (`cargo-clippy`, `cargo-clippy-all-features`, `cargo-deny-advisories`,
 `wheel-smoke`, `pytest`, `constrained-parallelism`) were **not** run here and remain
