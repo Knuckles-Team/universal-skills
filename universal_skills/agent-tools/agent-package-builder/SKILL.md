@@ -91,6 +91,16 @@ Run the script and generate `uv.lock` with the repository's normal dependency wo
 The scaffold includes:
 
 - current Python packaging, immutable supply-chain workflows, and pre-commit gates;
+- one pinned structural scanner profile: KISS, CCCC, and dupehound over changed
+  Python/source files at pre-commit; all-format jscpd delta plus an advisory full
+  census at pre-push/manual; KISS and CCCC full censuses at pre-push/manual and
+  CI; and a scoped import-linter architecture contract;
+- a dedicated `.github/workflows/scanners.yml` that provisions the exact scanner
+  versions from the checked-in profile and runs the same changed-source, delta,
+  and census modes without modifying the checkout;
+- an idempotent, non-destructive rerun contract: existing project-owned files are
+  preserved (even when the template has changed), while missing generated files
+  are added;
 - one canonical `api/` package—no facade alias or compatibility layer;
 - one intent-routed MCP surface with an optional verbose operation surface;
 - one A2A agent entry point using `agent-runtime`;
@@ -98,6 +108,13 @@ The scaffold includes:
 - mandatory native knowledge-graph ingestion backed by `epistemic-graph[full]`;
 - a strict MkDocs site and generated deployment/readme markers;
 - least-privilege container and runtime configuration templates.
+
+Scanner wrappers, policy files, and `.pre-commit-config.yaml` are source-checkout
+development artifacts. `MANIFEST.in` carries them into source distributions so a
+checkout recreated from an sdist retains the reviewed quality surface, while
+runtime wheels and Docker images contain only package/runtime data and never
+install scanner binaries. Native tools are provisioned by the reviewed host or
+scanner CI image; hooks never download or mutate toolchains.
 
 ### 3. Enforce the dependency contract
 
@@ -226,7 +243,10 @@ python -m agent_utilities.mcp.readme_mcp_examples --check
 Also verify:
 
 - every file in `PARITY_MANIFEST.md` exists;
-- generated blocks are idempotent;
+- generated blocks are idempotent and a second scaffold run does not overwrite
+  project-owned scanner/configuration files;
+- `.github/workflows/scanners.yml` and `[tool.agent_utilities.scanners]` carry
+  the same exact CCCC/KISS/dupehound/jscpd/import-linter versions;
 - dependency metadata contains current bounded ranges and mandatory
   `epistemic-graph[full]`;
 - no recursive extra, legacy alias, generated `.env`, raw credential, verification
