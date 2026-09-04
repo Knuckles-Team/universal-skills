@@ -11,7 +11,9 @@ must remain environment-neutral, current-only, and deterministic.
 | `pyproject.toml` | R | Python 3.12–3.14 with Ruff `py312` and mypy `3.12`; `agent-utilities[mcp]>=1.27.1,<2.0.0` and `epistemic-graph[full]>=2.23.1,<3.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
 | `requirements.txt` | R | Exact newline rendering of `[project].dependencies`; no optional or recursive dependency. |
 | `.bumpversion.cfg` | R | Version fields and installed Docker targets only; no self-referencing-extra target. |
-| `.pre-commit-config.yaml` | R | Reviewed immutable hook revisions plus formatting, typing, tests, supply-chain, docs, privacy, skill, environment-drift, and generated-readme gates. |
+| `.pre-commit-config.yaml` | R | Reviewed immutable hook revisions plus formatting, typing, tests, supply-chain, docs, privacy, skill, environment-drift, and generated-readme gates. Scanner changed-source modes run at pre-commit; KISS/CCCC census and jscpd delta/census modes run only at pre-push/manual and CI. |
+| `.cccc.toml`, `.kiss/kiss.toml`, `.importlinter` | R | Non-baseline structural policies: CCCC 10/15 caps, explicit KISS thresholds, and package-layer import contracts. Native tools are provisioned by the reviewed host/CI toolchain, never installed by hooks. |
+| `scripts/check_scanners.py`, `scripts/run_kiss.sh` | R | Fail-closed wrappers for pinned CCCC/KISS/dupehound/import-linter checks, KISS/CCCC full censuses, and all-format jscpd delta/census. Changed-source checks run at pre-commit; tree work is pre-push/manual and CI only. Generated/vendor/fixture paths are excluded; Python is included in jscpd. These are source-checkout tools, retained in sdists but not runtime wheel data. |
 | `.env.example` | R | Safe non-secret runtime switches and comments pointing to `AgentConfig`; no endpoint, credential, certificate, telemetry key, or TLS-verification value. |
 | `.env` | — | Must not be generated or committed. |
 | `mcp_config.json` | R | Installed stdio entry point, `MCP_TOOL_MODE=intent`, and non-secret tool toggles only. Provider values are resolved from `AgentConfig`. |
@@ -22,7 +24,7 @@ must remain environment-neutral, current-only, and deterministic.
 | `CLAUDE.md` | R | Stub importing the canonical `AGENTS.md`. |
 | `LICENSE` | R | MIT license using `Repository Maintainers`, never a person's identity. |
 | `CHANGELOG.md` | R | Keep a Changelog structure. |
-| `MANIFEST.in` | R | Includes prompts, skills, ontologies, connector presets, and package MCP config. |
+| `MANIFEST.in` | R | Includes prompts, skills, ontologies, connector presets, package MCP config, and the scanner policies/wrappers needed to recreate the source-checkout quality surface from an sdist. Runtime wheels/images do not install scanner binaries. |
 | `pytest.ini` | R | Unit tests by default; explicit integration marker. |
 | `.gitignore`, `.gitattributes`, `.dockerignore`, `.codespellignore`, `.vulture_ignore` | R | Portable repository hygiene; `.env` remains ignored even though it is never generated. |
 
@@ -36,6 +38,7 @@ must remain environment-neutral, current-only, and deterministic.
 | `docker/agent.compose.yml` | R | Same controls for MCP and agent services; internal service traffic may use container-local HTTP, while external traffic requires authenticated TLS ingress. |
 | `docker/starship.toml` | R | Presentation-only shell configuration. |
 | `.github/workflows/pipeline.yml`, `.github/workflows/pages.yml` | R | Reusable workflows pinned to reviewed commit digests. |
+| `.github/workflows/scanners.yml` | R | Dedicated CI source-checkout gate: provisions exact CCCC 1.6.0, KISS 0.4.10, dupehound 0.1.2, jscpd 5.0.16, and import-linter 2.14 versions, asserts the checked-in profile, and runs changed-source, pre-push delta, and KISS/CCCC/jscpd census modes. No hook-time installation or permanent baseline. |
 
 ## Documentation contract
 
