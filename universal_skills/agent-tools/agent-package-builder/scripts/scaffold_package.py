@@ -10,6 +10,11 @@ AGENTS.md+CLAUDE.md
 stub pattern, and the a2a.json / opencode.json / pytest.ini / MANIFEST.in /
 .codespellignore / .vulture_ignore config set.
 
+The generated quality surface also carries a pinned, host-provisioned scanner
+profile: changed-source KISS/CCCC/dupehound/import-linter checks at pre-commit,
+and KISS/CCCC full censuses plus all-format jscpd delta and an advisory full-tree
+census at pre-push/manual and CI.
+
 See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
 """
 
@@ -37,6 +42,51 @@ def to_display(name: str) -> str:
 def to_upper_env(name: str) -> str:
     """Convert kebab-case to UPPER_SNAKE env prefix."""
     return name.replace("-", "_").upper()
+
+
+def _write_generated_text(path: Path, content: str) -> bool:
+    """Create a generated text file without overwriting an existing file.
+
+    A scaffold may be re-run in a checkout that already contains operator or
+    project-owned files.  Matching content is already in the desired state;
+    different content is deliberately preserved so a generator update cannot
+    destroy local work.  The return value tells the caller whether a file was
+    created.
+    """
+
+    if path.exists() or path.is_symlink():
+        if path.is_file() and not path.is_symlink():
+            try:
+                identical = path.read_text(encoding="utf-8") == content
+            except (OSError, UnicodeError):
+                identical = False
+            state = "already current" if identical else "preserved existing"
+        else:
+            state = "preserved existing non-file"
+        print(f"  ↷ {path} ({state})")
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return True
+
+
+def _copy_generated_file(path: Path, destination: Path) -> bool:
+    """Copy a bundled artifact only when its destination does not exist."""
+
+    if destination.exists() or destination.is_symlink():
+        if destination.is_file() and not destination.is_symlink():
+            try:
+                identical = destination.read_bytes() == path.read_bytes()
+            except OSError:
+                identical = False
+            state = "already current" if identical else "preserved existing"
+        else:
+            state = "preserved existing non-file"
+        print(f"  ↷ {destination} ({state})")
+        return False
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, destination)
+    return True
 
 
 # ── Templates (golden standard: gitlab-api) ──────────────────────────────────
@@ -129,6 +179,24 @@ python_version = "3.12"
 ignore_missing_imports = true
 check_untyped_defs = true
 
+# Structural quality scanners are host/CI tools, never hook-installed
+# dependencies.  The generated wrappers read this contract, reject version
+# drift, and exit 2 when a required binary/configuration cannot be trusted.
+# Keep these versions aligned with the fleet scanner image/toolchain.
+[tool.agent_utilities.scanners]
+cccc_version = "1.6.0"
+kiss_version = "0.4.10"
+dupehound_version = "0.1.2"
+jscpd_version = "5.0.16"
+import_linter_version = "2.14"
+cccc_max_cyclomatic = 10
+cccc_max_cognitive = 15
+dupehound_threshold = 0.85
+dupehound_min_tokens = 40
+jscpd_min_tokens = 50
+jscpd_min_lines = 5
+jscpd_mode = "mild"
+
 [dependency-groups]
 dev = [
     "pytest-timeout>=2.4.0",
@@ -188,6 +256,9 @@ replace = __version__ = "{{new_version}}"
 PRECOMMIT_CONFIG = """\
 default_language_version:
   python: python3
+# Install both client-side hook types; without this, `pre-commit install`
+# wires only pre-commit and the heavy jscpd gate is silently skipped on push.
+default_install_hook_types: [pre-commit, pre-push]
 # Phase 0 dev-velocity contract (graph-os-completion-program, PHASE-0-DEV-VELOCITY.md
 # section 2): pre-commit = FAST (<=5s warm), pre-push = HEAVY (pytest, cargo, uv
 # lock verification, ...). A hook with no explicit `stages:` below is commit-only —
@@ -258,6 +329,78 @@ repos:
   hooks:
   - id: nbqa-ruff
     args: ["--fix"]
+- repo: local
+  hooks:
+  # Structural checks are deliberately local: their binaries are provisioned
+  # by the reviewed developer/CI toolchain, never downloaded by a hook.
+  # The wrappers inspect staged paths and return 2 when a required tool or
+  # checked-in policy cannot be trusted (missing is never a false green).
+  - id: scanner-kiss-changed
+    name: KISS — changed Python source
+    entry: bash scripts/run_kiss.sh
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: scanner-cccc-changed
+    name: CCCC — changed source complexity (10/15)
+    entry: python3 scripts/check_scanners.py cccc
+    language: system
+    pass_filenames: false
+    always_run: true
+  - id: scanner-dupehound-changed
+    name: dupehound — changed function twins
+    entry: python3 scripts/check_scanners.py dupehound
+    language: system
+    pass_filenames: false
+    always_run: true
+  # Import-linter is scoped by the wrapper to changed Python modules, so it is
+  # cheap enough for pre-commit while still checking the complete architecture
+  # contract whenever a relevant module changes.
+  - id: scanner-import-linter
+    name: import-linter — package architecture
+    entry: python3 scripts/check_scanners.py import-linter
+    language: system
+    pass_filenames: false
+    always_run: true
+- repo: local
+  hooks:
+  # Full KISS/CCCC censuses are deliberately kept out of commit-time hooks.
+  # They recompute the current tree without accepting a permanent baseline;
+  # CI runs the same modes on every push and pull request.
+  - id: scanner-kiss-census
+    name: KISS — full-tree census
+    entry: python3 scripts/check_scanners.py kiss-census
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-push, manual]
+  - id: scanner-cccc-census
+    name: CCCC — full-tree census (10/15)
+    entry: python3 scripts/check_scanners.py cccc-census
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-push, manual]
+  # jscpd intentionally scans Python as well as templates/configuration.  It
+  # catches copied blocks inside otherwise distinct functions; dupehound is a
+  # complementary whole-function detector, not a reason to omit Python here.
+  # Both passes are pre-push/manual only: no heavy tree walk runs at commit.
+  # On a real push pre-commit supplies PRE_COMMIT_FROM_REF/TO_REF; the wrapper
+  # compares those commits instead of looking only at an already-clean index.
+  - id: scanner-jscpd-delta
+    name: jscpd — new blocks across code/templates/config
+    entry: python3 scripts/check_scanners.py jscpd
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-push, manual]
+  - id: scanner-jscpd-census
+    name: jscpd — full-tree census (advisory)
+    entry: python3 scripts/check_scanners.py jscpd-census
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-push, manual]
 - repo: local
   hooks:
   - id: uv-lock
@@ -487,6 +630,93 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+"""
+
+# Scanner policy files are intentionally separate from the pre-commit YAML:
+# KISS owns its own TOML grammar, CCCC's caps are human-readable, and
+# import-linter's contracts should be reviewable without decoding a Python
+# string.  Tool versions live in [tool.agent_utilities.scanners] in
+# PYPROJECT_TOML; these files contain thresholds/contracts only.
+CCCC_CONFIG = """\
+# Structural complexity policy for generated provider packages.
+# The wrapper reads these caps and invokes cccc 1.6.0 from the provisioned
+# developer/CI toolchain.  No baseline is accepted: changed functions must be
+# under both caps, and the full census remains a release/CI responsibility.
+max-cyclomatic = 10
+max-cognitive = 15
+"""
+
+KISS_CONFIG = """\
+# KISS policy for generated provider packages.
+#
+# This is a checked-in policy, not a generated baseline.  The wrapper always
+# passes this file explicitly, rejects an ambient .kissconfig, rejects unknown
+# keys, and invokes one path at a time because kiss 0.4.10 has a multi-path
+# false-green defect.  Disabled metrics are intentionally loud (999999), not
+# silently omitted; another gate owns those definitions where noted.
+[global]
+min_similarity          = 0.9
+duplication_enabled     = true
+orphan_module_enabled   = false
+comment_removal_enabled = false
+docs_allowed            = ["./"]
+orphan_allowed          = []
+
+[python]
+max_indentation            = 4
+nested_function_depth      = 2
+return_values_per_function = 5
+decorators_per_function    = 5
+boolean_parameters         = 1
+statements_per_try_block   = 3
+returns_per_function       = 5
+positional_args            = 3
+statements_per_function    = 35
+local_variables            = 15
+calls_per_function         = 20
+methods_per_class          = 10
+imported_names_per_file    = 30
+statements_per_file        = 200
+lines_per_file             = 400
+functions_per_file         = 20
+interface_types_per_file   = 5
+
+# Branching and import topology have separate, more precise owners.  Keep
+# these metrics visible in `kiss stats` without letting two tools disagree on
+# the same definition.
+branches_per_function   = 999999
+keyword_only_args       = 999999
+concrete_types_per_file = 999999
+cycle_size              = 999999
+dependency_depth        = 999999
+indirect_dependencies   = 999999
+"""
+
+IMPORTLINTER_CONFIG = """\
+[importlinter]
+root_package = {pkg_dir}
+
+# Public API/client code is the lowest package layer.  It may use shared
+# framework dependencies, but never reach upward into transport or runtime
+# entrypoints.  The contract is intentionally small and stable for generated
+# packages; add domain-specific contracts when the provider grows.
+[importlinter:api-does-not-import-runtimes]
+name = API layer does not import MCP or agent runtime layers
+type = forbidden
+source_modules =
+    {pkg_dir}.api
+forbidden_modules =
+    {pkg_dir}.mcp
+    {pkg_dir}.mcp_server
+    {pkg_dir}.agent_server
+
+[importlinter:mcp-does-not-import-agent]
+name = MCP tools do not import the A2A agent runtime
+type = forbidden
+source_modules =
+    {pkg_dir}.mcp
+forbidden_modules =
+    {pkg_dir}.agent_server
 """
 
 DOCKERFILE = """\
@@ -936,6 +1166,17 @@ MANIFEST_IN = """\
 include LICENSE
 include README.md
 include requirements.txt
+# Scanner policies and wrappers are included in source distributions so a
+# checkout recreated from the sdist has the same reviewed quality surface.
+# They remain source-checkout tooling, not runtime wheel/package data; hooks
+# never install these native tools and the Docker runtime excludes scripts/.
+include .pre-commit-config.yaml
+include .cccc.toml
+include .importlinter
+include .kiss/kiss.toml
+include scripts/check_scanners.py
+include scripts/run_kiss.sh
+include .github/workflows/scanners.yml
 recursive-include {pkg_dir} *.py *.json *.md *.yaml *.yml
 """
 
@@ -1029,6 +1270,14 @@ dmypy.json
 *errors*.txt
 failed_tests.txt
 trace.txt
+
+# Structural scanner runtime state.  The threshold/config files under
+# `.kiss/` are generated and tracked; only kiss's unsafe auto-config and
+# transient reports are ignored.  Hooks refuse `.kissconfig` instead of
+# silently accepting its calibrated defaults.
+.kissconfig
+.kiss/*.json
+.jscpd-report/
 
 # P0.2 (graph-os-completion-program): materialized, dev-machine-only symlink to
 # the real agent-utilities checkout, used so this package resolves standalone
@@ -1356,6 +1605,159 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
+"""
+
+# Structural scanners run in a dedicated source-checkout workflow.  Keeping
+# provisioning here, rather than in a pre-commit hook or a runtime package,
+# makes the no-download hook contract explicit while ensuring every generated
+# project has a reproducible CI census.  The profile assertion intentionally
+# duplicates the checked-in versions: if either side drifts, CI fails before a
+# scanner can report a result under the wrong toolchain.
+SCANNER_CI_YML = """\
+name: Structural scanner gates
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+      - '**/*.pyi'
+      - '**/*.c'
+      - '**/*.cc'
+      - '**/*.cpp'
+      - '**/*.go'
+      - '**/*.h'
+      - '**/*.java'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.kt'
+      - '**/*.php'
+      - '**/*.rb'
+      - '**/*.rs'
+      - '**/*.scala'
+      - '**/*.swift'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.bash'
+      - '**/*.css'
+      - '**/*.html'
+      - '**/*.htm'
+      - '**/*.md'
+      - '**/*.scss'
+      - '**/*.sh'
+      - '**/*.sql'
+      - '**/*.xml'
+      - '**/*.ini'
+      - '**/*.toml'
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/*.json'
+      - '**/Dockerfile*'
+      - '**/compose*.yml'
+      - '**/compose*.yaml'
+      - '.cccc.toml'
+      - '.importlinter'
+      - '.kiss/**'
+      - 'pyproject.toml'
+      - '.pre-commit-config.yaml'
+      - 'scripts/check_scanners.py'
+      - 'scripts/run_kiss.sh'
+      - '.github/workflows/scanners.yml'
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scanners:
+    name: Pinned structural scanners
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Install the exact scanner toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.95.0 --profile minimal
+          rustup default 1.95.0
+          cargo install cccc-cli --version 1.6.0 --locked
+          cargo install kiss-ai --version 0.4.10 --locked
+          cargo install dupehound --version 0.1.2 --locked
+          npm install --global jscpd@5.0.16
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            'import-linter==2.14' 'pre-commit==4.3.0'
+          scanner_bin="${CARGO_HOME:-$HOME/.cargo}/bin"
+          {
+            echo "CCCC_BIN=$scanner_bin/cccc"
+            echo "KISS_BIN=$scanner_bin/kiss"
+            echo "DUPEHOUND_BIN=$scanner_bin/dupehound"
+            echo "JSCPD_BIN=$(npm prefix --global)/bin/jscpd"
+          } >> "$GITHUB_ENV"
+          python - <<'PY'
+          import os
+          import sysconfig
+          from pathlib import Path
+
+          scripts = Path(sysconfig.get_path('scripts'))
+          with Path(os.environ['GITHUB_ENV']).open('a', encoding='utf-8') as handle:
+              handle.write(f'IMPORT_LINTER_BIN={scripts / "lint-imports"}\\n')
+          PY
+
+      - name: Assert the checked-in scanner profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import tomllib
+
+          with open('pyproject.toml', 'rb') as handle:
+              profile = tomllib.load(handle)['tool']['agent_utilities']['scanners']
+          expected = {
+              'cccc_version': '1.6.0',
+              'kiss_version': '0.4.10',
+              'dupehound_version': '0.1.2',
+              'jscpd_version': '5.0.16',
+              'import_linter_version': '2.14',
+          }
+          drift = {key: (profile.get(key), value) for key, value in expected.items()
+                   if profile.get(key) != value}
+          if drift:
+              raise SystemExit(f'scanner profile drift: {drift}')
+          PY
+
+      - name: Validate pre-commit configuration
+        run: python -m pre_commit validate-config
+
+      - name: Run changed-source scanner modes
+        run: |
+          python -m pre_commit run scanner-kiss-changed --all-files
+          python -m pre_commit run scanner-cccc-changed --all-files
+          python -m pre_commit run scanner-dupehound-changed --all-files
+          python -m pre_commit run scanner-import-linter --all-files
+
+      - name: Run push delta and full census modes
+        env:
+          CX_SCANNER_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CX_SCANNER_TARGET_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -m pre_commit run scanner-kiss-census --all-files --hook-stage pre-push
+          python -m pre_commit run scanner-cccc-census --all-files --hook-stage pre-push
+          python -m pre_commit run scanner-jscpd-delta --all-files --hook-stage pre-push
+          python -m pre_commit run scanner-jscpd-census --all-files --hook-stage pre-push
 """
 
 PAGES_YML = """\
@@ -3635,7 +4037,7 @@ def test_browser_html_is_retained_for_browser_accept_headers():
 
     assert response.media_type == BROWSER_HTML_MEDIA_TYPE
     assert response.body.startswith("<!doctype html>")
-    assert "data-error-code=\"invalid_request\"" in response.body
+    assert 'data-error-code="invalid_request"' in response.body
 """
 
 TESTS_MCP_VALIDATION = """\
@@ -3798,6 +4200,9 @@ def scaffold(
         root / "pyproject.toml": (PYPROJECT_TOML, True),
         root / ".bumpversion.cfg": (BUMPVERSION_CFG, True),
         root / ".pre-commit-config.yaml": (PRECOMMIT_CONFIG, False),
+        root / ".cccc.toml": (CCCC_CONFIG, False),
+        root / ".kiss" / "kiss.toml": (KISS_CONFIG, False),
+        root / ".importlinter": (IMPORTLINTER_CONFIG, True),
         root / ".dockerignore": (DOCKERIGNORE, True),
         root / ".env.example": (ENV_EXAMPLE, True),
         root / ".gitignore": (GITIGNORE, False),
@@ -3822,6 +4227,7 @@ def scaffold(
         root / "docker/starship.toml": (STARSHIP_TOML, True),
         # GitHub workflows
         root / ".github/workflows/pipeline.yml": (PIPELINE_YML, False),
+        root / ".github/workflows/scanners.yml": (SCANNER_CI_YML, False),
         root / ".github/workflows/pages.yml": (PAGES_YML, False),
         root / ".github/workflows/windows-ci.yml": (WINDOWS_CI_YML, True),
         # Docs site (7 standard pages)
@@ -3945,10 +4351,9 @@ def scaffold(
 
     # ── Write all files ──────────────────────────────────────────────────
     for path, (template, needs_format) in files.items():
-        path.parent.mkdir(parents=True, exist_ok=True)
         content = template.format(**ctx) if needs_format else template
-        path.write_text(content, encoding="utf-8")
-        print(f"  ✅ {path.relative_to(root.parent)}")
+        if _write_generated_text(path, content):
+            print(f"  ✅ {path.relative_to(root.parent)}")
 
     # Bundled golden validation scripts (verbatim from gitlab-api)
     for script_name in (
@@ -3965,13 +4370,17 @@ def scaffold(
         # false-positive limitation. Wired into .pre-commit-config.yaml's
         # check-import-safety hook below.
         "check_import_safety.py",
+        # Structural scanner dispatcher.  It is copied as a single, standard
+        # library-only helper so each generated package owns the same
+        # fail-closed staged/delta semantics without hook-time installation.
+        "check_scanners.py",
+        "run_kiss.sh",
     ):
         src = TEMPLATES_DIR / script_name
         dst = root / "scripts" / script_name
         if src.is_file():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dst)
-            print(f"  ✅ {dst.relative_to(root.parent)} (bundled golden script)")
+            if _copy_generated_file(src, dst):
+                print(f"  ✅ {dst.relative_to(root.parent)} (bundled golden script)")
         else:
             print(
                 f"  ⚠️  {script_name} template missing — copy it from "
@@ -3986,11 +4395,10 @@ def scaffold(
         src = _scaffolder_scripts_dir / script_name
         dst = root / "scripts" / script_name
         if src.is_file():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dst)
-            print(
-                f"  ✅ {dst.relative_to(root.parent)} (bundled workspace-source guard)"
-            )
+            if _copy_generated_file(src, dst):
+                print(
+                    f"  ✅ {dst.relative_to(root.parent)} (bundled workspace-source guard)"
+                )
 
     # Documentation readiness is a builder-owned contract.  Copy the exact
     # generator/schema pair so every package inherits the same deterministic,
@@ -4004,16 +4412,14 @@ def scaffold(
         or not readiness_tck.is_file()
     ):
         raise FileNotFoundError("agent-readiness builder contract is incomplete")
-    shutil.copyfile(readiness_script, root / "scripts" / "generate_agent_readiness.py")
-    shutil.copyfile(readiness_schema, root / "docs" / "agent-readiness.schema.json")
-    shutil.copyfile(readiness_tck, root / "scripts" / "agent_readiness_tck.py")
-    print(
-        f"  ✅ {(root / 'scripts/generate_agent_readiness.py').relative_to(root.parent)}"
+    readiness_outputs = (
+        (readiness_script, root / "scripts" / "generate_agent_readiness.py"),
+        (readiness_schema, root / "docs" / "agent-readiness.schema.json"),
+        (readiness_tck, root / "scripts" / "agent_readiness_tck.py"),
     )
-    print(
-        f"  ✅ {(root / 'docs/agent-readiness.schema.json').relative_to(root.parent)}"
-    )
-    print(f"  ✅ {(root / 'scripts/agent_readiness_tck.py').relative_to(root.parent)}")
+    for source, destination in readiness_outputs:
+        if _copy_generated_file(source, destination):
+            print(f"  ✅ {destination.relative_to(root.parent)}")
 
     # Generate current discovery artifacts only after all source pages and the
     # explicit applicability input exist.  This calls the same reviewed
@@ -4036,8 +4442,8 @@ def scaffold(
     deps = parsed_toml.get("project", {}).get("dependencies", [])
 
     req_path = root / "requirements.txt"
-    req_path.write_text("\n".join(deps) + "\n", encoding="utf-8")
-    print(f"  ✅ {req_path.relative_to(root.parent)}")
+    if _write_generated_text(req_path, "\n".join(deps) + "\n"):
+        print(f"  ✅ {req_path.relative_to(root.parent)}")
 
     # Auto-emit the root uv workspace [tool.uv.sources] entry for the new package
     # (CONCEPT:OS-5.72-workspace-uv-sources) — never a hand-edit, never a path
