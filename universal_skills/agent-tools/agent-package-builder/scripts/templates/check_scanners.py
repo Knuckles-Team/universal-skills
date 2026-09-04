@@ -47,14 +47,10 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 from io import BytesIO
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - generated projects require 3.11+
-    tomllib = None  # type: ignore[assignment]
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -241,8 +237,6 @@ def _fail(message: str) -> NoReturn:
 
 
 def _read_toml(path: Path) -> dict[str, Any]:
-    if tomllib is None:
-        _fail("Python 3.11+ tomllib is required")
     try:
         with path.open("rb") as handle:
             document = tomllib.load(handle)
