@@ -13,6 +13,7 @@ CONCEPT:CA-000 — Project Discovery & Classification
 
 import json
 import re
+import subprocess
 import sys
 import tomllib
 import uuid
@@ -299,25 +300,23 @@ def main():
             arg = sys.argv[i]
             i += 1
             if arg.startswith(("http://", "https://", "git@")):
-                try:
-                    import repository_manager
-
-                    temp_dir.mkdir(parents=True, exist_ok=True)
-                    repo_name = arg.rstrip("/").split("/")[-1]
-                    if repo_name.endswith(".git"):
-                        repo_name = repo_name[:-4]
-                    target_path = temp_dir / repo_name
-                    print(f"Cloning {arg} into {target_path}...", file=sys.stderr)
-                    git = repository_manager.Git()
-                    res = git.clone_repository(arg, str(target_path))
-                    if res.status == "success":
-                        paths.append(str(target_path))
-                        cleanup_needed = True
-                    else:
-                        print(f"Failed to clone {arg}: {res.error}", file=sys.stderr)
-                except ImportError:
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                repo_name = arg.rstrip("/").split("/")[-1]
+                if repo_name.endswith(".git"):
+                    repo_name = repo_name[:-4]
+                target_path = temp_dir / repo_name
+                print(f"Cloning {arg} into {target_path}...", file=sys.stderr)
+                clone = subprocess.run(
+                    ["git", "clone", "--", arg, str(target_path)],
+                    capture_output=True,
+                    text=True,
+                )
+                if clone.returncode == 0:
+                    paths.append(str(target_path))
+                    cleanup_needed = True
+                else:
                     print(
-                        f"repository-manager not installed, cannot clone {arg}",
+                        f"Failed to clone {arg}: {clone.stderr.strip()}",
                         file=sys.stderr,
                     )
             else:
