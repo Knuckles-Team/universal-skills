@@ -29,7 +29,7 @@ test = [
 ]
 agent-browser = []
 agent-builder = ["PyYAML>=6.0.3"]
-agent-package-builder = []
+agent-package-builder = ["PyYAML>=6.0.3"]
 agent-spawner = []
 mcp-client = ["fastmcp>=3.4.4", "python-dotenv>=1.2.2"]
 agent-workflows = ["httpx>=0.28.1", "PyYAML>=6.0.3"]

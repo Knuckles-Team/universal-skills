@@ -4606,6 +4606,9 @@ source = { editable = "." }
 agent-builder = [
     { name = "pyyaml" },
 ]
+agent-package-builder = [
+    { name = "pyyaml" },
+]
 agent-workflows = [
     { name = "httpx" },
     { name = "pyyaml" },
@@ -4828,6 +4831,7 @@ requires-dist = [
     { name = "python-dotenv", marker = "extra == 'mcp-client'", specifier = ">=1.2.2" },
     { name = "python-pptx", marker = "extra == 'document-tools'", specifier = ">=1.0.2" },
     { name = "pyyaml", marker = "extra == 'agent-builder'", specifier = ">=6.0.3" },
+    { name = "pyyaml", marker = "extra == 'agent-package-builder'", specifier = ">=6.0.3" },
     { name = "pyyaml", marker = "extra == 'agent-workflows'", specifier = ">=6.0.3" },
     { name = "pyyaml", marker = "extra == 'developer-utilities'", specifier = ">=6.0.3" },
     { name = "pyyaml", marker = "extra == 'skill-builder'", specifier = ">=6.0.3" },

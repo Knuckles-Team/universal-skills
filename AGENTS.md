@@ -78,8 +78,11 @@ and every `ontology_providers` `.ttl` into the federated ontology. So:
   that invokes a package-owned skill should list the owning package in its `requires:`
   frontmatter.
 - **System prompts** use the canonical `StructuredPrompt` format — author them with the
-  **`prompt-builder`** skill (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical). `agent-package-builder` scaffolds the
-  prompt + a starter skill + the entry-points automatically.
+  **`prompt-builder`** skill (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical) for
+  an agent-utilities-dependent package. `agent-package-builder` no longer scaffolds this
+  entry-point trio: RF-ADR-009 retargets it to `agent-connector-sdk`-based connectors,
+  which serve their skill/prompt/ontology content as native MCP primitives
+  (`ConnectorContent`) instead — see its `PARITY_MANIFEST.md`.
 
 ## Tech Stack & Architecture
 - **Language**: Python 3.10+
