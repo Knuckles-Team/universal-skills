@@ -6,6 +6,8 @@ file contract this exercises.
 from __future__ import annotations
 
 import importlib.util
+import json
+import re
 from pathlib import Path
 
 SCAFFOLD = (
@@ -120,6 +122,55 @@ def test_docs_publish_from_pages_not_docs(tmp_path):
     assert (root / "pages" / "index.md").is_file()
     mkdocs = (root / "mkdocs.yml").read_text(encoding="utf-8")
     assert "docs_dir: pages" in mkdocs
+    assert "theme:" not in mkdocs
+    assert "markdown_extensions:" not in mkdocs
+
+
+def test_pages_workflow_calls_the_shared_reusable_workflow_pinned_to_a_sha(tmp_path):
+    module = _load_scaffold_module()
+    module.scaffold("example-provider", output_dir=str(tmp_path))
+    root = tmp_path / "example-provider"
+    pages_workflow = (root / ".github" / "workflows" / "pages.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@"
+        in pages_workflow
+    )
+    sha = re.search(r"pages_pipeline\.yml@([0-9a-f]{40})", pages_workflow)
+    assert sha is not None, "pages.yml must pin the reusable workflow to a full SHA"
+    assert "content_source: pages" in pages_workflow
+    assert "shared_theme_enabled: true" in pages_workflow
+    assert "agent_readiness_enabled: true" in pages_workflow
+    assert "mkdocs build" not in pages_workflow
+
+
+def test_agent_readiness_input_matches_both_canonical_schemas(tmp_path):
+    module = _load_scaffold_module()
+    module.scaffold("example-provider", output_dir=str(tmp_path))
+    root = tmp_path / "example-provider"
+
+    readiness = json.loads(
+        (root / "pages" / "agent-readiness.json").read_text(encoding="utf-8")
+    )
+    schema = json.loads(
+        (root / "pages" / "agent-readiness.schema.json").read_text(encoding="utf-8")
+    )
+    canonical_schema = json.loads(
+        (SCAFFOLD.parent / "agent_readiness_schema.json").read_text(encoding="utf-8")
+    )
+    assert schema == canonical_schema
+
+    assert readiness["schema_version"] == "agent-readiness/v1"
+    assert readiness["applicability"]["discoverability"] is True
+    for name in ("api", "mcp", "a2a", "skills"):
+        assert readiness["capabilities"][name] == {"applicable": False}
+    assert (root / "scripts" / "generate_agent_readiness.py").is_file()
+    generator_script = (root / "scripts" / "generate_agent_readiness.py").read_text(
+        encoding="utf-8"
+    )
+    assert "sys.modules[spec.name] = module" in generator_script
 
 
 def test_precommit_references_shared_hooks_with_a_placeholder_revision():

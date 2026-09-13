@@ -100,8 +100,21 @@ regenerated file must never contain).
   root-hygiene, dependency-audit, orphan-module) is ever copied into the
   package.** That block cannot run until the SHARED-HOOKS lane publishes the
   bundle; report which hooks fail to resolve rather than working around it;
-- `pages/` + `mkdocs.yml` (`docs_dir: pages`) and a GitHub Pages workflow —
-  there is no `/docs`;
+- `pages/` + `mkdocs.yml` (`docs_dir: pages`, no local `theme:`/
+  `markdown_extensions:` — those are inherited from the shared pipelines
+  theme) — there is no `/docs`;
+- `pages/agent-readiness.json` + `pages/agent-readiness.schema.json` (a
+  verbatim copy of the canonical schema) — the applicability declaration both
+  universal-skills' generator and the pipelines readiness TCK validate;
+- `scripts/generate_agent_readiness.py`, which regenerates the committed,
+  root-level `llms.txt`, `llms-sections/`, and `markdown-mirror-manifest.json`
+  from `pages/agent-readiness.json` by delegating to the installed
+  universal-skills builder (`uv sync --group docs` first; never vendored);
+- `.github/workflows/pages.yml`, a thin caller of the shared reusable
+  workflow `Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml`
+  (pinned to a full commit SHA) with `content_source: pages`,
+  `shared_theme_enabled: true`, `agent_readiness_enabled: true` — no local
+  mkdocs-build-and-deploy steps of its own;
 - `tests/` mirroring `agent-connector-sdk`'s own fixture pattern: manifest
   validity, MCP server content listing, credential resolution, and the SDK's
   source-adapter conformance kit.
@@ -114,6 +127,7 @@ uv run --frozen python -m ruff format --check .
 uv run --frozen python -m mypy <pkg>
 uv run --frozen python -m pytest -q
 uv run --frozen python -c "from agent_connector_sdk.manifest.loader import require_valid_connector_package; from pathlib import Path; require_valid_connector_package(Path('.'))"
+uv run --group docs python scripts/generate_agent_readiness.py   # after touching pages/*.md or agent-readiness.json
 pre-commit run --all-files            # everything except the SHARED-HOOKS block, until it publishes
 ```
 

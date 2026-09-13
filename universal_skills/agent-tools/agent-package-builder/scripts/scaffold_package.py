@@ -115,6 +115,15 @@ def _write_generated_json(path: Path, document: object) -> bool:
 GITHUB_ORG = "Knuckles-Team"
 SDK_MIN_VERSION = "0.1.0"
 EG_MIN_VERSION = "2.23.0"
+#: Knuckles-Team/pipelines commit this scaffold's Pages workflow call and
+#: readiness contract were proved against (pipelines `main`, 2026-09-13).
+#: pipelines must be pushed to this ref before a generated repository's Pages
+#: workflow can resolve it.
+PIPELINES_SHA = "2d9681bfdbfc8d99d526769e36610864ce773630"
+#: repository-manager commit the docs-readiness preflight contract
+#: (`_content_source`, `_input_preflight`) was proved against (main,
+#: 2026-09-13) — informational; not referenced by a generated file.
+REPOSITORY_MANAGER_SHA = "8f1b17fb0295c3170f3c1a0d98182a409bb25072"
 
 
 def build_context(
@@ -146,6 +155,7 @@ def build_context(
         "year": str(datetime.date.today().year),
         "sdk_min_version": SDK_MIN_VERSION,
         "eg_min_version": EG_MIN_VERSION,
+        "pipelines_sha": PIPELINES_SHA,
     }
 
 
@@ -240,7 +250,11 @@ check_untyped_defs = true
 
 [dependency-groups]
 test = ["pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-timeout>=2.4.0"]
-docs = ["mkdocs-material==9.7.7"]
+# universal-skills is a dev-only readiness-generation dependency: it is the
+# canonical agent-readiness builder repository-manager's docs_readiness also
+# resolves (universal_skills.agent_readiness.generate). Never a runtime
+# dependency of this connector.
+docs = ["mkdocs-material==9.7.7", "universal-skills[agent-package-builder]>=1.3.1,<2.0.0"]
 
 [tool.uv]
 default-groups = ["test"]
@@ -746,28 +760,23 @@ Full documentation: <https://knuckles-team.github.io/@@package_name@@/>
 """
 
 MKDOCS_YML = """\
+# Theme, palette and markdown_extensions come from the shared Knuckles-Team/
+# pipelines Pages theme (templates/mkdocs-theme/base.mkdocs.yml), inherited at
+# build time by the pages_pipeline.yml reusable workflow's INHERIT: injection
+# (shared_theme_enabled: true in .github/workflows/pages.yml) — this file is
+# reduced to its own content manifest and never hand-copies that theme.
 site_name: @@package_name@@
 site_description: @@description@@
 site_url: https://knuckles-team.github.io/@@package_name@@/
 repo_url: https://github.com/@@github_org@@/@@package_name@@
 docs_dir: pages
 strict: true
-theme:
-  name: material
-  features:
-    - navigation.sections
-    - content.code.copy
 nav:
   - Overview: index.md
   - Installation: installation.md
   - Usage: usage.md
   - Deployment: deployment.md
   - Concepts: concepts.md
-markdown_extensions:
-  - admonition
-  - tables
-  - toc:
-      permalink: true
 """
 
 PAGES_INDEX_MD = """\
@@ -878,9 +887,14 @@ jobs:
 PAGES_YML = """\
 name: Pages
 
-# Builds the GitHub Pages site from the hand-written sources in pages/
-# (RF-ADR-009 section 5). Switch to the shared Knuckles-Team/pipelines Pages
-# workflow once it accepts a configurable docs_dir.
+# Calls the shared Knuckles-Team/pipelines Pages workflow (RF-ADR-009 section
+# 5, lane PAGES-FOUNDATION): the shared Material theme via mkdocs INHERIT:
+# (shared_theme_enabled), plus canonical agent-readiness delivery
+# (agent_readiness_enabled) — pages/agent-readiness.json validated against
+# pages/agent-readiness.schema.json, llms.txt + the readiness/mirror
+# manifests cross-checked against the built site, and the offline readiness
+# TCK. Pinned to the pipelines commit this repository was proved against
+# locally; pipelines must be pushed to that ref before this workflow resolves.
 
 on:
   push:
@@ -889,41 +903,16 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
-        with:
-          version: '0.11.7'
-      - name: Build the site strictly
-        run: uv run --frozen --only-group docs mkdocs build --strict --site-dir site
-      - name: Upload the Pages artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
-        with:
-          path: site
-
-  deploy:
-    name: deploy
-    needs: [build]
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+  pages:
+    uses: @@github_org@@/pipelines/.github/workflows/pages_pipeline.yml@@@pipelines_sha@@
+    with:
+      content_source: pages
+      shared_theme_enabled: true
+      agent_readiness_enabled: true
 """
 
 # ── Python package templates ─────────────────────────────────────────────────
@@ -1544,6 +1533,127 @@ def _mcp_config(ctx: dict[str, str]) -> dict[str, object]:
     }
 
 
+def _agent_readiness_input(ctx: dict[str, str]) -> dict[str, object]:
+    """The applicability declaration ``pages/agent-readiness.json`` carries.
+
+    Validated at Pages-build time by both the universal-skills generator
+    (``agent_readiness._validate_input``, delegated to by
+    ``repository_manager.docs_readiness``) and the pipelines readiness TCK
+    (``pages_readiness._validate_readiness_input``). ``mcp``/``api``/``a2a``
+    are declared inapplicable: the pipelines TCK requires a public HTTPS
+    ``endpoint`` for any applicable ``mcp``/``a2a`` capability, and this
+    connector's default transport is stdio with no such endpoint to prove.
+    ``skills`` is declared inapplicable too, even though this package ships
+    real skills: the universal-skills generator adds
+    ``.well-known/agent-skills.json`` to its "generated" output list whenever
+    ``skills.applicable`` and ``applicability.discoverability`` are both
+    true, but the pipelines TCK's own output allowlist does not accept a
+    ``.well-known/*`` path — declaring ``skills.applicable: true`` here would
+    make the two canonical validators disagree. ``discoverability`` itself
+    must stay true: the pipelines TCK's Markdown-mirror check requires it (an
+    inapplicable mirror carries no page URLs to validate). See
+    ``pages/deployment.md`` and ``AGENTS.md`` for the operator path once a
+    real networked endpoint exists.
+    """
+    return {
+        "schema_version": "agent-readiness/v1",
+        "project": {"name": ctx["package_name"], "kind": "package"},
+        "applicability": {
+            "content": True,
+            "discoverability": True,
+            "access_policy": True,
+            "capabilities": True,
+            "errors": False,
+            "provenance": False,
+            "measurement": False,
+            "deployment": True,
+        },
+        "standards": [{"id": "RFC 8259", "kind": "rfc", "level": "normative"}],
+        "content_signals": {"policy": "unset"},
+        "budgets": {"curated_chars": 8000, "summary_chars": 600, "full_chars": 0},
+        "capabilities": {
+            "api": {"applicable": False},
+            "mcp": {"applicable": False},
+            "a2a": {"applicable": False},
+            "skills": {"applicable": False},
+        },
+    }
+
+
+GENERATE_AGENT_READINESS_PY = '''\
+#!/usr/bin/env python3
+"""Regenerate ``llms.txt`` and the readiness/mirror manifests.
+
+Delegates to universal-skills' canonical agent-readiness builder (the same
+authority ``repository_manager.docs_readiness`` resolves via
+``importlib.resources``) so this package never carries its own copy of that
+~1,400-line generator. Requires the ``docs`` dependency group
+(``uv sync --group docs``). Run after editing ``pages/*.md`` or
+``pages/agent-readiness.json``, before a Pages build.
+"""
+
+from __future__ import annotations
+
+import importlib.resources
+import importlib.util
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _find(root: Any, filename: str) -> Any | None:
+    for child in root.iterdir():
+        if child.name == filename:
+            return child
+        if child.is_dir():
+            found = _find(child, filename)
+            if found is not None:
+                return found
+    return None
+
+
+def _generator() -> Any:
+    package = importlib.resources.files("universal_skills")
+    candidate = _find(package, "agent_readiness.py")
+    if candidate is None:
+        raise SystemExit(
+            "universal-skills' agent_readiness.py was not found; run "
+            "`uv sync --group docs` first."
+        )
+    with importlib.resources.as_file(candidate) as script_path:
+        spec = importlib.util.spec_from_file_location(
+            "_agent_readiness_generator", script_path
+        )
+        if spec is None or spec.loader is None:
+            raise SystemExit("agent_readiness.py could not be loaded")
+        module = importlib.util.module_from_spec(spec)
+        # dataclasses' own machinery resolves a class's module by name through
+        # sys.modules, so the module must be registered before exec_module
+        # runs its @dataclass-decorated class bodies (the same registration
+        # repository_manager.docs_readiness._load_generator_authority does).
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+    return module.generate
+
+
+def main() -> None:
+    generate = _generator()
+    result = generate(
+        ROOT,
+        applicability=ROOT / "pages" / "agent-readiness.json",
+        check=False,
+        adopt_existing=True,
+    )
+    generated = ", ".join(result["generated"])
+    print(f"Generated: {generated}")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
 
@@ -1590,6 +1700,20 @@ def _write_root_files(root: Path, ctx: dict[str, str]) -> None:
         ("concepts.md", PAGES_CONCEPTS_MD),
     ):
         _write_generated_text(root / "pages" / name, render(template, **ctx))
+
+    _write_generated_json(
+        root / "pages" / "agent-readiness.json", _agent_readiness_input(ctx)
+    )
+    _write_generated_text(
+        root / "pages" / "agent-readiness.schema.json",
+        (Path(__file__).resolve().parent / "agent_readiness_schema.json").read_text(
+            encoding="utf-8"
+        ),
+    )
+    _write_generated_text(
+        root / "scripts" / "generate_agent_readiness.py",
+        render(GENERATE_AGENT_READINESS_PY, **ctx),
+    )
 
 
 def _write_package(root: Path, ctx: dict[str, str]) -> None:
