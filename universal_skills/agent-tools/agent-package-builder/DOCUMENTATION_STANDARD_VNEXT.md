@@ -45,7 +45,15 @@ output.
 
 **`api`/`mcp`/`a2a`/`skills` are all declared `applicable: false`** in the
 scaffolded `pages/agent-readiness.json`, even though this package genuinely
-serves an MCP tool and ships real skills:
+serves an MCP tool, ships real skills, and (lane BUILDER-API-CLIENT) now
+carries a real outbound vendor API client (`<pkg>/api_client.py`). That last
+point does not move this declaration: `capabilities.api` here is RFC
+9727/9264 discovery of *this package's own* served surface (a linkset the
+generator only emits when the connector serves HTTP — see
+`agent_readiness._render_api_catalog`'s `serves_http` gate), never of an API
+this connector calls outward. A stdio-default connector serves no such
+surface regardless of how many vendor APIs its tools call, so `api.applicable`
+tracks `mcp`/`a2a` here, not the presence of an API client:
 
 * the pipelines readiness TCK's own capability validator
   (`pages_readiness._validate_readiness_input`) requires a public HTTPS

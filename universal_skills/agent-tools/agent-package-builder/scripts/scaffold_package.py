@@ -125,6 +125,37 @@ PIPELINES_SHA = "2d9681bfdbfc8d99d526769e36610864ce773630"
 #: 2026-09-13) — informational; not referenced by a generated file.
 REPOSITORY_MANAGER_SHA = "8f1b17fb0295c3170f3c1a0d98182a409bb25072"
 
+#: Outbound auth modes the generated ``api_client.py`` can build
+#: (agent-connector-sdk ``auth.static``/``auth.oidc``/``auth.delegation``).
+AUTH_MODES = ("bearer", "basic", "api_key", "client_credentials", "delegated")
+#: ``mcp_tool`` pagination styles ``preset_pagination`` covers.
+PAGINATION_MODES = ("cursor", "page", "offset")
+DEFAULT_PAGE_SIZE = 100
+
+
+def _openapi_hint(openapi_path: str | None) -> dict[str, str]:
+    """The base URL and one list operation's path from a small OpenAPI document.
+
+    Best-effort: only ``servers[0].url`` and the first ``GET`` path are read.
+    Returns an empty mapping when ``openapi_path`` is not given.
+    """
+    if not openapi_path:
+        return {}
+    document = yaml.safe_load(Path(openapi_path).read_text(encoding="utf-8")) or {}
+    servers = document.get("servers") or []
+    base_url = servers[0].get("url") if servers and isinstance(servers[0], dict) else None
+    paths = document.get("paths") or {}
+    list_path = next(
+        (path for path, ops in paths.items() if isinstance(ops, dict) and "get" in ops),
+        None,
+    )
+    hint: dict[str, str] = {}
+    if base_url:
+        hint["base_url"] = str(base_url)
+    if list_path:
+        hint["list_path"] = str(list_path)
+    return hint
+
 
 def build_context(
     package_name: str,
@@ -132,14 +163,22 @@ def build_context(
     display_name: str | None = None,
     description: str | None = None,
     domain: str = "reader",
+    auth_mode: str = "bearer",
+    pagination: str = "cursor",
+    openapi: str | None = None,
 ) -> dict[str, str]:
     """Derive every template placeholder from the package name and options."""
+    if auth_mode not in AUTH_MODES:
+        raise ValueError(f"auth_mode must be one of {AUTH_MODES}")
+    if pagination not in PAGINATION_MODES:
+        raise ValueError(f"pagination must be one of {PAGINATION_MODES}")
     pkg_dir = to_pkg_dir(package_name)
     display = display_name or to_display(package_name)
     domain = domain.strip().lower().replace("-", "_") or "reader"
     tool_name = f"{pkg_dir}_{domain}"
     doc_type = f"{pkg_dir}_item"
     resource_name = "".join(part.capitalize() for part in pkg_dir.split("_")) + "Item"
+    hint = _openapi_hint(openapi)
     return {
         "package_name": package_name,
         "pkg_dir": pkg_dir,
@@ -156,33 +195,56 @@ def build_context(
         "sdk_min_version": SDK_MIN_VERSION,
         "eg_min_version": EG_MIN_VERSION,
         "pipelines_sha": PIPELINES_SHA,
+        "auth_mode": auth_mode,
+        "pagination": pagination,
+        "page_size": str(DEFAULT_PAGE_SIZE),
+        "base_url": hint.get("base_url", "https://api.example.invalid"),
+        "list_path": hint.get("list_path", f"/{domain}"),
+    }
+
+
+def _pagination_preset_fields(pagination: str, page_size: int) -> dict[str, object]:
+    """The pagination-specific preset fields, matching
+    ``agent_connector_sdk.http.pagination.preset_pagination`` exactly (the tool
+    returns a ``ToolPage``, whose JSON shape this mirrors)."""
+    if pagination == "cursor":
+        return {
+            "pagination": "cursor",
+            "cursor_param": "cursor",
+            "cursor_path": "next_cursor",
+            "more_path": "has_more",
+        }
+    return {
+        "pagination": pagination,
+        "page_param": "page" if pagination == "page" else "offset",
+        "page_size_param": "page_size" if pagination == "page" else "limit",
+        "page_size": page_size,
+        "page_kind": "number" if pagination == "page" else "offset",
     }
 
 
 def _preset_dict(ctx: dict[str, str]) -> dict[str, object]:
-    """The one ``mcp_tool`` sync preset the demo reader tool serves.
+    """The one ``mcp_tool`` sync preset the ``@@tool_name@@`` tool serves.
 
     Shared verbatim between ``connectors/mcp_source_presets.json`` (the
     structural preset declaration ``agent_connector_sdk.manifest.loader``
     cross-checks the manifest against) and the manifest ``sync[0].raw`` field
     (what ``McpToolSourceAdapter.from_sync_spec`` actually extracts with).
+    ``params_style: "args"`` and no ``action`` means the tool call passes the
+    pagination parameter straight through as a keyword argument — exactly what
+    ``@@pkg_dir@@/mcp/mcp_@@domain@@.py`` declares.
     """
     return {
         "server": ctx["package_name"],
         "tool": ctx["tool_name"],
-        "action": "stream_contents",
-        "params_style": "json",
-        "params": {"count": 2},
+        "action": "",
+        "params_style": "args",
         "records_path": "items",
         "id_field": "id",
         "title_field": "title",
         "text_field": "text",
-        "updated_field": "published",
-        "updated_since_param": "newer_than",
-        "pagination": "cursor",
-        "cursor_param": "continuation",
-        "cursor_path": "continuation",
         "doc_type": ctx["doc_type"],
+        **_pagination_preset_fields(ctx["pagination"], int(ctx["page_size"])),
     }
 
 
@@ -447,6 +509,49 @@ services:
         max-file: "3"
 """
 
+# --- .env.example client blocks, one per --auth mode (agent_connector_sdk's
+# http/tls/auth layer; api_client.py's _auth() reads exactly these settings).
+_CLIENT_ENV_BLOCKS: dict[str, str] = {
+    "bearer": """\
+@@short_env@@_URL=@@base_url@@
+# @@short_env@@_TOKEN_REF=env://@@short_env@@_TOKEN
+# @@short_env@@_TOKEN_REF=openbao://apps/@@package_name@@#TOKEN
+""",
+    "basic": """\
+@@short_env@@_URL=@@base_url@@
+@@short_env@@_USERNAME=changeme
+# @@short_env@@_PASSWORD_REF=env://@@short_env@@_PASSWORD
+# @@short_env@@_PASSWORD_REF=openbao://apps/@@package_name@@#PASSWORD
+""",
+    "api_key": """\
+@@short_env@@_URL=@@base_url@@
+# @@short_env@@_API_KEY_REF=env://@@short_env@@_API_KEY
+# @@short_env@@_API_KEY_REF=openbao://apps/@@package_name@@#API_KEY
+""",
+    "client_credentials": """\
+@@short_env@@_URL=@@base_url@@
+
+# --- OAuth 2.0 client credentials (agent_connector_sdk.auth.oidc) ---
+# OIDC_ISSUER=https://idp.example.invalid/realms/fleet
+OIDC_CLIENT_ID=changeme
+# OIDC_CLIENT_SECRET_REF=env://OIDC_CLIENT_SECRET
+# OIDC_CLIENT_SECRET_REF=openbao://apps/@@package_name@@#OIDC_CLIENT_SECRET
+OIDC_AUDIENCE=@@package_name@@-api
+""",
+    "delegated": """\
+@@short_env@@_URL=@@base_url@@
+
+# --- Delegated (on-behalf-of) auth (agent_connector_sdk.auth.delegation) ---
+ENABLE_DELEGATION=true
+OIDC_TOKEN_URL=https://idp.example.invalid/realms/fleet/protocol/openid-connect/token
+OIDC_CLIENT_ID=changeme
+# OIDC_CLIENT_SECRET_REF=env://OIDC_CLIENT_SECRET
+# OIDC_CLIENT_SECRET_REF=openbao://apps/@@package_name@@#OIDC_CLIENT_SECRET
+AUDIENCE=@@package_name@@-api
+DELEGATED_SCOPES=api
+""",
+}
+
 ENV_EXAMPLE = """\
 # ==============================================================================
 # @@display_name@@ environment configuration
@@ -463,13 +568,15 @@ TRANSPORT=stdio # options: stdio, streamable-http, sse
 AUTH_TYPE=none # a listener outside loopback requires configured authentication
 MCP_TOOL_MODE=intent # options: condensed, verbose, both, intent
 
-# --- Provider credentials (references only; resolved at the composition root
-# by @@pkg_dir@@.credentials.build_resolver) ---
-# @@short_env@@_API_TOKEN_REF=env://@@short_env@@_API_TOKEN
-# @@short_env@@_API_TOKEN_REF=openbao://apps/@@package_name@@#API_TOKEN
+# --- @@display_name@@ API client (agent_connector_sdk.http/tls/auth;
+# @@pkg_dir@@.api_client.build_client resolves these at composition time) ---
+@@client_env_block@@
+# --- TLS profile (agent_connector_sdk.tls.resolve; service="@@pkg_dir@@") ---
+# @@short_env@@_CA_BUNDLE_REF=env://@@short_env@@_CA_BUNDLE
+# @@short_env@@_TLS_PROFILE=default
 
 # --- OpenBao (only needed when a reference above uses openbao://) ---
-# OPENBAO_ADDR=https://openbao.internal:8200
+# OPENBAO_ADDR=https://openbao.example.invalid:8200
 # OPENBAO_TOKEN_REF=env://OPENBAO_TOKEN
 """
 
@@ -645,9 +752,10 @@ fails the push.
 
 | Path | Contents |
 |---|---|
+| `@@pkg_dir@@/api_client.py` | the governed API client (`agent_connector_sdk.http`/`tls`/`auth` only) — point `_auth()` and `@@short_env@@_URL` at the real vendor API |
 | `@@pkg_dir@@/mcp_server.py` | builds the server: `create_mcp_server` + `register_tool_surface` + `ConnectorContent` |
-| `@@pkg_dir@@/mcp/mcp_@@domain@@.py` | the `@@tool_name@@` action-routed tool — replace its demo data with real API calls |
-| `@@pkg_dir@@/credentials.py` | wires `env://`/`openbao://` secret references through `agent_connector_sdk.credentials` |
+| `@@pkg_dir@@/mcp/mcp_@@domain@@.py` | the `@@tool_name@@` tool — calls `api_client.build_client()`; replace `_LIST_PATH` and the response field names with the vendor's real shape |
+| `@@pkg_dir@@/credentials.py` | wires `env://`/`openbao://` secret references through `agent_connector_sdk.credentials` for ad hoc use |
 | `skills/`, `prompts/`, `ontology/`, `connectors/` | served as MCP primitives by `ConnectorContent`; see `connector_manifest.yml` |
 | `connector_manifest.yml` | the Connector Ontology Manifest — resources, identity, `schema_mappings`, one `sync` preset |
 | `scripts/pin_tool_schema.py` | run after `uv sync` (and whenever the tool's parameters change) to pin the live tool schema fingerprint the manifest's `sync[0].tool_schema_sha256` and `connectors/tool_schema_fingerprints.json` both pin |
@@ -808,11 +916,16 @@ PAGES_USAGE_MD = """\
 @@mcp_cmd@@ --transport streamable-http --host 127.0.0.1 --port 8000
 ```
 
-The `@@tool_name@@` tool is action-routed: pass `action="stream_contents"` and a
-JSON `params_json` payload (`count`, `continuation`, `newer_than`). Replace its
-demo data in `@@pkg_dir@@/mcp/mcp_@@domain@@.py` with real API calls, keeping the
-`items`/`continuation` response shape the `connector_manifest.yml` sync preset
-expects — or update both together.
+The `@@tool_name@@` tool calls `@@pkg_dir@@/api_client.py`'s governed HTTP
+client and returns an `agent_connector_sdk.http.pagination.ToolPage`. It
+takes one pagination parameter, `@@pagination@@` (chosen by `--pagination
+@@pagination@@` at scaffold time), and pages until `ToolPage.has_more` is
+false. Point `@@short_env@@_URL` and this connector's auth settings (see
+`.env.example`) at the real vendor API, then replace `_LIST_PATH` and the
+`items`/pagination field names in `@@pkg_dir@@/mcp/mcp_@@domain@@.py` with
+the vendor's real endpoint and response shape — keeping
+`connector_manifest.yml`'s sync preset in step, or update both together and
+rerun `scripts/pin_tool_schema.py`.
 """
 
 PAGES_DEPLOYMENT_MD = """\
@@ -822,9 +935,12 @@ Local MCP usage defaults to `stdio`. A networked deployment requires
 `AUTH_TYPE` configured and a loopback-only publish behind an operator-owned
 authenticated TLS ingress — see `docker/mcp.compose.yml`.
 
-Credentials are `env://` or `openbao://` references resolved by
-`@@pkg_dir@@.credentials.build_resolver`; no raw secret value is ever written
-to configuration, images, or generated files.
+The API client's own credentials (`@@short_env@@_TOKEN_REF` and similar,
+depending on `--auth`) and TLS profile are `env://` or `openbao://`
+references resolved by `@@pkg_dir@@.api_client` at composition time; the
+`@@pkg_dir@@.credentials` module resolves any other reference the same way.
+No raw secret value is ever written to configuration, images, or generated
+files.
 """
 
 PAGES_CONCEPTS_MD = """\
@@ -966,6 +1082,106 @@ def resolve_setting(key: str, resolver: CredentialResolver | None = None) -> str
     return (resolver or build_resolver()).resolve(parse_secret_reference(str(raw)))
 '''
 
+# ── API client: one governed HTTP client per connector, built only from
+# agent-connector-sdk's http/tls/auth layer (never raw httpx/requests, never
+# agent-utilities). ``_auth()`` is the one function that varies by --auth mode;
+# everything else in api_client.py is identical across modes.
+_AUTH_IMPORTS: dict[str, str] = {
+    "bearer": "from agent_connector_sdk.auth.static import bearer_auth",
+    "basic": "from agent_connector_sdk.auth.static import basic_auth",
+    "api_key": "from agent_connector_sdk.auth.static import api_key_auth",
+    "client_credentials": (
+        "from agent_connector_sdk.auth.oidc import (\n"
+        "    ClientCredentialsConfig,\n"
+        "    client_credentials_auth,\n"
+        ")"
+    ),
+    "delegated": (
+        "from agent_connector_sdk.auth.delegation import "
+        "DelegatedTokenAuth, DelegationSettings"
+    ),
+}
+
+_AUTH_FUNCTIONS: dict[str, str] = {
+    "bearer": '''\
+def _auth() -> httpx.Auth:
+    """The outbound credentials, resolved from settings."""
+    return bearer_auth(setting("@@short_env@@_TOKEN_REF"))
+''',
+    "basic": '''\
+def _auth() -> httpx.Auth:
+    """The outbound credentials, resolved from settings."""
+    return basic_auth(
+        setting("@@short_env@@_USERNAME"), setting("@@short_env@@_PASSWORD_REF")
+    )
+''',
+    "api_key": '''\
+def _auth() -> httpx.Auth:
+    """The outbound credentials, resolved from settings."""
+    return api_key_auth(setting("@@short_env@@_API_KEY_REF"), header="X-Api-Key")
+''',
+    "client_credentials": '''\
+def _auth() -> httpx.Auth:
+    """The outbound credentials: an OAuth 2.0 client-credentials token."""
+    return client_credentials_auth(ClientCredentialsConfig.from_settings())
+''',
+    "delegated": '''\
+def _auth() -> httpx.Auth:
+    """The outbound credentials: a token exchanged for the verified MCP caller."""
+    token_client = create_http_client(
+        HttpClientOptions(base_url=setting("OIDC_TOKEN_URL"))
+    )
+    return DelegatedTokenAuth(
+        DelegationSettings.from_settings(), http_client=token_client
+    )
+''',
+}
+
+API_CLIENT_PY = '''\
+"""@@display_name@@ API client.
+
+The governed HTTP client @@pkg_dir@@'s tools call. Base URL, auth and TLS all
+resolve from settings at composition time (agent-connector-sdk
+pages/http-clients.md); the client itself never reads the ambient environment.
+Failures surface as ``agent_connector_sdk.http.errors.HttpProblemError``.
+"""
+
+from __future__ import annotations
+
+import httpx
+@@auth_imports@@
+from agent_connector_sdk.config import setting
+from agent_connector_sdk.http.client import create_async_http_client, create_http_client
+from agent_connector_sdk.http.options import HttpClientOptions
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
+
+__all__ = ["build_client", "build_client_for"]
+
+
+@@auth_fn@@
+
+
+def build_client() -> httpx.AsyncClient:
+    """Composition root: settings and secret references resolve here, once."""
+    return create_async_http_client(
+        HttpClientOptions(
+            base_url=setting("@@short_env@@_URL"),
+            auth=_auth(),
+            tls=resolve_tls_profile("@@pkg_dir@@"),
+        )
+    )
+
+
+def build_client_for(base_url: str) -> httpx.Client:
+    """A synchronous client for ``base_url``, built like :func:`build_client`.
+
+    Used by agent-connector-sdk's HTTP client conformance kit
+    (``agent_connector_sdk.testing.http_clients.run_http_client_suite``), which
+    points a synchronous factory at its own scripted local server.
+    """
+    return create_http_client(HttpClientOptions(base_url=base_url, auth=_auth()))
+'''
+
 MCP_SERVER_PY = '''\
 """@@display_name@@ MCP server.
 
@@ -1040,64 +1256,99 @@ from @@pkg_dir@@.mcp.mcp_@@domain@@ import register_@@domain@@_tools
 __all__ = ["register_@@domain@@_tools"]
 '''
 
-MCP_DOMAIN_PY = '''\
-"""@@display_name@@ — the ``@@tool_name@@`` action-routed MCP tool.
+# Tool bodies keyed by --pagination mode: each calls the governed API client
+# and returns a ToolPage, matching the ``preset_pagination(mode, ...)`` fields
+# ``_preset_dict`` writes into connector_manifest.yml / mcp_source_presets.json
+# (agent-connector-sdk pages/http-clients.md).
+_TOOL_BODIES: dict[str, str] = {
+    "cursor": '''\
+    @mcp.tool()
+    async def @@tool_name@@(cursor: str | None = None, ctx=None) -> ToolPage:
+        """Read one page of @@package_name@@ @@domain@@ items."""
+        await ctx_progress(ctx, 0, 1, message="fetching @@domain@@")
+        async with build_client() as client:
+            document = await arequest_json(
+                client, "GET", _LIST_PATH, params={"cursor": cursor}
+            )
+        await ctx_progress(ctx, 1, 1)
+        # Replace "items"/"next" with the vendor's real response field names.
+        return ToolPage.from_cursor(document["items"], document.get("next"))
+''',
+    "page": '''\
+    @mcp.tool()
+    async def @@tool_name@@(page: int = 0, ctx=None) -> ToolPage:
+        """Read one page of @@package_name@@ @@domain@@ items."""
+        await ctx_progress(ctx, 0, 1, message="fetching @@domain@@")
+        async with build_client() as client:
+            document = await arequest_json(
+                client,
+                "GET",
+                _LIST_PATH,
+                params={"page": page, "page_size": @@page_size@@},
+            )
+        await ctx_progress(ctx, 1, 1)
+        # Replace "items" with the vendor's real response field name.
+        return ToolPage.from_window(document["items"], page_size=@@page_size@@)
+''',
+    "offset": '''\
+    @mcp.tool()
+    async def @@tool_name@@(offset: int = 0, ctx=None) -> ToolPage:
+        """Read one page of @@package_name@@ @@domain@@ items."""
+        await ctx_progress(ctx, 0, 1, message="fetching @@domain@@")
+        async with build_client() as client:
+            document = await arequest_json(
+                client,
+                "GET",
+                _LIST_PATH,
+                params={"offset": offset, "limit": @@page_size@@},
+            )
+        await ctx_progress(ctx, 1, 1)
+        # Replace "items" with the vendor's real response field name.
+        return ToolPage.from_window(document["items"], page_size=@@page_size@@)
+''',
+}
 
-Mirrors the shape every ``mcp_tool`` sync preset expects: one action-routed
-tool taking ``action`` and a JSON ``params_json`` payload, returning a page of
-records under ``items`` plus a ``continuation`` cursor. Replace ``_ITEMS`` and
-``_page`` with real calls to the provider's API; keep the
-``action``/``params_json``/``items``/``continuation`` shape so
-``connectors/mcp_source_presets.json`` and ``connector_manifest.yml``'s
-``sync`` preset keep working, or update all three together and rerun
-``scripts/pin_tool_schema.py``.
+#: Just the parameter the tool takes besides ``ctx`` — reused by the test
+#: suite's malformed server, which must declare the identical input schema.
+TOOL_SIGNATURES: dict[str, str] = {
+    "cursor": "cursor: str | None = None",
+    "page": "page: int = 0",
+    "offset": "offset: int = 0",
+}
+
+MCP_DOMAIN_PY = '''\
+"""@@display_name@@ — the ``@@tool_name@@`` MCP tool.
+
+Calls the governed API client from ``@@pkg_dir@@.api_client`` and returns one
+``agent_connector_sdk.http.pagination.ToolPage`` per call. ``build_client()``
+is called per request, not at import/registration time, so listing tools or
+pinning the schema needs no credentials configured; hoist it to a longer-lived
+client for connection reuse once this is real production traffic. The
+matching ``connectors/mcp_source_presets.json`` entry is built by
+``preset_pagination("@@pagination@@", ...)`` (agent-connector-sdk
+pages/http-clients.md), so extraction pages through exactly what this tool
+returns. Replace ``_LIST_PATH`` and the ``items``/pagination field names with
+the vendor's real endpoint and response shape.
 """
 
 from __future__ import annotations
 
-import json
-from typing import Any
-
+from agent_connector_sdk.http.pagination import ToolPage
+from agent_connector_sdk.http.responses import arequest_json
+from agent_connector_sdk.progress import ctx_progress
 from fastmcp import FastMCP
+
+from @@pkg_dir@@.api_client import build_client
 
 __all__ = ["register_@@domain@@_tools"]
 
-_ITEMS: tuple[dict[str, Any], ...] = tuple(
-    {
-        "id": f"item-{index}",
-        "title": f"Item {index}",
-        "text": f"Body of item {index}",
-        "published": f"2026-01-0{index}T00:00:00Z",
-    }
-    for index in range(1, 6)
-)
-
-
-def _page(params: dict[str, Any]) -> dict[str, Any]:
-    count = int(params.get("count", 2))
-    start = int(params.get("continuation") or 0)
-    newer_than = params.get("newer_than")
-    selected = [
-        item for item in _ITEMS if not newer_than or item["published"] > newer_than
-    ]
-    page = selected[start : start + count]
-    following = start + count
-    return {
-        "items": page,
-        "continuation": str(following) if following < len(selected) else None,
-    }
+_LIST_PATH = "@@list_path@@"
 
 
 def register_@@domain@@_tools(mcp: FastMCP) -> None:
-    """Register the ``@@tool_name@@`` action-routed tool."""
+    """Register the ``@@tool_name@@`` tool."""
 
-    @mcp.tool()
-    def @@tool_name@@(action: str, params_json: str = "{}") -> dict[str, Any]:
-        """Read the @@package_name@@ stream one page at a time."""
-        if action != "stream_contents":
-            raise ValueError(f"unknown action: {action}")
-        return _page(json.loads(params_json or "{}"))
-'''
+@@tool_body@@'''
 
 PIN_TOOL_SCHEMA_PY = '''\
 #!/usr/bin/env python3
@@ -1118,12 +1369,11 @@ import json
 from pathlib import Path
 
 import yaml
-from fastmcp import Client
-
 from agent_connector_sdk.manifest.tool_schema import (
     canonical_input_schema,
     compatibility_fingerprint,
 )
+from fastmcp import Client
 
 from @@pkg_dir@@.mcp_server import build_server
 
@@ -1190,15 +1440,16 @@ license: MIT
 ---
 # @@display_name@@ @@domain@@
 
-Call `@@tool_name@@` with `action="stream_contents"` and a JSON `params_json`
-payload (`count`, `continuation`, `newer_than`). Follow the returned
-`continuation` value until it is `null`.
+Call `@@tool_name@@` with `@@pagination@@` (the connector's pagination
+parameter). It calls the real @@package_name@@ API and returns a page of
+items; keep calling with the next `@@pagination@@` value until the result's
+`has_more` is false.
 """
 
 PROMPT_CORE_DIRECTIVE = (
-    "You operate the @@package_name@@ stream through the @@tool_name@@ tool. "
-    "Page through it with the continuation cursor and stop when continuation "
-    "is null."
+    "You operate the @@package_name@@ stream through the @@tool_name@@ tool, "
+    "which calls the real @@package_name@@ API. Page through it with "
+    "@@pagination@@ and stop when the result's has_more is false."
 )
 
 PROMPT_JSON_TEMPLATE: dict[str, str] = {
@@ -1254,13 +1505,14 @@ def build_well_formed_server() -> Any:
 
 
 def build_malformed_server() -> Any:
-    """Same tool contract; the payload is not a record list."""
+    """Same input schema as the real tool (so its pinned fingerprint still
+    matches); the payload is not a record list."""
     mcp: FastMCP[Any] = FastMCP("@@package_name@@", version="0.1.0")
 
     @mcp.tool()
-    def @@tool_name@@(action: str, params_json: str = "{}") -> dict[str, Any]:
-        """Read the @@package_name@@ stream one page at a time."""
-        return {"items": "not-a-list", "continuation": None}
+    def @@tool_name@@(@@malformed_signature@@, ctx=None) -> dict[str, Any]:
+        """Read the @@package_name@@ @@domain@@ stream one page at a time."""
+        return {"items": "not-a-list", "next_cursor": None, "has_more": False}
 
     return mcp
 '''
@@ -1275,7 +1527,6 @@ from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 
 import pytest
-
 from agent_connector_sdk.adapters.mcp_tool import McpToolSourceAdapter
 from agent_connector_sdk.manifest.loader import require_valid_connector_package
 from agent_connector_sdk.ports.session import McpSession, TransportEndpoint
@@ -1339,11 +1590,14 @@ def test_manifest_matches_presets_and_fingerprints() -> None:
 '''
 
 TESTS_MCP_SERVER_PY = '''\
-"""The MCP server lists its tools, skills, prompts and content resources."""
+"""The MCP server lists its tools, skills, prompts and content resources.
+
+The ``@@tool_name@@`` tool itself calls a real vendor API, so a live end-to-end
+call belongs to ``tests/test_api_client.py`` (a scripted local server), not
+here.
+"""
 
 from __future__ import annotations
-
-import json
 
 from fastmcp import Client
 
@@ -1370,12 +1624,6 @@ async def test_server_serves_tools_skills_prompts_and_resources() -> None:
             )
         )
         assert "@@tool_name@@" in skill_text
-
-        result = await client.call_tool(
-            "@@tool_name@@", {"action": "stream_contents", "params_json": "{}"}
-        )
-        payload = json.loads(result.content[0].text)
-        assert payload["items"] and "continuation" in payload
 '''
 
 TESTS_CREDENTIALS_PY = '''\
@@ -1384,7 +1632,6 @@ TESTS_CREDENTIALS_PY = '''\
 from __future__ import annotations
 
 import pytest
-
 from agent_connector_sdk.credentials.references import SecretReferenceError
 from agent_connector_sdk.credentials.resolver import CredentialUnavailableError
 
@@ -1416,15 +1663,25 @@ def test_missing_env_target_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> N
 '''
 
 TESTS_CONFORMANCE_PY = '''\
-"""The manifest's sync preset passes agent-connector-sdk's conformance kit."""
+"""The manifest's sync preset passes agent-connector-sdk's conformance kit.
+
+Marked ``integration`` (skipped by ``pytest.ini``'s default
+``-m "not integration"``): ``sessions``/``malformed_sessions`` build the real
+MCP server, whose tool calls the real vendor API through
+``@@pkg_dir@@.api_client`` — this needs @@short_env@@_URL and this
+connector's auth settings pointed at a real (or realistically scripted,
+multi-page) target, not the placeholder `.env.example` ships.
+"""
 
 from __future__ import annotations
 
+import pytest
 from agent_connector_sdk.adapters.mcp_tool import McpToolSourceAdapter
 from agent_connector_sdk.testing.results import SessionFactory, assert_conformant
 from agent_connector_sdk.testing.source_adapters import run_source_adapter_suite
 
 
+@pytest.mark.integration
 async def test_sync_preset_passes_the_conformance_kit(
     adapter: McpToolSourceAdapter,
     sessions: SessionFactory,
@@ -1432,6 +1689,201 @@ async def test_sync_preset_passes_the_conformance_kit(
 ) -> None:
     results = await run_source_adapter_suite(adapter, sessions, malformed_sessions)
     assert_conformant(results)
+'''
+
+# ── tests/test_api_client.py: proves the governed API client, not just the
+# manifest's sync preset. Two shapes: STATIC (bearer/basic/api_key) whose
+# factory needs only a base URL, so it also runs the SDK's
+# run_http_client_suite; OAUTH (client_credentials/delegated) whose auth
+# mints a token from a separately configured endpoint, so the generic kit
+# (which assumes a self-contained factory) does not apply — see the
+# generated module's own docstring.
+_OAUTH_AUTH_MODES = frozenset({"client_credentials", "delegated"})
+
+_AUTH_ENV_SETUP: dict[str, str] = {
+    "bearer": '''\
+    monkeypatch.setenv("@@short_env@@_URL", base_url)
+    monkeypatch.setenv("@@short_env@@_TOKEN", "test-token")
+    monkeypatch.setenv("@@short_env@@_TOKEN_REF", "env://@@short_env@@_TOKEN")
+''',
+    "basic": '''\
+    monkeypatch.setenv("@@short_env@@_URL", base_url)
+    monkeypatch.setenv("@@short_env@@_USERNAME", "test-user")
+    monkeypatch.setenv("@@short_env@@_PASSWORD", "test-pass")
+    monkeypatch.setenv("@@short_env@@_PASSWORD_REF", "env://@@short_env@@_PASSWORD")
+''',
+    "api_key": '''\
+    monkeypatch.setenv("@@short_env@@_URL", base_url)
+    monkeypatch.setenv("@@short_env@@_API_KEY", "test-key")
+    monkeypatch.setenv("@@short_env@@_API_KEY_REF", "env://@@short_env@@_API_KEY")
+''',
+    "client_credentials": '''\
+    monkeypatch.setenv("@@short_env@@_URL", base_url)
+    monkeypatch.setenv("OIDC_TOKEN_URL", base_url)
+    monkeypatch.setenv("OIDC_CLIENT_ID", "test-client")
+    monkeypatch.setenv("OIDC_CLIENT_SECRET", "test-secret")
+    monkeypatch.setenv("OIDC_CLIENT_SECRET_REF", "env://OIDC_CLIENT_SECRET")
+    monkeypatch.setenv("OIDC_AUDIENCE", "@@package_name@@-api")
+''',
+    "delegated": '''\
+    monkeypatch.setenv("@@short_env@@_URL", base_url)
+    monkeypatch.setenv("ENABLE_DELEGATION", "true")
+    monkeypatch.setenv("OIDC_TOKEN_URL", base_url)
+    monkeypatch.setenv("OIDC_CLIENT_ID", "test-client")
+    monkeypatch.setenv("OIDC_CLIENT_SECRET", "test-secret")
+    monkeypatch.setenv("OIDC_CLIENT_SECRET_REF", "env://OIDC_CLIENT_SECRET")
+    monkeypatch.setenv("AUDIENCE", "@@package_name@@-api")
+    monkeypatch.setattr(
+        "agent_connector_sdk.auth.delegation.get_access_token",
+        lambda: type("_FakeToken", (), {"token": "caller-token"})(),
+    )
+''',
+}
+
+_AUTH_HEADER_ASSERT: dict[str, str] = {
+    "bearer": 'assert business.headers.get("authorization") == "Bearer test-token"',
+    "basic": 'assert business.headers.get("authorization", "").startswith("Basic ")',
+    "api_key": 'assert business.headers.get("x-api-key") == "test-key"',
+    "client_credentials": (
+        'assert business.headers.get("authorization") == "Bearer minted-token"'
+    ),
+    "delegated": (
+        'assert business.headers.get("authorization") == "Bearer minted-token"'
+    ),
+}
+
+TESTS_API_CLIENT_STATIC_PY = '''\
+"""The governed API client: conformance kit + one real tool call end to end."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+from agent_connector_sdk.http.errors import HttpProblemError
+from agent_connector_sdk.http.problems import PROBLEM_JSON
+from agent_connector_sdk.http.responses import request_json
+from agent_connector_sdk.testing.http_clients import run_http_client_suite
+from agent_connector_sdk.testing.http_server import ScriptedHttpServer, ScriptedResponse
+from agent_connector_sdk.testing.results import assert_conformant
+from fastmcp import Client
+
+from @@pkg_dir@@.api_client import build_client_for
+from @@pkg_dir@@.mcp_server import build_server
+
+_OK_BODY = b\'{"items": [{"id": "1", "title": "One", "text": "Body"}]}\'
+_PROBLEM_BODY = b\'{"type": "https://api.example.invalid/missing", "title": "Missing"}\'
+
+
+def _set_auth_env(monkeypatch: pytest.MonkeyPatch, base_url: str) -> None:
+@@auth_env_setup@@
+
+
+def test_client_factory_passes_the_conformance_kit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_auth_env(monkeypatch, "https://api.example.invalid")
+    assert_conformant(run_http_client_suite(build_client_for))
+
+
+async def test_tool_calls_the_client_end_to_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with ScriptedHttpServer(ScriptedResponse(body=_OK_BODY)) as server:
+        _set_auth_env(monkeypatch, server.base_url)
+        _, mcp, _ = build_server(command_args=[])
+        async with Client(mcp) as client:
+            result = await client.call_tool("@@tool_name@@", {})
+        business = server.requests[0]
+        @@auth_header_assert@@
+        payload = json.loads(result.content[0].text)
+        assert payload["items"] == [{"id": "1", "title": "One", "text": "Body"}]
+
+
+def test_problem_response_maps_to_http_problem_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with ScriptedHttpServer(
+        ScriptedResponse(
+            status=404, body=_PROBLEM_BODY, headers={"Content-Type": PROBLEM_JSON}
+        )
+    ) as server:
+        _set_auth_env(monkeypatch, server.base_url)
+        with (
+            build_client_for(server.base_url) as client,
+            pytest.raises(HttpProblemError) as excinfo,
+        ):
+            request_json(client, "GET", "/@@domain@@")
+        assert excinfo.value.problem.status == 404
+'''
+
+TESTS_API_CLIENT_OAUTH_PY = '''\
+"""The governed API client: one real tool call end to end, token mint included.
+
+``run_http_client_suite`` is not run here: it assumes a factory that is fully
+self-contained given only a base URL, but this connector's OAuth 2.0 auth
+mints its token from a separately configured endpoint (``OIDC_TOKEN_URL``) —
+here pointed at the same scripted server as the business call, ahead of it in
+the response queue, so both requests resolve against one local server.
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+from agent_connector_sdk.http.errors import HttpProblemError
+from agent_connector_sdk.http.problems import PROBLEM_JSON
+from agent_connector_sdk.http.responses import request_json
+from agent_connector_sdk.testing.http_server import ScriptedHttpServer, ScriptedResponse
+from fastmcp import Client
+
+from @@pkg_dir@@.api_client import build_client_for
+from @@pkg_dir@@.mcp_server import build_server
+
+_TOKEN_BODY = (
+    b\'{"access_token": "minted-token", "token_type": "bearer", "expires_in": 3600}\'
+)
+_OK_BODY = b\'{"items": [{"id": "1", "title": "One", "text": "Body"}]}\'
+_PROBLEM_BODY = b\'{"type": "https://api.example.invalid/missing", "title": "Missing"}\'
+
+
+def _set_auth_env(monkeypatch: pytest.MonkeyPatch, base_url: str) -> None:
+@@auth_env_setup@@
+
+
+async def test_tool_calls_the_client_end_to_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with ScriptedHttpServer(
+        ScriptedResponse(body=_TOKEN_BODY), ScriptedResponse(body=_OK_BODY)
+    ) as server:
+        _set_auth_env(monkeypatch, server.base_url)
+        _, mcp, _ = build_server(command_args=[])
+        async with Client(mcp) as client:
+            result = await client.call_tool("@@tool_name@@", {})
+        business = server.requests[1]
+        @@auth_header_assert@@
+        payload = json.loads(result.content[0].text)
+        assert payload["items"] == [{"id": "1", "title": "One", "text": "Body"}]
+
+
+def test_problem_response_maps_to_http_problem_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with ScriptedHttpServer(
+        ScriptedResponse(body=_TOKEN_BODY),
+        ScriptedResponse(
+            status=404, body=_PROBLEM_BODY, headers={"Content-Type": PROBLEM_JSON}
+        ),
+    ) as server:
+        _set_auth_env(monkeypatch, server.base_url)
+        with (
+            build_client_for(server.base_url) as client,
+            pytest.raises(HttpProblemError) as excinfo,
+        ):
+            request_json(client, "GET", "/@@domain@@")
+        assert excinfo.value.problem.status == 404
 '''
 
 # ── Manifest / structured data ───────────────────────────────────────────────
@@ -1464,7 +1916,6 @@ def _connector_manifest(
             "id_field": {ctx["doc_type"]: "id"},
             "title_field": {ctx["doc_type"]: "title"},
             "text_field": {ctx["doc_type"]: "text"},
-            "updated_field": {ctx["doc_type"]: "published"},
         },
         "schema_mappings": {
             resource: {"ontology_class": "Document", "fields": {}},
@@ -1479,7 +1930,7 @@ def _connector_manifest(
                 "id_field": preset["id_field"],
                 "title_field": preset["title_field"],
                 "text_field": preset["text_field"],
-                "updated_field": preset["updated_field"],
+                "updated_field": preset.get("updated_field"),
                 "pagination": preset["pagination"],
                 "doc_type": preset["doc_type"],
                 "tool_schema_sha256": "PENDING-RUN-scripts/pin_tool_schema.py",
@@ -1503,7 +1954,11 @@ def _connector_manifest(
             },
         },
         "review_todos": [
-            "Replace the demo reader tool with real API calls.",
+            f"Point {ctx['short_env']}_URL and this connector's auth settings "
+            "at the real vendor API, and replace _LIST_PATH and the "
+            "items/pagination field names in "
+            f"{ctx['pkg_dir']}/mcp/mcp_{ctx['domain']}.py with the vendor's "
+            "real endpoint and response shape.",
             "Run scripts/pin_tool_schema.py after uv sync and whenever the "
             "tool's parameters change.",
             "Map real ontology classes/fields in schema_mappings and recompute "
@@ -1657,12 +2112,16 @@ if __name__ == "__main__":
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
 
+def _env_example_source(ctx: dict[str, str]) -> str:
+    client_env_block = render(_CLIENT_ENV_BLOCKS[ctx["auth_mode"]], **ctx)
+    return render(ENV_EXAMPLE, client_env_block=client_env_block, **ctx)
+
+
 def _write_root_files(root: Path, ctx: dict[str, str]) -> None:
     for path, template in (
         ("pyproject.toml", PYPROJECT_TOML),
         (".bumpversion.cfg", BUMPVERSION_CFG),
         (".pre-commit-config.yaml", PRECOMMIT_CONFIG),
-        (".env.example", ENV_EXAMPLE),
         ("pytest.ini", PYTEST_INI),
         (".codespellignore", CODESPELLIGNORE),
         ("CLAUDE.md", CLAUDE_MD),
@@ -1677,6 +2136,7 @@ def _write_root_files(root: Path, ctx: dict[str, str]) -> None:
         ("mkdocs.yml", MKDOCS_YML),
     ):
         _write_generated_text(root / path, render(template, **ctx))
+    _write_generated_text(root / ".env.example", _env_example_source(ctx))
 
     _write_generated_text(root / "docker" / "Dockerfile", render(DOCKERFILE, **ctx))
     _write_generated_text(
@@ -1716,15 +2176,29 @@ def _write_root_files(root: Path, ctx: dict[str, str]) -> None:
     )
 
 
+def _api_client_source(ctx: dict[str, str]) -> str:
+    """Render ``api_client.py`` for ``ctx["auth_mode"]``."""
+    auth_fn = render(_AUTH_FUNCTIONS[ctx["auth_mode"]], **ctx).rstrip("\n")
+    values = {**ctx, "auth_imports": _AUTH_IMPORTS[ctx["auth_mode"]], "auth_fn": auth_fn}
+    return render(API_CLIENT_PY, **values)
+
+
+def _mcp_domain_source(ctx: dict[str, str]) -> str:
+    """Render ``mcp/mcp_<domain>.py`` for ``ctx["pagination"]``."""
+    tool_body = render(_TOOL_BODIES[ctx["pagination"]], **ctx)
+    return render(MCP_DOMAIN_PY, tool_body=tool_body, **ctx)
+
+
 def _write_package(root: Path, ctx: dict[str, str]) -> None:
     pkg = root / ctx["pkg_dir"]
     _write_generated_text(pkg / "__init__.py", render(INIT_PY, **ctx))
     _write_generated_text(pkg / "py.typed", "")
     _write_generated_text(pkg / "credentials.py", render(CREDENTIALS_PY, **ctx))
+    _write_generated_text(pkg / "api_client.py", _api_client_source(ctx))
     _write_generated_text(pkg / "mcp_server.py", render(MCP_SERVER_PY, **ctx))
     _write_generated_text(pkg / "mcp" / "__init__.py", render(MCP_INIT_PY, **ctx))
     _write_generated_text(
-        pkg / "mcp" / f"mcp_{ctx['domain']}.py", render(MCP_DOMAIN_PY, **ctx)
+        pkg / "mcp" / f"mcp_{ctx['domain']}.py", _mcp_domain_source(ctx)
     )
     _write_generated_text(
         root / "scripts" / "pin_tool_schema.py", render(PIN_TOOL_SCHEMA_PY, **ctx)
@@ -1770,9 +2244,30 @@ def _write_yaml_manifest(
     _write_generated_text(root / "connector_manifest.yml", text)
 
 
+def _test_servers_source(ctx: dict[str, str]) -> str:
+    values = {**ctx, "malformed_signature": TOOL_SIGNATURES[ctx["pagination"]]}
+    return render(TESTS_SERVERS_PY, **values)
+
+
+def _test_api_client_source(ctx: dict[str, str]) -> str:
+    """Render ``test_api_client.py`` for ``ctx["auth_mode"]``."""
+    template = (
+        TESTS_API_CLIENT_OAUTH_PY
+        if ctx["auth_mode"] in _OAUTH_AUTH_MODES
+        else TESTS_API_CLIENT_STATIC_PY
+    )
+    auth_env_setup = render(_AUTH_ENV_SETUP[ctx["auth_mode"]], **ctx).rstrip("\n")
+    values = {
+        **ctx,
+        "auth_env_setup": auth_env_setup,
+        "auth_header_assert": _AUTH_HEADER_ASSERT[ctx["auth_mode"]],
+    }
+    return render(template, **values)
+
+
 def _write_tests(root: Path, ctx: dict[str, str]) -> None:
     tests = root / "tests"
-    _write_generated_text(tests / "servers.py", render(TESTS_SERVERS_PY, **ctx))
+    _write_generated_text(tests / "servers.py", _test_servers_source(ctx))
     _write_generated_text(tests / "conftest.py", render(TESTS_CONFTEST_PY, **ctx))
     _write_generated_text(tests / "test_manifest.py", render(TESTS_MANIFEST_PY, **ctx))
     _write_generated_text(
@@ -1784,6 +2279,7 @@ def _write_tests(root: Path, ctx: dict[str, str]) -> None:
     _write_generated_text(
         tests / "test_conformance.py", render(TESTS_CONFORMANCE_PY, **ctx)
     )
+    _write_generated_text(tests / "test_api_client.py", _test_api_client_source(ctx))
 
 
 def scaffold(
@@ -1792,6 +2288,9 @@ def scaffold(
     display_name: str | None = None,
     description: str | None = None,
     domain: str = "reader",
+    auth_mode: str = "bearer",
+    pagination: str = "cursor",
+    openapi: str | None = None,
     output_dir: str = ".",
     in_place: bool = False,
 ) -> Path:
@@ -1802,7 +2301,13 @@ def scaffold(
     added.
     """
     ctx = build_context(
-        package_name, display_name=display_name, description=description, domain=domain
+        package_name,
+        display_name=display_name,
+        description=description,
+        domain=domain,
+        auth_mode=auth_mode,
+        pagination=pagination,
+        openapi=openapi,
     )
     root = (
         Path(output_dir).resolve()
@@ -1835,7 +2340,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--domain",
         default="reader",
-        help="snake_case name of the one demo MCP tool domain (default: reader)",
+        help="snake_case name of the one MCP tool domain (default: reader)",
+    )
+    parser.add_argument(
+        "--auth",
+        dest="auth_mode",
+        choices=AUTH_MODES,
+        default="bearer",
+        help="outbound auth the generated api_client.py builds (default: bearer)",
+    )
+    parser.add_argument(
+        "--pagination",
+        choices=PAGINATION_MODES,
+        default="cursor",
+        help="pagination style the generated tool and sync preset use (default: cursor)",
+    )
+    parser.add_argument(
+        "--openapi",
+        default=None,
+        help="optional OpenAPI document; seeds the base URL and list path",
     )
     parser.add_argument("--output-dir", default=".")
     parser.add_argument(
@@ -1853,6 +2376,9 @@ def main(argv: list[str] | None = None) -> int:
         display_name=args.display_name,
         description=args.description,
         domain=args.domain,
+        auth_mode=args.auth_mode,
+        pagination=args.pagination,
+        openapi=args.openapi,
         output_dir=args.output_dir,
         in_place=args.in_place,
     )

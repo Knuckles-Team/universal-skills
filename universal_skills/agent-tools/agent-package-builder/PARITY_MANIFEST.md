@@ -11,6 +11,17 @@ references, carries a `connector_manifest.yml` with a valid `sync` preset, and
 publishes docs from `pages/` (no `/docs`). Generated files must remain
 environment-neutral, current-only, and deterministic.
 
+Lane BUILDER-API-CLIENT (RF-ADR-009 W2) closed the gap the retarget left open:
+the scaffold now generates a real `<pkg>/api_client.py` built only from
+`agent_connector_sdk.http`/`tls`/`auth` (never raw `httpx`/`requests`, never
+`agent-utilities`), chosen by `--auth {bearer,basic,api_key,client_credentials,
+delegated}` (default `bearer`) and `--pagination {cursor,page,offset}`
+(default `cursor`), with an optional `--openapi <file>` to seed the base URL
+and list path from a small OpenAPI document. The one MCP tool per domain calls
+that client and returns an `agent_connector_sdk.http.pagination.ToolPage`; the
+sync preset is built to match exactly (`preset_pagination`-equivalent fields,
+`params_style: "args"`, no `action`).
+
 ## Root contract
 
 | Path | Status | Contract |
@@ -18,7 +29,7 @@ environment-neutral, current-only, and deterministic.
 | `pyproject.toml` | R | Python 3.12–3.14. `dependencies` is exactly `agent-connector-sdk>=0.1.0,<1.0.0` and `epistemic-graph>=2.23.0,<3.0.0` — never `agent-utilities` or any later workspace-phase package. One console script, `<package>-mcp`. Test deps live in `[dependency-groups] test` (`default-groups = ["test"]`) so `uv sync` installs them without an extra. |
 | `.bumpversion.cfg` | R | Version fields in `pyproject.toml`, `README.md` and `docker/Dockerfile` only. |
 | `.pre-commit-config.yaml` | R | Reviewed pinned hooks (pre-commit-hooks, ruff, mypy, uv-lock) plus one `repo: https://github.com/Knuckles-Team/pipelines` block with `rev: REPLACE_WITH_SHARED_HOOKS_REV` referencing the shared gate-script bundle by hook id (`complexity-staged`, `kiss-staged`, `clone-dupehound-changed-functions`, `check-secret-history`, `security-sanitizer`, `guardrail-tracked-privacy`, `check-root-hygiene`, `dependency-audit`, `check-orphan-modules`) — RF-ADR-009 section 8's gate-script consolidation. **No gate script is copied into the package**; the block cannot run until the SHARED-HOOKS lane publishes that bundle, and that is expected until it does. Local hooks validate the manifest (`agent_connector_sdk.manifest.loader.require_valid_connector_package`) and run the test suite at pre-push. |
-| `.env.example` | R | Non-secret runtime switches (`HOST`, `PORT`, `TRANSPORT`, `AUTH_TYPE`, `MCP_TOOL_MODE`) plus commented `env://`/`openbao://` reference examples for provider credentials. No endpoint, credential, or certificate value. |
+| `.env.example` | R | Non-secret runtime switches (`HOST`, `PORT`, `TRANSPORT`, `AUTH_TYPE`, `MCP_TOOL_MODE`); the API client's base URL setting and its `--auth`-mode-specific settings (commented `env://`/`openbao://` reference examples for every credential); a commented TLS-profile block (`agent_connector_sdk.tls.resolve`). No endpoint, credential, or certificate value. |
 | `.env` | — | Must not be generated or committed. |
 | `mcp_config.json` | R | Installed stdio entry point and `MCP_TOOL_MODE` only; no resolved reference or raw secret. |
 | `README.md` | R | Installation, usage, and the `env://`/`openbao://` credential model; links to the Pages site. |
@@ -60,10 +71,10 @@ environment-neutral, current-only, and deterministic.
 | `mkdocs.yml` | R | `docs_dir: pages`, `strict: true`, and its own content manifest only (`site_name`, `site_description`, `site_url`, `repo_url`, `nav`). No `theme:`/`markdown_extensions:` block — those come from the shared Knuckles-Team/pipelines Pages theme, inherited at build time via `.github/workflows/pages.yml`'s `shared_theme_enabled: true` (mkdocs native `INHERIT:`, injected by the reusable workflow, never hand-copied here). |
 | `pages/index.md` | R | Package purpose, one line on what it is built on. |
 | `pages/installation.md` | R | `uvx`/`pip` install; Python 3.12–3.14. |
-| `pages/usage.md` | R | The tool's action-routed contract; how to swap the demo data for real API calls. |
+| `pages/usage.md` | R | The tool's pagination contract and how to point `<pkg>/api_client.py` and `.env.example` at the real vendor API (base URL, auth, TLS profile). |
 | `pages/deployment.md` | R | Local stdio default; networked deployment requires `AUTH_TYPE` and a loopback-only publish behind an operator-owned authenticated TLS ingress. |
 | `pages/concepts.md` | R | Native content primitives, governed sync, credentials by reference. |
-| `pages/agent-readiness.json` | R | The applicability/maturity declaration validated by both universal-skills' `agent_readiness._validate_input` (delegated to by `repository_manager.docs_readiness`) and the pipelines `pages_readiness._validate_readiness_input` TCK. `api`/`mcp`/`a2a`/`skills` are all declared `applicable: false` — see the docstring on `scaffold_package._agent_readiness_input` for exactly why (the pipelines TCK requires a public HTTPS `endpoint` for an applicable `mcp`/`a2a`, which a stdio-default connector has none of; declaring `skills.applicable: true` collides with the pipelines TCK's output allowlist, which does not accept `.well-known/*` — a discovered cross-repo contract gap, not a defect in this template). `discoverability: true` is required for the Markdown-mirror check to have anything to validate. |
+| `pages/agent-readiness.json` | R | The applicability/maturity declaration validated by both universal-skills' `agent_readiness._validate_input` (delegated to by `repository_manager.docs_readiness`) and the pipelines `pages_readiness._validate_readiness_input` TCK. `api`/`mcp`/`a2a`/`skills` are all declared `applicable: false` — see the docstring on `scaffold_package._agent_readiness_input` for exactly why (the pipelines TCK requires a public HTTPS `endpoint` for an applicable `mcp`/`a2a`, which a stdio-default connector has none of; declaring `skills.applicable: true` collides with the pipelines TCK's output allowlist, which does not accept `.well-known/*` — a discovered cross-repo contract gap, not a defect in this template). `discoverability: true` is required for the Markdown-mirror check to have anything to validate. **This `api` entry is unrelated to lane BUILDER-API-CLIENT's `<pkg>/api_client.py`:** it is RFC 9727/9264 discovery of *this package's own* served surface (an `application/linkset+json` catalog `agent_readiness._render_api_catalog` only ever emits when the connector serves HTTP — `capabilities.a2a.applicable` or an HTTP-transport `mcp`), never of a vendor API this connector calls outward. Adding a real outbound API client does not change this declaration, and forcing `api.applicable: true` without an HTTP-served surface fails `agent_readiness`'s own `serves_http` gate. Verified against pipelines `pages_readiness.py` on its current `refactor/readiness-fix` branch (equal to the pipelines commit pinned in `pages.yml`; no readiness-relevant changes landed on that branch yet — see `scripts/agent_readiness.py` in this repository for the generator-side gate). |
 | `pages/agent-readiness.schema.json` | R | An exact copy of the builder's canonical `agent_readiness_schema.json` (same file both validators check the input against; not hand-duplicated — copied verbatim at scaffold time). |
 | `scripts/generate_agent_readiness.py` | R | Regenerates `llms.txt`, `llms-sections/*/llms.txt` and `markdown-mirror-manifest.json` (root-level, committed) by delegating to the installed universal-skills `agent_readiness.generate()` — the same authority `repository_manager.docs_readiness` resolves via `importlib.resources`. Requires the `docs` dependency group (`uv sync --group docs`). Run after editing `pages/*.md` or `pages/agent-readiness.json`. |
 | `.github/workflows/pages.yml` | R | Calls the shared reusable workflow `Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml`, pinned to a full commit SHA, with `content_source: pages`, `shared_theme_enabled: true`, `agent_readiness_enabled: true`. No local mkdocs-build-and-deploy steps of its own. |
@@ -102,9 +113,10 @@ assuming the full `site_url` path is mirrored on disk.
 | Path | Status | Contract |
 |---|:---:|---|
 | `<pkg>/__init__.py` | R | `__version__` only; no legacy alias. |
+| `<pkg>/api_client.py` | R | The governed API client, built only from `agent_connector_sdk.http`/`tls`/`auth`. `_auth()` is the one function `--auth` varies (`bearer_auth`/`basic_auth`/`api_key_auth`/`client_credentials_auth`/`DelegatedTokenAuth`, all resolving credentials by reference through `setting()`); `build_client()` is the async composition root (`create_async_http_client` + `HttpClientOptions` + `resolve_tls_profile`); `build_client_for(base_url)` is the sync factory `agent_connector_sdk.testing.http_clients.run_http_client_suite` drives. Never raw `httpx`/`requests` request calls, never `agent-utilities`. |
 | `<pkg>/mcp_server.py` | R | `build_server()` calls `agent_connector_sdk.mcp.server.create_mcp_server` with a `ConnectorContent` pointing at the repository root, then `agent_connector_sdk.mcp.tool_surface.register_tool_surface`. `mcp_server()` (the console-script entry point) passes `host`/`port` only for a non-`stdio` transport. |
-| `<pkg>/mcp/__init__.py`, `<pkg>/mcp/mcp_<domain>.py` | R | One action-routed tool (`action` + `params_json`) per domain, exported as `register_<domain>_tools`. |
-| `<pkg>/credentials.py` | R | Wires `agent_connector_sdk.credentials`: `build_resolver()` (env, plus OpenBao when `OPENBAO_ADDR` is set) and `resolve_setting()`. No raw secret handling of its own. |
+| `<pkg>/mcp/__init__.py`, `<pkg>/mcp/mcp_<domain>.py` | R | One tool per domain, exported as `register_<domain>_tools`, that calls `<pkg>.api_client.build_client()` and returns an `agent_connector_sdk.http.pagination.ToolPage`; its one pagination parameter (`cursor`, `page`, or `offset`) matches `--pagination` and the sync preset's fields exactly. |
+| `<pkg>/credentials.py` | R | Wires `agent_connector_sdk.credentials`: `build_resolver()` (env, plus OpenBao when `OPENBAO_ADDR` is set) and `resolve_setting()`. Available for ad hoc reference resolution; `api_client.py`'s `_auth()` calls the SDK's `auth.*` helpers directly and does not depend on this module. |
 
 ## Tests
 
@@ -113,9 +125,10 @@ assuming the full `site_url` path is mirrored on disk.
 | `tests/servers.py` | R | In-process well-formed and malformed FastMCP servers for the test suite (not collected as tests). |
 | `tests/conftest.py` | R | `sessions`, `malformed_sessions`, `repo_root`, `adapter` fixtures, mirroring `agent-connector-sdk`'s own `tests/conftest.py`. |
 | `tests/test_manifest.py` | R | `require_valid_connector_package` succeeds against the repository root. |
-| `tests/test_mcp_server.py` | R | The in-process server lists the tool, prompt, ontology/shapes/manifest resources and the skill, and the tool call round-trips. |
+| `tests/test_mcp_server.py` | R | The in-process server lists the tool, prompt, ontology/shapes/manifest resources and the skill. The tool itself calls a real vendor API, so its round-trip is proven in `tests/test_api_client.py` against a scripted local server, not here. |
 | `tests/test_credentials.py` | R | `env://` resolution, unset reference, malformed reference, and an unavailable env target — all through `agent_connector_sdk.credentials`. |
-| `tests/test_conformance.py` | R | `agent_connector_sdk.testing.source_adapters.run_source_adapter_suite` passes against the manifest's `sync` preset. |
+| `tests/test_conformance.py` | R | `agent_connector_sdk.testing.source_adapters.run_source_adapter_suite` passes against the manifest's `sync` preset. Marked `@pytest.mark.integration` (deselected by `pytest.ini`'s default `-m "not integration"`): its fixtures build the real server, whose tool calls the real vendor API — it needs a real (or realistically scripted, multi-page) target configured, unlike `tests/test_api_client.py`'s self-contained `ScriptedHttpServer` proof. |
+| `tests/test_api_client.py` | R | For `bearer`/`basic`/`api_key`: `agent_connector_sdk.testing.http_clients.run_http_client_suite` against `build_client_for`, plus a `ScriptedHttpServer` end-to-end proof (auth header sent, a paginated call, a `HttpProblemError`-mapped 404). For `client_credentials`/`delegated`: the same end-to-end proof only — `run_http_client_suite` assumes a factory that is self-contained given a base URL, which does not hold for a client whose token is minted from a separately configured endpoint; the generated module's docstring says so. |
 
 ## Current-only rejection gate
 
@@ -126,6 +139,9 @@ A scaffold fails parity if it contains any of the following:
   dependencies;
 - a generated `.env`, a raw credential/endpoint value, `SSL_VERIFY`, or a
   `verify=False` path;
+- a direct `httpx`/`requests` request call, or any other API client not built
+  from `agent_connector_sdk.http`/`tls`/`auth` (`api_client.py` is the only
+  place a connector reaches its vendor);
 - a copied gate script (`check_scanners.py`, `run_kiss.sh`, or any script the
   SHARED-HOOKS bundle is meant to own) inside the package;
 - `docs/`, `llms.txt`, or any `.well-known/` discovery artifact;
