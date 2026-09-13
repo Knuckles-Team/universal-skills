@@ -12,12 +12,38 @@ CONCEPT:CA-000 — Project Discovery & Classification
 """
 
 import json
+import os
 import re
+import signal
 import subprocess
 import sys
 import tomllib
 import uuid
 from pathlib import Path
+
+# Seconds to allow one `git clone` before it is killed. Bounded so a stalled
+# or malicious remote can't hang project discovery indefinitely.
+CLONE_TIMEOUT_SECONDS = 600
+
+# Ambient Git env vars that could redirect a clone at an unrelated repo
+# (e.g. the git-hook / worktree ambient-env trap) — stripped from the child
+# environment. Mirrors repository_manager.operation_boundary.PinnedDirectory
+# .anchored_git_environment's blocklist.
+_UNSAFE_GIT_ENV_VARS = frozenset(
+    {
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_COMMON_DIR",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_CONFIG_GLOBAL",
+        "GIT_CONFIG_NOSYSTEM",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_CONFIG_COUNT",
+    }
+)
 
 LANGUAGE_MARKERS = {
     "python": [
@@ -269,6 +295,93 @@ def discover_project(path: Path) -> dict:
     return result
 
 
+def _sanitized_git_clone_env() -> dict[str, str]:
+    """Child environment for a `git clone` subprocess.
+
+    Strips inherited repository-redirecting GIT_* vars (this workspace has
+    hit the git-hook ambient-env trap before, e.g. GIT_DIR/GIT_INDEX_FILE
+    left set by a caller) and disables system/global Git config, so the
+    clone can't be pointed at, or configured from, anything other than the
+    URL given on the command line.
+    """
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key not in _UNSAFE_GIT_ENV_VARS
+        and not key.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))
+    }
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    return env
+
+
+def _terminate_process_group(process: subprocess.Popen) -> None:
+    """SIGTERM then SIGKILL a timed-out clone's whole process group."""
+    if not hasattr(os, "killpg"):
+        process.kill()
+        return
+    try:
+        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            process.wait(timeout=5)
+    except OSError:
+        process.kill()
+
+
+def _clone_repository(
+    url: str, target_path: Path, timeout: int = CLONE_TIMEOUT_SECONDS
+) -> tuple[bool, str]:
+    """Clone ``url`` into ``target_path``, refusing everything but a plain
+    git-over-http(s)/ssh transport.
+
+    ``-c protocol.allow=never`` plus explicit per-protocol allows blocks the
+    ``ext::``/``fd::`` (and any other) transports that can otherwise turn a
+    URL into arbitrary command execution, regardless of what a system/global
+    Git config on this host might otherwise permit.
+    """
+    command = [
+        "git",
+        "-c",
+        "protocol.allow=never",
+        "-c",
+        "protocol.http.allow=always",
+        "-c",
+        "protocol.https.allow=always",
+        "-c",
+        "protocol.ssh.allow=always",
+        "clone",
+        "--",
+        url,
+        str(target_path),
+    ]
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            env=_sanitized_git_clone_env(),
+            start_new_session=True,
+        )
+    except OSError as exc:
+        return False, f"failed to start git: {exc}"
+
+    try:
+        output, _ = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _terminate_process_group(process)
+        process.communicate()
+        return False, f"git clone timed out after {timeout}s"
+
+    if process.returncode == 0:
+        return True, output or ""
+    return False, (output or "").strip() or f"git clone exited {process.returncode}"
+
+
 def main():
     if len(sys.argv) < 2:
         print(
@@ -306,19 +419,12 @@ def main():
                     repo_name = repo_name[:-4]
                 target_path = temp_dir / repo_name
                 print(f"Cloning {arg} into {target_path}...", file=sys.stderr)
-                clone = subprocess.run(
-                    ["git", "clone", "--", arg, str(target_path)],
-                    capture_output=True,
-                    text=True,
-                )
-                if clone.returncode == 0:
+                cloned, message = _clone_repository(arg, target_path)
+                if cloned:
                     paths.append(str(target_path))
                     cleanup_needed = True
                 else:
-                    print(
-                        f"Failed to clone {arg}: {clone.stderr.strip()}",
-                        file=sys.stderr,
-                    )
+                    print(f"Failed to clone {arg}: {message}", file=sys.stderr)
             else:
                 paths.append(arg)
 
