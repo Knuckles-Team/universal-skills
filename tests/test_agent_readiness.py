@@ -523,3 +523,303 @@ def test_builder_scaffold_carries_the_readiness_contract(tmp_path):
     )
     assert manifest["content_signals"] == {"policy": "unset"}
     assert manifest["capabilities"]["mcp"]["applicable"] is True
+
+
+def _mcp_artifact(root: Path, *, http_transport: bool) -> None:
+    (root / "provider.py").write_text("def serve():\n    return 'ready'\n", encoding="utf-8")
+    _write_json(
+        root / "mcp.json",
+        {
+            "applicable": True,
+            "surface": "mcp",
+            "version": "capability/v1",
+            "http_transport": http_transport,
+            "source": "provider.py",
+        },
+    )
+
+
+def test_non_public_mcp_surfaces_are_declared_without_a_public_endpoint(tmp_path):
+    """A stdio or in-cluster MCP connector is applicable without a public URL,
+    and is never advertised by public discovery documents."""
+
+    module = _load_generator()
+    root, readiness = _fixture(tmp_path)
+    _mcp_artifact(root, http_transport=True)
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "transport": "stdio",
+        "reachability": "local",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+
+    result = module.generate(root)
+    assert result["capabilities"]["mcp"] == {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "transport": "stdio",
+        "reachability": "local",
+    }
+    assert ".well-known/agent-skills.json" in result["generated"]
+    assert ".well-known/mcp-server-card.json" not in result["generated"]
+    assert ".well-known/api-catalog" not in result["generated"]
+
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "transport": "streamable-http",
+        "reachability": "in-cluster",
+        "service_identity": "provider-mcp.connectors",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    result = module.generate(root)
+    assert "service_identity" not in result["capabilities"]["mcp"]
+    assert "provider-mcp.connectors" not in (
+        root / "agent-readiness-manifest.json"
+    ).read_text(encoding="utf-8")
+    assert ".well-known/mcp-server-card.json" not in result["generated"]
+
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "transport": "streamable-http",
+        "reachability": "public",
+        "endpoint": "https://service.example.invalid/mcp",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    result = module.generate(root)
+    assert "endpoint" not in result["capabilities"]["mcp"]
+    assert ".well-known/mcp-server-card.json" in result["generated"]
+    assert ".well-known/api-catalog" in result["generated"]
+
+
+def test_http_transport_declaration_requires_artifact_proof(tmp_path):
+    module = _load_generator()
+    root, readiness = _fixture(tmp_path)
+    _mcp_artifact(root, http_transport=False)
+    readiness["capabilities"]["mcp"] = {
+        "applicable": True,
+        "artifact": "mcp.json",
+        "transport": "sse",
+        "reachability": "in-cluster",
+        "service_identity": "provider-mcp.connectors",
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+    with pytest.raises(module.ReadinessError, match="mcp-transport-not-proven"):
+        module.generate(root)
+
+
+_SURFACE_CASES = [
+    ("mcp", {}, None),
+    ("mcp", {"endpoint": "https://service.example.invalid/mcp"}, None),
+    ("mcp", {"transport": "stdio", "reachability": "local"}, None),
+    (
+        "mcp",
+        {
+            "transport": "streamable-http",
+            "reachability": "in-cluster",
+            "service_identity": "provider-mcp.connectors",
+        },
+        None,
+    ),
+    (
+        "mcp",
+        {
+            "transport": "sse",
+            "reachability": "public",
+            "endpoint": "https://service.example.invalid/mcp",
+        },
+        None,
+    ),
+    (
+        "a2a",
+        {
+            "transport": "jsonrpc",
+            "reachability": "in-cluster",
+            "service_identity": "provider-agent.agents",
+        },
+        None,
+    ),
+    ("mcp", {"transport": "stdio"}, "capability-transport-incomplete"),
+    ("mcp", {"reachability": "local"}, "capability-transport-incomplete"),
+    (
+        "mcp",
+        {"service_identity": "provider-mcp.connectors"},
+        "capability-transport-incomplete",
+    ),
+    (
+        "mcp",
+        {"transport": "websocket", "reachability": "public"},
+        "capability-transport-unsupported",
+    ),
+    (
+        "a2a",
+        {"transport": "stdio", "reachability": "local"},
+        "capability-transport-unsupported",
+    ),
+    (
+        "mcp",
+        {"transport": "stdio", "reachability": "nearby"},
+        "capability-reachability-invalid",
+    ),
+    (
+        "mcp",
+        {"transport": "streamable-http", "reachability": "local"},
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "stdio",
+            "reachability": "in-cluster",
+            "service_identity": "provider-mcp.connectors",
+        },
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "stdio",
+            "reachability": "local",
+            "endpoint": "https://service.example.invalid/mcp",
+        },
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "stdio",
+            "reachability": "local",
+            "service_identity": "provider-mcp.connectors",
+        },
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "mcp",
+        {"transport": "streamable-http", "reachability": "in-cluster"},
+        "capability-service-identity-required",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "streamable-http",
+            "reachability": "in-cluster",
+            "service_identity": "provider-mcp",
+        },
+        "capability-service-identity-invalid",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "streamable-http",
+            "reachability": "in-cluster",
+            "service_identity": "provider-mcp.connectors",
+            "endpoint": "https://service.example.invalid/mcp",
+        },
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "mcp",
+        {"transport": "streamable-http", "reachability": "public"},
+        "capability-endpoint-required",
+    ),
+    (
+        "mcp",
+        {
+            "transport": "streamable-http",
+            "reachability": "public",
+            "endpoint": "https://service.example.invalid/mcp",
+            "service_identity": "provider-mcp.connectors",
+        },
+        "capability-reachability-inconsistent",
+    ),
+    (
+        "api",
+        {"transport": "streamable-http", "reachability": "public"},
+        "capability-entry-invalid",
+    ),
+]
+
+
+@pytest.mark.parametrize(("surface", "declared", "expected"), _SURFACE_CASES)
+def test_surface_reachability_rules_agree_with_the_schema(
+    tmp_path, surface, declared, expected
+):
+    """The generator and the published JSON Schema accept exactly the same
+    served-surface declarations (address validity aside, which only the
+    generator can check)."""
+
+    import jsonschema
+
+    module = _load_generator()
+    root, readiness = _fixture(tmp_path)
+    (root / "provider.py").write_text("def serve():\n    return 'ready'\n", encoding="utf-8")
+    _write_json(
+        root / f"{surface}.json",
+        {
+            "applicable": True,
+            "surface": surface,
+            **({"http_transport": True} if surface == "mcp" else {}),
+            "source": "provider.py",
+        },
+    )
+    readiness["capabilities"][surface] = {
+        "applicable": True,
+        "artifact": f"{surface}.json",
+        **declared,
+    }
+    _write_json(root / "docs" / "agent-readiness.json", readiness)
+
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    schema_valid = jsonschema.Draft202012Validator(schema).is_valid(readiness)
+    if expected is None:
+        module.generate(root)
+        assert schema_valid
+    else:
+        with pytest.raises(module.ReadinessError, match=expected):
+            module.generate(root)
+        assert not schema_valid
+
+
+def test_use_directory_urls_false_maps_pages_to_html_files(tmp_path):
+    module = _load_generator()
+    root, _ = _fixture(tmp_path)
+    (root / "docs" / "nested").mkdir()
+    (root / "docs" / "nested" / "index.md").write_text(
+        "# Nested\n\nNested source.\n", encoding="utf-8"
+    )
+    (root / "mkdocs.yml").write_text(
+        "site_name: Provider\nsite_url: https://example.github.io/provider/\n"
+        "use_directory_urls: false\n"
+        "nav:\n"
+        "  - Home: index.md\n"
+        "  - Guides:\n"
+        "      - Guide: guide.md\n"
+        "      - Nested: nested/index.md\n",
+        encoding="utf-8",
+    )
+    module.generate(root)
+    mirror = json.loads(
+        (root / "markdown-mirror-manifest.json").read_text(encoding="utf-8")
+    )
+    urls = {entry["source"]: entry["url"] for entry in mirror["entries"]}
+    markdown_urls = {
+        entry["source"]: entry["markdown_url"] for entry in mirror["entries"]
+    }
+    assert urls == {
+        "docs/index.md": "https://example.github.io/provider/index.html",
+        "docs/guide.md": "https://example.github.io/provider/guide.html",
+        "docs/nested/index.md": "https://example.github.io/provider/nested/index.html",
+    }
+    assert markdown_urls["docs/guide.md"] == (
+        "https://example.github.io/provider/guide/index.md"
+    )
+
+    (root / "mkdocs.yml").write_text(
+        "site_name: Provider\nsite_url: https://example.github.io/provider/\n"
+        "use_directory_urls: 'no'\nnav:\n  - Home: index.md\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(module.ReadinessError, match="mkdocs-use-directory-urls-invalid"):
+        module.generate(root)

@@ -138,10 +138,32 @@
           "$ref": "#/$defs/capability"
         },
         "mcp": {
-          "$ref": "#/$defs/capability"
+          "allOf": [
+            {
+              "$ref": "#/$defs/served_capability"
+            },
+            {
+              "properties": {
+                "transport": {
+                  "enum": ["stdio", "streamable-http", "sse"]
+                }
+              }
+            }
+          ]
         },
         "a2a": {
-          "$ref": "#/$defs/capability"
+          "allOf": [
+            {
+              "$ref": "#/$defs/served_capability"
+            },
+            {
+              "properties": {
+                "transport": {
+                  "enum": ["jsonrpc", "http-json", "grpc"]
+                }
+              }
+            }
+          ]
         },
         "skills": {
           "type": "object",
@@ -186,6 +208,124 @@
           "const": ".well-known/oauth-authorization-server"
         }
       }
+    },
+    "served_capability": {
+      "description": "An MCP or A2A surface. transport/reachability are optional; once either is declared both are required and must agree: local = stdio with no endpoint or service_identity; in-cluster = a network transport with a service_identity and no endpoint; public = a network transport with a public HTTPS endpoint.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applicable"],
+      "properties": {
+        "applicable": {
+          "type": "boolean"
+        },
+        "artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oauth_protected_resource": {
+          "type": "string",
+          "const": ".well-known/oauth-protected-resource"
+        },
+        "oauth_authorization_server": {
+          "type": "string",
+          "const": ".well-known/oauth-authorization-server"
+        },
+        "transport": {
+          "enum": ["stdio", "streamable-http", "sse", "jsonrpc", "http-json", "grpc"]
+        },
+        "reachability": {
+          "enum": ["local", "in-cluster", "public"]
+        },
+        "service_identity": {
+          "type": "string",
+          "maxLength": 253,
+          "pattern": "^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?){1,4}$"
+        }
+      },
+      "dependentRequired": {
+        "transport": ["reachability"],
+        "reachability": ["transport"],
+        "service_identity": ["transport", "reachability"]
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["reachability"],
+            "properties": {
+              "reachability": {
+                "const": "local"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transport": {
+                "const": "stdio"
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["endpoint"]
+                },
+                {
+                  "required": ["service_identity"]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["reachability"],
+            "properties": {
+              "reachability": {
+                "const": "in-cluster"
+              }
+            }
+          },
+          "then": {
+            "required": ["service_identity"],
+            "properties": {
+              "transport": {
+                "not": {
+                  "const": "stdio"
+                }
+              }
+            },
+            "not": {
+              "required": ["endpoint"]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["reachability"],
+            "properties": {
+              "reachability": {
+                "const": "public"
+              }
+            }
+          },
+          "then": {
+            "required": ["endpoint"],
+            "properties": {
+              "transport": {
+                "not": {
+                  "const": "stdio"
+                }
+              }
+            },
+            "not": {
+              "required": ["service_identity"]
+            }
+          }
+        }
+      ]
     }
   }
 }

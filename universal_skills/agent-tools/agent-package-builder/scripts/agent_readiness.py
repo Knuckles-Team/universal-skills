@@ -77,6 +77,21 @@ _OAUTH_METADATA_FIELDS = {
     "oauth_protected_resource": "oauth-protected-resource",
     "oauth_authorization_server": "oauth-authorization-server",
 }
+#: Transports an applicable served surface may declare. ``stdio`` exists only
+#: for MCP; an A2A agent is always reached over a network binding.
+SURFACE_TRANSPORTS = {
+    "mcp": frozenset({"stdio", "streamable-http", "sse"}),
+    "a2a": frozenset({"jsonrpc", "http-json", "grpc"}),
+}
+#: ``local``: a client launches the server process itself (stdio);
+#: ``in-cluster``: reachable only inside the deployment network under a
+#: ``service_identity``; ``public``: reachable at a public HTTPS ``endpoint``.
+REACHABILITY_VALUES = frozenset({"local", "in-cluster", "public"})
+NON_PUBLIC_REACHABILITY = frozenset({"local", "in-cluster"})
+TRANSPORT_KEYS = frozenset({"transport", "reachability", "service_identity"})
+SERVICE_IDENTITY_PATTERN = re.compile(
+    r"[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?){1,4}"
+)
 SAFE_SIGNAL_POLICIES = frozenset({"unset", "operator-reviewed"})
 SECRET_PATTERN = re.compile(
     r"(?ix)(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|"
@@ -447,12 +462,22 @@ def _discovery_link(
     return link
 
 
+def _publicly_discoverable(capability: dict[str, Any]) -> bool:
+    """Public discovery documents never advertise a surface declared
+    ``local`` or ``in-cluster``; an undeclared reachability keeps v1 behavior."""
+
+    return (
+        capability.get("applicable") is True
+        and capability.get("reachability") not in NON_PUBLIC_REACHABILITY
+    )
+
+
 def _render_mcp_server_card(
     readiness: dict[str, Any], *, project_name: str
 ) -> str | None:
     mcp = readiness["capabilities"].get("mcp", {})
     evidence = readiness["capability_evidence"].get("mcp", {})
-    if mcp.get("applicable") is not True or evidence.get("http_transport") != "true":
+    if not _publicly_discoverable(mcp) or evidence.get("http_transport") != "true":
         return None
     _scan_safe_text(project_name, "mcp-server-card")
     return json.dumps(
@@ -471,23 +496,24 @@ def _render_mcp_server_card(
 def _render_api_catalog(readiness: dict[str, Any]) -> str | None:
     capabilities = readiness["capabilities"]
     evidence = readiness["capability_evidence"]
-    serves_http = capabilities["a2a"].get("applicable") is True or (
-        capabilities["mcp"].get("applicable") is True
+    public_a2a = _publicly_discoverable(capabilities["a2a"])
+    public_mcp_http = (
+        _publicly_discoverable(capabilities["mcp"])
         and evidence.get("mcp", {}).get("http_transport") == "true"
     )
-    if not serves_http:
+    if not (public_a2a or public_mcp_http):
         return None
     links: list[dict[str, str]] = []
     if capabilities["api"].get("applicable") is True:
         links.append(_discovery_link(capabilities["api"]["artifact"]))
-    if capabilities["a2a"].get("applicable") is True:
+    if public_a2a:
         links.append(_discovery_link("a2a.json", title="A2A agent card"))
         links.append(
             _discovery_link(
                 capabilities["a2a"]["artifact"], title="A2A capability authority"
             )
         )
-    if evidence.get("mcp", {}).get("http_transport") == "true":
+    if public_mcp_http:
         links.append(
             _discovery_link(
                 ".well-known/mcp-server-card.json",
@@ -562,10 +588,24 @@ def _summary(markdown: str, limit: int) -> str:
     return value[:limit].strip()
 
 
-def _static_page_url(site_url: str, source: str) -> str:
-    """Map a Markdown source to MkDocs directory-style output URLs."""
+def _static_page_url(
+    site_url: str, source: str, *, use_directory_urls: bool = True
+) -> str:
+    """Map a Markdown source to the URL MkDocs serves it from.
+
+    With MkDocs' default ``use_directory_urls: true`` every page is a
+    directory URL; with ``false`` a page is its ``.html`` file (an
+    ``index.md`` is its directory's ``index.html``), so the canonical URL
+    names the file the site build actually writes.
+    """
 
     parts = list(PurePosixPath(source).parts)
+    if not use_directory_urls:
+        if parts[-1] == "index.md":
+            parts[-1] = "index.html"
+        else:
+            parts[-1] = PurePosixPath(parts[-1]).with_suffix(".html").name
+        return urljoin(site_url, "/".join(parts))
     if parts[-1] == "index.md":
         parts.pop()
     else:
@@ -657,6 +697,55 @@ def _validate_standards(value: object) -> list[dict[str, str]]:
     return normalized
 
 
+def _validate_surface_reachability(name: str, entry: dict[str, Any]) -> None:
+    """Validate how an applicable MCP/A2A surface is actually reached.
+
+    Without ``transport``/``reachability`` a declaration keeps its original v1
+    meaning (an optional ``endpoint``, validated as public HTTPS when present).
+    Once either is declared, both are required and must agree: ``local`` is
+    MCP ``stdio`` with no endpoint or service identity; ``in-cluster`` is a
+    network transport with a ``service_identity`` and no public endpoint;
+    ``public`` is a network transport with a verifiable public HTTPS
+    ``endpoint``. The pipelines Pages TCK applies the identical rules and
+    error codes (``scripts/pages_readiness.py``).
+    """
+
+    if not TRANSPORT_KEYS & set(entry):
+        return
+    transport = entry.get("transport")
+    reachability = entry.get("reachability")
+    if transport is None or reachability is None:
+        _fail("capability-transport-incomplete")
+    if transport not in SURFACE_TRANSPORTS[name]:
+        _fail("capability-transport-unsupported")
+    if reachability not in REACHABILITY_VALUES:
+        _fail("capability-reachability-invalid")
+    endpoint = entry.get("endpoint")
+    identity = entry.get("service_identity")
+    if (transport == "stdio") != (reachability == "local"):
+        _fail("capability-reachability-inconsistent")
+    if reachability == "public":
+        if identity is not None:
+            _fail("capability-reachability-inconsistent")
+        if not isinstance(endpoint, str):
+            _fail("capability-endpoint-required")
+        return
+    if endpoint is not None:
+        _fail("capability-reachability-inconsistent")
+    if reachability == "local":
+        if identity is not None:
+            _fail("capability-reachability-inconsistent")
+        return
+    if identity is None:
+        _fail("capability-service-identity-required")
+    if (
+        not isinstance(identity, str)
+        or len(identity) > 253
+        or not SERVICE_IDENTITY_PATTERN.fullmatch(identity)
+    ):
+        _fail("capability-service-identity-invalid")
+
+
 def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
     if value.get("schema_version") != SCHEMA_VERSION:
         _fail("applicability-schema-version")
@@ -725,16 +814,18 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
     for name, entry in capabilities.items():
         if not isinstance(entry, dict) or not isinstance(entry.get("applicable"), bool):
             _fail("capability-entry-invalid")
-        allowed_keys = (
-            {"applicable", "path"}
-            if name == "skills"
-            else {
+        if name == "skills":
+            allowed_keys = {"applicable", "path"}
+        elif name in SURFACE_TRANSPORTS:
+            allowed_keys = {
                 "applicable",
                 "artifact",
                 "endpoint",
                 *_OAUTH_METADATA_FIELDS,
+                *TRANSPORT_KEYS,
             }
-        )
+        else:
+            allowed_keys = {"applicable", "artifact", "endpoint", *_OAUTH_METADATA_FIELDS}
         if set(entry) - allowed_keys:
             _fail("capability-entry-invalid")
         applicable = entry["applicable"]
@@ -748,11 +839,19 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
         if applicable and name in {"api", "mcp", "a2a"}:
             if not isinstance(artifact, str):
                 _fail("capability-authority-required")
+            if endpoint is not None:
+                _public_url(endpoint, f"{name}-endpoint")
+            if name in SURFACE_TRANSPORTS:
+                _validate_surface_reachability(name, entry)
             capability_evidence[name] = _validate_capability_artifact(
                 root, name, artifact
             )
-            if endpoint is not None:
-                _public_url(endpoint, f"{name}-endpoint")
+            if (
+                name == "mcp"
+                and entry.get("transport") in {"streamable-http", "sse"}
+                and capability_evidence[name].get("http_transport") != "true"
+            ):
+                _fail("mcp-transport-not-proven")
             for field in _OAUTH_METADATA_FIELDS:
                 metadata_path = entry.get(field)
                 if metadata_path is not None:
@@ -767,10 +866,19 @@ def _validate_input(root: Path, value: dict[str, Any]) -> dict[str, Any]:
             _fail("capability-entry-inapplicable-data")
         if name == "skills" and applicable and set(entry) != {"applicable", "path"}:
             _fail("skills-path-required")
+        # Runtime ``endpoint``, ``service_identity`` and OAuth metadata paths are
+        # validated above but deliberately not recorded in the manifest; the
+        # declared transport/reachability are, so consumers (the pipelines
+        # Pages TCK) can see how the surface is reached without its address.
         normalized_capabilities[name] = {
             "applicable": applicable,
             **({"artifact": artifact} if isinstance(artifact, str) else {}),
             **({"path": normalized_path} if normalized_path is not None else {}),
+            **{
+                field: entry[field]
+                for field in ("transport", "reachability")
+                if applicable and isinstance(entry.get(field), str)
+            },
         }
     return {
         "schema_version": SCHEMA_VERSION,
@@ -792,6 +900,9 @@ def _page_records(
     root: Path, config: dict[str, Any], summary_limit: int
 ) -> tuple[tuple[Page, ...], tuple[Section, ...]]:
     site_url = _public_url(config.get("site_url"), "mkdocs-site", directory=True)
+    use_directory_urls = config.get("use_directory_urls", True)
+    if not isinstance(use_directory_urls, bool):
+        _fail("mkdocs-use-directory-urls-invalid")
     docs_dir_raw = config.get("docs_dir", "docs")
     docs_root = _safe_relative(root, docs_dir_raw, "docs-dir")
     leaves = _flatten_nav(config["nav"])
@@ -808,7 +919,9 @@ def _page_records(
         payload = _regular_file(source_path, "nav-source")
         text = payload.decode("utf-8")
         _scan_safe_text(text, "markdown")
-        url = _static_page_url(site_url, raw_source)
+        url = _static_page_url(
+            site_url, raw_source, use_directory_urls=use_directory_urls
+        )
         if url in seen_urls:
             _fail("mkdocs-nav-url-duplicate")
         markdown_url = _static_markdown_url(site_url, raw_source)
