@@ -173,21 +173,23 @@ def test_agent_readiness_input_matches_both_canonical_schemas(tmp_path):
     assert "sys.modules[spec.name] = module" in generator_script
 
 
-def test_precommit_references_shared_hooks_with_a_placeholder_revision():
+def test_precommit_references_shared_hooks_by_their_published_ids():
     module = _load_scaffold_module()
     precommit = module.PRECOMMIT_CONFIG
 
     assert "@@github_org@@/pipelines" in precommit
-    assert "REPLACE_WITH_SHARED_HOOKS_REV" in precommit
-    assert "SHARED-HOOKS" in precommit
+    # Operator ruling D9: pipelines has no per-release tags yet, so the
+    # generated config pins to rev: main.
+    assert "rev: main" in precommit
+    assert "REPLACE_WITH_SHARED_HOOKS_REV" not in precommit
     for hook_id in (
         "complexity-staged",
         "kiss-staged",
-        "clone-dupehound-changed-functions",
-        "check-secret-history",
+        "dupehound-changed",
+        "secret-history",
         "security-sanitizer",
-        "guardrail-tracked-privacy",
-        "check-root-hygiene",
+        "tracked-privacy",
+        "root-hygiene",
         "dependency-audit",
         "check-orphan-modules",
     ):

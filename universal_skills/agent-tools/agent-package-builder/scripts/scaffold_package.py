@@ -350,9 +350,10 @@ replace = __version__ = "{new_version}"
 
 # ── Pre-commit: standard hooks pinned to reviewed revisions, plus the shared
 # hook repository (SHARED-HOOKS lane) for the gate-script categories RF-ADR-009
-# section 8 lists for consolidation. Per the lane brief: reference the shared
-# hooks by id with a clearly marked placeholder revision; do not copy the gate
-# scripts themselves into this package.
+# section 8 lists for consolidation. Per operator ruling D9: reference the
+# shared hooks by their published ids at ``rev: main`` (pipelines has no
+# per-release tags yet); do not copy the gate scripts themselves into this
+# package.
 PRECOMMIT_CONFIG = """\
 default_language_version:
   python: python3
@@ -401,21 +402,21 @@ repos:
     args: ["--check"]
 # ── Shared workspace gate bundle (RF-ADR-009 section 8 "gate-script
 # duplication"). complexity, KISS diff-scope, duplication, secret-history,
-# security sanitizer, tracked-privacy, root-hygiene, dependency-audit and
-# orphan-module-gate are consolidated into ONE hook repository so 72 connectors
-# never receive copies. SHARED-HOOKS fills in the real revision once that
-# bundle publishes; this block cannot run until then and is not a substitute
-# for it — do not vendor the gate scripts here in the meantime.
+# security sanitizer, tracked-privacy, root-hygiene and dependency-audit are
+# consolidated into ONE hook repository so 72 connectors never receive
+# copies; ids match pipelines' published .pre-commit-hooks.yaml exactly
+# (operator ruling D9: rev: main until pipelines cuts per-release tags) —
+# do not vendor the gate scripts here.
 - repo: https://github.com/@@github_org@@/pipelines
-  rev: REPLACE_WITH_SHARED_HOOKS_REV # SHARED-HOOKS: pin once the connector-sdk hook bundle publishes
+  rev: main
   hooks:
   - id: complexity-staged
   - id: kiss-staged
-  - id: clone-dupehound-changed-functions
-  - id: check-secret-history
+  - id: dupehound-changed
+  - id: secret-history
   - id: security-sanitizer
-  - id: guardrail-tracked-privacy
-  - id: check-root-hygiene
+  - id: tracked-privacy
+  - id: root-hygiene
   - id: dependency-audit
   - id: check-orphan-modules
 - repo: local
@@ -585,9 +586,6 @@ PYTEST_INI = """\
 timeout = 60
 asyncio_mode = auto
 testpaths = tests
-markers =
-    integration: Integration tests
-addopts = -m "not integration"
 """
 
 CODESPELLIGNORE = """\
@@ -1518,11 +1516,19 @@ def build_malformed_server() -> Any:
 '''
 
 TESTS_CONFTEST_PY = '''\
-"""Shared fixtures: in-process sessions and the manifest-driven source adapter."""
+"""Shared fixtures: in-process sessions and the manifest-driven source adapter.
+
+``sessions`` points the real connector server's tool at a local
+``ScriptedHttpServer`` (the same double ``tests/test_api_client.py`` uses)
+instead of a real vendor target, pre-loaded with enough scripted pages to
+cover every check ``run_source_adapter_suite`` runs against it (an initial
+sweep, pagination, checkpoint-resume and idempotent-rerun each sweep again).
+"""
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import json
+from collections.abc import Callable, Iterator
 from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 
@@ -1530,6 +1536,7 @@ import pytest
 from agent_connector_sdk.adapters.mcp_tool import McpToolSourceAdapter
 from agent_connector_sdk.manifest.loader import require_valid_connector_package
 from agent_connector_sdk.ports.session import McpSession, TransportEndpoint
+from agent_connector_sdk.testing.http_server import ScriptedHttpServer, ScriptedResponse
 from agent_connector_sdk.testing.results import SessionFactory
 from agent_connector_sdk.transports.mcp import McpTransport
 from servers import build_malformed_server, build_well_formed_server
@@ -1545,10 +1552,26 @@ def _factory(build: Callable[[], object]) -> SessionFactory:
     return open_session
 
 
+def _paged_items(start: int, count: int) -> list[dict[str, str]]:
+    return [
+        {"id": str(start + i), "title": f"Item {start + i}", "text": "Body"}
+        for i in range(count)
+    ]
+
+
+@@scripted_responses@@
+
+def _set_auth_env(monkeypatch: pytest.MonkeyPatch, base_url: str) -> None:
+@@auth_env_setup@@
+
+
 @pytest.fixture
-def sessions() -> SessionFactory:
-    """Fresh sessions to the real connector server."""
-    return _factory(build_well_formed_server)
+def sessions(monkeypatch: pytest.MonkeyPatch) -> Iterator[SessionFactory]:
+    """Fresh sessions to the real connector server, its tool pointed at a
+    local ``ScriptedHttpServer`` standing in for the vendor API."""
+    with ScriptedHttpServer(*_scripted_responses()) as server:
+        _set_auth_env(monkeypatch, server.base_url)
+        yield _factory(build_well_formed_server)
 
 
 @pytest.fixture
@@ -1568,6 +1591,49 @@ def adapter() -> McpToolSourceAdapter:
     """The ``mcp_tool`` adapter built from the manifest's sync entry."""
     manifest = require_valid_connector_package(REPO_ROOT)
     return McpToolSourceAdapter.from_sync_spec(manifest.sync[0], connector=CONNECTOR)
+'''
+
+#: Two deterministic, byte-identical-on-every-cycle pages, one per
+#: ``ctx["pagination"]`` mode, matching ``ToolPage``'s exact wire shape
+#: (``agent_connector_sdk.http.pagination.preset_pagination``).
+_CONFORMANCE_PAGE_BODIES: dict[str, str] = {
+    "cursor": '''\
+def _page_bodies() -> list[bytes]:
+    return [
+        json.dumps({"items": _paged_items(1, 1), "next": "page-2"}).encode(),
+        json.dumps({"items": _paged_items(2, 1), "next": None}).encode(),
+    ]
+''',
+    "page": '''\
+def _page_bodies() -> list[bytes]:
+    return [
+        json.dumps({"items": _paged_items(1, @@page_size@@)}).encode(),
+        json.dumps({"items": _paged_items(1 + @@page_size@@, 1)}).encode(),
+    ]
+''',
+}
+_CONFORMANCE_PAGE_BODIES["offset"] = _CONFORMANCE_PAGE_BODIES["page"]
+
+#: Static auth (bearer/basic/api_key): one HTTP request per page. OAuth
+#: (client_credentials/delegated, ``_OAUTH_AUTH_MODES``): a token response
+#: ahead of every page request, mirroring ``TESTS_API_CLIENT_OAUTH_PY``.
+_CONFORMANCE_RESPONSES_STATIC = '''\
+def _scripted_responses() -> list[ScriptedResponse]:
+    return [ScriptedResponse(body=body) for body in _page_bodies() * 8]
+'''
+
+_CONFORMANCE_RESPONSES_OAUTH = '''\
+_TOKEN_BODY = json.dumps(
+    {"access_token": "minted-token", "token_type": "bearer", "expires_in": 3600}
+).encode()
+
+
+def _scripted_responses() -> list[ScriptedResponse]:
+    responses: list[ScriptedResponse] = []
+    for body in _page_bodies() * 8:
+        responses.append(ScriptedResponse(body=_TOKEN_BODY))
+        responses.append(ScriptedResponse(body=body))
+    return responses
 '''
 
 TESTS_MANIFEST_PY = '''\
@@ -1665,23 +1731,20 @@ def test_missing_env_target_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> N
 TESTS_CONFORMANCE_PY = '''\
 """The manifest's sync preset passes agent-connector-sdk's conformance kit.
 
-Marked ``integration`` (skipped by ``pytest.ini``'s default
-``-m "not integration"``): ``sessions``/``malformed_sessions`` build the real
-MCP server, whose tool calls the real vendor API through
-``@@pkg_dir@@.api_client`` — this needs @@short_env@@_URL and this
-connector's auth settings pointed at a real (or realistically scripted,
-multi-page) target, not the placeholder `.env.example` ships.
+Runs by default, no marker: ``sessions`` (see ``conftest.py``) builds the
+real MCP server, but its tool's calls through ``@@pkg_dir@@.api_client``
+resolve against a local ``ScriptedHttpServer`` instead of a real vendor
+target — the same double ``tests/test_api_client.py``'s proof uses.
+``malformed_sessions`` never leaves the process at all.
 """
 
 from __future__ import annotations
 
-import pytest
 from agent_connector_sdk.adapters.mcp_tool import McpToolSourceAdapter
 from agent_connector_sdk.testing.results import SessionFactory, assert_conformant
 from agent_connector_sdk.testing.source_adapters import run_source_adapter_suite
 
 
-@pytest.mark.integration
 async def test_sync_preset_passes_the_conformance_kit(
     adapter: McpToolSourceAdapter,
     sessions: SessionFactory,
@@ -2249,6 +2312,23 @@ def _test_servers_source(ctx: dict[str, str]) -> str:
     return render(TESTS_SERVERS_PY, **values)
 
 
+def _test_conftest_source(ctx: dict[str, str]) -> str:
+    """Render ``conftest.py`` for ``ctx["pagination"]``/``ctx["auth_mode"]``."""
+    auth_env_setup = render(_AUTH_ENV_SETUP[ctx["auth_mode"]], **ctx).rstrip("\n")
+    page_bodies = render(_CONFORMANCE_PAGE_BODIES[ctx["pagination"]], **ctx)
+    responses_fn = (
+        _CONFORMANCE_RESPONSES_OAUTH
+        if ctx["auth_mode"] in _OAUTH_AUTH_MODES
+        else _CONFORMANCE_RESPONSES_STATIC
+    )
+    values = {
+        **ctx,
+        "auth_env_setup": auth_env_setup,
+        "scripted_responses": page_bodies + "\n" + responses_fn,
+    }
+    return render(TESTS_CONFTEST_PY, **values)
+
+
 def _test_api_client_source(ctx: dict[str, str]) -> str:
     """Render ``test_api_client.py`` for ``ctx["auth_mode"]``."""
     template = (
@@ -2268,7 +2348,7 @@ def _test_api_client_source(ctx: dict[str, str]) -> str:
 def _write_tests(root: Path, ctx: dict[str, str]) -> None:
     tests = root / "tests"
     _write_generated_text(tests / "servers.py", _test_servers_source(ctx))
-    _write_generated_text(tests / "conftest.py", render(TESTS_CONFTEST_PY, **ctx))
+    _write_generated_text(tests / "conftest.py", _test_conftest_source(ctx))
     _write_generated_text(tests / "test_manifest.py", render(TESTS_MANIFEST_PY, **ctx))
     _write_generated_text(
         tests / "test_mcp_server.py", render(TESTS_MCP_SERVER_PY, **ctx)

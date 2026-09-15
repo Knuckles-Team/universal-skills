@@ -84,14 +84,13 @@ uv run --frozen python -m pytest -q
 `connectors/tool_schema_fingerprints.json` share the same placeholder string,
 so the manifest/preset/fingerprint structural cross-check passes immediately)
 and pins it to the real compatibility fingerprint once the server can run.
-Skipping this step is safe for `tests/test_manifest.py` and for the default
-`pytest -q` run: `tests/test_conformance.py`'s test is marked
-`@pytest.mark.integration` (its fixtures build the real server, whose tool
-calls the real vendor API, so it needs real credentials configured; run it
-explicitly with `-m integration`) and is deselected by `pytest.ini`'s default
-`-m "not integration"`. Once run, an unpinned fingerprint fails it closed, by
-design — `McpToolSourceAdapter.discover()` never extracts through an
-unverified tool.
+Skipping this step is safe for `tests/test_manifest.py`: `tests/test_conformance.py`'s
+`sessions` fixture points the real server's tool at a local
+`ScriptedHttpServer` (the same double `tests/test_api_client.py` uses), so
+the conformance kit runs offline in the default `pytest -q` run — no
+`integration` marker, no real credentials needed. Once pointed at a real
+target, an unpinned fingerprint fails it closed, by design —
+`McpToolSourceAdapter.discover()` never extracts through an unverified tool.
 
 The scaffold is idempotent and non-destructive on rerun: an existing
 project-owned file with different content is preserved; a missing generated
@@ -126,12 +125,12 @@ regenerated file must never contain).
   `connectors/tool_schema_fingerprints.json`;
 - `.pre-commit-config.yaml` with the standard formatting/typing/lock hooks
   pinned to reviewed revisions, plus one block referencing the shared
-  workspace gate bundle (`https://github.com/Knuckles-Team/pipelines`) by
-  hook id with `rev: REPLACE_WITH_SHARED_HOOKS_REV` — **no gate script
-  (complexity, KISS, duplication, secret-history, sanitizer, tracked-privacy,
-  root-hygiene, dependency-audit, orphan-module) is ever copied into the
-  package.** That block cannot run until the SHARED-HOOKS lane publishes the
-  bundle; report which hooks fail to resolve rather than working around it;
+  workspace gate bundle (`https://github.com/Knuckles-Team/pipelines`) by its
+  published hook ids (`complexity-staged`, `kiss-staged`, `dupehound-changed`,
+  `secret-history`, `security-sanitizer`, `tracked-privacy`, `root-hygiene`,
+  `dependency-audit`) at `rev: main` (operator ruling D9 — pipelines has no
+  per-release tags yet) — **no gate script is ever copied into the
+  package.**;
 - `pages/` + `mkdocs.yml` (`docs_dir: pages`, no local `theme:`/
   `markdown_extensions:` — those are inherited from the shared pipelines
   theme) — there is no `/docs`;
