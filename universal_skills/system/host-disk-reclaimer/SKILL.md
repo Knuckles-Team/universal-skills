@@ -2,7 +2,7 @@
 name: host-disk-reclaimer
 domain: system
 skill_type: skill
-description: 'Discover what is consuming disk on a host and safely reclaim space. Use when a filesystem is full or nearly full ("no space left on device", df shows 90%+), when /home or / is ballooning, or when the user asks to free up space, clean caches, prune stale git worktrees, garbage-collect a Docker registry, or consolidate per-repo virtualenvs. Runs read-only discovery (df + du breakdown) first, then gated reclamation in safety order: regenerable caches, merged+clean git worktrees, Docker registry GC, docker system prune, and redundant venv consolidation — always preserving in-flight work, live service data, and application databases. Works on the local host or, for a remote host, via tunnel-manager (SSH) and container-manager-mcp (Docker over SSH). Do NOT use to delete application data, dump databases, or migrate/rotate live services to other hosts (that is a deployment-planner + tunnel-manager job).'
+description: 'Discover what is consuming disk or inodes on a host and safely reclaim space. Use when a filesystem is full or nearly full ("no space left on device", high df byte use, or high df inode use), when /home, /tmp, or / is ballooning, or when the user asks to free space, clean caches, prune stale git worktrees, garbage-collect a Docker registry, or consolidate per-repo virtualenvs. All discovery and cleanup scripts default to read-only dry-run; mutation requires explicit --apply. Preserves in-flight work, live service data, and application databases. Works locally or remotely via tunnel-manager and container-manager-mcp. Do NOT delete application data, dump databases, or migrate live services with this skill.'
 license: MIT
 tags: [system, disk, cleanup, docker, registry, git-worktree, cache, venv, ops]
 metadata:
@@ -23,11 +23,15 @@ steps require an explicit `--apply`. Make them executable once: `chmod +x script
 - **Reclaim regenerable things only.** Caches, merged worktrees, orphaned registry blobs, duplicate venvs — all rebuildable. Never delete source, databases, or a service's bind-mounted data.
 - **Preserve in-flight work.** A git worktree is removed only if it is BOTH clean AND merged. Dirty/unmerged = keep.
 - **Measure each step.** Capture `df -h <fs>` before/after so reclaimed space is reported, not guessed.
-- **`du` is slow** on big trees (minutes) — run discovery/measurement in the background; do not block on it.
+- **Bound every scan.** `discover_disk.sh` caps each `du`/`find` probe at 15 seconds
+  by default (`DU_TIMEOUT_SECONDS`). A missing size means that probe timed out; use a
+  guarded, low-priority follow-up for that exact path instead of an unbounded scan.
 
 ## Step 1 — Discover (read-only)
-Run `scripts/discover_disk.sh [TARGET_DIR]`. It reports: the fullest filesystem,
-the top-level `du` breakdown of the target, the size of package caches, the git
+Run `scripts/discover_disk.sh [TARGET_DIR]`. It reports filesystem byte and inode
+use with warning thresholds (`DISK_BYTE_WARN_PCT`, default 85;
+`DISK_INODE_WARN_PCT`, default 80), the top-level `du` breakdown of the target,
+the size of package caches, the git
 worktree count/size, the number of `.venv` dirs, and the Docker registry container.
 Identify which category dominates — that is where to focus.
 
@@ -37,9 +41,11 @@ Typical ranking on a dev/homelab host: **git worktrees > docker registry > works
 Run each step's script in **dry-run** to preview, then re-run with `--apply`.
 Record `df -h` before/after each.
 
-1. **Package & tool caches** (safest) — `scripts/clear_caches.sh [REPO_ROOT]`.
-   Clears `uv`/`pip`/`torch`/`pre-commit` caches and (if REPO_ROOT given) per-repo
-   `__pycache__`/`.mypy_cache`/`.ruff_cache`/`.pytest_cache`/`.hypothesis`.
+1. **Package & tool caches** (safest) — `scripts/clear_caches.sh [REPO_ROOT]`
+   prints exact candidates and deletes nothing. Review the paths, then use
+   `scripts/clear_caches.sh --apply [REPO_ROOT]`. It accepts only exact known user
+   cache paths and exact named tool-cache directories under the verified repository
+   root; broad roots such as `/`, `/home`, `/var`, `/usr`, and `/opt` are refused.
 2. **Stale git worktrees** (usually the biggest win) —
    `scripts/prune_worktrees.py <worktrees-root>` (dry-run) → review the KEEP list →
    `--apply`. Removes only clean+merged worktrees via `git worktree remove` and

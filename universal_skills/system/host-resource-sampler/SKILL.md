@@ -1,12 +1,10 @@
 ---
 name: host-resource-sampler
 skill_type: skill
-description: >
-  System resource sampling atomic skill. Gathers CPU, memory, disk, and load
-  average utilization metrics across multiple remote hosts via SSH.
+description: Read-only host resource sampler for diagnosing OOM kills, pressure stalls, swap use, disk exhaustion, and inode exhaustion locally or over SSH. Emits one compact JSON record containing load, memory and swap, Linux PSI for CPU/memory/I/O, the current cgroup-v2 memory limits/current/peak/swap/events, byte and inode usage with warning thresholds for key filesystems, and bounded size measurements for known build targets and caches. Use before or during guarded compilation and as the probe invoked by repository-manager's bounded scheduled runs. It never deletes data, changes limits, starts a scheduler, or remediates the host.
 domain: system
 license: MIT
-tags: [metrics, host, monitoring, system, telemetry]
+tags: [metrics, host, monitoring, psi, cgroup, memory, swap, disk, inode, telemetry]
 metadata:
   version: '1.3.1'
   author: Genius
@@ -15,51 +13,55 @@ requires:
   - tunnel-manager-mcp
 ---
 
-# Host Resource Sampler Skill
+# Host Resource Sampler
 
-Stateless atomic operation to establish SSH connections or invoke system utility calls across inventory hosts, execute diagnostic metrics sweeps, parse utilization outputs (CPU core loads, memory allocation, storage disk capacities, process queue sizes), and output a standardized telemetry JSON structure indicating current server constraints.
+Collect one read-only, machine-readable health sample from a host. The sampler makes
+no system changes and does not launch background work.
 
-## Prerequisites
+Run locally:
 
-- `systems-manager-mcp` — for retrieving OS statistics, executing diagnostic shell probes, and sampling process metrics.
-- `tunnel-manager-mcp` — for executing commands concurrently across remote nodes.
+```bash
+scripts/sample_resources.py
+```
 
-## Steps
+The single-line `host-resource-sample/v1` JSON record includes:
 
-### Step 1: execute_resource_queries
-Coordinate concurrent telemetry sweeps across target hosts using secure command pipelines:
-- Construct diagnostic sampling commands:
-  - CPU & Load Average: `top -bn1 | grep "Cpu(s)"` or `cat /proc/loadavg`
-  - Memory: `free -m` or `vmstat 1 2`
-  - Disk Space & I/O: `df -h` and `iostat -d 1 2` (if available)
-- Invoke remote sweeps:
-  - Dispatch commands concurrently using `tunnel-manager-mcp` (e.g. `run_command` across the target cluster group or single inventory alias).
-  - Capture standard stdout metrics logs and stderr messages.
-- Output parameters:
-  - `sampling_results`: Key-value map of host aliases to their raw command output logs.
+- UTC observation time, host name, load averages, memory available, and swap used;
+- `/proc/pressure/{cpu,memory,io}` `some`/`full` averages and totals;
+- cgroup-v2 `memory.current`, `high`, `max`, `peak`, swap limits/use, and both
+  `memory.events` counters, including `oom` and `oom_kill` where available;
+- byte and inode capacity for `/`, `/home`, `/tmp`, `/var/tmp`, and every `--path`;
+- low-priority, bounded `du` measurements for uv, pip, pre-commit, Torch, and
+  Hugging Face caches, `$CARGO_TARGET_DIR` when set, and every `--size-path`.
 
-### Step 2: parse_utilization_metrics [depends_on: execute_resource_queries]
-Extract numerical utilization ratios and parse raw streams using robust pattern matches:
-- Parse CPU usage:
-  - Extract idle percentage (`id`) and calculate active CPU load percentage (`100 - idle`).
-  - Extract 1-minute, 5-minute, and 15-minute load averages.
-- Parse Memory metrics:
-  - Extract total, used, free, and buffered/cached memory sizes in megabytes.
-  - Calculate memory usage percentage: `(used / total) * 100`.
-- Parse Disk partition utilization:
-  - Map active mount points (specifically root `/` and primary data volumes).
-  - Extract percentage used and absolute gigabytes remaining.
-- Output parameters:
-  - `host_metrics`: Detailed mapping of host metrics including `{ cpu_pct: Float, load_avg: List, mem_pct: Float, disk_pct: Float }`.
+Missing optional kernel files are represented by empty or null fields. Directory
+measurements time out independently after 10 seconds by default, so a large cache
+cannot stall the whole sample. Override that bound with `--size-timeout SECONDS`.
 
-### Step 3: compile_telemetry_report [depends_on: parse_utilization_metrics]
-Synthesize the metrics scorecard and execute warning rules for system limits:
-- Identify high-utilization alerts:
-  - Mark hosts exceeding defined limits (e.g. CPU > 90%, Memory > 92%, Disk Space > 88%).
-- Format output payloads:
-  - Standardize JSON object of the sweep status.
-  - Build a clean markdown utilization dashboard displaying host columns, system bars, and highlight symbols next to any alert-flagged nodes.
-- Output parameters:
-  - `status`: "SUCCESS" or "FAILED"
-  - `payload`: Standardized JSON representation of the host utilization.
-  - `summary_markdown`: Markdown visualization of the server metrics dashboard.
+## Filesystem thresholds
+
+Byte warnings default to 85% and inode warnings to 80%. Override them per sample:
+
+```bash
+scripts/sample_resources.py \
+  --disk-byte-warning 90 \
+  --disk-inode-warning 75 \
+  --path /srv \
+  --size-path /var/tmp/build-target
+```
+
+Each filesystem record carries `byte_warning` and `inode_warning` booleans. An inode
+warning matters even when many bytes remain: creating logs, sockets, lock files, or
+compiler outputs can fail once the inode pool is exhausted.
+
+## Guarded periodic use
+
+`repository-manager` remains the authority for guarded runs and scheduling. Have its
+bounded runner invoke this script with a short runtime limit, a small cgroup memory
+limit, and stdout captured by the existing rotated journal/log destination. The script
+emits exactly one JSON line and performs no automatic deletion, which makes repeated
+samples append-safe. Do not install a second timer or cron entry from this skill.
+
+For a remote host, invoke the same command with `tunnel-manager-mcp`, or use
+`systems-manager-mcp` to collect equivalent fields. Fan-out belongs to the calling
+workflow; this atomic skill samples one host per invocation.
