@@ -4749,6 +4749,7 @@ system-tools = [
 test = [
     { name = "build" },
     { name = "httpx" },
+    { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -4787,6 +4788,7 @@ requires-dist = [
     { name = "fastmcp", marker = "extra == 'mcp-client'", specifier = ">=3.4.4" },
     { name = "httpx", marker = "extra == 'agent-workflows'", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'test'", specifier = ">=0.28.1" },
+    { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.25.1" },
     { name = "keepachangelog", marker = "extra == 'code-enhancer'", specifier = ">=2.0.0" },
     { name = "keyring", marker = "extra == 'google-workspace'", specifier = ">=25.7.0" },
     { name = "lxml", marker = "extra == 'document-tools'", specifier = ">=6.1.1" },
