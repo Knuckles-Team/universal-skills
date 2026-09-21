@@ -83,6 +83,28 @@ surfaces.
 Preview, diff, repository selection, and fleet rollout remain operator/root
 responsibilities outside this package-builder contract.
 
+## Public README and AGENTS surface
+
+Every generated repository opts into the shared `public-surface` pre-commit hook
+from the immutable pipelines release
+`35209bf6d85569a3c1fe3d5cd31771cacfdc3731`. Its repository-local TOML identity
+must declare `repository`, `distribution`, `pages_url`, and the boolean
+`mcp_server` value. The generator derives those values from the package name and
+selected package types; it never checks URL reachability while scaffolding.
+
+`README.md` is a concise public entry point: it has exactly one H1, the required
+Overview, Key capabilities, Quick start, Architecture, Documentation,
+Development, and License headings, the full canonical GitHub/PyPI badge set, and
+the MCP badge only when `mcp_server = true`. It links to the configured public
+Pages site and stays between 1,500 and 24,000 characters and below 200 lines.
+
+`AGENTS.md` records only the current contributor contract. It includes the
+durable ownership, module map, commands, quality gates, development rules,
+documentation, and branching/isolation sections; it contains no local
+filesystem paths or internal planning/history references. It stays between
+1,200 and 24,000 characters and below 240 lines. Detailed prose belongs in the
+Pages source tree.
+
 ## Served-surface TCK
 
 The generated `scripts/agent_readiness_tck.py` is a bounded adapter for a

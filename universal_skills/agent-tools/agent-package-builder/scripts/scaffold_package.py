@@ -44,6 +44,58 @@ def to_upper_env(name: str) -> str:
     return name.replace("-", "_").upper()
 
 
+GITHUB_BADGE_URLS = (
+    ("GitHub Repo stars", "https://img.shields.io/github/stars/{repository}"),
+    ("GitHub forks", "https://img.shields.io/github/forks/{repository}"),
+    ("GitHub contributors", "https://img.shields.io/github/contributors/{repository}"),
+    ("GitHub license", "https://img.shields.io/github/license/{repository}"),
+    (
+        "GitHub last commit (by committer)",
+        "https://img.shields.io/github/last-commit/{repository}",
+    ),
+    ("GitHub pull requests", "https://img.shields.io/github/issues-pr/{repository}"),
+    (
+        "GitHub closed pull requests",
+        "https://img.shields.io/github/issues-pr-closed/{repository}",
+    ),
+    ("GitHub issues", "https://img.shields.io/github/issues/{repository}"),
+    ("GitHub top language", "https://img.shields.io/github/languages/top/{repository}"),
+    (
+        "GitHub language count",
+        "https://img.shields.io/github/languages/count/{repository}",
+    ),
+    ("GitHub repo size", "https://img.shields.io/github/repo-size/{repository}"),
+    (
+        "GitHub repo file count (file type)",
+        "https://img.shields.io/github/directory-file-count/{repository}",
+    ),
+)
+PYPI_BADGE_URLS = (
+    ("PyPI - Version", "https://img.shields.io/pypi/v/{distribution}"),
+    ("PyPI - Downloads", "https://img.shields.io/pypi/dd/{distribution}"),
+    ("PyPI - License", "https://img.shields.io/pypi/l/{distribution}"),
+    ("PyPI - Wheel", "https://img.shields.io/pypi/wheel/{distribution}"),
+    (
+        "PyPI - Implementation",
+        "https://img.shields.io/pypi/implementation/{distribution}",
+    ),
+)
+
+
+def render_public_badges(package_name: str, *, mcp_server: bool) -> str:
+    """Render the canonical offline public-surface badge set."""
+    repository = f"Knuckles-Team/{package_name}"
+    values = {"repository": repository, "distribution": package_name}
+    definitions = [*GITHUB_BADGE_URLS, *PYPI_BADGE_URLS]
+    if mcp_server:
+        definitions.append(("MCP Server", "https://badge.mcpx.dev?type=server"))
+    lines = []
+    for alt, url in definitions:
+        title = " 'MCP Server'" if alt == "MCP Server" else ""
+        lines.append(f"![{alt}]({url.format(**values)}{title})")
+    return "\n".join(lines)
+
+
 def _write_generated_text(path: Path, content: str) -> bool:
     """Create a generated text file without overwriting an existing file.
 
@@ -179,6 +231,18 @@ python_version = "3.12"
 ignore_missing_imports = true
 check_untyped_defs = true
 
+# Shared public documentation contract.  The hook is pinned below in
+# .pre-commit-config.yaml; these values identify this generated repository and
+# keep its README/AGENTS surface deterministic without network access.
+[tool.pipelines_hooks]
+packages = ["{pkg_dir}"]
+
+[tool.pipelines_hooks.public_surface]
+repository = "Knuckles-Team/{package_name}"
+distribution = "{package_name}"
+pages_url = "https://knuckles-team.github.io/{package_name}/"
+mcp_server = {mcp_server}
+
 # Structural quality scanners are host/CI tools, never hook-installed
 # dependencies.  The generated wrappers read this contract, reject version
 # drift, and exit 2 when a required binary/configuration cannot be trusted.
@@ -272,6 +336,13 @@ ci:
   autoupdate_schedule: 'monthly'
 
 repos:
+# Public README/AGENTS contract.  Keep this on the reviewed immutable
+# pipelines release so generated repositories share one implementation.
+- repo: https://github.com/Knuckles-Team/pipelines
+  rev: 35209bf6d85569a3c1fe3d5cd31771cacfdc3731
+  hooks:
+  - id: public-surface
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
   hooks:
@@ -1325,146 +1396,76 @@ LICENSE           text
 
 README_MD = """\
 # {display_name}
-## CLI or API | MCP | Agent
 
-![PyPI - Version](https://img.shields.io/pypi/v/{package_name})
-![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
-![PyPI - Downloads](https://img.shields.io/pypi/dd/{package_name})
-![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/{package_name})
-![PyPI - License](https://img.shields.io/pypi/l/{package_name})
-![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/{package_name})
-
-*Version: 0.1.0*
-
-> **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
-> interfaces, the integrated A2A agent server, and guidance for provisioning the
-> backing platform are maintained in the
-> [official documentation](https://knuckles-team.github.io/{package_name}/).
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Available MCP Tools](#available-mcp-tools)
-- [Installation](#installation)
-- [Usage](#usage)
-- [MCP](#mcp)
-- [Documentation](#documentation)
-
----
-
-## Overview
-
-**{display_name} MCP Server + A2A Agent**
+{badge_lines}
 
 {description}
 
-This repository is actively maintained - Contributions are welcome!
+The [documentation site](https://knuckles-team.github.io/{package_name}/) contains the
+full API, deployment, security, and operational reference. This README is the concise
+entry point for installation and the supported runtime surfaces.
 
-## Key Features
+## Overview
 
-- **Action-routed MCP tools** — each domain is exposed as a single MCP tool that routes
-  to many underlying operations via an `action` argument, keeping the tool surface small.
-- **Three interfaces, one package** — use it as a Python **API client**, an **MCP server**
-  (`stdio` / `streamable-http` / `sse`), or a Pydantic-AI **A2A agent**.
-- **`agent-utilities` native** — built on the shared framework (auth, action router,
-  telemetry, governance) for fleet consistency.
-- **Per-tool toggles** — enable or disable each tool domain with environment switches.
-- **Enterprise-ready** — OTEL/Langfuse telemetry and optional Eunomia access governance.
+`{package_name}` is a typed provider package for the agent ecosystem. It combines a
+small Python client with governed MCP and A2A entry points where those surfaces are
+enabled. Configuration uses runtime credential references; resolved credentials and
+private endpoints are never committed.
 
-## Available MCP Tools
+## Key capabilities
 
-Each tool is **action-routed**: pass an `action` and a JSON `params_json` payload. Tool
-domains can be toggled on or off with the listed environment variable. The table below is
-**auto-generated from the live server** by the `mcp-readme-table` pre-commit hook
-(`python -m agent_utilities.mcp.readme_tools`) — do not edit it by hand.
+- **Typed boundaries** — Pydantic request and response models keep provider data
+  explicit and validate it before it reaches an agent or graph.
+- **One package, shared policy** — authentication, telemetry, action routing, and
+  error handling follow the `agent-utilities` conventions used by the fleet.
+- **Graph-ready content** — skills, prompts, ontology, and connector presets are
+  packaged as discoverable data for the epistemic graph.
+- **Operational safety** — TLS profiles, bounded responses, loopback defaults, and
+  immutable container references are part of the generated deployment contract.
+
+## Quick start
+
+Install the package and run its generated entry points:
+
+```bash
+python -m pip install "{package_name}[all]"
+{mcp_cmd}
+{agent_cmd}
+```
+
+For an on-demand run, use `uvx`:
+
+```bash
+uvx --from "{package_name}[mcp]" {mcp_cmd}
+uvx --from "{package_name}[agent]" {agent_cmd}
+```
+
+The networked server binds to loopback by default:
+
+```bash
+{mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
+```
+
+## Architecture
+
+The provider keeps the boundary between transport and domain code explicit:
+
+```text
+client or agent → MCP/A2A entry point → typed tool module → API client → provider
+                                  └── skills, prompts, ontology, connector presets
+```
+
+The MCP surface uses action-routed tools. Pass an `action` and a JSON `params_json`
+payload; the generated table below is refreshed by the repository hook.
 
 <!-- MCP-TOOLS-TABLE:START -->
 <!-- MCP-TOOLS-TABLE:END -->
 
-## Installation
+## MCP configuration
 
-### Install with `uvx` (no install — run on demand)
-
-```bash
-uvx --from "{package_name}[mcp]" {mcp_cmd}      # MCP server + full graph engine
-uvx --from "{package_name}[agent]" {agent_cmd}  # MCP + A2A agent runtime
-```
-
-> Every supported install includes `epistemic-graph[full]`. The `[mcp]` extra adds
-> the MCP serving stack; `[agent]` adds the current `agent-runtime` and telemetry.
-
-### Install with `pip`
-
-```bash
-python -m pip install {package_name}            # core (API client)
-python -m pip install "{package_name}[all]"     # + MCP server + A2A agent + telemetry
-```
-
-### Console scripts
-
-After installation the following entry points are available on your `PATH`:
-
-| Command | Description |
-|---------|-------------|
-| `{mcp_cmd}` | Launch the MCP server |
-| `{agent_cmd}` | Launch the A2A agent server |
-
-## Usage
-
-### As a Python API client
-
-```python
-from {pkg_dir}.auth import get_client
-
-client = get_client()
-status = client.get_system_status()
-print(status)
-```
-
-### As an MCP server (CLI)
-
-```bash
-# Local stdio (for IDEs)
-{mcp_cmd}
-
-# Networked streamable-http
-{mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
-```
-
-### Calling an MCP tool
-
-Tools are action-routed — pass an `action` plus a JSON `params_json` string:
-
-```json
-{{
-  "tool": "system_operations",
-  "arguments": {{
-    "action": "status",
-    "params_json": "{{}}"
-  }}
-}}
-```
-
-## MCP
-
-### Using as an MCP Server
-
-The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
-`sse` mode.
-
-#### Runtime configuration
-
-Keep `provider_configs.{short_name}` endpoint, credential, selector, and TLS
-references in `AgentConfig`; do not place resolved values in MCP client JSON.
-
-### MCP Configuration Examples
-
-<!-- MCP-CONFIG-EXAMPLES:START -->
-
-#### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
+The server supports local `stdio` and authenticated `streamable-http` deployments.
+Keep endpoint, credential, selector, and TLS references in `AgentConfig`; do not put
+resolved values in client configuration.
 
 ```json
 {{
@@ -1472,15 +1473,17 @@ references in `AgentConfig`; do not place resolved values in MCP client JSON.
     "{mcp_cmd}": {{
       "command": "{mcp_cmd}",
       "args": [],
-      "env": {{
-        "MCP_TOOL_MODE": "intent"
-      }}
+      "env": {{"MCP_TOOL_MODE": "intent"}}
     }}
   }}
 }}
 ```
 
-#### Streamable-HTTP Transport (networked / production)
+For a networked deployment, use an authenticated TLS ingress and keep the allowlist in
+`MCP_ALLOWED_HOSTS`. A configured remote example is `https://service.example.invalid/mcp`;
+it is documentation-only and is never contacted by the generator.
+
+<!-- MCP-CONFIG-EXAMPLES:START -->
 
 ```json
 {{
@@ -1499,61 +1502,49 @@ references in `AgentConfig`; do not place resolved values in MCP client JSON.
 }}
 ```
 
-_Regenerated by the `readme-mcp-examples` pre-commit hook
-(`python -m agent_utilities.mcp.readme_mcp_examples`) — do not edit by hand._
 <!-- MCP-CONFIG-EXAMPLES:END -->
 
-<!-- BEGIN GENERATED: additional-deployment-options -->
-### Additional Deployment Options
-
-`{package_name}` can also run as a **local container** (Docker / Podman / `uv`) or be
-consumed from a **remote deployment**. The
-[Deployment guide](https://knuckles-team.github.io/{package_name}/deployment/) has full,
-copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable-http**,
-**local container / uv**, and **remote URL**:
-
-- **Local container** — launch a reviewed immutable image as a least-privilege
-  stdio child with no listener or published port.
-- **Remote URL** — connect through an operator-supplied authenticated HTTPS ingress.
-  Keep the URL, outbound identity references, trust profile, and exact
-  `MCP_ALLOWED_HOSTS` in `AgentConfig`.
-<!-- END GENERATED: additional-deployment-options -->
-
-## Container images (`:mcp` vs `:agent`)
-
-One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
-
-| Local build tag | Build target | Contents | Entrypoint |
-|-----------|--------------|----------|------------|
-| `{package_name}:mcp-local` | `--target mcp` | `{package_name}[mcp]` — MCP serving runtime + `epistemic-graph[full]` | `{mcp_cmd}` |
-| `{package_name}:agent-local` | `--target agent` (default) | `{package_name}[agent]` — MCP + agent runtime + `epistemic-graph[full]` | `{agent_cmd}` |
+Container builds use immutable, least-privilege runtime stages:
 
 ```bash
-docker build --target mcp   -t {package_name}:mcp-local docker/
+docker build --target mcp -t {package_name}:mcp-local docker/
 docker build --target agent -t {package_name}:agent-local docker/
 ```
 
-## Knowledge-graph database (`epistemic-graph`)
-
-Every image embeds the **epistemic-graph[full]** engine. For production — or to
-share one knowledge graph across multiple
-agents — run **epistemic-graph as its own database container** and point the agent at it.
-Deployment recipes (single-node + Raft HA), connection config, and the full database
-architecture (with diagrams) are in the
-[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
-Local engine autostart or an operator-configured remote engine is selected through AgentConfig.
+Deploy reviewed images by digest (`{package_name}@sha256:<digest>`) and include
+`--cap-drop=ALL` in the runtime policy. The [deployment guide](https://knuckles-team.github.io/{package_name}/deployment/)
+contains the complete transport and container examples.
 
 ## Documentation
 
-Full documentation is published to the GitHub Pages site and mirrored under `docs/`:
+Use the [Pages documentation](https://knuckles-team.github.io/{package_name}/) for
+installation details, API capabilities, deployment profiles, platform integration,
+and the concept registry. The concise local references remain available at:
 
-- [Documentation site](https://knuckles-team.github.io/{package_name}/)
-- [Overview](docs/overview.md)
 - [Installation](docs/installation.md)
 - [Usage](docs/usage.md)
 - [Deployment](docs/deployment.md)
 - [Platform](docs/platform.md)
-- [Concept Registry](docs/concepts.md)
+- [Concept registry](docs/concepts.md)
+
+## Development
+
+Create an isolated branch, install the test extra, and run the complete local gate:
+
+```bash
+uv sync --extra test
+pytest tests -q
+pre-commit run --all-files
+```
+
+Keep generated MCP tables and environment documentation under their owning hooks.
+Add focused positive and adversarial tests for every behavior change. See
+`AGENTS.md` for the current module ownership and release checks.
+
+## License
+
+This project is distributed under the MIT license. See [LICENSE](LICENSE) for the
+complete terms.
 """
 
 CHANGELOG_MD = """\
@@ -1880,11 +1871,17 @@ ROOT_AGENTS_MD = """\
 > Claude Code loads this file via `CLAUDE.md` (`@AGENTS.md` import) — the two stay
 > in sync. Edit **this** file, not `CLAUDE.md`.
 
-## Tech Stack & Architecture
+## What this repository owns
 - Language/Version: Python 3.12–3.14
 - Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
-- Architecture:
+
+This repository owns the `{display_name}` provider package, its typed client,
+runtime entry points, connector data, tests, and published documentation. It does
+not own the shared graph engine or the fleet orchestration runtime.
+
+## Architecture and module map
+- Module map:
     - `{pkg_dir}/api/`: Modular folder for target service client wrappers.
     - `{pkg_dir}/mcp/`: Modular folder for action-routed dynamic MCP tool tags.
     - `{pkg_dir}/mcp_server.py`: Main MCP server entry point and tool registration.
@@ -1920,18 +1917,20 @@ sequenceDiagram
     S-->>U: Output
 ```
 
-## Commands (run these exactly)
-# Installation
+## Commands
 pip install .[all]
 
-# Quality & Linting (run from project root)
 pre-commit run --all-files
 
-# Execution Commands
-# Run MCP Server
 {mcp_cmd}
-# Run Agent
 {agent_cmd}
+
+## Quality gates
+
+The required local gate is `pre-commit run --all-files`. It validates packaging,
+security, import safety, scanner policy, documentation, and the shared public
+README/AGENTS contract. Run the focused test suite with `pytest tests -q` before
+the complete hook suite.
 
 ## Project Structure Quick Reference
 - MCP Entry Point → `{pkg_dir}/mcp_server.py`
@@ -1942,7 +1941,14 @@ pre-commit run --all-files
 - Tests → `tests/`
 - Documentation → `docs/` (published via mkdocs + GitHub Pages)
 
-## Code Style & Conventions
+## Documentation
+
+The README is the concise public entry point. Detailed API, deployment, platform,
+and concept material is published at
+`https://knuckles-team.github.io/{package_name}/` and sourced from the repository's
+documentation tree.
+
+## Development rules
 **Always:**
 - Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent_server`).
 - Define input/output models using Pydantic.
@@ -1989,15 +1995,15 @@ pre-commit run --all-files
 **Why:** These files expose private filesystem paths, credentials, and internal infrastructure details when pushed to GitHub publicly.
 
 **Where to put scratch work instead:**
-- Use `~/workspace/scratch/` for temporary scripts and experiments
-- Use `~/workspace/reports/` for command output and reports
+- Use `scratch/` outside the repository for temporary scripts and experiments
+- Use `reports/` outside the repository for command output and reports
 - Keep test scripts in the `tests/` directory following proper pytest conventions
 
 ## ⛔ Keep the Repository Root Pristine — No Scratch / Temp / Debug Files
 
 **The repository ROOT must contain only canonical project files** (packaging,
 config, docs, lockfiles). The only hidden directories allowed at root are
-`.git/`, `.github/`, and `.specify/` (plus a local, git-ignored `.venv/`).
+`.git/` and `.github/` (plus a local, git-ignored `.venv/`).
 
 **NEVER write any of the following — anywhere in the repo, and ESPECIALLY at the root:**
 - One-off / debug / migration scripts: `fix_*.py`, `migrate_*.py`, `refactor_*.py`,
@@ -2014,8 +2020,8 @@ config, docs, lockfiles). The only hidden directories allowed at root are
 **Why:** scratch at the root leaks private paths/credentials, bloats the tree,
 and erodes a pristine codebase.
 
-**Where scratch goes instead:** `~/workspace/scratch/` (experiments),
-`~/workspace/reports/` (command output); tests go in `tests/` (pytest).
+**Where scratch goes instead:** `scratch/` (experiments) and `reports/`
+(command output) outside the repository; tests go in `tests/` (pytest).
 Before finishing a task, run `git status` and confirm no stray root files were added.
 
 ## Working Discipline — think, simplify, stay surgical, verify
@@ -2061,7 +2067,7 @@ file as a known, unavoidable limitation. Only commit once `pre-commit run
 --all-files` passes cleanly; if a check legitimately cannot pass, stop and explain
 why rather than bypassing it.
 
-## Working with Git Worktrees (multi-session)
+## Branching & isolation
 
 Multiple agents/sessions work the configured package repos concurrently. **Do not
 edit the canonical checkout** (`$AGENT_PACKAGES_ROOT/<repo>`) — a
@@ -2069,10 +2075,8 @@ background `repository-manager` sync can reset its working tree and discard
 uncommitted edits. Take your own git worktree on your own branch instead:
 
 ```bash
-# preferred — repository-manager MCP:
 rm_worktree add <repo> <your-branch>      # path comes from repository-manager config
 
-# raw-git fallback:
 git -C "$AGENT_PACKAGES_ROOT/<repo>" checkout main
 git -C "$AGENT_PACKAGES_ROOT/<repo>" worktree add \
   "$AGENT_WORKTREES_ROOT/<repo>/<branch>" -b <branch>
@@ -4162,6 +4166,8 @@ def scaffold(
         "pkg_dir": pkg_dir,
         "display_name": display_name,
         "description": description,
+        "badge_lines": render_public_badges(package_name, mcp_server="mcp" in types),
+        "mcp_server": "true" if "mcp" in types else "false",
         "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "agent_cmd": agent_cmd,

@@ -238,6 +238,7 @@ python -m pytest -q
 python -m mkdocs build --strict
 python -m agent_utilities.mcp.check_env_var_drift --check
 python -m agent_utilities.mcp.readme_mcp_examples --check
+pipelines-hook public-surface
 ```
 
 Also verify:
@@ -247,6 +248,9 @@ Also verify:
   project-owned scanner/configuration files;
 - `.github/workflows/scanners.yml` and `[tool.agent_utilities.scanners]` carry
   the same exact CCCC/KISS/dupehound/jscpd/import-linter versions;
+- `[tool.pipelines_hooks.public_surface]` identifies the GitHub repository,
+  distribution, Pages URL, and MCP applicability, and the README/AGENTS output
+  satisfies the shared size, heading, badge, and privacy contract;
 - dependency metadata contains current bounded ranges and mandatory
   `epistemic-graph[full]`;
 - no recursive extra, legacy alias, generated `.env`, raw credential, verification
