@@ -16,7 +16,7 @@ SCAFFOLD = (
     / "scripts"
     / "scaffold_package.py"
 )
-PIPELINES_REV = "35209bf6d85569a3c1fe3d5cd31771cacfdc3731"
+PIPELINES_REV = "fd67b6bee79d6aba1b26699680a9c29106c093e6"
 
 
 def _load_scaffold():
@@ -35,13 +35,15 @@ def _scaffold(
     return module, tmp_path / package_name
 
 
-def _headings(text: str) -> set[str]:
-    return {
+def _headings(text: str, *, level: int = 2) -> list[str]:
+    return [
         re.sub(r"\s+", " ", match.group(2).strip(" #\t").lower())
         for match in re.finditer(
-            r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", text, re.MULTILINE
+            rf"^ {{0,3}}(#{{{level}}})[ \t]+(.+?)[ \t]*#*[ \t]*$",
+            text,
+            re.MULTILINE,
         )
-    }
+    ]
 
 
 def test_generated_package_opts_into_public_surface(tmp_path: Path) -> None:
@@ -65,15 +67,23 @@ def test_generated_package_opts_into_public_surface(tmp_path: Path) -> None:
     expected = module.render_public_badges("example-provider", mcp_server=True)
     assert expected in readme
     assert "![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')" in readme
-    assert {
+    assert _headings(readme) == [
         "overview",
         "key capabilities",
-        "quick start",
-        "architecture",
         "documentation",
-        "development",
+        "architecture",
+        "quick start",
+        "contributing",
         "license",
-    } <= _headings(readme)
+    ]
+    assert "## Installation" not in readme
+    quick_start = readme.split("## Quick start", maxsplit=1)[1].split(
+        "## Contributing", maxsplit=1
+    )[0]
+    assert 'python -m pip install "example-provider[mcp]"' in quick_start
+    assert "example-provider-mcp --transport stdio" in quick_start
+    assert "[installation guide]" in quick_start
+    assert len(quick_start.splitlines()) <= 14
     assert len(readme) >= 1_500
     assert len(readme) <= 24_000
     assert len(readme.splitlines()) <= 200
@@ -88,7 +98,7 @@ def test_generated_package_opts_into_public_surface(tmp_path: Path) -> None:
         "development rules",
         "documentation",
         "branching & isolation",
-    } <= _headings(agents)
+    } <= set(_headings(agents))
     assert len(agents) >= 1_200
     assert len(agents) <= 24_000
     assert len(agents.splitlines()) <= 240
@@ -108,3 +118,13 @@ def test_generated_mcp_badge_and_flag_follow_package_types(tmp_path: Path) -> No
         "api-provider", mcp_server=False
     )
     assert "![MCP Server]" not in readme
+    assert 'python -m pip install "api-provider[agent]"' in readme
+    assert "api-provider-agent --help" in readme
+
+
+def test_api_only_quickstart_uses_import_smoke_path(tmp_path: Path) -> None:
+    _, root = _scaffold(tmp_path, package_name="api-only", pkg_types="api_client")
+    readme = (root / "README.md").read_text(encoding="utf-8")
+
+    assert 'python -m pip install "api-only"' in readme
+    assert "python -m api_only.api.api_client_base" in readme

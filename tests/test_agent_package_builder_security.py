@@ -34,8 +34,7 @@ def test_local_templates_default_to_loopback():
     assert "ARG HOST=127.0.0.1" in module.DOCKERFILE
     assert "ARG HOST=0.0.0.0" not in module.DOCKERFILE
     assert "HOST=127.0.0.1" in module.ENV_EXAMPLE
-    assert "--host 127.0.0.1" in module.README_MD
-    assert '"HOST": "127.0.0.1"' in module.README_MD
+    assert "/deployment/" in module.README_MD
 
 
 def test_networked_compose_requires_auth_and_limits_host_publish():

@@ -339,7 +339,7 @@ repos:
 # Public README/AGENTS contract.  Keep this on the reviewed immutable
 # pipelines release so generated repositories share one implementation.
 - repo: https://github.com/Knuckles-Team/pipelines
-  rev: 35209bf6d85569a3c1fe3d5cd31771cacfdc3731
+  rev: fd67b6bee79d6aba1b26699680a9c29106c093e6
   hooks:
   - id: public-surface
 
@@ -1402,8 +1402,8 @@ README_MD = """\
 {description}
 
 The [documentation site](https://knuckles-team.github.io/{package_name}/) contains the
-full API, deployment, security, and operational reference. This README is the concise
-entry point for installation and the supported runtime surfaces.
+complete API, configuration, and deployment guides. This README is the concise public
+overview and starting point.
 
 ## Overview
 
@@ -1414,132 +1414,63 @@ private endpoints are never committed.
 
 ## Key capabilities
 
-- **Typed boundaries** — Pydantic request and response models keep provider data
-  explicit and validate it before it reaches an agent or graph.
-- **One package, shared policy** — authentication, telemetry, action routing, and
-  error handling follow the `agent-utilities` conventions used by the fleet.
-- **Graph-ready content** — skills, prompts, ontology, and connector presets are
-  packaged as discoverable data for the epistemic graph.
-- **Operational safety** — TLS profiles, bounded responses, loopback defaults, and
-  immutable container references are part of the generated deployment contract.
+- **Typed boundaries** — Pydantic models validate provider data before use.
+- **Governed integration** — authentication, telemetry, and action routing follow the
+  shared agent control-plane conventions.
+- **Graph-ready assets** — skills, prompts, ontology, and connector presets ship as
+  discoverable package resources.
 
-## Quick start
+## Documentation
 
-Install the package and run its generated entry points:
+Start with the [documentation site](https://knuckles-team.github.io/{package_name}/)
+for installation, configuration, API usage, deployment, and platform integration.
+See the [deployment guide](https://knuckles-team.github.io/{package_name}/deployment/)
+for transport, container, and network-security details. Short local references are
+available in [`docs/`](docs/).
 
-```bash
-python -m pip install "{package_name}[all]"
-{mcp_cmd}
-{agent_cmd}
-```
-
-For an on-demand run, use `uvx`:
-
-```bash
-uvx --from "{package_name}[mcp]" {mcp_cmd}
-uvx --from "{package_name}[agent]" {agent_cmd}
-```
-
-The networked server binds to loopback by default:
-
-```bash
-{mcp_cmd} --transport streamable-http --host 127.0.0.1 --port 8000
-```
-
-## Architecture
-
-The provider keeps the boundary between transport and domain code explicit:
-
-```text
-client or agent → MCP/A2A entry point → typed tool module → API client → provider
-                                  └── skills, prompts, ontology, connector presets
-```
-
-The MCP surface uses action-routed tools. Pass an `action` and a JSON `params_json`
-payload; the generated table below is refreshed by the repository hook.
+<details>
+<summary>Generated reference tables and client examples</summary>
 
 <!-- MCP-TOOLS-TABLE:START -->
 <!-- MCP-TOOLS-TABLE:END -->
 
-## MCP configuration
-
-The server supports local `stdio` and authenticated `streamable-http` deployments.
-Keep endpoint, credential, selector, and TLS references in `AgentConfig`; do not put
-resolved values in client configuration.
-
-```json
-{{
-  "mcpServers": {{
-    "{mcp_cmd}": {{
-      "command": "{mcp_cmd}",
-      "args": [],
-      "env": {{"MCP_TOOL_MODE": "intent"}}
-    }}
-  }}
-}}
-```
-
-For a networked deployment, use an authenticated TLS ingress and keep the allowlist in
-`MCP_ALLOWED_HOSTS`. A configured remote example is `https://service.example.invalid/mcp`;
-it is documentation-only and is never contacted by the generator.
+<!-- ENV-VARS-TABLE:START -->
+<!-- ENV-VARS-TABLE:END -->
 
 <!-- MCP-CONFIG-EXAMPLES:START -->
-
-```json
-{{
-  "mcpServers": {{
-    "{mcp_cmd}": {{
-      "command": "{mcp_cmd}",
-      "args": ["--transport", "streamable-http", "--port", "8000"],
-      "env": {{
-        "TRANSPORT": "streamable-http",
-        "HOST": "127.0.0.1",
-        "PORT": "8000",
-        "MCP_TOOL_MODE": "intent"
-      }}
-    }}
-  }}
-}}
-```
-
 <!-- MCP-CONFIG-EXAMPLES:END -->
 
-Container builds use immutable, least-privilege runtime stages:
+</details>
+
+## Architecture
+
+The package keeps transport, typed tool contracts, and provider clients in separate
+modules. Optional skills, prompts, ontology, and connector presets are packaged as
+data and consumed through their documented interfaces.
+
+## Quick start
+
+{quickstart_intro}
 
 ```bash
-docker build --target mcp -t {package_name}:mcp-local docker/
-docker build --target agent -t {package_name}:agent-local docker/
+python -m pip install "{quickstart_install}"
+{quickstart_run}
 ```
 
-Deploy reviewed images by digest (`{package_name}@sha256:<digest>`) and include
-`--cap-drop=ALL` in the runtime policy. The [deployment guide](https://knuckles-team.github.io/{package_name}/deployment/)
-contains the complete transport and container examples.
+See the [installation guide](https://knuckles-team.github.io/{package_name}/installation/)
+for optional extras and other runtime modes.
 
-## Documentation
+## Contributing
 
-Use the [Pages documentation](https://knuckles-team.github.io/{package_name}/) for
-installation details, API capabilities, deployment profiles, platform integration,
-and the concept registry. The concise local references remain available at:
-
-- [Installation](docs/installation.md)
-- [Usage](docs/usage.md)
-- [Deployment](docs/deployment.md)
-- [Platform](docs/platform.md)
-- [Concept registry](docs/concepts.md)
-
-## Development
-
-Create an isolated branch, install the test extra, and run the complete local gate:
+Use an isolated branch, install the test extra, and run the repository checks:
 
 ```bash
 uv sync --extra test
-pytest tests -q
+uv run pytest tests -q
 pre-commit run --all-files
 ```
 
-Keep generated MCP tables and environment documentation under their owning hooks.
-Add focused positive and adversarial tests for every behavior change. See
-`AGENTS.md` for the current module ownership and release checks.
+Add focused tests for behavior changes and update the relevant documentation.
 
 ## License
 
@@ -4161,6 +4092,29 @@ def scaffold(
     )
     gql_all_extend = ', "_GQL_AVAILABLE"' if has_graphql else ""
 
+    quickstart_extra = (
+        "mcp" if "mcp" in types else "agent" if "agent" in types else None
+    )
+    quickstart_install = (
+        f"{package_name}[{quickstart_extra}]"
+        if quickstart_extra
+        else package_name
+    )
+    quickstart_run = (
+        f"{mcp_cmd} --transport stdio"
+        if "mcp" in types
+        else f"{agent_cmd} --help"
+        if "agent" in types
+        else f"python -m {pkg_dir}.api.api_client_base"
+    )
+    quickstart_intro = (
+        "Install the MCP extra and start its local stdio server:"
+        if "mcp" in types
+        else "Install the agent extra and verify its command-line entry point:"
+        if "agent" in types
+        else "Install the package and verify it is importable:"
+    )
+
     ctx = {
         "package_name": package_name,
         "pkg_dir": pkg_dir,
@@ -4171,6 +4125,9 @@ def scaffold(
         "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "agent_cmd": agent_cmd,
+        "quickstart_install": quickstart_install,
+        "quickstart_run": quickstart_run,
+        "quickstart_intro": quickstart_intro,
         "short_name": short_name,
         "agent_port": "9000",
         "gql_core_dep": gql_core_dep,

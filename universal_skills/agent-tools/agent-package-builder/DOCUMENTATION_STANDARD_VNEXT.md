@@ -87,16 +87,20 @@ responsibilities outside this package-builder contract.
 
 Every generated repository opts into the shared `public-surface` pre-commit hook
 from the immutable pipelines release
-`35209bf6d85569a3c1fe3d5cd31771cacfdc3731`. Its repository-local TOML identity
+`fd67b6bee79d6aba1b26699680a9c29106c093e6`. Its repository-local TOML identity
 must declare `repository`, `distribution`, `pages_url`, and the boolean
 `mcp_server` value. The generator derives those values from the package name and
 selected package types; it never checks URL reachability while scaffolding.
 
-`README.md` is a concise public entry point: it has exactly one H1, the required
-Overview, Key capabilities, Quick start, Architecture, Documentation,
-Development, and License headings, the full canonical GitHub/PyPI badge set, and
-the MCP badge only when `mcp_server = true`. It links to the configured public
-Pages site and stays between 1,500 and 24,000 characters and below 200 lines.
+`README.md` is a concise public entry point with exactly one H1 and this exact H2
+flow: Overview, Key capabilities, Documentation, Architecture, Quick start,
+Contributing, License. It has the full canonical GitHub/PyPI badge set, and the
+MCP badge only when `mcp_server = true`. Quick start contains one minimal
+install-and-run example; optional modes and operational details link to Pages.
+Generated tool, environment, and client-reference blocks remain available in a
+collapsed section instead of expanding the main README. The file links to the
+configured public Pages site and stays between 1,500 and 24,000 characters and
+below 200 lines.
 
 `AGENTS.md` records only the current contributor contract. It includes the
 durable ownership, module map, commands, quality gates, development rules,
