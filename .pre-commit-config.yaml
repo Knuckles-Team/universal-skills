@@ -72,6 +72,13 @@ repos:
   - id: uv-lock
 - repo: local
   hooks:
+  - id: dependency-readiness
+    name: Dependency readiness — every declared intra-fleet constraint is installable
+    entry: bash -c 'CANON_ROOT="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"; P=""; d="$CANON_ROOT"; while [ "$d" != "/" ]; do [ -d "$d/agent-packages/agents/repository-manager" ] && { P="$d/agent-packages/agents/repository-manager"; break; }; d=$(dirname "$d"); done; [ -n "$P" ] || P=repository-manager; uv run --no-project --python 3.12 --prerelease=allow --with "$P" python -m repository_manager.dependency_readiness .'
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [manual, pre-push]
   - id: concept-registry-parity
     name: concept ids exist in the agent-utilities registry
     entry: pytest -q tests/test_concept_parity.py
