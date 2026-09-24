@@ -4,7 +4,7 @@ domain: agent-tools
 skill_type: skill
 description: >-
   Scaffold a new Agent Utilities provider package with a governed API client,
-  intent-routed MCP server, optional agent runtime, mandatory full epistemic-graph,
+  intent-routed MCP server (no per-connector agent), mandatory full epistemic-graph,
   reference-only AgentConfig, portable TLS profiles, documentation, and release gates.
   Use for brand-new provider packages; use focused builder skills for existing repos.
 license: MIT
@@ -103,7 +103,9 @@ The scaffold includes:
   are added;
 - one canonical `api/` package—no facade alias or compatibility layer;
 - one intent-routed MCP surface with an optional verbose operation surface;
-- one A2A agent entry point using `agent-runtime`;
+- **no** per-connector agent entry point: standalone `agent_server.py` agents are retired
+  (graph-os composes the agent over the package's MCP tools). If the scaffold still emits
+  `agent_server.py`, delete it, its console script and the `agent` extra before committing;
 - provider-contributed skills, prompts, ontology, and source-connector presets;
 - mandatory native knowledge-graph ingestion backed by `epistemic-graph[full]`;
 - a strict MkDocs site and generated deployment/readme markers;
@@ -129,14 +131,12 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = ["agent-utilities[mcp]>=2.0.0,<3.0.0"]
-agent = ["agent-utilities[agent-runtime,logfire]>=2.0.0,<3.0.0"]
-all = ["agent-utilities[mcp,agent-runtime,logfire]>=2.0.0,<3.0.0"]
+all = ["agent-utilities[mcp]>=2.0.0,<3.0.0"]
 ```
 
 GraphQL packages add `gql[requests]>=4.0.0` directly to the applicable dependency
-lists. The `all` extra must never reference the package itself. Both MCP and agent
-images contain the mandatory full graph engine; the MCP target omits only the optional
-agent orchestration stack.
+lists. The `all` extra must never reference the package itself. The MCP image contains
+the mandatory full graph engine; there is no per-package agent image.
 
 ### 4. Use reference-only provider configuration
 
@@ -194,9 +194,9 @@ lowercase hyphenated tags, validates parameters, and carries a concept ID. Add d
 by exporting `register_<domain>_tools` from `mcp/__init__.py`; the shared registrar
 discovers them.
 
-The agent entry point uses the `agent-runtime` extra and canonical prompt schema. Agent
-instructions, skills, and provider configuration remain package data—not process-local
-paths.
+The package ships no agent entry point. Its canonical structured prompt, skills and
+provider configuration remain package data—not process-local paths—and reach the
+composed agent as connector content.
 
 ### 7. Contribute native knowledge
 

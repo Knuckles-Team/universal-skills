@@ -76,13 +76,15 @@ for the presence and correctness of each one.
 | `docker/Dockerfile` | Production image |
 | `docker/mcp.compose.yml` | MCP server compose config |
 
-### Source Structure (5 mandatory files + 1 mandatory subdir)
+### Source Structure (4 mandatory files + 1 mandatory subdir)
+
+Per-connector `agent_server.py` agents are retired — a connector ships no agent entry
+point; graph-os composes the agent over its MCP tools.
 
 | File/Dir | Purpose |
 |----------|---------|
 | `{pkg}/__init__.py` | Package init with version |
 | `{pkg}/__main__.py` | CLI entrypoint |
-| `{pkg}/agent_server.py` | A2A agent server |
 | `{pkg}/mcp_server.py` | MCP server entrypoint |
 | `{pkg}/auth.py` | Authentication setup (if project has API) |
 | `{pkg}/mcp/` | **REQUIRED** subdirectory with `register_*_tools` modules |
@@ -274,7 +276,7 @@ Each project is scored 0–100 across 7 categories:
 | Root Files | 15% | README, CHANGELOG, AGENTS.md, pyproject.toml, .pre-commit, .bumpversion, .gitignore, .gitattributes, .dockerignore, .env |
 | Documentation | 15% | docs/index.md, docs/overview.md, docs/concepts.md, NO legacy_readme.md |
 | Docker | 10% | docker/Dockerfile, docker/mcp.compose.yml |
-| Source Structure | 20% | __init__.py, __main__.py, agent_server.py, mcp_server.py, auth.py, mcp/ subdir, api/ subdir (if applicable) |
+| Source Structure | 20% | __init__.py, __main__.py, mcp_server.py, auth.py, mcp/ subdir, api/ subdir (if applicable); a retired `agent_server.py` is an issue |
 | Tests | 15% | conftest.py, test_concept_parity.py, test_init_dynamics.py, test_startup.py |
 | Env Vars | 15% | Standard naming (_URL, _TOKEN, _SSL_VERIFY), no duplicates, no deprecated patterns |
 | Concepts | 10% | Unique prefix, docs/concepts.md exists, ECO-4.0 bridge reference, no collisions |

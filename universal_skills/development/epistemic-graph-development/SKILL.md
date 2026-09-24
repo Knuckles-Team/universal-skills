@@ -38,8 +38,8 @@ and the capability ledger before quoting one).
 
 **Load `graphos-ecosystem-development` first.** It owns the rules shared with every
 repo in the platform — the lane protocol (own worktree, explicit staging,
-`--no-verify` lane commits, STATE.md), build hosts via `eg-lane-run`, landing via
-`eg-land-gate --fanout`, the gate caps, contract regeneration and the decisions
+`--no-verify` lane commits, checkpoints), builds on dedicated build hosts, the
+fanned-out landing gate, the gate caps, contract regeneration and the decisions
 protocol. This file covers only what is specific to EG. EG owns **all** knowledge and
 semantics in the platform — storage, ontology lifecycle, SHACL, RDF, OWL, reasoning,
 Decide, memory — so semantic work that used to live in agent-utilities lands here.
@@ -113,7 +113,7 @@ routine gate suite has ever type-checked it.
 **So: name the build in every acceptance claim.** `1,270 passed` is a statement
 about `-p epistemic-graph --lib` under `default`, and about nothing else. If your
 diff touches a path behind a non-default feature, you owe a second run (as
-`eg-lane-run` steps on a build host, §8):
+steps of one build-host submission, §8):
 
 ```bash
 cargo check -p epistemic-graph --features raft          # or the feature that gates your path
@@ -150,7 +150,7 @@ evidence. Do this, in order, before the full run:
    git diff --name-only --diff-filter=A main...HEAD
    ```
 4. **Run the remainder BY NAME first**, then the crate, then everything — as steps of
-   one `eg-lane-run` submission (§8), never on the dev host:
+   one build-host submission (§8), never on the shared workstation:
    ```bash
    cargo test -p epistemic-graph --lib wired_catalog_tests -j 8 -- --test-threads=4
    cargo test -p <touched crate>  --lib -j 8 -- --test-threads=4
@@ -656,17 +656,16 @@ things that are still open today.** The rules themselves:
 
 ## 8. Build and test operating rules
 
-### Running the suite — on a build host, never the dev host
+### Running the suite — on a build host, never the shared workstation
 
-No cargo runs on the dev host (a shim refuses it in agent sessions). Batch every step into
-one build-host submission and end the turn with `WAITING-ON-RUN <run-id>`:
+Never run cargo on the shared development workstation. Batch every step into one
+build-host submission through the program's build runner (a private overlay skill, when
+installed, names the command), then end the turn and let the orchestrator resume you:
 
 ```bash
-eg-lane-run submit --lane <lane> --worktree <wt> --include-uncommitted \
-  --step 'check=cargo check -p epistemic-graph --all-features' \
-  --step 'crate=cargo test -p <touched crate> --lib -j 8 -- --test-threads=4' \
-  --step 'named=cargo test -p epistemic-graph --lib <pre-existing test module> -j 8 -- --test-threads=4'
-eg-lane-run status <run-id>
+cargo check -p epistemic-graph --all-features
+cargo test -p <touched crate> --lib -j 8 -- --test-threads=4
+cargo test -p epistemic-graph --lib <pre-existing test module> -j 8 -- --test-threads=4
 ```
 
 - `cargo check` first (compile before review); name the feature set in every claim (**G3**).
@@ -676,14 +675,15 @@ eg-lane-run status <run-id>
   `[build] target-dir = "target-isolated"`, so each worktree is isolated; `lane-guard`
   refuses a commit made with an off-lane override.
 - Local Python tests: **only `pytest -m no_engine`**. Every other EG Python test builds
-  the engine from its conftest — run it as an `eg-lane-run` step.
+  the engine from its conftest — run it on a build host.
 - Contract surface changed (a `Method`, a capability row, a generated sender)? Regenerate
-  with `gen_contract` on the build host and pull the artifacts back per
+  with `gen_contract` on the build host and bring the artifacts back per
   `graphos-ecosystem-development` §6; the `engine-contract` hook runs
   `gen_contract -- --check`.
 - Lanes run targeted checks only and commit with `--no-verify`. The full gate is the
-  orchestrator's `eg-land-gate --fanout` over the release workflow (plus
-  `scripts/constrained_parallelism_gate.sh` and the full nextest suite) on the merged train.
+  orchestrator's landing gate — the release workflow's jobs fanned out across build hosts
+  (plus `scripts/constrained_parallelism_gate.sh` and the full nextest suite) on the
+  merged tree.
 
 ### Git, in a shared multi-worktree repo
 

@@ -42,9 +42,11 @@ DOCKER_FILES = ["docker/Dockerfile", "docker/mcp.compose.yml"]
 SOURCE_FILES = [
     "__init__.py",
     "__main__.py",
-    "agent_server.py",
     "mcp_server.py",
 ]
+# Per-connector standalone agents are retired: graph-os/agent-utilities compose the
+# agent over the connector's MCP tools, so a connector must not ship one.
+RETIRED_SOURCE_FILES = ["agent_server.py"]
 
 TEST_FILES = [
     "tests/conftest.py",
@@ -160,6 +162,9 @@ def audit_source_structure(project_dir: Path, pkg_name: str) -> dict:
 
     for f in SOURCE_FILES:
         results["files"][f] = (src_dir / f).exists()
+    for f in RETIRED_SOURCE_FILES:
+        if (src_dir / f).exists():
+            results["issues"].append(f"{pkg_name}/{f} is retired; remove it and its console script")
 
     # auth.py is required if project has API integration
     has_api = (src_dir / "api").is_dir() or (src_dir / "api_client.py").exists()

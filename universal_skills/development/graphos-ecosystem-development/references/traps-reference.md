@@ -13,7 +13,7 @@ right column is what is actually happening and what to do instead.
 | `git branch --merged` lists a branch as merged | Its worktree may still hold the only copy of uncommitted work | Ancestor check + clean-worktree check before pruning |
 | `update-ref` advanced the branch | The worktree and index did not move; the next commit silently reverts everything in between | `merge --ff-only`; verify by tree |
 | "Index wiped" | The worktree files are usually intact | `git reset --mixed` recovers; never `--hard` |
-| Two lanes' commits landed under each other's subjects | Both wrote the same `/tmp/msg.txt` | Lane-unique message paths |
+| Two lanes' commits landed under each other's subjects | Both wrote the same shared commit-message temp file | Lane-unique message paths |
 | pre-commit run overlapped your edits and `git status` is clean | pre-commit stashed and restored the unstaged tree | Never edit while a long hook run is in flight; re-verify each change by content |
 | Edited the canonical checkout | A repository-manager sync resets it | Always a worktree |
 
@@ -22,9 +22,9 @@ right column is what is actually happening and what to do instead.
 | Symptom | Reality | Do instead |
 |---|---|---|
 | "no variant named X" for code that clearly defines X | Shared/corrupted cargo target from an exported `CARGO_TARGET_DIR` | Unset it; each worktree has `target-isolated` |
-| Load 60+ on a 24-core host | Several cargo lanes; cargo ignores CPU quotas | Budget by cargo lanes (3–4 per host, `-j`); build hosts only |
-| Whole tmux session killed | systemd-oomd kills the scope | Heavy work in transient units / build hosts |
-| Test run filled RAM | `/tmp` is tmpfs | Temp under a lane directory on disk |
+| Load far above core count on a shared machine | Several cargo builds; cargo ignores CPU quotas | Budget by concurrent cargo builds, not lanes; bound `-j`; build hosts only |
+| Whole terminal session killed | the OOM daemon kills the whole scope | Heavy work in transient units / build hosts |
+| Test run filled RAM | `/tmp` can be RAM-backed (tmpfs) | Temp under a lane directory on disk |
 | Phantom AU failures citing the project's own guards | `uv run pytest` used the system interpreter, or a test's `uv sync` rebuilt the lane venv | `scripts/uv_workspace.py run --all-extras -- pytest`; print `sys.executable`; believe a `venv-package-count` alarm |
 | pytest exited 75 mid-run | A guard `realpath()`-ed the uv interpreter and `execve`'d away | Never realpath a venv interpreter |
 | AU suite hangs; `--timeout` never fires | Blocked in an anyio worker thread on a live engine call | `py-spy dump`; make the test hermetic |

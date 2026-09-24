@@ -71,12 +71,12 @@ test against and print the resolved paths before trusting a result.
 
 ```bash
 uv sync --extra test
-uv run pytest tests/<the files you touched> -x -n 2   # targeted, on the dev host
+uv run pytest tests/<the files you touched> -x -n 2   # targeted, local
 uv run ruff check <changed files> && uv run ruff format --check <changed files>
 uv run mypy <changed files>
 ```
 
-Heavier runs go through `py-remote-run <host> <lane> <worktree> -- <command>`. The full
+Heavier runs go to a worker host (see the private overlay if installed). The full
 hook suite (`complexity-staged`, `kiss-staged`, `dupehound-changed`, `jscpd-differential`,
 `public-surface`, `tracked-privacy`, `supply-chain`, `ci-gate-replica`, `pytest`, …) is the
 orchestrator's landing gate — design to it, do not run `--all-files` in a lane.
@@ -107,7 +107,7 @@ orchestrator's landing gate — design to it, do not run `--all-files` in a lane
 3. Implement once; wire MCP and REST to the same service; keep failures closed.
 4. Run the targeted checks above and a live-path test through the real entrypoint.
 5. Update `docs/status.md` / docs honestly, commit an explicit allowlist with
-   `--no-verify`, and checkpoint STATE.md.
+   `--no-verify` as a coordinated lane, and checkpoint.
 
 Execution: run directly, or delegate through graph-os `graph_orchestrate` with the same
 rules. Use an economy model for inventory and mechanical edits.

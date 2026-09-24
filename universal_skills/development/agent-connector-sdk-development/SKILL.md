@@ -107,7 +107,7 @@ targeted checks above.
 2. Add it at one extension port with a typed protocol; declare its public surface.
 3. Write positive and adversarial tests, including discovery for entry-point features.
 4. Run the targeted checks and the wiring checks above.
-5. Commit an explicit allowlist with `--no-verify` and checkpoint STATE.md.
+5. Commit an explicit allowlist (`--no-verify` only as a coordinated lane) and checkpoint.
 
 Execution: run directly, or delegate through graph-os `graph_orchestrate` with the same
 rules. Use an economy model for mechanical connector migrations.
