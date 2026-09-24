@@ -55,10 +55,17 @@ version = "0.1.0"
 description = "{description}"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
-requires-python = ">=3.11, <3.15"
+requires-python = ">=3.12, <3.15"
+# NOTE (EH-484, agents/[t-z]* connector migration): agent-utilities is NOT fully
+# dropped here. kg_ingest.py's native_ingest primitive and auth.py's
+# provider-runtime abstraction have no agent_connector_sdk equivalent yet (see
+# the sibling connector repos' pyproject.toml comments for the full gap list,
+# e.g. wger-agent, technitium-dns-mcp). Everything else (mcp.*, core.config,
+# core.exceptions, core.transport_security, base_utilities, OIDC delegation) is
+# built on agent-connector-sdk. Drop agent-utilities once those gaps land.
 dependencies = [
-    "agent-utilities[mcp]>=1.27.1,<2.0.0",
-    "epistemic-graph[full]>=2.23.1,<3.0.0",{gql_core_dep}
+    "agent-connector-sdk>=0.1.0,<1.0.0",
+    "agent-utilities>=2.0.0,<3.0.0",{gql_core_dep}
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -67,17 +74,11 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-utilities[mcp]>=1.27.1,<2.0.0",]
-agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0",]
-{gql_extra}all = [
-    "agent-utilities[mcp,agent-runtime,logfire]>=1.27.1,<2.0.0",{gql_all_dep}
-]
-test = [
+{gql_extra}test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
 [project.scripts]
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
-{agent_cmd} = "{pkg_dir}.agent_server:agent_server"
 
 # Fleet contribution (CONCEPT:OS-5.52 / AU-KG.ontology.federation-provider-leg): advertise this
 # package's skills, prompts, OWL/RDF ontology, and source-connector presets so
@@ -101,11 +102,11 @@ test = [
 # agent-utilities -- also a member of that outer workspace -- is itself a
 # self-contained uv workspace root ("Nested workspaces are not supported"). This
 # stops discovery here instead, independent of whether uv is invoked from the
-# canonical checkout or an external worktree. The path-dependency source below
-# (rather than `agent-utilities = {{ workspace = true }}`) is required for the same
-# reason: agent-utilities isn't published on PyPI past 1.26.4, so this package must
-# resolve it from the local sibling checkout via a gitignored symlink, not a
-# version-range dependency.
+# canonical checkout or an external worktree. The path-dependency sources below
+# (rather than `{{ workspace = true }}`) are required for the same reason:
+# neither package is published on PyPI past agent-utilities' 1.26.4, so this
+# package must resolve them from the local sibling checkouts via gitignored
+# symlinks, not a version-range dependency.
 [tool.uv.workspace]
 members = ["."]
 
@@ -115,6 +116,7 @@ override-dependencies = [
 ]
 
 [tool.uv.sources]
+agent-connector-sdk = {{ path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }}
 agent-utilities = {{ path = ".uv-workspace-siblings/agent-utilities", editable = true }}
 
 [tool.setuptools]
