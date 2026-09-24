@@ -3,8 +3,8 @@ name: agent-package-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Scaffold a new Agent Utilities provider package with a governed API client,
-  intent-routed MCP server, optional agent runtime, mandatory full epistemic-graph,
+  Scaffold a new agent-connector-sdk provider package with a governed API client,
+  intent-routed MCP server, mandatory full epistemic-graph,
   reference-only AgentConfig, portable TLS profiles, documentation, and release gates.
   Use for brand-new provider packages; use focused builder skills for existing repos.
 license: MIT
@@ -93,7 +93,6 @@ The scaffold includes:
 - current Python packaging, immutable supply-chain workflows, and pre-commit gates;
 - one canonical `api/` package—no facade alias or compatibility layer;
 - one intent-routed MCP surface with an optional verbose operation surface;
-- one A2A agent entry point using `agent-runtime`;
 - provider-contributed skills, prompts, ontology, and source-connector presets;
 - mandatory native knowledge-graph ingestion backed by `epistemic-graph[full]`;
 - a strict MkDocs site and generated deployment/readme markers;
@@ -106,20 +105,18 @@ Every generated distribution uses bounded current ranges:
 ```toml
 [project]
 dependencies = [
-  "agent-utilities[mcp]>=2.0.0,<3.0.0",
-  "epistemic-graph[full]>=3.0.0,<4.0.0",
+  "agent-connector-sdk>=0.1.0,<1.0.0",
+  "agent-utilities>=2.0.0,<3.0.0",
 ]
-
-[project.optional-dependencies]
-mcp = ["agent-utilities[mcp]>=2.0.0,<3.0.0"]
-agent = ["agent-utilities[agent-runtime,logfire]>=2.0.0,<3.0.0"]
-all = ["agent-utilities[mcp,agent-runtime,logfire]>=2.0.0,<3.0.0"]
 ```
 
-GraphQL packages add `gql[requests]>=4.0.0` directly to the applicable dependency
-lists. The `all` extra must never reference the package itself. Both MCP and agent
-images contain the mandatory full graph engine; the MCP target omits only the optional
-agent orchestration stack.
+`agent-utilities` is kept (not fully dropped) only for the modules with no
+`agent-connector-sdk` equivalent yet -- native ingestion
+(`agent_utilities.knowledge_graph.memory.native_ingest`, EH-484 gap #0) and the
+provider-runtime abstraction (`agent_utilities.core.provider_runtime`,
+`AgentConfig`) -- record every such gap in the scaffolded package's own
+pyproject.toml comment and drop `agent-utilities` once the gap lands. GraphQL
+packages add `gql[requests]>=4.0.0` directly to the dependency list.
 
 ### 4. Use reference-only provider configuration
 
@@ -165,21 +162,21 @@ provider's TLS profile. Fixed provider tokens are the referenced fallback.
   RFC 9457 problem value. Details must be sanitized and bounded; intentional
   denials are never retryable.
 
-### 6. Build the MCP and agent surfaces
+### 6. Build the MCP surface
 
 `mcp_server.py` calls `load_config()`, `create_mcp_server()`, and exactly one
-`register_tool_surface(...)`. `MCP_TOOL_MODE=intent` is the default; `verbose` is the
-explicit operation surface. Do not generate retired mode aliases or per-domain mode
-branches.
+`register_tool_surface(...)` (all three from `agent_connector_sdk`).
+`MCP_TOOL_MODE=intent` is the default; `verbose` is the explicit operation surface.
+Do not generate retired mode aliases or per-domain mode branches.
 
 Each domain lives in `mcp/mcp_<domain>.py`, exposes one bounded action router, uses
 lowercase hyphenated tags, validates parameters, and carries a concept ID. Add domains
 by exporting `register_<domain>_tools` from `mcp/__init__.py`; the shared registrar
 discovers them.
 
-The agent entry point uses the `agent-runtime` extra and canonical prompt schema. Agent
-instructions, skills, and provider configuration remain package data—not process-local
-paths.
+There is no A2A/LLM-agent entry point: `agent_server.py` was retired (EH-484) --
+`agent-connector-sdk` has no `create_agent_server`/`create_agent_parser` equivalent.
+`__main__.py` runs the MCP server.
 
 ### 7. Contribute native knowledge
 

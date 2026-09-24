@@ -8,7 +8,7 @@ must remain environment-neutral, current-only, and deterministic.
 
 | Path | Status | Contract |
 |---|:---:|---|
-| `pyproject.toml` | R | Python 3.11–3.14; `agent-utilities[mcp]>=2.0.0,<3.0.0` and `epistemic-graph[full]>=3.0.0,<4.0.0` are direct dependencies. Extras are direct: `mcp` uses `agent-utilities[mcp]`; `agent` uses `agent-utilities[agent-runtime,logfire]`; `all` lists current upstream dependencies and never references the package itself. GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
+| `pyproject.toml` | R | Python 3.12–3.14; `agent-connector-sdk>=0.1.0,<1.0.0` is the primary dependency. `agent-utilities>=2.0.0,<3.0.0` is kept (not fully dropped) only for the modules with no `agent-connector-sdk` equivalent yet -- native ingestion (EH-484 gap #0) and the provider-runtime abstraction -- each recorded in an inline comment; drop it once those gaps land. No `mcp`/`agent`/`all` AU extras (retired with the "agent" surface type, EH-484). GraphQL adds `gql[requests]>=4.0.0`. Author metadata is the non-personal `Repository Maintainers`. |
 | `requirements.txt` | R | Exact newline rendering of `[project].dependencies`; no optional or recursive dependency. |
 | `.bumpversion.cfg` | R | Version fields and installed Docker targets only; no self-referencing-extra target. |
 | `.pre-commit-config.yaml` | R | Reviewed immutable hook revisions plus formatting, typing, tests, supply-chain, docs, privacy, skill, environment-drift, and generated-readme gates. |
@@ -16,7 +16,7 @@ must remain environment-neutral, current-only, and deterministic.
 | `.env` | — | Must not be generated or committed. |
 | `mcp_config.json` | R | Installed stdio entry point, `MCP_TOOL_MODE=intent`, and non-secret tool toggles only. Provider values are resolved from `AgentConfig`. |
 | `opencode.json` | R | Loopback-only neutral local-model example; no deployment hostname or credential. |
-| `a2a.json` | R | Portable agent card with package metadata and no operator endpoint. |
+| — (`a2a.json`) | — | Retired (EH-484): a root "agent card" advertising A2A capabilities no scaffolded package serves anymore is never generated. |
 | `README.md` | R | Generated tool and MCP-example markers; current extras; mandatory full graph engine; least-privilege stdio container; authenticated HTTPS network boundary; AgentConfig/TLS references. |
 | `AGENTS.md` | R | Canonical repository instructions forbidding resolved provider values, personal data, raw secrets, and compatibility aliases. |
 | `CLAUDE.md` | R | Stub importing the canonical `AGENTS.md`. |
@@ -30,7 +30,7 @@ must remain environment-neutral, current-only, and deterministic.
 
 | Path | Status | Contract |
 |---|:---:|---|
-| `docker/Dockerfile` | R | Digest-pinned bases and tools; `mcp` target installs `[mcp]`; `agent` target installs `[agent]`. Both contain mandatory `epistemic-graph[full]`; only the optional agent orchestration stack differs. |
+| `docker/Dockerfile` | R | Digest-pinned bases and tools; single `mcp` target installs the package. Contains mandatory `epistemic-graph[full]`. |
 | `docker/debug.Dockerfile` | R | Digest-pinned development image with no network-to-shell installer. |
 | `docker/mcp.compose.yml` | R | Immutable image input, loopback publication, configured authentication for network mode, and read-only operator AgentConfig mount; no `env_file`. |
 | `docker/agent.compose.yml` | R | Same controls for MCP and agent services; internal service traffic may use container-local HTTP, while external traffic requires authenticated TLS ingress. |
@@ -68,7 +68,8 @@ must remain environment-neutral, current-only, and deterministic.
 | `<pkg>/api/` | R | Canonical public API package with URL/origin validation, finite bounds, redirect rejection, `ResolvedTLSProfile`, and no top-level facade. |
 | `<pkg>/mcp/` | R | Atomic intent-routed domains with bounded inputs and globally unique provider-prefixed names. |
 | `<pkg>/mcp_server.py` | C | `load_config`, governed server factory, one `register_tool_surface` call, default `intent` mode. |
-| `<pkg>/agent_server.py`, `<pkg>/__main__.py` | C | Current `agent-runtime` entry point and canonical structured prompt. |
+| — (`<pkg>/agent_server.py`) | — | Retired (EH-484): agent-connector-sdk has no create_agent_server/create_agent_parser equivalent; never generated. |
+| `<pkg>/__main__.py` | C | Runs `mcp_server`. |
 | `<pkg>/<short>_gql.py` | C | GraphQL transport configured by the same resolved TLS profile; bounded query input. |
 | `<pkg>/main_agent.json`, `<pkg>/prompts/` | R | Canonical structured prompts with no local path or deployment identity. |
 | `<pkg>/skills/` | R | At least one atomic, provider-prefixed, portable skill. |
@@ -88,7 +89,7 @@ must remain environment-neutral, current-only, and deterministic.
 | `tests/test_kg_ingest.py` | R | Fakes-based mapping verification against the mandatory native ingestion primitive. |
 | `tests/test_<short>_mcp_validation.py` | C | Governed server and intent tool registration. |
 | `tests/test_startup.py`, `tests/test_init_dynamics.py`, `tests/test_concept_parity.py` | R | Import, entry-point, and concept gates. |
-| `scripts/security_sanitizer.py`, `scripts/verify_api_integration.py`, `scripts/validate_a2a_agent.py`, `scripts/validate_agent.py` | R | Bounded, non-secret validation helpers copied from reviewed templates. |
+| `scripts/security_sanitizer.py`, `scripts/verify_api_integration.py` | R | Bounded, non-secret validation helpers copied from reviewed templates. `validate_a2a_agent.py`/`validate_agent.py` are retired with the "agent" surface type (EH-484). |
 | `scripts/generate_agent_readiness.py` | R | Deterministic source-Markdown generator; no provider imports or generated-HTML scraping. |
 | `scripts/agent_readiness_tck.py` | R | Bounded served-surface TCK adapter with explicit HTTPS-origin allowlisting, fixture-only local mode, no credentials, rejected redirects, negotiated Markdown/HTML and RFC 9457 parity checks, discovery validation, budgets, and explicit unavailable/not-applicable evidence. |
 
@@ -96,8 +97,10 @@ must remain environment-neutral, current-only, and deterministic.
 
 A scaffold fails parity if it contains any of the following:
 
-- `agent-utilities` below `1.27.1`, the retired `agent` extra, or a recursive `all` extra;
-- anything other than mandatory `epistemic-graph[full]` for the engine dependency;
+- `agent-connector-sdk` missing from `dependencies`, or the retired `mcp`/`agent`/`all`
+  AU extras, or a recursive `all` extra;
+- a generated `agent_server.py`, root `a2a.json` agent card, or `docs/capabilities/a2a.json`
+  (the "agent" surface type is retired, EH-484);
 - a generated `.env`, raw credential/endpoint/certificate value, `SSL_VERIFY`, or
   `verify=False` path;
 - a legacy import facade, retired MCP mode alias, or no-engine compatibility branch;

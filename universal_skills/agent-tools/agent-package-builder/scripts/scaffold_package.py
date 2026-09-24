@@ -7,7 +7,7 @@ Generates the full project structure following the configured golden standard,
 including the modular api/ and mcp/ split, the full pre-commit gate, the two
 consolidated GitHub workflows (pipeline/pages), the 7-page Material mkdocs site,
 AGENTS.md+CLAUDE.md
-stub pattern, and the a2a.json / opencode.json / pytest.ini / MANIFEST.in /
+stub pattern, and the opencode.json / pytest.ini / MANIFEST.in /
 .codespellignore / .vulture_ignore config set.
 
 See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
@@ -160,25 +160,13 @@ tag = True
 search = version = "{{current_version}}"
 replace = version = "{{new_version}}"
 
-[bumpversion:file:a2a.json]
-search = "version": "{{current_version}}"
-replace = "version": "{{new_version}}"
-
 [bumpversion:file:README.md]
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
 
 [bumpversion:file(mcp-img):docker/Dockerfile]
-search = {package_name}[mcp]>={{current_version}}
-replace = {package_name}[mcp]>={{new_version}}
-
-[bumpversion:file(agent-img):docker/Dockerfile]
-search = {package_name}[agent]>={{current_version}}
-replace = {package_name}[agent]>={{new_version}}
-
-[bumpversion:file:{pkg_dir}/agent_server.py]
-search = __version__ = "{{current_version}}"
-replace = __version__ = "{{new_version}}"
+search = {package_name}=={{current_version}}
+replace = {package_name}=={{new_version}}
 
 [bumpversion:file:{pkg_dir}/mcp_server.py]
 search = __version__ = "{{current_version}}"
@@ -349,17 +337,10 @@ repos:
     additional_dependencies: ['@zabaca/mermaid-validate@1.0.1']
     types: [markdown]
     pass_filenames: true
-  - id: check-agent-standards
-    name: check agent standards
-    entry: |-
-      bash -c 'for f in $(find . -type f -name "agent_server.py" -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do grep -q "warnings.filterwarnings" "$f" && grep -q "file=sys.stderr" "$f" || { echo "agent_server.py is missing required warning controls"; exit 1; }; done'
-    language: system
-    pass_filenames: false
-    always_run: true
   - id: check-cli-help
     name: check cli help
     entry: |-
-      bash -c 'for f in $(find . -type f \\( -name "mcp_server.py" -o -name "agent_server.py" \\) -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do mod=$(echo "$f" | sed -e "s/^\\.\\///" -e "s/\\.py$//" -e "s/\\//./g"); uv run python -m "$mod" --help >/dev/null || exit 1; done'
+      bash -c 'for f in $(find . -type f -name "mcp_server.py" -not -path "*/\\.venv/*" -not -path "*/__pycache__/*"); do mod=$(echo "$f" | sed -e "s/^\\.\\///" -e "s/\\.py$//" -e "s/\\//./g"); uv run python -m "$mod" --help >/dev/null || exit 1; done'
     language: system
     pass_filenames: false
     always_run: true
@@ -493,21 +474,12 @@ repos:
 
 DOCKERFILE = """\
 # syntax=docker/dockerfile:1
-# Two runtime images from ONE Dockerfile, selected by build --target. Both are
-# multi-stage builds that ship only the installed runtime:
+# One runtime image, a multi-stage build that ships only the installed MCP
+# serving runtime. The A2A/LLM-agent entrypoint was retired (EH-484 --
+# agent_connector_sdk has no agent-runtime equivalent yet). Publish and deploy
+# by immutable manifest digest.
 #
-#   --target agent  (DEFAULT)  installs {package_name}[agent] = the agent runtime
-#                              (agent-utilities[agent-runtime,logfire]: engine + agent +
-#                              skills). Because [agent] also includes [mcp], this image
-#                              can run either the agent or the MCP server. Publish and
-#                              deploy it by immutable manifest digest.
-#
-#   --target mcp               installs {package_name}[mcp] = the MCP serving runtime.
-#                              The mandatory epistemic-graph[full] engine remains present;
-#                              only the optional agent orchestration stack is omitted.
-#
-#   docker build --target agent -t {package_name}:local .
-#   docker build --target mcp   -t {package_name}:mcp    .
+#   docker build -t {package_name}:local .
 # See agent-packages/CLAUDE.md "Connector recipe" for the tag contract.
 FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS builder-base
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
@@ -521,15 +493,10 @@ RUN apt-get update \\
     && apt-get install -y --no-install-recommends build-essential \\
     && rm -rf /var/lib/apt/lists/*
 
-# MCP serving dependency closure (including mandatory epistemic-graph[full]).
+# MCP serving dependency closure.
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[mcp]>=0.1.0
-
-# Full agent runtime dependency closure.
-FROM builder-base AS builder-agent
-RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[agent]>=0.1.0
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}>=0.1.0
 
 FROM python:3.11-slim@sha256:e031123e3d85762b141ad1cbc56452ba69c6e722ebf2f042cc0dc86c47c0d8b3 AS runtime-base
 ARG HOST=127.0.0.1
@@ -551,11 +518,6 @@ ENV HOST=${{HOST}} \\
 FROM runtime-base AS mcp
 COPY --from=builder-mcp /usr/local /usr/local
 CMD ["{mcp_cmd}"]
-
-# Agent image (DEFAULT target); can also run the MCP server.
-FROM runtime-base AS agent
-COPY --from=builder-agent /usr/local /usr/local
-CMD ["{agent_cmd}"]
 """
 
 DEBUG_DOCKERFILE = """\
@@ -586,83 +548,15 @@ RUN apt-get update \\
 WORKDIR /app
 COPY . /app
 
-# Compile and install package in-place. Dev image carries the FULL agent runtime
-# (.[agent], which includes .[mcp]) so it can run either server while debugging.
-RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[agent]
+# Compile and install package in-place.
+RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .
 
 CMD ["{mcp_cmd}"]
 """
 
-AGENT_COMPOSE_YML = """\
-version: '3.8'
-
-services:
-  {package_name}-mcp:
-    # MCP serving image (built with `--target mcp`).
-    image: "${{MCP_IMAGE:?set-MCP_IMAGE-to-image@sha256-digest}}"
-    container_name: {package_name}-mcp
-    hostname: {package_name}-mcp
-    restart: always
-    volumes:
-      - type: bind
-        source: ${{AGENT_CONFIG_DIR:?set-AGENT_CONFIG_DIR-to-an-AgentConfig-directory}}
-        target: /etc/agent-utilities
-        read_only: true
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=0.0.0.0
-      - PORT=8000
-      - TRANSPORT=streamable-http
-      - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
-      - AGENT_UTILITIES_CONFIG_DIR=/etc/agent-utilities
-    ports:
-      - "127.0.0.1:8000:8000"
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  {package_name}-agent:
-    # Full agent runtime image. Deployment inputs must be immutable digests.
-    image: "${{AGENT_IMAGE:?set-AGENT_IMAGE-to-image@sha256-digest}}"
-    container_name: {package_name}-agent
-    hostname: {package_name}-agent
-    restart: always
-    depends_on:
-      - {package_name}-mcp
-    volumes:
-      - type: bind
-        source: ${{AGENT_CONFIG_DIR:?set-AGENT_CONFIG_DIR-to-an-AgentConfig-directory}}
-        target: /etc/agent-utilities
-        read_only: true
-    command: [ "{agent_cmd}" ]
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=0.0.0.0
-      - PORT={agent_port}
-      - MCP_URL=http://{package_name}-mcp:8000/mcp
-      - AGENT_UTILITIES_CONFIG_DIR=/etc/agent-utilities
-    ports:
-      - "127.0.0.1:{agent_port}:{agent_port}"
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:{agent_port}/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-"""
+# AGENT_COMPOSE_YML (docker/agent.compose.yml) was removed per the operator's
+# retirement ruling (EH-484): its MCP service duplicated MCP_COMPOSE_YML below,
+# and its agent service depended on the retired agent_server.py console script.
 
 MCP_COMPOSE_YML = """\
 version: '3.8'
@@ -839,30 +733,11 @@ filterwarnings =
     ignore:.*exclude_args.*
 """
 
-A2A_JSON = """\
-{{
-  "name": "{package_name}-agent",
-  "type": "agent",
-  "version": "0.1.0",
-  "description": "{description}",
-  "url": "https://github.com/Knuckles-Team/{package_name}/tree/main",
-  "license": "MIT",
-  "capabilities": [
-    {{
-      "id": "run_graph_flow",
-      "name": "Graph Flow Execution",
-      "description": "Execute a workflow through the agent's graph orchestration engine"
-    }}
-  ],
-  "tools": [
-    {{
-      "id": "graph-flow",
-      "type": "flow",
-      "description": "Run complex multi-step workflows via Pydantic-Graph"
-    }}
-  ]
-}}
-"""
+# A2A_JSON (root a2a.json "agent card") was removed with the "agent" surface
+# type (EH-484 operator retirement ruling): it advertised A2A capabilities
+# ("run_graph_flow" / Pydantic-Graph orchestration) that no scaffolded package
+# serves anymore -- generating it would be actively misleading, unlike
+# docs/agent-readiness.json's honest "a2a": {"applicable": false}.
 
 OPENCODE_JSON = """\
 {
@@ -1090,9 +965,8 @@ README_MD = """\
 *Version: 0.1.0*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
-> interfaces, the integrated A2A agent server, and guidance for provisioning the
-> backing platform are maintained in the
-> [official documentation](https://knuckles-team.github.io/{package_name}/).
+> interfaces, and guidance for provisioning the backing platform are maintained in
+> the [official documentation](https://knuckles-team.github.io/{package_name}/).
 
 ---
 
@@ -1142,28 +1016,22 @@ domains can be toggled on or off with the listed environment variable. The table
 ### Install with `uvx` (no install — run on demand)
 
 ```bash
-uvx --from "{package_name}[mcp]" {mcp_cmd}      # MCP server + full graph engine
-uvx --from "{package_name}[agent]" {agent_cmd}  # MCP + A2A agent runtime
+uvx --from "{package_name}" {mcp_cmd}      # MCP server + full graph engine
 ```
-
-> Every supported install includes `epistemic-graph[full]`. The `[mcp]` extra adds
-> the MCP serving stack; `[agent]` adds the current `agent-runtime` and telemetry.
 
 ### Install with `pip`
 
 ```bash
-python -m pip install {package_name}            # core (API client)
-python -m pip install "{package_name}[all]"     # + MCP server + A2A agent + telemetry
+python -m pip install {package_name}
 ```
 
 ### Console scripts
 
-After installation the following entry points are available on your `PATH`:
+After installation the following entry point is available on your `PATH`:
 
 | Command | Description |
 |---------|-------------|
 | `{mcp_cmd}` | Launch the MCP server |
-| `{agent_cmd}` | Launch the A2A agent server |
 
 ## Usage
 
@@ -1272,18 +1140,16 @@ copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable
   `MCP_ALLOWED_HOSTS` in `AgentConfig`.
 <!-- END GENERATED: additional-deployment-options -->
 
-## Container images (`:mcp` vs `:agent`)
+## Container image
 
-One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+One multi-stage `docker/Dockerfile` builds the MCP serving image:
 
-| Local build tag | Build target | Contents | Entrypoint |
-|-----------|--------------|----------|------------|
-| `{package_name}:mcp-local` | `--target mcp` | `{package_name}[mcp]` — MCP serving runtime + `epistemic-graph[full]` | `{mcp_cmd}` |
-| `{package_name}:agent-local` | `--target agent` (default) | `{package_name}[agent]` — MCP + agent runtime + `epistemic-graph[full]` | `{agent_cmd}` |
+| Local build tag | Contents | Entrypoint |
+|-----------|----------|------------|
+| `{package_name}:mcp-local` | `{package_name}` — MCP serving runtime + `epistemic-graph[full]` | `{mcp_cmd}` |
 
 ```bash
-docker build --target mcp   -t {package_name}:mcp-local docker/
-docker build --target agent -t {package_name}:agent-local docker/
+docker build -t {package_name}:mcp-local docker/
 ```
 
 ## Knowledge-graph database (`epistemic-graph`)
@@ -1488,15 +1354,11 @@ ROOT_AGENTS_MD = """\
     - `{pkg_dir}/api/`: Modular folder for target service client wrappers.
     - `{pkg_dir}/mcp/`: Modular folder for action-routed dynamic MCP tool tags.
     - `{pkg_dir}/mcp_server.py`: Main MCP server entry point and tool registration.
-    - `{pkg_dir}/agent_server.py`: Pydantic AI agent definition and logic.
 
 ### Architecture Diagram
 ```mermaid
 graph TD
-    User([User/A2A]) --> Server[A2A Server / FastAPI]
-    Server --> Agent[Pydantic AI Agent]
-    Agent --> Skills[Modular Skills]
-    Agent --> MCP[MCP Server / FastMCP]
+    User([MCP Client]) --> MCP[MCP Server / FastMCP]
     MCP --> Client[API Client / Wrapper]
     Client --> ExternalAPI([External Service API])
 ```
@@ -1504,25 +1366,19 @@ graph TD
 ### Workflow Diagram
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant S as Server
-    participant A as Agent
+    participant U as MCP Client
     participant T as MCP Tool
     participant API as External API
 
-    U->>S: Request
-    S->>A: Process Query
-    A->>T: Invoke Tool
+    U->>T: Invoke Tool
     T->>API: API Request
     API-->>T: API Response
-    T-->>A: Tool Result
-    A-->>S: Final Response
-    S-->>U: Output
+    T-->>U: Tool Result
 ```
 
 ## Commands (run these exactly)
 # Installation
-pip install .[all]
+pip install .
 
 # Quality & Linting (run from project root)
 pre-commit run --all-files
@@ -1530,12 +1386,9 @@ pre-commit run --all-files
 # Execution Commands
 # Run MCP Server
 {mcp_cmd}
-# Run Agent
-{agent_cmd}
 
 ## Project Structure Quick Reference
 - MCP Entry Point → `{pkg_dir}/mcp_server.py`
-- Agent Entry Point → `{pkg_dir}/agent_server.py`
 - Source Code → `{pkg_dir}/`
 - API client mixins → `{pkg_dir}/api/`
 - MCP tool modules → `{pkg_dir}/mcp/`
@@ -1544,7 +1397,7 @@ pre-commit run --all-files
 
 ## Code Style & Conventions
 **Always:**
-- Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent_server`).
+- Use `agent-connector-sdk` for common patterns (e.g., `create_mcp_server`).
 - Define input/output models using Pydantic.
 - Include descriptive docstrings for all tools (they are used as tool descriptions for LLMs).
 - Check for optional dependencies using `try/except ImportError`.
@@ -1566,7 +1419,7 @@ pre-commit run --all-files
 - Use `agent-utilities` base classes.
 
 **Ask first:**
-- Major refactors of `mcp_server.py` or `agent_server.py`.
+- Major refactors of `mcp_server.py`.
 - Deleting or renaming public tool functions.
 
 **Never do:**
@@ -1761,9 +1614,16 @@ AUTH_PY = """\
 
 \"\"\"Resolve reference-only provider configuration at the client boundary.\"\"\"
 
-from agent_utilities.base_utilities import get_logger
+from agent_connector_sdk.exceptions import AuthError, UnauthorizedError
+from agent_connector_sdk.utilities import get_logger
+
+# SDK-GAP (EH-484, see the sibling connector repos' pyproject.toml comments, e.g.
+# vaultwarden-mcp/vector-mcp): AU's provider-runtime abstraction
+# (AgentConfig.provider_configs.<name>: endpoint/tls/credential/selector references
+# resolved as one profile) has no agent_connector_sdk equivalent -- the SDK's
+# config.py is a flat env-var setting()/load_config() model only. Kept as an exact
+# AU import.
 from agent_utilities.core.config import AgentConfig
-from agent_utilities.core.exceptions import AuthError, UnauthorizedError
 from agent_utilities.core.provider_runtime import (
     ResolvedProviderRuntime,
     resolve_provider_runtime_profile,
@@ -1789,23 +1649,41 @@ def get_client(config: AgentConfig | None = None) -> ApiClientSystem:
         raise RuntimeError("Provider profile requires endpoint and TLS references")
     token = runtime.credentials.get("token", "")
 
-    from agent_utilities.mcp.delegated_auth import (
-        get_delegated_token,
-        get_user_identity,
-        is_delegation_enabled,
-    )
-
     # --- Path 1: OIDC Delegation (RFC 8693 Token Exchange) ---
-    if is_delegation_enabled():
+    # agent_connector_sdk.auth.delegation.DelegationSettings always reads live env
+    # settings (like AU's is_delegation_enabled(config=None) fallback path); unlike
+    # AU's get_delegated_token (which took an explicit audience=runtime.endpoint
+    # override), the SDK requires AUDIENCE to be set whenever delegation is enabled
+    # and fails closed (ValueError) otherwise -- a stricter, intentional contract,
+    # not silently reproduced here.
+    try:
+        import httpx
+        from agent_connector_sdk.auth.delegation import (
+            DelegationSettings,
+            current_user_token,
+            exchange_token,
+        )
+
+        delegation_settings = DelegationSettings.from_settings()
+        delegation_enabled = delegation_settings.enabled
+    except Exception:
+        delegation_enabled = False
+
+    if delegation_enabled:
         try:
-            delegated_token = get_delegated_token(
-                audience=runtime.endpoint,
-            )
-            get_user_identity()
+            subject_token = current_user_token()
+            if not subject_token:
+                raise RuntimeError("no verified caller token is available")
+            with httpx.Client(timeout=30) as exchange_client:
+                delegated_token = exchange_token(
+                    delegation_settings,
+                    subject_token=subject_token,
+                    http_client=exchange_client,
+                )
             logger.info("Using OIDC delegated token")
             _client = ApiClientSystem(
                 base_url=runtime.endpoint,
-                token=delegated_token,
+                token=delegated_token.value,
                 tls_profile=runtime.tls,
             )
             _provider_runtime = runtime
@@ -1850,12 +1728,10 @@ import logging
 import sys
 from typing import Any
 
-from agent_utilities.base_utilities import get_logger
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    load_config,
-    register_tool_surface,
-)
+from agent_connector_sdk.config import load_config
+from agent_connector_sdk.mcp.server import create_mcp_server
+from agent_connector_sdk.mcp.tool_surface import register_tool_surface
+from agent_connector_sdk.utilities import get_logger
 
 from . import mcp as tool_modules
 from .api import ApiClientSystem
@@ -1923,88 +1799,28 @@ if __name__ == "__main__":
     mcp_server()
 """
 
-AGENT_SERVER_PY = """\
-#!/usr/bin/python
-import logging
-import sys
-import warnings
-
-from agent_utilities.core.config import setting
-
-__version__ = "0.1.0"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()],
-)
-logger = logging.getLogger(__name__)
-
-
-def agent_server():
-    from agent_utilities import (
-        build_system_prompt_from_workspace,
-        create_agent_parser,
-        create_agent_server,
-        initialize_workspace,
-        load_identity,
-    )
-
-    warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
-
-    initialize_workspace()
-    meta = load_identity()
-    agent_name = setting("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
-
-    print(f"{{agent_name}} v{{__version__}}", file=sys.stderr)
-    parser = create_agent_parser()
-    args = parser.parse_args()
-
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logger.debug("Debug mode enabled")
-
-    create_agent_server(
-        mcp_url=args.mcp_url,
-        mcp_config=args.mcp_config or "mcp_config.json",
-        host=args.host,
-        port=args.port,
-        provider=args.provider,
-        model_id=args.model_id,
-        router_model=args.model_id,
-        agent_model=args.model_id,
-        base_url=args.base_url,
-        api_key=None,
-        agent_description=setting(
-            "AGENT_DESCRIPTION", meta.get("description", "{description}")
-        ),
-        system_prompt=setting(
-            "AGENT_SYSTEM_PROMPT",
-            meta.get("content") or build_system_prompt_from_workspace(),
-        ),
-        custom_skills_directory=args.custom_skills_directory,
-        enable_web_ui=args.web,
-        enable_otel=args.otel,
-        otel_endpoint=args.otel_endpoint,
-        otel_headers=args.otel_headers,
-        otel_public_key=args.otel_public_key,
-        otel_secret_key=args.otel_secret_key,
-        otel_protocol=args.otel_protocol,
-        debug=args.debug,
-    )
-
-
-if __name__ == "__main__":
-    agent_server()
-"""
+# AGENT_SERVER_PY (the A2A/LLM-agent entrypoint) was removed per the operator's
+# retirement ruling (EH-484): agent_connector_sdk has no create_agent_server/
+# create_agent_parser equivalent (confirmed absent from the SDK tree; the pilot
+# connector world-reference-mcp ships none either). See
+# /var/tmp/l9/finish/au-decon-G4e/SDK-GAPS.md gap #3 (informational).
 
 MAIN_PY = """\
 #!/usr/bin/python
-from {pkg_dir}.agent_server import agent_server
+\"\"\"``python -m {pkg_dir}`` runs the MCP server.
+
+The A2A/LLM-agent entrypoint (``agent_server.py``) was removed in the
+agent-connector-sdk migration (EH-484) — agent_connector_sdk has no equivalent to
+agent-utilities' agent-runtime (``create_agent_server`` et al.); see
+/var/tmp/l9/finish/au-decon-G4e/SDK-GAPS.md.
+\"\"\"
+
+from __future__ import annotations
+
+from {pkg_dir}.mcp_server import mcp_server
 
 if __name__ == "__main__":
-    agent_server()
+    mcp_server()
 """
 
 API_CLIENT_BASE = """\
@@ -2013,6 +1829,13 @@ import time
 from typing import Any, Dict
 from urllib.parse import SplitResult, urljoin, urlsplit
 
+# SDK-GAP (EH-484, see /var/tmp/l9/finish/au-decon-G4e/SDK-GAPS.md gap #4/#5):
+# agent_connector_sdk.http.client.create_http_client takes a base_url-scoped
+# HttpClientOptions with no pin_egress/allowed_private_hosts/allow_loopback
+# fields at all -- this client relies on those to reach a service that may be
+# on a private network or loopback, so the SDK version is not a safe drop-in.
+# ResolvedTLSProfile stays paired with it (the actual TLS-profile object flows
+# in from the caller); kept as exact AU imports.
 from agent_utilities.core.http_client import create_http_client
 from agent_utilities.core.transport_security import ResolvedTLSProfile
 
@@ -2165,6 +1988,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+# SDK-GAP (EH-484, see /var/tmp/l9/finish/au-decon-G4e/SDK-GAPS.md gap #2):
+# AU's PII/secret-redaction guard has no agent_connector_sdk equivalent. Kept as
+# an exact AU import.
 from agent_utilities.security.persistence_privacy import sanitize_for_persistence
 
 
@@ -2519,7 +2345,8 @@ class SystemStatusResponse(BaseModel):
 MCP_SYSTEM_PY = """\
 import json
 
-from agent_utilities.mcp_utilities import resolve_action, run_blocking
+from agent_connector_sdk.mcp.action_dispatch import resolve_action
+from agent_connector_sdk.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from fastmcp.dependencies import Depends
 from pydantic import Field
@@ -2909,15 +2736,13 @@ import logging
 from typing import Any, Dict, Optional
 from urllib.parse import urlsplit
 
-from agent_utilities.core.decorators import require_auth
-from agent_utilities.core.exceptions import (
+from agent_connector_sdk.exceptions import (
     MissingParameterError,
     ParameterError,
+    require_auth,
 )
-from agent_utilities.core.transport_security import (
-    ResolvedTLSProfile,
-    resolve_configured_tls_profile,
-)
+from agent_connector_sdk.tls.profile import ResolvedTLSProfile
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
@@ -2958,7 +2783,7 @@ class GraphQL:
 
         self.url = f"{{rendered_url.rstrip('/')}}/api/graphql"
         self.token = token
-        self.tls_profile = tls_profile or resolve_configured_tls_profile(
+        self.tls_profile = tls_profile or resolve_tls_profile(
             "{short_name}"
         )
         self.debug = debug
@@ -3003,23 +2828,9 @@ class GraphQL:
             raise ParameterError(f"Query execution failed: {{type(e).__name__}}")
 """
 
-VALIDATE_AGENT_PY = """\
-#!/usr/bin/env python3
-\"\"\"Smoke-validate the A2A agent server entry point.\"\"\"
-
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-try:
-    from {pkg_dir}.agent_server import agent_server  # noqa: F401
-except ImportError as e:
-    print(f"Agent import failed: {{type(e).__name__}}")
-    sys.exit(1)
-
-print("Agent entry point import OK")
-"""
+# VALIDATE_AGENT_PY (scripts/validate_agent.py) was removed with the "agent"
+# surface type -- see the retirement note where agent_server.py used to be
+# written.
 
 # ── mkdocs + docs site (7 standard pages) ─────────────────────────────────────
 
@@ -3175,8 +2986,6 @@ This project follows the standardized agent-package pattern:
   tool modules) for cleaner organization.
 - **Dynamic Tool Registration**: action-routed dynamic tool tags, strictly
   lowercase, each togglable with a `*TOOL` environment flag.
-- **A2A Agent Server**: a Pydantic-AI graph agent (console script `{agent_cmd}`)
-  that calls the MCP tool surface and exposes an AG-UI web interface.
 
 ## Concept Registry
 
@@ -3206,20 +3015,12 @@ DOCS_INSTALLATION_MD = """\
 pip install {package_name}
 ```
 
-### Optional extras
-
-| Extra | Install | Pulls in |
-|---|---|---|
-| `mcp` | `pip install "{package_name}[mcp]"` | MCP runtime + mandatory `epistemic-graph[full]` |
-| `agent` | `pip install "{package_name}[agent]"` | Current agent runtime + Logfire tracing |
-| `all` | `pip install "{package_name}[all]"` | Everything above |
-
 ## From source
 
 ```bash
 git clone https://github.com/Knuckles-Team/{package_name}.git
 cd {package_name}
-pip install -e ".[all]"
+pip install -e .
 ```
 
 ## Docker
@@ -3233,10 +3034,9 @@ docker pull "$IMAGE_REF"
 DOCS_DEPLOYMENT_MD = """\
 # Deployment
 
-This page covers running `{package_name}` as long-lived servers.
+This page covers running `{package_name}` as a long-lived server.
 
-> `{package_name}` ships both an **MCP server** (console script `{mcp_cmd}`) and an
-> **A2A agent server** (console script `{agent_cmd}`).
+> `{package_name}` ships an **MCP server** (console script `{mcp_cmd}`).
 
 <!-- BEGIN GENERATED: deployment-options -->
 ## Deployment Options
@@ -3331,14 +3131,7 @@ must use direct TLS or an explicitly trusted TLS-terminating ingress and an exac
 ## Docker Compose
 
 ```bash
-docker compose -f docker/mcp.compose.yml up -d      # MCP server only
-docker compose -f docker/agent.compose.yml up -d    # MCP + agent
-```
-
-## Run the A2A agent server
-
-```bash
-{agent_cmd} --mcp-config mcp_config.json --web
+docker compose -f docker/mcp.compose.yml up -d      # MCP server
 ```
 """
 
@@ -3458,9 +3251,8 @@ CAPABILITY_API_JSON = """\
 CAPABILITY_MCP_JSON = """\
 {{"applicable": true, "surface": "mcp", "version": "capability/v1", "http_transport": true, "source": "{pkg_dir}/mcp_server.py"}}
 """
-CAPABILITY_A2A_JSON = """\
-{{"applicable": true, "surface": "a2a", "version": "capability/v1", "source": "{pkg_dir}/agent_server.py"}}
-"""
+# CAPABILITY_A2A_JSON (docs/capabilities/a2a.json) was removed with the "agent"
+# surface type -- see the retirement note above where it used to be written.
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -3496,8 +3288,8 @@ def test_get_client_auth_error():
     with (
         patch("{pkg_dir}.auth.resolve_provider_runtime_profile", return_value=runtime),
         patch(
-            "agent_utilities.mcp.delegated_auth.is_delegation_enabled",
-            return_value=False,
+            "agent_connector_sdk.auth.delegation.DelegationSettings.from_settings",
+            return_value=MagicMock(enabled=False),
         ),
         patch("{pkg_dir}.auth.ApiClientSystem") as mock_client_cls,
     ):
@@ -3784,6 +3576,9 @@ def scaffold(
         "mcp_artifact": (
             ', "artifact": "docs/capabilities/mcp.json"' if "mcp" in types else ""
         ),
+        # "agent" is never in types (the A2A surface type was retired, EH-484),
+        # so this always renders {"applicable": false} in AGENT_READINESS_JSON --
+        # an honest reflection of reality, not dead code to remove.
         "a2a_artifact": (
             ', "artifact": "docs/capabilities/a2a.json"' if "agent" in types else ""
         ),
@@ -3808,7 +3603,6 @@ def scaffold(
         root / ".codespellignore": (CODESPELLIGNORE, False),
         root / ".vulture_ignore": (VULTURE_IGNORE, False),
         root / "pytest.ini": (PYTEST_INI, False),
-        root / "a2a.json": (A2A_JSON, True),
         root / "opencode.json": (OPENCODE_JSON, False),
         root / "mcp_config.json": (ROOT_MCP_CONFIG_JSON, True),
         root / "AGENTS.md": (ROOT_AGENTS_MD, True),
@@ -3820,7 +3614,6 @@ def scaffold(
         # Docker
         root / "docker/Dockerfile": (DOCKERFILE, True),
         root / "docker/debug.Dockerfile": (DEBUG_DOCKERFILE, True),
-        root / "docker/agent.compose.yml": (AGENT_COMPOSE_YML, True),
         root / "docker/mcp.compose.yml": (MCP_COMPOSE_YML, True),
         root / "docker/starship.toml": (STARSHIP_TOML, True),
         # GitHub workflows
@@ -3837,8 +3630,6 @@ def scaffold(
         root / "docs/platform.md": (DOCS_PLATFORM_MD, True),
         root / "docs/concepts.md": (DOCS_CONCEPTS_MD, True),
         root / "docs/agent-readiness.json": (AGENT_READINESS_JSON, True),
-        # Repo scripts
-        root / "scripts/validate_agent.py": (VALIDATE_AGENT_PY, True),
     }
 
     if "api_client" in types:
@@ -3919,12 +3710,13 @@ def scaffold(
 
     if "mcp" in types:
         files[pkg / "mcp_server.py"] = (MCP_SERVER_PY, True)
+        files[pkg / "__main__.py"] = (MAIN_PY, True)
         files[root / "docs/capabilities/mcp.json"] = (CAPABILITY_MCP_JSON, True)
 
-    if "agent" in types:
-        files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
-        files[pkg / "__main__.py"] = (MAIN_PY, True)
-        files[root / "docs/capabilities/a2a.json"] = (CAPABILITY_A2A_JSON, True)
+    # The "agent" surface type (agent_server.py, the A2A/LLM-agent console script,
+    # docs/capabilities/a2a.json) was retired per the operator's ruling (EH-484):
+    # agent_connector_sdk has no create_agent_server/create_agent_parser
+    # equivalent. See /var/tmp/l9/finish/au-decon-G4e/SDK-GAPS.md gap #3.
 
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
@@ -3957,7 +3749,9 @@ def scaffold(
     for script_name in (
         "security_sanitizer.py",
         "verify_api_integration.py",
-        "validate_a2a_agent.py",
+        # validate_a2a_agent.py removed with the "agent" surface type (EH-484
+        # operator retirement ruling): it probed a live A2A server endpoint no
+        # scaffolded package serves anymore.
         # Cross-platform import-safety gate (2026-08-13 Windows-coverage
         # program): walks every module in the scaffolded package and fails
         # on ImportError, with --simulate-windows poisoning fcntl/termios/
@@ -4042,21 +3836,34 @@ def scaffold(
     req_path.write_text("\n".join(deps) + "\n", encoding="utf-8")
     print(f"  ✅ {req_path.relative_to(root.parent)}")
 
-    # Auto-emit the root uv workspace [tool.uv.sources] entry for the new package
-    # (CONCEPT:OS-5.72-workspace-uv-sources) — never a hand-edit, never a path
-    # source for a sibling. No-op (prints nothing further) if this scaffold isn't
-    # under a `[tool.uv.workspace]` root.
-    from workspace_sources import find_workspace_root, sync_uv_sources
-
-    workspace_root = find_workspace_root(root)
-    if workspace_root is not None:
-        changed = sync_uv_sources(workspace_root)
-        verb = "Synced" if changed else "Already in sync:"
-        print(f"  ✅ {verb} {workspace_root / 'pyproject.toml'} [tool.uv.sources]")
+    # NOTE (EH-484, 2026-09-24): this used to auto-emit a root uv workspace
+    # [tool.uv.sources] entry via workspace_sources.sync_uv_sources() here
+    # (CONCEPT:OS-5.72-workspace-uv-sources). That call is intentionally
+    # REMOVED — do not reintroduce it. Per D-EGSFT-1 (2026-08-14, owner-
+    # approved), the outer ecosystem `pyproject.toml` no longer declares a
+    # `[tool.uv.workspace]` table at all (see its own header comment); every
+    # package resolves independently and points at siblings via its own
+    # gitignored `.uv-workspace-siblings/<name>` editable path source (exactly
+    # what PYPROJECT_TOML above already writes for agent-connector-sdk and
+    # agent-utilities). With no real outer workspace root left to find,
+    # `find_workspace_root(root)` walked upward from the freshly scaffolded
+    # package and matched that package's OWN self-referential
+    # `[tool.uv.workspace] members = ["."]` declaration (the deliberate
+    # P0.2-nested-uv-workspace-fix pattern), then `sync_uv_sources` treated the
+    # new package as the sole member of its own one-package pseudo-workspace
+    # and overwrote its `[tool.uv.sources]` table with just
+    # `<package> = { workspace = true }` — destroying the path sources this
+    # scaffolder had just written. Confirmed via an end-to-end scaffold run.
+    # The generated `workspace-source-drift` pre-commit hook
+    # (`check_workspace_source_drift.py --check`, read-only lint) is still
+    # safe to keep: it resolves the same self-referencing single-member
+    # "workspace," so agent-connector-sdk/agent-utilities are never in that
+    # member set and it reports zero findings for their legitimate
+    # `.uv-workspace-siblings` path sources.
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")
-    print(f"   Console scripts: {mcp_cmd}, {agent_cmd}")
+    print(f"   Console scripts: {mcp_cmd}")
     print(f"   Concept prefix: CONCEPT:{concept_prefix}-*")
     print(f"   Types: {', '.join(types)}")
     print("   → Run `uv lock` to generate uv.lock (required by the pre-commit gate).")
@@ -4082,10 +3889,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--type",
-        default="api_client,mcp,agent",
+        default="api_client,mcp",
         dest="pkg_types",
         type=str,
-        help="Comma-separated types: api_client, mcp, agent, graphql (default: api_client,mcp,agent)",
+        help=(
+            "Comma-separated types: api_client, mcp, graphql "
+            "(default: api_client,mcp). The 'agent' A2A/LLM-agent surface type "
+            "was retired (EH-484) -- agent-connector-sdk has no agent-runtime "
+            "equivalent yet."
+        ),
     )
     parser.add_argument(
         "--display-name",
