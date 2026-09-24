@@ -78,7 +78,8 @@ Expected: `ingested-research-concepts`
 **Agent**: `alpha-strategist`
 **Tools**: `ontology_query, graph_query`
 
-Ensure the trading ontology (`ontology_trading.ttl`), the `MicrostructureSignal`
+Ensure the trading ontology (an epistemic-graph schema source or the emerald-exchange
+connector pack — never a `.ttl` in agent-utilities), the `MicrostructureSignal`
 candidates, and the curated `teamcfg:trading_paper_v1` TeamConfig are registered in
 the KG (`agent_utilities.graph.trading_team_seed.seed_trading_team`). This is the
 substrate the rest of the loop reasons over.

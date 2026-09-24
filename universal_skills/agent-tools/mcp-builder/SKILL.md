@@ -83,7 +83,7 @@ Key pages to review:
 #### 1.3 Study Framework Documentation
 
 **Recommended stack:**
-- **Language**: Python (FastMCP). We build MCPs using our standard custom FastMCP template which includes standard middlewares (auth, timeout, Eunomia) and CLI argument parsing.
+- **Language**: Python (FastMCP 4). We build MCPs on `agent-connector-sdk` (`agent_connector_sdk.mcp.server.create_mcp_server`), which supplies authentication, network-exposure checks, the standard middlewares and CLI argument parsing. Connectors never import `agent_utilities`.
 - **Transport**: stdio is standard for local execution, or streamable HTTP as supported by the `mcp_server()` entry point.
 
 **Load framework documentation:**
@@ -307,7 +307,7 @@ Load these resources as needed during development:
   - The exact boilerplate required for the `mcp_server.py` file
   - Standardization logic for arguments, middlewares, and `mcp_server()`
   - Tool registration using `@mcp.tool`
-  - Required imports and dependencies (`fastmcp`, `agent_utilities`, etc.)
+  - Required imports and dependencies (`fastmcp`, `agent-connector-sdk`)
   - Quality checklist
 - [🛠 Context Helpers Guide](./reference/ctx_helpers.md) - Standard patterns for destructive guards, progress reporting, and logging.
 - [📋 Phase 2 Implementation Plan](./reference/ctx_implementation_plan_phase_2.md) - Details on the fleet-wide instrumentation of context helpers.

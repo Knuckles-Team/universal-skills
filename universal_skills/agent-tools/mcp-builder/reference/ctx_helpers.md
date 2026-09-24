@@ -4,7 +4,7 @@ This guide covers the standardized patterns for using MCP context helpers to pro
 
 ## Standard Helpers
 
-The following helpers are available in `agent_utilities.mcp_utilities` (or should be implemented according to these patterns) to standardize common MCP tool interactions.
+The following helpers are available in `agent_connector_sdk.mcp.context` (`ctx_confirm_destructive`, `ctx_log`) or should be implemented according to these patterns to standardize common MCP tool interactions.
 
 ### 1. `ctx.elicit()` — Destructive Operation Guards
 

@@ -47,6 +47,6 @@ Identify and probe any connected GPU or AI accelerator devices (e.g., using `nvi
 - Driver version and execution status
 
 ### Step 3: Format HW Profile Data
-Export the structured metadata representing compute hardware. Data fields strictly align with `ontology_infrastructure.ttl` classes:
+Export the structured metadata representing compute hardware. Data fields strictly align with the classes of epistemic-graph's `core:infrastructure@1` ontology module:
 - `HardwareNode` properties (CPU cores, RAM size, OS info)
 - `GPUAccelerator` properties (VRAM size, bus ID, model name)

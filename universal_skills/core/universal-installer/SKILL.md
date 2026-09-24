@@ -167,6 +167,13 @@ directory — Claude Code etc. don't consume `.ttl`/prompt JSON directly); only
 the skills/skill-graphs leg is tool-specific. Skip with `--no-ontologies` /
 `--no-prompts`.
 
+> **Ontology authority.** The XDG ontology copy is a local convenience only.
+> epistemic-graph owns the ontology lifecycle, SHACL and OWL: a connector's
+> vocabulary reaches the graph as a pack certified by agent-connector-sdk and
+> committed through EG `ConnectorPack`, and engine-owned modules are EG
+> `core:<module>@<N>` sources. agent-utilities does not ingest or reason over
+> these files.
+
 ## Per-package auto-detection (new)
 
 When an `agents/*` package is **already pip-installed**, its skills/prompts/

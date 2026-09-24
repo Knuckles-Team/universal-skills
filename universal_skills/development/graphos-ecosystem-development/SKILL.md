@@ -44,9 +44,10 @@ fix this file.
 
 ## 1. Architecture boundaries — which repository owns the change
 
-One dependency direction, enforced by the `phase-direction` gate:
-**pipelines → epistemic-graph → agent-connector-sdk → agent-utilities → graph-os →
-front-ends and skill corpora → connectors.** A repository may only import toward the left.
+One dependency direction — the `workspace.yml` maintenance phases, enforced by the
+`phase-direction` gate: **pipelines → epistemic-graph → agent-connector-sdk →
+agent-utilities → agent-webui → graph-os → core tools, UIs and skill corpora →
+the `agents/*` connectors.** A repository may only import toward the left.
 
 | Owner | Owns | Never |
 |---|---|---|
@@ -204,7 +205,8 @@ set; a gate that scanned nothing must fail, not pass.
 - Measure the merged tree (`git merge-tree --write-tree`), not a branch tip. After any merge
   wave run a parser over every source file (rustfmt / `ast` / `tomllib`) before gates.
 - Never land with `update-ref`; fast-forward, then verify by tree (`git cat-file -e HEAD:<path>`).
-- Push order: pipelines → EG → SDK → AU → graph-os → front-ends. A project is pushed once its
+- Push order follows the phases: pipelines → EG → SDK → AU → WebUI → graph-os → tools/UIs →
+  connectors. A project is pushed once its
   full local gate matrix is green (standing authorization), after `gh-preflight`; then watch
   hosted CI and fix any red at once. Tags and PyPI wait for the release phase.
 - Prune only after proving reachability with `git merge-base --is-ancestor`, never from
