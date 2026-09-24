@@ -1686,7 +1686,16 @@ jobs:
           rustup toolchain install 1.95.0 --profile minimal
           rustup default 1.95.0
           cargo install cccc-cli --version 1.6.0 --locked
-          cargo install kiss-ai --version 0.4.10 --locked
+          # kiss: 0.4.10 rules from the fleet fork build (inline-module fix,
+          # dsweet99/kiss#48); it prints the same `kiss 0.4.10` as crates.io, so
+          # prove the build: upstream aborts on `mod helper;` inside `mod tests {}`.
+          cargo install --locked --git https://github.com/Knucklessg1/kiss --rev 4d05b0ee01c58318f199848b4d799b12d470d1bd kiss-ai
+          probe="$RUNNER_TEMP/kiss-fork-probe"; mkdir -p "$probe/src/a/tests"
+          printf '[package]\\nname = "probe"\\nversion = "0.1.0"\\nedition = "2024"\\n' > "$probe/Cargo.toml"
+          printf 'pub mod a;\\n' > "$probe/src/lib.rs"
+          printf 'pub fn a() {}\\n#[cfg(test)]\\nmod tests {\\n    mod helper;\\n}\\n' > "$probe/src/a.rs"
+          printf '#[test]\\nfn h() {}\\n' > "$probe/src/a/tests/helper.rs"
+          (cd "$probe" && "${CARGO_HOME:-$HOME/.cargo}/bin/kiss" check --lang rust .)
           cargo install dupehound --version 0.1.2 --locked
           npm install --global jscpd@5.0.16
           python -m pip install --disable-pip-version-check --no-cache-dir \
