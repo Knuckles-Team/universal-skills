@@ -4,19 +4,19 @@ domain: development
 skill_type: skill
 description: >-
   Develop inside the epistemic-graph (EG) Rust engine without creating sprawl.
-  Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or
-  second route to an existing capability in agent-packages/epistemic-graph.
-  Supplies twelve guardrails with what enforces each; the authorization model
-  end to end (claims to VerifiedRequestContext to allows_method to the dispatch
-  chokepoint, the RBAC/RLS axis, and the measured kg:read
-  / RunUdf / policy:export findings); the 48-crate layer model, the
-  dependency-direction rule and how to find a symbol's CONSUMERS; the
-  pre-commit gates and what each forbids; the rules for authoring a gate that
-  cannot report coverage it does not have; the MutationBatch v1
-  scope-vs-domain contract; an anti-sprawl checklist; seven failure patterns;
-  and the build/test operating rules. References/ holds the deep material. Use
-  when the agent must write, refactor, review, or plan work in the EG Rust
-  workspace. Not for the Python agent-utilities side or deploying the engine.
+  Load BEFORE adding a crate, constant, predicate, table list, helper, gate,
+  ontology module, or second route to an existing capability in
+  agent-packages/epistemic-graph. Supplies twelve guardrails with what enforces
+  each; the authorization model end to end (claims to VerifiedRequestContext to
+  allows_method to the dispatch chokepoint, and the RBAC/RLS axis); the crate
+  layer model, the dependency-direction rule and how to find a symbol's
+  CONSUMERS; the gates and what each forbids; how to author a gate that cannot
+  report coverage it does not have; the MutationBatch scope-vs-domain contract;
+  an anti-sprawl checklist; seven failure patterns; and build/test rules on
+  build hosts. Shared lane, gate and landing rules are in
+  graphos-ecosystem-development. Use when the agent must write, refactor,
+  review, or plan work in the EG Rust workspace. Not for agent-utilities or
+  deploying the engine.
 license: MIT
 tags: [epistemic-graph, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
@@ -32,7 +32,17 @@ answers a question already answered, a hand-copied list of another crate's table
 a shared helper extracted across a boundary it should not cross.
 
 **Read this file before writing EG code.** Every claim below was verified against
-the tree; anything unverified is marked. Verify again — the tree moves.
+the tree; anything unverified is marked. Verify again — the tree moves (crate and
+method counts in particular: re-derive them from `Cargo.toml` `[workspace] members`
+and the capability ledger before quoting one).
+
+**Load `graphos-ecosystem-development` first.** It owns the rules shared with every
+repo in the platform — the lane protocol (own worktree, explicit staging,
+`--no-verify` lane commits, STATE.md), build hosts via `eg-lane-run`, landing via
+`eg-land-gate --fanout`, the gate caps, contract regeneration and the decisions
+protocol. This file covers only what is specific to EG. EG owns **all** knowledge and
+semantics in the platform — storage, ontology lifecycle, SHACL, RDF, OWL, reasoning,
+Decide, memory — so semantic work that used to live in agent-utilities lands here.
 
 ---
 
@@ -57,7 +67,7 @@ Numbers are cross-referenced to the section that owns them, never restated.
 | **G8** | **No baseline files. Ever. MUST NOT.** Verified 2026-09-03: **no `--update-baseline` mechanism exists anywhere in `scripts/`** — the sole mention is `check_tracked_privacy.py:1045` recording that its own was DELETED. Two committed known-bad lists do exist and are the *permitted* shape, not ratchets: `tests/integration_failure_baseline.txt` (79 lines) and `tests/protocol_unbound_baseline.txt` (173 lines). | `scripts/check_integration_baseline.py` — it refuses a malformed line, requires `# owner=@handle review-by=YYYY-MM-DD` per entry, fails when anything NEW joins **and** when anything on the list starts passing. A ledger that rots loudly. **Add no third list, and never add a self-updating flag.** |
 | **G9** | **A gate whose universe is empty must FAIL, not pass. MUST.** Vacuous truth is not coverage. | **Enforced by example — copy this shape.** `scripts/check_mint_lease_call_sites.py` exits non-zero on ZERO matches: *"either the scan paths drifted or the feature was deleted … don't let it go quietly blind."* Verified passing today: 1 production call site (`src/server/dispatch.rs:4974`), 1 test-only. Any new gate you write must refuse an empty universe the same way. |
 | **G10** | **A count's composition matters as much as its size. MUST.** "Fix the exclude, remove 1,144 arch-lint findings" was true and useless — **0 of those 1,144 were blocking errors.** `arch-lint.toml`'s `exclude` lists `**/target/**` and *not* `target-isolated/**`; verified. §3 owns the breakdown. | **Nothing — discipline.** Break every delta down by rule and severity before calling it progress. |
-| **G11** | **Isolation and staging. MUST NOT.** Never edit the canonical checkout; never use the harness's worktree-isolation tool (it sets `core.bare=true` on the shared common dir); never `git stash` (`refs/stash` is repo-wide across 50+ worktrees); never `git add -A`/`.`; never export `CARGO_TARGET_DIR`; never `update-ref` to advance a branch — `merge --ff-only`, then verify by TREE (`git cat-file -e HEAD:<path>`), not by ref. ⚠ **`pre-commit run --all-files` belongs on this list too and §8 currently tells you to run it:** it `git stash`es every UNSTAGED change around the run, and a file-rewriting hook touching the same path can silently DROP those edits on restore. **EG ships no safe wrapper.** Use §8's own replacement — a throwaway detached worktree with a lane-private `PRE_COMMIT_HOME` and `TMPDIR`. (agent-utilities' `scripts/safe_precommit_all_files.py` derives its repo root from `git rev-parse` in the cwd and so is repo-agnostic *in principle*; that is **unverified against EG** — do not treat it as a shipped affordance here.) **§8 "Git, in a shared multi-worktree repo" owns the rest of the list with each prohibition's replacement — read it, this row is only the index.** | `lane-guard` refuses a commit authored in the canonical checkout and a commit made with `CARGO_TARGET_DIR` exported off-lane. **`git stash`, `git add -A`, the harness worktree tool and `update-ref` are NOT enforced — discipline.** |
+| **G11** | **Isolation and staging. MUST NOT.** Never edit the canonical checkout; never use the harness's worktree-isolation tool (it sets `core.bare=true` on the shared common dir); never `git stash` (`refs/stash` is repo-wide across 50+ worktrees); never `git add -A`/`.`; never export `CARGO_TARGET_DIR`; never `update-ref` to advance a branch — `merge --ff-only`, then verify by TREE (`git cat-file -e HEAD:<path>`), not by ref. ⚠ **`pre-commit run --all-files` belongs on this list too:** it `git stash`es every UNSTAGED change around the run, and a file-rewriting hook touching the same path can silently DROP those edits on restore. **EG ships no safe wrapper.** Lanes do not run it at all (the orchestrator's landing gate does); anyone who must, uses a throwaway detached worktree with a lane-private `PRE_COMMIT_HOME` and `TMPDIR`. (agent-utilities' `scripts/safe_precommit_all_files.py` derives its repo root from `git rev-parse` in the cwd and so is repo-agnostic *in principle*; that is **unverified against EG** — do not treat it as a shipped affordance here.) **§8 "Git, in a shared multi-worktree repo" owns the rest of the list with each prohibition's replacement — read it, this row is only the index.** | `lane-guard` refuses a commit authored in the canonical checkout and a commit made with `CARGO_TARGET_DIR` exported off-lane. **`git stash`, `git add -A`, the harness worktree tool and `update-ref` are NOT enforced — discipline.** |
 | **G12** | **Fail closed, and never substitute a sentinel for absence. MUST.** A native scope has no graph name: comparing `Option` against `Some(x)` is correct; an empty-string sentinel is a security defect. Worked instances below. | Partly: `universal-read-rls-architecture` and `mint-lease-call-sites` cover parts of the served-read seam. The scope→`authz_action` mapping is **not gated** — see the two live shapes below. |
 
 ### G3 in practice — the feature matrix, and why `--lib` green is not green
@@ -102,7 +112,8 @@ routine gate suite has ever type-checked it.
 
 **So: name the build in every acceptance claim.** `1,270 passed` is a statement
 about `-p epistemic-graph --lib` under `default`, and about nothing else. If your
-diff touches a path behind a non-default feature, you owe a second run:
+diff touches a path behind a non-default feature, you owe a second run (as
+`eg-lane-run` steps on a build host, §8):
 
 ```bash
 cargo check -p epistemic-graph --features raft          # or the feature that gates your path
@@ -138,7 +149,8 @@ evidence. Do this, in order, before the full run:
    ```bash
    git diff --name-only --diff-filter=A main...HEAD
    ```
-4. **Run the remainder BY NAME first**, then the crate, then everything:
+4. **Run the remainder BY NAME first**, then the crate, then everything — as steps of
+   one `eg-lane-run` submission (§8), never on the dev host:
    ```bash
    cargo test -p epistemic-graph --lib wired_catalog_tests -j 8 -- --test-threads=4
    cargo test -p <touched crate>  --lib -j 8 -- --test-threads=4
@@ -420,7 +432,7 @@ sees them all.
 
 ## 3. What is actually enforced, and what is red today
 
-`.pre-commit-config.yaml` declares **60 hooks**. For the architecture-enforcing
+`.config/pre-commit.yaml` declares **60 hooks**. For the architecture-enforcing
 subset — and the contract- and hygiene-enforcing ones beside it — every hook id,
 its script, exactly what it refuses, the scope traps in the two non-Rust hooks,
 and the per-hook measured PASS/FAIL state with each failure's real message, see
@@ -616,6 +628,7 @@ never from memory — a count without a command behind it is inadmissible.
 | A protocol method | `protocol.rs` variant + `handlers/<domain>.rs` fn + a ONE-LINER `dispatch.rs` arm + a client method + a round-trip test |
 | A new operation family | a new `handlers/<domain>.rs`, never another arm in an existing file |
 | A store-authoritative capability | its own crate with its own `MutationScopeIdentity`; never a bare `Database` |
+| An ontology / SHACL module the engine ships | `crates/eg-core/ontology/<module>-v<N>.ttl`, registered in `crates/eg-core/src/graph/schema_sources.rs::core_specs()` as the engine-owned source `core:<module>@<N>`; connector-owned vocabulary arrives as a `ConnectorPack` instead |
 
 
 ---
@@ -643,35 +656,34 @@ things that are still open today.** The rules themselves:
 
 ## 8. Build and test operating rules
 
-### Running the suite
+### Running the suite — on a build host, never the dev host
+
+No cargo runs on the dev host (a shim refuses it in agent sessions). Batch every step into
+one build-host submission and end the turn with `WAITING-ON-RUN <run-id>`:
 
 ```bash
-export CARGO_INCREMENTAL=0
-cargo check -p eg-types                          # fastest inner loop
-cargo check -p epistemic-graph                   # full closure
-cargo test -p epistemic-graph --lib -j 8 -- --test-threads=4
+eg-lane-run submit --lane <lane> --worktree <wt> --include-uncommitted \
+  --step 'check=cargo check -p epistemic-graph --all-features' \
+  --step 'crate=cargo test -p <touched crate> --lib -j 8 -- --test-threads=4' \
+  --step 'named=cargo test -p epistemic-graph --lib <pre-existing test module> -j 8 -- --test-threads=4'
+eg-lane-run status <run-id>
 ```
 
-- **Do NOT export `CARGO_TARGET_DIR`.** The committed `.cargo/config.toml` already sets
-  `[build] target-dir = "target-isolated"`. That path is *relative*, so it resolves
-  against each worktree root — every worktree gets its own isolated target dir with no
-  env var and no action after checkout. An exported `CARGO_TARGET_DIR` overrides it
-  (cargo's own precedence) and **`lane-guard` refuses the commit** unless the export
-  points at exactly this lane's partitioned dir
-  (`agent-utilities/scripts/check_lane_guard.py`, `_check_cargo_target_override`).
+- `cargo check` first (compile before review); name the feature set in every claim (**G3**).
 - **NEVER omit `--test-threads=4`. The suite deadlocks at the 24-thread default.**
-- **`-j` bounds the COMPILER, not the harness.** `-j 8` limits `rustc` jobs;
-  `--test-threads` after `--` limits the test harness. They are different knobs
-  and you need both.
-- Cargo ignores `CPUQuota`; `-j` is the only lever. 3-4 concurrent cargo lanes on
-  this workspace is the practical ceiling.
-- Full gate before claiming done: `pre-commit run --all-files`, no `--no-verify`
-  — but **not bare in a shared checkout**, because it stashes and can drop your
-  unstaged work (**G11**); run it from a throwaway detached worktree with a
-  lane-private `PRE_COMMIT_HOME` and `TMPDIR`, as *Git, in a shared
-  multi-worktree repo* below already requires.
-  Plus `bash scripts/constrained_parallelism_gate.sh` (GOC-70), which re-runs the
-  lib suite and the concurrency-sensitive integration binaries under `taskset -c 0,1`.
+  `-j` bounds the compiler, `--test-threads` the harness — you need both.
+- **Do NOT export `CARGO_TARGET_DIR`.** `.cargo/config.toml` sets the relative
+  `[build] target-dir = "target-isolated"`, so each worktree is isolated; `lane-guard`
+  refuses a commit made with an off-lane override.
+- Local Python tests: **only `pytest -m no_engine`**. Every other EG Python test builds
+  the engine from its conftest — run it as an `eg-lane-run` step.
+- Contract surface changed (a `Method`, a capability row, a generated sender)? Regenerate
+  with `gen_contract` on the build host and pull the artifacts back per
+  `graphos-ecosystem-development` §6; the `engine-contract` hook runs
+  `gen_contract -- --check`.
+- Lanes run targeted checks only and commit with `--no-verify`. The full gate is the
+  orchestrator's `eg-land-gate --fanout` over the release workflow (plus
+  `scripts/constrained_parallelism_gate.sh` and the full nextest suite) on the merged train.
 
 ### Git, in a shared multi-worktree repo
 
@@ -707,9 +719,9 @@ before publishing a count.**
 
 | Path | What it is |
 |---|---|
-| `agent-packages/epistemic-graph/AGENTS.md` | Authoritative repo doc. Its "Module Structure" tree is stale (5 crates vs 48); its "Workspace & server dispatch conventions" section is current. |
+| `agent-packages/epistemic-graph/AGENTS.md` | The repo's navigation index (public-surface contract); points here and to `graphos-ecosystem-development` for development rules. |
 | `agent-packages/epistemic-graph/Cargo.toml` | The 48-crate member list and the feature graph. `default = ["graph", "algorithms", "metrics", "full"]` — a **superset** of `full`, not equal to it. |
-| `agent-packages/epistemic-graph/.pre-commit-config.yaml` | All 60 hooks. |
+| `agent-packages/epistemic-graph/.config/pre-commit.yaml` | The hook suite (count it; it moves). |
 | `agent-packages/epistemic-graph/.repo-layout.toml` | Root-entry justification manifest read by `check_root_hygiene.py`. |
 | `agent-packages/epistemic-graph/arch-lint.toml` | arch-lint policy. Declares `preset = "minimal"` + `fail_on = "error"` and disables AL001, but 0.5.0 ignores the preset and runs the other 7 rules — see §3. Its `exclude` does not cover `target-isolated/`. |
 | `agent-packages/epistemic-graph/.importlinter` | Python client contracts. |
