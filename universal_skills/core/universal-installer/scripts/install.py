@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import hashlib
 import os
 import re
 import shutil
@@ -386,7 +387,9 @@ def _prune_broken_symlinks(target_path: Path) -> int:
                     logger.info(f"Pruned broken symlink: {entry.name} → {dead_target}")
                     pruned += 1
                 except OSError as e:
-                    logger.warning(f"Could not prune broken symlink {entry.name}: {type(e).__name__}")
+                    logger.warning(
+                        f"Could not prune broken symlink {entry.name}: {type(e).__name__}"
+                    )
     if pruned:
         logger.info(
             f"Pruned {pruned} broken symlink(s) left by renamed/removed skills."
@@ -441,7 +444,11 @@ def _install_transformed_copy(
         return False
     if skill_dst.exists() or skill_dst.is_symlink():
         _remove_dest(skill_dst)
-    shutil.copytree(skill_src.resolve(), skill_dst)
+    shutil.copytree(
+        skill_src.resolve(),
+        skill_dst,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
     _transform_skill_md(skill_dst, contract)
     return True
 
@@ -531,7 +538,11 @@ def install_skills(
         src_abs = skill_src.resolve()
 
         # Idempotent: an already-correct symlink needs no work (even without --force).
-        if effective_symlink and skill_dst.is_symlink() and skill_dst.resolve() == src_abs:
+        if (
+            effective_symlink
+            and skill_dst.is_symlink()
+            and skill_dst.resolve() == src_abs
+        ):
             logger.info(f"{skill_src.name} already symlinked → up to date.")
             continue
 
@@ -541,7 +552,11 @@ def install_skills(
         # (`kg-ingest/kg-ingest -> kg-ingest`) — and `_remove_dest` below would first
         # delete the real source. Skip such degenerate targets outright.
         dst_abs = skill_dst.resolve()
-        if src_abs == dst_abs or src_abs in dst_abs.parents or dst_abs in src_abs.parents:
+        if (
+            src_abs == dst_abs
+            or src_abs in dst_abs.parents
+            or dst_abs in src_abs.parents
+        ):
             logger.warning(
                 f"Skipping {skill_src.name}: destination {dst_abs} is the source itself "
                 f"or shares its subtree — would create a self-referential link."
@@ -596,9 +611,17 @@ def install_skills(
                         logger.warning(
                             f"Symlink unavailable for {skill_src.name} ({link_err}); copying instead."
                         )
-                        shutil.copytree(src_abs, skill_dst)
+                        shutil.copytree(
+                            src_abs,
+                            skill_dst,
+                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                        )
             else:
-                shutil.copytree(src_abs, skill_dst)
+                shutil.copytree(
+                    src_abs,
+                    skill_dst,
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                )
             installed_count += 1
         except Exception as e:
             logger.error(f"Failed to install {skill_src.name}: {type(e).__name__}")
@@ -612,6 +635,52 @@ def install_skills(
     mode = "symlinked" if effective_symlink else "installed"
     logger.info(f"Successfully {mode} {installed_count} items.")
     return True
+
+
+def check_skill_install(target_path: Path, sources: List[Path], contract) -> List[str]:
+    """Report missing or changed installed files without mutating the target."""
+    issues: List[str] = []
+    expected: dict[str, Path] = {}
+    for source in sources:
+        is_graph = "skill_graphs" in source.parts or "skill-graphs" in source.parts
+        name = adapters.resolve_dest_name(source.name, contract)
+        root = (
+            target_path
+            if contract.flat_discovery or not is_graph
+            else target_path / "skill-graphs"
+        )
+        expected[str(root / name)] = source
+        if contract.flat_discovery and not is_graph:
+            for nested in adapters.iter_promotable_nested(source):
+                name = adapters.resolve_dest_name(nested.name, contract)
+                expected[str(target_path / name)] = nested
+
+    for destination, source in sorted(expected.items()):
+        dst = Path(destination)
+        if not dst.is_dir():
+            issues.append(f"missing: {dst}")
+            continue
+        for src_file in sorted(source.rglob("*")):
+            if "__pycache__" in src_file.parts or src_file.suffix == ".pyc":
+                continue
+            if not src_file.is_file():
+                continue
+            rel = src_file.relative_to(source)
+            dst_file = dst / rel
+            if not dst_file.is_file():
+                issues.append(f"missing: {dst_file}")
+                continue
+            source_bytes = src_file.read_bytes()
+            if rel == Path("SKILL.md") and contract.requires_transform:
+                source_bytes = adapters.transform_frontmatter(
+                    source_bytes.decode("utf-8"), contract, installed_name=dst.name
+                ).encode("utf-8")
+            if (
+                hashlib.sha256(source_bytes).digest()
+                != hashlib.sha256(dst_file.read_bytes()).digest()
+            ):
+                issues.append(f"changed: {dst_file}")
+    return issues
 
 
 def _find_portability_checker() -> Optional[Path]:
@@ -647,7 +716,9 @@ def _run_validate(target_path: Path) -> None:
             timeout=60,
         )
     except Exception as e:  # noqa: BLE001
-        logger.warning(f"--validate could not run the portability checker: {type(e).__name__}")
+        logger.warning(
+            f"--validate could not run the portability checker: {type(e).__name__}"
+        )
         return
     if proc.returncode != 0:
         logger.warning(
@@ -655,7 +726,9 @@ def _run_validate(target_path: Path) -> None:
             f"{proc.stdout}{proc.stderr}"
         )
     else:
-        logger.info(f"--validate: {target_path} passed the frontmatter portability gate.")
+        logger.info(
+            f"--validate: {target_path} passed the frontmatter portability gate."
+        )
 
 
 def _available_providers() -> List[str]:
@@ -677,7 +750,11 @@ def _prompt_choice(title: str, items: List[tuple]) -> List[str]:
     for i, (_, disp) in enumerate(items, 1):
         print(f"  {i}) {disp}")
     print("  a) all")
-    raw = input("Select (numbers, comma/space separated, or 'a' for all): ").strip().lower()
+    raw = (
+        input("Select (numbers, comma/space separated, or 'a' for all): ")
+        .strip()
+        .lower()
+    )
     if raw in ("", "a", "all"):
         return [k for k, _ in items]
     picks = [
@@ -799,6 +876,11 @@ def main():
     )
     parser.add_argument(
         "--force", action="store_true", help="Overwrite existing skills"
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Read-only check that selected installed skill files match their sources",
     )
     parser.add_argument(
         "--symlink",
@@ -925,6 +1007,15 @@ def main():
         if package_manifest is None:
             sys.exit(1)
         from_package_sources = from_package_mod.discover_skill_sources(package_manifest)
+        if skill_names:
+            requested = {name.strip() for name in skill_names}
+            from_package_sources = [
+                source for source in from_package_sources if source.name in requested
+            ]
+        if args.group:
+            from_package_sources = [
+                source for source in from_package_sources if args.group in source.parts
+            ]
         scripts = package_manifest.mcp_console_scripts()
         if scripts:
             from_package_scripts[package_manifest.name] = scripts
@@ -940,9 +1031,7 @@ def main():
     # Runs when explicitly requested, or on a bare invocation (no target flag) with a
     # TTY. Without a TTY, --interactive degrades to --all-detected so automation
     # (install.sh --all-detected) is never blocked on a prompt.
-    no_target_flag = not (
-        args.all_detected or args.all_tools or args.path or args.tool
-    )
+    no_target_flag = not (args.all_detected or args.all_tools or args.path or args.tool)
     interactive_targets: dict = {}
     interactive_graph_os_mode: Optional[str] = None
     interactive_graph_os_url: Optional[str] = None
@@ -1011,6 +1100,30 @@ def main():
         )
         sys.exit(1)
 
+    if args.check:
+        sources = from_package_sources
+        if sources is None:
+            sources = get_source_paths(
+                skill_names,
+                args.group,
+                args.install_skill_graphs,
+                layer=args.layer,
+                providers=provider_filter,
+            )
+        if not sources:
+            logger.error("No skill/graph sources found to check.")
+            sys.exit(1)
+        issues: List[str] = []
+        for label, target in targets.items():
+            contract = adapters.get_contract(label)
+            issues.extend(check_skill_install(target, sources, contract))
+        for issue in issues:
+            print(issue)
+        print(
+            f"checked {len(sources)} sources in {len(targets)} target(s); drift={len(issues)}"
+        )
+        sys.exit(bool(issues))
+
     # Collapse duplicate destinations (e.g. agent-utilities/agent-terminal-ui, or the
     # XDG store when it is also the explicit target), then install into each.
     seen: set = set()
@@ -1074,9 +1187,7 @@ def main():
             else (args.graph_os or "stdio")
         )
         graph_os_url = interactive_graph_os_url or args.graph_os_url
-        provider_names = [
-            p for p in _available_providers() if p != UNIVERSAL_PROVIDER
-        ]
+        provider_names = [p for p in _available_providers() if p != UNIVERSAL_PROVIDER]
         if provider_filter is not None:
             provider_names = [p for p in provider_names if p in provider_filter]
         mcp_seen: set = set()

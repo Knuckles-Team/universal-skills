@@ -136,6 +136,17 @@ install-universal --tool claude --graph-os remote --graph-os-url https://graph-o
 install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
 ```
 
+`--check` performs a read-only source-to-install comparison for the selected
+providers, skills, and target. It checks missing files and SHA-256 content drift,
+including Codex's transformed `SKILL.md`, and exits nonzero on drift. It never
+updates MCP settings, prompts, or ontologies. Use `--no-xdg` to limit the check
+to the named tool, then rerun the same selection with `--force` to refresh:
+
+```bash
+install-universal --tool codex --no-xdg --from-package /path/to/agent-utilities --check
+install-universal --tool codex --no-xdg --from-package /path/to/agent-utilities --force --no-mcp --no-ontologies --no-prompts --validate
+```
+
 > Invoke via the `install-universal` console entry point (installed with the
 > package). The legacy `install-skills` console entry (from `skill-installer`)
 > still works and now points at this same implementation — no functionality lost.
