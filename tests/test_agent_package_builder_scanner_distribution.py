@@ -12,6 +12,8 @@ SCAFFOLD = (
     / "scripts"
     / "scaffold_package.py"
 )
+# The fleet's kiss fork build (upstream 0.4.12 + inline-module fix, dsweet99/kiss#48).
+KISS_FORK_REV = "7f1c6785697d3fe9a41ceb8b8e5d0f615fb1f3d9"
 
 
 def _load_scaffold():
@@ -36,10 +38,14 @@ def test_scanner_census_modes_and_ci_provisioning_are_generated():
     assert "stages: [pre-push, manual]" in module.PRECOMMIT_CONFIG
 
     workflow = module.SCANNER_CI_YML
-    for version in ("1.6.0", "0.4.10", "0.1.2", "5.0.16", "2.14"):
+    for version in ("1.6.0", "0.4.12", "0.1.2", "5.0.16", "2.14"):
         assert version in workflow
     assert "cargo install cccc-cli --version 1.6.0 --locked" in workflow
-    assert "cargo install kiss-ai --version 0.4.10 --locked" in workflow
+    assert (
+        "cargo install --locked --git https://github.com/Knucklessg1/kiss "
+        f"--rev {KISS_FORK_REV} kiss-ai" in workflow
+    )
+    assert "check --lang rust .)" in workflow, "kiss fork-build probe missing"
     assert "cargo install dupehound --version 0.1.2 --locked" in workflow
     assert "npm install --global jscpd@5.0.16" in workflow
     assert "import-linter==2.14" in workflow

@@ -38,7 +38,7 @@ must remain environment-neutral, current-only, and deterministic.
 | `docker/agent.compose.yml` | R | Same controls for MCP and agent services; internal service traffic may use container-local HTTP, while external traffic requires authenticated TLS ingress. |
 | `docker/starship.toml` | R | Presentation-only shell configuration. |
 | `.github/workflows/pipeline.yml`, `.github/workflows/pages.yml` | R | Reusable workflows pinned to reviewed commit digests. |
-| `.github/workflows/scanners.yml` | R | Dedicated CI source-checkout gate: provisions exact CCCC 1.6.0, KISS 0.4.10, dupehound 0.1.2, jscpd 5.0.16, and import-linter 2.14 versions, asserts the checked-in profile, and runs changed-source, pre-push delta, and KISS/CCCC/jscpd census modes. No hook-time installation or permanent baseline. |
+| `.github/workflows/scanners.yml` | R | Dedicated CI source-checkout gate: provisions exact CCCC 1.6.0, KISS 0.4.12 (fleet fork build), dupehound 0.1.2, jscpd 5.0.16, and import-linter 2.14 versions, asserts the checked-in profile, and runs changed-source, pre-push delta, and KISS/CCCC/jscpd census modes. No hook-time installation or permanent baseline. |
 
 ## Documentation contract
 

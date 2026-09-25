@@ -249,7 +249,7 @@ mcp_server = {mcp_server}
 # Keep these versions aligned with the fleet scanner image/toolchain.
 [tool.agent_utilities.scanners]
 cccc_version = "1.6.0"
-kiss_version = "0.4.10"
+kiss_version = "0.4.12"
 dupehound_version = "0.1.2"
 jscpd_version = "5.0.16"
 import_linter_version = "2.14"
@@ -722,13 +722,15 @@ KISS_CONFIG = """\
 #
 # This is a checked-in policy, not a generated baseline.  The wrapper always
 # passes this file explicitly, rejects an ambient .kissconfig, rejects unknown
-# keys, and invokes one path at a time because kiss 0.4.10 has a multi-path
+# keys, and invokes one path at a time because kiss has a multi-path
 # false-green defect.  Disabled metrics are intentionally loud (999999), not
 # silently omitted; another gate owns those definitions where noted.
+# No orphan key: kiss 0.4.11 moved it to [test] orphan_detection (default
+# false), and kiss 0.4.12 silently drops the whole [global] table when it
+# holds the old orphan_module_enabled key -- run_kiss.sh refuses it.
 [global]
 min_similarity          = 0.9
 duplication_enabled     = true
-orphan_module_enabled   = false
 comment_removal_enabled = false
 docs_allowed            = ["./"]
 orphan_allowed          = []
@@ -1686,7 +1688,16 @@ jobs:
           rustup toolchain install 1.95.0 --profile minimal
           rustup default 1.95.0
           cargo install cccc-cli --version 1.6.0 --locked
-          cargo install kiss-ai --version 0.4.10 --locked
+          # kiss: upstream 0.4.12 + the inline-module fix, fleet fork build
+          # (dsweet99/kiss#48); it prints the same `kiss 0.4.12` as crates.io, so
+          # prove the build: upstream aborts on `mod helper;` inside `mod tests {}`.
+          cargo install --locked --git https://github.com/Knucklessg1/kiss --rev 7f1c6785697d3fe9a41ceb8b8e5d0f615fb1f3d9 kiss-ai
+          probe="$RUNNER_TEMP/kiss-fork-probe"; mkdir -p "$probe/src/a/tests"
+          printf '[package]\\nname = "probe"\\nversion = "0.1.0"\\nedition = "2024"\\n' > "$probe/Cargo.toml"
+          printf 'pub mod a;\\n' > "$probe/src/lib.rs"
+          printf 'pub fn a() {}\\n#[cfg(test)]\\nmod tests {\\n    mod helper;\\n}\\n' > "$probe/src/a.rs"
+          printf '#[test]\\nfn h() {}\\n' > "$probe/src/a/tests/helper.rs"
+          (cd "$probe" && "${CARGO_HOME:-$HOME/.cargo}/bin/kiss" check --lang rust .)
           cargo install dupehound --version 0.1.2 --locked
           npm install --global jscpd@5.0.16
           python -m pip install --disable-pip-version-check --no-cache-dir \
@@ -1719,7 +1730,7 @@ jobs:
               profile = tomllib.load(handle)['tool']['agent_utilities']['scanners']
           expected = {
               'cccc_version': '1.6.0',
-              'kiss_version': '0.4.10',
+              'kiss_version': '0.4.12',
               'dupehound_version': '0.1.2',
               'jscpd_version': '5.0.16',
               'import_linter_version': '2.14',

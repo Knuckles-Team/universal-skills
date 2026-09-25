@@ -60,7 +60,7 @@ def test_scanner_profile_is_pinned_and_split_by_cost():
 
     for version in (
         'cccc_version = "1.6.0"',
-        'kiss_version = "0.4.10"',
+        'kiss_version = "0.4.12"',
         'dupehound_version = "0.1.2"',
         'jscpd_version = "5.0.16"',
         'import_linter_version = "2.14"',
@@ -84,7 +84,7 @@ def test_scanner_profile_accepts_two_component_import_linter_release(tmp_path):
         """
 [tool.agent_utilities.scanners]
 cccc_version = "1.6.0"
-kiss_version = "0.4.10"
+kiss_version = "0.4.12"
 dupehound_version = "0.1.2"
 jscpd_version = "5.0.16"
 import_linter_version = "2.14"
@@ -374,3 +374,29 @@ def test_kiss_wrapper_validates_policy_and_skips_its_own_scanner():
     assert "global.min_similarity must be a finite number" in kiss
     assert "python.{key} must be a positive integer" in kiss
     assert "KISS_BIN points to a missing or non-executable scanner" in kiss
+
+
+def test_kiss_wrapper_refuses_the_renamed_orphan_key(tmp_path):
+    """kiss 0.4.12 silently drops [global] when it holds the pre-0.4.11
+    orphan_module_enabled key; the generated policy omits it and the wrapper
+    refuses it."""
+    policy = _load_scaffold().KISS_CONFIG
+    assert "orphan_module_enabled   =" not in policy
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / ".kiss").mkdir()
+    wrapper = tmp_path / "scripts" / "run_kiss.sh"
+    wrapper.write_text((SCANNER.parent / "run_kiss.sh").read_text(encoding="utf-8"))
+    stale = policy.replace("[global]\n", "[global]\norphan_module_enabled = false\n", 1)
+    (tmp_path / ".kiss" / "kiss.toml").write_text(stale, encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+
+    result = subprocess.run(
+        ["bash", str(wrapper), "--census"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "orphan_module_enabled" in result.stderr
