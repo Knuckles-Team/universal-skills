@@ -41,13 +41,11 @@ On-demand via the graph-os MCP orchestration tool:
 graph_orchestrate(action="golden_loop", max_topics=5)
 ```
 
-…or directly:
-
-```bash
-KG_DAEMON_ROLE=client python -c \
-  "from agent_utilities.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
-   import json; print(json.dumps(run_golden_loop_cycle(max_topics=5), default=str, indent=2))"
-```
+> **Availability check first.** The in-process `golden_loop` module is no longer
+> part of agent-utilities, so there is no direct Python entry point. Confirm the
+> `graph_orchestrate` action is listed by the running graph-os before relying on it;
+> otherwise drive the research/evolution cycle through `graph_loops` and the
+> `agent-utilities-self-evolution` skill.
 
 ## Always-on daemon (optional)
 

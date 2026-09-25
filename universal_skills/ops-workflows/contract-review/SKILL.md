@@ -47,7 +47,7 @@ Identify section headings, numbered clauses, definitions, and exhibits.
 **Agent**: `clause-extractor`
 **Tools**: `graph_analyze`
 
-Extract and classify clauses against ontology_legal.ttl:ContractClause:
+Extract and classify clauses against the `ContractClause` class of the legal ontology (the legal-peripherals-mcp connector pack, served by epistemic-graph):
 - Indemnification clauses
 - Limitation of liability
 - Non-compete / non-solicitation

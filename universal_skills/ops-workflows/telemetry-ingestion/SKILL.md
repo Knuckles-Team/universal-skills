@@ -49,7 +49,7 @@ Expected: `success, token`
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
-Write Cypher queries using kg_write to ingest ExecutionSummary and PerformanceAnomaly nodes into LadybugDB with relationships to their respective Workflow, Agent, and Tool nodes.
+Write Cypher queries through graph-os to ingest ExecutionSummary and PerformanceAnomaly nodes into the epistemic-graph engine with relationships to their respective Workflow, Agent, and Tool nodes.
 Expected: `cypher, ingest`
 
 ### Step 3: KG Persistence [depends_on: graph-os]

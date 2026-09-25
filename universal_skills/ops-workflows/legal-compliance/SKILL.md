@@ -28,7 +28,7 @@ metadata:
 **CONCEPT:KG-2.12 — Company Operations Domain**
 
 Coordinates legal compliance review including statute research, regulatory
-tracking, and compliance validation against the KG ontology_legal.ttl.
+tracking, and compliance validation against the legal ontology (the legal-peripherals-mcp connector pack, served by epistemic-graph).
 
 ## Steps
 
@@ -44,7 +44,7 @@ case law, statutes, and precedent relevant to the compliance matter.
 **Tools**: `graph_analyze`, `document_tools`
 
 Parse contracts using document-tools, extract clauses, identify risk factors.
-Cross-reference against ontology_legal.ttl ContractClause classes.
+Cross-reference against the legal ontology's ContractClause classes.
 
 ### Step 2: Compliance Validation
 **Agent**: `compliance-checker`

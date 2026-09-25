@@ -77,8 +77,9 @@ Create `{pkg_dir}/models.py`:
 
 For each endpoint:
 - Unpack arguments using Pydantic models (`Model(**kwargs)`)
-- Check required parameters — raise `agent_utilities.exceptions.MissingParameterError` if absent
-- Use `@require_auth` decorator from `agent_utilities.core.decorators` on authenticated methods
+- Check required parameters — raise `agent_connector_sdk.exceptions.MissingParameterError` if absent
+- Use the `@require_auth` decorator from `agent_connector_sdk.exceptions` on authenticated methods
+  (connectors depend on `agent-connector-sdk`, never on `agent_utilities`)
 - Make HTTP requests using the initialized session
 - Parse JSON responses with appropriate Pydantic response model
 - Handle errors: 401/403 → `AuthError`/`UnauthorizedError`, invalid params → `ParameterError`

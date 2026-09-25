@@ -1,7 +1,7 @@
 # Epistemic-graph gate reference
 
 Deep reference for `epistemic-graph-development`: every architecture-,
-contract- and hygiene-enforcing hook `.pre-commit-config.yaml` declares, the
+contract- and hygiene-enforcing hook `.config/pre-commit.yaml` declares, the
 script behind it and exactly what it refuses; which non-Rust hooks have a
 scope that is routinely misread; the per-hook measured PASS/FAIL state on the
 current tree with each failure's actual message; and the `rust-arch-lint`
@@ -9,12 +9,12 @@ denominator with its build-artifact contamination broken out. The parent
 [`SKILL.md`](../SKILL.md) keeps the guardrails, the authorization model, the
 gate-authoring rules and the workflow. Per **G2**, read the row here — and the
 gate script's own docstring — before citing what a gate enforces; a
-`.pre-commit-config.yaml` comment is not the gate's behaviour, and neither is
+`.config/pre-commit.yaml` comment is not the gate's behaviour, and neither is
 `arch-lint.toml`.
 
 ## Invariants that are actually enforced, and by what
 
-`.pre-commit-config.yaml` declares **60 hooks**. These are the architecture- and
+`.config/pre-commit.yaml` declares **60 hooks**. These are the architecture- and
 contract-enforcing ones. Every script path below was verified to exist.
 
 ### Rust / architecture

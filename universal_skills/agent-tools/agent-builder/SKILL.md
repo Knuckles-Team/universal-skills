@@ -3,68 +3,52 @@ name: agent-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Guide for building scalable Pydantic AI agents. Use this skill when the user
-  wants to create a new agent package or modify an existing agent's architecture,
-  to ensure it follows the standardized agent patterns using `agent-utilities`.
+  How an agent experience is provided for a connector or package in the GraphOS
+  ecosystem. Use this skill when the user wants to "create an agent" for a
+  connector, add an agent entry point to an agent package, or migrate an
+  existing per-connector agent. Per-connector standalone agents
+  (agent_server.py plus a <name>-agent console script) are retired: graph-os and
+  agent-utilities compose the agent over the connector's MCP tools, and the
+  connector ships only its MCP server and its content (prompt, skills,
+  ontology) through agent-connector-sdk.
 license: MIT
-tags: [agent, development, pydantic-ai, architecture]
+tags: [agent, development, pydantic-ai, architecture, connectors]
 metadata:
   version: '1.3.1'
   author: Genius
 ---
 # Agent Builder Guide
 
-This skill provides guidelines and templates for building Pydantic AI agents that adhere to our standardized architecture using the `agent-utilities` package.
+## The rule
 
-## Architecture: Agent Pattern
+**Do not create a per-connector agent.** No `agent_server.py`, no `<name>-agent`
+console script, no `agent` optional-dependency extra, no `create_agent_server()` call in
+a connector package. That pattern is retired fleet-wide.
 
-When building a new agent, you must use the **Agent Pattern**. Agent will have access to all authorized capabilities via the `mcp-client` universal skill.
+The "chat with this connector" experience is served by **graph-os**, which asks
+**agent-utilities** (the agent orchestration plane) to compose an agent over the
+connector's MCP tools. A connector contributes only:
 
----
+- its **MCP server**, built with `agent-connector-sdk` (see `mcp-builder`);
+- its **content** — the structured system prompt (`prompt-builder`), skills, and
+  ontology/shapes — published as a pack certified by `agent-connector-sdk` and
+  committed to epistemic-graph.
 
-## Implementation Workflow
+## Migrating a package that still has an agent entry point
 
-Follow these steps when defining a new agent package:
+1. Delete `<pkg>/agent_server.py` and any `__main__`/CLI path that only launched it.
+2. Remove its console script from `[project.scripts]` and the `agent` extra (with any
+   dependency only it needed) from `pyproject.toml`; regenerate `uv.lock` once.
+3. Keep the structured prompt as connector content so the composed agent still
+   receives it; remove agent-runtime imports (`create_agent_server`,
+   `create_agent_parser`, `load_identity`) from the package.
+4. Remove the agent entry from the package's README, `mcp_config*.json`, compose files
+   and docs in the same change; no alias or deprecated entry point stays behind.
+5. Run the package's targeted tests and its hooks on the changed files.
 
-### 1. Initialize the Package
-1. Create a `my_agent/agent_data` directory within the package.
-2. Ensure `pyproject.toml` depends on `agent-utilities>=2.0.0` (and includes `agent` under optional dependencies).
-3. Configure `project.scripts` in `pyproject.toml` to expose the agent entry point (e.g., `my-agent = "my_package.agent_server:agent_server"`).
+## Where agent behaviour is built instead
 
-### 2. Configure Agent Workspace Files
-The agent's behavior and state are controlled by several core files in the `agent_data/` directory:
-
-- **main_agent.json** (lives at `{pkg_dir}/main_agent.json`, golden-standard convention): the main-agent prompt definition — name, role, system prompt, tools, tone, and goal.
-- **USER.md**: Information about the user (name, style, preferences).
-- **A2A_AGENTS.md**: Registry of known A2A peer agents.
-- **Knowledge Graph** (`knowledge_graph.db`): Long-term memory and topological intelligence (managed via `knowledge_tools`).
-- **CRON.md**: Persistent scheduled tasks.
-- **CRON_LOG.md**: History of execution for scheduled tasks.
-- **HEARTBEAT.md**: Periodic self-check tasks and instructions.
-- **chats/**: (Directory) Persistent storage for background job conversations.
-- **mcp_config.json**: Configuration for MCP servers.
-- **icon.png**: Visual representation of the agent.
-
-Each file plays a critical role in how the agent operates and interacts within the workspace.
-
-### 3. Implement the Agent Entry Point (`agent_server.py`)
-Create `agent_server.py` in the package source directory (NOT in `agent_data`).
-Use `load_identity()` to fetch the `[default]` metadata. Capture the environmental default variables (including OTel, host, port, mcp config, and A2A configurations) and pass them to `create_agent_server()`.
-Ensure you extract the appropriate arguments from `create_agent_parser` to pass to `create_agent_server`, including:
-- `otel_endpoint`, `otel_headers`, `otel_public_key`, `otel_secret_key`, `otel_protocol`
-- `a2a_broker`, `a2a_broker_url`, `a2a_storage`, `a2a_storage_url`
-
-### 4. System Prompt and Context
-When initializing the `Agent`, ensure the system prompt is built dynamically. Using `build_system_prompt_from_workspace()` is the recommended approach to ensure core context files (e.g. `{pkg_dir}/main_agent.json`) are combined into a rich prompt. Historical context, logs, and cron data are injected dynamically during the execution graph's `memory_selection_step` via the Knowledge Graph.
-
-### 4. Verification
-After implementation:
-- Verify the agent starts correctly by running `python -m my_package.agent --help`.
-- Run `run_pre_commits.sh` (or `pre-commit run --all-files`) in the workspace to ensure styling and syntax compliance.
-
-## Identity API compatibility
-
-The identity contract is owned by `agent-utilities`, not bundled with this skill.
-Before implementing the entry point, verify the installed version's
-`load_identity()` signature and returned fields; treat that installed API as the
-source of truth when it differs from this guide.
+Agent graphs, planning, delegation, harness adapters and model profiles live in
+agent-utilities (`agent-utilities-development`); serving and the "chat with a
+connector" surface live in graph-os (`graph-os-development`). Shared rules:
+`graphos-ecosystem-development`.

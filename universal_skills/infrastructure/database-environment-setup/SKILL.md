@@ -2,7 +2,10 @@
 name: database-environment-setup
 skill_type: skill
 description: >
-  Provision the agent-utilities database environment end-to-end from credentials:
+  Retiring path: epistemic-graph is the platform's only graph store, and external
+  databases (Stardog, Fuseki, Postgres/AGE) become EG federation sources, never
+  agent-utilities backends. Only for operating an existing deployment of this
+  setup. Provision the agent-utilities database environment end-to-end from credentials:
   push the ontology to Stardog (prod) or a local SPARQL endpoint (dev), stand up a
   Postgres carrying Apache AGE + pgvector + ParadeDB pg_search, wire the durable
   backend, and backfill graph relationships into AGE. Resolves secrets from
@@ -29,6 +32,13 @@ metadata:
 ---
 
 # Database Environment Setup (Stardog + pg-age)
+
+> **Status — retiring.** epistemic-graph owns storage, ontology, SHACL/OWL and
+> reasoning; agent-utilities keeps no external graph backend. New work registers an
+> external database as an **EG federation source** (tenant-scoped foreign-source
+> path) instead of wiring `GRAPH_BACKEND=tiered`/AGE backfill. Use this skill only
+> to operate or decommission an existing deployment of this setup. Shared rules:
+> `graphos-ecosystem-development`.
 
 Stand up the two database environments agent-utilities is built around — **prod**
 (Stardog) and **dev** (local SPARQL) — and durably backfill the graph into Apache

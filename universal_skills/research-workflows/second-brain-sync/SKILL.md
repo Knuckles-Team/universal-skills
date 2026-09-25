@@ -251,7 +251,7 @@ documents that `graph_ask`/`graph_query` can cross-reference.
 - `agent_utilities/knowledge_graph/adaptation/contradiction_detector.py` — friction/contradiction surface (`graph_analyze action=contradictions`)
 - `agent_utilities/knowledge_graph/adaptation/belief_revision.py` — the `:BeliefRevisionProposal` confidence-propagation math (`recompute_confidence`/`explain_revision`)
 - `agent_utilities/knowledge_graph/research/claim_flywheel.py` — the governed claim lifecycle (`graph_claims` MCP tool)
-- `agent_utilities/skills/kg-epistemic-answer/SKILL.md` — the four-layer epistemic-answer pattern used in Step 3
+- `agent_utilities/skills/graph-query-and-explanation/SKILL.md` — the epistemic-answer pattern used in Step 3
 
 ## Execution
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the standard architectural pattern, configuration boilerplate, and template required for building custom MCP servers based on `fastmcp` and `agent_utilities`.
+This document provides the standard architectural pattern, configuration boilerplate, and template required for building custom MCP servers based on `fastmcp` (4.x) and `agent-connector-sdk`. Every connector goes through the SDK; connectors never import `agent_utilities`.
 
 All new Python MCP servers MUST follow this precise structural pattern.
 
@@ -10,7 +10,7 @@ All new Python MCP servers MUST follow this precise structural pattern.
 
 ## The Standard Boilerplate
 
-Your `mcp_server.py` must use `create_mcp_server()` from `agent_utilities.mcp_utilities` which handles argument parsing, auth setup, and middleware assembly in a single call. It returns a `(args, mcp, middlewares)` tuple.
+Your `mcp_server.py` must use `create_mcp_server()` from `agent_connector_sdk.mcp.server`, which parses the standard command line, refuses unsafe network exposure, configures authentication, adds `/health` and change subscriptions, and returns an `(args, mcp, middlewares)` tuple. The caller adds the middlewares.
 
 Below is the complete generic template. Customize the constants, tool signatures, and inner implementations as needed.
 
@@ -25,9 +25,10 @@ from pydantic import Field
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-# Import standard internal utilities
-from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server
+# Import the connector SDK (never agent_utilities)
+from agent_connector_sdk.mcp.network import build_network_serving_config
+from agent_connector_sdk.mcp.server import create_mcp_server
+from agent_connector_sdk.utilities import to_boolean
 
 __version__ = "1.0.0"
 
@@ -90,14 +91,16 @@ def get_mcp_instance():
     load_dotenv(find_dotenv())
 
     # create_mcp_server returns (args, mcp, middlewares)
-    # - args: parsed CLI arguments (transport, host, port, auth_type, etc.)
-    # - mcp: configured FastMCP instance
-    # - middlewares: list of middleware instances (auto-applied internally)
+    # - args: parsed CLI arguments (transport, host, port, auth, TLS, allowed hosts)
+    # - mcp: configured FastMCP instance (auth, /health, change subscriptions)
+    # - middlewares: the standard middleware stack — the caller adds it
     args, mcp, middlewares = create_mcp_server(
-        name="MyService MCP",
+        "MyService MCP",
         version=__version__,
         instructions="MyService MCP Server - Manage your services.",
     )
+    for middleware in middlewares:
+        mcp.add_middleware(middleware)
 
     # Register tools dynamically based on env-var toggles
     DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
@@ -118,14 +121,16 @@ def mcp_server() -> None:
     print(f"MyService MCP v{__version__}", file=sys.stderr)
     args, mcp = get_mcp_instance()
 
-    transport = getattr(args, "transport", os.getenv("TRANSPORT", "stdio"))
-    host = getattr(args, "host", os.getenv("HOST", "0.0.0.0"))
-    port = int(getattr(args, "port", os.getenv("PORT", "8000")))
-
-    if transport == "stdio":
+    serving = build_network_serving_config(args)
+    if serving is None:
         mcp.run(transport="stdio")
     else:
-        mcp.run(transport="streamable-http", host=host, port=port)
+        mcp.run(
+            transport=args.transport,
+            host=args.host,
+            port=args.port,
+            **serving.fastmcp_run_kwargs(),
+        )
 
 
 if __name__ == "__main__":
@@ -142,15 +147,15 @@ if __name__ == "__main__":
 args, mcp, middlewares = create_mcp_server(name=..., version=..., instructions=...)
 ```
 
-- **`args`**: Parsed CLI arguments (transport, host, port, auth_type, debug, etc.)
-- **`mcp`**: Configured `FastMCP` instance with auth and middleware pre-applied
-- **`middlewares`**: List of middleware instances (ErrorHandling, RateLimiting, Timing, Logging, JWTClaims, UserToken, Eunomia) — these are automatically added to the server, you do NOT need to call `mcp.add_middleware()` manually in most cases
+- **`args`**: Parsed CLI arguments (transport, host, port, authentication, TLS, allowed hosts)
+- **`mcp`**: Configured `FastMCP` instance with authentication, `/health`, visibility filtering and change subscriptions
+- **`middlewares`**: The standard middleware stack (error handling, per-caller rate limiting) — add each with `mcp.add_middleware()`
 
 ### What `create_mcp_server` handles automatically:
-- CLI argument parsing (transport, host, port, auth type, Eunomia config)
-- Auth setup (JWT, OIDC, OAuth, static token) based on `--auth-type` flag
-- Middleware stack assembly and registration
-- SSL verification configuration
+- CLI argument parsing (transport, host, port, authentication, TLS, allowed hosts)
+- Authentication setup from the auth flags, with secret references resolved by a credential resolver
+- Refusal of a non-loopback listener without authentication, a TLS boundary and an exact `--allowed-hosts` list
+- The middleware stack (returned for the caller to add)
 
 You should NOT import middleware classes directly unless you need custom middleware beyond the standard stack.
 
