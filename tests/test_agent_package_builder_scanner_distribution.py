@@ -12,8 +12,8 @@ SCAFFOLD = (
     / "scripts"
     / "scaffold_package.py"
 )
-# The fleet's kiss fork build (0.4.10 rules + inline-module fix, dsweet99/kiss#48).
-KISS_FORK_REV = "4d05b0ee01c58318f199848b4d799b12d470d1bd"
+# The fleet's kiss fork build (upstream 0.4.12 + inline-module fix, dsweet99/kiss#48).
+KISS_FORK_REV = "7f1c6785697d3fe9a41ceb8b8e5d0f615fb1f3d9"
 
 
 def _load_scaffold():
@@ -38,7 +38,7 @@ def test_scanner_census_modes_and_ci_provisioning_are_generated():
     assert "stages: [pre-push, manual]" in module.PRECOMMIT_CONFIG
 
     workflow = module.SCANNER_CI_YML
-    for version in ("1.6.0", "0.4.10", "0.1.2", "5.0.16", "2.14"):
+    for version in ("1.6.0", "0.4.12", "0.1.2", "5.0.16", "2.14"):
         assert version in workflow
     assert "cargo install cccc-cli --version 1.6.0 --locked" in workflow
     assert (

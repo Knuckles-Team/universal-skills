@@ -4,7 +4,7 @@
 # This wrapper is deliberately shell-only so it remains usable before the
 # package environment is installed.  It never invokes cargo/pip/npm, never
 # lets kiss create its auto-calibrated .kissconfig, and never passes more than
-# one path to `kiss check` (kiss 0.4.10 silently reports a false green for
+# one path to `kiss check` (kiss silently reports a false green for
 # multi-path checks).
 set -uo pipefail
 
@@ -65,7 +65,6 @@ allowed = {
     "global": {
         "min_similarity",
         "duplication_enabled",
-        "orphan_module_enabled",
         "comment_removal_enabled",
         "docs_allowed",
         "orphan_allowed",
@@ -125,7 +124,6 @@ global_policy = policy["global"]
 python_policy = policy["python"]
 for key in (
     "duplication_enabled",
-    "orphan_module_enabled",
     "comment_removal_enabled",
 ):
     if not isinstance(global_policy[key], bool):
