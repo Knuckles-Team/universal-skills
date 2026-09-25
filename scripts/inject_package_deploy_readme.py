@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Inject current deployment blocks into each provider README and deployment guide.
 
-Every connector README should point operators at the consolidated
-``agent-utilities-deployment`` workflow. This injector renders one machine-neutral
+Every connector README should point operators at the Graph OS
+``graphos-deployment`` skill (shipped with graph-os). This injector renders one machine-neutral
 contract per package and inserts or updates it between idempotent markers, so the
 fleet rollout is generated rather than hand-written.
 
@@ -25,10 +25,13 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 _DEFAULT_AGENTS = REPO / "../../agents"
-BEGIN = (
+BEGIN = "<!-- BEGIN graphos-deployment (generated; do not edit between markers) -->"
+END = "<!-- END graphos-deployment -->"
+# Blocks written before the deployment skill moved to graph-os; replaced in place.
+RETIRED_BEGIN = (
     "<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->"
 )
-END = "<!-- END agent-utilities-deployment -->"
+RETIRED_END = "<!-- END agent-utilities-deployment -->"
 ADDITIONAL_BEGIN = "<!-- BEGIN GENERATED: additional-deployment-options -->"
 ADDITIONAL_END = "<!-- END GENERATED: additional-deployment-options -->"
 DOCS_BEGIN = "<!-- BEGIN GENERATED: deployment-options -->"
@@ -62,13 +65,13 @@ def _block(meta: dict) -> str:
     name, package, image = meta["name"], meta["package"], meta["image"]
     return f"""{BEGIN}
 
-## Deploy with `agent-utilities-deployment`
+## Deploy with `graphos-deployment`
 
-Provision this package with the consolidated **`agent-utilities-deployment`**
-workflow. It selects an installed-package, editable-source, or immutable-container
+Provision this package with the Graph OS **`graphos-deployment`** skill, which
+registers it with the graph-os fleet multiplexer. It selects an installed-package, editable-source, or immutable-container
 path; records only runtime secret and TLS-profile references in `AgentConfig`; and
 runs doctor, registration, policy, observability, and rollback gates. Ask your agent
-to **"deploy `{package}` with agent-utilities-deployment"**.
+to **"deploy `{package}` with graphos-deployment"**.
 
 | Install mode | Command |
 |------|---------|
@@ -192,7 +195,11 @@ def _apply_docs(content: str, block: str) -> tuple[str, bool]:
 def _apply(readme: Path, block: str) -> tuple[str, bool]:
     """Return the rendered README and whether it differs from disk."""
     current = readme.read_text(encoding="utf-8") if readme.exists() else ""
-    pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.DOTALL)
+    pattern = re.compile(
+        rf"(?:{re.escape(BEGIN)}|{re.escape(RETIRED_BEGIN)})"
+        rf".*?(?:{re.escape(END)}|{re.escape(RETIRED_END)})",
+        re.DOTALL,
+    )
     if pattern.search(current):
         updated = pattern.sub(block, current)
     else:

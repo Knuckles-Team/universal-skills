@@ -24,7 +24,8 @@ def test_block_uses_only_current_deployment_contract():
         }
     )
 
-    assert "agent-utilities-deployment" in block
+    assert "graphos-deployment" in block
+    assert "agent-utilities-deployment" not in block
     assert "AgentConfig" in block
     assert "@sha256:<digest>" in block
     assert "agent-os-genesis" not in block
@@ -194,3 +195,30 @@ def test_legacy_tls_gate_requires_named_profiles_on_released_surfaces(tmp_path):
     )
 
     assert generator._legacy_tls_boolean_references(tmp_path) == []
+
+
+def test_apply_replaces_a_retired_marker_block_in_place(tmp_path):
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "# Sample\n\n"
+        + generator.RETIRED_BEGIN
+        + "\nold body\n"
+        + generator.RETIRED_END
+        + "\n\n## After\n",
+        encoding="utf-8",
+    )
+    block = generator._block(
+        {
+            "name": "sample",
+            "package": "sample-agent",
+            "image": "registry.example.invalid/sample-agent@sha256:<digest>",
+        }
+    )
+
+    updated, changed = generator._apply(readme, block)
+
+    assert changed is True
+    assert generator.RETIRED_BEGIN not in updated
+    assert "old body" not in updated
+    assert updated.count(generator.BEGIN) == 1
+    assert updated.endswith("## After\n")

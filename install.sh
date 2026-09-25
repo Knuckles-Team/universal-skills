@@ -2,15 +2,14 @@
 # universal-skills — one-click install / easy setup.
 #
 # Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and then
-# deploys the skills — including universal-installer and agent-os-genesis (alias
-# agent-utilities-genesis) — into EVERY detected AI tool (Claude Code, Antigravity,
+# deploys the skills — including universal-installer — into EVERY detected AI tool (Claude Code, Antigravity,
 # Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the agent-utilities XDG space
 # (~/.config/agent-utilities/skills), preferring SYMLINKS to the installed package
 # (Windows falls back to a directory junction, then a copy).
 #
-# This is the technical starting point for agent-os-genesis: once installed, the
-# `universal-installer` skill (and the `install-skills` CLI) are present and can deploy
-# any other skill. agent-os-genesis is then loadable/invocable in your tools.
+# Once installed, the `universal-installer` skill (and the `install-skills` CLI) are
+# present and can deploy any other skill. The Day-0 platform skills (graphos-genesis,
+# graphos-deployment) ship with graph-os and install through the same provider path.
 #
 # Usage (download first so the installer can be reviewed before execution):
 #   curl -fSLo universal-skills-install.sh https://knuckles-team.github.io/universal-skills/install.sh
@@ -22,7 +21,7 @@
 #   --editable        Dev install: `uv pip install -e .` / `pip install -e .` from the
 #                     repo (skills symlink to your working tree). Default: PyPI install.
 #   --copy            Copy skills instead of symlinking (default: symlink).
-#   --skills a,b,c    Only deploy these skills (default: all). e.g. --skills agent-os-genesis
+#   --skills a,b,c    Only deploy these skills (default: all). e.g. --skills universal-installer
 #   --mcp <path>      Also wire MCP servers from this mcp_config.json into detected tools.
 #   --no-mcp          Skip MCP wiring (default if no --mcp given).
 #   --dry-run         Print the steps without executing.
@@ -107,6 +106,6 @@ if [ -n "$MCP_CONFIG" ]; then
   fi
 fi
 
-info "Done. agent-os-genesis (alias agent-utilities-genesis) + universal-installer are deployed."
-info "Next: open your AI tool and invoke \"agent-os-genesis\" (or \"day0\") to deploy the Agent OS,"
-info "or \"deploy <package> with agent-os-genesis\" to stand up a single connector."
+info "Done. universal-installer and the selected skills are deployed."
+info "Next: install graph-os and invoke \"graphos-genesis\" in your AI tool to deploy the platform,"
+info "or \"deploy <package> with graphos-deployment\" to stand up a single connector."
