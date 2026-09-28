@@ -105,15 +105,36 @@ graph LR
     end
 ```
 
-## Commands (run these exactly)
-# Installation
-pip install -e "."
-pip install -e ".[all]"
-pip install -e ".[skill-name]"
+## Setup
 
-# Development
-ruff check --fix .
-ruff format .
+From a fresh clone (locally, in CI, or in a Claude Code cloud session, where
+`.claude/hooks/session-start.sh` runs it automatically):
+
+```bash
+scripts/bootstrap.sh   # uv >= 0.9, Python from .python-version, locked .venv (all extras), git hooks
+```
+
+## Commands (run these exactly)
+
+```bash
+uvx pre-commit run --all-files                          # every gate; CI runs the same config
+uv run --frozen --no-sync pytest tests -m "not slow"    # the test suite alone
+pip install -e ".[skill-name]"                          # install one skill's extras elsewhere
+```
+
+A gate that needs a missing tool or the project environment prints
+`SKIPPED (<gate>): <reason>` and passes locally; with `CI` set it exits 2
+(`CANNOT RUN`) instead. The concept-registry check reads a sibling
+agent-utilities checkout (or `AGENT_UTILITIES_OVERVIEW`); CI clones it. Gates
+check behaviour or contracts, not hand-kept counts or golden copies, and no gate
+calls an external service.
+
+## Branches and pull requests
+
+Work on a topic branch, one logical change per commit, run the checks above,
+push with `git push -u origin <branch>`, and open the pull request against
+`main`. The `CI` workflow runs `scripts/bootstrap.sh` and then
+`.pre-commit-config.yaml`, including the full test suite.
 
 ## Project Structure Quick Reference
 - `universal_skills/<domain>/<skill>/` → Atomic skills grouped by domain.
@@ -134,6 +155,8 @@ ruff format .
 │   ├── skill_utilities.py     # Utilities for loading skills
 │   └── __init__.py
 ├── tests/                     # Skill validation tests
+├── scripts/                   # Repository gates and bootstrap.sh
+├── .claude/                   # Claude Code cloud-session hook
 ├── pyproject.toml
 └── README.md
 ```
