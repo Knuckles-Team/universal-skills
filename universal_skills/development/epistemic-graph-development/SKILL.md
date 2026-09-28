@@ -287,10 +287,10 @@ admin-tier, which is a property of one ledger row, not of this code.
 by parsing `crates/eg-capabilities/src/domains/*.rs` and reimplementing
 `coarse_kg_admin_only`'s four string tests (script in the reference below):
 **412 rows · 234 non-mutating · 221 reachable by a caller holding only
-`kg:read` · 45 distinct actions.** Identical to
-`plans/refactor/evidence/reports/SEC-FINDING-KG-READ-REACHES-221-METHODS-20260903.md`,
-which measured it with the repo's own `scripts/method_policy_inventory.py` — two
-independent counters, same number. The mechanism is step 5: *any* non-mutating
+`kg:read` · 45 distinct actions.** Recheck these historical counts against the
+current tree with `scripts/method_policy_inventory.py` and the independent
+method in [`references/authorization-reference.md`](references/authorization-reference.md).
+The mechanism is step 5: *any* non-mutating
 action whose **name** does not match one of four string shapes is granted to any
 read-tier caller. **110 of the 221 are `compute:*`** — finance, graph-algo,
 datascience, semantic, parse, vision. `mutates` is a **durability** property
@@ -341,8 +341,8 @@ script that re-derives `412 / 234 / 221 / 45 / 22 / 5 / 50` — are in
 ## 2. Where code goes — the layer model
 
 **48 member crates under `crates/` plus the root facade `epistemic-graph`
-(`src/`).** Source of truth: `Cargo.toml` `[workspace] members`; layer names
-follow `plans/refactor/DESIGN.md` → "EG target crate graph". The order is:
+(`src/`).** Source of truth: `Cargo.toml` `[workspace] members`, the crates'
+`Cargo.toml` dependencies, and their public interfaces. The current layer model is:
 
 **0 contract leaves** (`eg-types` — the DAG's bottom and the only crate
 everything can see — `eg-durable`, `eg-quantum-core`, `eg-resource`,
@@ -622,9 +622,8 @@ never from memory — a count without a command behind it is inadmissible.
 
 ## 7. Documented failure patterns — the seven rules
 
-Each is backed by a specific, dated finding in
-`plans/refactor/evidence/reports/`. The evidence, the `file:line` citations
-re-verified against the current tree, and the open/closed status of each are in
+The evidence, the `file:line` citations re-verified against the current tree,
+and the open/closed status of each are in
 [`references/failure-patterns-reference.md`](references/failure-patterns-reference.md)
 — **open it before you act on any of these, especially 7.3 and 7.7, which name
 things that are still open today.** The rules themselves:
@@ -713,8 +712,8 @@ before publishing a count.**
 | `agent-packages/epistemic-graph/.repo-layout.toml` | Root-entry justification manifest read by `check_root_hygiene.py`. |
 | `agent-packages/epistemic-graph/arch-lint.toml` | arch-lint policy. Declares `preset = "minimal"` + `fail_on = "error"` and disables AL001, but 0.5.0 ignores the preset and runs the other 7 rules — see §3. Its `exclude` does not cover `target-isolated/`. |
 | `agent-packages/epistemic-graph/.importlinter` | Python client contracts. |
-| `plans/refactor/DESIGN.md` | "EG target crate graph" — the six-layer target and the dependency-direction rule. |
-| `plans/refactor/evidence/reports/` | The finding register cited throughout §7 and `references/failure-patterns-reference.md`; it also holds `SEC-FINDING-KG-READ-REACHES-221-METHODS-20260903.md`, the independent measurement behind §1. |
+| `epistemic-graph/specs/` | Public repository-owned requirements, architecture, and acceptance evidence for current work. |
+| `epistemic-graph/scripts/method_policy_inventory.py` | Re-derives the authorization method inventory discussed in §1. |
 
 ### The `references/` directory — what is in each file
 

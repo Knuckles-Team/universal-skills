@@ -1,8 +1,7 @@
 # Epistemic-graph failure-pattern reference
 
 Deep reference for `epistemic-graph-development`: the seven documented EG
-failure patterns in full — each with the dated finding in
-`plans/refactor/evidence/reports/` that produced it, the `file:line` evidence
+failure patterns in full — each with the source-tree `file:line` evidence
 re-verified against the current tree, and the rule it was promoted into. The
 parent [`SKILL.md`](../SKILL.md) carries the rule statements and the index of
 these patterns; open this file when you need the evidence behind one, or when a
@@ -11,11 +10,8 @@ Section numbering matches the parent's index.
 
 ## Documented failure patterns — stated as rules
 
-Each rule below is backed by a specific, dated finding in
-`plans/refactor/evidence/reports/`.
-
-Each rule below is backed by a specific, dated finding in
-`plans/refactor/evidence/reports/`.
+Each rule below is grounded in the cited source paths. Recheck paths and
+observed behavior against the current public checkout before acting on it.
 
 ### 7.1 A predicate consulted by both a validator and a producer is answering two questions
 

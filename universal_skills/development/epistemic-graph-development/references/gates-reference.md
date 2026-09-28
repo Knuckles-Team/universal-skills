@@ -106,8 +106,8 @@ Found 687 error(s), 3955 warning(s), 0 info(s) in 1077 file(s)
 `no-silent-result-drop` 3,845 warn · **AL002 `no-sync-io` 687 error** · AL003
 `no-error-swallowing` 58 warn · AL005 `require-thiserror` 52 warn. The recorded "318"
 was an **AL001-only** census taken under a stricter config than the hook runs — and
-AL001 is the one rule that is disabled. Corrected record:
-`plans/refactor/evidence/reports/ARCH-LINT-GATE-IS-RED-4642-FINDINGS-20260903.md`.
+AL001 is the one rule that is disabled. These are historical measurements;
+rerun the current command before reporting a count.
 
 > ⚠ **About a quarter of those findings are generated build artifacts.** 858 came from
 > `target-isolated/` and 286 from a sibling worktree's `target-*` dir — **1,144 total**,

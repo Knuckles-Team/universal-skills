@@ -13,9 +13,8 @@ before creating a crate or moving a module.
 
 ## Component inventory — what each crate OWNS
 
-Source of truth: `Cargo.toml` `[workspace] members` (48 entries) and each crate's
-own `description`. Layer names follow `plans/refactor/DESIGN.md` → "EG target
-crate graph".
+Source of truth: `Cargo.toml` `[workspace] members` (48 entries), each crate's
+own `description`, and the dependency edges in their `Cargo.toml` files.
 
 ### Layer 0 — contract leaves (zero intra-workspace dependencies)
 
