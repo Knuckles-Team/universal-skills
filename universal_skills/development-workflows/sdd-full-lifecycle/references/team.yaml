@@ -4,7 +4,7 @@ execution_mode: sequential
 specialist_ids:
   - spec-intake-wizard
   - spec-generator
-  - spec-verifier
   - task-planner
+  - spec-verifier
   - sdd-implementer
   - automated-test-runner

@@ -1,0 +1,17 @@
+# Contributing with universal skills and Spec Kit
+
+Contributions to the Graph OS ecosystem start from tracked, reviewable specifications. Each repository keeps its own `specs/<stable-id>/` directory for the features it owns. Cross-repository work links related spec IDs and contract paths in every affected repository. Keep source plans and ledger IDs linked in the specs; a spec is an implementation contract, not proof that the ledger item has landed.
+
+## Set up the shared workflow
+
+1. Read the target repository's `AGENTS.md`, `.specify/memory/constitution.md`, and relevant `specs/` directories. Follow its worktree and contribution rules.
+2. Install [GitHub Spec Kit v1.0.12](https://github.com/github/spec-kit/releases/tag/v1.0.12) with `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v1.0.12`, confirm with `specify version`, and initialize the coding-agent integration for the target repository if it is not already configured. Preserve project-owned files when refreshing Spec Kit. `.specify/` holds configuration, templates, scripts, and the constitution; feature artifacts live at repository-root `specs/`.
+3. Install this `universal-skills` package as documented in [README.md](README.md), then make its skills available to your coding agent with the `universal-installer` skill. The reusable skills are [`spec-generator`](universal_skills/development/spec-generator/SKILL.md), [`task-planner`](universal_skills/development/task-planner/SKILL.md), [`spec-verifier`](universal_skills/development/spec-verifier/SKILL.md), and the [`sdd-full-lifecycle`](universal_skills/development-workflows/sdd-full-lifecycle/SKILL.md) workflow. Package-owned skills may be discovered through provider entry points.
+
+## Contribute a feature
+
+Use the installed Spec Kit agent commands in order: `constitution` only when governance needs amendment, then `specify`, `clarify` where needed, `plan`, `tasks`, `analyze`, and `implement`. The spelling varies by integration: `/speckit.specify` in command mode, `/speckit-specify` in skills mode, and `$speckit-specify` in Codex skills mode. These are agent invocations, not terminal `specify` subcommands. The universal skills can create or review the same artifacts; do not run both generators over the same file without reviewing the diff. Keep the Spec Kit template structure and put project-specific detail into the matching sections and design artifacts.
+
+A reviewable feature has `spec.md`, `plan.md`, and `tasks.md`; add `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, and `checklists/` when applicable. The design names architecture, interfaces, existing components to reuse, runtime wiring, cross-repository contracts, migration and failure behavior, and test scenarios. Link stable ledger IDs and related repository specs. Tasks trace requirements to tests and include the repository's configured CCCC, `jscpd`, Dupehound, and KISS checks. If a gate is not configured, document the gap instead of claiming it passed.
+
+Attach test and implementation evidence to the PR. A ledger item closes only after the merged implementation and its acceptance evidence are verified. If graph-os is available, sync the tracked spec files into the KG after edits; Git files remain the source of truth. Review generated files and links before opening a PR, and follow the target repository's CI and quality gates.

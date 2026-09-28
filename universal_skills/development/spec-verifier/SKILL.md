@@ -3,8 +3,8 @@ name: spec-verifier
 domain: development
 skill_type: skill
 description: >-
-  Polished verifier skill with drift report and CHECKLIST.md output for spec-kit
-  parity
+  Verify one tracked specs/<stable-id>/ feature against its constitution, design,
+  tasks, tests, quality gates, ledger links, and cross-repository contracts.
 license: MIT
 tags: [verifier, sdd, qa]
 metadata:
@@ -12,35 +12,12 @@ metadata:
   author: Genius
 ---
 
-You are the Spec Verifier agent in a Spec-Driven Development workflow.
+# Spec Verifier
 
-Your goal is to ensure the implementation strategy (Plan and Tasks) is 100% aligned with the Specification and Constitution.
+Verify one feature directory at repository root: `specs/<stable-id>/`. Read `spec.md`, `plan.md`, `tasks.md`, applicable design artifacts and `checklists/`, plus `.specify/memory/constitution.md`. Use the live repository and relevant related repositories as evidence. The tracked spec files are authoritative; graph-os is a derived index to query for concept drift when available.
 
-### Verification Logic
+Evaluate every user story and functional requirement against acceptance criteria, design decisions, executable tasks, and a test scenario. Check that `plan.md` names existing components and wiring to reuse, interfaces, data flows, migration and failure handling, architecture boundaries, and cross-repository contracts. Verify that tasks cover integration into a real execution path and the affected documentation. Resolve linked ledger IDs and related spec paths; mark absent or stale links as failures, not completed work.
 
-1.  **Requirement Coverage**: Cross-check every User Story and Functional Requirement in `spec.md` against the `tasks.md`.
-2.  **Constitution Compliance**: Ensure the `plan.md` adheres to the technical stack and principles defined in `constitution.md`.
-3.  **Concept Drift Validation**: Actively query the Knowledge Graph (using `kg_concept_search` via the `agent-utilities-kg` MCP server) for any `CONCEPT:` IDs found in the spec or plan. Verify that the concept still exists and its definition matches the implementation intent.
-4.  **Terminology Drift**: Detect if the implementation uses different names for entities or concepts than defined in the spec.
-5.  **Over-Engineering**: Flag any tasks or components that are not justified by the requirements.
+Check the constitution and the repository's configured CCCC, `jscpd`, and Dupehound thresholds, plus KISS, for unjustified duplication or complexity. Report unavailable tools or undefined thresholds as gaps; never fabricate green results. Check actual test evidence, including negative and integration cases. Keep specification quality checks distinct from implementation test results.
 
-### Required Output Artifacts
-
-#### 1. Drift Report
-Output a structured report (either as a new file `.specify/specs/<feature-id>/DRIFT_REPORT.md` or as a section in your response) containing:
-- **Missing Requirements**: List FRs/USs with no corresponding tasks.
-- **Ambiguities**: Parts of the spec that are underspecified and led to assumptions in the plan.
-- **Over-Engineering**: Features in the plan/tasks not found in the spec.
-- **Terminology Mismatches**: e.g., Spec calls it "Account", Plan calls it "Profile".
-
-#### 2. CHECKLIST.md
-Generate `.specify/specs/<feature-id>/CHECKLIST.md` with binary pass/fail items for:
-- [ ] Every Functional Requirement (FR-###)
-- [ ] Every Acceptance Criteria from User Stories
-- [ ] Success Metrics verification steps
-- [ ] Technical Quality Gates (from constitution)
-
-#### 3. Review & Acceptance
-Include a final section with a summary score (0-100%) and a clear "Pass/Fail/Needs Revision" status.
-
-Output **only** valid markdown. Do not add conversational filler.
+Write a concise `specs/<stable-id>/DRIFT_REPORT.md` with requirement-to-task-to-test coverage, missing design or contracts, ambiguities, terminology drift, quality gate results, ledger/cross-repository link status, and evidence links. Write `specs/<stable-id>/checklists/requirements.md` as a binary specification-quality checklist, using Spec Kit's checklist layout. Each failed item names a specific fix. End the report with **Pass**, **Fail**, or **Needs revision** and a coverage fraction. Never mark a ledger item landed solely because these documents exist. Report KG lookup or sync failures separately from the file-based verdict.

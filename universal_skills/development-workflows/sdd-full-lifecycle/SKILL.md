@@ -3,10 +3,8 @@ name: sdd-full-lifecycle
 domain: development-workflows
 skill_type: workflow
 description: >-
-  Turn a feature request into verified implementation results by composing the
-  catalog's atomic specification, planning, implementation, and test skills. Use
-  when a user wants the complete spec-driven development lifecycle for an approved
-  repository change rather than one isolated SDD phase.
+  Compose intake, tracked Spec Kit specification, task planning, verification,
+  implementation, and testing for an approved change with a supplied design plan.
 license: MIT
 requires: []
 agent: sdd-lifecycle-orchestrator
@@ -17,8 +15,8 @@ team_config:
   specialist_ids:
     - spec-intake-wizard
     - spec-generator
-    - spec-verifier
     - task-planner
+    - spec-verifier
     - sdd-implementer
     - automated-test-runner
 tags: [sdd, specification, planning, implementation, testing]
@@ -44,21 +42,21 @@ Invoke `$spec-generator` with `intake_result`.
 
 Expected: `specification`
 
-### Step 2: spec-verifier [skill: spec-verifier] [depends_on: Step 1]
+### Step 2: task-planner [skill: task-planner] [depends_on: Step 1]
 
-Invoke `$spec-verifier` with `specification`.
+Invoke `$task-planner` with `specification` and the supplied `specs/<stable-id>/plan.md` and design artifacts.
+
+Expected: `tasks`
+
+### Step 3: spec-verifier [skill: spec-verifier] [depends_on: Step 2]
+
+Invoke `$spec-verifier` with `specification`, `plan.md`, and `tasks`.
 
 Expected: `verified_specification`
 
-### Step 3: task-planner [skill: task-planner] [depends_on: Step 2]
-
-Invoke `$task-planner` with `verified_specification`.
-
-Expected: `implementation_plan`
-
 ### Step 4: sdd-implementer [skill: sdd-implementer] [depends_on: Step 3]
 
-Invoke `$sdd-implementer` with `implementation_plan`.
+Invoke `$sdd-implementer` with `verified_specification` and `tasks`.
 
 Expected: `implementation_result`
 
@@ -70,10 +68,12 @@ Expected: `test_result`
 
 ## Execution
 
+The workflow input must include a tracked `specs/<stable-id>/plan.md` and applicable design artifacts produced with the repository’s Spec Kit plan command. The current DAG has no atomic plan-generation skill; it must stop before task planning if the design is absent. `.specify/memory/constitution.md` governs each step. Git-tracked `specs/` files are authoritative; KG sync is derived.
+
 - **Run first:** Step 0 — `$spec-intake-wizard`.
 - **After Step 0:** Step 1 — `$spec-generator`.
-- **After Step 1:** Step 2 — `$spec-verifier`.
-- **After Step 2:** Step 3 — `$task-planner`.
+- **After Step 1:** Step 2 — `$task-planner`.
+- **After Step 2:** Step 3 — `$spec-verifier`.
 - **After Step 3:** Step 4 — `$sdd-implementer`.
 - **After Step 4:** Step 5 — `$automated-test-runner`.
 
