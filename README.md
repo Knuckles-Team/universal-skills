@@ -33,6 +33,7 @@ authoring.
 - [Category improvement roadmap and workflow designs](docs/skill-catalog-improvement-roadmap.md)
 - [Skill and workflow architecture](docs/overview.md)
 - [Published documentation](https://knuckles-team.github.io/universal-skills/)
+- [Contribution and specification workflow](https://knuckles-team.github.io/universal-skills/contributing/)
 
 Reproduce the catalog audit locally:
 

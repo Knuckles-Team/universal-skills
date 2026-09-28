@@ -53,7 +53,8 @@ install-skills --all-detected --symlink
 ## Authoring
 
 Use `skill-builder` for one atomic capability and `skill-workflow-builder` for a
-pure DAG. Before proposing a change, run:
+pure DAG. For ecosystem specifications, follow the [contribution workflow](contributing.md)
+and its links to the shared Spec Kit skills. Before proposing a change, run:
 
 ```bash
 python scripts/check_atomicity.py --strict

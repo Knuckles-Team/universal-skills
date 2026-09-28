@@ -16,6 +16,8 @@ A reviewable feature has `spec.md`, `plan.md`, and `tasks.md`; add `research.md`
 
 Attach test and implementation evidence to the PR. A ledger item closes only after the merged implementation and its acceptance evidence are verified. If graph-os is available, sync the tracked spec files into the KG after edits; Git files remain the source of truth. Review generated files and links before opening a PR, and follow the target repository's CI and quality gates.
 
+Required cloud PR checks must run with deterministic fixtures or provision their own disposable dependencies. A missing private service, live deployment, or credential must not block a PR through an unrelated check. Put credentialed and live-environment checks in a separately reported scheduled or post-merge lane, with its owner and result visible. Keep hermetic correctness, security, and code-quality checks required; their failures still need fixes before merge.
+
 ## Keep the integration current
 
 Spec Kit reads `.specify/memory/constitution.md` at runtime for `plan`, `tasks`, and `analyze`; governance edits do not require copying policy into generated core templates. To refresh an existing project after upgrading the CLI, inspect `specify integration status`, run `specify integration upgrade <key>` for its installed coding-agent integration, then `specify extension update` for installed extensions. Review the resulting diff and any local-change warning before accepting a forced refresh. Preserve the tracked `specs/` tree and project-owned constitution.
