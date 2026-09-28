@@ -2,6 +2,24 @@
 
 Contributions to the Graph OS ecosystem start from tracked, reviewable specifications. Each repository keeps its own `specs/<stable-id>/` directory for the features it owns. Cross-repository work links related spec IDs and contract paths in every affected repository. A public spec must contain all requirements and decisions needed to build and test it without private drafts or inventory. A spec is an implementation contract, not proof that the deliverable has landed.
 
+## Set up this repository
+
+```bash
+scripts/bootstrap.sh
+uvx pre-commit run --all-files
+```
+
+`scripts/bootstrap.sh` is idempotent: it installs uv 0.9 or newer, the Python in
+`.python-version`, syncs `.venv` from `uv.lock` with every extra (the tests
+exercise all skills' scripts), and installs the pre-commit and pre-push hooks.
+Claude Code cloud sessions run it through `.claude/hooks/session-start.sh`. CI
+runs the same script and the same `.pre-commit-config.yaml`. A gate whose tool
+or environment is missing prints `SKIPPED (<gate>): <reason>` locally and fails
+with `CANNOT RUN` in CI.
+
+Branch from `main`, keep each commit to one logical change, push with
+`git push -u origin <branch>`, and open the pull request against `main`.
+
 ## Set up the shared workflow
 
 1. Read the target repository's `AGENTS.md`, `.specify/memory/constitution.md`, and relevant `specs/` directories. Follow its worktree and contribution rules.

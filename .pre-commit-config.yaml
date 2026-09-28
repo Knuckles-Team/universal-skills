@@ -74,7 +74,9 @@ repos:
   hooks:
   - id: concept-registry-parity
     name: concept ids exist in the agent-utilities registry
-    entry: pytest -q tests/test_concept_parity.py
+    # A live contract with the agent-utilities registry: SKIPPED locally when
+    # no sibling checkout exists; CI clones agent-utilities and fails closed.
+    entry: python3 scripts/gate_env.py --gate concept-registry-parity --project-env -- python -m pytest -q -rs -p no:cacheprovider tests/test_concept_parity.py
     language: system
     pass_filenames: false
     always_run: true
@@ -95,22 +97,23 @@ repos:
   - id: check-cli-help
     name: check cli help
     entry: |-
-      bash -c 'for f in $(find . -type f \( -name "mcp_server.py" -o -name "agent_server.py" \) -not -path "*/\.venv/*" -not -path "*/__pycache__/*"); do mod=$(echo "$f" | sed -e "s/^\.\///" -e "s/\.py$//" -e "s/\//./g"); uv run python -m "$mod" --help >/dev/null || exit 1; done'
+      bash -c 'for f in $(find . -type f \( -name "mcp_server.py" -o -name "agent_server.py" \) -not -path "*/\.venv/*" -not -path "*/__pycache__/*"); do mod=$(echo "$f" | sed -e "s/^\.\///" -e "s/\.py$//" -e "s/\//./g"); python3 scripts/gate_env.py --gate check-cli-help --project-env -- python -m "$mod" --help >/dev/null || exit 1; done'
     language: system
     pass_filenames: false
     always_run: true
   - id: check-bumpversion
     name: validate bumpversion config
-    entry: |-
-      bash -c 'if [ -f ".bumpversion.cfg" ]; then bump2version patch --dry-run --allow-dirty; fi'
-    language: system
+    entry: bump2version patch --dry-run --allow-dirty
+    language: python
+    additional_dependencies: [bump2version==1.0.1]
     pass_filenames: false
     always_run: true
 - repo: local
   hooks:
   - id: pytest
     name: pytest
-    entry: bash -c 'test_target="tests"; for d in tests/unit test/unit tests test; do if [ -d "$d" ]; then test_target="$d"; break; fi; done; if [ -f uv.lock ]; then uv run --all-extras pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; else pytest "$test_target" -q --tb=short -m "not slow" --timeout=60; fi'
+    # The locked environment (all extras) comes from scripts/bootstrap.sh.
+    entry: python3 scripts/gate_env.py --gate pytest --project-env -- python -m pytest tests -q --tb=short -p no:cacheprovider -n auto -m "not slow" --timeout=60
     language: system
     types: [python]
     pass_filenames: false
@@ -151,8 +154,9 @@ repos:
   hooks:
   - id: check-frontmatter-portability
     name: cross-agent frontmatter portability (Codex + fleet)
-    entry: |-
-      bash -c 'roots="universal_skills"; for d in ../skill-graphs/skill_graphs ../../agent-utilities/agent_utilities/skills ../../agents; do [ -d "$d" ] && roots="$roots $d"; done; python3 scripts/check_frontmatter_portability.py $roots --max-violations 0'
+    # Checks this repository's skills only, so the verdict does not depend on
+    # which sibling checkouts happen to exist; each sibling gates its own.
+    entry: python3 scripts/check_frontmatter_portability.py universal_skills --max-violations 0
     language: system
     pass_filenames: false
     always_run: true

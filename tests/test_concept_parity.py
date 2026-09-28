@@ -98,10 +98,13 @@ def test_concept_parity():
     exist in the master agent-utilities registry.
     """
     if MASTER_OVERVIEW_PATH is None:
-        pytest.skip(
+        reason = (
             "agent-utilities concept registry is not available; set "
-            "AGENT_UTILITIES_OVERVIEW for a standalone checkout"
+            "AGENT_UTILITIES_OVERVIEW or clone agent-utilities next to this checkout"
         )
+        if os.environ.get("CI"):
+            pytest.fail(f"concept-registry-parity: CANNOT RUN in CI: {reason}")
+        pytest.skip(f"SKIPPED (concept-registry-parity): {reason}")
     master_concepts = extract_concepts_from_overview(MASTER_OVERVIEW_PATH)
 
     # Extract concepts from this project
