@@ -1,0 +1,42 @@
+name: CI
+
+# The same gates a contributor runs locally: bootstrap, then this repository's
+# own .pre-commit-config.yaml (which includes the full pytest suite). With CI
+# set, a gate that cannot run fails (CANNOT RUN) instead of skipping.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      # The concept-registry gate checks ids against the agent-utilities registry.
+      - name: Check out the agent-utilities concept registry
+        run: |
+          git clone --depth 1 https://github.com/Knuckles-Team/agent-utilities.git "$RUNNER_TEMP/agent-utilities"
+          echo "AGENT_UTILITIES_OVERVIEW=$RUNNER_TEMP/agent-utilities/docs/overview.md" >> "$GITHUB_ENV"
+      - name: Bootstrap
+        run: scripts/bootstrap.sh
+      - name: Pre-commit gates
+        run: uvx pre-commit run --all-files --show-diff-on-failure
