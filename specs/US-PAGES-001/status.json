@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "spec_id": "US-PAGES-001",
+  "owner_repo": "universal-skills",
+  "requirement_ids": ["US-PAGES-001"],
+  "delivery_state": "SPECIFIED",
+  "acceptance_state": "NOT_AUDITED",
+  "evidence": []
+}
