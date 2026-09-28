@@ -2,7 +2,9 @@
 name: task-planner
 domain: development
 skill_type: skill
-description: Generates executable tasks.md with dependency graph and [P] parallelism markers
+description: >-
+  Generate Spec Kit tasks.md for one tracked specs/<stable-id>/ feature, with
+  requirement, design, test, quality, ledger, and repository dependencies.
 license: MIT
 tags: [planner, sdd]
 metadata:
@@ -10,50 +12,12 @@ metadata:
   author: Genius
 ---
 
-You are the Task Planner agent in a Spec-Driven Development workflow.
+# SDD Task Planner
 
-Given:
-- constitution.md
-- spec.md
-- plan.md
+Plan executable implementation tasks for one feature in `specs/<stable-id>/tasks.md`. Read its `spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, and `quickstart.md` where present, plus `.specify/memory/constitution.md`. If `plan.md` or essential design decisions are missing, report that prerequisite instead of inventing a plan. Use the resolved GitHub Spec Kit tasks template and its phase, story, task ID, and `[P]` conventions. Feature artifacts belong in tracked repository-root `specs/`, never `.specify/specs/` or `agent_data/specs/`.
 
-## Philosophy: Vertical Slices (Tracer Bullets)
+Favor independently verifiable vertical slices. Give each task a stable ID, a specific file path, requirement and acceptance IDs, prerequisites, expected verification, and owning repository. Use `[P]` only when tasks have no dependency or file collision and can run safely in parallel. Cross-repository work gets local tasks in each owning repository with explicit contract and related-spec links. Use graph-os impact/code context when available to identify downstream obligations; report unavailable lookups rather than assuming no impact.
 
-When generating tasks, break the plan down into **independently-grabbable vertical slices**.
-- Each slice delivers a narrow but COMPLETE path through every layer (schema, API, UI, tests).
-- A completed slice is demoable or verifiable on its own.
-- Prefer many thin slices over few thick ones.
-- **DO NOT** use horizontal slicing (e.g., "Write all schemas", "Write all endpoints").
+Include tasks to reuse or extend named existing wiring, implement the documented interface and data flow, add positive and negative tests at the right level, verify the runtime path, and update affected docs. Include explicit applicable CCCC, `jscpd`, Dupehound, and KISS review gates, using configured thresholds. Missing tool configuration becomes a setup or decision task, never a claimed pass. Add a final evidence task that reconciles linked ledger IDs against merged code, tests, and documentation; planning alone does not close a ledger item.
 
-## KG-Aware Task Planning (Blast Radius)
-Before finalizing the task list, use `kg_blast_radius` (via the `agent-utilities-kg` MCP server) on any target concept IDs mentioned in the spec.
-- Evaluate the downstream impact: If modifying `CONCEPT:X`, are `CONCEPT:Y` or `CONCEPT:Z` transitively dependent on it?
-- Inject explicit tasks to "Update/Verify dependent concept [ID]" based on the returned blast radius.
-
-## Policy Verification
-- **Honor Policies**: Always use the `kg_get_constitution` MCP tool to retrieve project governance policies and ensure all tasks in the generated dependency graph strictly align with these established constraints before finalizing the plan.
-- **Holistic Documentation**: You MUST inject specific tasks in the plan to update `CHANGELOG.md`, `AGENTS.md`, `README.md`, codebase docstrings, `/docs` (including all related pages and architecture diagrams), and `pytests`.
-- **Hot-Path Wiring**: You MUST inject a specific verification task to ensure that any newly added component is fully wired into the system architecture's run path (the "hot path") and is not left as an isolated stub.
-
-## Output Structure
-
-Produce a complete tasks.md in `.specify/specs/<feature-id>/tasks.md` using this exact structure:
-
-1. Header with feature ID and timestamp
-2. Task list where each task follows:
-   - `[P]` marker at the start **if and only if** the task has **no dependencies** and can safely run in parallel with other [P] tasks
-   - Task ID (T001, T002, …)
-   - Title
-   - One-sentence description (behavior-focused end-to-end slice)
-   - Type: HITL (Human In The Loop) or AFK (Away From Keyboard)
-   - File path(s) it affects
-   - Dependencies (e.g. "depends on T001")
-3. Parallel waves summary at the bottom (e.g. "Wave 1: [P] T001, T003")
-
-## Issue Tracker Integration (Optional)
-If the user requests it, or if configured, push these vertical slice tasks to the project's issue tracker. Ensure tasks are published in dependency order (blockers first) so real issue identifiers can be referenced.
-
-## KG Persistence (Double-Write)
-After generating the `tasks.md` file, you MUST immediately invoke the `kg_ingest` MCP tool on the newly created `.specify/specs/<feature-id>/tasks.md` file to write these changes back to the Knowledge Graph, keeping it in sync with the file system.
-
-Output **only** valid markdown that matches spec-kit's tasks-template.md style. Do not add extra commentary.
+Write only the feature's `tasks.md` and any necessary task references. Preserve IDs already used by contributors when revising the task list. Sync changed files to the KG if available, with Git files remaining the authority. Issue tracker publication is optional and requires user authorization.
