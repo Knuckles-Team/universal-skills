@@ -38,6 +38,51 @@ Required cloud PR checks must run with deterministic fixtures or provision their
 
 ## Keep the integration current
 
+### Pages sources and offline checks
+
+MkDocs renders the contribution guide from this file and the public
+US-PAGES-001 package from `specs/US-PAGES-001/` using its native
+`scripts/pages_sources.py` hook. Generated pages exist only in the build;
+edit the tracked source, never a second copy under `docs/`.
+Repository-relative guide links resolve to public GitHub sources. Spec package
+Markdown links resolve to their rendered pages. The hook validates local source
+targets; a strict MkDocs build validates local page links and anchors.
+
+| Pages URL (relative to the existing site root) | Canonical source |
+| --- | --- |
+| `/` | `docs/index.md` |
+| `/overview/` (catalog and architecture) | `docs/overview.md` |
+| `/contributing/` | `CONTRIBUTING.md` |
+| `/skill-catalog-audit/` | `docs/skill-catalog-audit.md` |
+| `/skill-catalog-improvement-roadmap/` | `docs/skill-catalog-improvement-roadmap.md` |
+| `/specs/US-PAGES-001/spec/` | `specs/US-PAGES-001/spec.md` plus `status.json` |
+| `/specs/US-PAGES-001/{plan,test-spec,tasks}/` | Corresponding tracked package Markdown |
+
+The dedicated **Pages check** workflow runs on every PR using only this checkout
+and disposable documentation dependencies. Its separately collected
+`tests/pages_contracts.py` suite requires MkDocs; the existing package tests and
+pre-commit gates retain their own locked environment. To reproduce this lane:
+
+```bash
+python -m pip install -r .github/requirements-pages.txt
+python -m mkdocs build --strict
+python -m pytest tests/pages_contracts.py -q
+```
+
+`status.json` keeps delivery and acceptance separate. A status of `ACCEPTED`
+requires `IMPLEMENTED` and two matching exact-commit receipts: an evidence entry
+with `kind: merged_implementation`, `commit: <40-character SHA>`, and the owning
+repository's public commit URL; and `kind: passing_acceptance` with the same
+commit and a public Actions run URL. Missing, malformed, or mismatched receipts
+fail the build. Offline validation checks receipt structure; a maintainer must
+audit merge ancestry and passing results before recording acceptance. The real
+US-PAGES-001 status remains `SPECIFIED` / `NOT_AUDITED` until that audit.
+
+This slice publishes only the explicit public US-PAGES-001 package. Additional
+specs need an explicit source/navigation decision. It does not verify live
+GitHub URLs or deployed Pages routes. Post-merge deployment smoke results,
+organization-template adoption, and the full spec acceptance audit remain open.
+
 Spec Kit reads `.specify/memory/constitution.md` at runtime for `plan`, `tasks`, and `analyze`; governance edits do not require copying policy into generated core templates. To refresh an existing project after upgrading the CLI, inspect `specify integration status`, run `specify integration upgrade <key>` for its installed coding-agent integration, then `specify extension update` for installed extensions. Review the resulting diff and any local-change warning before accepting a forced refresh. Preserve the tracked `specs/` tree and project-owned constitution.
 
 Use a Spec Kit **preset** for reusable organization-wide artifact rules such as requirement traceability, architecture/test coverage, and CCCC/`jscpd`/Dupehound/KISS gates; use `.specify/templates/overrides/` only for a one-repository customization. This repository currently supplies these rules as universal-skills instructions and this contribution guide. It does **not** ship an installable Spec Kit preset yet, so installing the skills alone does not alter Spec Kit's resolved templates. A future preset can encode those same rules once its cross-repository behavior is validated. Avoid editing generated core templates directly.

@@ -8,6 +8,10 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'specs/US-PAGES-001/**'
+      - 'scripts/pages_sources.py'
+      - '.github/workflows/pages.yml'
 
 permissions:
   contents: read

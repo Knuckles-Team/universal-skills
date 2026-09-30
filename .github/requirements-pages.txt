@@ -1,0 +1,5 @@
+# Match the existing pipelines Pages build; MkDocs hooks require 1.6.
+mkdocs-material==9.7.6
+mkdocs==1.6.1
+pytest==9.1.1
+pytest-asyncio==1.4.0
