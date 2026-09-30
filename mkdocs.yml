@@ -52,6 +52,14 @@ theme:
 plugins:
   - search
 
+hooks:
+  - scripts/pages_sources.py
+
+validation:
+  links:
+    not_found: warn
+    anchors: warn
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
@@ -90,3 +98,8 @@ nav:
   - Contributing: contributing.md
   - Catalog Audit: skill-catalog-audit.md
   - Improvement Roadmap: skill-catalog-improvement-roadmap.md
+  - Specifications:
+      - US-PAGES-001: specs/US-PAGES-001/spec.md
+      - Design: specs/US-PAGES-001/plan.md
+      - Tests: specs/US-PAGES-001/test-spec.md
+      - Work Items: specs/US-PAGES-001/tasks.md
