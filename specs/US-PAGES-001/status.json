@@ -13,13 +13,21 @@
     {
       "id": "US-PAGES-001",
       "title": "Consolidate published documentation",
-      "delivery_state": "SPECIFIED",
-      "evidence": []
+      "delivery_state": "LANDED",
+      "evidence": [
+        {
+          "kind": "merged_head",
+          "result": "passed",
+          "commit": "a32ae4574cbff161406daa18ff016e20b1ec7d33",
+          "url": "https://github.com/Knuckles-Team/universal-skills/commit/a32ae4574cbff161406daa18ff016e20b1ec7d33",
+          "description": "Implemented on the default branch; exercised by tests/pages_contracts.py::test_canonical_sources_and_existing_urls"
+        }
+      ]
     },
     {
       "id": "US-PAGES-R001",
       "title": "Shared documentation hierarchy across the fleet's sites",
-      "delivery_state": "UNKNOWN",
+      "delivery_state": "SPECIFIED",
       "evidence": []
     }
   ]
