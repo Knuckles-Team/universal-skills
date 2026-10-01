@@ -7,6 +7,8 @@
 **Owner:** universal-skills
 
 **Source of truth:** this tracked spec package. The [organization spec report](https://knuckles-team.github.io/.github/spec-status.html) is an index, not acceptance authority.
+Every requirement ID this spec owns is defined in [requirements.md](requirements.md); delivery
+state and evidence for each ID are recorded in `status.json`.
 
 ## Goal
 
@@ -51,7 +53,7 @@ inclusion or link approach that gives each page one canonical Git file.
 Keep `specs/` as the reviewable source for build contracts; Pages is a rendered
 view, not the authority for completion.
 
-The current `docs/contributing.md` link and removal of the sibling README freshness hook are partial groundwork. `specs/<id>/status.json` supplies the local delivery and acceptance states. The [organization hub governance spec](https://github.com/Knuckles-Team/.github/tree/main/specs/crossrepo-authority-governance) owns cross-repository indexing; [pipelines](https://github.com/Knuckles-Team/pipelines) owns the shared Pages workflow. This repository owns its invocation and site output. Do not publish private plans, internal GitLab, homelab inventory, or local paths.
+The current `docs/contributing.md` link and removal of the sibling README freshness hook are partial groundwork. `specs/<id>/status.json` supplies the local delivery and acceptance states. The [organization hub governance spec](https://github.com/Knuckles-Team/.github/tree/main/specs/crossrepo-authority-governance) owns cross-repository indexing; [pipelines](https://github.com/Knuckles-Team/pipelines) owns the shared Pages workflow. This repository owns its invocation and site output. Do not publish private planning documents, internal infrastructure or cluster inventory, or local filesystem paths.
 
 Use the configured pre-commit quality checks and reuse the existing MkDocs and workflow wiring. CCCC, `jscpd`, and Dupehound have no configured threshold in this site's current path; identify a real command and threshold before claiming a pass. Reject acceptance claims without exact merged-code and passing-test evidence.
 
