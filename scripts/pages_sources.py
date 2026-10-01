@@ -131,7 +131,7 @@ def on_files(files, config):
     package = root / "specs" / "US-PAGES-001"
     status = json.loads((package / "status.json").read_text(encoding="utf-8"))
     rendered_status = status_markdown(status)
-    for name in ("spec.md", "plan.md", "test-spec.md", "tasks.md"):
+    for name in ("spec.md", "requirements.md", "plan.md", "test-spec.md", "tasks.md"):
         source = package / name
         markdown = public_links(
             source.read_text(encoding="utf-8"), source, root, repo_url

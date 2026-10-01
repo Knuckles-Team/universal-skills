@@ -8,7 +8,7 @@
 
 **Source of truth:** this tracked spec package. The [organization spec report](https://knuckles-team.github.io/.github/spec-status.html) is an index, not acceptance authority.
 Every requirement ID this spec owns is defined in [requirements.md](requirements.md); delivery
-state and evidence for each ID are recorded in [status.json](status.json).
+state and evidence for each ID are recorded in `status.json`.
 
 ## Goal
 
