@@ -12,3 +12,12 @@
 - [ ] Audit merged implementation and test receipts before changing status.
 
 Checkboxes show task progress only; they do not prove acceptance.
+
+No task above cites a `requirements.md` ID by name. `US-PAGES-001` (consolidate published
+documentation) is closed by the tasks above. `US-PAGES-R001` (shared documentation hierarchy
+across the fleet's sites) is not yet covered by an existing task:
+
+- [ ] Align this repository's published navigation and content hierarchy (catalog, contribution
+      guide, specs) with the shared Pages template and workflow used by the other core ecosystem
+      repositories' documentation sites, and add a cross-site navigation/link-structure check.
+      Closes `US-PAGES-R001`.

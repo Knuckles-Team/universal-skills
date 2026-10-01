@@ -2,8 +2,25 @@
   "schema_version": 1,
   "spec_id": "US-PAGES-001",
   "owner_repo": "universal-skills",
-  "requirement_ids": ["US-PAGES-001"],
+  "requirement_ids": [
+    "US-PAGES-001",
+    "US-PAGES-R001"
+  ],
   "delivery_state": "SPECIFIED",
   "acceptance_state": "NOT_AUDITED",
-  "evidence": []
+  "evidence": [],
+  "requirements": [
+    {
+      "id": "US-PAGES-001",
+      "title": "Consolidate published documentation",
+      "delivery_state": "SPECIFIED",
+      "evidence": []
+    },
+    {
+      "id": "US-PAGES-R001",
+      "title": "Shared documentation hierarchy across the fleet's sites",
+      "delivery_state": "UNKNOWN",
+      "evidence": []
+    }
+  ]
 }
