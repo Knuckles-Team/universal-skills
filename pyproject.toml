@@ -137,6 +137,17 @@ all = [
 install-universal = "universal_skills.core.universal_installer:main"
 install-skills = "universal_skills.core.skill_installer:main"
 
+# Discovered by agent-utilities' own skill-provider sweep
+# (`agent_utilities.core.providers.resolve_skill_provider_dirs`, the SAME
+# resolution every other package's skills reach a served MCP server through)
+# so a host with universal-skills installed alongside agent-utilities serves
+# this whole corpus the same way as any other provider's own skills, with no
+# separate scanner or install step. The target is the package root because
+# its skills live several directories deep (`<category>/<name>/SKILL.md`);
+# the resolver already walks recursively for every provider.
+[project.entry-points."agent_utilities.skill_providers"]
+universal-skills = "universal_skills"
+
 [[project.authors]]
 name = "Repository Maintainers"
 
