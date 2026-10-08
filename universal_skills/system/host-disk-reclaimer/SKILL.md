@@ -6,7 +6,7 @@ description: 'Discover what is consuming disk on a host and safely reclaim space
 license: MIT
 tags: [system, disk, cleanup, docker, registry, git-worktree, cache, venv, ops]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: Knuckles-Team
 ---
 

@@ -22,7 +22,7 @@ team_config:
 tags: [overnight, research, backtest, factor]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
 ---
 
 # Overnight Research Loop Workflow

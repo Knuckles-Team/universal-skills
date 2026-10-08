@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [strategy, market-analysis, positioning, financial-modeling, saas-metrics]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: Genius
 ---
 # Product Strategy & Market Analysis

@@ -8,7 +8,7 @@ domain: development
 license: MIT
 tags: [sdd, user-interaction, wizard, specification, planning]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: Genius
 requires: []
 ---

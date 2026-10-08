@@ -12,7 +12,7 @@ agent: quant_career_mentor
 team_config: quantitative_trading_team
 tags: [quant, career, roadmap, finance, mentoring, workflow]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---
