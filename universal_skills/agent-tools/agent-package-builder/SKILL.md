@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [agent, package, scaffold, mcp, api-client, agentconfig, tls]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
 ---
 
 # Agent Package Builder

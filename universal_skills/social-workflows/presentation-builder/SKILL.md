@@ -22,7 +22,7 @@ team_config:
 tags: [social, content, presentation, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: Genius
 ---
 

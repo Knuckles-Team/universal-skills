@@ -22,7 +22,7 @@ team_config:
 tags: [arbitrage, multi-exchange, derivatives, spot]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
 ---
 
 # Multi Exchange Arbitrage Workflow

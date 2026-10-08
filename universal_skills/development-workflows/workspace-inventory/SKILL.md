@@ -18,7 +18,7 @@ team_config:
 tags: ['workspace', 'git', 'validation', 'repositories']
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
 ---
 
 # Workspace Inventory Workflow

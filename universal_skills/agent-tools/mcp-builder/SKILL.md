@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
-  version: '1.3.1'
+  version: '1.3.2'
   author: Genius
 ---
 # MCP Server Development Guide
