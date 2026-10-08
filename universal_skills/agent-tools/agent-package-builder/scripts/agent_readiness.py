@@ -1118,10 +1118,11 @@ def _atomic_write(path: Path, payload: bytes) -> None:
             prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
         )
         with os.fdopen(descriptor, "wb") as handle:
-            os.fchmod(handle.fileno(), 0o644)
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
+        # By path, not os.fchmod: fchmod is POSIX-only before Python 3.13.
+        os.chmod(temporary, 0o644)
         os.replace(temporary, path)
         temporary = None
     except OSError as exc:
