@@ -10,6 +10,7 @@ accepts no operands. Execution requires POSIX; import and discovery are portable
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import os
 from pathlib import Path
 import selectors
@@ -56,39 +57,45 @@ def _stop(process: subprocess.Popen) -> None:
         process.stderr.close()
 
 
-def _read_output(process: subprocess.Popen) -> bytes:
+def _drain_ready(selector, output: bytearray, *, observed: int, interval: float) -> int:
+    for key, _ in selector.select(interval):
+        chunk = os.read(key.fd, min(8192, _MAX_OUTPUT_BYTES - observed + 1))
+        if not chunk:
+            selector.unregister(key.fileobj)
+            continue
+        observed += len(chunk)
+        if observed > _MAX_OUTPUT_BYTES:
+            raise CliError("CLI output limit exceeded")
+        if key.data:
+            output.extend(chunk)
+    return observed
+
+
+def _read_output(process: subprocess.Popen, cancel_check: Callable[[], None] | None) -> bytes:
     deadline = time.monotonic() + _TIMEOUT_SECONDS
     output = bytearray()
     observed = 0
     with selectors.DefaultSelector() as selector:
         selector.register(process.stdout, selectors.EVENT_READ, True)
         selector.register(process.stderr, selectors.EVENT_READ, False)
-        while selector.get_map():
+        # Poll cancellation even when the process is silent or closes both pipes.
+        while selector.get_map() or process.poll() is None:
+            if cancel_check is not None:
+                cancel_check()
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise CliError("CLI action timed out")
-            for key, _ in selector.select(remaining):
-                chunk = os.read(key.fd, min(8192, _MAX_OUTPUT_BYTES - observed + 1))
-                if not chunk:
-                    selector.unregister(key.fileobj)
-                    continue
-                observed += len(chunk)
-                if observed > _MAX_OUTPUT_BYTES:
-                    raise CliError("CLI output limit exceeded")
-                if key.data:
-                    output.extend(chunk)
-    try:
-        code = process.wait(timeout=max(0.001, deadline - time.monotonic()))
-    except subprocess.TimeoutExpired:
-        raise CliError("CLI action timed out") from None
-    if code:
+            observed = _drain_ready(selector, output, observed=observed, interval=min(0.05, remaining))
+    if process.returncode:
         raise CliError("CLI action failed")
     return bytes(output)
 
 
-def _invoke(executable: str, arguments: tuple[str, ...]) -> bytes:
+def _invoke(executable: str, arguments: tuple[str, ...], cancel_check: Callable[[], None] | None) -> bytes:
     if os.name != "posix":
         raise CliError("CLI execution requires POSIX")
+    if cancel_check is not None:
+        cancel_check()
     with tempfile.TemporaryDirectory(prefix="connector-cli-") as directory:
         try:
             process = subprocess.Popen(
@@ -99,7 +106,7 @@ def _invoke(executable: str, arguments: tuple[str, ...]) -> bytes:
         except OSError:
             raise CliError("CLI executable could not start") from None
         try:
-            return _read_output(process)
+            return _read_output(process, cancel_check)
         except OSError:
             raise CliError("CLI output could not be read") from None
         finally:
@@ -112,15 +119,15 @@ class CliClient:
     def __init__(self, executable: str) -> None:
         self._executable = _executable(executable)
 
-    def run(self, action: str) -> dict[str, str]:
+    def run(self, action: str, *, cancel_check: Callable[[], None] | None = None) -> dict[str, str]:
         if not isinstance(action, str) or action not in _ACTIONS:
             raise CliError("Unsupported CLI action")
-        output = _invoke(self._executable, _ACTIONS[action])
+        output = _invoke(self._executable, _ACTIONS[action], cancel_check)
         return {{"status": "ok", "version": output.decode("utf-8", errors="replace").strip()}}
 
-    def get_system_status(self) -> dict[str, str]:
+    def get_system_status(self, *, cancel_check: Callable[[], None] | None = None) -> dict[str, str]:
         """Read the configured program's version using the fixed status action."""
-        return self.run("status")
+        return self.run("status", cancel_check=cancel_check)
 
 
 def get_client() -> CliClient:
@@ -143,6 +150,7 @@ CLI_MCP_SYSTEM_PY = r'''
 
 from agent_connector_sdk.mcp.action_dispatch import resolve_action
 from agent_connector_sdk.mcp.concurrency import run_blocking
+from anyio.from_thread import check_cancelled
 from fastmcp import FastMCP
 from fastmcp.dependencies import Depends
 
@@ -163,7 +171,7 @@ def register_system_tools(mcp: FastMCP):
             raise CliError("Unsupported CLI action") from None
         if isinstance(resolved, dict):
             return resolved
-        return await run_blocking(client.get_system_status)
+        return await run_blocking(client.get_system_status, cancel_check=check_cancelled)
 '''
 
 TESTS_CLI = r'''
@@ -291,6 +299,45 @@ def test_timeout_stops_a_silent_process(executable, monkeypatch, tmp_path):
     assert time.monotonic() - started < 3
     with pytest.raises(ProcessLookupError):
         os.kill(int(pid_file.read_text()), 0)
+
+
+@pytest.mark.parametrize("close_pipes", [False, True])
+def test_cancellation_propagates_after_process_cleanup(executable, tmp_path, close_pipes):
+    class Cancelled(BaseException):
+        pass
+
+    ready = tmp_path / "ready.json"
+    path = executable(
+        "import json, os, time\nfrom pathlib import Path\n"
+        + ("os.close(1); os.close(2)\n" if close_pipes else "")
+        + "p = Path(" + repr(str(ready)) + ")\n"
+        "p.with_suffix('.tmp').write_text(json.dumps([os.getpid(), os.getcwd()]))\n"
+        "p.with_suffix('.tmp').replace(p)\ntime.sleep(20)\n"
+    )
+
+    def cancel_check():
+        if ready.exists():
+            raise Cancelled
+
+    started = time.monotonic()
+    with pytest.raises(Cancelled):
+        cli.CliClient(path).get_system_status(cancel_check=cancel_check)
+    assert time.monotonic() - started < 2
+    pid, directory = json.loads(ready.read_text())
+    with pytest.raises(ProcessLookupError):
+        os.kill(pid, 0)
+    assert not Path(directory).exists()
+
+
+def test_cancelled_request_does_not_start_process(executable, monkeypatch):
+    client = cli.CliClient(executable("raise AssertionError('must not execute')\n"))
+    monkeypatch.setattr(cli.subprocess, "Popen", lambda *a, **k: pytest.fail("process started"))
+
+    def cancel_check():
+        raise InterruptedError("cancelled")
+
+    with pytest.raises(InterruptedError, match="cancelled"):
+        client.get_system_status(cancel_check=cancel_check)
 
 
 @pytest.mark.parametrize("descriptor", [1, 2])

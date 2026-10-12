@@ -77,7 +77,11 @@ stderr and failure details before exposing them.
 
 Bound execution time and captured output, handle cancellation, and terminate and
 reap spawned processes on failure. `capture_output=True` alone does not bound
-memory use. Check exit status and validate structured output; do not represent a
+memory use. The generated MCP tool passes AnyIO's cooperative `check_cancelled`
+through the SDK worker boundary. The runner checks it at most every 50 ms during
+pipe and exit waits, kills the process group, reaps the direct child, and closes
+pipes before propagating cancellation. A thread offload alone is insufficient.
+Check exit status and validate structured output; do not represent a
 nonzero exit or truncated response as successful empty data. Do not automatically
 retry commands that may have effects. SDK registration, confirmation, authorization
 and effect contracts apply to command-backed operations as they do to HTTP writes.

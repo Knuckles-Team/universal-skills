@@ -54,8 +54,8 @@ def _requirements(
             (
                 f"{spec_id}-R002",
                 "Bounded process execution",
-                f"The connector must execute only reviewed argument vectors through `{package}/cli.py` without a shell or stdin, with a restricted environment, a 10-second deadline, and a 64 KiB combined output limit.",
-                "`tests/test_cli.py` must exercise isolated executable fixtures for fixed arguments, environment isolation, process errors, timeouts, and oversized output.",
+                f"The connector must execute only reviewed argument vectors through `{package}/cli.py` without a shell or stdin, with a restricted environment, a 10-second deadline, and a 64 KiB combined output limit. MCP cancellation must stop the process group and complete local cleanup before propagating.",
+                "`tests/test_cli.py` must exercise isolated executable fixtures for fixed arguments, environment isolation, process errors, timeouts, cancellation with open and closed pipes, and oversized output.",
             ),
         ]
     else:
