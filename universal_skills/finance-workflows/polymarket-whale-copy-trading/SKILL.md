@@ -15,7 +15,7 @@ requires:
 - mcp_risk
 - mcp_orders
 metadata:
-  version: '1.3.2'
+  version: '1.3.3'
 ---
 
 # polymarket-whale-copy-trading Workflow

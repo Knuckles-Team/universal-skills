@@ -20,7 +20,7 @@ team_config:
 tags: ['postiz', 'social-media', 'marketing', 'scheduling', 'postiz-agent']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.2'
+  version: '1.3.3'
 ---
 
 # Postiz Scheduler Workflow

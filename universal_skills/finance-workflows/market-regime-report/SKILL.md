@@ -21,7 +21,7 @@ team_config:
 tags: [finance, regime, reporting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.2'
+  version: '1.3.3'
   author: Genius
 ---
 

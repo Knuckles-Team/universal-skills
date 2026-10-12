@@ -9,7 +9,7 @@ description: >-
 tags: [agent, delegation, graph-os, pydantic-ai, orchestration]
 license: MIT
 metadata:
-  version: '1.3.2'
+  version: '1.3.3'
   author: Repository Maintainers
 ---
 

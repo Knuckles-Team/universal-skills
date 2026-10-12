@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [content, outline, editorial, structure, evidence]
 metadata:
-  version: '1.3.2'
+  version: '1.3.3'
   author: Genius
 ---
 
