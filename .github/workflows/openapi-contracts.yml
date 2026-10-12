@@ -29,5 +29,5 @@ jobs:
       - name: Install Unicode constraint validator as a wheel
         run: |
           uv pip install --python .ci/agent-connector-sdk/.venv/bin/python --only-binary=:all: regex==2026.9.29
-      - name: Test real governed transport and template API boundaries
-        run: .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_github_template.py
+      - name: Test real governed transport and local-source publication boundaries
+        run: .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_github_publish.py

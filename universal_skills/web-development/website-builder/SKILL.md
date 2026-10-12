@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [frontend, website, react, tailwind, gsap, cinematic]
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
   author: Genius
 ---
 # Website Builder

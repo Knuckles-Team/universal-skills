@@ -34,40 +34,61 @@ and hostname verification remain enabled. Requests cannot change origin and
 redirects are refused, including HTTPS-to-HTTP redirects. No credentials are
 forwarded to a redirect target.
 
-## Private GitHub template bootstrap
+## Publish the local scaffold
 
-`github_template.py` uses the existing `gh` credential context and verifies the
-actor before a write. It refuses existing destination repositories. It never
-reads or serializes credential values. Both template and generated repositories
-are created private. Generation calls the GitHub template `/generate` API and
-checks the reviewed template head before and after the call.
+The installed `mcp-builder` skill owns the canonical scaffold, scripts and assets.
+Generate the destination package directly with its intended name; no GitHub
+repository is used as a template and no substitution pass is needed.
 
-Preparation is deterministic and local:
+Run from this skill directory:
 
 ```bash
-python scripts/github_template.py render template-source rendered-project --variables variables.json
+python3 scripts/scaffold_package.py example-api --type api_client,mcp --generation-date 2026-10-12 --output-dir /path/to/output
+python3 scripts/github_publish.py manifest /path/to/output/example-api > /path/to/evidence/files.json
 ```
 
-The variable file is an explicit map of literal source strings to target strings.
-Replacement occurs once, simultaneously, in canonical paths and UTF-8 content,
-including hidden files. Non-text files and Git executable modes are preserved.
-Symlinks, path aliases, traversal, collisions and transient files are rejected
-before rendering starts. A normalized comparison must enumerate every allowed domain-code
-or README edit; `verify` reports every unexpected changed, added or removed file.
+`manifest` inventories every authored file, including hidden files and binary
+assets, using SHA-256 and Git executable mode (`100644` or `100755`). It does not
+mark any checks as passed. Generated readiness and documentation hash manifests
+come from the local scaffold; refresh them with the generated project's helpers
+after intentional edits, then validate that final tree. Fixed generation inputs
+and date produce deterministic bytes and modes.
 
-Publication requires a JSON checks record containing `passed: true` and `files`
-equal to the complete validated template manifest, mapping each path to its
-`sha256` and Git `mode` (`100644` or `100755`). That record is
-evidence supplied by the caller after normal tests, hooks and built-site checks;
-the bootstrap does not run or certify those checks itself.
+After the project's required checks actually pass, record their evidence outside
+the source tree. The publication checks JSON must contain `passed: true` and
+`files` equal to the complete validated manifest, together with the actual check
+commands/results. The publisher verifies the bound snapshot but does not run or
+certify those checks itself. Do not place the checks record inside the tree it
+attests.
+
+When repository creation and publication are authorized:
 
 ```bash
-python scripts/github_template.py publish-template template-source --owner Example --name mcp-connector-template --checks checks.json
-python scripts/github_template.py create --owner Example --name example-mcp --template Example/mcp-connector-template --template-sha REVIEWED_COMMIT
+python3 scripts/github_publish.py publish /path/to/output/example-api --owner Example --name example-api --expected-login Operator --checks /path/to/evidence/checks.json
 ```
+
+The publisher uses the existing `gh` credential context, verifies the explicit
+expected login, and refuses existing destinations. It creates a normal private
+repository under the selected organization or authenticated user's account,
+then uploads one captured local tree. There is no remote template lookup,
+GitHub template-generation call, or legacy-template wrapper. Account names and
+credentials are not embedded in the skill. Credentials are never read or
+serialized by the helper.
+
+Source symlinks, `.env` and transient log/bytecode files are refused; Git metadata,
+virtual environments and known caches are excluded. The initialized README and
+all subsequent blobs come from the same checked snapshot even if local files
+change during upload. Complete remote blob identities and executable modes are
+verified before advancing the branch without force. The reported commit and
+manifest bind the result; the branch is checked again after publication, but
+GitHub does not make this sequence atomic against later concurrent changes.
 
 Failed or uncertain API writes are not retried or deleted automatically. Inspect
-the resulting repository state before deciding how to recover. The reusable
-automation does not merge PRs, publish packages, configure Pages, alter live
-services or provision credentials. Generated specification artifacts describe
-requirements; they are not proof those requirements have been implemented.
+the resulting repository state before deciding how to recover. The helper does
+not modify existing repositories, merge PRs, publish packages, configure Pages,
+alter live services or provision credentials. Generated specification artifacts
+describe requirements; they are not proof those requirements were implemented.
+
+The API contracts are GitHub's [normal repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
+[repository initialization](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents)
+and [Git tree publication](https://docs.github.com/en/rest/git/trees#create-a-tree).

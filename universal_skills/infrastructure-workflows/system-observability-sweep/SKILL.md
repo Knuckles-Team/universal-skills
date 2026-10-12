@@ -20,7 +20,7 @@ team_config:
 tags: ['monitoring', 'health', 'cross-system', 'observability']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # System Observability Sweep Workflow

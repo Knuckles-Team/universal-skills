@@ -22,7 +22,7 @@ team_config:
 tags: [stress-test, crash, scenario-analysis, risk]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Portfolio Stress Test Workflow
