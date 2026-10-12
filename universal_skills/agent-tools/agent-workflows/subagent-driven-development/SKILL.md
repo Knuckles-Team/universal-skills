@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [workflows, agents, orchestration, docs]
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
   author: Agent Utilities Contributors
 ---
 # Subagent-Driven Development

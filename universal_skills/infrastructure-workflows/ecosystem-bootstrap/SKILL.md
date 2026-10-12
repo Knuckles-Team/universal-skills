@@ -30,7 +30,7 @@ requires:
   - tunnel-manager-mcp
   - graph-os
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Ecosystem Bootstrap Workflow

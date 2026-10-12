@@ -22,7 +22,7 @@ team_config:
 tags: [lifecycle, backtest, debate, live]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Strategy Hypothesis To Live Workflow

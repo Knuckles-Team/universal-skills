@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [data, profiling, schema, statistics, csv, json]
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
   author: Genius
 ---
 

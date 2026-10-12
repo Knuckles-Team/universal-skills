@@ -22,7 +22,7 @@ team_config:
 tags: [infra, systems-issue-troubleshooter]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Systems Issue Troubleshooter Workflow

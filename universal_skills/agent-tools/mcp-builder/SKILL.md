@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api]
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
   author: Genius
 ---
 
@@ -31,7 +31,8 @@ Run from this skill directory, choosing only the requested package surfaces:
 
     python3 scripts/scaffold_package.py example-connector --type api_client,mcp --output-dir /path/to/output
 
-The generator preserves existing project-owned files. Inspect the generated diff
+The canonical scaffold and its assets ship inside this skill; generation requires
+no external template repository. The generator preserves existing project-owned files. Inspect the generated diff
 and resolve current authority changes before treating a scaffold as ready.
 Optional agent orchestration belongs behind the current agent-utilities runtime
 contract; it is not a connector dependency or a second builder.
@@ -60,6 +61,8 @@ contract; it is not a connector dependency or a second builder.
 - [Documentation readiness](DOCUMENTATION_STANDARD_VNEXT.md): bounded source-only
   discovery, ownership manifests, public docs and served-surface checks.
 - [MCP design](reference/mcp_best_practices.md): tool boundaries and transport choices.
+- [OpenAPI and publication](reference/openapi_bootstrap.md): provider conversion and
+  publishing a validated local tree to a new normal GitHub repository.
 - [Evaluation](reference/evaluation.md): optional read-only task evaluation with the
   existing model harness; it does not replace static and contract checks.
 

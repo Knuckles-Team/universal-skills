@@ -22,7 +22,7 @@ team_config:
 tags: [finance, crypto, arbitrage, stat-arb]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Crypto Arbitrage Workflow

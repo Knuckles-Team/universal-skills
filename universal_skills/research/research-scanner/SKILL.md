@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [research, scanner, scholarx, pulselink, automation, agent-workflow]
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
   author: Genius
 ---
 

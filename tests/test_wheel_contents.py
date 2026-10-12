@@ -167,12 +167,17 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
     readiness_resources = {
         "universal_skills/agent-tools/mcp-builder/SKILL.md",
         "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py",
+        "universal_skills/agent-tools/mcp-builder/scripts/github_publish.py",
         "universal_skills/agent-tools/mcp-builder/scripts/transport_templates.py",
         "universal_skills/agent-tools/mcp-builder/scripts/connector_templates.py",
         "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness.py",
         "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness_schema.json",
     }
     assert readiness_resources <= members
+    assert (
+        "universal_skills/agent-tools/mcp-builder/scripts/github_template.py"
+        not in members
+    )
     assert not any(
         member.startswith(
             (
@@ -233,6 +238,27 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
     assert (emitted_theme / "provenance.json").is_file()
     assert not list(emitted_theme.rglob("__pycache__"))
     assert not list(emitted_theme.rglob("*.pyc"))
+    inventory = subprocess.run(
+        [
+            sys.executable,
+            str(installed_scripts / "github_publish.py"),
+            "manifest",
+            str(generated / "installed-wheel"),
+        ],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert inventory.returncode == 0, inventory.stdout + inventory.stderr
+    import json
+
+    captured = json.loads(inventory.stdout)
+    assert ".github/workflows/pages.yml" in captured
+    assert "installed_wheel/connector_manifest.yml" in captured
+    assert captured["scripts/check_connector_contract.py"]["mode"] == "100644"
+    assert "passed" not in captured
     resource_check = subprocess.run(
         [
             sys.executable,

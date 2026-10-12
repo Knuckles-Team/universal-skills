@@ -18,7 +18,7 @@ team_config:
 tags: ['qbittorrent', 'torrents', 'adder', 'downloads', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Qbittorrent Download Adder Workflow

@@ -18,7 +18,7 @@ team_config:
 tags: ['health', 'workout', 'fitness', 'wger-agent']
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.3.3'
+  version: '1.3.4'
 ---
 
 # Personal Fitness Trainer Workflow
