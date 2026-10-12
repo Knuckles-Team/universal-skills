@@ -279,14 +279,6 @@ replace = "version": "{{new_version}}"
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
 
-[bumpversion:file(mcp-img):docker/Dockerfile]
-search = {package_name}[mcp]>={{current_version}}
-replace = {package_name}[mcp]>={{new_version}}
-
-[bumpversion:file(agent-img):docker/Dockerfile]
-search = {package_name}[agent]>={{current_version}}
-replace = {package_name}[agent]>={{new_version}}
-
 [bumpversion:file:{pkg_dir}/agent_server.py]
 search = __version__ = "{{current_version}}"
 replace = __version__ = "{{new_version}}"
@@ -321,9 +313,9 @@ DOCKERFILE = """\
 #                              The SDK graph client engine remains present;
 #                              only the optional agent orchestration stack is omitted.
 #
-#   docker build --target agent -t {package_name}:local .
-#   docker build --target mcp   -t {package_name}:mcp    .
-# See agent-packages/CLAUDE.md "Connector recipe" for the tag contract.
+#   docker build --file docker/Dockerfile --target agent -t {package_name}:local .
+#   docker build --file docker/Dockerfile --target mcp -t {package_name}:mcp .
+# Build from the repository root with --file docker/Dockerfile.
 FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS builder-base
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
@@ -336,15 +328,21 @@ RUN apt-get update \\
     && apt-get install -y --no-install-recommends build-essential \\
     && rm -rf /var/lib/apt/lists/*
 
+# Build the connector from this checkout, including generated runtime data.
+# Copy only the package and its wheel metadata, not credentials or local tooling.
+WORKDIR /src
+COPY pyproject.toml README.md LICENSE ./
+COPY {pkg_dir}/ ./{pkg_dir}/
+
 # MCP serving dependency closure (including SDK graph client).
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow "{package_name}[mcp]>=0.1.0"
+    uv pip install --system --break-system-packages --prerelease=allow ".[mcp]"
 
 # Full agent runtime dependency closure.
 FROM builder-base AS builder-agent
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow "{package_name}[agent]>=0.1.0"
+    uv pip install --system --break-system-packages --prerelease=allow ".[agent]"
 
 FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS runtime-base
 ARG HOST=127.0.0.1
@@ -1014,11 +1012,12 @@ it is documentation-only and is never contacted by the generator.
 
 <!-- MCP-CONFIG-EXAMPLES:END -->
 
-Container builds use immutable, least-privilege runtime stages:
+Container builds install this checkout, so the connector need not be published first.
+Run from the repository root:
 
 ```bash
-docker build --target mcp -t {package_name}:mcp-local docker/
-docker build --target agent -t {package_name}:agent-local docker/
+docker build --file docker/Dockerfile --target mcp -t {package_name}:mcp-local .
+docker build --file docker/Dockerfile --target agent -t {package_name}:agent-local .
 ```
 
 Deploy reviewed images by digest (`{package_name}@sha256:<digest>`) and include
@@ -2269,6 +2268,35 @@ DOCS_DEPLOYMENT_MD = """\
 # Deployment
 
 This page covers running `{package_name}` as long-lived servers.
+
+## Build from a reviewed source commit
+
+The production Dockerfile installs the local package and its selected runtime
+extra from the repository root. It does not download `{package_name}` from an
+index. The build copies the complete `{pkg_dir}/` directory, including generated
+OpenAPI contracts, prompts, skills, ontology and connector data. Runtime images
+contain the installed package; source tooling remains outside the final stage.
+
+Use an exact reviewed commit as the build context:
+
+```bash
+SOURCE_COMMIT=$(git rev-parse --verify 'HEAD^{{commit}}')
+git archive --format=tar "$SOURCE_COMMIT" | docker build \\
+  --file docker/Dockerfile --target mcp \\
+  --label "org.opencontainers.image.revision=$SOURCE_COMMIT" \\
+  --tag {package_name}:mcp-local -
+```
+
+For an enabled agent surface, select `--target agent`. The shared
+[container workflow](https://github.com/Knuckles-Team/pipelines/blob/7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e/.github/workflows/container_pipeline.yml)
+also checks out the exact workflow commit. Build only on an approved image-build
+host. Publish through the repository's approved process, then deploy the returned
+image manifest digest through `MCP_IMAGE` (and `AGENT_IMAGE` when enabled).
+A source commit does not freeze the index-resolved dependency closure. For a
+qualified offline wheel build, use the shared
+[runtime artifact contract](https://github.com/Knuckles-Team/pipelines/blob/7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e/reference/container-runtime.md)
+with its producer receipts and full hashes. This scaffold does not claim that
+qualification or provision a producer, registry credentials or deployment.
 
 > `{package_name}` ships both an **MCP server** (console script `{mcp_cmd}`) and an
 > **A2A agent server** (console script `{agent_cmd}`).

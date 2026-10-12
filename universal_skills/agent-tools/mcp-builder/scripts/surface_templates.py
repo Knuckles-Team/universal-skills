@@ -38,7 +38,7 @@ def _bumpversion(text: str, has_agent: bool) -> str:
     sections = re.split(r"(?m)(?=^\[bumpversion(?::|\]))", text)
     omitted = ["file:README.md"]  # README has no version marker.
     if not has_agent:
-        omitted += ["file:a2a.json", "file(agent-img)", "/agent_server.py"]
+        omitted += ["file:a2a.json", "/agent_server.py"]
     return "".join(
         section
         for section in sections
@@ -70,7 +70,7 @@ def _readme(text: str, has_agent: bool) -> str:
         "client or agent → MCP/A2A entry point", "client → MCP entry point"
     )
     return text.replace(
-        "docker build --target agent -t {package_name}:agent-local docker/\n", ""
+        "docker build --file docker/Dockerfile --target agent -t {package_name}:agent-local .\n", ""
     )
 
 
@@ -122,6 +122,7 @@ def _installation(text: str, has_agent: bool) -> str:
 def _deployment(text: str, has_agent: bool) -> str:
     if has_agent:
         return text
+    text = text.replace("For an enabled agent surface, select `--target agent`. ", "")
     text = text.replace(
         "> `{package_name}` ships both an **MCP server** (console script `{mcp_cmd}`) and an\n"
         "> **A2A agent server** (console script `{agent_cmd}`).",
