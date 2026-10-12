@@ -29,8 +29,6 @@ test = [
     "jsonschema>=4.25.1"
 ]
 agent-browser = []
-agent-builder = ["PyYAML>=6.0.3"]
-agent-package-builder = []
 agent-spawner = []
 mcp-client = ["fastmcp>=4.0.10", "python-dotenv>=1.2.2"]
 agent-workflows = ["httpx>=0.28.1", "PyYAML>=6.0.3"]
@@ -85,8 +83,7 @@ code-enhancer = ["requests>=2.34.2", "packaging>=26.2", "keepachangelog>=2.0.0",
 
 all = [
     "universal-skills[agent-browser]>=1.0.0",
-    "universal-skills[agent-builder]>=1.0.0",
-    "universal-skills[agent-package-builder]>=1.0.0",
+    "universal-skills[mcp-builder]>=1.0.0",
     "universal-skills[agent-spawner]>=1.0.0",
     "universal-skills[mcp-client]>=1.0.0",
     "universal-skills[agent-workflows]>=1.0.0",
@@ -167,7 +164,7 @@ universal_skills = [
 # repository-manager. Keep its two authority resources declared on their owning
 # namespace package as an explicit contract in addition to the catalog-wide
 # resource glob above.
-"universal_skills.agent-tools.agent-package-builder.scripts" = [
+"universal_skills.agent-tools.mcp-builder.scripts" = [
     "agent_readiness.py",
     "agent_readiness_schema.json",
 ]

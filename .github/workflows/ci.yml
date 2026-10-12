@@ -40,3 +40,44 @@ jobs:
         run: scripts/bootstrap.sh
       - name: Pre-commit gates
         run: uvx pre-commit run --all-files --show-diff-on-failure
+
+  mcp-builder-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - name: Check out reviewed SDK contract
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: Knuckles-Team/agent-connector-sdk
+          ref: 5babc4cc48ad73928468b243842f219f51e2cca1
+          path: .ci/agent-connector-sdk
+          persist-credentials: false
+      - name: Check out shared Pages contract
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: Knuckles-Team/pipelines
+          ref: 7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
+          path: .ci/pipelines
+          persist-credentials: false
+      - name: Bootstrap repository build environment
+        run: scripts/bootstrap.sh
+      - name: Bootstrap SDK and its pinned generated EG client
+        working-directory: .ci/agent-connector-sdk
+        # Canonical SDK bootstrap uses its frozen lock and pinned EG source
+        # contract, with --no-install-package epistemic-graph (no native build).
+        run: bash scripts/bootstrap.sh
+      - name: Require real SDK behavior and built artifact tests
+        env:
+          MCP_BUILDER_REQUIRE_SDK: '1'
+          MCP_BUILDER_BUILD_PYTHON: ${{ github.workspace }}/.venv/bin/python
+          PIPELINES_CONTRACT_ROOT: ${{ github.workspace }}/.ci/pipelines
+          MCP_FLEET_REGISTRATION: 'false'
+        run: |
+          .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra \
+            tests/test_mcp_builder_smoke.py tests/test_mcp_builder_connector_contract.py \
+            tests/test_mcp_builder_distribution.py tests/test_mcp_builder_surfaces.py \
+            tests/test_mcp_builder_pages.py

@@ -14,7 +14,7 @@ SCRIPT = (
     Path(__file__).parents[1]
     / "universal_skills"
     / "agent-tools"
-    / "agent-package-builder"
+    / "mcp-builder"
     / "scripts"
     / "agent_readiness_tck.py"
 )

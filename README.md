@@ -27,6 +27,9 @@ The content and data domains include evidence-aware drafting, publication prefli
 dataset profiling, deterministic data-quality validation, and data-dictionary
 authoring.
 
+Connector packages use [mcp-builder](universal_skills/agent-tools/mcp-builder/SKILL.md)
+for SDK scaffolding and shared pipeline contracts.
+
 ## Catalog quality and roadmap
 
 - [Per-skill structural audit](docs/skill-catalog-audit.md)

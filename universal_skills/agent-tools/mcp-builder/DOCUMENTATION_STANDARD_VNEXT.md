@@ -1,4 +1,4 @@
-# Documentation Standard vNext
+# Documentation readiness contract
 
 This is the hybrid documentation contract for an agent package. It keeps the
 semantic layer (Concept IDs, ontology, `AGENTS.md`, and source Markdown) as the
@@ -85,25 +85,23 @@ responsibilities outside this package-builder contract.
 
 ## Public README and AGENTS surface
 
-Every generated repository opts into the shared `public-surface` pre-commit hook
-from the immutable pipelines release
-`35209bf6d85569a3c1fe3d5cd31771cacfdc3731`. Its repository-local TOML identity
-must declare `repository`, `distribution`, `pages_url`, and the boolean
-`mcp_server` value. The generator derives those values from the package name and
-selected package types; it never checks URL reachability while scaffolding.
+Generated repositories use the current shared pipelines public-surface hook,
+pinned according to the repository supply-chain policy. That hook checks safe
+local links and the README installation/start paths. Run it against the generated
+repository and retain its actual result; it does not certify heading sets, document
+sizes, badge completeness or privacy.
 
-`README.md` is a concise public entry point: it has exactly one H1, the required
-Overview, Key capabilities, Quick start, Architecture, Documentation,
-Development, and License headings, the full canonical GitHub/PyPI badge set, and
-the MCP badge only when `mcp_server = true`. It links to the configured public
-Pages site and stays between 1,500 and 24,000 characters and below 200 lines.
+Keep README a concise public entry point describing the package, supported
+capabilities, installation, startup, architecture, documentation and development.
+Choose badges and links that describe this repository accurately. Keep AGENTS
+focused on current ownership, module boundaries, commands, quality gates,
+development rules and isolation. Detailed guidance belongs in source docs.
 
-`AGENTS.md` records only the current contributor contract. It includes the
-durable ownership, module map, commands, quality gates, development rules,
-documentation, and branching/isolation sections; it contains no local
-filesystem paths or internal planning/history references. It stays between
-1,200 and 24,000 characters and below 240 lines. Detailed prose belongs in the
-Pages source tree.
+Review these documents for environment-specific paths, identities, endpoints and
+secret-bearing examples. Review length, headings and badge choices for usability;
+do not present historical numeric limits or heading lists as enforced pipelines
+contracts. Public URLs and readiness-generated content remain subject to the
+separate validation and privacy requirements above.
 
 ## Served-surface TCK
 
@@ -123,3 +121,9 @@ metadata parity, denial non-retryability, response/link budgets, and malformed
 or stale artifacts. Bodies and secret-bearing headers are never retained; only
 bounded metadata and digests enter evidence. A target that cannot be reached or
 does not apply is not silently certified.
+
+## Shared delivery authority
+
+Use current pipelines specification-delivery and publication workflows for the
+requested repository. Link source specifications, validation evidence and delivery
+status in the docs site where applicable. See [connector contracts](reference/connector_contracts.md).

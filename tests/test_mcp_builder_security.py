@@ -2,18 +2,19 @@
 
 import ast
 import importlib.util
+import tomllib
 from pathlib import Path
 
+import pytest
 
 SCAFFOLD = (
     Path(__file__).parents[1]
     / "universal_skills"
     / "agent-tools"
-    / "agent-package-builder"
+    / "mcp-builder"
     / "scripts"
     / "scaffold_package.py"
 )
-PARITY_MANIFEST = SCAFFOLD.parent.parent / "PARITY_MANIFEST.md"
 PYTHON_312_BASE = (
     "python:3.12-slim@sha256:"
     "57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
@@ -61,14 +62,22 @@ def test_generated_api_client_has_outbound_request_boundaries():
     compile(rendered, "<generated-api-client>", "exec")
     assert "create_http_client(" in rendered
     assert "ResolvedTLSProfile" in rendered
-    assert "tls_profile.httpx_kwargs()" in rendered
+    assert "HttpClientOptions(" in rendered
+    assert "tls=tls_profile" in rendered
     assert "timeout=_REQUEST_TIMEOUT_S" in rendered
-    assert "follow_redirects=False" in rendered
+    assert 'kwargs["follow_redirects"] = False' in rendered
+    assert 'if "timeout" in kwargs:' in rendered
+    assert "Redirect following is disabled" in rendered
     assert "from ..error_authority import AGENT_ERROR_ACCEPT" in rendered
-    assert 'headers = {"Accept": AGENT_ERROR_ACCEPT}' in rendered
-    assert (
-        "pin_egress=not tls_profile.proxy_url and not tls_profile.trust_env" in rendered
-    )
+    assert 'headers={"Accept": AGENT_ERROR_ACCEPT}' in rendered
+    imports = {
+        node.module
+        for node in ast.walk(ast.parse(rendered))
+        if isinstance(node, ast.ImportFrom)
+    }
+    assert "agent_connector_sdk.http.client" in imports
+    assert "agent_connector_sdk.http.options" in imports
+    assert not any(name and name.startswith("agent_utilities") for name in imports)
     assert "_MAX_RESPONSE_BYTES" in rendered
     assert "self.session.stream(" in rendered
 
@@ -99,7 +108,9 @@ def test_generated_capability_discovery_is_bound_and_endpoint_free():
 
 def test_generated_auth_uses_reference_only_runtime_without_pii_logs():
     module = _load_scaffold_module()
-    rendered = module.AUTH_PY.format(short_name="example_provider")
+    rendered = module.AUTH_PY.format(
+        short_name="example_provider", upper_name="EXAMPLE_PROVIDER"
+    )
     tree = ast.parse(rendered)
     imported_symbols = {
         (node.module, alias.name)
@@ -109,31 +120,78 @@ def test_generated_auth_uses_reference_only_runtime_without_pii_logs():
     }
 
     compile(rendered, "<generated-auth>", "exec")
-    assert "from agent_utilities.core import config as config_module" in rendered
-    assert "config_module.AgentConfig" in rendered
-    assert ("agent_utilities.core", "config") in imported_symbols
-    assert ("agent_utilities.core.config", "AgentConfig") not in imported_symbols
-    assert "resolve_provider_runtime_profile(" in module.AUTH_PY
-    assert "provider_configs.{short_name}" in module.AUTH_PY
-    assert "resolve_tls_verify" not in module.AUTH_PY
-    assert "SSL_VERIFY" not in module.AUTH_PY
-    assert "verify: bool" not in module.AUTH_PY
-    assert "user_email" not in module.AUTH_PY
+    assert ("agent_connector_sdk.auth.static", "bearer_auth") in imported_symbols
+    assert (
+        "agent_connector_sdk.auth.delegation",
+        "DelegatedTokenAuth",
+    ) in imported_symbols
+    assert (
+        "agent_connector_sdk.tls.resolve",
+        "resolve_tls_profile",
+    ) in imported_symbols
+    assert not any(
+        name and name.startswith("agent_utilities") for name, _ in imported_symbols
+    )
+    assert 'bearer_auth(setting("EXAMPLE_PROVIDER_TOKEN_REF", ""))' in rendered
+    assert 'resolve_tls_profile("example_provider")' in rendered
+    assert 'resolve_tls_profile("oidc")' in rendered
+    assert "resources.callback(tls.cleanup)" in rendered
+    assert "resources.callback(token_tls.cleanup)" in rendered
+    assert "resources.callback(token_client.close)" in rendered
+    assert "resources.callback(client.close)" in rendered
+    assert "resolve_tls_verify" not in rendered
+    assert "SSL_VERIFY" not in rendered
+    assert "verify: bool" not in rendered
+    assert "user_email" not in rendered
 
 
-def test_generated_graphql_client_validates_url_and_sets_timeout():
+def test_generated_graphql_uses_bounded_sdk_client_and_rejects_invalid_results(
+    tmp_path, monkeypatch
+):
     module = _load_scaffold_module()
-
-    assert "urlsplit(rendered_url)" in module.GQL_PY
-    assert "timeout=30" in module.GQL_PY
-    assert "len(query_str) > 1_000_000" in module.GQL_PY
+    tree = ast.parse(module.GQL_PY.format())
+    client_import = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "api.api_client_base"
+    ]
+    assert len(client_import) == 1 and client_import[0].level == 1
+    assert [alias.name for alias in client_import[0].names] == ["ApiClientBase"]
+    # Only the outbound client is replaced: import the actual rendered class
+    # so bad input and partial provider failures cannot become successes.
+    package = tmp_path / "sdk_graphql_fixture"
+    (package / "api").mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    (package / "api" / "__init__.py").write_text("")
+    (package / "api" / "api_client_base.py").write_text("class ApiClientBase: pass\n")
+    (package / "graphql.py").write_text(module.GQL_PY.format())
+    monkeypatch.syspath_prepend(str(tmp_path))
+    graphql = importlib.import_module("sdk_graphql_fixture.graphql")
+    client = graphql.GraphQL()
+    calls = []
+    client.request = lambda *args, **kwargs: (
+        calls.append((args, kwargs)) or {"data": {"ok": True}}
+    )
+    for query in ("", " ", "x" * 1_000_001, None):
+        with pytest.raises(ValueError, match="input boundary"):
+            client.execute_gql(query)
+    assert calls == []
+    assert client.execute_gql("query { status }") == {"data": {"ok": True}}
+    assert calls[0][0][0] == "POST"
+    assert calls[0][1]["json"]["query"] == "query { status }"
+    client.request = lambda *args, **kwargs: {
+        "data": {"ok": True},
+        "errors": [{"message": "partial"}],
+    }
+    with pytest.raises(RuntimeError, match="partial results"):
+        client.execute_gql("query { status }")
 
 
 def test_generated_deployment_docs_are_current_only_and_tls_bound():
     module = _load_scaffold_module()
     docs = module.README_MD + module.DOCS_DEPLOYMENT_MD
 
-    assert 'MCP_TOOL_MODE": "intent' in docs
+    assert "MCP_TOOL_MODE" not in docs
     assert "agent-os-genesis" not in docs
     assert "your_token" not in docs
     assert ".arpa" not in docs
@@ -145,9 +203,17 @@ def test_generated_deployment_docs_are_current_only_and_tls_bound():
     assert "@sha256:<digest>" in docs
 
 
-def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
+@pytest.mark.parametrize("has_agent", [False, True])
+def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_extras(
+    tmp_path,
+    has_agent,
+):
     module = _load_scaffold_module()
-    module.scaffold("example-provider", output_dir=str(tmp_path))
+    module.scaffold(
+        "example-provider",
+        output_dir=str(tmp_path),
+        pkg_types="api_client,mcp" + (",agent" if has_agent else ""),
+    )
     root = tmp_path / "example-provider"
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     agents_md = (root / "AGENTS.md").read_text(encoding="utf-8")
@@ -156,7 +222,6 @@ def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
     debug_dockerfile = (root / "docker" / "debug.Dockerfile").read_text(
         encoding="utf-8"
     )
-    parity_manifest = PARITY_MANIFEST.read_text(encoding="utf-8")
     generated_text = "\n".join(
         path.read_text(encoding="utf-8") for path in root.rglob("*") if path.is_file()
     )
@@ -166,7 +231,6 @@ def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
     assert 'python_version = "3.12"' in pyproject
     assert "py310" not in pyproject
     assert 'python_version = "3.10"' not in pyproject
-    assert "Language/Version: Python 3.12–3.14" in agents_md
     assert "Python 3.12–3.14" in installation_md
     assert "Python 3.11" not in agents_md
     assert "Python 3.11" not in installation_md
@@ -174,14 +238,31 @@ def test_generated_packaging_is_current_full_and_nonrecursive(tmp_path):
     assert debug_dockerfile.count(PYTHON_312_BASE) == 1
     assert "Python 3.11" not in generated_text
     assert "python:3.11" not in generated_text
-    assert '"agent-utilities[mcp]>=1.27.1,<2.0.0"' in pyproject
-    assert '"epistemic-graph[full]>=2.23.1,<3.0.0"' in pyproject
-    assert '"agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0"' in pyproject
-    assert "`agent-utilities[mcp]>=1.27.1,<2.0.0`" in parity_manifest
-    assert "`epistemic-graph[full]>=2.23.1,<3.0.0`" in parity_manifest
-    assert "agent-utilities[mcp]>=2.0.0" not in parity_manifest
-    assert "epistemic-graph[full]>=3.0.0" not in parity_manifest
-    assert PYTHON_312_BASE.removeprefix("python:3.12-slim@") in parity_manifest
+    metadata = tomllib.loads(pyproject)
+    dependencies = metadata["project"]["dependencies"]
+    extras = metadata["project"]["optional-dependencies"]
+    assert "agent-connector-sdk>=0.1.0,<1" in dependencies
+    assert not any(
+        requirement.startswith(("agent-utilities", "epistemic-graph"))
+        for requirement in dependencies
+    )
+    if has_agent:
+        assert any(
+            requirement.startswith("agent-utilities[agent-runtime")
+            for requirement in extras["agent"]
+        )
+    else:
+        assert "agent" not in extras
+        assert not any(
+            requirement.startswith("agent-utilities") for requirement in extras["all"]
+        )
+    assert all(
+        "epistemic-graph[full]" not in requirement
+        for group in extras.values()
+        for requirement in group
+    )
+    assert (root / "example_provider" / "agent_server.py").exists() is has_agent
+    assert (root / "example_provider" / "mcp_server.py").is_file()
     assert "example-provider[" not in pyproject
     assert not (root / ".env").exists()
     assert "SSL_VERIFY" not in (root / "mcp_config.json").read_text(encoding="utf-8")

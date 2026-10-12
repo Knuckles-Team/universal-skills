@@ -77,6 +77,6 @@ per-package `test_prompt_parity.py`, so "valid here" means "valid in CI".
   it is missing (`pip install agent-utilities`).
 - A package contributes its prompt to the KG library by declaring a
   `[project.entry-points."agent_utilities.prompt_providers"]` entry pointing at
-  its `prompts` subpackage (see `agent-package-builder`).
+  its `prompts` subpackage (see [mcp-builder](../mcp-builder/SKILL.md)).
 - For per-agent overrides without editing the package, drop a `*.json` into the
   XDG overlay `~/.config/agent-utilities/prompts/`.

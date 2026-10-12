@@ -2,7 +2,7 @@
 the canonical StructuredPrompt schema (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical).
 
 These guard the exact gap that produced the original drift: a hand-edited
-template diverging from the model. Both the agent-package-builder's
+template diverging from the model. Both the mcp-builder's
 ``render_main_agent_json`` and the prompt-builder's ``build_prompt`` must emit
 blueprints that pass the ONE shared validator.
 """
@@ -29,7 +29,7 @@ SCAFFOLD = (
     REPO
     / "universal_skills"
     / "agent-tools"
-    / "agent-package-builder"
+    / "mcp-builder"
     / "scripts"
     / "scaffold_package.py"
 )
