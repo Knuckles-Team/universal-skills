@@ -20,7 +20,7 @@ team_config:
 tags: [finance, execution, slippage]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Genius
 ---
 

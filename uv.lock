@@ -4974,7 +4974,7 @@ wheels = [
 
 [[package]]
 name = "universal-skills"
-version = "1.3.4"
+version = "1.3.5"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -5007,7 +5007,6 @@ all = [
     { name = "playwright" },
     { name = "psutil" },
     { name = "psycopg2-binary" },
-    { name = "pydantic" },
     { name = "pygments" },
     { name = "pymssql" },
     { name = "pymupdf4llm" },
@@ -5021,10 +5020,6 @@ all = [
     { name = "toml" },
     { name = "user-agents" },
     { name = "validators" },
-]
-api-wrapper-builder = [
-    { name = "pydantic" },
-    { name = "requests" },
 ]
 browser-tools = [
     { name = "pillow" },
@@ -5187,7 +5182,6 @@ requires-dist = [
     { name = "psutil", marker = "extra == 'system-tools'", specifier = ">=7.2.2" },
     { name = "psutil", marker = "extra == 'web-crawler'", specifier = ">=7.2.2" },
     { name = "psycopg2-binary", marker = "extra == 'database-tools'", specifier = ">=2.9.12" },
-    { name = "pydantic", marker = "extra == 'api-wrapper-builder'", specifier = ">=2.13.4" },
     { name = "pygments", marker = "extra == 'document-tools'", specifier = ">=2.20.0" },
     { name = "pymssql", marker = "extra == 'database-tools'", specifier = ">=2.3.13" },
     { name = "pymupdf4llm", marker = "extra == 'document-converter'", specifier = ">=1.28.0" },
@@ -5210,7 +5204,6 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'skill-graph-builder'", specifier = ">=6.0.3" },
     { name = "pyyaml", marker = "extra == 'skill-workflow-builder'", specifier = ">=6.0.3" },
     { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6.0.3" },
-    { name = "requests", marker = "extra == 'api-wrapper-builder'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'cloudflare-deploy'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'code-enhancer'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'github-tools'", specifier = ">=2.34.2" },
@@ -5227,7 +5220,6 @@ requires-dist = [
     { name = "universal-skills", extras = ["agent-spawner"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["agent-workflows"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["algorithmic-art"], marker = "extra == 'all'", specifier = ">=1.0.0" },
-    { name = "universal-skills", extras = ["api-wrapper-builder"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["brainstorming"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["brand-guidelines"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["browser-tools"], marker = "extra == 'all'", specifier = ">=1.0.0" },
@@ -5271,7 +5263,7 @@ requires-dist = [
     { name = "validators", marker = "extra == 'document-tools'", specifier = ">=0.35.0" },
     { name = "wheel", marker = "extra == 'test'", specifier = ">=0.47.0" },
 ]
-provides-extras = ["test", "agent-browser", "agent-spawner", "mcp-client", "agent-workflows", "automated-credential-rotation", "algorithmic-art", "api-wrapper-builder", "brainstorming", "brand-guidelines", "browser-tools", "c4-architecture", "canvas-design", "cloudflare-deploy", "creative-media", "database-tools", "document-converter", "developer-utilities", "document-tools", "github-backlog-planner", "github-ci-failure-sweep", "github-tools", "google-workspace", "internal-comms", "jupyter-notebook", "marp-presentations", "mcp-builder", "mermaid-diagrams", "product-strategy", "pre-mortem", "react-development", "react-native-skills", "security-tools", "session-handoff", "skill-builder", "skill-catalog-auditor", "universal-installer", "skill-graph-builder", "skill-workflow-builder", "system-tools", "tdd-methodology", "theme-factory", "user-research", "web-artifacts", "web-crawler", "web-design-guidelines", "web-search", "web-fetch", "website-builder", "website-cloner", "code-enhancer", "all"]
+provides-extras = ["test", "agent-browser", "agent-spawner", "mcp-client", "agent-workflows", "automated-credential-rotation", "algorithmic-art", "brainstorming", "brand-guidelines", "browser-tools", "c4-architecture", "canvas-design", "cloudflare-deploy", "creative-media", "database-tools", "document-converter", "developer-utilities", "document-tools", "github-backlog-planner", "github-ci-failure-sweep", "github-tools", "google-workspace", "internal-comms", "jupyter-notebook", "marp-presentations", "mcp-builder", "mermaid-diagrams", "product-strategy", "pre-mortem", "react-development", "react-native-skills", "security-tools", "session-handoff", "skill-builder", "skill-catalog-auditor", "universal-installer", "skill-graph-builder", "skill-workflow-builder", "system-tools", "tdd-methodology", "theme-factory", "user-research", "web-artifacts", "web-crawler", "web-design-guidelines", "web-search", "web-fetch", "website-builder", "website-cloner", "code-enhancer", "all"]
 
 [[package]]
 name = "urllib3"

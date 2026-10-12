@@ -120,6 +120,11 @@ def test_generation_is_current_bounded_and_idempotent(tmp_path):
         encoding="utf-8"
     )
     assert ".md" not in (root / "llms.txt").read_text(encoding="utf-8")
+    assert "## Standards maturity" in (root / "llms.txt").read_text()
+    section = root / "llms-sections" / "guides" / "llms.txt"
+    assert "## Standards maturity" not in section.read_text()
+    assert "[root documentation index](../../llms.txt)" in section.read_text()
+    assert (section.parent / "../../llms.txt").resolve() == root / "llms.txt"
 
     # A removed navigation section is not retained as stale discovery context.
     (root / "mkdocs.yml").write_text(

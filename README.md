@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/universal-skills)](https://pypi.org/project/universal-skills/)
 [![License](https://img.shields.io/github/license/Knuckles-Team/universal-skills)](LICENSE)
 
-*Version: 1.3.4*
+*Version: 1.3.5*
 
 Universal Skills is a portable catalog of agent capabilities and dependency-ordered
 skill workflows. It supports Claude-compatible `SKILL.md` discovery and the
@@ -107,6 +107,7 @@ Before opening a change:
 
 ```bash
 python scripts/gen_bumpversion.py
+bump2version --config-file .bumpversion.cfg --allow-dirty --no-commit --no-tag patch
 python scripts/check_atomicity.py --strict
 pytest -q
 pre-commit run --all-files

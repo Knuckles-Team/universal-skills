@@ -20,7 +20,7 @@ team_config:
 tags: ['observability', 'research', 'langfuse', 'cross-domain']
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
 ---
 
 # Observability And Research Workflow

@@ -64,6 +64,12 @@ immutable revisions through repository supply-chain policy; do not copy mutable
 workflow refs or obsolete pins. Dependency-readiness is a manual/release gate
 where current pipelines requires it.
 
+A generated project's resolver lock must come from its reviewed dependency set,
+using an existing resolver with native builds disabled where required. Missing
+required releases block release/install claims; do not lower dependency bounds or
+invent lock entries. If a pipeline policy conflicts with approved immutable pins,
+retain the pins and report the conflict until the change is explicitly authorized.
+
 Retain applicable CCCC complexity, KISS, duplication, architecture and scanner
 distribution checks. Reuse shared implementations/profiles rather than another
 hand-maintained policy. Provision native tools only through an approved existing

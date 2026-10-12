@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "universal-skills"
-version = "1.3.4"
+version = "1.3.5"
 description = "A collection of universal skills for AI agents"
 readme = "README.md"
 license = "MIT"
@@ -34,7 +34,6 @@ mcp-client = ["fastmcp>=4.0.10", "python-dotenv>=1.2.2"]
 agent-workflows = ["httpx>=0.28.1", "PyYAML>=6.0.3"]
 automated-credential-rotation = []
 algorithmic-art = []
-api-wrapper-builder = ["requests>=2.34.2", "pydantic>=2.13.4"]
 brainstorming = []
 brand-guidelines = []
 browser-tools = ["playwright>=1.63.0", "Pillow>=12.3.0"]
@@ -88,7 +87,6 @@ all = [
     "universal-skills[mcp-client]>=1.0.0",
     "universal-skills[agent-workflows]>=1.0.0",
     "universal-skills[algorithmic-art]>=1.0.0",
-    "universal-skills[api-wrapper-builder]>=1.0.0",
     "universal-skills[brainstorming]>=1.0.0",
     "universal-skills[brand-guidelines]>=1.0.0",
     "universal-skills[browser-tools]>=1.0.0",

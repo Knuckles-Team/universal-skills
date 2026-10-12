@@ -25,7 +25,7 @@ team_config:
 tags: [social, content, automation, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Genius
 ---
 

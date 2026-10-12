@@ -10,7 +10,7 @@ stub pattern, and the a2a.json / opencode.json / pytest.ini / MANIFEST.in /
 .codespellignore / .vulture_ignore config set.
 
 The generated quality surface also carries a pinned, host-provisioned scanner
-profile consumed from the pinned pipelines hooks; scanner implementation and
+profile consumed from the shared pipelines hooks; scanner implementation and
 provisioning policy remain owned by pipelines.
 
 See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
@@ -23,6 +23,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from surface_templates import select_template
+from backend_surfaces import select_backend_template
+from cli_templates import CLI_PY, CLI_MCP_SYSTEM_PY, TESTS_CLI
 from scaffold_dates import generation_date
 from docs_assets import staged_theme_files, check_shared_theme, validate_theme_destinations
 from spec_templates import render_spec_files
@@ -224,16 +226,22 @@ include-package-data = true
 line-length = 88
 target-version = "py312"
 
+[tool.ruff.lint.isort]
+known-first-party = ["{pkg_dir}"]
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
 check_untyped_defs = true
 
-# Shared public documentation contract.  The hook is pinned below in
+# Shared public documentation contract. The hook authority is declared in
 # .pre-commit-config.yaml; these values identify this generated repository and
 # keep its README/AGENTS surface deterministic without network access.
 [tool.pipelines_hooks]
 packages = ["{pkg_dir}"]
+
+[tool.pipelines_hooks.stdout_writes]
+served_paths = ["{pkg_dir}"]
 
 [tool.pipelines_hooks.public_surface]
 repository = "Knuckles-Team/{package_name}"
@@ -1222,16 +1230,14 @@ and checks. Do not automatically merge or remove worktrees after scaffolding.
 
 INIT_PY = """\
 #!/usr/bin/env python
-# coding: utf-8
 
 import importlib
 import inspect
 import warnings
-from typing import List
 
 warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
 
-__all__: List[str] = []
+__all__: list[str] = []
 
 CORE_MODULES = [
     "{pkg_dir}.api",
@@ -1281,8 +1287,9 @@ __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"{gql_all_extend}])
 """
 
 
-MCP_SERVER_PY = r'''from pathlib import Path
+MCP_SERVER_PY = """\
 import sys
+from pathlib import Path
 
 from agent_connector_sdk.config import load_config
 from agent_connector_sdk.mcp.content import ConnectorContent
@@ -1295,7 +1302,7 @@ __version__ = "0.1.0"
 
 
 def get_mcp_instance(*, command_args=None):
-    """Construct one SDK-governed server and its native package content."""
+    \"\"\"Construct one SDK-governed server and its native package content.\"\"\"
     load_config()
     package_root = Path(__file__).resolve().parent
     args, mcp, middlewares = create_mcp_server(
@@ -1310,7 +1317,9 @@ def get_mcp_instance(*, command_args=None):
             manifest_path=package_root / "connector_manifest.yml",
         ),
     )
-    register_tool_surface(mcp, service="{package_name}", tools_module=tool_modules)
+    register_tool_surface(
+        mcp, service="{package_name}", tools_module=tool_modules
+    )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
     return mcp, args, middlewares
@@ -1323,13 +1332,15 @@ def build_server(*, command_args=None):
 def mcp_server():
     mcp, args, _ = get_mcp_instance()
     print("Starting {display_name} MCP", file=sys.stderr)
-    options = {{}} if args.transport == "stdio" else {{"host": args.host, "port": args.port}}
+    options = (
+        {{}} if args.transport == "stdio" else {{"host": args.host, "port": args.port}}
+    )
     mcp.run(transport=args.transport, **options)
 
 
 if __name__ == "__main__":
     mcp_server()
-'''
+"""
 
 AGENT_SERVER_PY = """\
 #!/usr/bin/python
@@ -1417,7 +1428,7 @@ if __name__ == "__main__":
 
 
 API_CLIENT_SYSTEM = """\
-from typing import Any, Dict
+from typing import Any
 
 from .api_client_base import ApiClientBase
 
@@ -1425,7 +1436,7 @@ from .api_client_base import ApiClientBase
 class ApiClientSystem(ApiClientBase):
     \"\"\"System status and monitoring API operations.\"\"\"
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         \"\"\"Retrieve the status of the target system.\"\"\"
         return self.request("GET", "/health")
 """
@@ -1437,347 +1448,13 @@ from .api_client_system import ApiClientSystem
 __all__ = ["ApiClientBase", "ApiClientSystem"]
 """
 
-ERROR_AUTHORITY_PY = '''\
-#!/usr/bin/python
-"""One representation authority for agent-readable HTTP errors.
-
-The generated module is deliberately framework-neutral.  HTTP, MCP, and A2A
-adapters construct one :class:`ProblemDetails` value and negotiate only its
-representation; they do not independently translate exceptions or retry
-metadata.  Browser HTML remains available, but agent clients receive RFC 9457
-JSON or structured Markdown when they ask for it.
-"""
-
-from __future__ import annotations
-
-import html
-import json
-import math
-import re
-from dataclasses import dataclass
-from typing import Any, Mapping
-
-from agent_connector_sdk.privacy import sanitize_for_persistence
-
-
-PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
-STRUCTURED_MARKDOWN_MEDIA_TYPE = "text/markdown"
-BROWSER_HTML_MEDIA_TYPE = "text/html"
-AGENT_ERROR_ACCEPT = (
-    f"{PROBLEM_JSON_MEDIA_TYPE}, "
-    f"{STRUCTURED_MARKDOWN_MEDIA_TYPE};q=0.9, "
-    f"{BROWSER_HTML_MEDIA_TYPE};q=0.5"
-)
-MAX_DETAIL_CHARS = 2048
-MAX_INSTANCE_CHARS = 512
-MAX_TYPE_CHARS = 256
-MAX_RETRY_AFTER_S = 3600.0
-
-_CODE_RE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,63}$")
-_DENIAL_CODES = frozenset(
-    {
-        "access_denied",
-        "authentication_required",
-        "forbidden",
-        "not_authorized",
-        "permission_denied",
-        "policy_denied",
-        "unauthorized",
-    }
-)
-_DEFAULT_TITLES = {
-    "dependency_unavailable": "Dependency unavailable",
-    "engine_degraded": "Service temporarily unavailable",
-    "invalid_request": "Invalid request",
-    "operation_failed": "Operation failed",
-    "permission_denied": "Permission denied",
-}
-_METADATA_FIELDS = (
-    "status",
-    "code",
-    "type",
-    "instance",
-    "retryable",
-    "retry_after_s",
-)
-
-
-def _safe_text(value: Any, *, limit: int, fallback: str) -> str:
-    """Sanitize and bound text before it crosses a public response boundary."""
-    candidate = "" if isinstance(value, BaseException) else str(value or "")
-    sanitized, _ = sanitize_for_persistence(candidate)
-    text = str(sanitized).replace("\\x00", "").strip()
-    return text[:limit] or fallback
-
-
-def _safe_code(value: Any) -> str:
-    candidate = str(value or "operation_failed").strip().lower()
-    return candidate if _CODE_RE.fullmatch(candidate) else "operation_failed"
-
-
-def _bounded_retry_after(value: Any) -> float | None:
-    if value is None:
-        return None
-    try:
-        retry_after = float(value)
-    except (TypeError, ValueError):
-        return None
-    if not math.isfinite(retry_after) or retry_after < 0:
-        return None
-    return min(retry_after, MAX_RETRY_AFTER_S)
-
-
-@dataclass(frozen=True)
-class ProblemDetails:
-    """Canonical RFC 9457 problem details plus agent retry metadata."""
-
-    status: int
-    code: str
-    instance: str
-    detail: str
-    type_uri: str = ""
-    title: str = ""
-    retryable: bool = False
-    retry_after_s: float | None = None
-
-    def __post_init__(self) -> None:
-        status = int(self.status)
-        if not 100 <= status <= 599:
-            raise ValueError("problem status must be between 100 and 599")
-
-        code = _safe_code(self.code)
-        denied = status in {401, 403} or code in _DENIAL_CODES
-        type_uri = _safe_text(
-            self.type_uri,
-            limit=MAX_TYPE_CHARS,
-            fallback=f"urn:agent-error:{code}",
-        )
-        instance = _safe_text(
-            self.instance,
-            limit=MAX_INSTANCE_CHARS,
-            fallback="urn:agent-error-instance:unknown",
-        )
-        title = _safe_text(
-            self.title,
-            limit=256,
-            fallback=_DEFAULT_TITLES.get(code, "Operation failed"),
-        )
-        detail = _safe_text(
-            self.detail,
-            limit=MAX_DETAIL_CHARS,
-            fallback="The request could not be completed.",
-        )
-        retryable = bool(self.retryable) and not denied
-        retry_after_s = (
-            _bounded_retry_after(self.retry_after_s) if retryable else None
-        )
-
-        object.__setattr__(self, "status", status)
-        object.__setattr__(self, "code", code)
-        object.__setattr__(self, "type_uri", type_uri)
-        object.__setattr__(self, "instance", instance)
-        object.__setattr__(self, "title", title)
-        object.__setattr__(self, "detail", detail)
-        object.__setattr__(self, "retryable", retryable)
-        object.__setattr__(self, "retry_after_s", retry_after_s)
-
-    def metadata(self) -> dict[str, Any]:
-        """Return the representation-invariant agent metadata."""
-        return {
-            "status": self.status,
-            "code": self.code,
-            "type": self.type_uri,
-            "instance": self.instance,
-            "retryable": self.retryable,
-            "retry_after_s": self.retry_after_s,
-        }
-
-    def as_dict(self) -> dict[str, Any]:
-        """Return an RFC 9457-compatible object with stable extension fields."""
-        return {
-            "type": self.type_uri,
-            "title": self.title,
-            "status": self.status,
-            "detail": self.detail,
-            "instance": self.instance,
-            "code": self.code,
-            "retryable": self.retryable,
-            "retry_after_s": self.retry_after_s,
-        }
-
-    def to_json(self) -> str:
-        return json.dumps(
-            self.as_dict(), ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        )
-
-    def to_markdown(self) -> str:
-        """Render structured Markdown from the same metadata object as JSON."""
-        metadata = self.metadata()
-        lines = ["---"]
-        for field in _METADATA_FIELDS:
-            rendered = json.dumps(metadata[field], ensure_ascii=False)
-            lines.append(f"{field}: {rendered}")
-        lines.extend(
-            [
-                "---",
-                f"# {self.title}",
-                "",
-                "## Detail",
-            ]
-        )
-        lines.extend(
-            f"> {line}" if line else ">" for line in self.detail.splitlines()
-        )
-        return "\\n".join(lines) + "\\n"
-
-    def to_html(self) -> str:
-        """Render the retained browser surface with escaped bounded fields."""
-        metadata = self.metadata()
-        attrs = " ".join(
-            "data-error-{}=\\"{}\\"".format(
-                field.replace("_", "-"), html.escape(str(value), quote=True)
-            )
-            for field, value in metadata.items()
-        )
-        detail = html.escape(self.detail, quote=False).replace("\\n", "<br>")
-        return (
-            "<!doctype html>\\n<html lang=\\"en\\"><head>"
-            f"<meta name=\\"error-status\\" content=\\"{self.status}\\">"
-            f"<title>{html.escape(self.title)}</title></head>\\n"
-            f"<body><main {attrs}><h1>{html.escape(self.title)}</h1>"
-            f"<p>{detail}</p></main></body></html>\\n"
-        )
-
-
-@dataclass(frozen=True)
-class RenderedError:
-    """A transport-neutral response ready for an HTTP/MCP adapter."""
-
-    status_code: int
-    media_type: str
-    body: str
-    headers: Mapping[str, str]
-
-
-def _accept_quality(accept: str, offered: str) -> tuple[float, int, int]:
-    """Return q, specificity, and source order for one offered media type."""
-    best_match = (-1, 0.0, -10_000)
-    for order, item in enumerate(accept.split(",")):
-        bits = [part.strip() for part in item.split(";")]
-        token = bits[0].lower()
-        try:
-            quality = next(
-                float(part.split("=", 1)[1].strip())
-                for part in bits[1:]
-                if part.lower().startswith("q=")
-            )
-        except (StopIteration, ValueError):
-            quality = 1.0
-        if not 0.0 <= quality <= 1.0:
-            continue
-        if token == offered:
-            specificity = 2
-        elif token == "*/*" or token == offered.split("/", 1)[0] + "/*":
-            specificity = 1
-        else:
-            continue
-        candidate = (specificity, quality, -order)
-        if candidate > best_match:
-            best_match = candidate
-    specificity, quality, source_order = best_match
-    return quality, specificity, source_order
-
-
-def negotiate_media_type(accept: str | None) -> str:
-    """Prefer agent formats, while retaining HTML for browser Accept headers."""
-    if not accept or not accept.strip():
-        return PROBLEM_JSON_MEDIA_TYPE
-    offered = (
-        PROBLEM_JSON_MEDIA_TYPE,
-        STRUCTURED_MARKDOWN_MEDIA_TYPE,
-        BROWSER_HTML_MEDIA_TYPE,
-    )
-    ranked = [
-        (*_accept_quality(accept, media_type), -priority, media_type)
-        for priority, media_type in enumerate(offered)
-    ]
-    supported = [candidate for candidate in ranked if candidate[0] > 0]
-    return max(supported)[-1] if supported else PROBLEM_JSON_MEDIA_TYPE
-
-
-def render_error(
-    problem: ProblemDetails, *, accept: str | None = None
-) -> RenderedError:
-    """Negotiate one bounded representation without changing its semantics."""
-    media_type = negotiate_media_type(accept)
-    if media_type == STRUCTURED_MARKDOWN_MEDIA_TYPE:
-        body = problem.to_markdown()
-    elif media_type == BROWSER_HTML_MEDIA_TYPE:
-        body = problem.to_html()
-    else:
-        media_type = PROBLEM_JSON_MEDIA_TYPE
-        body = problem.to_json()
-    headers = {
-        "Content-Type": f"{media_type}; charset=utf-8",
-        "Vary": "Accept",
-    }
-    if problem.retry_after_s is not None:
-        headers["Retry-After"] = str(problem.retry_after_s)
-    return RenderedError(
-        status_code=problem.status,
-        media_type=media_type,
-        body=body,
-        headers=headers,
-    )
-
-
-def error_response(
-    *,
-    status: int,
-    code: str,
-    instance: str,
-    detail: str,
-    type_uri: str = "",
-    title: str = "",
-    retryable: bool = False,
-    retry_after_s: float | None = None,
-    accept: str | None = None,
-) -> RenderedError:
-    """Construct and render a problem through the single package authority."""
-    return render_error(
-        ProblemDetails(
-            status=status,
-            code=code,
-            instance=instance,
-            detail=detail,
-            type_uri=type_uri,
-            title=title,
-            retryable=retryable,
-            retry_after_s=retry_after_s,
-        ),
-        accept=accept,
-    )
-
-
-__all__ = [
-    "BROWSER_HTML_MEDIA_TYPE",
-    "AGENT_ERROR_ACCEPT",
-    "MAX_DETAIL_CHARS",
-    "PROBLEM_JSON_MEDIA_TYPE",
-    "ProblemDetails",
-    "RenderedError",
-    "STRUCTURED_MARKDOWN_MEDIA_TYPE",
-    "error_response",
-    "negotiate_media_type",
-    "render_error",
-]
-'''
+ERROR_AUTHORITY_PY = (TEMPLATES_DIR / "error_authority.py").read_text(encoding="utf-8")
+ERROR_RENDERING_PY = (TEMPLATES_DIR / "error_rendering.py").read_text(encoding="utf-8")
+KISS_CONFIG = (TEMPLATES_DIR / "kiss.toml").read_text(encoding="utf-8")
 
 INPUT_MODELS_PY = """\
 #!/usr/bin/python
 \"\"\"Pydantic input models for {display_name} API request parameters.\"\"\"
-
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -1785,7 +1462,7 @@ from pydantic import BaseModel, Field
 class SystemStatusInput(BaseModel):
     \"\"\"Input model for system status queries.\"\"\"
 
-    verbose: Optional[bool] = Field(
+    verbose: bool | None = Field(
         default=False, description="Return extended status details."
     )
 """
@@ -1794,7 +1471,7 @@ RESPONSE_MODELS_PY = """\
 #!/usr/bin/python
 \"\"\"Pydantic response models for {display_name} API payloads.\"\"\"
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -1802,8 +1479,8 @@ from pydantic import BaseModel, Field
 class SystemStatusResponse(BaseModel):
     \"\"\"Response model for system status queries.\"\"\"
 
-    status: Optional[str] = Field(default=None, description="Service status string.")
-    raw: Optional[Dict[str, Any]] = Field(
+    status: str | None = Field(default=None, description="Service status string.")
+    raw: dict[str, Any] | None = Field(
         default=None, description="Raw response payload."
     )
 """
@@ -2596,9 +2273,7 @@ def test_denial_is_never_retryable_and_detail_is_bounded():
         status=403,
         code="permission_denied",
         instance="urn:request:denied",
-        detail=(
-            "/home/operator/private-token " + ("x" * (MAX_DETAIL_CHARS + 100))
-        ),
+        detail=("/home/operator/private-token " + ("x" * (MAX_DETAIL_CHARS + 100))),
         retryable=True,
         retry_after_s=30,
     )
@@ -2690,7 +2365,9 @@ def test_eco_bridge_present():
 @pytest.mark.concept("{concept_prefix}-001")
 def test_prefix_registered():
     \"\"\"Project concept prefix is registered. CONCEPT:{concept_prefix}-001\"\"\"
-    assert "CONCEPT:{concept_prefix}-" in CONCEPTS_DOC.read_text(encoding="utf-8")
+    assert "CONCEPT:{concept_prefix}-" in CONCEPTS_DOC.read_text(
+        encoding="utf-8"
+    )
 """
 
 
@@ -2711,17 +2388,27 @@ def scaffold(
     """Scaffold a complete agent-package project (SDK contracts)."""
     types = set(pkg_types.split(","))
     types = {value.strip() for value in types}
-    supported = {"api_client", "mcp", "agent", "graphql"}
-    if not {"api_client", "mcp"} <= types or not types <= supported:
+    supported = {"api_client", "cli", "mcp", "agent", "graphql"}
+    backends = types & {"api_client", "cli"}
+    if (
+        len(backends) != 1
+        or "mcp" not in types
+        or not types <= supported
+        or ("graphql" in types and "api_client" not in types)
+    ):
         raise ValueError(
-            "--type requires api_client,mcp; optional additions: agent,graphql"
+            "--type requires api_client,mcp or cli,mcp; optional addition: agent; "
+            "graphql is supported only with api_client"
         )
+    backend = next(iter(backends))
+    has_agent = "agent" in types
     pkg_dir = to_pkg_dir(package_name)
     if not display_name:
         display_name = to_display(package_name)
     if not description:
-        description = f"{display_name} API + MCP Server" + (
-            " + A2A Server" if "agent" in types else ""
+        label = "API" if backend == "api_client" else "CLI"
+        description = f"{display_name} {label} + MCP Server" + (
+            " + A2A Server" if has_agent else ""
         )
     upper_name = to_upper_env(package_name)
     if not concept_prefix:
@@ -2757,6 +2444,8 @@ def scaffold(
         "pkg_dir": pkg_dir,
         "display_name": display_name,
         "description": description,
+        "backend": backend,
+        "has_agent": has_agent,
         "badge_lines": render_public_badges(package_name, mcp_server="mcp" in types),
         "mcp_server": "true" if "mcp" in types else "false",
         "concept_prefix": concept_prefix,
@@ -2834,6 +2523,7 @@ def scaffold(
         # Docs site (7 standard pages)
         root / "mkdocs.yml": (MKDOCS_YML, True),
         root / ".config/spec-dashboard.json": (SPEC_DASHBOARD_CONFIG, False),
+        root / ".config/kiss.toml": (KISS_CONFIG, False),
         root / "docs/spec-delivery.md": (SPEC_DELIVERY_MD, True),
         root / "docs/index.md": (DOCS_INDEX_MD, True),
         root / "docs/overview.md": (DOCS_OVERVIEW_MD, True),
@@ -2852,13 +2542,20 @@ def scaffold(
 
     # Package files
     files[pkg / "__init__.py"] = (INIT_PY, True)
-    files[pkg / "auth.py"] = (AUTH_PY, True)
     files[pkg / "error_authority.py"] = (ERROR_AUTHORITY_PY, False)
-    files[pkg / f"{to_pkg_dir(short_name)}_input_models.py"] = (INPUT_MODELS_PY, True)
-    files[pkg / f"{to_pkg_dir(short_name)}_response_models.py"] = (
-        RESPONSE_MODELS_PY,
-        True,
-    )
+    files[pkg / "error_rendering.py"] = (ERROR_RENDERING_PY, False)
+    if backend == "api_client":
+        files[pkg / "auth.py"] = (AUTH_PY, True)
+        files[pkg / f"{to_pkg_dir(short_name)}_input_models.py"] = (
+            INPUT_MODELS_PY,
+            True,
+        )
+        files[pkg / f"{to_pkg_dir(short_name)}_response_models.py"] = (
+            RESPONSE_MODELS_PY,
+            True,
+        )
+    else:
+        files[pkg / "cli.py"] = (CLI_PY, True)
     files[pkg / "mcp_config.json"] = (PKG_MCP_CONFIG_JSON, False)
 
     # Canonical system prompt (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical) + fleet contribution
@@ -2931,14 +2628,18 @@ def scaffold(
         False,
     )
 
-    # API modular directory scaffolding
-    files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)
-    files[pkg / "api" / "api_client_base.py"] = (API_CLIENT_BASE, True)
-    files[pkg / "api" / "api_client_system.py"] = (API_CLIENT_SYSTEM, True)
+    # Backend source is emitted only for the selected integration boundary.
+    if backend == "api_client":
+        files[pkg / "api" / "__init__.py"] = (API_INIT_PY, False)
+        files[pkg / "api" / "api_client_base.py"] = (API_CLIENT_BASE, True)
+        files[pkg / "api" / "api_client_system.py"] = (API_CLIENT_SYSTEM, True)
 
     # MCP modular directory scaffolding
     files[pkg / "mcp" / "__init__.py"] = (MCP_INIT_PY, False)
-    files[pkg / "mcp" / "mcp_system.py"] = (MCP_SYSTEM_PY, True)
+    files[pkg / "mcp" / "mcp_system.py"] = (
+        CLI_MCP_SYSTEM_PY if backend == "cli" else MCP_SYSTEM_PY,
+        True,
+    )
 
     if "mcp" in types:
         files[pkg / "mcp_server.py"] = (MCP_SERVER_PY, True)
@@ -2966,9 +2667,13 @@ def scaffold(
 
     # Flat tests directory
     files[root / "tests" / "__init__.py"] = ("", False)
-    files[root / "tests" / "conftest.py"] = (TESTS_CONFTEST, True)
-    files[root / "tests" / "test_auth.py"] = (TESTS_AUTH, True)
-    files[root / "tests" / "test_api_wrapper.py"] = (TESTS_API_WRAPPER, True)
+    if backend == "api_client":
+        files[root / "tests" / "conftest.py"] = (TESTS_CONFTEST, True)
+        files[root / "tests" / "test_auth.py"] = (TESTS_AUTH, True)
+        files[root / "tests" / "test_api_wrapper.py"] = (TESTS_API_WRAPPER, True)
+    else:
+        files[root / "tests" / "conftest.py"] = ("", False)
+        files[root / "tests" / "test_cli.py"] = (TESTS_CLI, True)
     files[root / "tests" / "test_error_authority.py"] = (
         TESTS_ERROR_AUTHORITY,
         True,
@@ -2982,7 +2687,10 @@ def scaffold(
     files[root / "tests" / "test_concept_parity.py"] = (TESTS_CONCEPT_PARITY, True)
 
     files.update(
-        {root / path: (content, False) for path, content in render_spec_files(ctx).items()}
+        {
+            root / path: (content, False)
+            for path, content in render_spec_files(ctx).items()
+        }
     )
 
     selected_templates = {
@@ -2998,6 +2706,15 @@ def scaffold(
             "DOCS_OVERVIEW_MD",
             "DOCS_INSTALLATION_MD",
             "DOCS_DEPLOYMENT_MD",
+            "DOCS_USAGE_MD",
+            "DOCS_PLATFORM_MD",
+            "ROOT_AGENTS_MD",
+            "CHANGELOG_MD",
+            "MKDOCS_YML",
+            "ENV_EXAMPLE",
+            "ROOT_MCP_CONFIG_JSON",
+            "MCP_COMPOSE_YML",
+            "AGENT_COMPOSE_YML",
             "PYPROJECT_TOML",
             "INIT_PY",
         }
@@ -3005,9 +2722,9 @@ def scaffold(
 
     # ── Write all files ──────────────────────────────────────────────────
     for path, (template, needs_format) in files.items():
-        selected = select_template(
-            selected_templates.get(template, ""), template, "agent" in types
-        )
+        template_name = selected_templates.get(template, "")
+        selected = select_template(template_name, template, has_agent)
+        selected = select_backend_template(template_name, selected, backend)
         content = selected.format(**ctx) if needs_format else selected
         if _write_generated_text(path, content):
             print(f"  ✅ {path.relative_to(root.parent)}")
@@ -3037,7 +2754,9 @@ def scaffold(
         # library-only helper so each generated package owns the same
         # fail-closed staged/delta semantics without hook-time installation.
     ):
-        if script_name == "validate_a2a_agent.py" and "agent" not in types:
+        if script_name == "validate_a2a_agent.py" and not has_agent:
+            continue
+        if script_name == "verify_api_integration.py" and backend != "api_client":
             continue
         src = TEMPLATES_DIR / script_name
         dst = root / "scripts" / script_name
@@ -3147,7 +2866,7 @@ if __name__ == "__main__":
         default="api_client,mcp",
         dest="pkg_types",
         type=str,
-        help="Required: api_client,mcp; optional additions: agent,graphql (default: api_client,mcp)",
+        help="Required: api_client,mcp or cli,mcp; optional: agent; graphql requires api_client (default: api_client,mcp)",
     )
     parser.add_argument(
         "--display-name",

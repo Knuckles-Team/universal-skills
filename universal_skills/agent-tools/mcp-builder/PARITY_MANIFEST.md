@@ -1,7 +1,8 @@
 # MCP Builder parity contract
 
 The generator creates a portable connector repository. Required artifacts are
-conditional on selected api_client, mcp, agent and graphql surfaces. Existing
+conditional on one backend (`api_client` or `cli`) with mandatory `mcp`. Add
+`agent` for either backend or `graphql` for API clients only. Existing
 project-owned files remain unchanged on rerun; review their compatibility instead
 of overwriting them. Current SDK and pipelines source remain authoritative.
 
@@ -22,8 +23,9 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 
 | Artifact | Contract |
 |---|---|
-| api/ and auth.py | Provider semantics, bounded HTTP, origin/redirect/TLS protections, SDK configuration and credential references. |
-| mcp/ | Condensed tools with bounded schemas, truthful effect declarations and API-client calls. |
+| API backend: api/ and auth.py | Provider semantics, bounded HTTP, origin/redirect/TLS protections, SDK configuration and credential references. |
+| CLI backend: cli.py | Operator-configured executable, reviewed fixed argument vectors, no shell or ambient credentials, bounded time/output and safe process cleanup. The starter execution boundary is POSIX; discovery remains inert and portable. |
+| mcp/ | Condensed tools with bounded schemas, truthful effect declarations and calls to the selected backend. |
 | mcp_server.py | SDK load_config, factory, one registrar and explicit ConnectorContent; caller applies returned middleware. |
 | connector_manifest.yml | Packaged emitted types/relationships and applicable capabilities, validated by current SDK/graph-owned tooling. |
 | skills/, prompts/, ontology/, optional shapes | Portable provider content and native discovery; no deployment-specific ontology; prompt body in instructions.core_directive. |
@@ -57,7 +59,9 @@ and bound evidence. Never infer live endpoints or availability from source files
 
 Validate generated Python/metadata, entry points, installed data, schema/manifest
 agreement, actual tool/content registration, source/effect fixture conformance
-and normal repository gates. Preserve rerun and documentation ownership contracts.
+and normal repository gates. Test CLI process limits and argument safety with isolated
+executables, and API contracts through mock transports. Verify every supported
+backend/type combination in wheel and source distributions. Preserve rerun and documentation ownership contracts.
 
 Reject stale AU connector imports or native_ingest; missing content registration;
 undeclared ingestion types; retired modes presented as current APIs; recursive

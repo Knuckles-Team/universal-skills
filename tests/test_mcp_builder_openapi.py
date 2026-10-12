@@ -3,6 +3,7 @@
 import copy
 import importlib
 import json
+import os
 import ssl
 import sys
 from pathlib import Path
@@ -17,6 +18,14 @@ SCRIPTS = (
 sys.path.insert(0, str(SCRIPTS))
 generate = importlib.import_module("openapi_converter").generate
 compile_contract = importlib.import_module("openapi_schema").compile_contract
+
+
+def _require_runtime():
+    for name in ("agent_connector_sdk.http.client", "regex"):
+        if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":
+            importlib.import_module(name)
+        else:
+            pytest.importorskip(name)
 
 
 @pytest.fixture
@@ -68,8 +77,7 @@ def document():
 
 @pytest.fixture
 def runtime(tmp_path, document, monkeypatch):
-    pytest.importorskip("agent_connector_sdk.http.client")
-    pytest.importorskip("regex")
+    _require_runtime()
     package = tmp_path / "fixture_connector"
     package.mkdir(parents=True)
     (package / "__init__.py").write_text("")
@@ -97,7 +105,7 @@ def test_exact_method_route_and_body(runtime, method):
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
-        allow_writes=True,
+        write_mode="read-write",
     )
     arguments = {"action": method + "Item", "path": {"id": "abc"}}
     if method in {"post", "put", "patch"}:
@@ -130,7 +138,7 @@ def test_bad_input_never_requests(runtime, arguments):
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(forbidden),
-        allow_writes=True,
+        write_mode="read-write",
     )
     with pytest.raises(ValueError):
         client.execute("items", arguments)
@@ -156,7 +164,7 @@ def test_failed_write_is_never_retried(runtime, status):
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
-        allow_writes=True,
+        write_mode="read-write",
     )
     with pytest.raises(RuntimeError):
         client.execute("items", {"action": "deleteItem", "path": {"id": "abc"}})
@@ -375,8 +383,7 @@ def test_scaffold_public_converter_registered_tool_call(
     import asyncio
     import subprocess
 
-    pytest.importorskip("agent_connector_sdk.http.client")
-    pytest.importorskip("regex")
+    _require_runtime()
     from fastmcp import FastMCP, Client
     from agent_connector_sdk.http.client import create_http_client
 
@@ -437,3 +444,65 @@ def test_scaffold_public_converter_registered_tool_call(
         assert not seen[0].headers.get("authorization")
     finally:
         auth.close_client()
+
+
+def test_converted_client_preserves_generated_auth_contract(tmp_path, document):
+    import subprocess
+
+    _require_runtime()
+    subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "scaffold_package.py"),
+            "auth-fixture",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    project = tmp_path / "auth-fixture"
+    document["components"] = {
+        "securitySchemes": {"bearer": {"type": "http", "scheme": "bearer"}}
+    }
+    document["security"] = [{"bearer": []}]
+    spec = tmp_path / "auth.json"
+    spec.write_text(json.dumps(document))
+    generate(spec, project / "auth_fixture", "bearer")
+    environment = dict(os.environ, AUTH_FIXTURE_AUTH_SCHEME="bearer")
+    # Exercise the unchanged scaffold tests against the replacement OpenAPI factory.
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_auth.py", "-q", "-o", "addopts="],
+        cwd=project,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "6 passed" in result.stdout
+
+
+def test_registrar_keeps_sdk_domain_toggle(runtime, monkeypatch):
+    from fastmcp import FastMCP
+    from agent_connector_sdk.mcp import tool_surface
+
+    registrar = importlib.import_module("fixture_connector.mcp")
+    monkeypatch.setattr(
+        tool_surface,
+        "setting",
+        lambda key, default: False if key == "ITEMSTOOL" else default,
+    )
+    server = FastMCP("Disabled generated domain")
+    assert (
+        tool_surface.register_tool_surface(
+            server, service="fixture", tools_module=registrar
+        )
+        == []
+    )
+    assert tool_surface.registered_tools(server) == {}
+    monkeypatch.setattr(tool_surface, "setting", lambda key, default: default)
+    assert tool_surface.register_tool_surface(
+        server, service="fixture", tools_module=registrar
+    ) == ["items"]
+    assert set(tool_surface.registered_tools(server)) == {"items_operations"}

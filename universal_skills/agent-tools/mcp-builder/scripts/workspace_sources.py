@@ -35,14 +35,9 @@ dependency is needed (or added) because the table's own grammar
 
 from __future__ import annotations
 
-import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover - only exercised on Python 3.10
-    import tomli as tomllib
 
 _SOURCES_HEADER = "[tool.uv.sources]"
 _TABLE_HEADER_RE_PREFIX = "\n["

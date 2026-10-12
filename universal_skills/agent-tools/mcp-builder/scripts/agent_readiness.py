@@ -522,7 +522,7 @@ def _render_api_catalog(readiness: dict[str, Any]) -> str | None:
         )
     if capabilities["skills"].get("applicable") is True:
         links.append(_discovery_link(".well-known/agent-skills.json", title="Agent Skills"))
-    for field, rel in _OAUTH_METADATA_FIELDS.items():
+    for field in _OAUTH_METADATA_FIELDS:
         for authority in evidence.values():
             metadata_path = authority.get(field)
             if metadata_path:
@@ -955,7 +955,11 @@ def _page_records(
 
 
 def _render_curated(
-    config: dict[str, Any], readiness: dict[str, Any], sections: tuple[Section, ...]
+    config: dict[str, Any],
+    readiness: dict[str, Any],
+    sections: tuple[Section, ...],
+    *,
+    standards_reference: str | None = None,
 ) -> str:
     lines = [
         f"# {config.get('site_name', readiness['project']['name'])}",
@@ -970,9 +974,15 @@ def _render_curated(
             suffix = f" — {page.summary}" if page.summary else ""
             lines.append(f"- [{page.title}]({page.url}){suffix}")
         lines.append("")
-    lines.extend(["## Standards maturity", ""])
-    for standard in readiness["standards"]:
-        lines.append(f"- {standard['id']}: {standard['kind']} ({standard['level']})")
+    if standards_reference is None:
+        lines.extend(["## Standards maturity", ""])
+        for standard in readiness["standards"]:
+            lines.append(f"- {standard['id']}: {standard['kind']} ({standard['level']})")
+    else:
+        lines.append(
+            "Standards maturity and scope: "
+            f"[root documentation index]({standards_reference})."
+        )
     lines.append("")
     output = "\n".join(lines).rstrip() + "\n"
     _scan_safe_text(output, "llms")
@@ -1251,6 +1261,7 @@ def generate(
             },
             readiness,
             (section,),
+            standards_reference="../../llms.txt",
         )
         section_payloads[f"llms-sections/{section.slug}/llms.txt"] = section_text
 

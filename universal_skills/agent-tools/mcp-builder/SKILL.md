@@ -4,12 +4,13 @@ domain: agent-tools
 skill_type: skill
 description: >-
   Build or update an MCP connector package using agent-connector-sdk and shared
-  pipelines standards. Use for connector scaffolding, API/tool registration,
-  package content, ingestion contracts, and release-ready repository structure.
+  pipelines standards. Use when wrapping REST or GraphQL APIs from schemas or
+  documentation, exposing a CLI through MCP, or updating connector registration,
+  package content, ingestion contracts, and repository scaffolding.
 license: MIT
-tags: [mcp, development, protocol, tools, api]
+tags: [mcp, development, protocol, tools, api, cli]
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Genius
 ---
 
@@ -32,15 +33,26 @@ Run from this skill directory, choosing only the requested package surfaces:
     python3 scripts/scaffold_package.py example-connector --type api_client,mcp --output-dir /path/to/output
 
 The canonical scaffold and its assets ship inside this skill; generation requires
-no external template repository. The generator preserves existing project-owned files. Inspect the generated diff
+no external template repository.
+
+| Backend | Required types | Optional additions |
+|---|---|---|
+| REST or GraphQL API | `api_client,mcp` | `agent`, `graphql` |
+| Local CLI | `cli,mcp` | `agent` |
+
+Every generated package serves MCP. CLI backends need no HTTP base URL or API
+credentials. Select exactly one backend; MCP remains the default container entrypoint.
+
+The generator preserves existing project-owned files. Inspect the generated diff
 and resolve current authority changes before treating a scaffold as ready.
 Optional agent orchestration belongs behind the current agent-utilities runtime
 contract; it is not a connector dependency or a second builder.
 
 ## Contracts
 
-- Keep vendor requests, pagination and authentication in the API client. MCP tools
-  validate inputs and call that client through SDK registration.
+- Keep vendor requests and pagination in the API client, or subprocess execution
+  in the CLI adapter. MCP tools validate inputs and use SDK registration for either
+  backend; a local command does not bypass authorization or effect controls.
 - Serve declared skills, prompts, ontology, shapes and connector manifest through
   explicit SDK content registration; files in a wheel alone do not prove discovery.
 - Use typed SDK ingestion and graph-owned generated contracts. Source adapters
@@ -53,6 +65,8 @@ contract; it is not a connector dependency or a second builder.
 
 ## Load the relevant reference
 
+- [Backend contracts](reference/backend_contracts.md): API schemas, authentication,
+  pagination and errors; CLI argument vectors, execution bounds and proof cases.
 - [Connector contracts](reference/connector_contracts.md): SDK ownership, manifests,
   ingestion/effects, packaging, quality gates and source authorities.
 - [Python server](reference/python_mcp_server.md): factory, tools and explicit content.
@@ -75,7 +89,5 @@ Include a negative test rejecting stale agent-utilities connector imports. Run n
 lint and pre-commit gates in an existing environment; report unavailable checks
 accurately. Do not install native toolchains or broaden dependencies for unrelated
 checks.
-
-Supported scaffolds include `api_client,mcp`; add `agent` and/or `graphql` when needed. Other type combinations are rejected before any files are written. MCP remains the default container entrypoint.
 
 For reproducible output, pass `--generation-date YYYY-MM-DD` or set `SOURCE_DATE_EPOCH` (UTC Unix seconds). The explicit date wins; otherwise generation uses today's UTC date. Generation dates never establish delivery or release evidence.
