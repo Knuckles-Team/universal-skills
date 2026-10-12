@@ -74,3 +74,5 @@ accurately. Do not install native toolchains or broaden dependencies for unrelat
 checks.
 
 Supported scaffolds include `api_client,mcp`; add `agent` and/or `graphql` when needed. Other type combinations are rejected before any files are written. MCP remains the default container entrypoint.
+
+For reproducible output, pass `--generation-date YYYY-MM-DD` or set `SOURCE_DATE_EPOCH` (UTC Unix seconds). The explicit date wins; otherwise generation uses today's UTC date. Generation dates never establish delivery or release evidence.

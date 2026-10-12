@@ -17,13 +17,13 @@ See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
 """
 
 import argparse
-import datetime
 import shutil
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from surface_templates import select_template
+from scaffold_dates import generation_date
 from quality_templates import (
     PRECOMMIT_CONFIG,
     SCANNER_CI_YML,
@@ -1058,10 +1058,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - {date}
+Scaffold generated: {date}. This is not a release or delivery date.
 
 ### Added
-- Initial release.
+- Initial scaffold; release and delivery remain unclaimed.
 - Modular subfolders for API wrappers (`api/`) and action-routed MCP tools (`mcp/`).
 - Material-theme mkdocs documentation site (7 standard pages).
 - Full pre-commit quality gate and flat `tests/` structure.
@@ -2726,6 +2726,7 @@ def scaffold(
     concept_prefix: str = "",
     doc_urls: str = "",
     in_place: bool = False,
+    generated_on: str | None = None,
 ):
     """Scaffold a complete agent-package project (SDK contracts)."""
     types = set(pkg_types.split(","))
@@ -2757,8 +2758,9 @@ def scaffold(
         agent_cmd = f"{package_name}-agent"
         short_name = package_name
 
-    year = datetime.datetime.now().year
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    generated = generation_date(generated_on)
+    year = generated.year
+    date = generated.isoformat()
 
     has_graphql = "graphql" in types
     gql_core_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
@@ -2809,7 +2811,7 @@ def scaffold(
         "upper_name": upper_name,
     }
 
-    root = Path(output_dir) if in_place else Path(output_dir) / package_name
+    root = (Path(output_dir) if in_place else Path(output_dir) / package_name).resolve()
     pkg = root / pkg_dir
 
     # files: path -> (template, needs_format)
@@ -3183,6 +3185,12 @@ if __name__ == "__main__":
         help="Write files directly into --output-dir instead of creating a subdirectory",
     )
 
+    parser.add_argument(
+        "--generation-date",
+        dest="generated_on",
+        help="ISO generation date; defaults to SOURCE_DATE_EPOCH or today in UTC, never a delivery date",
+    )
+
     args = parser.parse_args()
     scaffold(
         package_name=args.package_name,
@@ -3193,4 +3201,5 @@ if __name__ == "__main__":
         concept_prefix=args.concept_prefix,
         doc_urls=args.doc_urls,
         in_place=args.in_place,
+        generated_on=args.generated_on,
     )
