@@ -44,6 +44,7 @@ def get_client():
             tls_profile=tls,
             credential_scheme=scheme if reference else None,
             allow_writes=setting("__PACKAGE_ENV___ALLOW_WRITES", False),
+            allow_plaintext=setting("__PACKAGE_ENV___ALLOW_PLAINTEXT", False),
         )
         resources.callback(client.close)
         _resources = resources.pop_all()

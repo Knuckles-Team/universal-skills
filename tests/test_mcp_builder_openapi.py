@@ -3,6 +3,7 @@
 import copy
 import importlib
 import json
+import ssl
 import sys
 from pathlib import Path
 
@@ -233,3 +234,206 @@ def test_auth_requirement_is_enforced_before_request(runtime):
     with pytest.raises(PermissionError):
         client.execute("items", {"action": "getItem", "path": {"id": "abc"}})
     client.close()
+
+
+def test_plaintext_requires_explicit_endpoint_opt_in(runtime):
+    with pytest.raises(ValueError, match="allow_plaintext"):
+        runtime.OpenApiClient("http://provider.example", auth=httpx.Auth())
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    client = runtime.OpenApiClient(
+        "http://provider.example",
+        auth=httpx.Auth(),
+        allow_plaintext=True,
+        transport=httpx.MockTransport(handler),
+    )
+    client.execute("items", {"action": "getItem", "path": {"id": "abc"}})
+    assert str(seen[0].url) == "http://provider.example/api/items/abc"
+    client.close()
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "https://other.example/leak",
+        "http://provider.example/downgrade",
+    ],
+)
+def test_credentials_never_follow_redirect(runtime, location):
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(302, headers={"location": location})
+
+    client = runtime.OpenApiClient(
+        "https://provider.example",
+        auth=httpx.BasicAuth("fixture", "not-a-secret"),
+        allow_plaintext=True,
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(RuntimeError, match="302"):
+        client.execute("items", {"action": "getItem", "path": {"id": "abc"}})
+    assert len(seen) == 1
+    assert seen[0].url.host == "provider.example"
+    assert seen[0].url.scheme == "https"
+    client.close()
+
+
+def test_plaintext_opt_in_preserves_https_verification(runtime, monkeypatch):
+    from agent_connector_sdk.http import client as sdk_client
+
+    captured = {}
+
+    def transport(**kwargs):
+        captured.update(kwargs)
+        return httpx.MockTransport(lambda _: httpx.Response(200, json={"ok": True}))
+
+    monkeypatch.setattr(sdk_client.httpx, "HTTPTransport", transport)
+    client = runtime.OpenApiClient(
+        "https://provider.example",
+        auth=httpx.Auth(),
+        allow_plaintext=True,
+    )
+    assert captured["verify"].check_hostname is True
+    assert captured["verify"].verify_mode == ssl.CERT_REQUIRED
+    client.close()
+
+
+def test_tampered_contract_cannot_escape_origin(runtime):
+    runtime.CONTRACT["operations"]["getItem"]["path"] = "https://other.example/{id}"
+    client = runtime.OpenApiClient(
+        "https://provider.example",
+        auth=httpx.Auth(),
+        transport=httpx.MockTransport(lambda _: pytest.fail("cross-origin request")),
+    )
+    with pytest.raises(ValueError, match="origin"):
+        client.execute("items", {"action": "getItem", "path": {"id": "abc"}})
+    client.close()
+
+
+@pytest.mark.parametrize(
+    "media,schema,wire,expected",
+    [
+        ("text/plain", {"type": "string", "enum": ["ok"]}, b"ok", "ok"),
+        ("application/vnd.apple.mpegurl", {"type": "string"}, b"#EXTM3U", "#EXTM3U"),
+        (
+            "application/octet-stream",
+            {"type": "string", "format": "binary"},
+            b"\x00\xff",
+            "AP8=",
+        ),
+        (
+            "application/problem+json",
+            {"type": "object", "required": ["ok"]},
+            b'{"ok":true}',
+            {"ok": True},
+        ),
+    ],
+)
+def test_declared_response_representation(
+    runtime, document, media, schema, wire, expected
+):
+    document["paths"]["/items/{id}"]["get"]["responses"]["200"]["content"] = {
+        media: {"schema": schema}
+    }
+    contract = compile_contract(document)
+    domain_schemas = importlib.import_module("openapi_schema").domain_schemas
+    contract["schemas"] = {
+        domain: domain_schemas(contract, domain) for domain in contract["domains"]
+    }
+    runtime.CONTRACT = contract
+    client = runtime.OpenApiClient(
+        "https://provider.example",
+        auth=httpx.Auth(),
+        transport=httpx.MockTransport(
+            lambda _: httpx.Response(200, content=wire, headers={"content-type": media})
+        ),
+    )
+    assert (
+        client.execute("items", {"action": "getItem", "path": {"id": "abc"}})["data"]
+        == expected
+    )
+    client.close()
+
+
+def test_unknown_response_encoding_fails_compilation(document):
+    document["paths"]["/items/{id}"]["get"]["responses"]["200"]["content"] = {
+        "application/unknown": {"schema": {"type": "string"}}
+    }
+    with pytest.raises(ValueError, match="Unsupported response media"):
+        compile_contract(document)
+
+
+def test_scaffold_public_converter_registered_tool_call(
+    tmp_path, document, monkeypatch
+):
+    import asyncio
+    import subprocess
+
+    pytest.importorskip("agent_connector_sdk.http.client")
+    pytest.importorskip("regex")
+    from fastmcp import FastMCP, Client
+    from agent_connector_sdk.http.client import create_http_client
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "scaffold_package.py"),
+            "public-fixture",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    project = tmp_path / "public-fixture"
+    spec = tmp_path / "public.json"
+    spec.write_text(json.dumps(document))
+    generate(spec, project / "public_fixture")
+    monkeypatch.syspath_prepend(str(project))
+    auth = importlib.import_module("public_fixture.auth")
+    runtime = importlib.import_module("public_fixture.openapi_runtime")
+    registrar = importlib.import_module("public_fixture.mcp")
+    monkeypatch.setattr(auth, "load_config", lambda: None)
+    monkeypatch.setattr(
+        auth,
+        "setting",
+        lambda key, default: (
+            "https://provider.example" if key.endswith("_BASE_URL") else default
+        ),
+    )
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    monkeypatch.setattr(
+        runtime,
+        "create_http_client",
+        lambda options, **kwargs: create_http_client(
+            options, transport=httpx.MockTransport(handler)
+        ),
+    )
+    server = FastMCP("Generated public connector fixture")
+    registrar.register_items_tools(server)
+
+    async def call():
+        async with Client(server) as client:
+            result = await client.call_tool(
+                "items_operations", {"action": "getItem", "path": {"id": "abc"}}
+            )
+            assert result.structured_content["data"] == {"ok": True}
+
+    try:
+        asyncio.run(call())
+        assert len(seen) == 1
+        assert seen[0].method == "GET"
+        assert not seen[0].headers.get("authorization")
+    finally:
+        auth.close_client()

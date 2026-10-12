@@ -27,15 +27,14 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
             Path(__file__).parent / "templates/openapi_runtime.py"
         ).read_text(),
     }
-    if auth_scheme:
-        if auth_scheme not in contract["security_schemes"]:
-            raise ValueError("Selected auth scheme is not declared in OpenAPI")
-        auth = (Path(__file__).parent / "templates/openapi_auth.py").read_text()
-        files[package / "auth.py"] = (
-            auth.replace("__PACKAGE_ENV__", package.name.upper())
-            .replace("__SERVICE__", package.name.replace("_", "-"))
-            .replace("__DEFAULT_AUTH_SCHEME__", auth_scheme)
-        )
+    if auth_scheme and auth_scheme not in contract["security_schemes"]:
+        raise ValueError("Selected auth scheme is not declared in OpenAPI")
+    auth = (Path(__file__).parent / "templates/openapi_auth.py").read_text()
+    files[package / "auth.py"] = (
+        auth.replace("__PACKAGE_ENV__", package.name.upper())
+        .replace("__SERVICE__", package.name.replace("_", "-"))
+        .replace("__DEFAULT_AUTH_SCHEME__", auth_scheme)
+    )
     imports = [
         "from ..openapi_runtime import register_domain",
         "from ..auth import get_client",

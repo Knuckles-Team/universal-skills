@@ -78,6 +78,33 @@ def hashes(contents):
     }
 
 
+def manifest(root):
+    """Bind every file's bytes and permitted Git executable mode."""
+    return {
+        name: {
+            "sha256": digest,
+            "mode": "100755" if (root / name).stat().st_mode & 0o111 else "100644",
+        }
+        for name, digest in hashes(files(root)).items()
+    }
+
+
+def safe_path(name):
+    """Reject noncanonical paths before filesystem normalization can alias them."""
+    if (
+        not name
+        or name.startswith("/")
+        or "\\" in name
+        or any(ord(char) < 32 for char in name)
+        or any(part in {"", ".", ".."} | IGNORED for part in name.split("/"))
+        or Path(name).as_posix() != name
+        or Path(name).name == ".env"
+        or Path(name).suffix in {".log", ".pyc"}
+    ):
+        raise ValueError("Substitution caused unsafe or noncanonical file path")
+    return name
+
+
 def substitute(contents, replacements):
     """One simultaneous literal substitution pass over file paths and UTF-8 bytes."""
     if not replacements or any(not key for key in replacements):
@@ -88,19 +115,41 @@ def substitute(contents, replacements):
             for key in sorted(replacements, key=lambda key: (-len(key), key))
         )
     )
+
     def change(value):
         return matcher.sub(lambda match: replacements[match.group()], value)
+
     result = {}
     for name, body in sorted(contents.items()):
-        target = change(name)
-        if target in result or target.startswith("/") or ".." in Path(target).parts:
+        target = safe_path(change(name))
+        if target in result:
             raise ValueError("Substitution caused unsafe or duplicate file path")
         try:
             rendered = change(body.decode()).encode()
         except UnicodeDecodeError:
             rendered = body
         result[target] = rendered
+    for name in result:
+        if any(parent.as_posix() in result for parent in Path(name).parents):
+            raise ValueError("Substitution caused a file/directory collision")
     return result
+
+
+def render(source, destination, replacements):
+    """Validate the complete plan before writing and preserve executable modes."""
+    if destination.exists():
+        raise FileExistsError("Render destination must not exist")
+    result = substitute(files(source), replacements)
+    modes = {
+        next(iter(substitute({name: b""}, replacements))): item["mode"]
+        for name, item in manifest(source).items()
+    }
+    for name, body in result.items():
+        path = destination / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+        path.chmod(0o755 if modes[name] == "100755" else 0o644)
+    return manifest(destination)
 
 
 def verify(expected, actual, allowed):
@@ -121,7 +170,7 @@ def verify(expected, actual, allowed):
 
 def publish_template(root, owner, name, checks):
     contents = files(root)
-    if checks.get("files") != hashes(contents) or checks.get("passed") is not True:
+    if checks.get("files") != manifest(root) or checks.get("passed") is not True:
         raise ValueError(
             "Passed checks must bind the exact complete template file hashes"
         )
@@ -187,8 +236,20 @@ def publish_template(root, owner, name, checks):
     return {
         "repository": repo["full_name"],
         "sha": commit["sha"],
-        "files": hashes(contents),
+        "files": manifest(root),
     }
+
+
+def commit_tree(repository, revision):
+    commit = api(f"repos/{repository}/git/commits/{revision}")
+    tree = api(f"repos/{repository}/git/trees/{commit['tree']['sha']}?recursive=1")
+    if tree.get("truncated"):
+        raise ValueError("Cannot attest a truncated repository tree")
+    return sorted(
+        (item["path"], item["mode"], item["type"], item["sha"])
+        for item in tree["tree"]
+        if item["type"] != "tree"
+    )
 
 
 def create_from_template(owner, name, template, template_sha):
@@ -202,20 +263,31 @@ def create_from_template(owner, name, template, template_sha):
     before = api(f"repos/{template}/commits/{branch}")["sha"]
     if before != template_sha:
         raise ValueError("Template head differs from reviewed revision")
+    expected_tree = commit_tree(template, template_sha)
     repo = api(
         f"repos/{template}/generate",
         "POST",
         {"owner": owner, "name": name, "private": True, "include_all_branches": False},
     )
-    after = api(f"repos/{template}/commits/{branch}")["sha"]
-    if before != after or not repo["private"]:
+    after_branch = api(f"repos/{template}")["default_branch"]
+    after = api(f"repos/{template}/commits/{after_branch}")["sha"]
+    if branch != after_branch or before != after or not repo["private"]:
         raise RuntimeError(
             "Template changed during generation; destination preserved for inspection"
+        )
+    generated = api(f"repos/{owner}/{name}")
+    generated_head = api(f"repos/{owner}/{name}/commits/{generated['default_branch']}")[
+        "sha"
+    ]
+    if commit_tree(f"{owner}/{name}", generated_head) != expected_tree:
+        raise RuntimeError(
+            "Generated tree differs from reviewed template; destination preserved"
         )
     return {
         "repository": repo["full_name"],
         "template": template,
         "template_sha": template_sha,
+        "generated_sha": generated_head,
         "private": repo["private"],
     }
 
@@ -239,14 +311,10 @@ def main():
     create.add_argument("--template-sha", required=True)
     args = parser.parse_args()
     if args.command == "render":
-        if args.destination.exists():
-            raise FileExistsError("Render destination must not exist")
-        result = substitute(files(args.source), json.loads(args.variables.read_text()))
-        for name, body in result.items():
-            path = args.destination / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(body)
-        print(json.dumps(hashes(result), indent=2, sort_keys=True))
+        result = render(
+            args.source, args.destination, json.loads(args.variables.read_text())
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
     elif args.command == "publish-template":
         print(
             json.dumps(

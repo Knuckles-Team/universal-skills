@@ -121,6 +121,7 @@ class OpenApiClient:
         *,
         credential_scheme=None,
         allow_writes=False,
+        allow_plaintext=False,
         transport=None,
     ):
         parsed = urlsplit(base_url)
@@ -132,6 +133,7 @@ class OpenApiClient:
                 auth=auth,
                 tls=tls_profile,
                 retry=RetryPolicy(max_attempts=1),
+                allow_plaintext=allow_plaintext,
                 timeout=30.0,
             ),
             transport=transport,
@@ -158,6 +160,16 @@ class OpenApiClient:
         ):
             raise PermissionError("Action requires a supported credential reference")
         path, query, headers = _parameters(operation, arguments)
+        target = self.session.base_url.join(path)
+        origin = self.session.base_url
+        if (target.scheme, target.host, target.port) != (
+            origin.scheme,
+            origin.host,
+            origin.port,
+        ):
+            raise ValueError(
+                "Operation must stay within the configured provider origin"
+            )
         options = {"params": query, "headers": headers, "follow_redirects": False}
         if "body" in arguments:
             body = arguments["body"]
@@ -200,11 +212,26 @@ class OpenApiClient:
                 if body:
                     raise ValueError("Unexpected provider response body")
                 content_type, data = "", None
-            elif content_type == "application/json":
+            elif content_type not in expected:
+                raise ValueError("Undeclared provider response media type")
+            elif (
+                operation["response_modes"][str(response.status_code)][content_type]
+                == "json"
+            ):
                 try:
                     data = json.loads(body)
                 except (ValueError, UnicodeDecodeError) as exc:
                     raise ValueError("Provider response is not JSON") from exc
+            elif (
+                operation["response_modes"][str(response.status_code)][content_type]
+                == "text"
+            ):
+                try:
+                    data = body.decode(response.charset_encoding or "utf-8")
+                except (UnicodeDecodeError, LookupError) as exc:
+                    raise ValueError(
+                        "Provider text response cannot be decoded"
+                    ) from exc
             else:
                 data = base64.b64encode(body).decode()
             result = {

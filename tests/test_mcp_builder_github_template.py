@@ -48,10 +48,15 @@ def test_hash_bound_checks_before_remote_write(tmp_path, monkeypatch):
 def test_generate_uses_private_template_api_and_frozen_head(monkeypatch):
     seen = []
     monkeypatch.setattr(template, "preflight", lambda owner, name: None)
+    monkeypatch.setattr(
+        template,
+        "commit_tree",
+        lambda repo, sha: [("README.md", "100644", "blob", "fixture")],
+    )
 
     def api(route, method="GET", data=None):
         seen.append((route, method, data))
-        if route == "repos/Example/template":
+        if route in {"repos/Example/template", "repos/Example/connector"}:
             return {"is_template": True, "default_branch": "main"}
         if route.endswith("/commits/main"):
             return {"sha": "a" * 40}
@@ -70,3 +75,91 @@ def test_generate_uses_private_template_api_and_frozen_head(monkeypatch):
         "private": True,
         "include_all_branches": False,
     }
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    ["a//b", "a/./b", "../outside", "/outside", "a\\b", ".git/config", "a/../b"],
+)
+def test_unsafe_substituted_paths_fail_before_writes(tmp_path, replacement):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "old").write_text("fixture")
+    target = tmp_path / "target"
+    with pytest.raises(ValueError, match="unsafe|noncanonical"):
+        template.render(source, target, {"old": replacement})
+    assert not target.exists()
+
+
+def test_duplicate_and_file_directory_collisions_fail():
+    with pytest.raises(ValueError, match="duplicate"):
+        template.substitute({"one": b"1", "two": b"2"}, {"one": "same", "two": "same"})
+    with pytest.raises(ValueError, match="collision"):
+        template.substitute(
+            {"one": b"1", "two": b"2"}, {"one": "same", "two": "same/file"}
+        )
+
+
+def test_executable_mode_preserved_and_bound_to_checks(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    source.mkdir()
+    script = source / "old.sh"
+    script.write_text("#!/bin/sh\nexit 0\n")
+    script.chmod(0o755)
+    (source / "README.md").write_text("fixture")
+    target = tmp_path / "target"
+    record = template.render(source, target, {"old": "new"})
+    assert (target / "new.sh").stat().st_mode & 0o111
+    assert record["new.sh"]["mode"] == "100755"
+    (target / "new.sh").chmod(0o644)
+    monkeypatch.setattr(
+        template, "api", lambda *args: pytest.fail("mode drift reached API")
+    )
+    with pytest.raises(ValueError, match="exact complete"):
+        template.publish_template(
+            target, "Example", "example-template", {"passed": True, "files": record}
+        )
+
+
+@pytest.mark.parametrize("failure", ["branch", "tree"])
+def test_generated_repository_attestation_rejects_drift(monkeypatch, failure):
+    monkeypatch.setattr(template, "preflight", lambda *args: None)
+    source_reads = 0
+
+    def api(route, method="GET", data=None):
+        nonlocal source_reads
+        if route == "repos/Example/template":
+            source_reads += 1
+            return {
+                "is_template": True,
+                "default_branch": "other"
+                if failure == "branch" and source_reads > 1
+                else "main",
+            }
+        if "/commits/" in route:
+            return {"sha": "a" * 40}
+        if route.endswith("/generate"):
+            return {"full_name": "Example/connector", "private": True}
+        if route == "repos/Example/connector":
+            return {"default_branch": "main"}
+        pytest.fail(route)
+
+    monkeypatch.setattr(template, "api", api)
+    monkeypatch.setattr(
+        template,
+        "commit_tree",
+        lambda repo, sha: [
+            (
+                "README",
+                "100644",
+                "blob",
+                "changed"
+                if failure == "tree" and repo.endswith("connector")
+                else "same",
+            )
+        ],
+    )
+    with pytest.raises(RuntimeError, match="preserved"):
+        template.create_from_template(
+            "Example", "connector", "Example/template", "a" * 40
+        )

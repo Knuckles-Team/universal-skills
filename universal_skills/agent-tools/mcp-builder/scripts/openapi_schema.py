@@ -118,6 +118,20 @@ def input_schema(document, shared, operation):
     return object_schema(fields, required), list(parameters.values()), content_type
 
 
+def response_mode(document, media, body):
+    """Choose only a response representation supported by the runtime."""
+    if media == "application/json" or media.endswith("+json"):
+        return "json"
+    resolved = resolve(document, body.get("schema", {}))
+    if resolved.get("format") == "binary":
+        return "binary"
+    if media.startswith("text/") or media == "application/vnd.apple.mpegurl":
+        if resolved.get("type", "string") != "string":
+            raise ValueError("Text response must declare a string schema")
+        return "text"
+    raise ValueError("Unsupported response media type or missing binary declaration")
+
+
 def compile_contract(document):
     """Every operation belongs to exactly one stable domain; collisions fail closed."""
     if not str(document.get("openapi", "")).startswith("3."):
@@ -161,11 +175,15 @@ def compile_contract(document):
             inputs, parameters, content_type = input_schema(
                 document, item.get("parameters", []), operation
             )
-            responses = {}
+            responses, response_modes = {}, {}
             for status, raw in sorted(operation.get("responses", {}).items()):
                 response = resolve(document, raw)
                 responses[status] = {
                     media: schema(body.get("schema", {}))
+                    for media, body in response.get("content", {}).items()
+                }
+                response_modes[status] = {
+                    media: response_mode(document, media, body)
                     for media, body in response.get("content", {}).items()
                 }
             operations[action] = {
@@ -178,6 +196,7 @@ def compile_contract(document):
                 "parameters": parameters,
                 "content_type": content_type,
                 "responses": responses,
+                "response_modes": response_modes,
                 "security": operation.get("security", document.get("security", [])),
                 "summary": operation.get("summary", action),
             }
