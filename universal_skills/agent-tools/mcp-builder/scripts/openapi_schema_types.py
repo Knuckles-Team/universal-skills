@@ -89,6 +89,16 @@ def schema(value):
         return value
     result = {key: schema(item) for key, item in value.items() if key != "nullable"}
     result = _schema_keywords(result)
+    if "$ref" in result and len(result) > 1:
+        # A reference and its sibling assertions intersect. FastMCP's shallow
+        # sibling merge could overwrite a stronger referenced assertion.
+        reference = {"$ref": result.pop("$ref")}
+        intersections = result.get("allOf", [])
+        if not isinstance(intersections, list):
+            raise ValueError("Schema allOf must be an array")
+        # Keep unevaluatedProperties/Items at the original scope so they can
+        # observe annotations from the referenced schema and existing branches.
+        result["allOf"] = [reference, *intersections]
     if value.get("nullable"):
         return {"anyOf": [result, {"type": "null"}]}
     return result

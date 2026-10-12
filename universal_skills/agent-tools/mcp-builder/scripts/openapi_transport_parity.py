@@ -67,7 +67,16 @@ def _transport(fixture, operation, seen, *, assert_request, source_operation):
 
 
 async def verify_transport(
-    source: bytes, contract, fixtures, *, api_factory, mcp_call, assert_request=None
+    source: bytes,
+    contract,
+    fixtures,
+    *,
+    api_factory,
+    mcp_call,
+    assert_request=None,
+    overlay_bytes=None,
+    expected_overlay_sha256=None,
+    evidence_root=None,
 ):
     """Require one successful actual request per operation through both surfaces.
 
@@ -79,7 +88,13 @@ async def verify_transport(
     fields and files; the runner never skips a declared body representation.
     """
     inventory = verify_contract(
-        json.loads(source), contract, hashlib.sha256(source).hexdigest()
+        json.loads(source),
+        contract,
+        hashlib.sha256(source).hexdigest(),
+        source_bytes=source,
+        overlay_bytes=overlay_bytes,
+        expected_overlay_sha256=expected_overlay_sha256,
+        evidence_root=evidence_root,
     )
     require_complete_coverage(contract, fixtures, fixtures)
     covered = {"api": [], "mcp": []}

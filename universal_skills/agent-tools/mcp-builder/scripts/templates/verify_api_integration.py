@@ -36,20 +36,38 @@ def find_package(root):
     return package
 
 
-def main():
+def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--local", action="store_true")
     parser.add_argument("--pre-commit", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument("--inspect", action="store_true")
+    parser.add_argument("--client-budget", type=Path)
+    parser.add_argument("--provider-overlay", type=Path)
+    parser.add_argument("--expected-overlay-sha256")
+    parser.add_argument("--evidence-root", type=Path)
+    return parser.parse_args()
+
+
+def main():
+    args = arguments()
     root = args.root.resolve()
     package = find_package(root)
     sys.path.insert(0, str(root))
     checker = importlib.import_module(f"{package.name}.parity.check_openapi_parity")
     print(
         json.dumps(
-            checker.check(args.source.resolve(), package, native=True),
+            checker.check(
+                args.source.resolve(),
+                package,
+                native=True,
+                mode="inspect" if args.inspect else "ready",
+                client_budget=args.client_budget,
+                overlay_path=args.provider_overlay,
+                expected_overlay_sha256=args.expected_overlay_sha256,
+                evidence_root=args.evidence_root,
+            ),
             indent=2,
             sort_keys=True,
         )

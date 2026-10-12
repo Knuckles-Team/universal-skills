@@ -81,6 +81,8 @@ contract; it is not a connector dependency or a second builder.
 - [MCP design](reference/mcp_best_practices.md): tool boundaries and transport choices.
 - [OpenAPI and publication](reference/openapi_bootstrap.md): provider conversion and
   publishing a validated local tree to a new normal GitHub repository.
+- [OpenAPI readiness](reference/openapi_readiness.md): named discovery budgets and
+  hash-bound provider evidence; separate from transport and live acceptance.
 - [Evaluation](reference/evaluation.md): optional read-only task evaluation with the
   existing model harness; it does not replace static and contract checks.
 

@@ -143,9 +143,9 @@ recording every operation, method, path, effective security requirement and `x-*
 annotation. Admin, security, billed and destructive operations remain represented;
 provider-specific policy must interpret their requirements explicitly. Missing
 security declarations are recorded as unknown, never as evidence of public access.
-The ready-state checker fails until the provider supplies a reviewed complete
-source contract with explicit authorization; arbitrary runtime overlays are not
-accepted as equivalent to the pinned source. Pure inventory/schema checks remain
+The ready-state checker fails until authorization is explicit in the source or
+verified through the narrow [provider evidence interface](openapi_readiness.md).
+Arbitrary runtime overlays are not equivalent to the pinned source. Pure inventory/schema checks remain
 separate from this authorization admission. Do not treat
 an undocumented effect as read-only merely because its HTTP method is GET.
 Malformed security declarations, undeclared scheme references and invalid scope
@@ -158,13 +158,14 @@ verify_contract, verify_mcp, require_complete_coverage, verify_transport`. No si
 builder checkout is needed. Run the checker in the existing reviewed environment:
 
 ```sh
-python -m package_module.parity.check_openapi_parity source.json package_module --native
+python -m package_module.parity.check_openapi_parity source.json package_module --native --inspect
 ```
 
 It rejects missing operations, method/route/parameter/response/security drift,
 incomplete domain mappings, stale inventories and missing or mismatched native
 MCP schemas. Expected references use the actual bounded FastMCP dereferencer;
-constraints and reference siblings stay checked. Client-unsupported schemas
+reference sibling assertions compile to an `allOf` intersection, so a shallow
+reference merge cannot overwrite a stronger constraint. Client-unsupported schemas
 (such as Unicode property escapes rejected by a Python JSON Schema client) fail
 explicitly; do not drop the constraint to obtain a pass. Discovery is distinct
 from successful transport execution.
@@ -213,10 +214,8 @@ translated to literal ranges; unsupported properties fail. This pins the existin
 converter semantics and does not assert equivalence with an unverified provider
 Node/Unicode version. The generated parity package ships the table as package data.
 
-Native schema validity does not establish model-context suitability. Measure the
-post-transformation per-tool and aggregate schema sizes against an explicit target
-client budget before admitting a discovery scope. Count-based pagination is not a
-byte budget, and clients may collect all pages. The measured full Immich catalog
-currently serves about 4.6 MB of tool JSON and remains an operational blocker.
-Retain all constraints and the full inventory; use reviewed visibility scopes or
-a separately validated disclosure mechanism instead of weakening schemas.
+Native schema validity does not establish model-context suitability. The generated
+runtime supports FastMCP's built-in deferred search with explicit named byte
+budgets. See [readiness and provider evidence](openapi_readiness.md) for configuration,
+measured full-schema disclosure and negative oversized checks. No constraints are
+truncated and all authorized tools retain their original dispatch path.

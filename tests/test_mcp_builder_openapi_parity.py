@@ -369,9 +369,10 @@ def test_real_client_and_native_mcp_transport(catalog, monkeypatch):
 def test_optional_files_preserve_multipart_media(catalog, monkeypatch, body):
     pytest.importorskip("agent_connector_sdk")
     pytest.importorskip("regex")
-    import httpx
     from email.parser import BytesParser
     from email.policy import default
+
+    import httpx
 
     document, source, _, _ = catalog
     operation = document["paths"]["/items"]["post"]
