@@ -108,6 +108,11 @@ def test_sdist_preserves_and_executes_generated_contract_scripts(artifacts):
     } <= expected
     for relative in expected:
         assert (sdist / relative).read_bytes() == (source / relative).read_bytes()
+    for directory in ("specs", ".pipeline-theme"):
+        for path in (source / directory).rglob("*"):
+            if path.is_file() and "__pycache__" not in path.parts:
+                relative = path.relative_to(source)
+                assert (sdist / relative).read_bytes() == path.read_bytes()
     result = _run(
         ["scripts/check_connector_contract.py", ".", "--package", PACKAGE],
         sdist,

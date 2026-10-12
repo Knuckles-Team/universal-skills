@@ -157,6 +157,7 @@ jobs:
     uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
     with:
       content_source: docs
+      shared_theme_enabled: true
       agent_readiness_enabled: true
       readiness_input: docs/agent-readiness.json
       readiness_schema: docs/agent-readiness.schema.json
@@ -185,8 +186,12 @@ The shared Pages pipeline builds this dashboard from canonical
 The repository owns the source configuration; the pinned shared pipeline owns
 rendering and validation. Update source specs through the reviewed spec process.
 
-An empty starter repository displays **No documented records**. Missing or
+The starter capability is **SPECIFIED** with empty delivery receipts. Missing or
 unverified evidence does not establish delivery, release, or deployment.
+Regenerate status with the shared `pipelines-hook spec-status --write` command
+after reviewed implementation commits and test bindings exist; commit the
+resulting source status. Read the [spec index](https://github.com/Knuckles-Team/{package_name}/blob/main/specs/README.md)
+and [architecture](architecture.md) for source mappings and declared dependencies.
 The dashboard is a build-time snapshot, refreshed on every push to main or an
 explicit Pages workflow run. Agent readiness uses the separate canonical
 `docs/agent-readiness.json` and its packaged schema.

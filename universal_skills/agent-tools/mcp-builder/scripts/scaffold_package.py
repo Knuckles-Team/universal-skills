@@ -24,6 +24,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from surface_templates import select_template
 from scaffold_dates import generation_date
+from docs_assets import staged_theme_files, check_shared_theme
+from spec_templates import render_spec_files
 from quality_templates import (
     PRECOMMIT_CONFIG,
     SCANNER_CI_YML,
@@ -428,6 +430,7 @@ services:
       - TRANSPORT=streamable-http
       - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
       - CONNECTOR_CONFIG_FILE=/etc/connector/config.json
+      - {upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
@@ -462,6 +465,7 @@ services:
       - PORT={agent_port}
       - MCP_URL=http://{package_name}-mcp:8000/mcp
       - CONNECTOR_CONFIG_FILE=/etc/connector/config.json
+      - {upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}
     ports:
       - "127.0.0.1:{agent_port}:{agent_port}"
     healthcheck:
@@ -499,6 +503,7 @@ services:
       - TRANSPORT=streamable-http
       - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
       - CONNECTOR_CONFIG_FILE=/etc/connector/config.json
+      - {upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
@@ -619,6 +624,8 @@ AUTH_TYPE=none
 SYSTEMTOOL=True
 # Set {upper_name}_BASE_URL at runtime to the authorized service origin.
 # Set {upper_name}_TOKEN_REF to an env:// or openbao:// credential reference.
+# Opt in only for an explicitly authorized HTTP origin in {upper_name}_BASE_URL.
+{upper_name}_ALLOW_PLAINTEXT=false
 # Configure {upper_name}_TLS_PROFILE or {upper_name}_TLS_PROFILE_REF per SDK TLS policy.
 # Network exposure/authentication and token exchange remain separately authorized.
 """
@@ -744,6 +751,8 @@ graft .github/workflows
 graft scripts
 graft tests
 graft docs
+graft specs
+graft .pipeline-theme
 graft docker
 include mkdocs.yml pytest.ini .bumpversion.cfg
 include .config/spec-dashboard.json
@@ -1876,7 +1885,7 @@ ROOT_MCP_CONFIG_JSON = """\
       ],
       "env": {{
         "SYSTEMTOOL": "true",
-        "SYSTEMTOOL": "True"
+        "{upper_name}_ALLOW_PLAINTEXT": "false"
       }}
     }}
   }}
@@ -2117,6 +2126,7 @@ print("Agent entry point import OK")
 # ── mkdocs + docs site (7 standard pages) ─────────────────────────────────────
 
 MKDOCS_YML = """\
+INHERIT: .pipeline-theme/templates/mkdocs-theme/base.mkdocs.yml
 site_name: "{package_name}"
 site_description: "{description}"
 site_url: "https://knuckles-team.github.io/{package_name}/"
@@ -2125,92 +2135,23 @@ repo_url: "https://github.com/Knuckles-Team/{package_name}"
 edit_uri: "edit/main/docs/"
 copyright: "Copyright &copy; Knuckles-Team — MIT licensed"
 
-theme:
-  name: material
-  icon:
-    repo: fontawesome/brands/github
-    logo: material/graph-outline
-  favicon: https://raw.githubusercontent.com/squidfunk/mkdocs-material/master/material/templates/assets/images/favicon.png
-  features:
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.top
-    - navigation.tracking
-    - navigation.instant
-    - navigation.instant.progress
-    - navigation.footer
-    - toc.follow
-    - search.suggest
-    - search.highlight
-    - search.share
-    - content.code.copy
-    - content.code.annotate
-    - content.tabs.link
-    - content.tooltips
-  palette:
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
-
 plugins:
   - search
 
-markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - admonition
-  - pymdownx.details
-  - attr_list
-  - md_in_html
-  - tables
-  - toc:
-      permalink: true
-
 extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/Knuckles-Team/{package_name}
-    - icon: fontawesome/brands/python
-      link: https://pypi.org/project/{package_name}/
+  ecosystem:
+    current: "{package_name}"
 
 nav:
   - Home: index.md
   - Overview: overview.md
+  - Architecture: architecture.md
   - Installation: installation.md
   - Deployment: deployment.md
   - Usage (API / CLI / MCP): usage.md
   - Backing Platform ({display_name}): platform.md
   - Concepts: concepts.md
+  - Glossary: glossary.md
   - Spec delivery: spec-delivery.md
 """
 
@@ -2461,6 +2402,17 @@ status = api.get_system_status()
 
 Configure `{upper_name}_BASE_URL`, `{upper_name}_TOKEN_REF`, and one SDK TLS profile
 selector through operator-provided settings, then run `{mcp_cmd} --transport stdio`.
+
+### Explicit HTTP endpoint
+
+HTTPS remains the default. For an existing HTTP-only endpoint you are authorized
+to use, set `{upper_name}_BASE_URL=http://service.example.invalid` and explicitly
+set `{upper_name}_ALLOW_PLAINTEXT=true`. This forwards the SDK's
+`HttpClientOptions.allow_plaintext` choice only to that vendor client. Requests
+remain bound to its exact scheme, host and port; redirects stay disabled.
+HTTP carries requests without TLS encryption. The flag never retries HTTPS over
+HTTP, changes certificate verification, or authorizes another endpoint. OIDC
+token exchanges retain their separate TLS policy. Leave the flag false for HTTPS.
 """
 
 DOCS_PLATFORM_MD = """\
@@ -3000,6 +2952,10 @@ def scaffold(
     files[root / "tests" / "test_startup.py"] = (TESTS_STARTUP, True)
     files[root / "tests" / "test_concept_parity.py"] = (TESTS_CONCEPT_PARITY, True)
 
+    files.update(
+        {root / path: (content, False) for path, content in render_spec_files(ctx).items()}
+    )
+
     selected_templates = {
         value: name
         for name, value in globals().items()
@@ -3026,6 +2982,11 @@ def scaffold(
         content = selected.format(**ctx) if needs_format else selected
         if _write_generated_text(path, content):
             print(f"  ✅ {path.relative_to(root.parent)}")
+
+    with staged_theme_files() as theme_files:
+        for source, relative in theme_files:
+            _copy_generated_file(source, root / relative)
+    check_shared_theme(root)
 
     # Bundled golden validation scripts (verbatim from gitlab-api)
     for script_name in (

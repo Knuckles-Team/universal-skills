@@ -46,6 +46,7 @@ def test_generated_pages_opts_into_canonical_delivery(generated):
     assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REV)
     assert job["with"] == {
         "content_source": "docs",
+        "shared_theme_enabled": True,
         "agent_readiness_enabled": True,
         "readiness_input": "docs/agent-readiness.json",
         "readiness_schema": "docs/agent-readiness.schema.json",
@@ -65,7 +66,7 @@ def test_generated_pages_opts_into_canonical_delivery(generated):
     assert (
         "https://knuckles-team.github.io/pages-example/spec-delivery/" in documentation
     )
-    assert "No documented records" in documentation
+    assert "**SPECIFIED**" in documentation
     assert "spec-delivery" in (root / "mkdocs.yml").read_text()
 
 
@@ -93,7 +94,7 @@ def test_generated_delivery_passes_pinned_pipeline_contract(generated):
         "args, root, config = parse_options(['--root', sys.argv[2], "
         "'--config', '.config/spec-dashboard.json', '--repository', "
         "'Knuckles-Team/pages-example']); "
-        "assert config['version'] == 1; assert read_records(root, config) == []"
+        "assert config['version'] == 1; rows = read_records(root, config); assert rows; assert all(row['delivery_state'] == 'SPECIFIED' for row in rows)"
     )
     checked = subprocess.run(
         [sys.executable, "-c", code, str(pipeline / "scripts"), str(root)],
