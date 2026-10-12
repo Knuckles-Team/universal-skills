@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [communications, announcements, memos, all-hands, status-updates, async]
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Genius
 ---
 # Internal Communications

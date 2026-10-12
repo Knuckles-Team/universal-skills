@@ -22,7 +22,7 @@ team_config:
 tags: [arbitrage, polymarket, execution, simulation]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
 ---
 
 # Polymarket Paired Arbitrage Workflow

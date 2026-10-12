@@ -10,7 +10,7 @@ agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, machine-learning, xgboost, classification, portfolio, workflow]
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 ---

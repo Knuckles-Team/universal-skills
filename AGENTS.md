@@ -136,6 +136,15 @@ push with `git push -u origin <branch>`, and open the pull request against
 `main`. The `CI` workflow runs `scripts/bootstrap.sh` and then
 `.pre-commit-config.yaml`, including the full test suite.
 
+For each release-bearing change, regenerate the bump file inventory with
+`python scripts/gen_bumpversion.py` after adding or retiring skill paths, then
+execute `bump2version --config-file .bumpversion.cfg --allow-dirty --no-commit --no-tag patch`
+for an approved patch increment (use the approved minor or major part otherwise).
+Do not edit version fields by hand. The no-commit/no-tag options leave the
+updated files for the normal checked PR commit; the release workflow creates
+the tag at its verified source commit after review. Report the planned version
+and tag before publication. Never retry a published version or move its tag.
+
 ## Project Structure Quick Reference
 - `universal_skills/<domain>/<skill>/` → Atomic skills grouped by domain.
 - `universal_skills/<domain>-workflows/<workflow>/` → Pure dependency DAGs over atomic skills or exact MCP tools.

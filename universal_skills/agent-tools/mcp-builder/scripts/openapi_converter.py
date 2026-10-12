@@ -35,20 +35,23 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
         .replace("__SERVICE__", package.name.replace("_", "-"))
         .replace("__DEFAULT_AUTH_SCHEME__", auth_scheme)
     )
-    imports = [
-        "from ..openapi_runtime import register_domain",
-        "from ..auth import get_client",
-        "",
-    ]
-    for domain in contract["domains"]:
-        imports.extend(
-            [
-                f"def register_{domain}_tools(mcp):",
-                f"    register_domain(mcp, {domain!r}, get_client)",
-                "",
-            ]
-        )
-    files[package / "mcp/__init__.py"] = "\n".join(imports) + "\n"
+    for name in ("openapi_runtime", "openapi_request", "openapi_response", "openapi_auth_scheme"):
+        files[package / f"{name}.py"] = (
+            Path(__file__).parent / f"templates/{name}.py"
+        ).read_text()
+    for target, template in {
+        "mcp/__init__.py": "openapi_registrars.py",
+        "api/api_client_system.py": "openapi_client_system.py",
+    }.items():
+        files[package / target] = (
+            Path(__file__).parent / "templates" / template
+        ).read_text()
+    api_init = package / "api/__init__.py"
+    files[api_init] = (
+        api_init.read_text()
+        if api_init.exists()
+        else 'from .api_client_system import ApiClientSystem\n\n__all__ = ["ApiClientSystem"]\n'
+    )
     for path, content in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content)

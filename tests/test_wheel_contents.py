@@ -183,6 +183,7 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
             (
                 "universal_skills/agent-tools/agent-builder/",
                 "universal_skills/agent-tools/agent-package-builder/",
+                "universal_skills/agent-tools/api-client-builder/",
             )
         )
         for member in members

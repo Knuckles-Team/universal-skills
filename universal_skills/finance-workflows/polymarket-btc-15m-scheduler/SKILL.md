@@ -17,7 +17,7 @@ requires:
 - mcp_orders
 - infrastructure-orchestrator
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
 ---
 
 # polymarket-btc-15m-scheduler Workflow

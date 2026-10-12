@@ -9,7 +9,7 @@ from importlib.resources import files, as_file
 from typing import Iterable, Optional
 
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 
 def get_universal_skills_package_name() -> str:

@@ -44,7 +44,7 @@ def test_regular_ci_runs_project_hooks_and_tests_without_release_readiness():
     assert "continue-on-error" not in _load_scaffold().SCANNER_CI_YML
 
 
-def test_release_reuses_immutable_pipeline_only_for_version_tags():
+def test_release_reuses_shared_pipeline_only_for_version_tags():
     workflow = _workflow(_load_scaffold().PIPELINE_YML)
     assert workflow["on"] == {"push": {"tags": ["v*"]}}
     job = workflow["jobs"]["publish-pypi"]
@@ -55,7 +55,7 @@ def test_release_reuses_immutable_pipeline_only_for_version_tags():
     assert job["secrets"] == {"PYPI_API_TOKEN": "${{ secrets.PYPI_API_TOKEN }}"}
 
 
-def test_pages_uses_pinned_workflow_and_actual_content_root():
+def test_pages_uses_shared_workflow_and_actual_content_root():
     workflow = _workflow(_load_scaffold().PAGES_YML)
     job = workflow["jobs"]["publish-pages"]
     assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REV)

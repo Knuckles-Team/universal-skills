@@ -32,7 +32,6 @@ from pathlib import PurePosixPath
 from typing import Any, Protocol
 from urllib.parse import urlsplit
 
-
 TCK_SCHEMA_VERSION = "agent-readiness-tck/v1"
 TCK_CONTRACT_VERSION = "agent-readiness-tck/v1"
 TCK_MATURITY = "experimental"
@@ -386,8 +385,8 @@ def _same_metadata(left: Mapping[str, Any], right: Mapping[str, Any]) -> bool:
 def _problem_from_json(value: object, *, local_fixture: bool) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise TckViolation("problem-json-invalid")
-    for field in _PROBLEM_FIELDS:
-        if field not in value:
+    for field_name in _PROBLEM_FIELDS:
+        if field_name not in value:
             raise TckViolation("problem-metadata-incomplete")
     if (
         not isinstance(value["status"], int)

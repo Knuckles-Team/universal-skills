@@ -20,7 +20,7 @@ team_config:
 tags: ['langfuse', 'telemetry', 'tracing', 'monitoring', 'debugging', 'langfuse-mcp']
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
 ---
 
 # Langfuse Agent Tracer Workflow

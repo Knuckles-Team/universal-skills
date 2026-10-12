@@ -1,6 +1,8 @@
 """Generated connectors consume the shared structural scanner contract."""
 
 import importlib.util
+import hashlib
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -11,6 +13,7 @@ SCAFFOLD = (
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
 )
 PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+KISS_POLICY_SHA256 = "a6f2b9171123503522092aec416eaea7ad29ea98a26eb7283f02156c9c3d5c3a"
 
 
 def _load_scaffold():
@@ -33,7 +36,7 @@ def _shared_hooks(config):
     return {hook["id"]: hook for hook in shared[0]["hooks"]}
 
 
-def test_scanner_hooks_consume_one_immutable_authority():
+def test_scanner_hooks_consume_shared_authority():
     module = _load_scaffold()
     hooks = _shared_hooks(module.PRECOMMIT_CONFIG)
     assert {
@@ -82,6 +85,15 @@ def test_scaffold_omits_copied_scanners_and_native_provisioning(tmp_path):
     module = _load_scaffold()
     module.scaffold("scanner-provider", output_dir=str(tmp_path))
     root = tmp_path / "scanner-provider"
+    project = tomllib.loads((root / "pyproject.toml").read_text())
+    assert project["tool"]["pipelines_hooks"]["stdout_writes"]["served_paths"] == [
+        "scanner_provider"
+    ]
+    # The fleet hand-authored KISS policy from pipelines 7b3d18 is copied unchanged.
+    config = root / ".config/kiss.toml"
+    expected = SCAFFOLD.parent / "templates/kiss.toml"
+    assert config.read_bytes() == expected.read_bytes()
+    assert hashlib.sha256(config.read_bytes()).hexdigest() == KISS_POLICY_SHA256
     for relative in (
         ".cccc.toml",
         ".kiss/kiss.toml",

@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import argparse
 import ast
-from pathlib import Path
 import re
 import tomllib
+from pathlib import Path
 
 
 def _imports(node: ast.AST) -> list[str]:

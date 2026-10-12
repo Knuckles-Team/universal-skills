@@ -1,6 +1,6 @@
 # Skill Catalog Audit
 
-Audited **255** skills: 112 skill, 143 workflow.
+Audited **254** skills: 111 skill, 143 workflow.
 
 This deterministic structural report excludes bundled `assets/` templates and generated `skill_graphs/`. Advisory findings require qualitative review; a clean row does not by itself prove domain correctness, safety, or freshness.
 
@@ -9,14 +9,14 @@ This deterministic structural report excludes bundled `assets/` templates and ge
 | Status | Count |
 |---|---:|
 | clean | 94 |
-| warning | 161 |
+| warning | 160 |
 
 ### Finding codes
 
 | Code | Count |
 |---|---:|
 | `workflow-multiple-tools` | 207 |
-| `description-no-trigger` | 130 |
+| `description-no-trigger` | 129 |
 | `workflow-unbound-component` | 98 |
 | `workflow-team-drift` | 70 |
 | `workflow-placeholder-step` | 63 |
@@ -37,7 +37,6 @@ This deterministic structural report excludes bundled `assets/` templates and ge
 | agent-tools | `agent-workflows` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase; warning: `atomic-workflow-section` — contains a Workflow section; confirm it describes one capability only |
 | agent-tools | `subagent-driven-development` | skill | clean | No structural or advisory findings |
 | agent-tools | `agents-md-generator` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
-| agent-tools | `api-client-builder` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | agent-tools | `autonomous-research-loop` | skill | clean | No structural or advisory findings |
 | agent-tools | `mcp-builder` | skill | clean | No structural or advisory findings |
 | agent-tools | `mcp-client` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |

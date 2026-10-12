@@ -28,6 +28,8 @@ PACKAGE = "distribution_demo"
 DISTRIBUTION = "distribution-demo"
 COMBINATIONS = (
     "api_client,mcp",
+    "cli,mcp",
+    "cli,mcp,agent",
     "api_client,mcp,agent",
     "api_client,mcp,graphql",
     "api_client,mcp,agent,graphql",

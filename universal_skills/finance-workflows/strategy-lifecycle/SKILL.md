@@ -9,7 +9,7 @@ tags: [finance, trading, strategy, lifecycle]
 team_config: trading_department
 agent: chief_trading_officer
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: agent-utilities
   concept: 'CONCEPT:KG-2.6'
 infrastructure:

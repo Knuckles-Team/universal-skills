@@ -83,4 +83,5 @@ jobs:
           .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra \
             tests/test_mcp_builder_smoke.py tests/test_mcp_builder_connector_contract.py \
             tests/test_mcp_builder_distribution.py tests/test_mcp_builder_surfaces.py \
-            tests/test_mcp_builder_pages.py tests/test_mcp_builder_site.py
+            tests/test_mcp_builder_pages.py tests/test_mcp_builder_site.py \
+            tests/test_mcp_builder_cli.py tests/test_mcp_builder_backend_docs.py

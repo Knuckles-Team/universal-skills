@@ -20,7 +20,7 @@ description: >-
 license: MIT
 tags: [epistemic-graph, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Genius
 ---
 # Epistemic Graph (EG) Development

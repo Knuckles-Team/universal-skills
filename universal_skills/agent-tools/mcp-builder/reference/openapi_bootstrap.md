@@ -1,7 +1,8 @@
 # OpenAPI connector generation
 
 `openapi_converter.py` compiles OpenAPI 3 into operation-bound SDK clients and
-one condensed MCP tool for each domain. The first non-Deprecated tag determines
+one condensed MCP tool for each domain. Named registrar callables preserve the
+SDK domain toggles without duplicating registrar bodies. The first non-Deprecated tag determines
 the domain; absent tags use the first path segment. Names, paths and methods are
 sorted. Duplicate operation identifiers and normalized domain collisions fail.
 
@@ -9,9 +10,11 @@ sorted. Duplicate operation identifiers and normalized domain collisions fail.
 python scripts/openapi_converter.py provider-openapi.json package_name --auth-scheme api_key
 ```
 
-The output includes `openapi_contract.json`, `openapi_runtime.py`, an explicit
-registrar for every domain, and `auth.py` with a public client factory even when
-no authentication scheme is selected. Package metadata declares
+The output includes `openapi_contract.json`, the runtime/request/response modules, named SDK
+registrars for every domain, `ApiClientSystem(OpenApiClient)`, and `auth.py` with a public client factory even when
+no authentication scheme is selected. `openapi_auth_scheme.py` represents selected
+header or bearer authentication explicitly; `auth.py` resolves references through the SDK.
+Package metadata declares
 the contract as package data and the JSON Schema and Unicode regex validators as
 dependencies. Request and response schemas retain source constraints, local
 references, nullability and declared methods including PATCH. File inputs are
@@ -27,12 +30,32 @@ operator enablement plus native MCP confirmation. HTTP requests have finite
 bounds and exactly one attempt, including PUT and DELETE. Transport uncertainty
 never triggers an automatic write retry.
 
-HTTP to a non-loopback provider is refused by default. An operator may set the
+HTTP to a non-loopback provider, and credential-bearing HTTP even on loopback,
+is refused by default. An operator may set the
 connector's `PACKAGE_ENV_ALLOW_PLAINTEXT=true` for its configured provider origin;
 this uses the SDK's `HttpClientOptions.allow_plaintext` control. HTTPS certificate
 and hostname verification remain enabled. Requests cannot change origin and
 redirects are refused, including HTTPS-to-HTTP redirects. No credentials are
 forwarded to a redirect target.
+
+## Signed session headers
+
+A provider's signed session is a header credential when its authoritative contract
+declares it that way. For example, ArtCraft's user session manager accepts the
+signed value in the `session` header, distinct from its Omni API bearer key:
+
+```json
+{"components":{"securitySchemes":{"signed_session":{"type":"apiKey","in":"header","name":"session"}}}}
+```
+
+This fragment documents authentication only; it is not an exported provider API.
+Bind only reviewed session-protected operations with
+`"security": [{"signed_session": []}]`, select `--auth-scheme signed_session`, and
+configure `PACKAGE_ENV_TOKEN_REF` with a credential reference. A bearer key cannot
+satisfy this scheme. Unknown schemes and transport-control header names are
+rejected. Declared credential headers cannot be supplied as tool parameters,
+including for public operations. Do not infer authentication from route names or
+create a credential as part of generation.
 
 ## Publish the local scaffold
 
@@ -96,3 +119,8 @@ describe requirements; they are not proof those requirements were implemented.
 The API contracts are GitHub's [normal repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
 [repository initialization](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents)
 and [Git tree publication](https://docs.github.com/en/rest/git/trees#create-a-tree).
+
+The client constructor uses `write_mode="read-only"` by default; the explicit
+`"read-write"` mode follows the unchanged operator `PACKAGE_ENV_ALLOW_WRITES`
+setting. Delegated bearer authentication uses a separate HTTPS-default OIDC
+client and closes both TLS profiles and clients through the canonical SDK flow.

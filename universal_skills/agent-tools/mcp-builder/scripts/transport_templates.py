@@ -1,7 +1,7 @@
 """SDK transport and authentication templates for generated connectors."""
 
-AUTH_PY = r'''
-"""Resolve credential references only when constructing a vendor client."""
+AUTH_PY = """\
+\"\"\"Resolve credential references only when constructing a vendor client.\"\"\"
 
 from contextlib import ExitStack
 
@@ -19,7 +19,7 @@ _resources = ExitStack()
 
 
 def get_client() -> ApiClientSystem:
-    """Build one client; delegated auth resolves the verified caller per request."""
+    \"\"\"Build one client; delegated auth resolves the verified caller per request.\"\"\"
     global _client, _resources
     if _client is not None:
         return _client
@@ -42,8 +42,12 @@ def get_client() -> ApiClientSystem:
         else:
             auth = bearer_auth(setting("{upper_name}_TOKEN_REF", ""))
         client = ApiClientSystem(
-            base_url=base_url, auth=auth, tls_profile=tls,
-            allow_plaintext=setting("{upper_name}_ALLOW_PLAINTEXT", False),
+            base_url=base_url,
+            auth=auth,
+            tls_profile=tls,
+            allow_plaintext=setting(
+                "{upper_name}_ALLOW_PLAINTEXT", False
+            ),
         )
         resources.callback(client.close)
         _resources = resources.pop_all()
@@ -52,16 +56,16 @@ def get_client() -> ApiClientSystem:
 
 
 def close_client() -> None:
-    """Release the cached client and any materialized TLS resources."""
+    \"\"\"Release the cached client and any materialized TLS resources.\"\"\"
     global _client
     try:
         _resources.close()
     finally:
         _client = None
-'''
+"""
 
-API_CLIENT_BASE = r'''
-"""A bounded vendor HTTP client using the connector SDK transport contract."""
+API_CLIENT_BASE = """\
+\"\"\"A bounded vendor HTTP client using the connector SDK transport contract.\"\"\"
 
 import json
 import time
@@ -88,7 +92,7 @@ def _origin(parsed: SplitResult) -> tuple[str, str, int]:
 
 def _validate_base_url(base_url: str) -> tuple[str, tuple[str, str, int]]:
     rendered = str(base_url or "").strip()
-    if not rendered or len(rendered) > 2048 or any(c in rendered for c in "\x00\r\n"):
+    if not rendered or len(rendered) > 2048 or any(c in rendered for c in "\\x00\\r\\n"):
         raise ValueError("Invalid service base URL")
     try:
         parsed = urlsplit(rendered)
@@ -111,7 +115,7 @@ def _request_url(
     base_url: str, expected_origin: tuple[str, str, int], path: str
 ) -> str:
     rendered = str(path or "")
-    if len(rendered) > 4096 or any(c in rendered for c in "\x00\r\n"):
+    if len(rendered) > 4096 or any(c in rendered for c in "\\x00\\r\\n"):
         raise ValueError("Invalid API path")
     try:
         supplied = urlsplit(rendered)
@@ -126,7 +130,7 @@ def _request_url(
 
 
 class ApiClientBase:
-    """Use SDK auth objects; tokens never travel through default headers."""
+    \"\"\"Use SDK auth objects; tokens never travel through default headers.\"\"\"
 
     def __init__(
         self,
@@ -151,11 +155,11 @@ class ApiClientBase:
         )
 
     def close(self) -> None:
-        """Close the owned HTTP connection pool."""
+        \"\"\"Close the owned HTTP connection pool.\"\"\"
         self.session.close()
 
     def request(self, method: str, path: str, **kwargs: Any) -> Any:
-        """Return bounded JSON or a bounded text response from the same origin."""
+        \"\"\"Return bounded JSON or a bounded text response from the same origin.\"\"\"
         url = _request_url(self.base_url, self._origin, path)
         if kwargs.get("follow_redirects") not in (None, False):
             raise ValueError("Redirect following is disabled")
@@ -189,9 +193,9 @@ class ApiClientBase:
                 "status": response.status_code,
                 "text": body.decode("utf-8", errors="replace")[:4096],
             }}
-'''
+"""
 
-TESTS_AUTH = r"""
+TESTS_AUTH = """\
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -206,8 +210,12 @@ import {pkg_dir}.auth as auth_module
 def configured_client(monkeypatch):
     auth_module.close_client()
     monkeypatch.setattr(auth_module, "load_config", lambda: None)
-    monkeypatch.setenv("{upper_name}_BASE_URL", "https://service.example.invalid")
-    monkeypatch.setenv("{upper_name}_TOKEN_REF", "env://SCAFFOLD_TEST_TOKEN")
+    monkeypatch.setenv(
+        "{upper_name}_BASE_URL", "https://service.example.invalid"
+    )
+    monkeypatch.setenv(
+        "{upper_name}_TOKEN_REF", "env://SCAFFOLD_TEST_TOKEN"
+    )
     monkeypatch.setenv("SCAFFOLD_TEST_TOKEN", "test-token")
     monkeypatch.setenv("ENABLE_DELEGATION", "false")
     monkeypatch.delenv("{upper_name}_ALLOW_PLAINTEXT", raising=False)
@@ -291,7 +299,7 @@ def test_delegation_uses_per_request_auth(monkeypatch):
         token_client.close.assert_called_once()
 """
 
-TESTS_API_WRAPPER = r"""
+TESTS_API_WRAPPER = """\
 import ssl
 
 import httpx
@@ -300,8 +308,7 @@ from agent_connector_sdk.auth.static import bearer_auth
 from agent_connector_sdk.tls.errors import TransportSecurityError
 from agent_connector_sdk.tls.resolve import resolve_tls_profile
 
-from {pkg_dir}.api import ApiClientBase
-from {pkg_dir}.api import api_client_base
+from {pkg_dir}.api import ApiClientBase, api_client_base
 
 
 @pytest.fixture
@@ -309,7 +316,9 @@ def client_factory(monkeypatch):
     monkeypatch.setenv("SCAFFOLD_TEST_TOKEN", "test-token")
     clients = []
 
-    def create(handler, base_url="https://service.example.invalid", *, allow_plaintext=False):
+    def create(
+        handler, base_url="https://service.example.invalid", *, allow_plaintext=False
+    ):
         client = ApiClientBase(
             base_url=base_url,
             auth=bearer_auth("env://SCAFFOLD_TEST_TOKEN"),
@@ -338,12 +347,15 @@ def test_request_returns_json_and_uses_sdk_auth(client_factory):
     assert client.session.trust_env is False
 
 
-@pytest.mark.parametrize("path", [
-    "https://other.example.invalid/health",
-    "//other.example.invalid/health",
-    "https://user:secret@service.example.invalid/health",
-    "https://service.example.invalid:8443/health",
-])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "https://other.example.invalid/health",
+        "//other.example.invalid/health",
+        "https://user:secret@service.example.invalid/health",
+        "https://service.example.invalid:8443/health",
+    ],
+)
 def test_request_rejects_origin_or_credentials(client_factory, path):
     calls = []
     client = client_factory(lambda request: calls.append(request))
@@ -357,7 +369,9 @@ def test_redirect_not_followed(client_factory):
 
     def respond(request):
         calls.append(request)
-        return httpx.Response(302, headers={{"location": "https://other.example.invalid"}})
+        return httpx.Response(
+            302, headers={{"location": "https://other.example.invalid"}}
+        )
 
     client = client_factory(respond)
     with pytest.raises(httpx.HTTPStatusError):
@@ -374,7 +388,9 @@ def test_request_rejects_safety_overrides(client_factory, options):
 
 def test_plaintext_remote_rejected(client_factory):
     with pytest.raises(ValueError, match="plaintext"):
-        client_factory(lambda request: httpx.Response(200), "http://service.example.invalid")
+        client_factory(
+            lambda request: httpx.Response(200), "http://service.example.invalid"
+        )
 
 
 def test_plaintext_opt_in_stays_on_configured_origin(client_factory):
@@ -389,7 +405,10 @@ def test_plaintext_opt_in_stays_on_configured_origin(client_factory):
     )
     assert client.request("GET", "/health") == {{"ok": True}}
     assert calls[0].url.scheme == "http"
-    for target in ("http://other.example.invalid/health", "https://service.example.invalid/health"):
+    for target in (
+        "http://other.example.invalid/health",
+        "https://service.example.invalid/health",
+    ):
         with pytest.raises(ValueError, match="API path"):
             client.request("GET", target)
     assert len(calls) == 1
@@ -418,7 +437,9 @@ def test_plaintext_opt_in_does_not_downgrade_https(client_factory):
 def test_tls_cannot_disable_verification():
     with pytest.raises(TransportSecurityError):
         resolve_tls_profile("{short_name}", profile={{"verify": False}})
-    profile = resolve_tls_profile("{short_name}", profile={{"trust_env": False}})
+    profile = resolve_tls_profile(
+        "{short_name}", profile={{"trust_env": False}}
+    )
     try:
         assert profile.ssl_context.verify_mode == ssl.CERT_REQUIRED
         assert profile.ssl_context.check_hostname

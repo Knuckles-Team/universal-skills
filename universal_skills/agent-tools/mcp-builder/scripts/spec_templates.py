@@ -16,27 +16,69 @@ SDK_README = (
 )
 
 
+def _backend_contract(package: str, backend: str) -> dict[str, str]:
+    if backend == "cli":
+        return {
+            "reuse": "The connector reuses the SDK server factory and typed ingest service. Its CLI adapter owns bounded local process execution.",
+            "ownership": "The shared connector SDK owns reusable MCP, server policy, native content, and ingest contracts.",
+            "interfaces": f"`{package}/mcp/mcp_system.py` routes the fixed status operation through `get_client` from `{package}/cli.py`.\n`{package}/cli.py` validates the operator-configured absolute executable path and invokes only the reviewed `--version` argument vector.\nThe POSIX process runner uses no shell or stdin, a restricted environment, a 10-second deadline, and a 64 KiB combined output limit.",
+            "code": f"../../{package}/cli.py ../../tests/test_cli.py ",
+            "architecture": "    Router --> Client[Bounded CLI adapter]\n    Client --> Executable[Operator-configured executable]\n    Settings[Absolute path and fixed arguments] --> Client\n",
+            "map": f"| Executable configuration | `{package}/cli.py` | `tests/test_cli.py` |\n| Process and argument limits | `{package}/cli.py` | `tests/test_cli.py` |",
+            "risk": "Missing executables, rejected process execution, time or output limits, and source ingestion failures must propagate as explicit failures.",
+        }
+    if backend != "api_client":
+        raise ValueError(f"unsupported connector backend: {backend}")
+    return {
+        "reuse": "The connector reuses the SDK server factory, credential resolver, HTTP client, and typed ingest service.",
+        "ownership": "The shared connector SDK owns reusable transport, authentication, MCP, and ingest contracts.",
+        "interfaces": f"`{package}/mcp/mcp_system.py` routes selected operations through `get_client` and the API client.\n`{package}/auth.py` resolves references only when a caller requests a client.\n`{package}/api/api_client_base.py` enforces transport and response limits before returning external data.",
+        "code": f"../../{package}/auth.py ../../{package}/api/api_client_base.py ../../tests/test_auth.py ../../tests/test_api_wrapper.py ",
+        "architecture": "    Router --> Client[Connector API client]\n    Client --> Vendor[Configured external system]\n    Resolver[Credential references and TLS policy] --> Client\n",
+        "map": f"| Credentials and TLS | `{package}/auth.py` | `tests/test_auth.py` |\n| External requests | `{package}/api/api_client_base.py` | `tests/test_api_wrapper.py` |",
+        "risk": "Missing credentials, rejected source observations, and failed transport checks must propagate as explicit failures.",
+    }
+
+
 def _requirements(
-    spec_id: str, package: str, mcp_test: str
+    spec_id: str, package: str, mcp_test: str, backend: str
 ) -> list[tuple[str, str, str, str]]:
-    return [
-        (
-            f"{spec_id}-R001",
-            "Credential references",
-            f"The connector must resolve authorized credential references in `{package}/auth.py` when a client is requested.",
-            "`tests/test_auth.py::test_client_resolves_reference_and_cleans_up` must observe reference resolution and resource cleanup.",
-        ),
-        (
-            f"{spec_id}-R002",
-            "Bounded API requests",
-            f"The connector must enforce origin, TLS, timeout, and response-size limits in `{package}/api/api_client_base.py`.",
-            "`tests/test_api_wrapper.py` must exercise rejected origins, redirects, deadlines, and oversized responses through the real client.",
-        ),
+    if backend == "cli":
+        backend_rows = [
+            (
+                f"{spec_id}-R001",
+                "Executable configuration",
+                f"The connector must resolve an operator-configured absolute executable path through `{package}/cli.py` only when a client is requested.",
+                "`tests/test_cli.py` must reject missing or invalid paths and prove imports and MCP discovery do not execute the configured program.",
+            ),
+            (
+                f"{spec_id}-R002",
+                "Bounded process execution",
+                f"The connector must execute only reviewed argument vectors through `{package}/cli.py` without a shell or stdin, with a restricted environment, a 10-second deadline, and a 64 KiB combined output limit.",
+                "`tests/test_cli.py` must exercise isolated executable fixtures for fixed arguments, environment isolation, process errors, timeouts, and oversized output.",
+            ),
+        ]
+    else:
+        backend_rows = [
+            (
+                f"{spec_id}-R001",
+                "Credential references",
+                f"The connector must resolve authorized credential references in `{package}/auth.py` when a client is requested.",
+                "`tests/test_auth.py::test_client_resolves_reference_and_cleans_up` must observe reference resolution and resource cleanup.",
+            ),
+            (
+                f"{spec_id}-R002",
+                "Bounded API requests",
+                f"The connector must enforce origin, TLS, timeout, and response-size limits in `{package}/api/api_client_base.py`.",
+                "`tests/test_api_wrapper.py` must exercise rejected origins, redirects, deadlines, and oversized responses through the real client.",
+            ),
+        ]
+    return backend_rows + [
         (
             f"{spec_id}-R003",
             "MCP registration",
             f"The connector must register its operation router through `{package}/mcp_server.py` and `{package}/mcp/mcp_system.py`.",
-            f"`{mcp_test}::test_mcp_instance_registration` must construct the production server without vendor requests.",
+            f"`{mcp_test}::test_mcp_instance_registration` must construct the production server without executing external operations.",
         ),
         (
             f"{spec_id}-R004",
@@ -57,6 +99,7 @@ def render_spec_files(ctx: Mapping[str, str]) -> dict[str, str]:
     """Return relative paths and text; lifecycle gates own later status updates.
 
     Required context: package_name, pkg_dir, short_name, display_name, concept_prefix.
+    backend defaults to api_client; cli selects local executable contracts.
     An explicit spec_id may override the canonical CONN-<REPOSITORY> default.
     """
     name, package = ctx["package_name"], ctx["pkg_dir"]
@@ -64,7 +107,9 @@ def render_spec_files(ctx: Mapping[str, str]) -> dict[str, str]:
     spec_id = ctx.get("spec_id") or f"CONN-{name.upper()}"
     directory = f"specs/{name}"
     mcp_test = f"tests/test_{ctx['short_name'].replace('-', '_')}_mcp_validation.py"
-    rows = _requirements(spec_id, package, mcp_test)
+    backend = ctx.get("backend", "api_client")
+    contract = _backend_contract(package, backend)
+    rows = _requirements(spec_id, package, mcp_test, backend)
     requirement_ids = [row[0] for row in rows]
     status = {
         "schema_version": 2,
@@ -95,22 +140,20 @@ def render_spec_files(ctx: Mapping[str, str]) -> dict[str, str]:
         f"| `{identifier}` | {acceptance} |" for identifier, _, _, acceptance in rows
     )
     code = (
-        f"../../{package}/auth.py ../../{package}/api/api_client_base.py "
-        f"../../{package}/mcp_server.py ../../{package}/mcp/mcp_system.py "
-        f"../../{package}/kg_ingest.py ../../tests/test_auth.py "
-        f"../../tests/test_api_wrapper.py ../../{mcp_test} "
-        "../../tests/test_kg_ingest.py ../../scripts/generate_tool_schemas.py"
+        contract["code"]
+        + f"../../{package}/mcp_server.py ../../{package}/mcp/mcp_system.py "
+        + f"../../{package}/kg_ingest.py ../../{mcp_test} "
+        + "../../tests/test_kg_ingest.py ../../scripts/generate_tool_schemas.py"
     )
-    architecture = """flowchart LR
-    Caller[Authorized caller] --> Server[MCP server]
-    Server --> Router[Operation router]
-    Router --> Client[Connector API client]
-    Client --> Vendor[Configured external system]
-    Resolver[Credential references and TLS policy] --> Client
-    Content[Packaged skills prompts ontology manifest] --> Server
-    Source[Authorized source observations] --> Mapper[Connector ingest mapper]
-    Mapper --> SDK[Shared connector ingest service]
-"""
+    architecture = (
+        "flowchart LR\n"
+        "    Caller[Authorized caller] --> Server[MCP server]\n"
+        "    Server --> Router[Operation router]\n"
+        + contract["architecture"]
+        + "    Content[Packaged skills prompts ontology manifest] --> Server\n"
+        "    Source[Authorized source observations] --> Mapper[Connector ingest mapper]\n"
+        "    Mapper --> SDK[Shared connector ingest service]\n"
+    )
     return {
         "specs/README.md": f"""# Connector specifications
 
@@ -135,12 +178,12 @@ See the [delivery dashboard](https://knuckles-team.github.io/{name}/spec-deliver
 ## Outcome
 
 The connector must expose reviewed external-system operations through one governed integration boundary.
-The connector must preserve credential, transport, source, and content contracts.
+The connector must preserve backend configuration, execution, source, and content contracts.
 
 ## Scope and owner
 
 The `{name}` repository owns external-system operations and source mappings.
-The shared connector SDK owns reusable transport, authentication, MCP, and ingest contracts.
+{contract["ownership"]}
 The shared pipelines repository owns quality gates and delivery rendering.
 
 Component: Connector integration
@@ -169,7 +212,7 @@ Governing specification: [spec.md](spec.md).
 
 ## Existing system and reuse
 
-The connector reuses the SDK server factory, credential resolver, HTTP client, and typed ingest service.
+{contract["reuse"]}
 The connector owns operation arguments, external-system mappings, and package content.
 
 Component: Connector integration
@@ -185,9 +228,7 @@ Code: {code}
 
 `{package}/mcp_server.py` exposes `build_server` and the console entry point.
 `get_mcp_instance` calls `create_mcp_server`, `register_tool_surface`, and the package tool registrars.
-`{package}/mcp/mcp_system.py` routes selected operations through `get_client` and the API client.
-`{package}/auth.py` resolves references only when a caller requests a client.
-`{package}/api/api_client_base.py` enforces transport and response limits before returning external data.
+{contract["interfaces"]}
 `{package}/kg_ingest.py` maps observations into SDK types and calls the configured service's `submit` method.
 The SDK owns engine transport and durable checkpoints.
 
@@ -216,7 +257,7 @@ Source tests do not authorize release, deployment, or external effects.
 ## Risks and alternatives
 
 Starter operations and mappings require external-system validation before production use.
-Missing credentials, rejected source observations, and failed transport checks must propagate as explicit failures.
+{contract["risk"]}
 Duplicating shared SDK or pipeline logic would create conflicting owners.
 """,
         f"{directory}/requirements.md": f"""# {spec_id} — Requirements
@@ -266,8 +307,7 @@ The [shared connector SDK]({SDK_README}) owns reusable runtime contracts.
 | Boundary | Source | Verification target |
 |---|---|---|
 | MCP entry and routing | `{package}/mcp_server.py`, `{package}/mcp/mcp_system.py` | `{mcp_test}` |
-| Credentials and TLS | `{package}/auth.py` | `tests/test_auth.py` |
-| External requests | `{package}/api/api_client_base.py` | `tests/test_api_wrapper.py` |
+{contract["map"]}
 | Native content and tool schemas | Package content and `scripts/generate_tool_schemas.py` | Live schema check; native content verification remains pending |
 | Source observations | `{package}/kg_ingest.py` | `tests/test_kg_ingest.py` |
 

@@ -22,7 +22,7 @@ team_config:
 tags: [walk-forward, validation, oversitting, backtest]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
 ---
 
 # Walk Forward Validation Workflow

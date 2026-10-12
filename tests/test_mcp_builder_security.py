@@ -85,16 +85,17 @@ def test_generated_api_client_has_outbound_request_boundaries():
 def test_generated_error_authority_has_agent_safe_negotiation():
     module = _load_scaffold_module()
     rendered = module.ERROR_AUTHORITY_PY
+    representations = module.ERROR_RENDERING_PY
 
     compile(rendered, "<generated-error-authority>", "exec")
-    assert "application/problem+json" in rendered
-    assert "text/markdown" in rendered
-    assert "text/html" in rendered
+    assert "application/problem+json" in representations
+    assert "text/markdown" in representations
+    assert "text/html" in representations
     assert "AGENT_ERROR_ACCEPT" in rendered
     assert "sanitize_for_persistence" in rendered
     assert "MAX_DETAIL_CHARS" in rendered
     assert "status in {401, 403}" in rendered
-    assert '"Vary": "Accept"' in rendered
+    assert '"Vary": "Accept"' in representations
     assert "{pkg_dir}.error_authority" in module.INIT_PY
 
 

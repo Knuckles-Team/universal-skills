@@ -6,7 +6,7 @@ description: Read-only host process inspector for a hot, slow, or swap-thrashing
 license: MIT
 tags: [system, host, process, zombie, runaway, swap, cpu, diagnostics, ops, ssh]
 metadata:
-  version: '1.3.4'
+  version: '1.3.5'
   author: Knuckles-Team
 requires:
   - tunnel-manager-mcp
