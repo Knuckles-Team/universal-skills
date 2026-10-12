@@ -1,0 +1,175 @@
+"""Complete source inventories and API/MCP contract parity, without provider calls."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+
+if __package__:
+    from .openapi_schema import compile_contract, domain_schemas
+else:
+    from openapi_schema import compile_contract, domain_schemas
+
+HTTP_METHODS = frozenset(
+    {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+)
+
+
+def digest(value):
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def _operation_entry(document, path, *, method, operation):
+    return {
+        "method": method.upper(),
+        "source_path": path,
+        "security": operation.get("security", document.get("security", [])),
+        "security_declaration": (
+            "operation"
+            if "security" in operation
+            else "root"
+            if "security" in document
+            else "unknown"
+        ),
+        "extensions": {
+            key: value for key, value in operation.items() if key.startswith("x-")
+        },
+        "deprecated": operation.get("deprecated", False),
+        "tags": operation.get("tags", []),
+        "operation_sha256": digest(operation),
+    }
+
+
+def operation_inventory(document, source_sha256):
+    """Enumerate the entire pinned source, independently of compiler filtering."""
+    operations = {}
+    for path, item in sorted(document["paths"].items()):
+        for method, operation in sorted(item.items()):
+            if method not in HTTP_METHODS:
+                continue
+            action = operation["operationId"]
+            if action in operations:
+                raise ValueError(f"Duplicate source operation: {action}")
+            operations[action] = _operation_entry(
+                document, path, method=method, operation=operation
+            )
+            operations[action]["path_parameters_sha256"] = digest(
+                item.get("parameters", [])
+            )
+    if not operations:
+        raise ValueError("Source declares no HTTP operations")
+    return {
+        "version": 1,
+        "source_sha256": source_sha256,
+        "source_info": document.get("info", {}),
+        "path_count": len(document["paths"]),
+        "operation_count": len(operations),
+        "operations": dict(sorted(operations.items())),
+        "scope": "All operations in this pinned OpenAPI source; upstream suite completeness requires separate evidence.",
+        "live_verified": False,
+    }
+
+
+def require_declared_authorization(inventory):
+    """Schema omission is not proof that an operation is public."""
+    unknown = [
+        action
+        for action, operation in inventory["operations"].items()
+        if operation["security_declaration"] == "unknown"
+    ]
+    if unknown:
+        raise ValueError(
+            f"Authorization classification requires reviewed provider evidence: {unknown}"
+        )
+
+
+def require_complete_coverage(contract, api_actions, mcp_actions):
+    """Call with successful probe IDs, not discovery IDs, for transport coverage."""
+    expected = set(contract["operations"])
+    for label, actions in (("API", list(api_actions)), ("MCP", list(mcp_actions))):
+        if len(actions) != len(set(actions)):
+            raise ValueError(f"Duplicate {label} coverage IDs")
+        missing, extra = (
+            sorted(expected - set(actions)),
+            sorted(set(actions) - expected),
+        )
+        if missing or extra:
+            raise ValueError(
+                f"Incomplete {label} coverage: missing={missing}, extra={extra}"
+            )
+    return {"api_operations": len(expected), "mcp_operations": len(expected)}
+
+
+def verify_contract(document, contract, source_sha256):
+    """Reject source omissions and exact method, route, parameter or schema drift."""
+    inventory = operation_inventory(document, source_sha256)
+    expected = compile_contract(document)
+    if set(inventory["operations"]) != set(expected["operations"]):
+        raise ValueError("Compiler omitted or invented source operations")
+    expected["source_sha256"] = source_sha256
+    expected["schemas"] = {
+        domain: domain_schemas(expected, domain) for domain in expected["domains"]
+    }
+    # JSON round-trip accounts only for tuples in the compiler's return value.
+    if contract != json.loads(json.dumps(expected)):
+        raise ValueError("API contract differs from complete source compilation")
+    mapped = [action for actions in contract["domains"].values() for action in actions]
+    require_complete_coverage(contract, mapped, mapped)
+    for domain, actions in contract["domains"].items():
+        if any(
+            contract["operations"][action]["domain"] != domain for action in actions
+        ):
+            raise ValueError("Operation is unreachable through its declared domain")
+    return inventory
+
+
+def verify_mcp(contract, tools):
+    """Compare actual native tools/list results, including every action branch."""
+    try:
+        from agent_connector_sdk.manifest.tool_schema import read_field
+    except ImportError as exc:
+        raise RuntimeError("MCP parity requires the reviewed SDK environment") from exc
+    names = [read_field(tool, "name") for tool in tools]
+    if len(names) != len(set(names)):
+        raise ValueError("Duplicate MCP tool names")
+    by_name = dict(zip(names, tools, strict=True))
+    covered = []
+    for domain, actions in contract["domains"].items():
+        name = f"{domain}_operations"
+        if name not in by_name:
+            raise ValueError(f"Unreachable MCP domain: {domain}")
+        _verify_tool_schema(by_name[name], contract["schemas"][domain], name)
+        covered.extend(actions)
+    require_complete_coverage(contract, contract["operations"], covered)
+    return {"domains": len(contract["domains"]), "exposed_operations": len(covered)}
+
+
+def _verify_tool_schema(tool, schemas, name):
+    from agent_connector_sdk.manifest.tool_schema import (
+        canonical_input_schema,
+        canonical_output_schema,
+    )
+    from fastmcp.utilities.json_schema import dereference_refs
+    from jsonschema import Draft202012Validator
+    from jsonschema.exceptions import SchemaError
+
+    inputs, outputs = schemas
+    expected = {"inputSchema": inputs, "outputSchema": outputs}
+    # Use FastMCP's actual bounded serve-time transformation. It preserves
+    # reference siblings and retains references for recursive/large graphs.
+    expanded = {
+        "inputSchema": dereference_refs(inputs),
+        "outputSchema": dereference_refs(outputs),
+    }
+    for canonical in (canonical_input_schema, canonical_output_schema):
+        actual = canonical(tool)
+        try:
+            Draft202012Validator.check_schema(actual)
+        except SchemaError as exc:
+            raise ValueError(
+                f"Native MCP schema is unsupported by client validation: {name}"
+            ) from exc
+        if actual != canonical(expected) and actual != canonical(expanded):
+            raise ValueError(f"MCP schema differs from API contract: {name}")

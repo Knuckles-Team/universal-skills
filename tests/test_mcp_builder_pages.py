@@ -16,7 +16,7 @@ SCRIPTS = (
     Path(__file__).resolve().parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts"
 )
-PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_REF = "main"
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def generated(tmp_path):
 def test_generated_pages_opts_into_canonical_delivery(generated):
     root, workflow = generated
     job = workflow["jobs"]["publish-pages"]
-    assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REV)
+    assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REF)
     assert job["with"] == {
         "content_source": "docs",
         "shared_theme_enabled": True,

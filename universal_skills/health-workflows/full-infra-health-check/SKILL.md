@@ -24,7 +24,7 @@ team_config:
 tags: [health, infrastructure, monitoring]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
   author: Genius
 ---
 

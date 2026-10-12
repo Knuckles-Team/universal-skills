@@ -117,14 +117,14 @@ class OpenApiClient:
             )
         options = {"params": query, "headers": headers, "follow_redirects": False}
         if "body" in arguments:
-            options.update(
-                body_options(
-                    operation,
-                    arguments["body"],
-                    definitions=CONTRACT["definitions"],
-                    max_bytes=MAX_BYTES,
-                )
+            body = body_options(
+                operation,
+                arguments["body"],
+                definitions=CONTRACT["definitions"],
+                max_bytes=MAX_BYTES,
             )
+            options["headers"].update(body.pop("headers", {}))
+            options.update(body)
         return self._send(operation, path, options)
 
     def _require_credentials(self, requirements):

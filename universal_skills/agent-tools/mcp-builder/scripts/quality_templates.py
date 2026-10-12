@@ -1,6 +1,6 @@
 """Consume reviewed pipeline contracts instead of copying their implementation."""
 
-PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_THEME_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
 
 # Verbatim templates: GitHub expressions and YAML braces are not str.format input.
 PRECOMMIT_CONFIG = """\
@@ -11,9 +11,9 @@ default_stages: [pre-commit]
 
 repos:
 - repo: https://github.com/Knuckles-Team/pipelines
-  rev: 7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
+  rev: main
   hooks:
-  # Native scanner versions and policy belong to this pinned source.
+  # Shared scanner policy follows the approved pipelines main branch.
   # Use the reviewed, already-provisioned toolchain; hooks never install it.
   - id: scanner-versions
   - id: complexity-staged
@@ -100,7 +100,7 @@ permissions:
 jobs:
   checks:
     # Use an approved runner with this project's Python test environment,
-    # pre-commit and the pinned pipeline scanner toolchain already provisioned.
+    # pre-commit and the pipeline scanner toolchain already provisioned.
     # Missing tooling fails the checks; this workflow never builds scanners.
     runs-on: self-hosted
     steps:
@@ -132,7 +132,7 @@ permissions:
 jobs:
   publish-pypi:
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
+    uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main
     permissions:
       contents: write
     # Configure this existing publishing secret through the repository's
@@ -154,7 +154,7 @@ permissions:
 
 jobs:
   publish-pages:
-    uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
+    uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main
     with:
       content_source: docs
       shared_theme_enabled: true

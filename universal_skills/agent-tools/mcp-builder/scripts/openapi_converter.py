@@ -10,15 +10,26 @@ import tomllib
 from pathlib import Path
 
 from openapi_schema import compile_contract, domain_schemas
+from openapi_parity import operation_inventory, verify_contract
 
 
 def generate(spec: Path, package: Path, auth_scheme: str = ""):
-    contract = compile_contract(json.loads(spec.read_text()))
-    contract["source_sha256"] = hashlib.sha256(spec.read_bytes()).hexdigest()
+    source = spec.read_bytes()
+    document = json.loads(source)
+    contract = compile_contract(document)
+    contract["source_sha256"] = hashlib.sha256(source).hexdigest()
     contract["schemas"] = {
         domain: domain_schemas(contract, domain) for domain in contract["domains"]
     }
+    inventory = operation_inventory(document, contract["source_sha256"])
+    verify_contract(
+        document, json.loads(json.dumps(contract)), contract["source_sha256"]
+    )
     files = {
+        package / "openapi_inventory.json": json.dumps(
+            inventory, indent=2, sort_keys=True
+        )
+        + "\n",
         package / "openapi_contract.json": json.dumps(
             contract, indent=2, sort_keys=True
         )
@@ -27,6 +38,27 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
             Path(__file__).parent / "templates/openapi_runtime.py"
         ).read_text(),
     }
+    for name in (
+        "openapi_schema",
+        "openapi_schema_types",
+        "openapi_schema_inputs",
+        "unicode_patterns",
+        "openapi_parity",
+        "openapi_transport_parity",
+        "check_openapi_parity",
+    ):
+        files[package / "parity" / f"{name}.py"] = (
+            Path(__file__).parent / f"{name}.py"
+        ).read_text()
+    files[package / "parity/unicode_properties.json"] = (
+        Path(__file__).parent / "unicode_properties.json"
+    ).read_text()
+    files[package / "parity/__init__.py"] = (
+        '"""Self-contained generated API/MCP parity checks; no sibling builder required."""\n\n'
+        "from .openapi_parity import (\n    operation_inventory,\n    require_complete_coverage,\n    verify_contract,\n    verify_mcp,\n)\n"
+        "from .openapi_transport_parity import verify_transport\n\n"
+        '__all__ = [\n    "operation_inventory",\n    "require_complete_coverage",\n    "verify_contract",\n    "verify_mcp",\n    "verify_transport",\n]\n'
+    )
     if auth_scheme and auth_scheme not in contract["security_schemes"]:
         raise ValueError("Selected auth scheme is not declared in OpenAPI")
     auth = (Path(__file__).parent / "templates/openapi_auth.py").read_text()
@@ -35,7 +67,12 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
         .replace("__SERVICE__", package.name.replace("_", "-"))
         .replace("__DEFAULT_AUTH_SCHEME__", auth_scheme)
     )
-    for name in ("openapi_runtime", "openapi_request", "openapi_response", "openapi_auth_scheme"):
+    for name in (
+        "openapi_runtime",
+        "openapi_request",
+        "openapi_response",
+        "openapi_auth_scheme",
+    ):
         files[package / f"{name}.py"] = (
             Path(__file__).parent / f"templates/{name}.py"
         ).read_text()
@@ -77,12 +114,26 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
             if count != 1:
                 raise ValueError("Cannot locate project dependency declaration")
         data = parsed["tool"]["setuptools"]["package-data"].get(package.name, [])
-        if "openapi_contract.json" not in data:
+        missing_data = [
+            name
+            for name in (
+                "openapi_contract.json",
+                "openapi_inventory.json",
+                "parity/unicode_properties.json",
+            )
+            if name not in data
+        ]
+        if missing_data:
             section = text.index("[tool.setuptools.package-data]")
             before, after = text[:section], text[section:]
             after, count = re.subn(
                 r"(?m)^" + re.escape(package.name) + r"\s*=\s*\[",
-                lambda match: match.group() + ' "openapi_contract.json",',
+                lambda match: (
+                    match.group()
+                    + " "
+                    + ", ".join(json.dumps(name) for name in missing_data)
+                    + ","
+                ),
                 after,
                 count=1,
             )

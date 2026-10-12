@@ -1,4 +1,4 @@
-"""Compile OpenAPI operations into deterministic, action-bound JSON schemas."""
+"""Compile every OpenAPI operation into deterministic, action-bound schemas."""
 
 from __future__ import annotations
 
@@ -6,134 +6,31 @@ import copy
 import re
 from collections import defaultdict
 
-METHODS = frozenset(
-    {"get", "post", "put", "delete", "patch", "head", "options", "trace"}
-)
-
-
-def identifier(value: str) -> str:
-    result = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
-    if not result or result[0].isdigit():
-        raise ValueError("Domain must have an alphabetic identifier")
-    return result
-
-
-def schema(value):
-    """Retain endpoint constraints while translating OpenAPI 3.0 nullability."""
-    if isinstance(value, list):
-        return [schema(item) for item in value]
-    if not isinstance(value, dict):
-        return value
-    result = {key: schema(item) for key, item in value.items() if key != "nullable"}
-    if "$ref" in result:
-        ref = result["$ref"]
-        if not ref.startswith("#/components/schemas/"):
-            raise ValueError("Only local schema references are supported")
-        result["$ref"] = ref.replace("#/components/schemas/", "#/$defs/", 1)
-    if result.get("format") == "binary":
-        result = {
-            "type": "string",
-            "contentEncoding": "base64",
-            "description": "Base64 file bytes; no filesystem paths.",
-        }
-    for name, replacement in (
-        ("exclusiveMinimum", "minimum"),
-        ("exclusiveMaximum", "maximum"),
-    ):
-        if isinstance(result.get(name), bool):
-            enabled = result.pop(name)
-            if enabled and replacement in result:
-                result[name] = result.pop(replacement)
-    if value.get("nullable"):
-        result = {"anyOf": [result, {"type": "null"}]}
-    return result
-
-
-def resolve(document, value):
-    seen = set()
-    while "$ref" in value:
-        ref = value["$ref"]
-        if not ref.startswith("#/") or ref in seen:
-            raise ValueError("External or cyclic object reference")
-        seen.add(ref)
-        value = document
-        for segment in ref[2:].split("/"):
-            value = value[segment.replace("~1", "/").replace("~0", "~")]
-    return value
-
-
-def object_schema(properties, required=()):
-    return {
-        "type": "object",
-        "properties": properties,
-        "required": sorted(required),
-        "additionalProperties": False,
-    }
-
-
-def input_schema(document, shared, operation):
-    fields = {"action": {"type": "string", "enum": [operation["operationId"]]}}
-    required = ["action"]
-    parameters = {}
-    for raw in shared + operation.get("parameters", []):
-        parameter = resolve(document, raw)
-        parameters[(parameter["in"], parameter["name"])] = parameter
-    for location in ("path", "query", "header", "cookie"):
-        items = [v for (where, _), v in sorted(parameters.items()) if where == location]
-        if not items:
-            continue
-        if location == "cookie":
-            raise ValueError("Cookie parameters require an explicit provider adapter")
-        props, needed = {}, []
-        for item in items:
-            expected = "form" if location == "query" else "simple"
-            if item.get("style", expected) != expected:
-                raise ValueError("Unsupported parameter style")
-            props[item["name"]] = schema(item["schema"])
-            if item.get("required") or location == "path":
-                needed.append(item["name"])
-        fields[location] = object_schema(props, needed)
-        if needed:
-            required.append(location)
-    body = resolve(document, operation.get("requestBody", {}))
-    media = body.get("content", {})
-    content_type = next(
-        (
-            name
-            for name in (
-                "application/json",
-                "multipart/form-data",
-                "application/x-www-form-urlencoded",
-            )
-            if name in media
-        ),
-        None,
+if __package__:
+    from .openapi_schema_types import (
+        METHODS,
+        check_path_parameters,
+        identifier,
+        object_schema,
+        resolve,
+        schema,
+        validate_binary_constraints,
     )
-    if media and content_type is None:
-        raise ValueError("Unsupported request media type")
-    if content_type:
-        fields["body"] = schema(media[content_type].get("schema", {}))
-        if body.get("required"):
-            required.append("body")
-    return object_schema(fields, required), list(parameters.values()), content_type
+    from .openapi_schema_inputs import input_schema, response_mode
+else:
+    from openapi_schema_types import (
+        METHODS,
+        check_path_parameters,
+        identifier,
+        object_schema,
+        resolve,
+        schema,
+        validate_binary_constraints,
+    )
+    from openapi_schema_inputs import input_schema, response_mode
 
 
-def response_mode(document, media, body):
-    """Choose only a response representation supported by the runtime."""
-    if media == "application/json" or media.endswith("+json"):
-        return "json"
-    resolved = resolve(document, body.get("schema", {}))
-    if resolved.get("format") == "binary":
-        return "binary"
-    if media.startswith("text/") or media == "application/vnd.apple.mpegurl":
-        if resolved.get("type", "string") != "string":
-            raise ValueError("Text response must declare a string schema")
-        return "text"
-    raise ValueError("Unsupported response media type or missing binary declaration")
-
-
-def compile_contract(document):
-    """Every operation belongs to exactly one stable domain; collisions fail closed."""
+def _prefix(document):
     if not str(document.get("openapi", "")).startswith("3."):
         raise ValueError("OpenAPI 3 is required")
     servers = document.get("servers", [{"url": ""}])
@@ -142,20 +39,78 @@ def compile_contract(document):
         not prefix.startswith("/") or prefix.startswith("//") or "{" in prefix
     ):
         raise ValueError("Server must be a fixed deployment-neutral path")
-    domains = defaultdict(list)
-    operations = {}
-    domain_names = {}
+    return prefix
+
+
+def _check_path(path, item):
+    if (
+        not path.startswith("/")
+        or path.startswith("//")
+        or "?" in path
+        or "#" in path
+        or ".." in path.split("/")
+    ):
+        raise ValueError("Unsafe OpenAPI path")
+    if "servers" in item or "$ref" in item:
+        raise ValueError("Path-level overrides require an explicit adapter")
+
+
+def _domain(path, operation, names):
+    if "servers" in operation or "callbacks" in operation:
+        raise ValueError("Operation overrides require an explicit adapter")
+    tags = [tag for tag in operation.get("tags", []) if tag != "Deprecated"]
+    label = tags[0] if tags else path.strip("/").split("/")[0]
+    domain = identifier(label)
+    if domain in names and names[domain] != label:
+        raise ValueError("Domain normalization collision")
+    names[domain] = label
+    return domain
+
+
+def _responses(document, operation):
+    responses, modes = {}, {}
+    for status, raw in sorted(operation.get("responses", {}).items()):
+        response = resolve(document, raw)
+        content = response.get("content", {})
+        responses[status] = {
+            media: schema(body.get("schema", {})) for media, body in content.items()
+        }
+        modes[status] = {
+            media: response_mode(document, media, body)
+            for media, body in content.items()
+        }
+    return responses, modes
+
+
+def _operation(document, operation, *, route, domain, shared):
+    method, path = route
+    inputs, parameters, content_type = input_schema(document, shared, operation)
+    check_path_parameters(path, parameters)
+    responses, response_modes = _responses(document, operation)
+    action = operation["operationId"]
+    return {
+        "action": action,
+        "domain": domain,
+        "method": method.upper(),
+        "path": path,
+        "read_only": method in {"get", "head", "options"},
+        "input": inputs,
+        "parameters": parameters,
+        "content_type": content_type,
+        "responses": responses,
+        "response_modes": response_modes,
+        "security": operation.get("security", document.get("security", [])),
+        "summary": operation.get("summary", action),
+    }
+
+
+def compile_contract(document):
+    """Every source operation belongs to exactly one domain; omissions fail closed."""
+    validate_binary_constraints(document)
+    prefix = _prefix(document)
+    domains, operations, names = defaultdict(list), {}, {}
     for path, item in sorted(document["paths"].items()):
-        if (
-            not path.startswith("/")
-            or path.startswith("//")
-            or "?" in path
-            or "#" in path
-            or ".." in path.split("/")
-        ):
-            raise ValueError("Unsafe OpenAPI path")
-        if "servers" in item or "$ref" in item:
-            raise ValueError("Path-level overrides require an explicit adapter")
+        _check_path(path, item)
         for method, operation in sorted(item.items()):
             if method not in METHODS:
                 continue
@@ -164,43 +119,19 @@ def compile_contract(document):
                 r"[A-Za-z][A-Za-z0-9_]*", action
             ):
                 raise ValueError("Invalid or duplicate operationId")
-            if "servers" in operation or "callbacks" in operation:
-                raise ValueError("Operation overrides require an explicit adapter")
-            tags = [tag for tag in operation.get("tags", []) if tag != "Deprecated"]
-            label = tags[0] if tags else path.strip("/").split("/")[0]
-            domain = identifier(label)
-            if domain in domain_names and domain_names[domain] != label:
-                raise ValueError("Domain normalization collision")
-            domain_names[domain] = label
-            inputs, parameters, content_type = input_schema(
-                document, item.get("parameters", []), operation
+            domain = _domain(path, operation, names)
+            operations[action] = _operation(
+                document,
+                operation,
+                route=(method, prefix + path),
+                domain=domain,
+                shared=item.get("parameters", []),
             )
-            responses, response_modes = {}, {}
-            for status, raw in sorted(operation.get("responses", {}).items()):
-                response = resolve(document, raw)
-                responses[status] = {
-                    media: schema(body.get("schema", {}))
-                    for media, body in response.get("content", {}).items()
-                }
-                response_modes[status] = {
-                    media: response_mode(document, media, body)
-                    for media, body in response.get("content", {}).items()
-                }
-            operations[action] = {
-                "action": action,
-                "domain": domain,
-                "method": method.upper(),
-                "path": prefix + path,
-                "read_only": method in {"get", "head", "options"},
-                "input": inputs,
-                "parameters": parameters,
-                "content_type": content_type,
-                "responses": responses,
-                "response_modes": response_modes,
-                "security": operation.get("security", document.get("security", [])),
-                "summary": operation.get("summary", action),
-            }
             domains[domain].append(action)
+    return _final_contract(document, domains, operations)
+
+
+def _final_contract(document, domains, operations):
     return {
         "version": 1,
         "definitions": schema(
@@ -243,20 +174,29 @@ def domain_schemas(contract, domain):
     )
 
 
-def trim_definitions(value):
-    definitions = value.pop("$defs")
+def _schema_refs(value):
     pending = [value]
-    used = set()
     while pending:
         item = pending.pop()
         if isinstance(item, list):
             pending.extend(item)
-        elif isinstance(item, dict):
-            ref = item.get("$ref", "")
-            if ref.startswith("#/$defs/"):
-                name = ref[len("#/$defs/") :]
-                if name not in used:
-                    used.add(name)
-                    pending.append(definitions[name])
-            pending.extend(item.values())
+            continue
+        if not isinstance(item, dict):
+            continue
+        ref = item.get("$ref", "")
+        if ref.startswith("#/$defs/"):
+            yield ref[len("#/$defs/") :]
+        pending.extend(item.values())
+
+
+def trim_definitions(value):
+    definitions = value.pop("$defs")
+    pending = list(_schema_refs(value))
+    used = set()
+    while pending:
+        name = pending.pop()
+        if name in used:
+            continue
+        used.add(name)
+        pending.extend(_schema_refs(definitions[name]))
     return {**value, "$defs": {key: definitions[key] for key in sorted(used)}}
