@@ -163,3 +163,53 @@ def test_generated_repository_attestation_rejects_drift(monkeypatch, failure):
         template.create_from_template(
             "Example", "connector", "Example/template", "a" * 40
         )
+
+
+def test_publish_uploads_and_attests_one_captured_snapshot(tmp_path, monkeypatch):
+    import base64
+
+    (tmp_path / "README.md").write_text("reviewed README")
+    script = tmp_path / "run.sh"
+    script.write_text("#!/bin/sh\nexit 0\n")
+    script.chmod(0o755)
+    reviewed = template.manifest(tmp_path)
+    seen = []
+    monkeypatch.setattr(template, "preflight", lambda *args: None)
+
+    def api(route, method="GET", data=None):
+        seen.append((route, method, data))
+        if route == "orgs/Example/repos":
+            (tmp_path / "README.md").write_text("concurrent unreviewed edit")
+            script.chmod(0o644)
+            return {
+                "private": True,
+                "is_template": True,
+                "full_name": "Example/template",
+            }
+        if "/contents/README.md" in route:
+            assert base64.b64decode(data["content"]) == b"reviewed README"
+            return {}
+        if route == "repos/Example/template":
+            return {"default_branch": "main"}
+        if route.endswith("/git/ref/heads/main"):
+            return {"object": {"sha": "parent"}}
+        if route.endswith("/git/trees"):
+            return {"sha": "tree"}
+        if route.endswith("/git/commits"):
+            return {"sha": "commit"}
+        if route.endswith("/git/refs/heads/main"):
+            return {}
+        pytest.fail(route)
+
+    monkeypatch.setattr(template, "api", api)
+    result = template.publish_template(
+        tmp_path, "Example", "template", {"passed": True, "files": reviewed}
+    )
+    tree = next(
+        data["tree"] for route, method, data in seen if route.endswith("/git/trees")
+    )
+    entries = {entry["path"]: entry for entry in tree}
+    assert entries["README.md"]["content"] == "reviewed README"
+    assert entries["run.sh"]["mode"] == "100755"
+    assert result["files"] == reviewed
+    assert template.manifest(tmp_path) != reviewed

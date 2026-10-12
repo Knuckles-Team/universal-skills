@@ -10,6 +10,7 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -56,7 +57,8 @@ def preflight(owner, name):
         raise PermissionError("Cannot establish that destination repository is absent")
 
 
-def files(root):
+def snapshot(root):
+    """Capture file bytes and executable modes before any remote operation."""
     result = {}
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
@@ -67,8 +69,16 @@ def files(root):
         if path.is_file():
             if path.name == ".env" or path.suffix in {".log", ".pyc"}:
                 raise ValueError("Transient or secret-bearing file in template")
-            result[relative.as_posix()] = path.read_bytes()
+            with path.open("rb") as stream:
+                mode = (
+                    "100755" if os.fstat(stream.fileno()).st_mode & 0o111 else "100644"
+                )
+                result[relative.as_posix()] = (stream.read(), mode)
     return result
+
+
+def files(root):
+    return {name: body for name, (body, _) in snapshot(root).items()}
 
 
 def hashes(contents):
@@ -80,12 +90,17 @@ def hashes(contents):
 
 def manifest(root):
     """Bind every file's bytes and permitted Git executable mode."""
+    return snapshot_manifest(snapshot(root))
+
+
+def snapshot_manifest(captured):
+    """Derive attestations solely from an already captured snapshot."""
     return {
         name: {
-            "sha256": digest,
-            "mode": "100755" if (root / name).stat().st_mode & 0o111 else "100644",
+            "sha256": hashlib.sha256(body).hexdigest(),
+            "mode": mode,
         }
-        for name, digest in hashes(files(root)).items()
+        for name, (body, mode) in sorted(captured.items())
     }
 
 
@@ -169,8 +184,10 @@ def verify(expected, actual, allowed):
 
 
 def publish_template(root, owner, name, checks):
-    contents = files(root)
-    if checks.get("files") != manifest(root) or checks.get("passed") is not True:
+    captured = snapshot(root)
+    contents = {name: body for name, (body, _) in captured.items()}
+    validated_manifest = snapshot_manifest(captured)
+    if checks.get("files") != validated_manifest or checks.get("passed") is not True:
         raise ValueError(
             "Passed checks must bind the exact complete template file hashes"
         )
@@ -204,7 +221,7 @@ def publish_template(root, owner, name, checks):
     head = api(f"repos/{owner}/{name}/git/ref/heads/{branch}")["object"]["sha"]
     tree = []
     for path, body in contents.items():
-        mode = "100755" if (root / path).stat().st_mode & 0o111 else "100644"
+        mode = captured[path][1]
         entry = {"path": path, "mode": mode, "type": "blob"}
         try:
             entry["content"] = body.decode()
@@ -236,7 +253,7 @@ def publish_template(root, owner, name, checks):
     return {
         "repository": repo["full_name"],
         "sha": commit["sha"],
-        "files": manifest(root),
+        "files": validated_manifest,
     }
 
 
