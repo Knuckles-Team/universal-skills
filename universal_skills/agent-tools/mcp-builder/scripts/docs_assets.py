@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 import hashlib
+from importlib.util import cache_from_source
 import json
 from pathlib import Path
 import subprocess
@@ -29,13 +30,32 @@ def _inventory(root: Path) -> dict[str, Path]:
             files[relative] = path
         else:
             raise ValueError(f"shared theme non-regular file: {relative}")
+    # pip normally byte-compiles installed .py resources. Such caches are not
+    # authoritative input and are never staged, but every path above is still
+    # checked before any cache can be ignored.
+    cache_files = set()
+    if "provenance.json" in files:
+        manifest = json.loads(files["provenance.json"].read_text())
+        for relative in manifest["files"]:
+            if relative not in files or not relative.endswith(".py"):
+                continue
+            for optimization in ("", "1", "2"):
+                cached = Path(cache_from_source(relative, optimization=optimization))
+                if cached.as_posix() in files:
+                    cache_files.add(cached.as_posix())
+    cache_directories = {Path(relative).parent.as_posix() for relative in cache_files}
+    files = {
+        relative: path
+        for relative, path in files.items()
+        if relative not in cache_files
+    }
     expected_directories = {
         parent.as_posix()
         for relative in files
         for parent in Path(relative).parents
         if parent != Path(".")
     }
-    if directories != expected_directories:
+    if directories - cache_directories != expected_directories:
         raise ValueError("shared theme inventory includes unexpected empty directories")
     return files
 

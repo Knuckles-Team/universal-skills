@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import py_compile
 from pathlib import Path
 import shutil
 import subprocess
@@ -166,3 +167,46 @@ def test_generator_rejects_redirected_theme_without_external_writes(tmp_path, re
     assert {path.name for path in external.iterdir()} == {"sentinel"}
     assert sentinel.read_bytes() == b"must remain untouched"
     assert destination.is_symlink()
+
+
+def test_theme_accepts_reviewed_interpreter_caches_without_staging_them(theme):
+    source = theme.SOURCE / "scripts/sync_mkdocs_theme.py"
+    caches = [
+        Path(py_compile.compile(str(source), doraise=True, optimize=level))
+        for level in (0, 1, 2)
+    ]
+    assert all(path.is_file() for path in caches)
+    assert theme.verified_source() == theme.SOURCE
+    with theme.staged_theme_files() as files:
+        assert all("__pycache__" not in destination.parts for _, destination in files)
+        assert all(source not in caches for source, _ in files)
+
+
+@pytest.mark.parametrize(
+    "mutation", ["unknown", "unreviewed-source", "symlink-file", "symlink-directory"]
+)
+def test_theme_rejects_unrecognized_or_redirected_caches(theme, tmp_path, mutation):
+    source = theme.SOURCE / "scripts/sync_mkdocs_theme.py"
+    cached = Path(importlib.util.cache_from_source(str(source)))
+    outside = tmp_path / "unreviewed-cache"
+    outside.mkdir()
+    sentinel = outside / "sentinel"
+    sentinel.write_bytes(b"must remain untouched")
+    if mutation == "symlink-directory":
+        cached.parent.symlink_to(outside, target_is_directory=True)
+    else:
+        cached.parent.mkdir()
+        if mutation == "symlink-file":
+            cached.symlink_to(sentinel)
+        elif mutation == "unreviewed-source":
+            unreviewed = source.with_name("unreviewed.py")
+            unreviewed.write_text("UNREVIEWED = True\n")
+            py_compile.compile(str(unreviewed), doraise=True)
+        else:
+            cached.with_name("sync_mkdocs_theme.unrecognized.pyc").write_bytes(
+                b"unknown"
+            )
+    with pytest.raises(ValueError, match="inventory differs|escapes its source"):
+        with theme.staged_theme_files():
+            pytest.fail("unrecognized or redirected bytecode was accepted")
+    assert sentinel.read_bytes() == b"must remain untouched"

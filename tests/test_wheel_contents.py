@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -182,11 +183,56 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         for member in members
     )
 
-    # Resolve the public resource API from an extracted wheel outside the source
-    # checkout, without installing dependencies or importing provider runtimes.
+    # Exercise normal pip byte-compilation, not just ZIP extraction. The target
+    # is isolated and no dependencies or host environment are installed/changed.
     installed = tmp_path / "installed"
-    with zipfile.ZipFile(wheel) as archive:
-        archive.extractall(installed)
+    pip = shutil.which("pip") or shutil.which("pip3")
+    assert pip, "the wheel install acceptance check requires an existing pip"
+    installation = subprocess.run(
+        [
+            pip,
+            "--python",
+            sys.executable,
+            "install",
+            "--no-deps",
+            "--no-index",
+            "--disable-pip-version-check",
+            "--target",
+            str(installed),
+            str(wheel),
+        ],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert installation.returncode == 0, installation.stdout + installation.stderr
+    installed_scripts = installed / "universal_skills/agent-tools/mcp-builder/scripts"
+    theme_source = (
+        installed_scripts / "templates/pipelines-theme/scripts/sync_mkdocs_theme.py"
+    )
+    assert Path(importlib.util.cache_from_source(str(theme_source))).is_file()
+    generated = tmp_path / "generated"
+    scaffold = subprocess.run(
+        [
+            sys.executable,
+            str(installed_scripts / "scaffold_package.py"),
+            "installed-wheel",
+            "--output-dir",
+            str(generated),
+        ],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert scaffold.returncode == 0, scaffold.stdout + scaffold.stderr
+    emitted_theme = generated / "installed-wheel/.pipeline-theme"
+    assert (emitted_theme / "provenance.json").is_file()
+    assert not list(emitted_theme.rglob("__pycache__"))
+    assert not list(emitted_theme.rglob("*.pyc"))
     resource_check = subprocess.run(
         [
             sys.executable,
