@@ -42,13 +42,13 @@ def test_generated_package_consumes_public_surface_and_declares_package(tmp_path
     # Wording, length, badges and heading layout are review guidance, not gates.
 
 
-def test_generated_mcp_badge_follows_package_types(tmp_path):
+def test_supported_scaffold_advertises_its_mcp_surface(tmp_path):
     module = _load_scaffold()
     module.scaffold(
-        "api-provider", output_dir=str(tmp_path), pkg_types="api_client,agent"
+        "api-provider", output_dir=str(tmp_path), pkg_types="api_client,mcp"
     )
     readme = (tmp_path / "api-provider/README.md").read_text()
-    assert "![MCP Server]" not in readme
+    assert "![MCP Server]" in readme
     assert "MCP Server" not in module.render_public_badges(
         "api-provider", mcp_server=False
     )

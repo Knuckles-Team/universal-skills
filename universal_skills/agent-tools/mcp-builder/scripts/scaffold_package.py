@@ -23,7 +23,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from quality_templates import PRECOMMIT_CONFIG, SCANNER_CI_YML, PIPELINE_YML, PAGES_YML
+from surface_templates import select_template
+from quality_templates import (
+    PRECOMMIT_CONFIG,
+    SCANNER_CI_YML,
+    PIPELINE_YML,
+    PAGES_YML,
+    SPEC_DASHBOARD_CONFIG,
+    SPEC_DELIVERY_MD,
+)
 from transport_templates import AUTH_PY, API_CLIENT_BASE, TESTS_AUTH, TESTS_API_WRAPPER
 from connector_templates import (
     render_kg_ingest,
@@ -329,12 +337,12 @@ RUN apt-get update \\
 # MCP serving dependency closure (including SDK graph client).
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[mcp]>=0.1.0
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow "{package_name}[mcp]>=0.1.0"
 
 # Full agent runtime dependency closure.
 FROM builder-base AS builder-agent
 RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow {package_name}[agent]>=0.1.0
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow "{package_name}[agent]>=0.1.0"
 
 FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS runtime-base
 ARG HOST=127.0.0.1
@@ -732,7 +740,14 @@ include requirements.txt
 # They remain source-checkout tooling, not runtime wheel/package data; hooks
 # never install these native tools and the Docker runtime excludes scripts/.
 include .pre-commit-config.yaml
-include .github/workflows/scanners.yml
+graft .github/workflows
+graft scripts
+graft tests
+graft docs
+graft docker
+include mkdocs.yml pytest.ini .bumpversion.cfg
+include .config/spec-dashboard.json
+global-exclude __pycache__ *.py[cod]
 recursive-include {pkg_dir} *.py *.json *.md *.yaml *.yml
 """
 
@@ -941,7 +956,8 @@ client or agent → MCP/A2A entry point → typed tool module → API client →
 ```
 
 The MCP surface uses action-routed tools. Pass an `action` and a JSON `params_json`
-payload; the generated table below is refreshed by the repository hook.
+payload. Regenerate `schemas/mcp_tools.json` with `python scripts/generate_tool_schemas.py`
+after changing a tool contract, and keep the examples below aligned with that schema.
 
 <!-- MCP-TOOLS-TABLE:START -->
 <!-- MCP-TOOLS-TABLE:END -->
@@ -1022,7 +1038,7 @@ pytest tests -q
 pre-commit run --all-files
 ```
 
-Keep generated MCP tables and environment documentation under their owning hooks.
+Keep MCP examples and environment documentation aligned with the implemented settings.
 Add focused positive and adversarial tests for every behavior change. See
 `AGENTS.md` for the current module ownership and release checks.
 
@@ -2195,6 +2211,7 @@ nav:
   - Usage (API / CLI / MCP): usage.md
   - Backing Platform ({display_name}): platform.md
   - Concepts: concepts.md
+  - Spec delivery: spec-delivery.md
 """
 
 DOCS_INDEX_MD = """\
@@ -2711,12 +2728,20 @@ def scaffold(
     in_place: bool = False,
 ):
     """Scaffold a complete agent-package project (SDK contracts)."""
-    types = [t.strip() for t in pkg_types.split(",")]
+    types = set(pkg_types.split(","))
+    types = {value.strip() for value in types}
+    supported = {"api_client", "mcp", "agent", "graphql"}
+    if not {"api_client", "mcp"} <= types or not types <= supported:
+        raise ValueError(
+            "--type requires api_client,mcp; optional additions: agent,graphql"
+        )
     pkg_dir = to_pkg_dir(package_name)
     if not display_name:
         display_name = to_display(package_name)
     if not description:
-        description = f"{display_name} API + MCP Server + A2A Server"
+        description = f"{display_name} API + MCP Server" + (
+            " + A2A Server" if "agent" in types else ""
+        )
     upper_name = to_upper_env(package_name)
     if not concept_prefix:
         concept_prefix = upper_name.split("_")[0]
@@ -2825,6 +2850,8 @@ def scaffold(
         root / ".github/workflows/windows-ci.yml": (WINDOWS_CI_YML, True),
         # Docs site (7 standard pages)
         root / "mkdocs.yml": (MKDOCS_YML, True),
+        root / ".config/spec-dashboard.json": (SPEC_DASHBOARD_CONFIG, False),
+        root / "docs/spec-delivery.md": (SPEC_DELIVERY_MD, True),
         root / "docs/index.md": (DOCS_INDEX_MD, True),
         root / "docs/overview.md": (DOCS_OVERVIEW_MD, True),
         root / "docs/installation.md": (DOCS_INSTALLATION_MD, True),
@@ -2942,6 +2969,18 @@ def scaffold(
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
 
+    if "agent" not in types:
+        for optional_path in (
+            root / "a2a.json",
+            root / "scripts/validate_agent.py",
+            root / "docker/agent.compose.yml",
+        ):
+            files.pop(optional_path, None)
+        files[pkg / "__main__.py"] = (
+            "from .mcp_server import mcp_server\n\nif __name__ == '__main__':\n    mcp_server()\n",
+            False,
+        )
+
     # Flat tests directory
     files[root / "tests" / "__init__.py"] = ("", False)
     files[root / "tests" / "conftest.py"] = (TESTS_CONFTEST, True)
@@ -2959,9 +2998,30 @@ def scaffold(
     files[root / "tests" / "test_startup.py"] = (TESTS_STARTUP, True)
     files[root / "tests" / "test_concept_parity.py"] = (TESTS_CONCEPT_PARITY, True)
 
+    selected_templates = {
+        value: name
+        for name, value in globals().items()
+        if name
+        in {
+            "DOCKERFILE",
+            "DEBUG_DOCKERFILE",
+            "BUMPVERSION_CFG",
+            "README_MD",
+            "DOCS_INDEX_MD",
+            "DOCS_OVERVIEW_MD",
+            "DOCS_INSTALLATION_MD",
+            "DOCS_DEPLOYMENT_MD",
+            "PYPROJECT_TOML",
+            "INIT_PY",
+        }
+    }
+
     # ── Write all files ──────────────────────────────────────────────────
     for path, (template, needs_format) in files.items():
-        content = template.format(**ctx) if needs_format else template
+        selected = select_template(
+            selected_templates.get(template, ""), template, "agent" in types
+        )
+        content = selected.format(**ctx) if needs_format else selected
         if _write_generated_text(path, content):
             print(f"  ✅ {path.relative_to(root.parent)}")
 
@@ -2984,6 +3044,8 @@ def scaffold(
         # library-only helper so each generated package owns the same
         # fail-closed staged/delta semantics without hook-time installation.
     ):
+        if script_name == "validate_a2a_agent.py" and "agent" not in types:
+            continue
         src = TEMPLATES_DIR / script_name
         dst = root / "scripts" / script_name
         if src.is_file():
@@ -3059,7 +3121,8 @@ def scaffold(
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")
-    print(f"   Console scripts: {mcp_cmd}, {agent_cmd}")
+    commands = [mcp_cmd] + ([agent_cmd] if "agent" in types else [])
+    print(f"   Console scripts: {', '.join(commands)}")
     print(f"   Concept prefix: CONCEPT:{concept_prefix}-*")
     print(f"   Types: {', '.join(types)}")
     print("   → Run `uv lock` to generate uv.lock (required by the pre-commit gate).")
@@ -3091,7 +3154,7 @@ if __name__ == "__main__":
         default="api_client,mcp",
         dest="pkg_types",
         type=str,
-        help="Comma-separated types: api_client, mcp, agent, graphql (default: api_client,mcp)",
+        help="Required: api_client,mcp; optional additions: agent,graphql (default: api_client,mcp)",
     )
     parser.add_argument(
         "--display-name",

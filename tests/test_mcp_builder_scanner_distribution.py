@@ -65,7 +65,8 @@ def test_pages_uses_pinned_workflow_and_actual_content_root():
 def test_source_distribution_carries_hooks_without_copied_scanners():
     manifest = _load_scaffold().MANIFEST_IN
     assert "include .pre-commit-config.yaml" in manifest
-    assert "include .github/workflows/scanners.yml" in manifest
+    assert "graft .github/workflows" in manifest
+    assert "graft scripts" in manifest
     assert "check_scanners.py" not in manifest
     assert "run_kiss.sh" not in manifest
 

@@ -147,7 +147,6 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'mkdocs.yml', 'README.md']
   workflow_dispatch:
 
 permissions:
@@ -158,10 +157,39 @@ jobs:
     uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
     with:
       content_source: docs
+      agent_readiness_enabled: true
+      readiness_input: docs/agent-readiness.json
+      readiness_schema: docs/agent-readiness.schema.json
+      spec_dashboard_enabled: true
+      spec_dashboard_config: .config/spec-dashboard.json
     permissions:
       contents: read
       pages: write
       id-token: write
+"""
+
+SPEC_DASHBOARD_CONFIG = """\
+{
+  "version": 1,
+  "sources": [{"glob": "specs/*/status.json", "kind": "spec"}]
+}
+"""
+
+SPEC_DELIVERY_MD = """\
+# Spec delivery
+
+[Open the published delivery dashboard](https://knuckles-team.github.io/{package_name}/spec-delivery/).
+
+The shared Pages pipeline builds this dashboard from canonical
+`specs/*/status.json` files selected by `.config/spec-dashboard.json`.
+The repository owns the source configuration; the pinned shared pipeline owns
+rendering and validation. Update source specs through the reviewed spec process.
+
+An empty starter repository displays **No documented records**. Missing or
+unverified evidence does not establish delivery, release, or deployment.
+The dashboard is a build-time snapshot, refreshed on every push to main or an
+explicit Pages workflow run. Agent readiness uses the separate canonical
+`docs/agent-readiness.json` and its packaged schema.
 """
 
 # Scanner versions and thresholds are owned by the pinned pipelines package.

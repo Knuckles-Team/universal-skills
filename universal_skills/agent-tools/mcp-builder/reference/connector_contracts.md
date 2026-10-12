@@ -9,7 +9,7 @@ before adapting the scaffold.
 |---|---|
 | [agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk) | Connector server, content, configuration, transport, ingest, source and effect APIs |
 | [pipelines](https://github.com/Knuckles-Team/pipelines) | Shared gates, scanner policy, documentation/spec delivery, release and publication |
-| [repository-manager-mcp](https://github.com/Knuckles-Team/repository-manager-mcp) | Repository connector integration examples |
+| [repository-manager](https://github.com/Knuckles-Team/repository-manager) | Repository connector integration examples |
 | [servicenow-api](https://github.com/Knuckles-Team/servicenow-api) | Service connector integration examples |
 
 Confirm exact repository identity before using examples. Do not substitute a
@@ -59,7 +59,7 @@ Optional orchestration belongs in its own extra. Avoid recursive extras and
 import-time live-service initialization.
 
 Current pipelines workflows/hooks own release, publication, Pages, dependency
-readiness, spec-delivery docs and public README/AGENTS checks. Resolve reviewed
+readiness, spec-delivery docs and public README checks. Resolve reviewed
 immutable revisions through repository supply-chain policy; do not copy mutable
 workflow refs or obsolete pins. Dependency-readiness is a manual/release gate
 where current pipelines requires it.
@@ -71,7 +71,9 @@ host or CI environment; hooks must not install toolchains.
 
 README is the public entry point; AGENTS records current ownership, commands,
 quality gates and isolation. Link detailed specification/delivery evidence from
-docs. Current pipelines public-surface owns heading, size, badge and privacy rules.
+docs. The current pipelines public-surface gate checks safe local links and README
+installation/start paths. Heading, size, badge and privacy conventions need their
+own review; a passing public-surface check does not certify them.
 
 ## Optional agent runtime
 

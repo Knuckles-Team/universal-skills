@@ -85,25 +85,23 @@ responsibilities outside this package-builder contract.
 
 ## Public README and AGENTS surface
 
-Every generated repository opts into the shared `public-surface` pre-commit hook
-from the reviewed current pipelines authority, pinned according to its supply-chain
-policy. Its repository-local TOML identity
-must declare `repository`, `distribution`, `pages_url`, and the boolean
-`mcp_server` value. The generator derives those values from the package name and
-selected package types; it never checks URL reachability while scaffolding.
+Generated repositories use the current shared pipelines public-surface hook,
+pinned according to the repository supply-chain policy. That hook checks safe
+local links and the README installation/start paths. Run it against the generated
+repository and retain its actual result; it does not certify heading sets, document
+sizes, badge completeness or privacy.
 
-`README.md` is a concise public entry point: it has exactly one H1, the required
-Overview, Key capabilities, Quick start, Architecture, Documentation,
-Development, and License headings, the full canonical GitHub/PyPI badge set, and
-the MCP badge only when `mcp_server = true`. It links to the configured public
-Pages site and stays between 1,500 and 24,000 characters and below 200 lines.
+Keep README a concise public entry point describing the package, supported
+capabilities, installation, startup, architecture, documentation and development.
+Choose badges and links that describe this repository accurately. Keep AGENTS
+focused on current ownership, module boundaries, commands, quality gates,
+development rules and isolation. Detailed guidance belongs in source docs.
 
-`AGENTS.md` records only the current contributor contract. It includes the
-durable ownership, module map, commands, quality gates, development rules,
-documentation, and branching/isolation sections; it contains no local
-filesystem paths or internal planning/history references. It stays between
-1,200 and 24,000 characters and below 240 lines. Detailed prose belongs in the
-Pages source tree.
+Review these documents for environment-specific paths, identities, endpoints and
+secret-bearing examples. Review length, headings and badge choices for usability;
+do not present historical numeric limits or heading lists as enforced pipelines
+contracts. Public URLs and readiness-generated content remain subject to the
+separate validation and privacy requirements above.
 
 ## Served-surface TCK
 

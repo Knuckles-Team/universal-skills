@@ -203,11 +203,17 @@ def test_generated_deployment_docs_are_current_only_and_tls_bound():
     assert "@sha256:<digest>" in docs
 
 
+@pytest.mark.parametrize("has_agent", [False, True])
 def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_extras(
     tmp_path,
+    has_agent,
 ):
     module = _load_scaffold_module()
-    module.scaffold("example-provider", output_dir=str(tmp_path))
+    module.scaffold(
+        "example-provider",
+        output_dir=str(tmp_path),
+        pkg_types="api_client,mcp" + (",agent" if has_agent else ""),
+    )
     root = tmp_path / "example-provider"
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     agents_md = (root / "AGENTS.md").read_text(encoding="utf-8")
@@ -240,16 +246,22 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
         requirement.startswith(("agent-utilities", "epistemic-graph"))
         for requirement in dependencies
     )
-    assert any(
-        requirement.startswith("agent-utilities[agent-runtime")
-        for requirement in extras["agent"]
-    )
+    if has_agent:
+        assert any(
+            requirement.startswith("agent-utilities[agent-runtime")
+            for requirement in extras["agent"]
+        )
+    else:
+        assert "agent" not in extras
+        assert not any(
+            requirement.startswith("agent-utilities") for requirement in extras["all"]
+        )
     assert all(
         "epistemic-graph[full]" not in requirement
         for group in extras.values()
         for requirement in group
     )
-    assert not (root / "example_provider" / "agent_server.py").exists()
+    assert (root / "example_provider" / "agent_server.py").exists() is has_agent
     assert (root / "example_provider" / "mcp_server.py").is_file()
     assert "example-provider[" not in pyproject
     assert not (root / ".env").exists()

@@ -72,3 +72,5 @@ Include a negative test rejecting stale agent-utilities connector imports. Run n
 lint and pre-commit gates in an existing environment; report unavailable checks
 accurately. Do not install native toolchains or broaden dependencies for unrelated
 checks.
+
+Supported scaffolds include `api_client,mcp`; add `agent` and/or `graphql` when needed. Other type combinations are rejected before any files are written. MCP remains the default container entrypoint.
