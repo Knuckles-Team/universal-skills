@@ -21,6 +21,8 @@ references, nullability and declared methods including PATCH. File inputs are
 base64 bytes; filesystem paths are never opened. The converter requires a fixed
 path-only server URL, JSON/form/multipart request content and standard path,
 query and header parameter styles. Unsupported features fail during compilation.
+Multiple request media types are rejected until a representation-complete adapter
+can validate and exercise each one; selecting only the first is not full parity.
 
 Tools accept an action enum bound to an exact method and route. They do not
 accept arbitrary URLs or methods. Credential references use SDK API-key or
@@ -29,6 +31,13 @@ origin, without the OpenAPI path prefix. Writes default to disabled and require
 operator enablement plus native MCP confirmation. HTTP requests have finite
 bounds and exactly one attempt, including PUT and DELETE. Transport uncertainty
 never triggers an automatic write retry.
+
+The SDK confirmation helper must accept `confirmation_arguments=arguments` and
+return either a boolean or `mcp.types.InputRequiredResult`. The tool returns a
+pending input request immediately and dispatches only for exact `True`.
+An older SDK without that interface fails closed on writes; it is not evidence of
+modern protocol compatibility. Test actual native acceptance, denial and pending
+round trips with the reviewed SDK before admitting write operations.
 
 HTTP to a non-loopback provider, and credential-bearing HTTP even on loopback,
 is refused by default. An operator may set the
@@ -139,6 +148,10 @@ source contract with explicit authorization; arbitrary runtime overlays are not
 accepted as equivalent to the pinned source. Pure inventory/schema checks remain
 separate from this authorization admission. Do not treat
 an undocumented effect as read-only merely because its HTTP method is GET.
+Malformed security declarations, undeclared scheme references and invalid scope
+arrays fail compilation. Explicit `security: []` and anonymous alternatives remain
+valid declarations; structural validity does not prove credential scope or service
+authorization. OpenAPI 3.0 and 3.1 scope/role rules are validated separately.
 
 The generated package includes these helpers: `from package_module.parity import
 verify_contract, verify_mcp, require_complete_coverage, verify_transport`. No sibling
@@ -155,6 +168,10 @@ constraints and reference siblings stay checked. Client-unsupported schemas
 (such as Unicode property escapes rejected by a Python JSON Schema client) fail
 explicitly; do not drop the constraint to obtain a pass. Discovery is distinct
 from successful transport execution.
+Raw source methods, routes and parameter placement are checked independently of
+the compiler, including against captured HTTP requests, so a consistently wrong
+compiler cannot certify its own routing. The source snapshot is isolated from
+compiler mutation.
 
 For exhaustive mocked transport proof, import `verify_transport` from
 `scripts/openapi_transport_parity.py`. Pass the original source bytes, generated
@@ -195,3 +212,11 @@ derived from the reviewed regex 2026.9.29 runtime. Positive L/M/N properties are
 translated to literal ranges; unsupported properties fail. This pins the existing
 converter semantics and does not assert equivalence with an unverified provider
 Node/Unicode version. The generated parity package ships the table as package data.
+
+Native schema validity does not establish model-context suitability. Measure the
+post-transformation per-tool and aggregate schema sizes against an explicit target
+client budget before admitting a discovery scope. Count-based pagination is not a
+byte budget, and clients may collect all pages. The measured full Immich catalog
+currently serves about 4.6 MB of tool JSON and remains an operational blocker.
+Retain all constraints and the full inventory; use reviewed visibility scopes or
+a separately validated disclosure mechanism instead of weakening schemas.

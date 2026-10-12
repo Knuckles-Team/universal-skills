@@ -17,6 +17,7 @@ if __package__:
         schema,
         validate_binary_constraints,
     )
+    from .openapi_security import validate_security
 else:
     from openapi_schema_inputs import input_schema, response_mode
     from openapi_schema_types import (
@@ -28,6 +29,7 @@ else:
         schema,
         validate_binary_constraints,
     )
+    from openapi_security import validate_security
 
 
 def _prefix(document):
@@ -107,6 +109,7 @@ def _operation(document, operation, *, route, domain, shared):
 def compile_contract(document):
     """Every source operation belongs to exactly one domain; omissions fail closed."""
     validate_binary_constraints(document)
+    validate_security(document)
     prefix = _prefix(document)
     domains, operations, names = defaultdict(list), {}, {}
     for path, item in sorted(document["paths"].items()):

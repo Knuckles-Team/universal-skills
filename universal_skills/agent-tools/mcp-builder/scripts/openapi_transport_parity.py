@@ -16,8 +16,10 @@ from urllib.parse import parse_qsl
 
 if __package__:
     from .openapi_parity import require_complete_coverage, verify_contract
+    from .openapi_source_parity import verify_source_request
 else:
     from openapi_parity import require_complete_coverage, verify_contract
+    from openapi_source_parity import verify_source_request
 
 
 def _check_request(request, expected, operation):
@@ -45,7 +47,7 @@ def _check_body(request, expected):
         raise ValueError("Dispatched form body differs from fixture")
 
 
-def _transport(fixture, operation, seen, *, assert_request):
+def _transport(fixture, operation, seen, *, assert_request, source_operation):
     try:
         import httpx
     except ImportError as exc:
@@ -54,6 +56,7 @@ def _transport(fixture, operation, seen, *, assert_request):
         ) from exc
 
     def respond(request):
+        verify_source_request(request, source_operation, fixture["arguments"])
         _check_request(request, fixture["expected_request"], operation)
         if assert_request is not None:
             assert_request(request, operation, fixture)
@@ -75,10 +78,17 @@ async def verify_transport(
     expected_result. Multipart fixtures require assert_request to inspect parsed
     fields and files; the runner never skips a declared body representation.
     """
-    verify_contract(json.loads(source), contract, hashlib.sha256(source).hexdigest())
+    inventory = verify_contract(
+        json.loads(source), contract, hashlib.sha256(source).hexdigest()
+    )
     require_complete_coverage(contract, fixtures, fixtures)
     covered = {"api": [], "mcp": []}
-    adapters = {"factory": api_factory, "mcp": mcp_call, "request": assert_request}
+    adapters = {
+        "factory": api_factory,
+        "mcp": mcp_call,
+        "request": assert_request,
+        "source": inventory["operations"],
+    }
     for action, operation in sorted(contract["operations"].items()):
         fixture = fixtures[action]
         if fixture["arguments"].get("action") != action:
@@ -113,7 +123,13 @@ def _require_body_proof(operation, fixture, assert_request):
 async def _probe_surface(surface, operation, fixture, *, adapters):
     seen = []
     client = adapters["factory"](
-        _transport(fixture, operation, seen, assert_request=adapters["request"]),
+        _transport(
+            fixture,
+            operation,
+            seen,
+            assert_request=adapters["request"],
+            source_operation=adapters["source"][operation["action"]],
+        ),
         operation,
     )
     with closing(client):

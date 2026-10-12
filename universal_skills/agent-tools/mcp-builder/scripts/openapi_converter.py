@@ -3,20 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import re
 import tomllib
 from pathlib import Path
 
-from openapi_schema import compile_contract, domain_schemas
 from openapi_parity import operation_inventory, verify_contract
+from openapi_schema import compile_contract, domain_schemas
 
 
 def generate(spec: Path, package: Path, auth_scheme: str = ""):
     source = spec.read_bytes()
     document = json.loads(source)
-    contract = compile_contract(document)
+    contract = compile_contract(copy.deepcopy(document))
     contract["source_sha256"] = hashlib.sha256(source).hexdigest()
     contract["schemas"] = {
         domain: domain_schemas(contract, domain) for domain in contract["domains"]
@@ -42,6 +43,8 @@ def generate(spec: Path, package: Path, auth_scheme: str = ""):
         "openapi_schema",
         "openapi_schema_types",
         "openapi_schema_inputs",
+        "openapi_source_parity",
+        "openapi_security",
         "unicode_patterns",
         "openapi_parity",
         "openapi_transport_parity",

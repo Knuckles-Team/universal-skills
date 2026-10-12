@@ -19,7 +19,7 @@ from fastmcp.tools import Tool, ToolResult
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import extend
-from mcp.types import ToolAnnotations
+from mcp.types import InputRequiredResult, ToolAnnotations
 from pydantic import Field
 
 from .openapi_auth_scheme import credential_headers
@@ -166,7 +166,12 @@ class OpenApiTool(Tool):
         if not operation["read_only"]:
             if not client.allow_writes:
                 raise PermissionError("Writes require explicit operator enablement")
-            if not await ctx_confirm_destructive(get_context(), operation["action"]):
+            confirmation = await ctx_confirm_destructive(
+                get_context(), operation["action"], confirmation_arguments=arguments
+            )
+            if isinstance(confirmation, InputRequiredResult):
+                return confirmation
+            if confirmation is not True:
                 raise PermissionError("Write was not confirmed")
         result = await run_blocking(client.execute, self.domain, arguments)
         return ToolResult(structured_content=result)

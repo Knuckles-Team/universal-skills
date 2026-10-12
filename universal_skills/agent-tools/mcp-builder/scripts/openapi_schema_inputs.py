@@ -25,6 +25,10 @@ def _location_schema(location, items):
 def _request_body(document, operation):
     body = resolve(document, operation.get("requestBody", {}))
     media = body.get("content", {})
+    if len(media) > 1:
+        raise ValueError(
+            "Multiple request media types require a representation-complete adapter"
+        )
     content_type = next(
         (
             name

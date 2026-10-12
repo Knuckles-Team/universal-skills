@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 
 if __package__:
     from .openapi_schema import compile_contract, domain_schemas
+    from .openapi_security import validate_requirements, validate_security
+    from .openapi_source_parity import source_route, verify_source_routes
 else:
     from openapi_schema import compile_contract, domain_schemas
+    from openapi_security import validate_requirements, validate_security
+    from openapi_source_parity import source_route, verify_source_routes
 
 HTTP_METHODS = frozenset(
     {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
@@ -23,6 +28,7 @@ def digest(value):
 
 def _operation_entry(document, path, *, method, operation):
     return {
+        **source_route(document, path, operation),
         "method": method.upper(),
         "source_path": path,
         "security": operation.get("security", document.get("security", [])),
@@ -44,6 +50,8 @@ def _operation_entry(document, path, *, method, operation):
 
 def operation_inventory(document, source_sha256):
     """Enumerate the entire pinned source, independently of compiler filtering."""
+    document = copy.deepcopy(document)
+    schemes = validate_security(document)
     operations = {}
     for path, item in sorted(document["paths"].items()):
         for method, operation in sorted(item.items()):
@@ -64,6 +72,8 @@ def operation_inventory(document, source_sha256):
         "version": 1,
         "source_sha256": source_sha256,
         "source_info": document.get("info", {}),
+        "openapi_version": document["openapi"],
+        "security_schemes": schemes,
         "path_count": len(document["paths"]),
         "operation_count": len(operations),
         "operations": dict(sorted(operations.items())),
@@ -74,6 +84,12 @@ def operation_inventory(document, source_sha256):
 
 def require_declared_authorization(inventory):
     """Schema omission is not proof that an operation is public."""
+    for operation in inventory["operations"].values():
+        validate_requirements(
+            operation["security"],
+            inventory["security_schemes"],
+            openapi_version=inventory["openapi_version"],
+        )
     unknown = [
         action
         for action, operation in inventory["operations"].items()
@@ -105,10 +121,13 @@ def require_complete_coverage(contract, api_actions, mcp_actions):
 def verify_contract(document, contract, source_sha256):
     """Reject source omissions and exact method, route, parameter or schema drift."""
     inventory = operation_inventory(document, source_sha256)
-    expected = compile_contract(document)
+    # A compiler must not be able to mutate the independent source inventory.
+    expected = compile_contract(copy.deepcopy(document))
     if set(inventory["operations"]) != set(expected["operations"]):
         raise ValueError("Compiler omitted or invented source operations")
     expected["source_sha256"] = source_sha256
+    verify_source_routes(inventory, expected)
+    verify_source_routes(inventory, contract)
     expected["schemas"] = {
         domain: domain_schemas(expected, domain) for domain in expected["domains"]
     }
