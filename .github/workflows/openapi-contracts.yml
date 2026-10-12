@@ -1,0 +1,33 @@
+name: OpenAPI builder contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  openapi-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: Knuckles-Team/agent-connector-sdk
+          ref: 5babc4cc48ad73928468b243842f219f51e2cca1
+          path: .ci/agent-connector-sdk
+          persist-credentials: false
+      - name: Bootstrap reviewed SDK without native builds
+        working-directory: .ci/agent-connector-sdk
+        run: bash scripts/bootstrap.sh
+      - name: Install Unicode constraint validator as a wheel
+        run: |
+          uv pip install --python .ci/agent-connector-sdk/.venv/bin/python --only-binary=:all: regex==2026.9.29
+      - name: Test real governed transport and template API boundaries
+        run: .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_github_template.py
