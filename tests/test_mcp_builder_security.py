@@ -223,7 +223,9 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
         encoding="utf-8"
     )
     generated_text = "\n".join(
-        path.read_text(encoding="utf-8") for path in root.rglob("*") if path.is_file()
+        path.read_text(encoding="utf-8")
+        for path in root.rglob("*")
+        if path.is_file() and path.suffix != ".png"
     )
 
     assert 'requires-python = ">=3.12, <3.15"' in pyproject

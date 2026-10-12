@@ -10,7 +10,7 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 | Artifact | Contract |
 |---|---|
 | pyproject.toml, requirements.txt | Direct reviewed agent-connector-sdk dependency; explicit package discovery/data; optional agent runtime separated; no recursive extras or mandatory embedded graph engine. |
-| .bumpversion.cfg, LICENSE, CHANGELOG.md | Consistent versions, maintainer metadata and ordinary release history. |
+| .bumpversion.cfg, LICENSE, CHANGELOG.md | Consistent versions and maintainer metadata; an Unreleased scaffold with a reproducible generation date, never invented release history. |
 | README.md, AGENTS.md, CLAUDE.md | Public entry point and current contributor guidance validated by pipelines public-surface; CLAUDE imports AGENTS. |
 | .pre-commit-config.yaml | Shared pipelines hooks and lint, test, docs, security, generated-contract and supply-chain checks at reviewed revisions. |
 | Scanner policies/wrappers | Applicable complexity, duplication and architecture checks with shared authoritative profile and source-distribution inclusion; no hook-time native installation. |
@@ -36,6 +36,17 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 Strict MkDocs navigation covers current public documentation, contributor and
 specification-delivery evidence, and actual capabilities. See
 [documentation readiness](DOCUMENTATION_STANDARD_VNEXT.md) for the detailed contract.
+
+Each generated capability has a six-file spec bundle and an index. Requirement
+definitions map to real source/test files; initial status is SPECIFIED with empty
+landing and verification receipts. Declare only real prerequisites with Depends-on;
+References and Code links do not establish dependency or verification claims.
+
+The site's presentation inherits the unmodified pinned pipelines theme. Its asset
+snapshot carries upstream revision and SHA-256 provenance; the upstream sync/check
+implementation validates generated assets. Source distributions retain the theme
+and spec inputs for offline site builds. The main-push Pages workflow verifies
+theme bytes, readiness, and renders source-backed delivery/architecture snapshots.
 
 Preserve the source-only readiness generator/schema, served-surface TCK, explicit
 applicability registry, bounded llms indexes, Markdown mirror and provenance

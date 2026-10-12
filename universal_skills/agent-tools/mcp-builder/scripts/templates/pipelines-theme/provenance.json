@@ -1,0 +1,23 @@
+{
+  "files": {
+    "scripts/sync_mkdocs_theme.py": "2c48e594035288b14dda106f3cbdc745f9485c84297e3e34db398a41d57c3d60",
+    "templates/mkdocs-theme/README.md": "5e0e109a935ce3a0ffc0f425e7086cc60ba69a3611213451556dc851abfb38f3",
+    "templates/mkdocs-theme/assets/brands/agent-connector-sdk-logo-v1.png": "6688810468a77118ee1960ac3872816c6ace4f750a849688d306d7a63132e1b1",
+    "templates/mkdocs-theme/assets/brands/agent-terminal-ui-logo-v1.png": "d5e3c011066e2241c09c885f65d9a07c6ff32f4244b00dbe8e7550a3bab20dc8",
+    "templates/mkdocs-theme/assets/brands/agent-utilities-logo-v1.png": "923319a3b89fa1fbd14ca14c27cf49d2e2d9f85bc45456e05b788692700f0103",
+    "templates/mkdocs-theme/assets/brands/agent-webui-logo-v1.png": "3939a7324f134c520fd544aadd2a37c99abba9db78dd2bf3fd5003ffd62502ff",
+    "templates/mkdocs-theme/assets/brands/epistemic-graph-logo-v1.png": "26671aef2c3b78ecdcca2ad13adfd266cebf8d7e666e614c2d83d166b853d272",
+    "templates/mkdocs-theme/assets/brands/geniusbot-logo-v1.png": "c4a17404f234f677496197ac202ca8fb30b136c5a69243811bbfa6e5d5352b28",
+    "templates/mkdocs-theme/assets/brands/graph-os-logo-v1.png": "bba183368e42927edea91013639311a5d64f5a9910ec2f1bdcc7f4cd32f9d230",
+    "templates/mkdocs-theme/assets/favicon.svg": "aa606f9668a363bfe533f7d835700c246efaed0b8895cce5fe4398f36c35e7ba",
+    "templates/mkdocs-theme/assets/graph-mark.svg": "d0c69cdc06aa51439b6ce04b4c6df4dbf02283329f01122a78e08f286186e25d",
+    "templates/mkdocs-theme/assets/runtime-architecture.mmd": "7fcbaed9a8fa8acbc1c30cccf31035e0d7048db9db45a73467f2e8faef7bc3cc",
+    "templates/mkdocs-theme/assets/runtime-architecture.svg": "2ecd201c6b7a170924195ce5578394f88365d3a539be4ece17aca15a439aef47",
+    "templates/mkdocs-theme/base.mkdocs.yml": "e324b30874e57ebe09a2ee0e7ae4a303e52dce808be1e7075dc3b445ad1e6bad",
+    "templates/mkdocs-theme/extra.css": "2cc17b7610b67c82895312e7e61cf84587a6fe291bbc154d3c83c59fba2ee843",
+    "templates/mkdocs-theme/glossary.md": "0c01322fff633a1d420fa3b0f4ee246124802f6b33bb0d4827b5d12fb9b56e09",
+    "templates/mkdocs-theme/overrides/main.html": "766234b5045a5815805bb2ce5223ddd93729f7854abc4b6cdf4fba9c7e0dab3b"
+  },
+  "repository": "https://github.com/Knuckles-Team/pipelines",
+  "revision": "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+}

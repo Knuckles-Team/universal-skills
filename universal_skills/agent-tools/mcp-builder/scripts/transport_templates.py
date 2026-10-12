@@ -41,7 +41,10 @@ def get_client() -> ApiClientSystem:
             auth = DelegatedTokenAuth(delegation, http_client=token_client)
         else:
             auth = bearer_auth(setting("{upper_name}_TOKEN_REF", ""))
-        client = ApiClientSystem(base_url=base_url, auth=auth, tls_profile=tls)
+        client = ApiClientSystem(
+            base_url=base_url, auth=auth, tls_profile=tls,
+            allow_plaintext=setting("{upper_name}_ALLOW_PLAINTEXT", False),
+        )
         resources.callback(client.close)
         _resources = resources.pop_all()
         _client = client
@@ -131,6 +134,7 @@ class ApiClientBase:
         auth: httpx.Auth,
         tls_profile: ResolvedTLSProfile | None = None,
         *,
+        allow_plaintext: bool = False,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         self.base_url, self._origin = _validate_base_url(base_url)
@@ -140,6 +144,7 @@ class ApiClientBase:
                 timeout=_REQUEST_TIMEOUT_S,
                 auth=auth,
                 tls=tls_profile,
+                allow_plaintext=allow_plaintext,
                 headers={{"Accept": AGENT_ERROR_ACCEPT}},
             ),
             transport=transport,
@@ -205,6 +210,7 @@ def configured_client(monkeypatch):
     monkeypatch.setenv("{upper_name}_TOKEN_REF", "env://SCAFFOLD_TEST_TOKEN")
     monkeypatch.setenv("SCAFFOLD_TEST_TOKEN", "test-token")
     monkeypatch.setenv("ENABLE_DELEGATION", "false")
+    monkeypatch.delenv("{upper_name}_ALLOW_PLAINTEXT", raising=False)
     yield
     auth_module.close_client()
 
@@ -224,9 +230,22 @@ def test_client_resolves_reference_and_cleans_up():
         assert authorized.headers["Authorization"] == "Bearer test-token"
         assert "test-token" not in repr(kwargs["auth"])
         assert "token" not in kwargs
+        assert kwargs["allow_plaintext"] is False
         auth_module.close_client()
         client.close.assert_called_once()
         tls.cleanup.assert_called_once()
+
+
+@pytest.mark.parametrize("value, expected", [("true", True), ("false", False)])
+def test_plaintext_setting_is_explicit(monkeypatch, value, expected):
+    monkeypatch.setenv("{upper_name}_ALLOW_PLAINTEXT", value)
+    with (
+        patch.object(auth_module, "resolve_tls_profile") as profile,
+        patch.object(auth_module, "ApiClientSystem") as client_cls,
+    ):
+        auth_module.get_client()
+        assert client_cls.call_args.kwargs["allow_plaintext"] is expected
+        assert client_cls.call_args.kwargs["tls_profile"] is profile.return_value
 
 
 def test_literal_credential_rejected_and_tls_cleaned(monkeypatch):
@@ -290,11 +309,12 @@ def client_factory(monkeypatch):
     monkeypatch.setenv("SCAFFOLD_TEST_TOKEN", "test-token")
     clients = []
 
-    def create(handler, base_url="https://service.example.invalid"):
+    def create(handler, base_url="https://service.example.invalid", *, allow_plaintext=False):
         client = ApiClientBase(
             base_url=base_url,
             auth=bearer_auth("env://SCAFFOLD_TEST_TOKEN"),
             transport=httpx.MockTransport(handler),
+            allow_plaintext=allow_plaintext,
         )
         clients.append(client)
         return client
@@ -355,6 +375,44 @@ def test_request_rejects_safety_overrides(client_factory, options):
 def test_plaintext_remote_rejected(client_factory):
     with pytest.raises(ValueError, match="plaintext"):
         client_factory(lambda request: httpx.Response(200), "http://service.example.invalid")
+
+
+def test_plaintext_opt_in_stays_on_configured_origin(client_factory):
+    calls = []
+
+    def respond(request):
+        calls.append(request)
+        return httpx.Response(200, json={{"ok": True}})
+
+    client = client_factory(
+        respond, "http://service.example.invalid", allow_plaintext=True
+    )
+    assert client.request("GET", "/health") == {{"ok": True}}
+    assert calls[0].url.scheme == "http"
+    for target in ("http://other.example.invalid/health", "https://service.example.invalid/health"):
+        with pytest.raises(ValueError, match="API path"):
+            client.request("GET", target)
+    assert len(calls) == 1
+    assert client.session.follow_redirects is False
+
+
+def test_plaintext_opt_in_does_not_downgrade_https(client_factory):
+    calls = []
+
+    def fail_tls(request):
+        calls.append(request)
+        try:
+            raise ssl.SSLCertVerificationError("certificate verification failed")
+        except ssl.SSLCertVerificationError as exc:
+            raise httpx.ConnectError("TLS handshake failed", request=request) from exc
+
+    from agent_connector_sdk.http.errors import TlsVerificationError
+
+    client = client_factory(fail_tls, allow_plaintext=True)
+    with pytest.raises(TlsVerificationError):
+        client.request("GET", "/health")
+    assert len(calls) == 1
+    assert calls[0].url.scheme == "https"
 
 
 def test_tls_cannot_disable_verification():
