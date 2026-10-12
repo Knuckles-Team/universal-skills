@@ -53,16 +53,36 @@ class GitHub:
                 "private": self.drift != "visibility",
                 "is_template": False,
                 "full_name": "Example/connector",
+                "default_branch": "main",
+                "id": 1234,
             }
         assert route.startswith("repos/Example/connector"), route
         if route.endswith("/contents/README.md"):
             assert base64.b64decode(data["content"]) == b"reviewed README\n"
-            return {}
-        if route == "repos/Example/connector":
+            assert data["branch"] == "main"
+            if self.drift == "seed":
+                self.head = "concurrent-commit"
             return {
+                "commit": {
+                    "sha": "parent",
+                    "parents": [{"sha": "concurrent-commit"}]
+                    if self.drift == "before_init"
+                    else [],
+                }
+            }
+        if route == "repos/Example/connector":
+            phase = "early" if self.head == "parent" else "final"
+            return {
+                "id": 5678 if self.drift == f"{phase}_identity" else 1234,
+                "full_name": "Other/connector"
+                if self.drift == f"{phase}_name"
+                else "Example/connector",
+                "private": self.drift != f"{phase}_visibility",
+                "is_template": self.drift == f"{phase}_template",
                 "default_branch": "other"
-                if self.drift == "branch" and self.head != "parent"
-                else "main"
+                if self.drift == "early_branch"
+                or (self.drift == "branch" and self.head != "parent")
+                else "main",
             }
         if route.endswith("/git/ref/heads/main"):
             return {"object": {"sha": self.head}}
@@ -151,6 +171,41 @@ def test_remote_drift_fails_without_delete_or_retry(source, monkeypatch, drift):
     assert all(method != "DELETE" for _, method in writes)
     if drift not in {"branch", "head"}:
         assert not any(method == "PATCH" for _, method in writes)
+
+
+@pytest.mark.parametrize("drift", ["before_init", "seed", "early_branch"])
+def test_initialization_drift_is_never_adopted_as_publication_parent(
+    source, monkeypatch, drift
+):
+    remote, checks = run_publish(source, monkeypatch, drift)
+    with pytest.raises(RuntimeError, match="initialization; preserved"):
+        publisher.publish(source, "Example", "connector", checks, "Operator")
+    writes = [(route, method) for route, method, _ in remote.seen if method != "GET"]
+    assert writes == [
+        ("orgs/Example/repos", "POST"),
+        ("repos/Example/connector/contents/README.md", "PUT"),
+    ]
+    assert remote.entries == []
+
+
+@pytest.mark.parametrize("phase", ["early", "final"])
+@pytest.mark.parametrize("field", ["identity", "name", "visibility", "template"])
+def test_repository_policy_and_identity_are_rechecked(
+    source, monkeypatch, phase, field
+):
+    remote, checks = run_publish(source, monkeypatch, f"{phase}_{field}")
+    with pytest.raises(RuntimeError, match="identity or visibility changed; preserved"):
+        publisher.publish(source, "Example", "connector", checks, "Operator")
+    writes = [(route, method) for route, method, _ in remote.seen if method != "GET"]
+    if phase == "early":
+        assert writes == [
+            ("orgs/Example/repos", "POST"),
+            ("repos/Example/connector/contents/README.md", "PUT"),
+        ]
+        assert remote.entries == []
+    else:
+        assert writes[-1] == ("repos/Example/connector/git/refs/heads/main", "PATCH")
+    assert all(method != "DELETE" for _, method in writes)
 
 
 @pytest.mark.parametrize("drift", ["content", "mode", "added", "removed", "failed"])

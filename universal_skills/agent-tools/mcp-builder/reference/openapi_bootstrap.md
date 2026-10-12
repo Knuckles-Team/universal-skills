@@ -78,9 +78,13 @@ serialized by the helper.
 Source symlinks, `.env` and transient log/bytecode files are refused; Git metadata,
 virtual environments and known caches are excluded. The initialized README and
 all subsequent blobs come from the same checked snapshot even if local files
-change during upload. Complete remote blob identities and executable modes are
+change during upload. The original default branch and root initialization commit
+are bound before upload; publication refuses intervening commits or branch changes
+and never adopts them as its parent. Complete remote blob identities and executable modes are
 verified before advancing the branch without force. The reported commit and
-manifest bind the result; the branch is checked again after publication, but
+manifest bind the result. Stable repository ID, owner/name, private visibility and
+non-template status are rechecked before upload and at final attestation. The
+branch is checked again after publication, but
 GitHub does not make this sequence atomic against later concurrent changes.
 
 Failed or uncertain API writes are not retried or deleted automatically. Inspect

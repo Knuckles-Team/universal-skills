@@ -151,6 +151,17 @@ def upload_tree(repository, captured):
     return api(f"repos/{repository}/git/trees", "POST", {"tree": tree})["sha"]
 
 
+def verify_repository(current, created):
+    """Bind remote reads to the same private, non-template repository."""
+    if (
+        current.get("id") != created["id"]
+        or current.get("full_name", "").casefold() != created["full_name"].casefold()
+        or current.get("private") is not True
+        or current.get("is_template") is not False
+    ):
+        raise RuntimeError("Destination identity or visibility changed; preserved")
+
+
 def publish(root, owner, name, checks, expected_login):
     captured = snapshot(root)
     validated = snapshot_manifest(captured)
@@ -171,25 +182,35 @@ def publish(root, owner, name, checks, expected_login):
         repo.get("private") is not True
         or repo.get("is_template") is not False
         or repo["full_name"].casefold() != repository.casefold()
+        or not isinstance(repo.get("id"), int)
     ):
         raise RuntimeError(
             "Created repository differs from requested destination; preserved"
         )
     # Git data writes require an initialized repository. Initialize only from
     # captured, checked bytes, then replace the entire tree with that snapshot.
-    api(
+    branch = repo["default_branch"]
+    initialized = api(
         f"repos/{repository}/contents/README.md",
         "PUT",
         {
             "message": "Initialize connector from validated local source",
+            "branch": branch,
             "content": base64.b64encode(captured["README.md"][0]).decode(),
             "author": IDENTITY,
             "committer": IDENTITY,
         },
     )
-    branch = api(f"repos/{repository}")["default_branch"]
+    seed = initialized["commit"]
+    if seed.get("parents") != []:
+        raise RuntimeError("Destination changed before initialization; preserved")
+    seed_sha = seed["sha"]
     ref = quote(branch, safe="")
-    head = api(f"repos/{repository}/git/ref/heads/{ref}")["object"]["sha"]
+    current = api(f"repos/{repository}")
+    verify_repository(current, repo)
+    current_head = api(f"repos/{repository}/git/ref/heads/{ref}")["object"]["sha"]
+    if current["default_branch"] != branch or current_head != seed_sha:
+        raise RuntimeError("Destination changed after initialization; preserved")
     tree_sha = upload_tree(repository, captured)
     commit = api(
         f"repos/{repository}/git/commits",
@@ -197,7 +218,7 @@ def publish(root, owner, name, checks, expected_login):
         {
             "message": "Publish validated local connector tree",
             "tree": tree_sha,
-            "parents": [head],
+            "parents": [seed_sha],
             "author": IDENTITY,
             "committer": IDENTITY,
         },
@@ -215,13 +236,14 @@ def publish(root, owner, name, checks, expected_login):
         {"sha": commit["sha"], "force": False},
     )
     current = api(f"repos/{repository}")
+    verify_repository(current, repo)
     current_head = api(f"repos/{repository}/git/ref/heads/{ref}")["object"]["sha"]
     if current["default_branch"] != branch or current_head != commit["sha"]:
         raise RuntimeError("Destination branch changed during publication; preserved")
     return {
         "repository": repo["full_name"],
         "sha": commit["sha"],
-        "private": True,
+        "private": current["private"],
         "files": validated,
     }
 
