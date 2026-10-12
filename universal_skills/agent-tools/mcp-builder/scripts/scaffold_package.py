@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from surface_templates import select_template
 from scaffold_dates import generation_date
-from docs_assets import staged_theme_files, check_shared_theme
+from docs_assets import staged_theme_files, check_shared_theme, validate_theme_destinations
 from spec_templates import render_spec_files
 from quality_templates import (
     PRECOMMIT_CONFIG,
@@ -2764,6 +2764,7 @@ def scaffold(
     }
 
     root = (Path(output_dir) if in_place else Path(output_dir) / package_name).resolve()
+    validate_theme_destinations(root, (Path(".pipeline-theme"),))
     pkg = root / pkg_dir
 
     # files: path -> (template, needs_format)
@@ -2984,6 +2985,7 @@ def scaffold(
             print(f"  ✅ {path.relative_to(root.parent)}")
 
     with staged_theme_files() as theme_files:
+        validate_theme_destinations(root, (relative for _, relative in theme_files))
         for source, relative in theme_files:
             _copy_generated_file(source, root / relative)
     check_shared_theme(root)
