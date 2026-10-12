@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 
 if __package__:
+    from .openapi_schema_inputs import input_schema, response_mode
     from .openapi_schema_types import (
         METHODS,
         check_path_parameters,
@@ -16,8 +17,8 @@ if __package__:
         schema,
         validate_binary_constraints,
     )
-    from .openapi_schema_inputs import input_schema, response_mode
 else:
+    from openapi_schema_inputs import input_schema, response_mode
     from openapi_schema_types import (
         METHODS,
         check_path_parameters,
@@ -27,7 +28,6 @@ else:
         schema,
         validate_binary_constraints,
     )
-    from openapi_schema_inputs import input_schema, response_mode
 
 
 def _prefix(document):

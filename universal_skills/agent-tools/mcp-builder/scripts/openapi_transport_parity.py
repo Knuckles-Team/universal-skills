@@ -9,9 +9,9 @@ the actual registered tool and preserve the protocol's confirmation behavior.
 from __future__ import annotations
 
 import copy
-from contextlib import closing
 import hashlib
 import json
+from contextlib import closing
 from urllib.parse import parse_qsl
 
 if __package__:

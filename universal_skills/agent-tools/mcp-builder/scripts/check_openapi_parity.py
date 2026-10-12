@@ -11,8 +11,8 @@ import asyncio
 import hashlib
 import importlib
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 if __package__:
     from .openapi_parity import (

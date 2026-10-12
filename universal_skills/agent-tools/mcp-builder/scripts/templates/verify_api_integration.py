@@ -11,9 +11,9 @@ import argparse
 import ast
 import importlib
 import json
-from pathlib import Path
 import sys
 import tomllib
+from pathlib import Path
 
 
 def find_package(root):
