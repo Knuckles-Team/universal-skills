@@ -1,4 +1,4 @@
-# Documentation Standard vNext
+# Documentation readiness contract
 
 This is the hybrid documentation contract for an agent package. It keeps the
 semantic layer (Concept IDs, ontology, `AGENTS.md`, and source Markdown) as the
@@ -86,8 +86,8 @@ responsibilities outside this package-builder contract.
 ## Public README and AGENTS surface
 
 Every generated repository opts into the shared `public-surface` pre-commit hook
-from the immutable pipelines release
-`35209bf6d85569a3c1fe3d5cd31771cacfdc3731`. Its repository-local TOML identity
+from the reviewed current pipelines authority, pinned according to its supply-chain
+policy. Its repository-local TOML identity
 must declare `repository`, `distribution`, `pages_url`, and the boolean
 `mcp_server` value. The generator derives those values from the package name and
 selected package types; it never checks URL reachability while scaffolding.
@@ -123,3 +123,9 @@ metadata parity, denial non-retryability, response/link budgets, and malformed
 or stale artifacts. Bodies and secret-bearing headers are never retained; only
 bounded metadata and digests enter evidence. A target that cannot be reached or
 does not apply is not silently certified.
+
+## Shared delivery authority
+
+Use current pipelines specification-delivery and publication workflows for the
+requested repository. Link source specifications, validation evidence and delivery
+status in the docs site where applicable. See [connector contracts](reference/connector_contracts.md).

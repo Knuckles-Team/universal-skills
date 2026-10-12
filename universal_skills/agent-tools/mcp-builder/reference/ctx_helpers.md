@@ -1,109 +1,34 @@
-# Implementation Guide: MCP Context Helpers (ctx)
+# SDK context helpers
 
-This guide covers the standardized patterns for using MCP context helpers to provide destructive operation guards, progress reporting, diagnostic logging, and state caching within tool bodies.
+Use public SDK helpers; do not copy the old agent-utilities implementations.
 
-## Standard Helpers
+    from agent_connector_sdk.mcp.context import ctx_confirm_destructive, ctx_log
+    from agent_connector_sdk.progress import ctx_progress
 
-The following helpers are available in `agent_utilities.mcp_utilities` (or should be implemented according to these patterns) to standardize common MCP tool interactions.
+## Destructive operations
 
-### 1. `ctx.elicit()` — Destructive Operation Guards
+The SDK action dispatcher applies confirmation to actions it classifies as
+destructive. Preserve that contract and separate policy/authorization checks.
+For a direct handler outside that dispatcher, required confirmation can use:
 
-**Purpose**: Prevent accidental execution of destructive actions (delete, remove, stop, etc.) by requiring explicit user confirmation via the built-in FastMCP elicitation mechanism.
+    if not await ctx_confirm_destructive(ctx, "delete the selected record"):
+        return {"status": "cancelled"}
 
-**Pattern**:
-```python
-from fastmcp import Context
+The helper denies when context is absent, elicitation fails or the user does not
+accept. Unsupported elicitation and unattended execution are not write permission.
+Confirmation does not replace verified authorization, optimistic source versions
+or the write-back contract.
 
-@mcp.tool(tags={"admin"}, annotations={"destructiveHint": True})
-async def delete_item(
-    item_id: str = Field(description="Item ID to delete"),
-    ctx: Context = None,
-) -> dict:
-    """Delete an item permanently."""
-    if ctx:
-        confirm = await ctx.elicit(
-            message=f"Are you sure you want to delete item {item_id}?",
-            schema={"type": "boolean"},
-        )
-        if not confirm.data:
-            return {"status": "cancelled", "message": "Operation cancelled by user"}
-    return get_client().delete_item(item_id)
-```
+## Progress and logging
 
-**Usage**:
-- Apply to all tools matching patterns: `delete`, `remove`, `destroy`, `stop`, `purge`, `revoke`, `kill`, `reset`, `shutdown`, `wipe`, `prune`.
-- **Note**: Requires the tool to be `async def`.
+    await ctx_progress(ctx, 0, 1, message="reading records")
+    await ctx_log(ctx, "Read completed", logger=logger, level="info")
+    await ctx_progress(ctx, 1, 1)
 
-### 2. `ctx_progress()` — Progress Reporting
+ctx_log is asynchronous and accepts the message second, with logger and level as
+keyword arguments. Keep credentials, raw provider responses and private endpoint
+details out of server and client logs. Report bounded progress.
 
-**Purpose**: Provide visual feedback to the user during long-running or multi-step operations.
-
-**Pattern**:
-```python
-async def bulk_operation_tool(items, ctx):
-    total = len(items)
-    for i, item in enumerate(items):
-        await ctx_progress(ctx, i, total)
-        # perform operation
-    await ctx_progress(ctx, total, total)
-    return {"status": "success"}
-```
-
-**Usage**:
-- Apply to tools with loops, bulk operations, or known long-running calls.
-- **Note**: Requires the tool to be `async def`.
-
-### 3. `ctx_log()` — Dual-Logging (Server + Client)
-
-**Purpose**: Augment standard server-side logging with client-side streaming so users/agents can see progress/diagnostics in real-time.
-
-**Pattern**:
-```python
-async def run_operation_tool(ctx):
-    ctx_log(ctx, logger, "info", "Starting operation...")
-    # ... logic ...
-```
-
-**Internals**: Calls `logger.{level}(msg)` AND streams the log to the MCP client via `ctx.info()` / `ctx.debug()`.
-
-### 4. `ctx_set_state()` — Auth/Session Caching
-
-**Purpose**: Persist important session state (like JWT tokens) across tool calls.
-
-**Pattern**:
-```python
-async def authenticate_tool(username, password, ctx):
-    result = get_client().authenticate(username=username, password=password)
-    if token := result.get("jwt"):
-        await ctx_set_state(ctx, "service_name", "auth_token", token)
-    return result
-```
-
-**Usage**:
-- Apply to `authenticate` or `login` tools.
-
-### 5. `ctx_sample()` — LLM-Enhanced Tools
-
-**Purpose**: Use the LLM to post-process tool results (summarize, extract, etc.) before returning to the main agent.
-
-**Usage**:
-- Search or summarize tools (experimental).
-
----
-
-## Migration & Implementation Strategy
-
-### Sync → Async Conversion
-If a sync `def` tool needs to use `ctx_progress()` or `ctx_confirm_destructive()`, it **must** be converted to `async def`. FastMCP handles async tools natively.
-
-### Strategic Instrumentation
-We do not instrument every single tool. Focus on:
-1. **Destructive Guards**: All tools that delete or stop resources.
-2. **Progress**: Tools with loops or multi-step API calls.
-3. **Logging**: Augment existing `logger.*()` calls inside tool functions.
-4. **State**: Auth/Login tools only.
-
-### Safety Guardrails
-- Skip tools that already use `ctx.elicit`, `ctx.report_progress`, etc. directly.
-- Preserve all existing return types and error handling.
-- Ensure `ctx: Context` is in the function signature.
+Session state and model sampling are optional framework capabilities, not required
+connector scaffolding. Never cache raw credentials in general MCP context state;
+use the SDK credential resolver and provider runtime contract.
