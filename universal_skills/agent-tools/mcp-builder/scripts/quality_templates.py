@@ -99,7 +99,7 @@ permissions:
 
 jobs:
   checks:
-    # The runner supplies Python, uv, pre-commit and the approved scanners.
+    # The runner supplies bootstrap Python, uv, pre-commit and approved scanners.
     # Prepare project dependencies separately; never build scanners here.
     runs-on: self-hosted
     env:
@@ -115,6 +115,19 @@ jobs:
           hook_runner="$(realpath "$(command -v pre-commit)")"
           test -x "$hook_runner"
           echo "CONNECTOR_PRE_COMMIT=$hook_runner" >> "$GITHUB_ENV"
+      - name: Resolve declared Python baseline
+        id: python-baseline
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from pathlib import Path
+          from scripts.bootstrap_sources import project_inputs
+          print("version=" + project_inputs(Path.cwd())[2])
+          PY
+      - name: Provision declared Python baseline
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ steps.python-baseline.outputs.version }}
       - name: Prepare frozen project test environment
         run: python scripts/bootstrap_environment.py --github
       - name: Validate hooks
