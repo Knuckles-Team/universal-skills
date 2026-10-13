@@ -20,7 +20,7 @@ team_config:
     compliance-checker: [graph_query, graph_write]
 concept: KG-2.12
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Legal Compliance Review Workflow

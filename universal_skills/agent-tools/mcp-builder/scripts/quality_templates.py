@@ -99,24 +99,33 @@ permissions:
 
 jobs:
   checks:
-    # Use an approved runner with this project's Python test environment,
-    # pre-commit and the pipeline scanner toolchain already provisioned.
-    # Missing tooling fails the checks; this workflow never builds scanners.
+    # The runner supplies Python, uv, pre-commit and the approved scanners.
+    # Prepare project dependencies separately; never build scanners here.
     runs-on: self-hosted
+    env:
+      MCP_FLEET_REGISTRATION: 'false'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Capture provisioned hook runner
+        shell: bash
+        run: |
+          hook_runner="$(realpath "$(command -v pre-commit)")"
+          test -x "$hook_runner"
+          echo "CONNECTOR_PRE_COMMIT=$hook_runner" >> "$GITHUB_ENV"
+      - name: Prepare frozen project test environment
+        run: python scripts/bootstrap_environment.py --github
       - name: Validate hooks
-        run: python -m pre_commit validate-config
+        run: '"$CONNECTOR_PRE_COMMIT" validate-config'
       - name: Commit checks
-        run: python -m pre_commit run --all-files --show-diff-on-failure
+        run: '"$CONNECTOR_PRE_COMMIT" run --all-files --show-diff-on-failure'
       - name: Push checks and generated connector tests
         env:
           PRE_COMMIT_FROM_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
           PRE_COMMIT_TO_REF: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python -m pre_commit run --all-files --hook-stage pre-push --show-diff-on-failure
+        run: '"$CONNECTOR_PRE_COMMIT" run --all-files --hook-stage pre-push --show-diff-on-failure'
 """
 
 PIPELINE_YML = """\

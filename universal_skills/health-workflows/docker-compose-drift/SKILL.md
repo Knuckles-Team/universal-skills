@@ -21,7 +21,7 @@ team_config:
 tags: [health, infrastructure, docker, drift]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
   author: Genius
 ---
 

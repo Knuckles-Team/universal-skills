@@ -22,7 +22,7 @@ team_config:
 tags: [options, volatility, iv, skew]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Options Volatility Surface Workflow

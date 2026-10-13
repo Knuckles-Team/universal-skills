@@ -19,7 +19,7 @@ tags:
 requires:
   - tunnel-manager-mcp
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # CA Trust Provisioner Skill

@@ -22,7 +22,7 @@ team_config:
 tags: [quant, alpha, momentum, sentiment, fundamental, optimization]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Alpha Factor Mining Workflow

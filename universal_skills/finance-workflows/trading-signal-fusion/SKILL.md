@@ -21,7 +21,7 @@ team_config:
 tags: [finance, signals, backtesting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
   author: Genius
 ---
 
