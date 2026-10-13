@@ -134,10 +134,15 @@ def test_declared_floor_and_job_scoped_path(selector, monkeypatch, tmp_path, flo
 
     monkeypatch.setattr(selector, "select_python", select)
     output = tmp_path / "github-path"
+    environment = tmp_path / "github-env"
     monkeypatch.setenv("GITHUB_PATH", str(output))
+    monkeypatch.setenv("GITHUB_ENV", str(environment))
     selector.main()
     assert calls == [floor]
     assert output.read_text() == str(selected.parent) + "\n"
+    assert (
+        environment.read_text() == "CONNECTOR_BOOTSTRAP_PYTHON=" + str(selected) + "\n"
+    )
 
 
 def test_real_startup_and_standard_library_probe(selector, monkeypatch):

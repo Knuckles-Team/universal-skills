@@ -3,6 +3,9 @@
 import copy
 import importlib.util
 import json
+import os
+import shlex
+import shutil
 import subprocess
 import sys
 import venv
@@ -124,7 +127,11 @@ def fake_prepare(tmp_path, monkeypatch):
     monkeypatch.setattr(
         bootstrap,
         "project_inputs",
-        lambda root: ({"project": {"name": "fixture"}}, [], "3.12"),
+        lambda root: (
+            {"project": {"name": "fixture"}},
+            [],
+            f"{sys.version_info[0]}.{sys.version_info[1]}",
+        ),
     )
     monkeypatch.setattr(bootstrap, "run", lambda *args, **kwargs: "uv 0.12.21")
 
@@ -158,6 +165,91 @@ def test_exports_environment_only_after_locked_sync_and_imports(fake_prepare):
     assert record["complete_wheel_installation_certified"] is False
     assert record["native_builds"] is False
     assert json.loads((root / ".ci/connector-environment.json").read_text()) == record
+
+
+def test_both_uv_commands_use_bound_executable_despite_competitors(
+    fake_prepare, monkeypatch
+):
+    root, events = fake_prepare
+    selected = str(Path(sys.executable))
+    monkeypatch.setenv("CONNECTOR_BOOTSTRAP_PYTHON", selected)
+    monkeypatch.setenv("UV_PYTHON", "/competing/managed/python")
+    monkeypatch.setenv("PATH", "/competing/bin")
+    commands = []
+
+    def command(arguments, **kwargs):
+        commands.append(arguments)
+        assert arguments[arguments.index("--python") + 1] == selected
+        assert "--no-python-downloads" in arguments
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", command)
+    record = bootstrap.prepare(root)
+    assert [command[1] for command in commands] == ["lock", "sync"]
+    assert record["bootstrap_python"] == selected
+
+
+@pytest.mark.parametrize("mismatch", ["floor", "selected-path", "relative-path"])
+def test_interpreter_mismatch_fails_before_any_prepare_effect(
+    fake_prepare, monkeypatch, mismatch
+):
+    root, events = fake_prepare
+    if mismatch == "floor":
+        monkeypatch.setattr(bootstrap, "project_inputs", lambda root: ({}, [], "3.99"))
+    elif mismatch == "selected-path":
+        monkeypatch.setenv("CONNECTOR_BOOTSTRAP_PYTHON", "/competing/python")
+    else:
+        monkeypatch.setattr(bootstrap.sys, "executable", "python")
+    with pytest.raises(ValueError):
+        bootstrap.prepare(root)
+    assert not events
+    assert not (root / ".ci").exists()
+
+
+def test_real_uv_explicit_interpreter_does_not_probe_competing_cache(tmp_path):
+    uv = shutil.which("uv")
+    assert uv, "The provisioned development environment must supply uv"
+    marker = tmp_path / "rediscovered"
+    competing = tmp_path / "competing/bin/python"
+    competing.parent.mkdir(parents=True)
+    competing.write_text(
+        "#!/bin/sh\nprintf rediscovered > " + shlex.quote(str(marker)) + "\nexit 17\n"
+    )
+    competing.chmod(0o755)
+    managed = (
+        tmp_path
+        / "managed"
+        / (
+            f"cpython-{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}-linux-x86_64-gnu"
+        )
+        / "bin"
+    )
+    managed.mkdir(parents=True)
+    (managed / f"python{sys.version_info[0]}.{sys.version_info[1]}").symlink_to(
+        competing
+    )
+    env = dict(
+        os.environ,
+        PATH=str(competing.parent),
+        UV_PYTHON=str(competing),
+        UV_PYTHON_INSTALL_DIR=str(tmp_path / "managed"),
+    )
+    result = subprocess.run(
+        [
+            uv,
+            "python",
+            "find",
+            "--offline",
+            "--no-python-downloads",
+            "--no-project",
+            sys.executable,
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert Path(result.stdout.strip()).samefile(sys.executable)
+    assert not marker.exists()
 
 
 def test_lock_check_failure_prevents_sync_and_exports(fake_prepare, monkeypatch):

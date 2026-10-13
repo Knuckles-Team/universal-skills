@@ -118,7 +118,7 @@ jobs:
       - name: Select provisioned Python baseline
         run: python scripts/select_python.py
       - name: Prepare frozen project test environment
-        run: python scripts/bootstrap_environment.py --github
+        run: '"$CONNECTOR_BOOTSTRAP_PYTHON" scripts/bootstrap_environment.py --github'
       - name: Validate hooks
         run: '"$CONNECTOR_PRE_COMMIT" validate-config'
       - name: Commit checks

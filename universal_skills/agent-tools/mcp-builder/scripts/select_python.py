@@ -76,6 +76,8 @@ def main():
     python = select_python(floor)
     with Path(os.environ["GITHUB_PATH"]).open("a") as output:
         output.write(str(python.parent) + "\n")
+    with Path(os.environ["GITHUB_ENV"]).open("a") as output:
+        output.write("CONNECTOR_BOOTSTRAP_PYTHON=" + str(python) + "\n")
     print(json.dumps({"python": str(python), "declared_minimum": floor}))
 
 

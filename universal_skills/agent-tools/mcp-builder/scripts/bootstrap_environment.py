@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -152,14 +153,30 @@ def workspace_environment(root):
     return ci, env
 
 
+def validated_interpreter(floor):
+    """Bind uv to this process, never a rediscovered minor-version request."""
+    if sys.implementation.name != "cpython" or sys.version_info[:2] != tuple(
+        map(int, floor.split("."))
+    ):
+        raise ValueError(f"Run bootstrap with the declared CPython {floor} minimum")
+    python = Path(sys.executable)
+    if not python.is_absolute():
+        raise ValueError("Bootstrap interpreter must have an absolute path")
+    selected = os.environ.get("CONNECTOR_BOOTSTRAP_PYTHON", str(python))
+    if selected != str(python):
+        raise ValueError("Bootstrap interpreter differs from the selected executable")
+    return str(python)
+
+
 def prepare(root, *, uv="uv", github=False):
     root = root.resolve()
     project, bindings, floor = project_inputs(root)
+    selected_python = validated_interpreter(floor)
     ci, env = workspace_environment(root)
     original_lock = sha256(root / "uv.lock")
     original_project = sha256(root / "pyproject.toml")
     sources = [checkout_source(root, binding, env) for binding in bindings]
-    commands = sync_commands(uv, floor, bindings, root=root)
+    commands = sync_commands(uv, selected_python, bindings, root=root)
     for command in commands:
         subprocess.run(command, cwd=root, env=env, check=True)
     if (sha256(root / "uv.lock"), sha256(root / "pyproject.toml")) != (
@@ -181,6 +198,7 @@ def prepare(root, *, uv="uv", github=False):
         "complete_wheel_installation_certified": False,
         "native_builds": False,
         "project": project["project"]["name"],
+        "bootstrap_python": selected_python,
         "pyproject_sha256": original_project,
         "lock_sha256": original_lock,
         "uv_version": run([uv, "--version"], root=root, env=env),

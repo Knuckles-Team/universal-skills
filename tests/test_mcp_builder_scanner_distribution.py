@@ -44,7 +44,9 @@ def test_regular_ci_runs_project_hooks_and_tests_without_release_readiness():
     steps = workflow["jobs"]["checks"]["steps"]
     assert "command -v pre-commit" in steps[1]["run"]
     assert steps[2]["run"] == "python scripts/select_python.py"
-    assert steps[3]["run"] == "python scripts/bootstrap_environment.py --github"
+    assert steps[3]["run"] == (
+        '"$CONNECTOR_BOOTSTRAP_PYTHON" scripts/bootstrap_environment.py --github'
+    )
     assert not any("setup-python" in step.get("uses", "") for step in steps)
     assert "validate-config" in steps[4]["run"]
     assert "python -m pre_commit" not in commands
