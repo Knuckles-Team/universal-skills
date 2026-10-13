@@ -105,6 +105,15 @@ Supported evidence forms are:
   operations do not acquire redirect handling. This correction never authenticates
   a session or grants readiness.
 
+Generated packages declare `rfc3986-validator` and `rfc3339-validator` explicitly.
+Location uses the maintained RFC 3986 parser, including custom mobile schemes;
+invalid query/fragment syntax is not accepted by a lexical approximation.
+Runtime schema validation fails closed if a declared format checker is absent,
+including URI and date-time. OpenAPI representation labels (`int32`, `int64`,
+`float`, `double`, `binary`, `byte`, `password`) retain their annotation role;
+their existing type, range, pattern and transport constraints remain enforced.
+Unknown provider-specific formats require an explicit supported validator.
+
 Evidence binds source commit, file SHA-256, optional Git blob identity and line
 bounds. Paths must be relative regular files under the supplied root; symlinks,
 traversal, duplicate fields, missing evidence, hash drift and unsupported changes

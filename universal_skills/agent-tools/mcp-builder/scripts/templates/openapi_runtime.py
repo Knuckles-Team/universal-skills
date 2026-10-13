@@ -40,7 +40,18 @@ def _pattern(*arguments):
         yield ValidationError("String does not satisfy its pattern")
 
 
-SchemaValidator = extend(Draft202012Validator, {"pattern": _pattern})
+def _format(*arguments):
+    """Require actual format assertions; retain OpenAPI representation annotations."""
+    validator, name, _instance, _schema = arguments
+    if name in {"int32", "int64", "float", "double", "binary", "byte", "password"}:
+        return
+    checker = validator.format_checker
+    if checker is None or name not in checker.checkers:
+        raise RuntimeError(f"Required OpenAPI format checker is unavailable: {name}")
+    yield from Draft202012Validator.VALIDATORS["format"](*arguments)
+
+
+SchemaValidator = extend(Draft202012Validator, {"pattern": _pattern, "format": _format})
 
 
 def validate(value, definition):

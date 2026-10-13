@@ -163,7 +163,12 @@ def _update_metadata(package):
 
 
 def _add_dependencies(text, existing):
-    required = ["jsonschema>=4.23,<5", "regex>=2026.9.29"]
+    required = [
+        "jsonschema>=4.23,<5",
+        "regex>=2026.9.29",
+        "rfc3986-validator>=0.1.1,<0.2",
+        "rfc3339-validator>=0.1.4,<0.2",
+    ]
     missing = [item for item in required if item not in existing]
     if missing:
         text, count = re.subn(

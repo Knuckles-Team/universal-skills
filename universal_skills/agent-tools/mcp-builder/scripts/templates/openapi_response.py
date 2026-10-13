@@ -2,8 +2,9 @@
 
 import base64
 import json
-import re
 import time
+
+from rfc3986_validator import validate_rfc3986
 
 
 def require_response_status(operation, status):
@@ -17,10 +18,7 @@ def _redirect_data(response):
     if len(values) != 1:
         raise ValueError("Redirect requires exactly one Location header")
     location = values[0]
-    if not re.fullmatch(
-        r"[A-Za-z][A-Za-z0-9+.-]*:(?:[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=-]|%[0-9A-Fa-f]{2})*",
-        location,
-    ):
+    if not location.isprintable() or not validate_rfc3986(location, rule="URI"):
         raise ValueError(
             "Redirect Location must be an absolute URI without unsafe characters"
         )
