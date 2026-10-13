@@ -89,6 +89,10 @@ revisions, input hashes and installed distributions are recorded in the private
 source overlays; it does not certify release wheels or native extension closure.
 Hooks use the captured runner pre-commit CLI with the prepared Python first on
 PATH, ambient Python import overrides cleared and fleet registration disabled.
+Both uv commands explicitly bind `--project` and `--directory` to the verified
+repository root. Ambient `UV_PROJECT`, `UV_WORKING_DIR` and
+`UV_WORKING_DIRECTORY` overrides are removed. Approved runner proxy and index
+settings remain available; they cannot replace the frozen project/lock binding.
 
 Retain applicable CCCC complexity, KISS, duplication, architecture and scanner
 distribution checks. Reuse shared implementations/profiles rather than another

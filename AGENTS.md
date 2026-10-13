@@ -93,7 +93,7 @@ and every `ontology_providers` `.ttl` into the federated ontology. So:
 ## Skill Architecture Diagram
 ```mermaid
 graph LR
-    Agent[AI Agent] -- reads --> SkillMD[SKILL.md]
+    Agent["Super Intelligence (SI) Agent — project terminology"] -- reads --> SkillMD[SKILL.md]
     SkillMD -- directs to --> Script[Python Script]
     Script -- uses --> Deps[Optional Dependencies]
     Script -- respects --> Guard[Guardrails & SSL Verify]

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "universal-skills"
 version = "1.3.9"
-description = "A collection of universal skills for AI agents"
+description = "A collection of universal skills for SI agents"
 readme = "README.md"
 license = "MIT"
 classifiers = [ "Development Status :: 5 - Production/Stable", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]

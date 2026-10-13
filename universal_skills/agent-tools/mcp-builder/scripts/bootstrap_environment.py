@@ -13,8 +13,17 @@ from pathlib import Path
 from bootstrap_sources import checkout_source, project_inputs, run, sha256
 
 
-def sync_commands(uv, python, bindings):
-    common = ["--no-build", "--no-python-downloads", "--python", python]
+def sync_commands(uv, python, bindings, *, root):
+    common = [
+        "--no-build",
+        "--no-python-downloads",
+        "--python",
+        python,
+        "--project",
+        str(root),
+        "--directory",
+        str(root),
+    ]
     exclusions = [
         argument
         for source in bindings
@@ -125,6 +134,9 @@ def workspace_environment(root):
         "PYTHONPATH",
         "PYTHONHOME",
         "VIRTUAL_ENV",
+        "UV_PROJECT",
+        "UV_WORKING_DIR",
+        "UV_WORKING_DIRECTORY",
         "GIT_DIR",
         "GIT_WORK_TREE",
         "GIT_INDEX_FILE",
@@ -147,7 +159,7 @@ def prepare(root, *, uv="uv", github=False):
     original_lock = sha256(root / "uv.lock")
     original_project = sha256(root / "pyproject.toml")
     sources = [checkout_source(root, binding, env) for binding in bindings]
-    commands = sync_commands(uv, floor, bindings)
+    commands = sync_commands(uv, floor, bindings, root=root)
     for command in commands:
         subprocess.run(command, cwd=root, env=env, check=True)
     if (sha256(root / "uv.lock"), sha256(root / "pyproject.toml")) != (

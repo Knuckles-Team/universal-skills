@@ -69,12 +69,16 @@ def test_source_mismatch_or_unsafe_remote_is_rejected(inputs, mutation):
 
 @pytest.mark.parametrize("bindings", [[], [{"name": "epistemic-graph"}]])
 def test_sync_forbids_builds_and_only_excludes_explicit_sources(bindings):
-    check, sync = bootstrap.sync_commands("uv", "3.12", bindings)
+    check, sync = bootstrap.sync_commands(
+        "uv", "3.12", bindings, root=Path("/reviewed/project")
+    )
     assert check[:3] == ["uv", "lock", "--check"]
     assert "--frozen" in sync and sync[sync.index("--extra") + 1] == "test"
     for command in (check, sync):
         assert "--no-build" in command
         assert "--no-python-downloads" in command
+        assert command[command.index("--project") + 1] == "/reviewed/project"
+        assert command[command.index("--directory") + 1] == "/reviewed/project"
     excluded = [
         sync[index + 1]
         for index, value in enumerate(sync)
@@ -192,6 +196,32 @@ def test_sync_failure_never_exposes_environment(fake_prepare, monkeypatch):
     with pytest.raises(subprocess.CalledProcessError):
         bootstrap.prepare(root, github=True)
     assert events == ["lock", "sync"]
+
+
+def test_competing_project_environment_cannot_redirect_lock_or_sync(
+    fake_prepare, monkeypatch
+):
+    root, events = fake_prepare
+    competing = root / "competing"
+    competing.mkdir()
+    (competing / "pyproject.toml").write_text('[project]\nname = "unrelated"\n')
+    (competing / "uv.lock").write_text("unrelated lock")
+    for name in ("UV_PROJECT", "UV_WORKING_DIR", "UV_WORKING_DIRECTORY"):
+        monkeypatch.setenv(name, str(competing))
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.example.invalid:8080")
+
+    def verify_selected_inputs(arguments, **kwargs):
+        env = kwargs["env"]
+        assert not {"UV_PROJECT", "UV_WORKING_DIR", "UV_WORKING_DIRECTORY"} & env.keys()
+        selected = Path(arguments[arguments.index("--project") + 1])
+        assert selected == root == Path(arguments[arguments.index("--directory") + 1])
+        assert (selected / "uv.lock").read_text() == "locked inputs"
+        assert env["HTTPS_PROXY"] == "http://proxy.example.invalid:8080"
+        events.append(arguments[1])
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", verify_selected_inputs)
+    bootstrap.prepare(root, github=True)
+    assert events == ["lock", "sync", "paths", "imports", "export"]
 
 
 def test_github_environment_clears_ambient_imports(tmp_path, monkeypatch):

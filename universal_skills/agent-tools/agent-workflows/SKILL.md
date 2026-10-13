@@ -211,6 +211,6 @@ Only one of `result` or `error` will be present. Always check for `"error"` befo
 
 ### 3. A2A & Subagent Methodologies (`docs/`)
 Follow the patterns outlined in the `docs/` folder when designing workflows that involve spawning independent agent worker nodes:
-- **A2A Orchestration**: Use explicit protocol interfaces when communicating between isolated AI agents. Ensure one agent serves as the coordinator while others act as execution workers.
+- **A2A Orchestration**: Use explicit protocol interfaces when communicating between isolated SI agents (using the project’s terminology). Ensure one agent serves as the coordinator while others act as execution workers.
 - **Dispatching Parallel Agents**: Don't force one agent to do multiple isolated tasks sequentially. Spin up multiple isolated environments (or TMUX sessions) and invoke worker routines in parallel for faster results.
 - **Subagent-Driven Development**: During complex execution tasks, break down the work into discrete chunks and farm it out to specialized subagents. You are the supervisor; they are the workers. Ensure they have clear constraints and output expected artifacts that you can subsequently review.
