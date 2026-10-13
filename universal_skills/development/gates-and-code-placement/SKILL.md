@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [pipelines, gates, complexity, kiss, clones, privacy, code-placement]
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # Gates and code placement

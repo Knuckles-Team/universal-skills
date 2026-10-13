@@ -160,7 +160,12 @@ def verify_contract(document, contract, source_sha256, **provider_options):
     """Reject source omissions and exact method, route, parameter or schema drift."""
     effective, inventory = source_context(document, source_sha256, **provider_options)
     # A compiler must not be able to mutate the independent source inventory.
-    expected = compile_contract(copy.deepcopy(effective))
+    expected = compile_contract(
+        copy.deepcopy(effective),
+        response_corrections=inventory.get("provider_overlay", {}).get(
+            "response_corrections", []
+        ),
+    )
     if set(inventory["operations"]) != set(expected["operations"]):
         raise ValueError("Compiler omitted or invented source operations")
     expected["source_sha256"] = source_sha256

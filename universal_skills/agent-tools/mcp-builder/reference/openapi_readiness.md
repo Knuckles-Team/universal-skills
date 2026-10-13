@@ -75,7 +75,11 @@ Version 1 overlay fields are `version`, `raw_source_sha256`,
 are in `scripts/openapi_provider_overlay.py`, `scripts/openapi_provider_evidence.py`
 and `tests/test_mcp_builder_provider_overlay.py` in the builder repository.
 
-Only two narrowly defined evidence forms are supported:
+Version 2 retains those fields and requires `response_corrections`. Version 1
+remains unchanged. The additional contract lives in
+`scripts/openapi_provider_responses.py` and its redirect behavior tests.
+
+Supported evidence forms are:
 
 - `require-property` adds one existing object property to a component's `required`
   list, with exact before/after component hashes and source evidence. It cannot
@@ -85,6 +89,21 @@ Only two narrowly defined evidence forms are supported:
   path and operation hash, plus nonempty category, preconditions and source
   evidence. Preconditions remain visible in the receipt. It does not synthesize
   `security: []`, grant credentials or bypass provider authorization.
+- `replace-empty-200-with-307` (version 2) corrects one GET response from an
+  empty declared 200 to a reviewed 307. It binds `operation_id`, `method`, `path`,
+  `source_operation_sha256`, `before_responses_sha256`,
+  `after_responses_sha256`, `source_evidence`, and `location_schema`.
+  The latter requires `type: string`, integer `minLength`/`maxLength` within
+  1–8192, and an anchored provider-specific `pattern`. Source evidence uses the
+  same verified file/hash/line references as authorization classifications.
+  `redirect_response(correction)` defines the exact effective response object;
+  only the named 200 is replaced, preserving every other response and operation.
+  The generated envelope is `{action, status: 307, content_type: "",
+  data: {location}}`. Exactly one absolute URI header must satisfy the reviewed
+  pattern and bounds. The response body remains byte/deadline bounded but is not
+  exposed. Redirect following stays disabled. Raw 3xx declarations and unrelated
+  operations do not acquire redirect handling. This correction never authenticates
+  a session or grants readiness.
 
 Evidence binds source commit, file SHA-256, optional Git blob identity and line
 bounds. Paths must be relative regular files under the supplied root; symlinks,

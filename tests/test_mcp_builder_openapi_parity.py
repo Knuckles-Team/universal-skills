@@ -123,8 +123,8 @@ def test_compiler_cannot_silently_drop_operations(catalog, monkeypatch):
     document, _, _, contract = catalog
     compiler = parity.compile_contract
 
-    def partial(document):
-        value = compiler(document)
+    def partial(document, **kwargs):
+        value = compiler(document, **kwargs)
         del value["operations"]["deleteItems"]
         return value
 

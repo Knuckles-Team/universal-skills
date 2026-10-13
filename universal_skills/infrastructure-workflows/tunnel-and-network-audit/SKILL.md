@@ -20,7 +20,7 @@ team_config:
 tags: ['tunnels', 'network', 'security', 'audit']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # Tunnel And Network Audit Workflow
