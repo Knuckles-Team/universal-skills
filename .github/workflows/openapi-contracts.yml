@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/agent-connector-sdk
-          ref: 5babc4cc48ad73928468b243842f219f51e2cca1
+          ref: 04a68087dbd3867bbb20e6ce286ffdd654028183
           path: .ci/agent-connector-sdk
           persist-credentials: false
       - name: Bootstrap reviewed SDK without native builds
