@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [git, worktree, shared-repository, hygiene]
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # Git in shared, multi-worktree repositories

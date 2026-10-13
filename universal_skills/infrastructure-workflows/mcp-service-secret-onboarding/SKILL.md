@@ -28,7 +28,7 @@ requires:
   - openbao-mcp
   - portainer-agent
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # MCP Service Secret Onboarding Workflow

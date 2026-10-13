@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 
 if __package__:
+    from .openapi_provider_responses import compiled_redirect, response_variants
     from .openapi_schema_inputs import input_schema, response_mode
     from .openapi_schema_types import (
         METHODS,
@@ -19,6 +20,7 @@ if __package__:
     )
     from .openapi_security import validate_security
 else:
+    from openapi_provider_responses import compiled_redirect, response_variants
     from openapi_schema_inputs import input_schema, response_mode
     from openapi_schema_types import (
         METHODS,
@@ -84,7 +86,7 @@ def _responses(document, operation):
     return responses, modes
 
 
-def _operation(document, operation, *, route, domain, shared):
+def _operation(document, operation, *, route, domain, shared, response_corrections):
     method, path = route
     inputs, parameters, content_type = input_schema(document, shared, operation)
     check_path_parameters(path, parameters)
@@ -103,10 +105,11 @@ def _operation(document, operation, *, route, domain, shared):
         "response_modes": response_modes,
         "security": operation.get("security", document.get("security", [])),
         "summary": operation.get("summary", action),
+        **compiled_redirect(operation, response_corrections),
     }
 
 
-def compile_contract(document):
+def compile_contract(document, *, response_corrections=()):
     """Every source operation belongs to exactly one domain; omissions fail closed."""
     validate_binary_constraints(document)
     validate_security(document)
@@ -129,6 +132,7 @@ def compile_contract(document):
                 route=(method, prefix + path),
                 domain=domain,
                 shared=item.get("parameters", []),
+                response_corrections=response_corrections,
             )
             domains[domain].append(action)
     return _final_contract(document, domains, operations)
@@ -157,21 +161,18 @@ def domain_schemas(contract, domain):
     }
     outputs = []
     for operation in operations:
-        for status, media in operation["responses"].items():
-            if not status.startswith("2"):
-                continue
-            for content_type, body in (media or {"": {"type": "null"}}).items():
-                outputs.append(
-                    object_schema(
-                        {
-                            "action": {"const": operation["action"], "type": "string"},
-                            "status": {"const": int(status), "type": "integer"},
-                            "content_type": {"const": content_type, "type": "string"},
-                            "data": body,
-                        },
-                        ["action", "status", "content_type", "data"],
-                    )
+        for status, content_type, body in response_variants(operation):
+            outputs.append(
+                object_schema(
+                    {
+                        "action": {"const": operation["action"], "type": "string"},
+                        "status": {"const": int(status), "type": "integer"},
+                        "content_type": {"const": content_type, "type": "string"},
+                        "data": body,
+                    },
+                    ["action", "status", "content_type", "data"],
                 )
+            )
     return trim_definitions(inputs), trim_definitions(
         {"type": "object", "anyOf": outputs, "$defs": contract["definitions"]}
     )
