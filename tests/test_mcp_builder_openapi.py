@@ -178,8 +178,9 @@ def test_tool_confirmation_result_never_dispatches_until_exact_true(
         assert confirmation_arguments == arguments
         return pending if decision == "pending" else decision
 
-    monkeypatch.setattr(runtime, "ctx_confirm_destructive", confirm)
-    monkeypatch.setattr(runtime, "get_context", lambda: object())
+    execution = importlib.import_module(runtime.__package__ + ".openapi_execution")
+    monkeypatch.setattr(execution, "ctx_confirm_destructive", confirm)
+    monkeypatch.setattr(execution, "get_context", lambda: object())
     inputs, outputs = runtime.CONTRACT["schemas"]["items"]
     tool = runtime.OpenApiTool(
         name="items_operations",

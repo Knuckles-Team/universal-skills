@@ -17,7 +17,7 @@ team_config:
     inquiry-agent: [research_artifact, graph_query]
 tags: [research, storm, multi-perspective, contradiction-map]
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Multi-Perspective Inquiry Workflow (STORM, native)

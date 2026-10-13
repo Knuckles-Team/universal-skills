@@ -20,7 +20,7 @@ team_config:
 tags: ['atlassian', 'confluence', 'wiki', 'knowledge-base', 'atlassian-agent', 'graph-os']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Confluence Knowledge Ingester Workflow

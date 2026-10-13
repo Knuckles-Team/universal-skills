@@ -4,6 +4,8 @@ The generated checker reports `ready: true` only for its stated scope: exact sou
 and contract agreement, authorization evidence, and budgeted native schema
 disclosure. This is not release, credential, transport, or live-service acceptance.
 Use `--inspect` to inspect incomplete evidence while keeping `ready: false`.
+The CLI writes its JSON diagnostic receipt to stderr, keeping the package's
+stdio MCP channel clear. Redirect stderr to save the receipt.
 
 ## Explicit model-facing budgets
 

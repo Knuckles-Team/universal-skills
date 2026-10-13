@@ -270,7 +270,16 @@ PACKAGE = ROOT / "__PACKAGE__"
 
 
 def _write_or_check(path: Path, value: dict, check: bool) -> None:
-    text = json.dumps(value, indent=2, sort_keys=True) + "\\n"
+    text = (
+        json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\\n"
+    )
     if check:
         if not path.is_file() or path.read_text(encoding="utf-8") != text:
             raise SystemExit(f"Stale generated contract: {path.relative_to(ROOT)}")

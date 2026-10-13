@@ -119,6 +119,7 @@ def _runtime_files(package, auth_scheme):
     )
     for name in (
         "openapi_runtime",
+        "openapi_execution",
         "openapi_request",
         "openapi_response",
         "openapi_auth_scheme",

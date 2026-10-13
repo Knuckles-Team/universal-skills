@@ -22,7 +22,7 @@ team_config:
 tags: [finance, risk, drawdown]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
   author: Genius
 ---
 

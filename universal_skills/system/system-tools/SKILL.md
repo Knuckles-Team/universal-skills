@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [os, hardware, screenshot, webcam, bluetooth, tmux, system]
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
   author: Genius
 ---
 # System Tools
