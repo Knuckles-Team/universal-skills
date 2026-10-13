@@ -20,7 +20,7 @@ tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensi
 concept: CONCEPT:EE-042
 requires: ['agent-utilities']
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # Market Microstructure Surveillance

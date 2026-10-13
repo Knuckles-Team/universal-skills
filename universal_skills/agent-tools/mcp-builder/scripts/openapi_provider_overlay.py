@@ -1,6 +1,7 @@
 """Apply reviewed additive schema corrections; retain auth evidence as a sidecar.
 
 Version 1 supports named component object schemas and explicit public decorators.
+Version 2 additionally permits a reviewed GET empty-200 to header-data 307 correction.
 It cannot repair routes, remove constraints, create credentials, or grant readiness.
 Component/operation hashes use compact sorted JSON; the effective document uses
 sorted, indented UTF-8 JSON with a final newline. Both use ensure_ascii=True.
@@ -21,9 +22,11 @@ if __package__:
         _pairs,
         _references,
     )
+    from .openapi_provider_responses import apply_response_corrections
     from .openapi_security import validate_security
 else:
     from openapi_provider_evidence import _evidence, _fields, _hash, _pairs, _references
+    from openapi_provider_responses import apply_response_corrections
     from openapi_security import validate_security
 
 _METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
@@ -161,11 +164,35 @@ def _apply(document, overlay, evidence):
         if action in classified:
             raise ValueError("Duplicate authorization classification")
         classified.add(action)
+    apply_response_corrections(
+        document,
+        overlay.get("response_corrections", []),
+        operations=operations,
+        evidence=evidence,
+    )
     return sorted(
         action
         for action, operation in operations.items()
         if operation["unknown"] and action not in classified
     )
+
+
+def _overlay_fields(overlay):
+    version = overlay.get("version") if isinstance(overlay, dict) else None
+    response_fields = {"response_corrections": list} if version == 2 else {}
+    _fields(
+        overlay,
+        {
+            "version": int,
+            "raw_source_sha256": str,
+            "effective_source_sha256": str,
+            "evidence_files": list,
+            "corrections": list,
+            "authorization_classifications": list,
+        }
+        | response_fields,
+    )
+    return overlay
 
 
 def apply_provider_overlay(
@@ -183,19 +210,11 @@ def apply_provider_overlay(
     ):
         raise ValueError("Expected reviewed overlay SHA256 mismatch or non-byte input")
     document = json.loads(raw_bytes, object_pairs_hook=_pairs)
-    overlay = json.loads(overlay_bytes, object_pairs_hook=_pairs)
-    _fields(
-        overlay,
-        {
-            "version": int,
-            "raw_source_sha256": str,
-            "effective_source_sha256": str,
-            "evidence_files": list,
-            "corrections": list,
-            "authorization_classifications": list,
-        },
-    )
-    if overlay["version"] != 1 or _hash(raw_bytes) != overlay["raw_source_sha256"]:
+    overlay = _overlay_fields(json.loads(overlay_bytes, object_pairs_hook=_pairs))
+    if (
+        overlay["version"] not in {1, 2}
+        or _hash(raw_bytes) != overlay["raw_source_sha256"]
+    ):
         raise ValueError("Unsupported overlay version or raw source SHA256 mismatch")
     validate_security(document)
     effective = copy.deepcopy(document)

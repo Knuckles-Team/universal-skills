@@ -8,7 +8,7 @@ domain: development
 license: MIT
 tags: [testing, verification, quality, CI, automation]
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
   author: Genius
 requires:
   - rep_rm_projects

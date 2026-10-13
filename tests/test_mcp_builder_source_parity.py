@@ -21,9 +21,9 @@ def test_generator_cannot_mutate_its_pinned_source(catalog, monkeypatch, tmp_pat
     source.write_text(json.dumps(document))
     compiler = converter.compile_contract
 
-    def incorrect(document):
+    def incorrect(document, **kwargs):
         document["paths"]["/items"]["get"]["parameters"][0]["in"] = "query"
-        return compiler(document)
+        return compiler(document, **kwargs)
 
     monkeypatch.setattr(converter, "compile_contract", incorrect)
     monkeypatch.setattr(parity, "compile_contract", incorrect)
@@ -63,8 +63,8 @@ def test_consistently_wrong_compiler_cannot_certify_itself(catalog, monkeypatch,
     ]
     compiler = parity.compile_contract
 
-    def incorrect(document):
-        result = compiler(document)
+    def incorrect(document, **kwargs):
+        result = compiler(document, **kwargs)
         operation = result["operations"]["getItems"]
         if field == "parameters":
             operation[field][0]["in"] = "query"

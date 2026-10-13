@@ -20,7 +20,7 @@ team_config:
 tags: ['ai', 'survey', 'papers', 'data-science']
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.3.7'
+  version: '1.3.8'
 ---
 
 # Ai Research Survey Workflow

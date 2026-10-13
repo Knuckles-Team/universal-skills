@@ -59,7 +59,12 @@ def _compiled_source(source, provider):
     document = json.loads(source)
     source_sha = hashlib.sha256(source).hexdigest()
     effective, inventory = source_context(document, source_sha, **provider)
-    contract = compile_contract(copy.deepcopy(effective))
+    contract = compile_contract(
+        copy.deepcopy(effective),
+        response_corrections=inventory.get("provider_overlay", {}).get(
+            "response_corrections", []
+        ),
+    )
     contract["source_sha256"] = source_sha
     if "provider_overlay" in inventory:
         contract["provider_overlay"] = inventory["provider_overlay"]
@@ -84,6 +89,7 @@ def _parity_files(package):
         "openapi_source_parity",
         "openapi_security",
         "openapi_provider_overlay",
+        "openapi_provider_responses",
         "openapi_provider_evidence",
         "openapi_schema_budget",
         "openapi_discovery",
@@ -157,7 +163,12 @@ def _update_metadata(package):
 
 
 def _add_dependencies(text, existing):
-    required = ["jsonschema>=4.23,<5", "regex>=2026.9.29"]
+    required = [
+        "jsonschema>=4.23,<5",
+        "regex>=2026.9.29",
+        "rfc3986-validator>=0.1.1,<0.2",
+        "rfc3339-validator>=0.1.4,<0.2",
+    ]
     missing = [item for item in required if item not in existing]
     if missing:
         text, count = re.subn(
