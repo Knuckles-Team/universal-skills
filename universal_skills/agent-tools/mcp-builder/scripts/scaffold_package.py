@@ -773,6 +773,7 @@ __pycache__/
 *$py.class
 
 /.ruff_cache/
+/.ci/
 /mcp/
 # C extensions
 *.so
@@ -2773,6 +2774,10 @@ def scaffold(
     # sourced from this scaffolder's own scripts/ dir, not templates/, since it is
     # the scaffolder's own tooling, not a per-package golden reference.
     _scaffolder_scripts_dir = Path(__file__).resolve().parent
+    for script_name in ("bootstrap_environment.py", "bootstrap_sources.py"):
+        _copy_generated_file(
+            _scaffolder_scripts_dir / script_name, root / "scripts" / script_name
+        )
     for script_name in (
         "workspace_sources.py",
         "check_workspace_source_drift.py",

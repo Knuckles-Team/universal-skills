@@ -15,7 +15,7 @@ description: >-
 license: MIT
 tags: [mcp, multiplexer, authorization, eunomia, keycloak, zero-trust, onboarding, security]
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
   author: Genius
 ---
 

@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [planner, sdd]
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
   author: Genius
 ---
 

@@ -4,7 +4,7 @@ domain: finance
 skill_type: skill
 description: Ingest quantitative trading data via akshare into the Timeseries Memory backend.
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Quant Data Ingest Skill

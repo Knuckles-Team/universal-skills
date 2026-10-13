@@ -22,7 +22,7 @@ team_config:
 tags: [research, scan, arxiv, papers]
 concept: CONCEPT:RESEARCH-001
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Paper Scan Workflow

@@ -20,7 +20,7 @@ team_config:
 tags: ['qbittorrent', 'torrents', 'cleaner', 'pruning', 'qbittorrent-agent']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Qbittorrent Completed Cleaner Workflow

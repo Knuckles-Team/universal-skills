@@ -6,7 +6,7 @@ domain: development-workflows
 tags: ['validation', 'workspace', 'repository-manager', 'bugfix', 'workflow', 'dev-workflows']
 requires: ['repository-manager-mcp']
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # workspace-validator-workflow Workflow

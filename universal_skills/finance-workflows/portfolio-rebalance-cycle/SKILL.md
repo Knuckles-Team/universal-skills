@@ -22,7 +22,7 @@ team_config:
 tags: [rebalance, portfolio, mvo, execution]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Portfolio Rebalance Cycle Workflow

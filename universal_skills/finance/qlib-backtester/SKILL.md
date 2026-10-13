@@ -4,7 +4,7 @@ domain: finance
 skill_type: skill
 description: Execute rigorous backtesting on alpha factors using Qlib.
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Qlib Backtester Skill

@@ -22,7 +22,7 @@ team_config:
 tags: [ops, servicenow-trm-tracker]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.8'
+  version: '1.3.9'
 ---
 
 # Servicenow Trm Tracker Workflow

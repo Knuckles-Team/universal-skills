@@ -5,7 +5,6 @@ from pathlib import Path
 
 import yaml
 
-
 SCAFFOLD = (
     Path(__file__).parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
@@ -37,11 +36,17 @@ def test_regular_ci_runs_project_hooks_and_tests_without_release_readiness():
         for job in workflow["jobs"].values()
         for step in job["steps"]
     )
-    assert "pre_commit run --all-files" in commands
+    assert '"$CONNECTOR_PRE_COMMIT" run --all-files' in commands
     assert "--hook-stage pre-push" in commands
     assert "--hook-stage manual" not in commands
     assert "dependency-readiness" not in commands
     assert "continue-on-error" not in _load_scaffold().SCANNER_CI_YML
+    steps = workflow["jobs"]["checks"]["steps"]
+    assert "command -v pre-commit" in steps[1]["run"]
+    assert steps[2]["run"] == "python scripts/bootstrap_environment.py --github"
+    assert "validate-config" in steps[3]["run"]
+    assert "python -m pre_commit" not in commands
+    assert workflow["jobs"]["checks"]["env"]["MCP_FLEET_REGISTRATION"] == "false"
 
 
 def test_release_reuses_shared_pipeline_only_for_version_tags():
@@ -76,6 +81,11 @@ def test_scaffold_rerun_preserves_project_owned_quality_files(tmp_path):
     module.scaffold("scanner-provider", output_dir=str(tmp_path))
     root = tmp_path / "scanner-provider"
     paths = [root / ".pre-commit-config.yaml", root / ".github/workflows/scanners.yml"]
+    for name in ("bootstrap_environment.py", "bootstrap_sources.py"):
+        assert (root / "scripts" / name).read_bytes() == (
+            SCAFFOLD.parent / name
+        ).read_bytes()
+    assert "/.ci/" in (root / ".gitignore").read_text().splitlines()
     for path in paths:
         path.write_text(path.read_text() + "\n# operator-owned\n")
     expected = [path.read_bytes() for path in paths]
