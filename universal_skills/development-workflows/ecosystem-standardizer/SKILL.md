@@ -45,7 +45,7 @@ for the presence and correctness of each one.
 |------|---------|-------------|
 | `README.md` | Project overview, quick start, tool tables | Manual |
 | `CHANGELOG.md` | Keep a Changelog format | `generate_changelog` |
-| `AGENTS.md` | AI coding agent context | `agents-md-generator` |
+| `AGENTS.md` | SI coding agent context (project terminology) | `agents-md-generator` |
 | `pyproject.toml` | Package metadata, deps, tools | Scaffold |
 | `requirements.txt` | Pinned deps for Docker | `uv pip compile` |
 | `.pre-commit-config.yaml` | Pre-commit hooks | Scaffold |
