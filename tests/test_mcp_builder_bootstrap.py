@@ -67,6 +67,35 @@ def test_source_mismatch_or_unsafe_remote_is_rejected(inputs, mutation):
         sources.source_binding("agent-connector-sdk", project, lock)
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("git", "https:///sdk.git"),
+        ("git", "https://user@example.invalid/sdk.git"),
+        ("git", "https://:synthetic@example.invalid/sdk.git"),
+        ("git", "https://example.invalid/sdk.git?ref=main"),
+        ("git", "https://example.invalid/sdk.git#main"),
+        ("rev", "a" * 39),
+        ("rev", "a" * 41),
+        ("rev", "A" * 40),
+    ],
+)
+def test_source_coordinates_reject_each_invalid_component(inputs, field, value):
+    project, lock = copy.deepcopy(inputs)
+    project["tool"]["uv"]["sources"]["agent-connector-sdk"][field] = value
+    with pytest.raises(ValueError, match="credential-free HTTPS and a full commit ID"):
+        sources.source_binding("agent-connector-sdk", project, lock)
+
+
+@pytest.mark.parametrize("matches", [0, 2])
+def test_source_binding_requires_exactly_one_matching_lock_entry(inputs, matches):
+    project, lock = copy.deepcopy(inputs)
+    package = lock["package"][0]
+    lock["package"] = [package] * matches
+    with pytest.raises(ValueError, match="differs between pyproject.toml and uv.lock"):
+        sources.source_binding("agent-connector-sdk", project, lock)
+
+
 @pytest.mark.parametrize("bindings", [[], [{"name": "epistemic-graph"}]])
 def test_sync_forbids_builds_and_only_excludes_explicit_sources(bindings):
     check, sync = bootstrap.sync_commands(

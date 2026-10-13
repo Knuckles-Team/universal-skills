@@ -20,8 +20,8 @@ def run(command, *, root, env):
     return subprocess.check_output(command, cwd=root, env=env, text=True).strip()
 
 
-def source_binding(name, project, lock):
-    source = project["tool"]["uv"]["sources"][name]
+def source_coordinates(name, source):
+    """Validate the immutable, credential-free source declaration."""
     if set(source) != {"git", "rev"}:
         raise ValueError(f"{name} requires one immutable Git source")
     url, revision = source["git"], source["rev"]
@@ -36,16 +36,27 @@ def source_binding(name, project, lock):
         or not re.fullmatch(r"[0-9a-f]{40}", revision)
     ):
         raise ValueError(f"{name} requires credential-free HTTPS and a full commit ID")
+    return url, revision
+
+
+def locked_source_package(name, lock, url, revision):
+    """Require one lock entry with the exact declared Git source."""
     packages = [row for row in lock["package"] if row["name"] == name]
     expected = {"git": f"{url}?rev={revision}#{revision}"}
     if len(packages) != 1 or packages[0]["source"] != expected:
         raise ValueError(f"{name} source differs between pyproject.toml and uv.lock")
+    return packages[0]
+
+
+def source_binding(name, project, lock):
+    url, revision = source_coordinates(name, project["tool"]["uv"]["sources"][name])
+    package = locked_source_package(name, lock, url, revision)
     return {
         "name": name,
         "module": SOURCE_MODULES[name],
         "url": url,
         "revision": revision,
-        "version": packages[0]["version"],
+        "version": package["version"],
     }
 
 
