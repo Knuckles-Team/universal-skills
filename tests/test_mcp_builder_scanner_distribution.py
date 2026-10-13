@@ -1,13 +1,8 @@
 """Distribution and rerun contracts for shared pipeline consumption."""
 
 import importlib.util
-import os
-import shutil
-import subprocess
-import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 SCAFFOLD = (
@@ -48,41 +43,12 @@ def test_regular_ci_runs_project_hooks_and_tests_without_release_readiness():
     assert "continue-on-error" not in _load_scaffold().SCANNER_CI_YML
     steps = workflow["jobs"]["checks"]["steps"]
     assert "command -v pre-commit" in steps[1]["run"]
-    assert steps[4]["run"] == "python scripts/bootstrap_environment.py --github"
-    assert "validate-config" in steps[5]["run"]
+    assert steps[2]["run"] == "python scripts/select_python.py"
+    assert steps[3]["run"] == "python scripts/bootstrap_environment.py --github"
+    assert not any("setup-python" in step.get("uses", "") for step in steps)
+    assert "validate-config" in steps[4]["run"]
     assert "python -m pre_commit" not in commands
     assert workflow["jobs"]["checks"]["env"]["MCP_FLEET_REGISTRATION"] == "false"
-
-
-@pytest.mark.parametrize("floor", ["3.12", "3.13"])
-def test_ci_provisions_declared_floor_before_frozen_bootstrap(tmp_path, floor):
-    steps = _workflow(_load_scaffold().SCANNER_CI_YML)["jobs"]["checks"]["steps"]
-    resolver, setup, bootstrap = steps[2:5]
-    assert resolver["id"] == "python-baseline"
-    assert setup["uses"] == (
-        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"
-    )
-    assert setup["with"]["python-version"] == (
-        "${{ steps.python-baseline.outputs.version }}"
-    )
-    assert bootstrap["run"] == "python scripts/bootstrap_environment.py --github"
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    shutil.copyfile(
-        SCAFFOLD.parent / "bootstrap_sources.py", scripts / "bootstrap_sources.py"
-    )
-    (tmp_path / "pyproject.toml").write_text(
-        f'[project]\nrequires-python = ">={floor}, <3.15"\n'
-        "[project.optional-dependencies]\ntest = []\n"
-    )
-    (tmp_path / "uv.lock").write_text("package = []\n")
-    output = tmp_path / "github-output"
-    env = dict(os.environ, GITHUB_OUTPUT=str(output))
-    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
-    subprocess.run(
-        ["bash", "-e", "-c", resolver["run"]], cwd=tmp_path, env=env, check=True
-    )
-    assert output.read_text() == f"version={floor}\n"
 
 
 def test_release_reuses_shared_pipeline_only_for_version_tags():
@@ -117,7 +83,11 @@ def test_scaffold_rerun_preserves_project_owned_quality_files(tmp_path):
     module.scaffold("scanner-provider", output_dir=str(tmp_path))
     root = tmp_path / "scanner-provider"
     paths = [root / ".pre-commit-config.yaml", root / ".github/workflows/scanners.yml"]
-    for name in ("bootstrap_environment.py", "bootstrap_sources.py"):
+    for name in (
+        "bootstrap_environment.py",
+        "bootstrap_sources.py",
+        "select_python.py",
+    ):
         assert (root / "scripts" / name).read_bytes() == (
             SCAFFOLD.parent / name
         ).read_bytes()
