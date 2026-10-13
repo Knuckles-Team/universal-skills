@@ -9,7 +9,7 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
-from quality_templates import PIPELINES_REV
+from quality_templates import PIPELINES_THEME_REV
 
 SOURCE = Path(__file__).resolve().parent / "templates" / "pipelines-theme"
 
@@ -64,7 +64,7 @@ def verified_source() -> Path:
     """Verify the complete shipped inventory against the reviewed provenance."""
     files = _inventory(SOURCE)
     manifest = json.loads(files["provenance.json"].read_text())
-    if manifest["revision"] != PIPELINES_REV:
+    if manifest["revision"] != PIPELINES_THEME_REV:
         raise ValueError("shared theme revision disagrees with the pipeline contract")
     for relative in manifest["files"]:
         path = SOURCE / relative

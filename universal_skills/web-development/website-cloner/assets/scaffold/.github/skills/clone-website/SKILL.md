@@ -6,7 +6,7 @@ description: Reverse-engineer and clone one or more websites in one shot — ext
 argument-hint: "<url1> [<url2> ...]"
 user-invocable: true
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
 ---
 
 # Clone Website

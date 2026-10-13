@@ -11,7 +11,7 @@ SCAFFOLD = (
     Path(__file__).parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
 )
-PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_REF = "main"
 
 
 def _load_scaffold():
@@ -34,7 +34,7 @@ def test_generated_package_consumes_public_surface_and_declares_package(tmp_path
         for repo in hooks
         if repo["repo"] == "https://github.com/Knuckles-Team/pipelines"
     )
-    assert shared["rev"] == PIPELINES_REV
+    assert shared["rev"] == PIPELINES_REF
     assert {"id": "public-surface"} in shared["hooks"]
     readme = (root / "README.md").read_text()
     assert "pip install" in readme or "uv sync" in readme

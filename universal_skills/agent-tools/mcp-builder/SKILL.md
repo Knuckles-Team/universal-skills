@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api, cli]
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
   author: Genius
 ---
 
@@ -50,6 +50,10 @@ contract; it is not a connector dependency or a second builder.
 
 ## Contracts
 
+- Preserve 100% of the supported source operation or command catalog across API
+  and MCP surfaces. Require deterministic inventory, schema and dispatch parity;
+  distinguish mocked transport coverage from live endpoint checks. Do not replace
+  a full integration with placeholder or selected operations.
 - Keep vendor requests and pagination in the API client, or subprocess execution
   in the CLI adapter. MCP tools validate inputs and use SDK registration for either
   backend; a local command does not bypass authorization or effect controls.
@@ -77,6 +81,8 @@ contract; it is not a connector dependency or a second builder.
 - [MCP design](reference/mcp_best_practices.md): tool boundaries and transport choices.
 - [OpenAPI and publication](reference/openapi_bootstrap.md): provider conversion and
   publishing a validated local tree to a new normal GitHub repository.
+- [OpenAPI readiness](reference/openapi_readiness.md): named discovery budgets and
+  hash-bound provider evidence; separate from transport and live acceptance.
 - [Evaluation](reference/evaluation.md): optional read-only task evaluation with the
   existing model harness; it does not replace static and contract checks.
 

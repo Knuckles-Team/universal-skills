@@ -2735,7 +2735,7 @@ def scaffold(
             _copy_generated_file(source, root / relative)
     check_shared_theme(root)
 
-    # Bundled golden validation scripts (verbatim from gitlab-api)
+    # Bundled validation scripts; integration parity uses the actual generated client.
     for script_name in (
         "security_sanitizer.py",
         "verify_api_integration.py",

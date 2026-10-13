@@ -9,6 +9,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import regex
+from agent_connector_sdk.config import setting
 from agent_connector_sdk.http.client import create_http_client
 from agent_connector_sdk.http.options import HttpClientOptions
 from agent_connector_sdk.http.retry import RetryPolicy
@@ -19,12 +20,13 @@ from fastmcp.tools import Tool, ToolResult
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import extend
-from mcp.types import ToolAnnotations
+from mcp.types import InputRequiredResult, ToolAnnotations
 from pydantic import Field
 
 from .openapi_auth_scheme import credential_headers
 from .openapi_request import body_options, parameters
 from .openapi_response import decode_body, read_body
+from .parity.openapi_discovery import configure_discovery
 
 CONTRACT = json.loads(Path(__file__).with_name("openapi_contract.json").read_text())
 MAX_BYTES = 16 * 1024 * 1024
@@ -117,14 +119,14 @@ class OpenApiClient:
             )
         options = {"params": query, "headers": headers, "follow_redirects": False}
         if "body" in arguments:
-            options.update(
-                body_options(
-                    operation,
-                    arguments["body"],
-                    definitions=CONTRACT["definitions"],
-                    max_bytes=MAX_BYTES,
-                )
+            body = body_options(
+                operation,
+                arguments["body"],
+                definitions=CONTRACT["definitions"],
+                max_bytes=MAX_BYTES,
             )
+            options["headers"].update(body.pop("headers", {}))
+            options.update(body)
         return self._send(operation, path, options)
 
     def _require_credentials(self, requirements):
@@ -166,13 +168,19 @@ class OpenApiTool(Tool):
         if not operation["read_only"]:
             if not client.allow_writes:
                 raise PermissionError("Writes require explicit operator enablement")
-            if not await ctx_confirm_destructive(get_context(), operation["action"]):
+            confirmation = await ctx_confirm_destructive(
+                get_context(), operation["action"], confirmation_arguments=arguments
+            )
+            if isinstance(confirmation, InputRequiredResult):
+                return confirmation
+            if confirmation is not True:
                 raise PermissionError("Write was not confirmed")
         result = await run_blocking(client.execute, self.domain, arguments)
         return ToolResult(structured_content=result)
 
 
 def register_domain(mcp, domain, client_factory):
+    configure_discovery(mcp, setting("__PACKAGE_ENV___MCP_CLIENT_BUDGET"))
     operations = [
         CONTRACT["operations"][action] for action in CONTRACT["domains"][domain]
     ]

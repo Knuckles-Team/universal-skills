@@ -17,7 +17,7 @@ description: >-
 license: MIT
 tags: [skills, ontologies, prompts, mcp, installer, deployment, agent-tools]
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
   author: Genius
   supersedes: skill-installer
 ---

@@ -22,7 +22,7 @@ team_config:
 tags: ['ssh', 'bootstrap', 'keys', 'onboarding', 'security']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
 ---
 
 # Ssh Bootstrap Workflow

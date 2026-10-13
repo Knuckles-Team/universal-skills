@@ -59,21 +59,25 @@ Optional orchestration belongs in its own extra. Avoid recursive extras and
 import-time live-service initialization.
 
 Current pipelines workflows/hooks own release, publication, Pages, dependency
-readiness, spec-delivery docs and public README checks. Resolve reviewed
-immutable revisions through repository supply-chain policy; do not copy mutable
-workflow refs or obsolete pins. Dependency-readiness is a manual/release gate
-where current pipelines requires it.
+readiness, spec-delivery docs and public README checks. Under the approved shared
+pipeline policy, the generated pre-commit repository and Python/Pages reusable
+workflows follow `main`; record the exact resolved revision in validation evidence.
+Bundled theme assets retain their immutable provenance and byte checks. Other
+dependency and workflow pins remain governed by their own repository policy.
+Dependency-readiness is a manual/release gate where current pipelines requires it.
 
 A generated project's resolver lock must come from its reviewed dependency set,
 using an existing resolver with native builds disabled where required. Missing
 required releases block release/install claims; do not lower dependency bounds or
 invent lock entries. If a pipeline policy conflicts with approved immutable pins,
-retain the pins and report the conflict until the change is explicitly authorized.
+retain the pins and report the conflict until that specific change is authorized.
 
 Retain applicable CCCC complexity, KISS, duplication, architecture and scanner
 distribution checks. Reuse shared implementations/profiles rather than another
 hand-maintained policy. Provision native tools only through an approved existing
-host or CI environment; hooks must not install toolchains.
+host or CI environment; hooks must not install toolchains. A separately approved
+[generated-schema policy](generated_schema_policy.md) may use the shared optional
+wrapper; the scaffold never enables exemptions by default.
 
 README is the public entry point; AGENTS records current ownership, commands,
 quality gates and isolation. Link detailed specification/delivery evidence from

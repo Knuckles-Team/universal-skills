@@ -15,7 +15,7 @@ requires:
   - tunnel-manager-mcp
   - systems-manager-mcp
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
 ---
 
 # Network Topology Sweep Skill

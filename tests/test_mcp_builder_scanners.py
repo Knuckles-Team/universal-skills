@@ -12,7 +12,7 @@ SCAFFOLD = (
     Path(__file__).parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
 )
-PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_REF = "main"
 KISS_POLICY_SHA256 = "a6f2b9171123503522092aec416eaea7ad29ea98a26eb7283f02156c9c3d5c3a"
 
 
@@ -32,7 +32,7 @@ def _shared_hooks(config):
         if repo["repo"] == "https://github.com/Knuckles-Team/pipelines"
     ]
     assert len(shared) == 1
-    assert shared[0]["rev"] == PIPELINES_REV
+    assert shared[0]["rev"] == PIPELINES_REF
     return {hook["id"]: hook for hook in shared[0]["hooks"]}
 
 

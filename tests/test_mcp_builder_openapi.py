@@ -1,5 +1,6 @@
 """Behavioral fixtures for generated method semantics and closed action dispatch."""
 
+import asyncio
 import copy
 import importlib
 import json
@@ -150,6 +151,56 @@ def test_writes_disabled_by_default(runtime):
     with pytest.raises(PermissionError):
         client.execute("items", {"action": "deleteItem", "path": {"id": "abc"}})
     client.close()
+
+
+@pytest.mark.parametrize("decision", ["pending", True, False, None, "truthy"])
+def test_tool_confirmation_result_never_dispatches_until_exact_true(
+    runtime, monkeypatch, decision
+):
+    from mcp.types import InputRequiredResult
+
+    requests = []
+    client = runtime.OpenApiClient(
+        "https://provider.example",
+        auth=httpx.Auth(),
+        write_mode="read-write",
+        transport=httpx.MockTransport(
+            lambda request: (
+                requests.append(request) or httpx.Response(200, json={"ok": True})
+            )
+        ),
+    )
+    arguments = {"action": "deleteItem", "path": {"id": "one"}}
+    pending = InputRequiredResult(request_state="test-state")
+
+    async def confirm(context, action, *, confirmation_arguments):
+        assert action == "deleteItem"
+        assert confirmation_arguments == arguments
+        return pending if decision == "pending" else decision
+
+    monkeypatch.setattr(runtime, "ctx_confirm_destructive", confirm)
+    monkeypatch.setattr(runtime, "get_context", lambda: object())
+    inputs, outputs = runtime.CONTRACT["schemas"]["items"]
+    tool = runtime.OpenApiTool(
+        name="items_operations",
+        domain="items",
+        client_factory=lambda: client,
+        parameters=inputs,
+        output_schema=outputs,
+    )
+    try:
+        if decision == "pending":
+            assert asyncio.run(tool.run(arguments)) is pending
+        elif decision is True:
+            assert asyncio.run(tool.run(arguments)).structured_content["data"] == {
+                "ok": True
+            }
+        else:
+            with pytest.raises(PermissionError, match="not confirmed"):
+                asyncio.run(tool.run(arguments))
+        assert len(requests) == (1 if decision is True else 0)
+    finally:
+        client.close()
 
 
 @pytest.mark.parametrize("status", [302, 429, 500])
@@ -384,8 +435,8 @@ def test_scaffold_public_converter_registered_tool_call(
     import subprocess
 
     _require_runtime()
-    from fastmcp import FastMCP, Client
     from agent_connector_sdk.http.client import create_http_client
+    from fastmcp import Client, FastMCP
 
     subprocess.run(
         [
@@ -484,8 +535,8 @@ def test_converted_client_preserves_generated_auth_contract(tmp_path, document):
 
 
 def test_registrar_keeps_sdk_domain_toggle(runtime, monkeypatch):
-    from fastmcp import FastMCP
     from agent_connector_sdk.mcp import tool_surface
+    from fastmcp import FastMCP
 
     registrar = importlib.import_module("fixture_connector.mcp")
     monkeypatch.setattr(

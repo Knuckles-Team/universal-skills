@@ -13,7 +13,7 @@ tags:
 requires:
   - gitlab-mcp
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
 ---
 
 # GitLab Repository Seeder Skill

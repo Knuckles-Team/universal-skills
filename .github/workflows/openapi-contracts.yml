@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/agent-connector-sdk
-          ref: 5babc4cc48ad73928468b243842f219f51e2cca1
+          ref: 04a68087dbd3867bbb20e6ce286ffdd654028183
           path: .ci/agent-connector-sdk
           persist-credentials: false
       - name: Bootstrap reviewed SDK without native builds
@@ -32,4 +32,4 @@ jobs:
       - name: Test real governed transport and local-source publication boundaries
         env:
           MCP_BUILDER_REQUIRE_SDK: '1'
-        run: .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_session_auth.py tests/test_mcp_builder_github_publish.py
+        run: .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_openapi_parity.py tests/test_mcp_builder_source_parity.py tests/test_mcp_builder_openapi_security.py tests/test_mcp_builder_unicode_patterns.py tests/test_mcp_builder_session_auth.py tests/test_mcp_builder_github_publish.py tests/test_mcp_builder_schema_budget.py tests/test_mcp_builder_provider_overlay.py tests/test_mcp_builder_native_confirmation.py

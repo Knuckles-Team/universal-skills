@@ -21,6 +21,8 @@ references, nullability and declared methods including PATCH. File inputs are
 base64 bytes; filesystem paths are never opened. The converter requires a fixed
 path-only server URL, JSON/form/multipart request content and standard path,
 query and header parameter styles. Unsupported features fail during compilation.
+Multiple request media types are rejected until a representation-complete adapter
+can validate and exercise each one; selecting only the first is not full parity.
 
 Tools accept an action enum bound to an exact method and route. They do not
 accept arbitrary URLs or methods. Credential references use SDK API-key or
@@ -29,6 +31,13 @@ origin, without the OpenAPI path prefix. Writes default to disabled and require
 operator enablement plus native MCP confirmation. HTTP requests have finite
 bounds and exactly one attempt, including PUT and DELETE. Transport uncertainty
 never triggers an automatic write retry.
+
+The SDK confirmation helper must accept `confirmation_arguments=arguments` and
+return either a boolean or `mcp.types.InputRequiredResult`. The tool returns a
+pending input request immediately and dispatches only for exact `True`.
+An older SDK without that interface fails closed on writes; it is not evidence of
+modern protocol compatibility. Test actual native acceptance, denial and pending
+round trips with the reviewed SDK before admitting write operations.
 
 HTTP to a non-loopback provider, and credential-bearing HTTP even on loopback,
 is refused by default. An operator may set the
@@ -124,3 +133,89 @@ The client constructor uses `write_mode="read-only"` by default; the explicit
 `"read-write"` mode follows the unchanged operator `PACKAGE_ENV_ALLOW_WRITES`
 setting. Delegated bearer authentication uses a separate HTTPS-default OIDC
 client and closes both TLS profiles and clients through the canonical SDK flow.
+
+
+## Complete operation parity
+
+Retain the entire supported operation catalog from the official pinned source.
+The converter emits `openapi_inventory.json`, binding the exact source bytes and
+recording every operation, method, path, effective security requirement and `x-*`
+annotation. Admin, security, billed and destructive operations remain represented;
+provider-specific policy must interpret their requirements explicitly. Missing
+security declarations are recorded as unknown, never as evidence of public access.
+The ready-state checker fails until authorization is explicit in the source or
+verified through the narrow [provider evidence interface](openapi_readiness.md).
+Arbitrary runtime overlays are not equivalent to the pinned source. Pure inventory/schema checks remain
+separate from this authorization admission. Do not treat
+an undocumented effect as read-only merely because its HTTP method is GET.
+Malformed security declarations, undeclared scheme references and invalid scope
+arrays fail compilation. Explicit `security: []` and anonymous alternatives remain
+valid declarations; structural validity does not prove credential scope or service
+authorization. OpenAPI 3.0 and 3.1 scope/role rules are validated separately.
+
+The generated package includes these helpers: `from package_module.parity import
+verify_contract, verify_mcp, require_complete_coverage, verify_transport`. No sibling
+builder checkout is needed. Run the checker in the existing reviewed environment:
+
+```sh
+python -m package_module.parity.check_openapi_parity source.json package_module --native --inspect
+```
+
+It rejects missing operations, method/route/parameter/response/security drift,
+incomplete domain mappings, stale inventories and missing or mismatched native
+MCP schemas. Expected references use the actual bounded FastMCP dereferencer;
+reference sibling assertions compile to an `allOf` intersection, so a shallow
+reference merge cannot overwrite a stronger constraint. Client-unsupported schemas
+(such as Unicode property escapes rejected by a Python JSON Schema client) fail
+explicitly; do not drop the constraint to obtain a pass. Discovery is distinct
+from successful transport execution.
+Raw source methods, routes and parameter placement are checked independently of
+the compiler, including against captured HTTP requests, so a consistently wrong
+compiler cannot certify its own routing. The source snapshot is isolated from
+compiler mutation.
+
+For exhaustive mocked transport proof, import `verify_transport` from
+`scripts/openapi_transport_parity.py`. Pass the original source bytes, generated
+contract, fixtures for **every** action, `api_factory(transport, operation)` and
+an async `mcp_call(tool_name, arguments, client)` adapter. Each fixture supplies
+`arguments`, `response` (httpx.Response keyword arguments), full `expected_result`, and
+`expected_request` (`path`, plus applicable `query`, `headers`, `json`, `form` or `body`).
+Multipart fixtures supply an `assert_request(request, operation, fixture)` callback
+that verifies decoded fields and files.
+The factory builds the real client with the supplied MockTransport; the MCP
+adapter binds that client to the actual native registered tool. Both surfaces
+must issue exactly one expected request. Missing fixtures, blocked dispatch,
+validation errors or MCP errors fail the check. Keep schema validation,
+credential requirements and confirmation enabled; no production policy patching.
+
+Run authorization/refusal fixtures separately. A protocol unable to complete a
+required confirmation is a remaining MCP acceptance blocker, not evidence of a
+successful write. Mocked coverage never certifies live endpoints. Record live
+verification separately and call only operations authorized for that check.
+
+The inventory proves completeness against its source, not that a partial source
+covers an entire provider suite. Preserve the official source inventory and map
+all supported APIs before claiming full-suite completion. For native MCP or CLI
+products preserve their complete supported catalogs and clearly identify any
+connector-owned API bridge; never invent an upstream HTTP service.
+
+Reject source exports whose URL placeholders differ from declared `in: path` names.
+Do not reinterpret whole request objects as path parameters to make compilation pass.
+Binary fields retain source annotations and extensions while the runtime
+representation uses base64. Raw binary length, pattern, enum and composition
+constraints require a representation-aware provider adapter and fail compilation;
+applying them to encoded text would change their meaning. Provider extensions such as `x-immich-required` are
+preserved evidence, not generic JSON Schema `required` semantics; resolve such
+source discrepancies through a reviewed provider correction before acceptance.
+
+Native Unicode property patterns use the bundled, hash-verified Unicode 18 ranges
+derived from the reviewed regex 2026.9.29 runtime. Positive L/M/N properties are
+translated to literal ranges; unsupported properties fail. This pins the existing
+converter semantics and does not assert equivalence with an unverified provider
+Node/Unicode version. The generated parity package ships the table as package data.
+
+Native schema validity does not establish model-context suitability. The generated
+runtime supports FastMCP's built-in deferred search with explicit named byte
+budgets. See [readiness and provider evidence](openapi_readiness.md) for configuration,
+measured full-schema disclosure and negative oversized checks. No constraints are
+truncated and all authorized tools retain their original dispatch path.

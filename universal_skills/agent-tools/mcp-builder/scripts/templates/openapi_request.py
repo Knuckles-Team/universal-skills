@@ -75,7 +75,16 @@ def _multipart(body, body_schema, *, definitions, max_bytes):
                 if isinstance(value, (dict, list))
                 else _value(value)
             )
-    return {"files": files, "data": data}
+    # HTTPX selects form encoding when files is empty. Optional file fields
+    # must not silently change the operation's declared multipart media type.
+    if files:
+        return {"files": files, "data": data}
+    if data:
+        return {"files": {key: (None, value) for key, value in data.items()}}
+    return {
+        "content": b"--mcp-empty-body--\r\n",
+        "headers": {"Content-Type": "multipart/form-data; boundary=mcp-empty-body"},
+    }
 
 
 def body_options(operation, body, *, definitions, max_bytes):

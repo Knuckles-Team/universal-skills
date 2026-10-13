@@ -13,7 +13,7 @@ domain: social-workflows
 tags: ['social', 'x', 'ingestion', 'graph-os', 'knowledge-graph', 'evolution']
 requires: ['graph-os']
 metadata:
-  version: '1.3.5'
+  version: '1.3.6'
   author: Genius
   concepts:
     - CONCEPT:ECO-4.6

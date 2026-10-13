@@ -10,7 +10,7 @@ SCAFFOLD = (
     Path(__file__).parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
 )
-PIPELINES_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_REF = "main"
 
 
 def _load_scaffold():
@@ -49,7 +49,7 @@ def test_release_reuses_shared_pipeline_only_for_version_tags():
     assert workflow["on"] == {"push": {"tags": ["v*"]}}
     job = workflow["jobs"]["publish-pypi"]
     assert job["uses"] == (
-        "Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@" + PIPELINES_REV
+        "Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@" + PIPELINES_REF
     )
     assert job["if"] == "startsWith(github.ref, 'refs/tags/v')"
     assert job["secrets"] == {"PYPI_API_TOKEN": "${{ secrets.PYPI_API_TOKEN }}"}
@@ -58,7 +58,7 @@ def test_release_reuses_shared_pipeline_only_for_version_tags():
 def test_pages_uses_shared_workflow_and_actual_content_root():
     workflow = _workflow(_load_scaffold().PAGES_YML)
     job = workflow["jobs"]["publish-pages"]
-    assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REV)
+    assert job["uses"].endswith("pages_pipeline.yml@" + PIPELINES_REF)
     assert job["with"]["content_source"] == "docs"
 
 
