@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [graph-os, development, public-contribution]
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Graph OS ecosystem development

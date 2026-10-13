@@ -22,7 +22,7 @@ team_config:
 tags: [risk, dashboard, var, drawdown]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Risk Dashboard Refresh Workflow

@@ -18,7 +18,7 @@ team_config:
 tags: ['voice', 'audio', 'transcription', 'whisper', 'speech-to-text', 'audio-transcriber-mcp']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Voice Message Transcriber Workflow

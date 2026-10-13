@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 HELPER = (
     Path(__file__).resolve().parents[1]
     / "universal_skills/agent-tools/mcp-builder/scripts/connector_templates.py"
@@ -138,6 +137,7 @@ def test_schema_generator_captures_both_live_schemas(tmp_path, templates, monkey
     asyncio.run(module.generate(False))
     asyncio.run(module.generate(True))
     schemas = tmp_path / "schemas/mcp_tools.json"
+    assert len(schemas.read_text().splitlines()) == 1
     contract = json.loads(schemas.read_text())["tools"]["echo"]
     assert contract["inputSchema"]["properties"]["value"]["type"] == "string"
     assert contract["outputSchema"] is not None

@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api, cli]
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
   author: Genius
 ---
 

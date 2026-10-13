@@ -22,7 +22,7 @@ team_config:
 tags: [prometheus, grafana, loki, docker, portainer, observability]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Deploy Observability Stack Workflow

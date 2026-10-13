@@ -75,6 +75,10 @@ def _multipart(body, body_schema, *, definitions, max_bytes):
                 if isinstance(value, (dict, list))
                 else _value(value)
             )
+    return _multipart_options(files, data)
+
+
+def _multipart_options(files, data):
     # HTTPX selects form encoding when files is empty. Optional file fields
     # must not silently change the operation's declared multipart media type.
     if files:

@@ -164,7 +164,8 @@ def main():
             ),
             indent=2,
             sort_keys=True,
-        )
+        ),
+        file=sys.stderr,
     )
 
 

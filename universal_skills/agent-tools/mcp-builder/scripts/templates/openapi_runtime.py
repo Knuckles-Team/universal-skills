@@ -6,7 +6,6 @@ import json
 import time
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 import regex
 from agent_connector_sdk.config import setting
@@ -14,8 +13,6 @@ from agent_connector_sdk.http.client import create_http_client
 from agent_connector_sdk.http.options import HttpClientOptions
 from agent_connector_sdk.http.retry import RetryPolicy
 from agent_connector_sdk.mcp.concurrency import run_blocking
-from agent_connector_sdk.mcp.context import ctx_confirm_destructive
-from fastmcp.server.dependencies import get_context
 from fastmcp.tools import Tool, ToolResult
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError
@@ -24,6 +21,7 @@ from mcp.types import InputRequiredResult, ToolAnnotations
 from pydantic import Field
 
 from .openapi_auth_scheme import credential_headers
+from .openapi_execution import confirm_write, require_origin
 from .openapi_request import body_options, parameters
 from .openapi_response import decode_body, read_body
 from .parity.openapi_discovery import configure_discovery
@@ -68,13 +66,11 @@ class OpenApiClient:
     ):
         if write_mode not in {"read-only", "read-write"}:
             raise ValueError("Unsupported OpenAPI write mode")
-        parsed = urlsplit(base_url)
-        if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
-            raise ValueError("Base URL must be the provider origin without a path")
-        if credential_scheme and parsed.scheme == "http" and not allow_plaintext:
-            raise ValueError(
-                "Credential-bearing plaintext HTTP requires explicit opt-in"
-            )
+        require_origin(
+            base_url,
+            credential_scheme=credential_scheme,
+            allow_plaintext=allow_plaintext,
+        )
         self.session = create_http_client(
             HttpClientOptions(
                 base_url=base_url,
@@ -165,16 +161,9 @@ class OpenApiTool(Tool):
         validate(arguments, self.parameters)
         operation = CONTRACT["operations"][arguments["action"]]
         client = self.client_factory()
-        if not operation["read_only"]:
-            if not client.allow_writes:
-                raise PermissionError("Writes require explicit operator enablement")
-            confirmation = await ctx_confirm_destructive(
-                get_context(), operation["action"], confirmation_arguments=arguments
-            )
-            if isinstance(confirmation, InputRequiredResult):
-                return confirmation
-            if confirmation is not True:
-                raise PermissionError("Write was not confirmed")
+        confirmation = await confirm_write(operation, arguments, client)
+        if isinstance(confirmation, InputRequiredResult):
+            return confirmation
         result = await run_blocking(client.execute, self.domain, arguments)
         return ToolResult(structured_content=result)
 

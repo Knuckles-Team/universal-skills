@@ -22,7 +22,7 @@ team_config:
 tags: [sentiment, crawler, social, nlp]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.6'
+  version: '1.3.7'
 ---
 
 # Sentiment Alpha Pipeline Workflow
