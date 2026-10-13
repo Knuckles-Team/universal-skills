@@ -115,21 +115,10 @@ jobs:
           hook_runner="$(realpath "$(command -v pre-commit)")"
           test -x "$hook_runner"
           echo "CONNECTOR_PRE_COMMIT=$hook_runner" >> "$GITHUB_ENV"
-      - name: Resolve declared Python baseline
-        id: python-baseline
-        shell: bash
-        run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          from pathlib import Path
-          from scripts.bootstrap_sources import project_inputs
-          print("version=" + project_inputs(Path.cwd())[2])
-          PY
-      - name: Provision declared Python baseline
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: ${{ steps.python-baseline.outputs.version }}
+      - name: Select provisioned Python baseline
+        run: python scripts/select_python.py
       - name: Prepare frozen project test environment
-        run: python scripts/bootstrap_environment.py --github
+        run: '"$CONNECTOR_BOOTSTRAP_PYTHON" scripts/bootstrap_environment.py --github'
       - name: Validate hooks
         run: '"$CONNECTOR_PRE_COMMIT" validate-config'
       - name: Commit checks
