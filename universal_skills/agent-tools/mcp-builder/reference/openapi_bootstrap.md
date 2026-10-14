@@ -93,19 +93,22 @@ commands/results. The publisher verifies the bound snapshot but does not run or
 certify those checks itself. Do not place the checks record inside the tree it
 attests.
 
-When repository creation and publication are authorized:
+When public repository creation and publication are authorized, Pages is included
+by default:
 
 ```bash
-python3 scripts/github_publish.py publish /path/to/output/example-api --owner Example --name example-api --expected-login Operator --checks /path/to/evidence/checks.json
+python3 scripts/github_publish.py publish /path/to/output/example-api --owner Example --name example-api --expected-login Operator --checks /path/to/evidence/checks.json --visibility public
 ```
 
 The publisher uses the existing `gh` credential context, verifies the explicit
-expected login, and refuses existing destinations. It creates a normal private
-repository under the selected organization or authenticated user's account,
+expected login, and refuses existing destinations. It creates a normal repository
+with the requested visibility under the selected organization or authenticated user's account,
 then uploads one captured local tree. There is no remote template lookup,
 GitHub template-generation call, or legacy-template wrapper. Account names and
 credentials are not embedded in the skill. Credentials are never read or
-serialized by the helper.
+serialized by the helper. Omitting `--visibility` retains the private default;
+private publication does not enable or dispatch Pages. Never infer permission to
+make a repository public from a request to generate documentation.
 
 Source symlinks, `.env` and transient log/bytecode files are refused; Git metadata,
 virtual environments and known caches are excluded. The initialized README and
@@ -114,20 +117,60 @@ change during upload. The original default branch and root initialization commit
 are bound before upload; publication refuses intervening commits or branch changes
 and never adopts them as its parent. Complete remote blob identities and executable modes are
 verified before advancing the branch without force. The reported commit and
-manifest bind the result. Stable repository ID, owner/name, private visibility and
+manifest bind the result. Stable repository ID, owner/name, requested visibility and
 non-template status are rechecked before upload and at final attestation. The
 branch is checked again after publication, but
 GitHub does not make this sequence atomic against later concurrent changes.
 
 Failed or uncertain API writes are not retried or deleted automatically. Inspect
-the resulting repository state before deciding how to recover. The helper does
-not modify existing repositories, merge PRs, publish packages, configure Pages,
-alter live services or provision credentials. Generated specification artifacts
+the resulting repository state before deciding how to recover. Repository creation
+never overwrites an existing repository. The helper does not merge PRs, publish
+packages, alter provider services or provision credentials. Generated specification artifacts
 describe requirements; they are not proof those requirements were implemented.
 
 The API contracts are GitHub's [normal repository creation](https://docs.github.com/en/rest/repos/repos#create-an-organization-repository),
 [repository initialization](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents)
 and [Git tree publication](https://docs.github.com/en/rest/git/trees#create-a-tree).
+
+### Documentation delivery
+
+Public publication requires the checked `.github/workflows/pages.yml`,
+`mkdocs.yml` and `docs/index.md`. After attesting the complete remote tree, the
+publisher configures Pages with `build_type: workflow`, reads the site back, and
+requests one run of the existing active `pages.yml` workflow. It checks the
+repository ID, name, public non-template status, default branch and expected head
+before each write phase. An existing Actions site is reused, including its custom
+domain. A legacy or private site is preserved and reported as a conflict; the
+helper never changes visibility, domains, TLS settings or runner permissions.
+
+Existing credentials must already permit repository creation, Pages configuration
+and workflow dispatch. The relevant API permissions are documented in GitHub's
+[Pages creation endpoint](https://docs.github.com/en/rest/pages/pages#create-a-github-pages-site)
+and [workflow dispatch endpoint](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event).
+Missing permissions are reported; the helper does not acquire broader access.
+
+The receipt records `configured`, `dispatch_requested` and
+`deployment_verified: false`. An accepted dispatch is not deployment evidence.
+Inspect the resulting Pages run, verify its actual `head_sha` against the published
+commit, require successful deployment, then check the returned HTTPS URL and the
+expected documentation/readiness assets anonymously. GitHub dispatches a branch
+reference, so a concurrent branch advance can change the run's source after the
+helper's last check. Record the run URL, revision and live HTTP results separately.
+
+If GitHub has not indexed the new workflow yet, or a Pages call fails, retain the
+published repository and inspect its state and existing workflow runs. Do not
+repeat repository creation or blindly retry a failed write. For an already
+reviewed public repository, the same provisioning operation is available directly:
+
+```bash
+python3 scripts/github_publish.py pages --owner Example --name example-api --expected-login Operator --repository-id 123456 --expected-head <reviewed-commit-sha>
+```
+
+Supply the repository ID and full expected commit SHA from the reviewed
+publication. This command binds to the current default branch and refuses identity,
+visibility or head drift. Invoke it only when a build is intended: it requests one
+new workflow run even when the site is already configured. Neither command changes
+an existing repository's visibility or enables a disabled workflow.
 
 The client constructor uses `write_mode="read-only"` by default; the explicit
 `"read-write"` mode follows the unchanged operator `PACKAGE_ENV_ALLOW_WRITES`

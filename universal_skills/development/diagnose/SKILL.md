@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [debugging, diagnose, troubleshooting, bugfix]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 

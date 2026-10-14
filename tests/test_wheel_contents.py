@@ -168,6 +168,7 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         "universal_skills/agent-tools/mcp-builder/SKILL.md",
         "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py",
         "universal_skills/agent-tools/mcp-builder/scripts/github_publish.py",
+        "universal_skills/agent-tools/mcp-builder/scripts/github_pages.py",
         "universal_skills/agent-tools/mcp-builder/scripts/transport_templates.py",
         "universal_skills/agent-tools/mcp-builder/scripts/connector_templates.py",
         "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness.py",

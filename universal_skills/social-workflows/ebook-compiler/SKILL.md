@@ -23,7 +23,7 @@ team_config:
 tags: [social, content, ebook, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 

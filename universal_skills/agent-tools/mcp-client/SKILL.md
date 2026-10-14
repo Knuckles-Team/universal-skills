@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, client, fastmcp, tools, stdio, http, config]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 # MCP Client Skill

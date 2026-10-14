@@ -8,7 +8,7 @@ domain: system
 license: MIT
 tags: [docker, swarm, infrastructure, drift]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 requires:
   - container-manager-mcp

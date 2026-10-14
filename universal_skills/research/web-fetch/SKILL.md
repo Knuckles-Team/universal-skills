@@ -9,7 +9,7 @@ description: >-
 tags: [web, fetch, compatibility, web-crawler]
 license: MIT
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Repository Maintainers
 ---
 

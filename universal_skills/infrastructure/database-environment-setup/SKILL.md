@@ -25,7 +25,7 @@ tags:
 requires:
   - graph-os
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
 ---
 
 # Database Environment Setup (Stardog + pg-age)
