@@ -7,6 +7,26 @@ from fastmcp.server.dependencies import get_context
 from mcp.types import InputRequiredResult
 
 
+def _reviewed_public(operation, overlay):
+    classifications = overlay.get("authorization_classifications")
+    binding = {
+        "operation_id": operation.get("action"),
+        "method": operation.get("method"),
+        "path": operation.get("source_path"),
+        "source_operation_sha256": operation.get("source_operation_sha256"),
+        "reviewed_guard_classification": "explicit-public-decorator",
+    }
+    return (
+        all(isinstance(value, str) and value for value in binding.values())
+        and isinstance(classifications, list)
+        and any(
+            isinstance(entry, dict)
+            and all(entry.get(key) == value for key, value in binding.items())
+            for entry in classifications
+        )
+    )
+
+
 def require_authorization(operation, contract):
     """An omitted declaration cannot dispatch as an anonymous public operation.
 
@@ -22,25 +42,9 @@ def require_authorization(operation, contract):
         declaration == "unknown"
         and operation.get("security") == []
         and isinstance(overlay, dict)
+        and _reviewed_public(operation, overlay)
     ):
-        classifications = overlay.get("authorization_classifications")
-        binding = {
-            "operation_id": operation.get("action"),
-            "method": operation.get("method"),
-            "path": operation.get("source_path"),
-            "source_operation_sha256": operation.get("source_operation_sha256"),
-            "reviewed_guard_classification": "explicit-public-decorator",
-        }
-        if (
-            all(isinstance(value, str) and value for value in binding.values())
-            and isinstance(classifications, list)
-            and any(
-                isinstance(entry, dict)
-                and all(entry.get(key) == value for key, value in binding.items())
-                for entry in classifications
-            )
-        ):
-            return
+        return
     raise PermissionError("Action authorization requires reviewed provider evidence")
 
 
