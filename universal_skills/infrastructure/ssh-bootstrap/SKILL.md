@@ -11,7 +11,7 @@ description: >-
 requires:
   - tunnel-manager-mcp
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
 ---
 
 # SSH bootstrap

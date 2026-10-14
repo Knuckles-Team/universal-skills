@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api, cli]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 
@@ -64,6 +64,9 @@ contract; it is not a connector dependency or a second builder.
 - Preserve user scope, authorization and credential-reference boundaries.
   Scaffolding does not authorize external writes, deployment, credential creation,
   publication or changes to live services. Required approval and policy gates remain.
+- Include GitHub Pages in authorized public connector publication, using the
+  existing generated workflow. Keep private publication private. Verify the
+  deployed workflow revision and public documentation URL before claiming delivery.
 - Keep generated files environment-neutral. Never generate credentials, private
   endpoints, personal identities, a committed .env or a TLS-verification bypass.
 

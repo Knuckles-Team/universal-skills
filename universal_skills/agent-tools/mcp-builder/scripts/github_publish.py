@@ -16,11 +16,13 @@ import subprocess
 from pathlib import Path
 from urllib.parse import quote
 
+from github_pages import provision
+
 IDENTITY = {"name": "Codex", "email": "noreply@openai.com"}
 IGNORED = frozenset({".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".venv"})
 
 
-def api(route, method="GET", data=None):
+def api(route, method="GET", data=None, *, allow_not_found=False):
     command = ["gh", "api", route, "--method", method]
     if data is not None:
         command.extend(["--input", "-"])
@@ -32,13 +34,15 @@ def api(route, method="GET", data=None):
         check=False,
     )
     if result.returncode:
+        if allow_not_found and method == "GET" and "HTTP 404" in result.stderr:
+            return None
         # Provider output may echo configuration; report only the operation.
         raise RuntimeError(f"GitHub API {method} failed for {route.split('?')[0]}")
-    return json.loads(result.stdout)
+    return json.loads(result.stdout) if result.stdout.strip() else {}
 
 
-def preflight(owner, name, expected_login):
-    """Confirm the selected actor, owner kind and absent destination, without writes."""
+def verify_actor(owner, name, expected_login):
+    """Validate explicit names and the selected credential context, without writes."""
     if not all(
         re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", value)
         for value in (owner, name, expected_login)
@@ -47,6 +51,12 @@ def preflight(owner, name, expected_login):
     actor = api("user")["login"]
     if actor.casefold() != expected_login.casefold():
         raise PermissionError("Authenticated GitHub actor differs from expected login")
+    return actor
+
+
+def preflight(owner, name, expected_login):
+    """Confirm the selected actor, owner kind and absent destination, without writes."""
+    actor = verify_actor(owner, name, expected_login)
     account = api(f"users/{owner}")
     if account["type"] == "Organization":
         route = f"orgs/{owner}/repos"
@@ -152,17 +162,20 @@ def upload_tree(repository, captured):
 
 
 def verify_repository(current, created):
-    """Bind remote reads to the same private, non-template repository."""
+    """Bind remote reads to the same identity and requested visibility."""
     if (
         current.get("id") != created["id"]
         or current.get("full_name", "").casefold() != created["full_name"].casefold()
-        or current.get("private") is not True
+        or current.get("private") is not created["private"]
         or current.get("is_template") is not False
     ):
         raise RuntimeError("Destination identity or visibility changed; preserved")
 
 
-def publish(root, owner, name, checks, expected_login):
+def publish(root, owner, name, checks, expected_login, *, visibility="private"):
+    if visibility not in {"private", "public"}:
+        raise ValueError("Repository visibility must be private or public")
+    private = visibility == "private"
     captured = snapshot(root)
     validated = snapshot_manifest(captured)
     if checks.get("files") != validated or checks.get("passed") is not True:
@@ -171,15 +184,23 @@ def publish(root, owner, name, checks, expected_login):
         )
     if "README.md" not in captured:
         raise ValueError("Generated source must include README.md")
+    if not private and not {
+        ".github/workflows/pages.yml",
+        "mkdocs.yml",
+        "docs/index.md",
+    }.issubset(captured):
+        raise ValueError(
+            "Public publication requires the checked Pages workflow and docs"
+        )
     create_route = preflight(owner, name, expected_login)
     repository = f"{owner}/{name}"
     repo = api(
         create_route,
         "POST",
-        {"name": name, "private": True, "is_template": False, "auto_init": False},
+        {"name": name, "private": private, "is_template": False, "auto_init": False},
     )
     if (
-        repo.get("private") is not True
+        repo.get("private") is not private
         or repo.get("is_template") is not False
         or repo["full_name"].casefold() != repository.casefold()
         or not isinstance(repo.get("id"), int)
@@ -240,12 +261,24 @@ def publish(root, owner, name, checks, expected_login):
     current_head = api(f"repos/{repository}/git/ref/heads/{ref}")["object"]["sha"]
     if current["default_branch"] != branch or current_head != commit["sha"]:
         raise RuntimeError("Destination branch changed during publication; preserved")
-    return {
+    result = {
         "repository": repo["full_name"],
         "sha": commit["sha"],
         "private": current["private"],
         "files": validated,
     }
+    if not private:
+        result["pages"] = provision(api, repository, repo["id"], branch, commit["sha"])
+    return result
+
+
+def existing_pages(owner, name, expected_login, repository_id, expected_head):
+    verify_actor(owner, name, expected_login)
+    repository = f"{owner}/{name}"
+    current = api(f"repos/{repository}")
+    return provision(
+        api, repository, repository_id, current["default_branch"], expected_head
+    )
 
 
 def main():
@@ -255,15 +288,36 @@ def main():
         "manifest", help="Inventory local files; does not certify checks"
     )
     inventory.add_argument("source", type=Path)
-    publication = sub.add_parser("publish", help="Create a private normal repository")
+    publication = sub.add_parser(
+        "publish", help="Publish checked source; public repos include Pages"
+    )
     publication.add_argument("source", type=Path)
     publication.add_argument("--owner", required=True)
     publication.add_argument("--name", required=True)
     publication.add_argument("--expected-login", required=True)
     publication.add_argument("--checks", type=Path, required=True)
+    publication.add_argument(
+        "--visibility", choices=("private", "public"), default="private"
+    )
+    pages = sub.add_parser(
+        "pages", help="Provision Pages for an existing checked public repository"
+    )
+    pages.add_argument("--owner", required=True)
+    pages.add_argument("--name", required=True)
+    pages.add_argument("--expected-login", required=True)
+    pages.add_argument("--repository-id", type=int, required=True)
+    pages.add_argument("--expected-head", required=True)
     args = parser.parse_args()
     if args.command == "manifest":
         result = manifest(args.source)
+    elif args.command == "pages":
+        result = existing_pages(
+            args.owner,
+            args.name,
+            args.expected_login,
+            args.repository_id,
+            args.expected_head,
+        )
     else:
         result = publish(
             args.source,
@@ -271,6 +325,7 @@ def main():
             args.name,
             json.loads(args.checks.read_text()),
             args.expected_login,
+            visibility=args.visibility,
         )
     print(json.dumps(result, indent=2, sort_keys=True))
 

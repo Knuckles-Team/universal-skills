@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow, worktree, git-state]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 # Workspace Validator

@@ -1945,7 +1945,21 @@ docker pull "$IMAGE_REF"
 DOCS_DEPLOYMENT_MD = """\
 # Deployment
 
-This page covers running `{package_name}` as long-lived servers.
+This page covers documentation delivery and running `{package_name}` as long-lived servers.
+
+## Documentation site
+
+Authorized public publication through mcp-builder includes GitHub Pages using the
+checked `.github/workflows/pages.yml`, `mkdocs.yml` and `docs/` sources. Private
+repository publication stays private and does not enable Pages. When using another
+publication process, configure Pages to use GitHub Actions before running the
+existing Pages workflow.
+
+Review documentation for public release before publishing. Confirm that the Pages
+run deployed the reviewed commit successfully, then check its public HTTPS URL and
+readiness assets. A generated workflow file or accepted dispatch alone does not
+prove delivery. Keep the run URL, source revision and live verification results in
+the publication evidence.
 
 ## Build from a reviewed source commit
 

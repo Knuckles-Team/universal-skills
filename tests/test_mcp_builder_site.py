@@ -33,6 +33,15 @@ SPEC_FILES = {
 
 
 def _run(command: list[str], root: Path, *, env: dict[str, str] | None = None) -> str:
+    if command[0] == "git":
+        env = dict(os.environ if env is None else env)
+        # Git hooks export repository-local variables; foreign fixture repos must
+        # not inherit the outer worktree's index, object directory or work tree.
+        names = subprocess.check_output(
+            ["git", "rev-parse", "--local-env-vars"], text=True
+        ).splitlines()
+        for name in names:
+            env.pop(name, None)
     result = subprocess.run(
         command,
         cwd=root,
@@ -44,6 +53,43 @@ def _run(command: list[str], root: Path, *, env: dict[str, str] | None = None) -
     )
     assert result.returncode == 0, result.stdout + result.stderr
     return result.stdout
+
+
+def test_fixture_git_commands_preserve_the_calling_repository(tmp_path, monkeypatch):
+    parent = tmp_path / "parent"
+    foreign = tmp_path / "fixture"
+    parent.mkdir()
+    foreign.mkdir()
+    _run(["git", "init", "-q"], parent)
+    (parent / "sentinel.txt").write_text("parent content\n")
+    _run(["git", "add", "."], parent)
+    commit = [
+        "git",
+        "-c",
+        "user.name=Codex",
+        "-c",
+        "user.email=noreply@openai.com",
+        "commit",
+        "-qm",
+        "Isolated fixture",
+    ]
+    _run(commit, parent)
+    before = (
+        _run(["git", "rev-parse", "HEAD"], parent),
+        _run(["git", "write-tree"], parent),
+    )
+    monkeypatch.setenv("GIT_DIR", str(parent / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(parent))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(parent / ".git/index"))
+    _run(["git", "init", "-q"], foreign)
+    (foreign / "fixture.txt").write_text("fixture content\n")
+    _run(["git", "add", "."], foreign)
+    _run(commit, foreign)
+    assert _run(["git", "ls-files"], foreign).splitlines() == ["fixture.txt"]
+    assert (
+        _run(["git", "rev-parse", "HEAD"], parent),
+        _run(["git", "write-tree"], parent),
+    ) == before
 
 
 @pytest.fixture(scope="module")

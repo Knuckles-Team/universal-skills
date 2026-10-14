@@ -22,7 +22,7 @@ team_config:
 tags: [sdd, specification, planning, implementation, testing]
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 

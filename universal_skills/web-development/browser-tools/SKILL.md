@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 # Browser Tools

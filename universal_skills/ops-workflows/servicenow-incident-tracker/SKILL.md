@@ -22,7 +22,7 @@ team_config:
 tags: [ops, servicenow-incident-tracker]
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
 ---
 
 # Servicenow Incident Tracker Workflow

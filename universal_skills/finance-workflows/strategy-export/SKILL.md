@@ -22,7 +22,7 @@ team_config:
 tags: [finance, strategy, export, deployment]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
 ---
 
 # Strategy Export Workflow

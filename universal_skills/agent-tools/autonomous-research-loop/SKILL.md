@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [knowledge-graph, research, self-evolution, golden-loop, propose-only, orchestration]
 metadata:
-  version: '1.3.10'
+  version: '1.3.11'
   author: Genius
 ---
 
