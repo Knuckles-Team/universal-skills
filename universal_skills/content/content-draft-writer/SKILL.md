@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [content, drafting, writing, editorial, citations]
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
   author: Genius
 ---
 

@@ -14,7 +14,7 @@ requires:
   - systems-manager-mcp
   - tunnel-manager-mcp
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
 ---
 
 # Hardware Profile Sweep Skill

@@ -162,6 +162,7 @@ def verify_contract(document, contract, source_sha256, **provider_options):
     # A compiler must not be able to mutate the independent source inventory.
     expected = compile_contract(
         copy.deepcopy(effective),
+        source_operations=inventory["operations"],
         response_corrections=inventory.get("provider_overlay", {}).get(
             "response_corrections", []
         ),

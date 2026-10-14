@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [verifier, sdd, qa]
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
   author: Genius
 ---
 

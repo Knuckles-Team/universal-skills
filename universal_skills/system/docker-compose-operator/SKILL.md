@@ -8,7 +8,7 @@ domain: system
 license: MIT
 tags: [docker, compose, swarm, deployment, system]
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
   author: Genius
 requires:
   - container-manager-mcp

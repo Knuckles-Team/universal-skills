@@ -61,6 +61,7 @@ def _compiled_source(source, provider):
     effective, inventory = source_context(document, source_sha, **provider)
     contract = compile_contract(
         copy.deepcopy(effective),
+        source_operations=inventory["operations"],
         response_corrections=inventory.get("provider_overlay", {}).get(
             "response_corrections", []
         ),

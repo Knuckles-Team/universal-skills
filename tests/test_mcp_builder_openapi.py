@@ -73,7 +73,12 @@ def document():
                 },
             }
         paths.setdefault("/items/{id}", {})[method] = operation
-    return {"openapi": "3.0.3", "servers": [{"url": "/api"}], "paths": paths}
+    return {
+        "openapi": "3.0.3",
+        "security": [],
+        "servers": [{"url": "/api"}],
+        "paths": paths,
+    }
 
 
 @pytest.fixture

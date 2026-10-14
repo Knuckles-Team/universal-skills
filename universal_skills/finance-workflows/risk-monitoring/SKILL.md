@@ -14,7 +14,7 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
   author: agent-utilities
   concept: 'CONCEPT:EE-011'
 ---
