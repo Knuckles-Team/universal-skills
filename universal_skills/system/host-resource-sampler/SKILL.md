@@ -8,7 +8,7 @@ domain: system
 license: MIT
 tags: [metrics, host, monitoring, system, telemetry]
 metadata:
-  version: '1.3.9'
+  version: '1.3.10'
   author: Genius
 requires:
   - systems-manager-mcp

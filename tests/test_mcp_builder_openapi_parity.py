@@ -293,6 +293,7 @@ def test_real_client_and_native_mcp_transport(catalog, monkeypatch):
     document, source, package, contract = catalog
     # This fixture source supports three read methods. Mutating operations are
     # covered by the complete inventory and fail-closed coverage tests above.
+    document["security"] = []
     document["paths"]["/items"] = {
         method: operation
         for method, operation in document["paths"]["/items"].items()
@@ -375,6 +376,7 @@ def test_optional_files_preserve_multipart_media(catalog, monkeypatch, body):
     import httpx
 
     document, source, _, _ = catalog
+    document["security"] = []
     operation = document["paths"]["/items"]["post"]
     operation["parameters"] = [
         {"name": "X-Trace", "in": "header", "schema": {"type": "string"}}

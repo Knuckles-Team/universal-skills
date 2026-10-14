@@ -124,8 +124,17 @@ Component/operation hashes use sorted compact JSON with ASCII escapes. Effective
 source hashes use sorted JSON with two-space indentation, ASCII escapes and a
 trailing newline, encoded as UTF-8. Raw hashes always cover original bytes.
 The inventory retains raw operation/security metadata alongside the verified
-correction/classification receipt. Unknown operations not classified remain
-blocked for readiness. Broader source repairs need a separately reviewed adapter;
+correction/classification receipt. The executable contract preserves whether each
+security declaration came from the operation, the root, or neither. Unknown
+operations not classified remain blocked for both readiness and execution, on all
+HTTP methods. API calls refuse before transport; native MCP calls refuse before
+credential resolution or write confirmation. Missing provenance in older generated
+contracts also refuses execution; regenerate those packages from their pinned
+source. Explicit public declarations, inherited security and optional anonymous
+alternatives retain their existing semantics. Reviewed public classifications must
+match the exact operation ID, source path, method and source operation hash.
+
+Broader source repairs need a separately reviewed adapter;
 this interface does not admit arbitrary patches or generalized authentication
 inference.
 

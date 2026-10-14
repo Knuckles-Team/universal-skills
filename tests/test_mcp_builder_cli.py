@@ -218,7 +218,11 @@ LIVE_CLI_CANCELLATION = textwrap.dedent(r"""
     def terminated(pid):
         # A killed orphan can remain a zombie until the host's init reaps it.
         status = Path(f"/proc/{pid}/stat")
-        if status.exists() and status.read_text().rpartition(")")[2].split()[0] == "Z":
+        try:
+            if status.exists() and status.read_text().rpartition(")")[2].split()[0] == "Z":
+                return True
+        except (FileNotFoundError, ProcessLookupError):
+            # The process can be reaped between exists() and read_text().
             return True
         try:
             os.kill(pid, 0)

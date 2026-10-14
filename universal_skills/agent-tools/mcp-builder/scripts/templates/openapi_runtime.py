@@ -21,7 +21,7 @@ from mcp.types import InputRequiredResult, ToolAnnotations
 from pydantic import Field
 
 from .openapi_auth_scheme import credential_headers
-from .openapi_execution import confirm_write, require_origin
+from .openapi_execution import confirm_write, require_authorization, require_origin
 from .openapi_request import body_options, parameters
 from .openapi_response import decode_body, read_body, require_response_status
 from .parity.openapi_discovery import configure_discovery
@@ -106,6 +106,7 @@ class OpenApiClient:
         operation = CONTRACT["operations"][arguments["action"]]
         if operation["domain"] != domain:
             raise ValueError("Action is outside this domain")
+        require_authorization(operation, CONTRACT)
         if not operation["read_only"] and not self.allow_writes:
             raise PermissionError("Writes require explicit operator enablement")
         self._require_credentials(operation["security"])
@@ -168,6 +169,7 @@ class OpenApiTool(Tool):
     async def run(self, arguments):
         validate(arguments, self.parameters)
         operation = CONTRACT["operations"][arguments["action"]]
+        require_authorization(operation, CONTRACT)
         client = self.client_factory()
         confirmation = await confirm_write(operation, arguments, client)
         if isinstance(confirmation, InputRequiredResult):

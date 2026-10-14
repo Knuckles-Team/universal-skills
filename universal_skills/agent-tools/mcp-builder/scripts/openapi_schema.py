@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import re
 from collections import defaultdict
 
@@ -87,7 +89,7 @@ def _responses(document, operation):
 
 
 def _operation(document, operation, *, route, domain, shared, response_corrections):
-    method, path = route
+    method, path, source_path = route
     inputs, parameters, content_type = input_schema(document, shared, operation)
     check_path_parameters(path, parameters)
     responses, response_modes = _responses(document, operation)
@@ -104,12 +106,23 @@ def _operation(document, operation, *, route, domain, shared, response_correctio
         "responses": responses,
         "response_modes": response_modes,
         "security": operation.get("security", document.get("security", [])),
+        "security_declaration": (
+            "operation"
+            if "security" in operation
+            else "root"
+            if "security" in document
+            else "unknown"
+        ),
+        "source_path": source_path,
+        "source_operation_sha256": hashlib.sha256(
+            json.dumps(operation, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
         "summary": operation.get("summary", action),
         **compiled_redirect(operation, response_corrections),
     }
 
 
-def compile_contract(document, *, response_corrections=()):
+def compile_contract(document, *, response_corrections=(), source_operations=None):
     """Every source operation belongs to exactly one domain; omissions fail closed."""
     validate_binary_constraints(document)
     validate_security(document)
@@ -129,11 +142,17 @@ def compile_contract(document, *, response_corrections=()):
             operations[action] = _operation(
                 document,
                 operation,
-                route=(method, prefix + path),
+                route=(method, prefix + path, path),
                 domain=domain,
                 shared=item.get("parameters", []),
                 response_corrections=response_corrections,
             )
+            if source_operations is not None:
+                # Reviewed response corrections may change the effective operation;
+                # authorization evidence remains bound to the raw source operation.
+                operations[action]["source_operation_sha256"] = source_operations[
+                    action
+                ]["operation_sha256"]
             domains[domain].append(action)
     return _final_contract(document, domains, operations)
 
