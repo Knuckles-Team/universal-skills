@@ -1,6 +1,6 @@
 # SDK context helpers
 
-Use public SDK helpers; do not copy the old agent-utilities implementations.
+Use the public SDK helpers; do not copy helper implementations into a connector.
 
     from agent_connector_sdk.mcp.context import ctx_confirm_destructive, ctx_log
     from agent_connector_sdk.progress import ctx_progress

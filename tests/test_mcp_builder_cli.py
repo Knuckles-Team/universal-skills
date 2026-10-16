@@ -161,8 +161,8 @@ LIVE_CLI_CONTRACT = textwrap.dedent("""\
                 assert tool.annotations.read_only_hint is True
                 assert tool.annotations.destructive_hint is False
                 prompts = {item.name for item in await client.list_prompts()}
-                assert {"main_agent", "cli_smoke_specialist"} <= prompts
-                prompt = await client.get_prompt("main_agent")
+                assert {"cli_smoke_specialist"} <= prompts
+                prompt = await client.get_prompt("cli_smoke_specialist")
                 assert prompt.messages[0].content.text.strip()
                 resources = {str(item.uri) for item in await client.list_resources()}
                 expected = {

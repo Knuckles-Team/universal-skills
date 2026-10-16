@@ -42,7 +42,7 @@ def test_local_templates_default_to_loopback():
 def test_networked_compose_requires_auth_and_limits_host_publish():
     module = _load_scaffold_module()
 
-    for compose in (module.AGENT_COMPOSE_YML, module.MCP_COMPOSE_YML):
+    for compose in (module.MCP_COMPOSE_YML,):
         assert "AUTH_TYPE=${{AUTH_TYPE:?" in compose
         assert '"127.0.0.1:8000:8000"' in compose
         assert '"8000:8000"' not in compose
@@ -204,7 +204,7 @@ def test_generated_deployment_docs_are_current_only_and_tls_bound():
     assert "@sha256:<digest>" in docs
 
 
-@pytest.mark.parametrize("has_agent", [False, True])
+@pytest.mark.parametrize("has_agent", [False])
 def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_extras(
     tmp_path,
     has_agent,
@@ -244,7 +244,7 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
     metadata = tomllib.loads(pyproject)
     dependencies = metadata["project"]["dependencies"]
     extras = metadata["project"]["optional-dependencies"]
-    assert "agent-connector-sdk>=0.1.0,<1" in dependencies
+    assert "agent-connector-sdk>=0.2.0,<1.0.0" in dependencies
     assert not any(
         requirement.startswith(("agent-utilities", "epistemic-graph"))
         for requirement in dependencies

@@ -13,11 +13,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agent_utilities import create_model
 from connections import create_connection
 from defusedxml import ElementTree as DefusedET
 from defusedxml.common import DefusedXmlException
 from pydantic_ai import Agent, ModelSettings, RunContext, Tool
+from pydantic_ai.models import infer_model
 
 EVALUATION_PROMPT = """You are an AI assistant with access to tools.
 
@@ -169,11 +169,11 @@ def _build_evaluation_tool(tool: dict[str, Any]) -> Tool:
 def build_evaluation_agent(
     model: str, tools: list[dict[str, Any]]
 ) -> Agent[_ToolCallDeps, str]:
-    """Build the agent-utilities-backed evaluator: the configured model, the
+    """Build the evaluator: the pydantic-ai model named by ``model`` (``provider:name``), the
     EVALUATION_PROMPT as its system prompt, and every MCP tool bound (each call
     proxies to the live connection supplied per-run via ``deps``)."""
     return Agent(
-        create_model(model_id=model),
+        infer_model(model),
         system_prompt=EVALUATION_PROMPT,
         tools=[_build_evaluation_tool(tool) for tool in tools],
         deps_type=_ToolCallDeps,

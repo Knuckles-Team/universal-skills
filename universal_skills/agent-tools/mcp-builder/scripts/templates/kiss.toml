@@ -1,7 +1,6 @@
 # KISS thresholds for the shared hook package (kiss 0.4.12, fleet fork build).
 #
-# Source: agent-packages/agent-utilities/.config/kiss.toml [python], the fleet's
-# hand-set, measured Python thresholds, copied unchanged. None was derived from
+# Source: the fleet's hand-set, measured Python thresholds, copied unchanged. None was derived from
 # what this repository passes. This file is NOT a baseline.
 #
 # Never run bare `kiss check`: without --config it writes a self-calibrating
