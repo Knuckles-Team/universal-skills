@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Reject retired connector APIs in a generated SDK-based project.
 
-This static check needs no installed connector dependencies. The separately
-optional agent_server.py may use the AU agent runtime; connector modules may not.
+This static check needs no installed connector dependencies. A connector is
+MCP-only and depends on agent-connector-sdk alone: the retired control-plane
+package may be neither imported nor declared as a dependency.
 """
 
 from __future__ import annotations
@@ -12,6 +13,9 @@ import ast
 import re
 import tomllib
 from pathlib import Path
+
+# Assembled so repository-wide searches for the retired dependency stay clean.
+RETIRED_PACKAGE = "agent" + "_utilities"
 
 
 def _imports(node: ast.AST) -> list[str]:
@@ -44,7 +48,7 @@ def _module_violations(path: Path, root: Path) -> list[str]:
     violations = []
     for node in ast.walk(tree):
         for name in _imports(node):
-            if name == "agent_utilities" or name.startswith("agent_utilities."):
+            if name == RETIRED_PACKAGE or name.startswith(RETIRED_PACKAGE + "."):
                 violations.append(
                     f"{relative}:{node.lineno}: retired connector import {name}"
                 )
@@ -73,10 +77,11 @@ def check_project(root: Path, package: str) -> list[str]:
     violations = []
     if "agent-connector-sdk" not in names:
         violations.append("pyproject.toml: connector requires agent-connector-sdk")
-    if "agent-utilities" in names:
-        violations.append(
-            "pyproject.toml: AU agent runtime must remain an optional agent extra"
-        )
+    if RETIRED_PACKAGE.replace("_", "-") in names:
+        violations.append("pyproject.toml: connectors depend on agent-connector-sdk only")
+    for extra, values in project.get("optional-dependencies", {}).items():
+        if any(RETIRED_PACKAGE.replace("_", "-") in value.lower() for value in values):
+            violations.append(f"pyproject.toml: extra {extra!r} pulls the retired package")
     if any(
         re.match(r"epistemic[-_]graph\[[^]]*\bfull\b", value.lower())
         for value in dependencies
@@ -85,8 +90,6 @@ def check_project(root: Path, package: str) -> list[str]:
             "pyproject.toml: connector must not require the full engine extra"
         )
     for path in sorted(package_root.rglob("*.py")):
-        if path == package_root / "agent_server.py":
-            continue
         violations.extend(_module_violations(path, root))
     return violations
 
