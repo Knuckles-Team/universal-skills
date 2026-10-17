@@ -17,7 +17,7 @@ def builder():
     return module
 
 
-@pytest.mark.parametrize("agent", [False, True])
+@pytest.mark.parametrize("agent", [False])
 def test_generated_image_installs_local_source_and_selected_extra(tmp_path, agent):
     module = builder()
     module.scaffold("unpublished-api", output_dir=str(tmp_path),
@@ -42,7 +42,7 @@ def test_generated_image_installs_local_source_and_selected_extra(tmp_path, agen
     assert not any("docker/Dockerfile" in name for name in config.sections())
 
 
-@pytest.mark.parametrize("agent", [False, True])
+@pytest.mark.parametrize("agent", [False])
 def test_source_build_docs_use_repository_context_and_exact_commit(tmp_path, agent):
     builder().scaffold("unpublished-api", output_dir=str(tmp_path),
                        pkg_types="api_client,mcp" + (",agent" if agent else ""))

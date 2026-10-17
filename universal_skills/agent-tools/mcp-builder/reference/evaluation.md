@@ -389,22 +389,22 @@ After creating your evaluation file, you can use the provided evaluation harness
 
    Or install manually:
    ```bash
-   pip install 'agent-utilities[mcp]>=2.0.0,<3.0.0'
+   pip install 'pydantic-ai-slim[openai]' defusedxml mcp
    ```
 
 2. **Set API Key**
 
-   The harness resolves its model through agent-utilities' model factory, which
-   defaults to the OpenAI-compatible provider (also how local vLLM/Ollama
-   endpoints are reached):
+   The harness resolves `--model` with pydantic-ai (`provider:model`, for example
+   `openai:gpt-4.1`). The OpenAI-compatible provider is also how local vLLM/Ollama
+   endpoints are reached:
 
    ```bash
    export OPENAI_API_KEY=your_api_key_here
    ```
 
    To use a different provider (Anthropic, Google, Groq, Mistral, ...) or a
-   self-hosted endpoint, configure it through agent-utilities' model registry
-   /`AgentConfig` instead of this environment variable.
+   self-hosted endpoint, pass the matching `provider:model` string and that
+   provider's standard environment variables.
 
 ## Evaluation File Format
 

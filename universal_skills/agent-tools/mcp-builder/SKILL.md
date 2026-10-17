@@ -3,7 +3,8 @@ name: mcp-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Build or update an MCP connector package using agent-connector-sdk and shared
+  Build or update an SDK-only MCP connector package: it depends on
+  agent-connector-sdk alone (never the agent control plane) and follows shared
   pipelines standards. Use when wrapping REST or GraphQL APIs from schemas or
   documentation, exposing a CLI through MCP, or updating connector registration,
   package content, ingestion contracts, and repository scaffolding.
@@ -16,7 +17,9 @@ metadata:
 
 # MCP Builder
 
-Build one MCP connector package using the maintained SDK scaffold.
+Build one MCP-only connector package using the maintained SDK scaffold. A connector
+depends on `agent-connector-sdk[mcp]>=0.2.1,<1.0.0` and nothing else from the agent
+ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
 
 Use current main revisions of
 [agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk),
@@ -32,21 +35,28 @@ Run from this skill directory, choosing only the requested package surfaces:
 
     python3 scripts/scaffold_package.py example-connector --type api_client,mcp --output-dir /path/to/output
 
+The output is an SDK-only package: `pyproject.toml` with the SDK dependency,
+`<pkg>/_version.py`, `<pkg>/mcp_server.py` (SDK `create_mcp_server` +
+`register_tool_surface` + `ConnectorContent`), `<pkg>/connector_manifest.yml`,
+bundled skills/prompts/ontology, `tests/` using the SDK and an in-process FastMCP
+client, and `.github/workflows/pipeline.yml` calling
+`Knuckles-Team/pipelines` `python_pipeline.yml@main` with `PYPI_API_TOKEN`.
+
 The canonical scaffold and its assets ship inside this skill; generation requires
 no external template repository.
 
 | Backend | Required types | Optional additions |
 |---|---|---|
-| REST or GraphQL API | `api_client,mcp` | `agent`, `graphql` |
-| Local CLI | `cli,mcp` | `agent` |
+| REST or GraphQL API | `api_client,mcp` | `graphql` |
+| Local CLI | `cli,mcp` | none |
 
 Every generated package serves MCP. CLI backends need no HTTP base URL or API
 credentials. Select exactly one backend; MCP remains the default container entrypoint.
 
 The generator preserves existing project-owned files. Inspect the generated diff
 and resolve current authority changes before treating a scaffold as ready.
-Optional agent orchestration belongs behind the current agent-utilities runtime
-contract; it is not a connector dependency or a second builder.
+There is no agent mode. Orchestration and model calls belong to the agent control
+plane, which reaches the connector over MCP.
 
 ## Contracts
 
@@ -59,6 +69,14 @@ contract; it is not a connector dependency or a second builder.
   backend; a local command does not bypass authorization or effect controls.
 - Serve declared skills, prompts, ontology, shapes and connector manifest through
   explicit SDK content registration; files in a wheel alone do not prove discovery.
+- Ship the connector's OWL/RDF ontology pack from day one. `ontology/<domain>.ttl`
+  holds the domain model and reuses core classes by IRI. `ontology/pack.ttl` states
+  the connector's own surface and ingest contract as native relationships in the
+  engine's connector-pack vocabulary (`cp:`): connector, features, tools, prompts,
+  skills, source objects, key rules, cursor, access and provenance policy. Keep
+  both in step with the typed declarations; the SDK generates the pack from them
+  and the engine imports it, validates it with SHACL and answers selection
+  questions over it. Use no blank nodes and no nested property maps.
 - Use typed SDK ingestion and graph-owned generated contracts. Source adapters
   and write-back ports require their applicable conformance checks.
 - Preserve user scope, authorization and credential-reference boundaries.
@@ -94,7 +112,8 @@ contract; it is not a connector dependency or a second builder.
 Validate frontmatter and local links, generator rerun behavior and a small isolated
 generated project. Check Python syntax, metadata, explicit content/tool registration,
 schema/manifest agreement and applicable source/effect contracts without live calls.
-Include a negative test rejecting stale agent-utilities connector imports. Run normal
+Run `scripts/check_connector_contract.py <root> --package <pkg>` (it rejects any
+import of, or dependency on, the retired control-plane package). Run normal
 lint and pre-commit gates in an existing environment; report unavailable checks
 accurately. Do not install native toolchains or broaden dependencies for unrelated
 checks.

@@ -1,4 +1,4 @@
-"""Select backend documentation without duplicating shared MCP or agent surfaces."""
+"""Select backend documentation without duplicating shared MCP surfaces."""
 
 CLI_ENV = """\
 # Operator-provided settings; no executable is installed by this scaffold.
@@ -82,12 +82,6 @@ _REPLACEMENTS = {
             "{upper_name}_EXECUTABLE=${{{upper_name}_EXECUTABLE:?set-absolute-executable-path-inside-container}}",
         ),
     ),
-    "AGENT_COMPOSE_YML": (
-        (
-            "{upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}",
-            "{upper_name}_EXECUTABLE=${{{upper_name}_EXECUTABLE:?set-absolute-executable-path-inside-container}}",
-        ),
-    ),
     "README_MD": (
         ("full API, deployment", "full connector, deployment"),
         (
@@ -160,7 +154,7 @@ _REPLACEMENTS = {
 
 
 def select_backend_template(name: str, template: str, backend: str) -> str:
-    """Apply after optional-agent selection and before formatting placeholders."""
+    """Apply before formatting placeholders."""
     if backend == "api_client":
         return template
     if backend != "cli":

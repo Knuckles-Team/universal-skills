@@ -3,6 +3,20 @@
 The executable scaffold is [scripts/scaffold_package.py](../scripts/scaffold_package.py).
 Verify it against current SDK source before extending a connector.
 
+## Dependencies and version
+
+The only framework dependency is the SDK; no agent control-plane package, LLM
+client or provider entry point belongs in a connector:
+
+    [project]
+    dependencies = ["agent-connector-sdk[mcp]>=0.2.1,<1.0.0"]
+
+    [project.scripts]
+    example-connector-mcp = "example_connector.mcp_server:mcp_server"
+
+`example_connector/_version.py` holds `__version__ = "0.1.0"` and is the single
+version source: `.bumpversion.cfg` rewrites it, `mcp_server.py` imports it.
+
 ## Factory and content
 
     from pathlib import Path
@@ -12,7 +26,8 @@ Verify it against current SDK source before extending a connector.
     from agent_connector_sdk.mcp.server import create_mcp_server
     from agent_connector_sdk.mcp.tool_surface import register_tool_surface
 
-    from . import __version__, mcp as tools
+    from . import mcp as tools
+    from ._version import __version__
 
     def get_mcp_instance():
         load_config()
@@ -54,3 +69,23 @@ domains and declared/listed tool agreement.
 
 See [connector contracts](connector_contracts.md) for manifests, ingestion,
 packaging and optional agent orchestration.
+
+## Manifest, tests and delivery
+
+`connector_manifest.yml` validates against
+`agent_connector_sdk.manifest.loader.load_manifest`; with the presets and
+`tool_schema_fingerprints.json` under `<pkg>/connectors/` it is checked as a whole
+by `require_valid_connector_package`. The scaffold renders the starter manifest
+(`render_connector_manifest` in `scripts/connector_templates.py`); regenerate it
+instead of hand-editing, and refresh fingerprints with
+`python scripts/generate_tool_schemas.py` after any tool signature change.
+
+Generated tests build the server in process (`get_mcp_instance(command_args=[])`),
+connect `fastmcp.Client`, and assert listed tools and `manifest://connector`.
+Use `agent_connector_sdk.testing` suites for source adapters and write-back.
+Certify a running server with `connector-certify . --check -- <command>`.
+
+Delivery is `.github/workflows/pipeline.yml`: the reusable
+`Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main` with the
+`PYPI_API_TOKEN` secret. A merge to main publishes; do not merge without the
+release go-ahead.

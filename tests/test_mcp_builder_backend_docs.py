@@ -64,7 +64,7 @@ def test_api_backend_preserves_shared_templates():
         selector("README_MD", "text", "unknown")
 
 
-@pytest.mark.parametrize("has_agent", [False, True])
+@pytest.mark.parametrize("has_agent", [False])
 def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
     backend = _load("backend_surfaces")
     surface = _load("surface_templates")
@@ -77,7 +77,7 @@ def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
     templates = _templates()
     rendered = {
         name: backend.select_backend_template(
-            name, surface.select_template(name, templates[name], has_agent), "cli"
+            name, surface.select_template(name, templates[name]), "cli"
         ).format(**CONTEXT)
         for name in names
     }
@@ -95,8 +95,8 @@ def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
     assert "--version" in rendered["DOCS_USAGE_MD"]
     assert "from docs_example.cli import get_client" in rendered["DOCS_USAGE_MD"]
     assert "authenticated TLS ingress" in rendered["DOCS_DEPLOYMENT_MD"]
-    assert ("docs-example-agent" in rendered["README_MD"]) is has_agent
-    assert ("Run the A2A agent server" in rendered["DOCS_DEPLOYMENT_MD"]) is has_agent
+    assert "docs-example-agent" not in rendered["README_MD"]
+    assert "A2A agent server" not in rendered["DOCS_DEPLOYMENT_MD"]
 
 
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
@@ -133,7 +133,7 @@ def test_spec_contracts_select_backend_without_inventing_receipts(backend):
 
 
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
-@pytest.mark.parametrize("has_agent", [False, True])
+@pytest.mark.parametrize("has_agent", [False])
 def test_generated_backend_documents_resolve_real_source_paths(
     backend, has_agent, tmp_path
 ):

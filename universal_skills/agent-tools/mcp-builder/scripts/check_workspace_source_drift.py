@@ -2,7 +2,7 @@
 
 CONCEPT:OS-5.72-workspace-uv-sources — workspace-source drift guard (CLI).
 
-Mirrors the shape of ``agent_utilities.mcp.check_env_var_drift``: a human report by
+A human report by
 default, ``--check`` to exit non-zero for pre-commit/CI, ``--json`` for a
 machine-readable findings list. The check itself lives in :mod:`workspace_sources`
 (:func:`find_path_source_drift`) — this file is only the CLI entry point + the
