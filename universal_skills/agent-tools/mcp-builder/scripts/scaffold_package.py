@@ -1428,6 +1428,68 @@ def render_ontology_ttl(display_name: str, domain: str) -> str:
     )
 
 
+def render_pack_ttl(
+    display_name: str, package_name: str, domain: str, skill_slug: str, prompt: str
+) -> str:
+    """The connector's own surface and ingest contract as native RDF.
+
+    Uses the engine's connector-pack vocabulary (EG-TYPED-PACKS-R101/R102). The
+    SDK generates this from typed declarations (SDK-CONNECTOR-CONTROL-R067); the
+    scaffold ships a valid starting point so every connector has a pack from day one.
+    """
+    cap = "".join(w.capitalize() for w in domain.replace("-", " ").split())
+    base = f"http://knuckles.team/kg/connector/{package_name}#"
+    return f"""@prefix : <http://knuckles.team/kg#> .
+@prefix cp: <http://knuckles.team/kg/connector-pack#> .
+@prefix c: <{base}> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Connector surface and ingest contract (STUB — keep in step with the typed
+# declarations). Domain classes come from {domain}.ttl; no blank nodes.
+
+c:connector a cp:Connector ;
+    rdfs:label "{display_name}" ;
+    cp:providesFeature c:feature-sync ;
+    cp:hasContract c:contract .
+
+c:feature-sync a cp:Feature ;
+    rdfs:label "{display_name} sync" ;
+    cp:realizedBy c:skill-{skill_slug}, c:prompt-{prompt} .
+
+c:skill-{skill_slug} a cp:Skill ;
+    cp:componentId "{skill_slug}" ;
+    cp:appliesTo :{cap}Resource .
+
+c:prompt-{prompt} a cp:Prompt ;
+    cp:componentId "{prompt}" ;
+    cp:appliesTo :{cap}Resource .
+
+c:contract a cp:IngestContract ;
+    cp:contractOf c:connector ;
+    cp:contractVersion "1" ;
+    cp:hasSourceObject c:object-resource ;
+    cp:hasCursorPolicy c:cursor ;
+    cp:hasAccessPolicy c:access ;
+    cp:requiresProvenance c:provenance .
+
+c:object-resource a cp:SourceObject ;
+    cp:mapsToClass :{cap}Resource ;
+    cp:hasKeyRule c:key-resource .
+
+c:key-resource a cp:KeyRule ;
+    cp:keyField "id" .
+
+c:cursor a cp:CursorPolicy ;
+    cp:cursorKind "opaque" .
+
+c:access a cp:AccessPolicy ;
+    cp:defaultAcl "quarantine" .
+
+c:provenance a cp:ProvenanceRequirement ;
+    cp:requiredField "source", "record_id", "as_of" .
+"""
+
+
 def render_specialist_prompt(display_name: str, source: str, domain: str) -> str:
     """A domain-specialist StructuredPrompt template (beyond the generic main-agent)."""
     import json as _json
@@ -2288,6 +2350,16 @@ def scaffold(
     )
     files[pkg / "ontology" / f"{ontology_domain}.ttl"] = (
         render_ontology_ttl(display_name, ontology_domain),
+        False,
+    )
+    files[pkg / "ontology" / "pack.ttl"] = (
+        render_pack_ttl(
+            display_name,
+            package_name,
+            ontology_domain,
+            starter_slug,
+            f"{ontology_domain.replace('-', '_')}_specialist",
+        ),
         False,
     )
     files[pkg / "kg_ingest.py"] = (
