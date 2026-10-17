@@ -165,7 +165,7 @@ def find_opportunities(root: Path) -> dict[str, list[dict[str, Any]]]:
     """Static scan for the three opportunity tiers.
 
     KG-native (CE-045): symbol enumeration (public defs, stub bodies) comes from
-    the tiered ``kg_native.repo_symbols`` (graph-os code KG, else the engine
+    the tiered ``kg_native.repo_symbols`` (arbora code KG, else the engine
     tree-sitter AST, else a local ``ast`` parse) instead of a per-file ``ast.walk``.
     "Referenced anywhere" is a whole-corpus identifier token scan — the same signal
     an ast.Name/ast.Attribute walk gives (does this identifier occur anywhere?),

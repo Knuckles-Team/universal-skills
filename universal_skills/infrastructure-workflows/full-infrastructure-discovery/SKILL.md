@@ -37,7 +37,7 @@ Depends On: Step 0
 List all DNS records to map domain-to-service routing
 Expected: record, domain
 
-### Step 5: graph-os
+### Step 5: arbora
 Ingest discovered topology into the Knowledge Graph as HardwareNode, Container, ContainerStack, NetworkSubnet, DNSRecord nodes with RUNS_ON, BELONGS_TO_STACK, RESOLVES_DNS_FOR relationships
 Expected: ingest, node, relationship
 Depends On: Step 1, Step 2, Step 3, Step 4
@@ -46,6 +46,6 @@ Depends On: Step 1, Step 2, Step 3, Step 4
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — discover-hosts; Step 1 — container-manager-mcp; Step 2 — portainer-mcp; Step 3 — scan-host-networks; Step 4 — technitium-dns-mcp; Step 5 — graph-os
+- **Run first (in parallel):** Step 0 — discover-hosts; Step 1 — container-manager-mcp; Step 2 — portainer-mcp; Step 3 — scan-host-networks; Step 4 — technitium-dns-mcp; Step 5 — arbora
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

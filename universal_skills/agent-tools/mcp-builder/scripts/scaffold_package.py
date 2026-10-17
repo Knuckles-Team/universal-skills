@@ -866,7 +866,7 @@ trace.txt
 .kiss/*.json
 .jscpd-report/
 
-# P0.2 (graph-os-completion-program): materialized, dev-machine-only symlink to
+# P0.2 (arbora-completion-program): materialized, dev-machine-only symlink to
 # the real agent-utilities checkout, used so this package resolves standalone
 # against its own tracked lock instead of the outer ecosystem workspace. Never
 # tracked.

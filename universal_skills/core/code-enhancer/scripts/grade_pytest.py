@@ -5,7 +5,7 @@ Grades pytest suites against industry best practices using the F.I.R.S.T.
 rubric (Fast, Independent, Repeatable, Self-validating, Timely), AAA pattern
 compliance, fixture/parametrize usage, organization, and AI slop detection.
 
-KG-native (CE-045): test symbol discovery goes through the graph-os code KG first
+KG-native (CE-045): test symbol discovery goes through the arbora code KG first
 (``kg_native.repo_symbols``), then the engine tree-sitter AST, and only falls back
 to a local stdlib ``ast`` parse when neither is reachable — replacing the direct
 ``ast.walk``/``ast.dump`` use. The actual quality metrics (assertion/mock/weak-

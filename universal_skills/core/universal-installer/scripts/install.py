@@ -49,7 +49,7 @@ except ImportError:
         adapters = None
 
 # Sibling modules for the capabilities added on top of the original
-# skill-installer: ontology/prompt provider legs, graph-os + fleet MCP config
+# skill-installer: ontology/prompt provider legs, arbora + fleet MCP config
 # wiring, and installing directly from an unreleased agents/* checkout. Same
 # import fallback as `adapters` above (hyphenated parent dir, dev-only tooling).
 try:
@@ -230,7 +230,7 @@ def _matches_layer(path: Path, layer: str) -> bool:
     """Filter a skill source path by layer.
 
     ``atomic`` = an atomic building-block skill — what an agent invokes directly, so
-    it belongs in Claude. ``workflows`` = a skill-workflow, meant for the graph-os
+    it belongs in Claude. ``workflows`` = a skill-workflow, meant for the arbora
     orchestrator (Claude fires them via ``kg-delegate`` / ``graph_orchestrate
     execute_workflow``) and usually NOT installed into Claude — that would bloat the
     always-loaded skill list. ``all`` = no filter.
@@ -289,7 +289,7 @@ def get_source_paths(
         else:
             paths = skill_utilities.get_universal_skills_path()
             sources.extend([Path(p) for p in paths])
-        # Restrict to the requested layer (atomic skills vs graph-os workflows).
+        # Restrict to the requested layer (atomic skills vs arbora workflows).
         if layer != "all":
             sources = [p for p in sources if _matches_layer(p, layer)]
 
@@ -688,18 +688,18 @@ def _prompt_choice(title: str, items: List[tuple]) -> List[str]:
     return picks or [k for k, _ in items]
 
 
-def _prompt_graph_os_mode() -> tuple:
-    """Ask how to wire graph-os into the target tool(s)' MCP config.
+def _prompt_arbora_mode() -> tuple:
+    """Ask how to wire arbora into the target tool(s)' MCP config.
 
     Returns ``(mode, remote_url)`` — ``mode`` is one of ``stdio``/``remote``/``skip``.
     """
-    print("\nWire graph-os into the target tool(s)' MCP config?")
-    print("  1) local stdio (uvx / an already-installed graph-os console script)")
-    print("  2) remote — connect to an existing graph-os/instances deployment")
+    print("\nWire arbora into the target tool(s)' MCP config?")
+    print("  1) local stdio (uvx / an already-installed arbora console script)")
+    print("  2) remote — connect to an existing arbora/instances deployment")
     print("  3) skip — don't touch MCP config")
     raw = input("Select [1]: ").strip() or "1"
     if raw == "2":
-        url = input("Remote graph-os URL: ").strip()
+        url = input("Remote arbora URL: ").strip()
         return ("remote", url) if url else ("stdio", None)
     if raw == "3":
         return "skip", None
@@ -707,9 +707,9 @@ def _prompt_graph_os_mode() -> tuple:
 
 
 def _run_interactive(detected: dict) -> tuple:
-    """Interactively choose target tools, source providers, and graph-os wiring.
+    """Interactively choose target tools, source providers, and arbora wiring.
 
-    Returns ``(selected_tools, providers, graph_os_mode, graph_os_url)`` where
+    Returns ``(selected_tools, providers, arbora_mode, arbora_url)`` where
     ``providers`` is ``None`` when every provider was selected (install-all).
     """
     if detected:
@@ -738,17 +738,17 @@ def _run_interactive(detected: dict) -> tuple:
     )
     providers = None if set(prov_keys) == set(all_provs) else set(prov_keys)
 
-    graph_os_mode, graph_os_url = (
-        _prompt_graph_os_mode() if selected_tools else ("skip", None)
+    arbora_mode, arbora_url = (
+        _prompt_arbora_mode() if selected_tools else ("skip", None)
     )
-    return selected_tools, providers, graph_os_mode, graph_os_url
+    return selected_tools, providers, arbora_mode, arbora_url
 
 
 def main():
     parser = argparse.ArgumentParser(
         description=(
             "Install skills, skill-graphs, ontologies, and system prompts into "
-            "agent tools, and wire graph-os + fleet MCP servers into their MCP config."
+            "agent tools, and wire arbora + fleet MCP servers into their MCP config."
         )
     )
     parser.add_argument(
@@ -842,7 +842,7 @@ def main():
         help=(
             "Which layer to install. 'atomic' = atomic building-block skills only "
             "(recommended for Claude — the agent invokes these directly). 'workflows' "
-            "= skill-workflows only (these run on the graph-os orchestrator; Claude "
+            "= skill-workflows only (these run on the arbora orchestrator; Claude "
             "fires them via kg-delegate). 'all' = both (default)."
         ),
     )
@@ -885,18 +885,18 @@ def main():
         ),
     )
     parser.add_argument(
-        "--graph-os",
+        "--arbora",
         choices=["stdio", "remote", "skip"],
         default=None,
         help=(
-            "How to wire graph-os into each target tool's MCP config: 'stdio' "
-            "(default — local uvx or an already-installed graph-os console script), "
-            "'remote' (requires --graph-os-url), or 'skip'."
+            "How to wire arbora into each target tool's MCP config: 'stdio' "
+            "(default — local uvx or an already-installed arbora console script), "
+            "'remote' (requires --arbora-url), or 'skip'."
         ),
     )
     parser.add_argument(
-        "--graph-os-url",
-        help="Remote graph-os/instances URL, required with --graph-os remote.",
+        "--arbora-url",
+        help="Remote arbora/instances URL, required with --arbora remote.",
     )
     parser.add_argument(
         "--no-mcp",
@@ -936,7 +936,7 @@ def main():
             f"mcp_scripts={scripts}"
         )
 
-    # ── Interactive picker (tools + providers + graph-os wiring) ────────────
+    # ── Interactive picker (tools + providers + arbora wiring) ────────────
     # Runs when explicitly requested, or on a bare invocation (no target flag) with a
     # TTY. Without a TTY, --interactive degrades to --all-detected so automation
     # (install.sh --all-detected) is never blocked on a prompt.
@@ -944,8 +944,8 @@ def main():
         args.all_detected or args.all_tools or args.path or args.tool
     )
     interactive_targets: dict = {}
-    interactive_graph_os_mode: Optional[str] = None
-    interactive_graph_os_url: Optional[str] = None
+    interactive_arbora_mode: Optional[str] = None
+    interactive_arbora_url: Optional[str] = None
     if args.interactive and not sys.stdin.isatty():
         logger.warning(
             "--interactive requested but no TTY; installing into all detected tools "
@@ -956,8 +956,8 @@ def main():
         (
             interactive_targets,
             sel_providers,
-            interactive_graph_os_mode,
-            interactive_graph_os_url,
+            interactive_arbora_mode,
+            interactive_arbora_url,
         ) = _run_interactive(detect_present_tools())
         if provider_filter is None:
             provider_filter = sel_providers
@@ -1066,14 +1066,14 @@ def main():
                 )
                 manifest_report.setdefault("ontologies", {})[package_manifest.name] = n
 
-    # ── graph-os + fleet MCP config wiring ───────────────────────────────────
+    # ── arbora + fleet MCP config wiring ───────────────────────────────────
     if not args.no_mcp and mcp_setup is not None:
-        graph_os_mode = (
-            interactive_graph_os_mode
-            if interactive_graph_os_mode is not None
-            else (args.graph_os or "stdio")
+        arbora_mode = (
+            interactive_arbora_mode
+            if interactive_arbora_mode is not None
+            else (args.arbora or "stdio")
         )
-        graph_os_url = interactive_graph_os_url or args.graph_os_url
+        arbora_url = interactive_arbora_url or args.arbora_url
         provider_names = [
             p for p in _available_providers() if p != UNIVERSAL_PROVIDER
         ]
@@ -1089,8 +1089,8 @@ def main():
             mcp_setup.wire_mcp_config(
                 tool_key,
                 None,
-                graph_os_mode,
-                graph_os_url,
+                arbora_mode,
+                arbora_url,
                 provider_names,
                 from_package_scripts=from_package_scripts,
             )
@@ -1098,7 +1098,7 @@ def main():
     # ── KG auto-extension registration hook ──────────────────────────────────
     # Makes newly-installed provider content DISCOVERABLE for KG ingestion; does
     # NOT ingest it itself (see SKILL.md "Ontology / skill / prompt auto-extension
-    # hook for the KG" — that is graph-os/epistemic-graph's job, over source_sync).
+    # hook for the KG" — that is arbora/epistemic-graph's job, over source_sync).
     if manifest_report and ontology_prompt_providers is not None:
         changed = any(v for leg in manifest_report.values() for v in leg.values())
         if changed:
@@ -1128,7 +1128,7 @@ def main():
                 logger.warning(f"Could not write install manifest: {type(e).__name__}")
             logger.info(
                 "Provider prompts/ontologies changed — to refresh the KG, run "
-                "`source_sync source=all mode=delta` via the graph-os MCP "
+                "`source_sync source=all mode=delta` via the arbora MCP "
                 "connection (or the agent-utilities-source-integration skill)."
             )
 

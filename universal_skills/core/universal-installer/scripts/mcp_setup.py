@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Portable graph-os + fleet MCP wiring for JSON-config clients.
+"""Portable arbora + fleet MCP wiring for JSON-config clients.
 
-Builds the ``mcpServers`` entries this skill is responsible for (graph-os +
+Builds the ``mcpServers`` entries this skill is responsible for (arbora +
 auto-detected ``agents/*`` servers) and merges them into a target agent tool's
 MCP config file by importing ``mcp-installer``'s own merge machinery — this
 module never re-implements config-file reading/writing/merging/backup.
@@ -14,7 +14,7 @@ Grounding for the entry shapes (no invented fields):
   ``agents/github-agent/README.md``), and the remote/Streamable-HTTP
   alternative is a bare ``{"url": "<url>"}`` (same READMEs, "Alternatively,
   connect to a pre-deployed Streamable-HTTP instance by `url`").
-- The graph-os launcher is the installed, machine-neutral console script with
+- The arbora launcher is the installed, machine-neutral console script with
   explicit stdio transport. Deployment topology and runtime state resolve from
   AgentConfig rather than being copied into a client registration.
 - The per-package MCP console-script name is **never guessed** (it is not a
@@ -88,19 +88,19 @@ def detect_present_mcp_tools() -> Dict[str, Path]:
     return present
 
 
-def build_graph_os_entry(
+def build_arbora_entry(
     mode: str = "stdio",
     remote_url: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Build the ``graph-os`` mcpServers entry for ``mode`` (stdio|remote|skip)."""
+    """Build the ``arbora`` mcpServers entry for ``mode`` (stdio|remote|skip)."""
     if mode == "skip":
         return None
     if mode == "remote":
         if not remote_url:
-            logger.error("--graph-os remote requires --graph-os-url.")
+            logger.error("--arbora remote requires --arbora-url.")
             return None
         return {"url": remote_url}
-    return {"command": "graph-os", "args": ["--transport", "stdio"]}
+    return {"command": "arbora", "args": ["--transport", "stdio"]}
 
 
 def _dist_mcp_console_scripts(dist_name: str) -> List[str]:
@@ -177,13 +177,13 @@ def merge_and_write(target_path: Path, servers: Dict[str, Dict[str, Any]]) -> bo
 def wire_mcp_config(
     tool_key: str,
     target_path: Optional[Path],
-    graph_os_mode: str,
-    graph_os_url: Optional[str],
+    arbora_mode: str,
+    arbora_url: Optional[str],
     provider_names: List[str],
     from_package_scripts: Optional[Dict[str, List[str]]] = None,
     tool_mode: str = "condensed",
 ) -> bool:
-    """Build + merge the graph-os and fleet-server entries for one target tool."""
+    """Build + merge the arbora and fleet-server entries for one target tool."""
     dest = target_path or MCP_CONFIG_PATHS.get(tool_key.lower())
     if dest is None:
         logger.info(
@@ -191,9 +191,9 @@ def wire_mcp_config(
         )
         return False
     servers: Dict[str, Dict[str, Any]] = {}
-    graph_os_entry = build_graph_os_entry(graph_os_mode, graph_os_url)
-    if graph_os_entry is not None:
-        servers["graph-os"] = graph_os_entry
+    arbora_entry = build_arbora_entry(arbora_mode, arbora_url)
+    if arbora_entry is not None:
+        servers["arbora"] = arbora_entry
     servers.update(
         build_agent_server_entries(provider_names, tool_mode, from_package_scripts)
     )

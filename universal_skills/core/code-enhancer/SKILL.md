@@ -95,19 +95,19 @@ python scripts/selftest.py                       # exits non-zero if any script 
 #    incremental JSON written as each domain completes (CE-031)
 python scripts/enhance_repo.py /path/to/repo --out reports/ --kg
 
-# 3. Ingest the run into graph-os via the MCP (best-effort; skips cleanly with no endpoint) (CE-032)
-GRAPH_OS_MCP_URL=http://localhost:8000 python scripts/kg_ingest_run.py reports/repo.enhance.json
+# 3. Ingest the run into arbora via the MCP (best-effort; skips cleanly with no endpoint) (CE-032)
+ARBORA_MCP_URL=http://localhost:8000 python scripts/kg_ingest_run.py reports/repo.enhance.json
 
 # 4. Cross-repo + bi-temporal questions the KG answers but a filesystem tool can't (CE-034)
 python scripts/kg_query_runs.py list                          # the cross-repo Cypher library
-python scripts/kg_query_runs.py query regressions            # via graph-os MCP
+python scripts/kg_query_runs.py query regressions            # via arbora MCP
 python scripts/kg_query_runs.py deltas --current reports/ --prior reports_prev/   # offline diff
 ```
 
 - **`enhance_repo.py`** is the per-repo unit; `run_multi_project.py` fans it out across repos with
   `-c` concurrency. Domains not applicable to the detected primary language are skipped (a Python
   dependency audit does not run on a Rust repo).
-- **KG-native** ingest/query talk to the **graph-os MCP server over HTTP**, never via a direct
+- **KG-native** ingest/query talk to the **arbora MCP server over HTTP**, never via a direct
   `import agent_utilities.*` (that hard dependency previously broke the KG step). Each run is
   time-stamped so the KG's bi-temporal layer surfaces per-repo score deltas over time.
 - Every new script supports `--self-test`; `selftest.py` aggregates them plus a fixture run of every
@@ -121,7 +121,7 @@ no longer hand-roll Python's stdlib `ast` (fragile — e.g. `ast.Str` broke on 3
 project's functions/classes/decorators. They go through the shared `kg_native.py` helper, which
 tries three mechanisms **in this order** for every symbol/concept lookup:
 
-1. **The ingested code KG (graph-os)** — a read-only Cypher query over the already-ingested
+1. **The ingested code KG (arbora)** — a read-only Cypher query over the already-ingested
    `:Code` graph (`kg_native.kg_repo_symbols`/`kg_repo_concepts`, `POST /graph/query`) or the
    composed `code_context` answer (`POST /graph/code`, action=`code_context` — definition,
    callers, blast-radius, CONCEPT markers, docs — CONCEPT:AU-KG.retrieval.synthesized-cited-answer).
@@ -131,16 +131,16 @@ tries three mechanisms **in this order** for every symbol/concept lookup:
    file/repo the KG doesn't hold yet. Multi-language, version-independent (the fix for the
    `ast.Str`-on-3.12 class of breakage), with exact native source ranges.
 3. **Local stdlib `ast`** — the final fallback, used only when neither the KG nor the engine socket
-   answers (`epistemic_graph` not installed, no `GRAPH_OS_MCP_URL`, or the engine erroring). Keeps
+   answers (`epistemic_graph` not installed, no `ARBORA_MCP_URL`, or the engine erroring). Keeps
    every script working completely standalone, with zero platform dependencies.
 
 Every `kg_native` helper is **best-effort and never raises** — an unreachable KG or engine degrades
 silently to the next tier, and the tier actually used is reported back (`"kg"` / `"engine"` /
-`"local"`) so a caller can note it was degraded. Set `GRAPH_OS_MCP_URL` (and optionally
-`GRAPH_OS_MCP_TOKEN` for an authenticated deployment) to enable Tier 1; Tier 2 activates
+`"local"`) so a caller can note it was degraded. Set `ARBORA_MCP_URL` (and optionally
+`ARBORA_MCP_TOKEN` for an authenticated deployment) to enable Tier 1; Tier 2 activates
 automatically whenever `epistemic_graph` 3.x is installed, its engine socket is reachable, and
 `GRAPH_SERVICE_AUTH_SECRET` is configured. **This degradation is real, not theoretical**: even a live
-graph-os deployment may be on a protocol/tool surface that predates the REST contract above (fleet
+arbora deployment may be on a protocol/tool surface that predates the REST contract above (fleet
 version drift) — the tiering means that never breaks the skill, it just quietly falls back.
 
 Remote graph endpoints must use HTTPS; plain HTTP is accepted only for loopback.
@@ -202,7 +202,7 @@ Consolidated graded report generation and SDD handoff. Compile findings, calcula
 - Requires: primary script `scripts/generate_report.py`, `scripts/generate_sdd_handoff.py`, `scripts/grade_pytest.py`, `scripts/grade_skills.py`, `scripts/evaluate_heuristics.py`
 
 ### Step 11: kg_persistence [depends_on: generate_report]
-Knowledge Graph double-write seeding and multi-project analysis. Ingest the report and spec files back into Graph-OS, and execute multi-project parallel cross-repository integration checks:
+Knowledge Graph double-write seeding and multi-project analysis. Ingest the report and spec files back into Arbora, and execute multi-project parallel cross-repository integration checks:
 - Requires: primary script `scripts/run_multi_project.py` and `scripts/analyze_integration.py`
 
 ## Best Practices
@@ -225,7 +225,7 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 ### Scripts
 - `scripts/enhance_repo.py` — **Headless single-repo driver**: runs all applicable domains for one
   repo, language-gated, per-domain timeout + fault isolation, incremental output (CE-031)
-- `scripts/kg_ingest_run.py` — KG-native ingest of a run into graph-os via the MCP (CE-032)
+- `scripts/kg_ingest_run.py` — KG-native ingest of a run into arbora via the MCP (CE-032)
 - `scripts/kg_query_runs.py` — Cross-repo + bi-temporal queries over runs (CE-034)
 - `scripts/selftest.py` — Toolchain self-test harness; smoke-runs every analyzer (CE-033)
 - `scripts/analyze_opportunities.py` — **Intent & Opportunity Discovery**: infers codebase intent, surfaces low-hanging-fruit / implied-missing / net-new value-adds (CE-035)

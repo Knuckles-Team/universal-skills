@@ -72,14 +72,6 @@ repos:
   - id: uv-lock
 - repo: local
   hooks:
-  - id: concept-registry-parity
-    name: concept ids exist in the agent-utilities registry
-    # A live contract with the agent-utilities registry: SKIPPED locally when
-    # no sibling checkout exists; CI clones agent-utilities and fails closed.
-    entry: python3 scripts/gate_env.py --gate concept-registry-parity --project-env -- python -m pytest -q -rs -p no:cacheprovider tests/test_concept_parity.py
-    language: system
-    pass_filenames: false
-    always_run: true
   - id: mermaid-fence-check
     name: mermaid fenced-block structure
     entry: python scripts/check_mermaid_blocks.py

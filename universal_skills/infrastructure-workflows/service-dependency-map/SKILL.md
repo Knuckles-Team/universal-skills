@@ -45,14 +45,14 @@ Expected: `stack, container, label`
 Inspect each container for Traefik labels, health checks, and inter-service dependencies
 Expected: `traefik, label, health`
 
-### Step 2: Graph Os
+### Step 2: Arbora
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
 Build the full dependency graph: MCPServer -[DEPLOYED_ON]-> Container -[BELONGS_TO_STACK]-> ContainerStack -[RUNS_ON]-> HardwareNode, and ProxyRoute -[ROUTES_TO]-> PlatformService
 Expected: `dependency, graph, relationship`
 
-### Step 3: KG Persistence [depends_on: graph-os]
+### Step 3: KG Persistence [depends_on: arbora]
 **Agent**: `verifier-agent`
 **Tools**: `graph_write`
 
@@ -68,7 +68,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Portainer Mcp; Step 1 — Container Manager Mcp; Step 2 — Graph Os
+- **Run first (in parallel):** Step 0 — Portainer Mcp; Step 1 — Container Manager Mcp; Step 2 — Arbora
 - **After level 0:** Step 3 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

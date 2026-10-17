@@ -136,7 +136,7 @@ permanently suppress a finding.
 
 One dependency direction runs through the ecosystem's core repositories:
 **pipelines → epistemic-graph → agent-connector-sdk → agent-utilities →
-agent-webui → graph-os**. Each repository's own `AGENTS.md` states what it
+agent-webui → arbora**. Each repository's own `AGENTS.md` states what it
 owns under a "What this repository owns" heading — that heading, not this
 skill, is the authoritative answer for a specific capability, because it is
 what gets kept current as boundaries shift (for example, agent-utilities is
@@ -150,7 +150,7 @@ reasoning and semantics belong in epistemic-graph; connector transport,
 manifests and certification belong in agent-connector-sdk; the agent
 orchestration plane (planning, delegation, skills/workflow runtime) belongs
 in agent-utilities; the served MCP/REST/control-plane runtime belongs in
-graph-os; shared CI/quality/workflow machinery like this package belongs in
+arbora; shared CI/quality/workflow machinery like this package belongs in
 pipelines. When it is not obvious which repository owns a piece of new
 behavior, read that repository's own `AGENTS.md` ownership section before
 writing anything — do not infer ownership from this table alone, since it is

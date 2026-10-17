@@ -33,7 +33,7 @@ Create comprehensive handoff documents that enable a fresh agent to seamlessly c
 1.  **Scaffold Generation** — Auto-scaffolds handoff documents with system, git, and file context.
 2.  **Handoff Validation** — Performs secret-scanning, placeholder checks, and quality scoring.
 3.  **Staleness Scoring** — Calculates divergency metrics based on git timeline and files.
-4.  **Episodic Memory Integration** — Double-writes handoffs as markdown and Graph-OS knowledge nodes.
+4.  **Episodic Memory Integration** — Double-writes handoffs as markdown and Arbora knowledge nodes.
 
 ---
 
@@ -94,7 +94,7 @@ Assess if handoff context is still current and analyze divergence:
   - **VERY_STALE** — Consider creating a fresh handoff first
 
 ### Step 6: memory_persistence [depends_on: complete_and_validate]
-Persist the validated handoff to both local markdown and Graph-OS:
+Persist the validated handoff to both local markdown and Arbora:
 - Markdown local fallback: file is stored in `.agent/handoffs/` following the naming convention `YYYY-MM-DD-HHMMSS-[slug].md`.
 - Knowledge Graph global memory store:
   - Invoke `kg_memory_store` MCP tool with `memory_type` set to `episodic`.

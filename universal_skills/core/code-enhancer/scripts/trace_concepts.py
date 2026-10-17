@@ -7,7 +7,7 @@ identify tests/functions missing concept markers, and cross-reference
 against a concept registry from AGENTS.md.
 
 KG-native (CE-045): decorator/pytest-marker + function scanning goes through the
-graph-os code KG first (a repo already ingested has this for free), then the
+arbora code KG first (a repo already ingested has this for free), then the
 engine tree-sitter AST (``kg_native.parse_file_symbols`` — multi-language,
 version-independent), and only falls back to a local stdlib ``ast`` parse when
 neither is reachable. See ``kg_native.py`` for the tier hierarchy.
@@ -77,7 +77,7 @@ def _scan_concepts_in_files(
 def _scan_pytest_decorators(root: Path) -> tuple[list[dict], list[dict]]:
     """Scan test files for @pytest.mark.concept decorators + CONCEPT: markers.
 
-    KG-native (CE-045): per test file, symbols come from the graph-os code KG when
+    KG-native (CE-045): per test file, symbols come from the arbora code KG when
     ingested, else the engine tree-sitter AST, else a local stdlib ``ast`` parse
     (``kg_native.file_symbols_by_line``) — replacing the old whole-file ast.walk.
 
@@ -151,7 +151,7 @@ def _scan_pytest_decorators(root: Path) -> tuple[list[dict], list[dict]]:
 def _scan_function_docstrings(root: Path) -> list[dict]:
     """Scan Python functions >10 lines for missing CONCEPT markers in docstrings.
 
-    KG-native (CE-045): symbols come from the graph-os code KG (Tier 1) when the
+    KG-native (CE-045): symbols come from the arbora code KG (Tier 1) when the
     repo is ingested, else the tiered engine/local parse per file.
     """
     missing: list[dict] = []

@@ -21,8 +21,8 @@ Every standard below is an application of one rule (see `AGENTS.md` for the full
   containing top-level directory name.
 - **Skill-workflows are dual-mode** — the `depends_on` DAG (+ `references/team.yaml`)
   is the single source of truth, and the body also renders a Claude-executable
-  `## Execution` section (parallel-vs-after) plus the standard graph-os delegation
-  footer, so the same workflow runs under Claude OR the graph-os orchestrator.
+  `## Execution` section (parallel-vs-after) plus the standard arbora delegation
+  footer, so the same workflow runs under Claude OR the arbora orchestrator.
 - Enforced by `scripts/check_atomicity.py` (pre-commit/CI gate).
 
 ## 1. Directory Structure

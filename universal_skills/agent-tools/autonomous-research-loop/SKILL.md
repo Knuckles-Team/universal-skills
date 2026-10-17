@@ -35,7 +35,7 @@ Drives the KG's self-evolution **golden loop** — one cycle of:
 
 ## Run it
 
-On-demand via the graph-os MCP orchestration tool:
+On-demand via the arbora MCP orchestration tool:
 
 ```text
 graph_orchestrate(action="golden_loop", max_topics=5)
@@ -52,7 +52,7 @@ KG_DAEMON_ROLE=client python -c \
 ## Always-on daemon (optional)
 
 Set `KG_GOLDEN_LOOP=1` (interval `KG_GOLDEN_LOOP_INTERVAL`, default 3600s) on the
-**host daemon** (gateway / `graph-os-daemon`) to run the cycle continuously and
+**host daemon** (gateway / `arbora-daemon`) to run the cycle continuously and
 throttled behind the foreground gate. Off by default (autonomous LLM work is
 opt-in). Still propose-only.
 

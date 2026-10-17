@@ -3,7 +3,7 @@ name: unattended-loop-driver
 domain: agent-tools
 skill_type: skill
 description: >-
-  Run Claude Code unattended ("while you sleep") to drive the graph-os Loop engine — feature
+  Run Claude Code unattended ("while you sleep") to drive the arbora Loop engine — feature
   extraction + innovation distillation — behind a governance-derived permission fence. Use when the
   user wants to "run the loop overnight", "let Claude work unattended", "run while I sleep", "set up an
   autonomous build session", or "drive the evolution loop without babysitting". Verifies the fence is
@@ -20,7 +20,7 @@ metadata:
 
 # Unattended Loop Driver
 
-Let Claude Code run **unattended** and drive the existing graph-os **Loop engine**
+Let Claude Code run **unattended** and drive the existing arbora **Loop engine**
 (`LoopController`, KG-2.78) — the same feature-extraction + innovation-distillation
 cycle the daemon ticks — inside a **permission fence** so the worst it can do is
 harmless. This surpasses a hand-written `settings.json`: the fence is **derived
@@ -60,7 +60,7 @@ Goal for this run: [describe the full outcome].
 
 Work toward it autonomously under the permission fence in settings.json:
 - Read what you need, edit source, run tests and lint as you go.
-- Drive the graph-os Loop once per iteration: graph_loops(action="run", max_topics=5)
+- Drive the arbora Loop once per iteration: graph_loops(action="run", max_topics=5)
   (feature extraction + innovation distillation, propose-only).
 - Commit after each productive cycle with a clear message.
 - If a tool hits the ask list (the gate returns "ask"), STOP that action and
@@ -94,7 +94,7 @@ or two `ask`-list items the gate halted.
 
 - **deny > allow > ask** — safety rules can never be overridden by a broad allow.
 - **Fail-closed gate** — the PreToolUse gate denies on any error/unparsable input
-  and protects secrets even when the graph-os daemon is down.
+  and protects secrets even when the arbora daemon is down.
 - **Propose-only loop** — `graph_loops(action="run")` writes proposals (specs,
   skill candidates, team proposals); it never auto-merges or executes high-stakes
   actions.

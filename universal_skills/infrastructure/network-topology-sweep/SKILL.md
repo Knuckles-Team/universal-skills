@@ -43,7 +43,7 @@ Run interface and routing scanning commands (`ip addr show`, `ip route`, `ifconf
 - VPN interfaces (e.g., WireGuard, Tailscale)
 
 ### Step 4: Export Discovered Topology Data
-Compile and format the parsed network profile into structured JSON for Graph-OS/topology mapping:
+Compile and format the parsed network profile into structured JSON for Arbora/topology mapping:
 - `NetworkSubnet` properties (CIDR, boundary IPs)
 - `NetworkInterface` properties (macAddress, mtu, speed, ipAddress)
 - `VPNTunnel` configurations

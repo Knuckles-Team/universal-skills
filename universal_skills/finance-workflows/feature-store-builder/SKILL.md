@@ -76,4 +76,4 @@ Return `normalized_market_dataset`, `feature_data_dictionary`, and
 - **After level 1:** Step 2 — `$data-dictionary-builder`.
 - **After level 2:** Step 3 — `$dataset-profiler`.
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -8,7 +8,7 @@ markers, tests), and exposes a version-independent, multi-language tree-sitter
 parser as an engine service. This module gives every code-enhancer script one
 shared, three-tier mechanism, preferred in this order:
 
-  1. **The ingested code KG (graph-os)** — a read-only Cypher query over the
+  1. **The ingested code KG (arbora)** — a read-only Cypher query over the
      already-ingested ``:Code`` graph (``POST /graph/query``) or the composed
      ``code_context`` answer (``POST /graph/code``, action=code_context — definition,
      callers, blast-radius, CONCEPT markers, docs). Zero re-parsing; the richest,
@@ -61,17 +61,17 @@ SKIP_DIRS = frozenset(
 
 
 # ---------------------------------------------------------------------------
-# Tier 1 — the ingested code KG (graph-os)
+# Tier 1 — the ingested code KG (arbora)
 # ---------------------------------------------------------------------------
 
 
-def graph_os_endpoint() -> str | None:
-    """Resolve the graph-os base URL from the environment (unset = KG tier skipped)."""
-    return os.environ.get("GRAPH_OS_MCP_URL") or None
+def arbora_endpoint() -> str | None:
+    """Resolve the arbora base URL from the environment (unset = KG tier skipped)."""
+    return os.environ.get("ARBORA_MCP_URL") or None
 
 
 def _auth_headers() -> dict[str, str]:
-    token = os.environ.get("GRAPH_OS_MCP_TOKEN")
+    token = os.environ.get("ARBORA_MCP_TOKEN")
     return {"Authorization": f"Bearer {token}"} if token else {}
 
 
@@ -87,9 +87,9 @@ def _endpoint_policy(url: str) -> UrlPolicy:
 def _post(
     path: str, body: dict[str, Any], endpoint: str | None, timeout: int = 20
 ) -> Any:
-    """POST JSON to a graph-os REST route. Returns the parsed ``result``, or ``None``
+    """POST JSON to an arbora REST route. Returns the parsed ``result``, or ``None``
     on any failure (unreachable, timeout, non-success) — never raises."""
-    url = endpoint or graph_os_endpoint()
+    url = endpoint or arbora_endpoint()
     if not url:
         return None
     req = Request(
@@ -115,7 +115,7 @@ def _post(
 def kg_cypher(
     cypher: str, params: dict[str, Any] | None = None, endpoint: str | None = None
 ) -> list[dict[str, Any]] | None:
-    """Run a read-only Cypher query via graph-os (``POST /graph/query``, ``graph_query``
+    """Run a read-only Cypher query via arbora (``POST /graph/query``, ``graph_query``
     MCP tool). ``None`` = KG unreachable/errored (fall through to Tier 2)."""
     result = _post(
         "/graph/query",

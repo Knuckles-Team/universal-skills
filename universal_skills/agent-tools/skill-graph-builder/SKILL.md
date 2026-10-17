@@ -132,7 +132,7 @@ Chrome install + the migration/refresh runbook.)
 
 ## Via the Knowledge-Graph MCP surface
 
-If graph-os is reachable, drive the same pipeline through `graph_ingest`:
+If arbora is reachable, drive the same pipeline through `graph_ingest`:
 
 * `action=build_skill_graph` — `corpus_name`=name, `target_path`=output parent dir,
   `base_path`=JSON list of sources `[{"kind","uri","options"}]` or `kind=uri,...`

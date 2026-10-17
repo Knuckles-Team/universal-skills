@@ -54,14 +54,14 @@ Expected: `cpu, memory, disk, os`
 For each reachable host, detect GPU/accelerator hardware via lspci or nvidia-smi and collect driver versions
 Expected: `gpu, accelerator, driver`
 
-### Step 3: Graph Os
+### Step 3: Arbora
 **Agent**: `dns-configurator`
 **Tools**: `adg_rewrites, td_zones`
 
 Update HardwareNode entries in the KG with collected hardware metadata and create GPUAccelerator nodes with HAS_ACCELERATOR relationships
 Expected: `update, hardware, gpu`
 
-### Step 4: KG Persistence [depends_on: graph-os]
+### Step 4: KG Persistence [depends_on: arbora]
 **Agent**: `dns-configurator`
 **Tools**: `graph_write`
 
@@ -77,7 +77,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Tunnel Manager Mcp; Step 1 — collect-host-hardware; Step 2 — collect-accelerators; Step 3 — Graph Os
+- **Run first (in parallel):** Step 0 — Tunnel Manager Mcp; Step 1 — collect-host-hardware; Step 2 — collect-accelerators; Step 3 — Arbora
 - **After level 0:** Step 4 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

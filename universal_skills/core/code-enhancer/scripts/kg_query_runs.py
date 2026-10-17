@@ -2,14 +2,14 @@
 """CE-034 — Cross-repo + bi-temporal queries over code-enhancement runs.
 
 The genuinely new value a filesystem tool can't give at 60-repo scale: ask the KG questions that
-span repos and time. Provides (a) a library of cross-repo Cypher queries to run against graph-os via
+span repos and time. Provides (a) a library of cross-repo Cypher queries to run against arbora via
 the MCP, and (b) an offline ``deltas`` mode that diffs two directories of ``enhance_repo`` reports
 (current vs prior) to surface per-repo / per-domain score regressions — a bi-temporal proxy that
 works before the KG is wired, and mirrors what the KG-2.11 as-of query returns once it is.
 
 Usage:
     python kg_query_runs.py list                       # print the cross-repo query library
-    python kg_query_runs.py query <name> [--endpoint U] # run one query via graph-os MCP (best-effort)
+    python kg_query_runs.py query <name> [--endpoint U] # run one query via arbora MCP (best-effort)
     python kg_query_runs.py deltas --current DIR --prior DIR   # offline regression diff
     python kg_query_runs.py --self-test
 """
@@ -26,7 +26,7 @@ from urllib.request import Request
 
 from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
-# Cross-repo Cypher library (run against graph-os; CodeEnhancementRun/DomainScore/Finding/Repo).
+# Cross-repo Cypher library (run against arbora; CodeEnhancementRun/DomainScore/Finding/Repo).
 QUERIES: dict[str, str] = {
     "lowest_repos": (
         "MATCH (r:Repo)<-[:OF_REPO]-(run:CodeEnhancementRun) "
@@ -59,12 +59,12 @@ QUERIES: dict[str, str] = {
 
 
 def execute_via_mcp(cypher: str, endpoint: str | None = None) -> dict[str, Any]:
-    """Best-effort run of a Cypher query via the graph-os MCP ``graph_query`` endpoint."""
-    url = endpoint or os.environ.get("GRAPH_OS_MCP_URL")
+    """Best-effort run of a Cypher query via the arbora MCP ``graph_query`` endpoint."""
+    url = endpoint or os.environ.get("ARBORA_MCP_URL")
     if not url:
         return {
             "status": "skipped",
-            "reason": "no GRAPH_OS_MCP_URL configured",
+            "reason": "no ARBORA_MCP_URL configured",
         }
     try:
         body = json.dumps({"cypher": cypher}).encode()

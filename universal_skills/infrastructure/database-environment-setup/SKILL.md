@@ -23,7 +23,7 @@ tags:
   - ontology
   - knowledge-graph
 requires:
-  - graph-os
+  - arbora
 metadata:
   version: '1.3.11'
 ---
@@ -41,7 +41,7 @@ is needed.
 
 ## Prerequisites
 
-- **graph-os** (agent-utilities) — the `graph_configure` tool and `setup-databases`
+- **arbora** (agent-utilities) — the `graph_configure` tool and `setup-databases`
   console script. Install it with `pip install agent-utilities[owl,postgres]`
   (add `stardog` for the prod path).
 - **openbao-mcp** *(optional)* — to resolve Vault/OpenBao secrets. Falls back to `.env`.

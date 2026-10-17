@@ -360,7 +360,7 @@ def workflow_findings(
             Finding(
                 "error",
                 "workflow-execution-missing",
-                "missing `## Execution` or graph-os delegation footer",
+                "missing `## Execution` or arbora delegation footer",
             )
         )
 

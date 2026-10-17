@@ -20,7 +20,7 @@ metadata:
   concepts:
     - CONCEPT:KG-2.7
     - CONCEPT:ECO-4.6
-requires: ['graph-os', 'agent-utilities']
+requires: ['arbora', 'agent-utilities']
 ---
 
 # Universal Knowledge Assimilation Engine
@@ -72,7 +72,7 @@ Use mcp_github-mcp_github with action to search repositories sorted by stars, to
 
 **KG Memory** (pending evolution candidates):
 ```
-Use mcp_graph-os_graph_query with cypher:
+Use mcp_arbora_graph_query with cypher:
 "MATCH (e:EvolutionCandidate {status: 'pending'}) RETURN e.id, e.source_type, e.evolution_score ORDER BY e.evolution_score DESC LIMIT 10"
 ```
 
@@ -85,7 +85,7 @@ For each content item from Step 0:
 
 1. Gather existing KG topics for context matching:
 ```
-Use mcp_graph-os_graph_query with cypher:
+Use mcp_arbora_graph_query with cypher:
 "MATCH (c) WHERE c:Concept OR c:KBConcept OR c:ResearchTopic
  RETURN c.name LIMIT 30"
 ```
@@ -115,23 +115,23 @@ For items classified as `ingest` or `ingest_and_evolve`:
 1. **X Posts/Articles**: Already ingested via `XIngestionBridge` in Step 1 (auto_ingest).
    For X Articles, fetch full article via `read_url_content` and ingest via:
    ```
-   Use mcp_graph-os_graph_ingest with action: "ingest", target_path: "<article_url>"
+   Use mcp_arbora_graph_ingest with action: "ingest", target_path: "<article_url>"
    ```
 
 2. **Research Papers**: Download PDF and ingest:
    ```
    Use mcp_scholarx-mcp_sx_storage with action: "download", paper_ids: "<id>"
-   Use mcp_graph-os_graph_ingest with action: "ingest", target_path: "<downloaded_path>"
+   Use mcp_arbora_graph_ingest with action: "ingest", target_path: "<downloaded_path>"
    ```
 
 3. **GitHub Repos**: Ingest repository:
    ```
-   Use mcp_graph-os_graph_ingest with action: "ingest", target_path: "<repo_url>"
+   Use mcp_arbora_graph_ingest with action: "ingest", target_path: "<repo_url>"
    ```
 
 4. For each ingested item, link to extracted concepts:
    ```
-   Use mcp_graph-os_graph_write with action: "add_edge",
+   Use mcp_arbora_graph_write with action: "add_edge",
    source_id: "<item_id>", target_id: "<concept_id>", rel_type: "ABOUT"
    ```
 
@@ -145,20 +145,20 @@ For each EvolutionCandidateNode created in Steps 1-2:
 
 1. Run relevance sweep:
    ```
-   Use mcp_graph-os_graph_analyze with action: "relevance_sweep",
+   Use mcp_arbora_graph_analyze with action: "relevance_sweep",
    query: "<evolution_reasoning>", target: "agent-utilities"
    ```
 
 2. Run deep extraction for actionable gaps:
    ```
-   Use mcp_graph-os_graph_analyze with action: "deep_extract",
+   Use mcp_arbora_graph_analyze with action: "deep_extract",
    query: "What specific features, patterns, or techniques from this content could be implemented in agent-utilities?",
    target: "<source_node_id>"
    ```
 
 3. If actionable gaps found, update the EvolutionCandidate status to "analyzed":
    ```
-   Use mcp_graph-os_graph_write with action: "add_node",
+   Use mcp_arbora_graph_write with action: "add_node",
    node_id: "<evo_candidate_id>",
    properties: '{"status": "analyzed", "gaps_found": <count>}'
    ```
@@ -180,14 +180,14 @@ For each analyzed EvolutionCandidate with actionable gaps:
 
 3. Log the evolution cycle in the KG:
    ```
-   Use mcp_graph-os_graph_write with action: "add_node",
+   Use mcp_arbora_graph_write with action: "add_node",
    node_type: "EvolutionCycle",
    properties: '{"triggered_by": "knowledge_assimilation", "items_scanned": <N>, "candidates_created": <N>, "plans_generated": <N>}'
    ```
 
 4. If the cycle generated useful distillation patterns, log them:
    ```
-   Use mcp_graph-os_graph_write with action: "store_memory",
+   Use mcp_arbora_graph_write with action: "store_memory",
    properties: '{"type": "procedural", "content": "<pattern_description>", "importance": 0.8}'
    ```
 
@@ -211,7 +211,7 @@ Depends On: Step 3
 | X Search | AI agents, MCP, knowledge graphs | On-demand | `x_search` |
 | ScholarX | cs.AI, cs.MA, cs.CL, cs.SE | Daily | `mcp_scholarx-mcp_sx_search` |
 | GitHub Trending | ai-agents, knowledge-graph, mcp-server | Daily | `mcp_github-mcp_github` |
-| KG Pending | EvolutionCandidate.status = "pending" | Every cycle | `mcp_graph-os_graph_query` |
+| KG Pending | EvolutionCandidate.status = "pending" | Every cycle | `mcp_arbora_graph_query` |
 
 ## Difference from agent-utilities-evolution
 
@@ -242,4 +242,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — scout; Step 1 — classify; Step 2 — ingest; Step 3 — analyze; Step 4 — plan
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

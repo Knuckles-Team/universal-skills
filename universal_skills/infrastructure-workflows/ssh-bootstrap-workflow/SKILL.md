@@ -80,4 +80,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **Run first (in parallel):** Step 0 — inspect-ssh-connectivity; Step 1 — Systems Manager Mcp; Step 2 — distribute-ssh-keys; Step 3 — verify-ssh-connectivity
 - **After level 0:** Step 4 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

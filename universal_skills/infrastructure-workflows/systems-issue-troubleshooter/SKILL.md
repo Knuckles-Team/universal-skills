@@ -88,4 +88,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **Run first (in parallel):** Step 0 — collect-system-health; Step 1 — inspect-processes; Step 2 — inspect-disk-and-logs; Step 3 — confirm-remediation; Step 4 — apply-approved-remediation; Step 5 — report-remediation
 - **After level 0:** Step 6 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

@@ -5,8 +5,8 @@ skill_type: skill
 description: >-
   Run one isolated delegated agent from the AgentConfig model, MCP, TLS, and
   skills catalogs. Use when a bounded task needs a temporary specialist without
-  mutating the parent agent; prefer GraphOS delegation for graph-governed work.
-tags: [agent, delegation, graph-os, pydantic-ai, orchestration]
+  mutating the parent agent; prefer Arbora delegation for graph-governed work.
+tags: [agent, delegation, arbora, pydantic-ai, orchestration]
 license: MIT
 metadata:
   version: '1.3.11'
@@ -37,5 +37,5 @@ The compatibility flags that accepted API keys, arbitrary dotenv/config paths,
 base URLs, personal agent names, or disabled TLS verification are retired.
 Never put credentials in arguments. The child uses strict tool guards and MCP
 isolation, emits no prompt/name/path/endpoint details, and relies on the shared
-transport profile. Use GraphOS delegation when policy, capability provenance,
+transport profile. Use Arbora delegation when policy, capability provenance,
 or trace-linked skill execution is required.

@@ -4,9 +4,9 @@
 Every comparative-analysis script that needs "what symbols/docstrings/imports does
 this file have" prefers, in this order:
 
-1. **graph-os / the ingested code KG** — ``kg_code_context()`` calls the live
+1. **arbora / the ingested code KG** — ``kg_code_context()`` calls the live
    ``graph_analyze action=code_context`` REST twin (``POST /api/graph/analyze/
-   code-context``) on a ``GRAPH_OS_URL``-configured gateway. Most native: when the
+   code-context``) on a ``ARBORA_URL``-configured gateway. Most native: when the
    target has already been ingested, the KG already holds resolved call graphs,
    wiring, and doc/architecture signals — no re-parsing needed. Best-effort and
    silently skipped when no gateway is configured or the target isn't ingested
@@ -32,7 +32,7 @@ Tier 1 is two-way: ``kg_code_context()`` reads from the KG, and
 targets over time builds a queryable, growing library of every comparative
 analysis ever run (score trends, cross-project comparisons via Cypher), not just
 a pile of local JSON files. Both are best-effort and silently no-op without
-``GRAPH_OS_URL`` configured.
+``ARBORA_URL`` configured.
 
 The native client is optional because comparative-analysis remains a standalone
 ``universal-skills`` tool. If the package cannot be imported or its configured
@@ -55,7 +55,7 @@ from urllib.request import Request
 from universal_skills._security.http import SafeHttpError, UrlPolicy, open_json
 
 # ---------------------------------------------------------------------------
-# Tier 1 — graph-os / the ingested code KG
+# Tier 1 — arbora / the ingested code KG
 # ---------------------------------------------------------------------------
 
 
@@ -79,13 +79,13 @@ def kg_code_context(
 ) -> dict[str, Any] | None:
     """Best-effort call to the live ``graph_analyze action=code_context`` REST twin.
 
-    ``endpoint`` defaults to the ``GRAPH_OS_URL`` env var (mirrors the established
-    ``GRAPH_OS_MCP_URL``-gated pattern in code-enhancer's ``kg_query_runs.py``).
+    ``endpoint`` defaults to the ``ARBORA_URL`` env var (mirrors the established
+    ``ARBORA_MCP_URL``-gated pattern in code-enhancer's ``kg_query_runs.py``).
     Returns ``None`` — never raises — when no gateway is configured, the request
     fails, or the response isn't well-formed, so callers can unconditionally fall
     through to tier 2/3.
     """
-    url = (endpoint or os.environ.get("GRAPH_OS_URL", "")).rstrip("/")
+    url = (endpoint or os.environ.get("ARBORA_URL", "")).rstrip("/")
     if not url:
         return None
     body = json.dumps(
@@ -128,12 +128,12 @@ def kg_write_analysis(
     Each call writes a NEW, timestamped node (never overwrites a prior run for the
     same project/domain) so the KG accumulates a real history — "how has this
     project's CA-004 score trended" becomes a Cypher query, not a diff of files on
-    disk. ``endpoint`` defaults to ``GRAPH_OS_URL``, matching ``kg_code_context``.
+    disk. ``endpoint`` defaults to ``ARBORA_URL``, matching ``kg_code_context``.
     Returns the written node id, or ``None`` — never raises — when no gateway is
     configured or the write fails, so callers can treat this as a pure side effect
     that never blocks the primary (local JSON) report output.
     """
-    url = (endpoint or os.environ.get("GRAPH_OS_URL", "")).rstrip("/")
+    url = (endpoint or os.environ.get("ARBORA_URL", "")).rstrip("/")
     if not url:
         return None
     ts = report.get("timestamp") or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())

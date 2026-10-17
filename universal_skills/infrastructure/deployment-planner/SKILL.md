@@ -52,7 +52,7 @@ This skill automates the process of determining **which services should run on w
 | `tunnel-manager-mcp` | SSH inventory, cross-host command execution |
 | `container-manager-mcp` | Container runtime introspection (Docker/Podman) |
 | `portainer-mcp` | Stack lifecycle management, Swarm service updates |
-| `graph-os` *(optional)* | Persist placement topology to Knowledge Graph |
+| `arbora` *(optional)* | Persist placement topology to Knowledge Graph |
 
 ## Configuration
 
@@ -392,7 +392,7 @@ Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
 
 1. **Native** (above) — deterministic, no external tools; best for
    planner-owned catalog services. Matches the in-repo golden reference
-   `agent-utilities/deploy/k8s/graphos.yaml`.
+   `agent-utilities/deploy/k8s/arbora.yaml`.
 2. **kompose transform** — for the ~60 existing compose stacks, start from
    `kompose convert -f compose.yml -o k8s/`, then apply the deterministic
    post-fixups kompose drops:
@@ -406,7 +406,7 @@ Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
    | `depends_on` | dropped | initContainer wait + readiness probe |
    | host-mode ports (Caddy 80/443) | NodePort guess | `hostPort` on the edge node or `Service type: LoadBalancer` |
 
-   For services that ship an upstream Helm chart (e.g. graph-os), prefer
+   For services that ship an upstream Helm chart (e.g. arbora), prefer
    `helm upgrade --install` with a values file rendered from the placement.
 
 The emitted `k8s/` dir is what the GitLab `k8s-deploy` CI job applies
@@ -449,7 +449,7 @@ After executing a deployment plan, verify:
 
 ## KG Schema (Optional)
 
-When Graph-OS is available, persist the deployment topology:
+When Arbora is available, persist the deployment topology:
 
 | Node Type | Properties |
 |---|---|

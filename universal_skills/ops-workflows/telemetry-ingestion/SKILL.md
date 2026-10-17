@@ -17,7 +17,7 @@ team_config:
     intake-agent: [graph_query, nc_files]
     processor-agent: [graph_analyze, document_tools]
     validator-agent: [graph_query]
-tags: ['telemetry', 'observability', 'langfuse', 'graph-os']
+tags: ['telemetry', 'observability', 'langfuse', 'arbora']
 concept: CONCEPT:KG-2.12
 metadata:
   version: '1.3.11'
@@ -45,14 +45,14 @@ Expected: `trace, filter`
 Calculate overall success rates and token consumption averages across workflows.
 Expected: `success, token`
 
-### Step 2: Graph Os
+### Step 2: Arbora
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
 Write Cypher queries using kg_write to ingest ExecutionSummary and PerformanceAnomaly nodes into LadybugDB with relationships to their respective Workflow, Agent, and Tool nodes.
 Expected: `cypher, ingest`
 
-### Step 3: KG Persistence [depends_on: graph-os]
+### Step 3: KG Persistence [depends_on: arbora]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Langfuse Trace Retrieval; Step 1 — Langfuse Metrics Aggregation; Step 2 — Graph Os
+- **Run first (in parallel):** Step 0 — Langfuse Trace Retrieval; Step 1 — Langfuse Metrics Aggregation; Step 2 — Arbora
 - **After level 0:** Step 3 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

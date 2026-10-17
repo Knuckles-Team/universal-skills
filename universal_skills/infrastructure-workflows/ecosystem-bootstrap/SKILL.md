@@ -21,14 +21,14 @@ tags:
   - portainer
   - container-manager-mcp
   - systems-manager-mcp
-  - graph-os
+  - arbora
 requires:
   - systems-manager-mcp
   - container-manager-mcp
   - portainer-mcp
   - technitium-dns-mcp
   - tunnel-manager-mcp
-  - graph-os
+  - arbora
 metadata:
   version: '1.3.11'
 ---
@@ -113,7 +113,7 @@ Update DNS records with the actual container IPs for all deployed services and M
 Expected: mcp_dns_records, total_records
 Depends On: Step 6
 
-### Step 8: graph-os
+### Step 8: arbora
 Register the complete deployment topology in the Knowledge Graph. Use `graph_write` to create nodes:
 - `DeploymentManifest` — the overall bootstrap record with profile, timestamp, host
 - `DeploymentPhase` nodes for each tier (Tier 0, 1, 2)
@@ -138,6 +138,6 @@ Depends On: Step 8
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — select-deployment-profile; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — verify-portainer; Step 4 — configure-service-dns; Step 5 — deploy-platform-services; Step 6 — deploy-mcp-services; Step 7 — update-mcp-dns; Step 8 — graph-os; Step 9 — present-bootstrap-summary
+- **Run first (in parallel):** Step 0 — select-deployment-profile; Step 1 — systems-manager-mcp; Step 2 — container-manager-mcp; Step 3 — verify-portainer; Step 4 — configure-service-dns; Step 5 — deploy-platform-services; Step 6 — deploy-mcp-services; Step 7 — update-mcp-dns; Step 8 — arbora; Step 9 — present-bootstrap-summary
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

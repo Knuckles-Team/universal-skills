@@ -9,7 +9,7 @@ metadata:
 
 # Trading Debate Skill
 
-Use this skill to orchestrate multi-agent debate to peer-review and risk-veto trading hypotheses using `graph-os`.
+Use this skill to orchestrate multi-agent debate to peer-review and risk-veto trading hypotheses using `arbora`.
 
 ## Workflow
 1. Accept a `ResearchHypothesis` or `AlphaFactor`.

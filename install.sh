@@ -97,7 +97,7 @@ else
   run_install_skills --all-detected
 fi
 
-# 4) Optional: wire MCP servers (genesis needs the graph-os + connector MCP servers).
+# 4) Optional: wire MCP servers (genesis needs the arbora + connector MCP servers).
 if [ -n "$MCP_CONFIG" ]; then
   MCP_INSTALL="$(python3 -c 'import importlib.util as u,os; s=u.find_spec("universal_skills"); print(os.path.join(os.path.dirname(s.origin),"agent-tools","mcp-installer","scripts","install.py")) if s else print("")' 2>/dev/null || true)"
   if [ -n "$MCP_INSTALL" ] && [ -f "$MCP_INSTALL" ]; then

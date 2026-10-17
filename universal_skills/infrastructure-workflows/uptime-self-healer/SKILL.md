@@ -55,4 +55,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — read-monitor-states; Step 1 — confirm-healing; Step 2 — diagnose-container; Step 3 — portainer-agent; Step 4 — restore-container; Step 5 — verify-monitor-recovery; Step 6 — report-recovery
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

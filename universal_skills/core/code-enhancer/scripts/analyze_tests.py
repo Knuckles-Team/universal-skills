@@ -4,7 +4,7 @@
 Inventories pytest tests, maps to use-cases, classifies intent,
 and detects drift between docs and tests.
 
-KG-native (CE-045): test symbol discovery goes through the graph-os code KG first
+KG-native (CE-045): test symbol discovery goes through the arbora code KG first
 (``kg_native.repo_symbols`` — a repo already ingested has ``is_test``/decorator/
 assert-count data for free), then the engine tree-sitter AST, and only falls back
 to a local stdlib ``ast`` parse when neither is reachable.
@@ -65,7 +65,7 @@ def _extract_tests_from_file(
     """Extract test function metadata from a Python test file.
 
     KG-native (CE-045): ``kg_symbols`` — when the caller already bulk-fetched them
-    from the graph-os code KG (Tier 1) for the whole repo — is used as-is; otherwise
+    from the arbora code KG (Tier 1) for the whole repo — is used as-is; otherwise
     falls back to the tiered per-file ``kg_native`` retrieval (engine AST, then a
     local ``ast`` parse) instead of a direct ``ast.walk`` here.
     """

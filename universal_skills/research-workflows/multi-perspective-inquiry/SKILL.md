@@ -57,7 +57,7 @@ the frontier question that was queued as the next research loop. Expected:
 
 ## Execution
 
-This is a thin delegating workflow. Execute it via graph-os rather than re-prompting:
+This is a thin delegating workflow. Execute it via arbora rather than re-prompting:
 
 - MCP: `research_artifact(action="inquire", topic="<topic>")`
 - REST: `POST /api/research/inquire {"topic": "<topic>"}`

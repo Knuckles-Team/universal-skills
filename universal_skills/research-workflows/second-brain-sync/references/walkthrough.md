@@ -3,7 +3,7 @@
 Two concrete, end-to-end runs of `second-brain-sync`: the common case — a
 markdown notes directory synced in one call (§A) — and a mixed corpus of an
 Obsidian vault export, a PDF, a git repo, and a bookmarked article ingested
-per-source (§B). Every tool call below is a real `graph-os` MCP tool
+per-source (§B). Every tool call below is a real `arbora` MCP tool
 (`graph_ingest`, `graph_analyze`, `graph_write`, `graph_query`, `graph_ask`,
 `graph_claims`, `engine_query`); none of it is invented. Load them first:
 `load_tools(tools=["graph_ingest", "graph_analyze", "graph_write", "graph_query", "graph_ask", "graph_claims", "engine_query"])`.

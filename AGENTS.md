@@ -41,13 +41,13 @@ application of it.
   named atomic skills in dependency order) — and end with the standard **delegation
   footer**:
 
-  > **Execution:** If graph-os is reachable, offload the whole DAG via
+  > **Execution:** If arbora is reachable, offload the whole DAG via
   > `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill)
   > for true parallel/swarm execution. Otherwise execute the steps natively in
   > dependency order: run steps with no unmet `depends_on` in parallel, then their
   > dependents.
 
-  The machine layer (frontmatter DAG + `team.yaml`) drives the agent-utilities graph-os
+  The machine layer (frontmatter DAG + `team.yaml`) drives the agent-utilities arbora
   orchestrator unchanged; the rendered `## Execution` layer is what lets Claude (or any
   agent) run the *same* workflow natively. `scripts/check_atomicity.py` enforces both.
 
@@ -124,8 +124,7 @@ pip install -e ".[skill-name]"                          # install one skill's ex
 
 A gate that needs a missing tool or the project environment prints
 `SKIPPED (<gate>): <reason>` and passes locally; with `CI` set it exits 2
-(`CANNOT RUN`) instead. The concept-registry check reads a sibling
-agent-utilities checkout (or `AGENT_UTILITIES_OVERVIEW`); CI clones it. Gates
+(`CANNOT RUN`) instead. Gates
 check behaviour or contracts, not hand-kept counts or golden copies, and no gate
 calls an external service.
 
