@@ -180,7 +180,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
 dependencies = [
-    "agent-connector-sdk>=0.2.0,<1.0.0",{gql_core_dep}
+    "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",{gql_core_dep}
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -189,9 +189,9 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk>=0.2.0,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk>=0.2.0,<1.0.0",{gql_all_dep}
+    "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",{gql_all_dep}
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
@@ -2471,7 +2471,6 @@ def scaffold(
             "ENV_EXAMPLE",
             "ROOT_MCP_CONFIG_JSON",
             "MCP_COMPOSE_YML",
-            "AGENT_COMPOSE_YML",
             "PYPROJECT_TOML",
             "INIT_PY",
         }

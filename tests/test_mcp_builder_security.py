@@ -244,7 +244,7 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
     metadata = tomllib.loads(pyproject)
     dependencies = metadata["project"]["dependencies"]
     extras = metadata["project"]["optional-dependencies"]
-    assert "agent-connector-sdk>=0.2.0,<1.0.0" in dependencies
+    assert "agent-connector-sdk[mcp]>=0.2.1,<1.0.0" in dependencies
     assert not any(
         requirement.startswith(("agent-utilities", "epistemic-graph"))
         for requirement in dependencies

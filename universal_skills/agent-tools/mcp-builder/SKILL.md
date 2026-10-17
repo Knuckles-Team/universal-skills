@@ -18,7 +18,7 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package using the maintained SDK scaffold. A connector
-depends on `agent-connector-sdk>=0.2.0,<1.0.0` and nothing else from the agent
+depends on `agent-connector-sdk[mcp]>=0.2.1,<1.0.0` and nothing else from the agent
 ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
 
 Use current main revisions of
