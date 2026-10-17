@@ -13,7 +13,7 @@ SCRIPT_DIR = PROJECT_ROOT / "universal_skills" / "research" / "web-crawler" / "s
 
 
 def _runtime():
-    pytest.importorskip("agent_utilities")
+    pytest.importorskip("agent_connector_sdk")
     sys.path.insert(0, str(SCRIPT_DIR))
     return importlib.import_module("security_runtime")
 
@@ -44,7 +44,7 @@ def test_crawler_source_has_no_insecure_transport_or_browser_switches() -> None:
     assert "--host-resolver-rules=" in (SCRIPT_DIR / "security_runtime.py").read_text(
         encoding="utf-8"
     )
-    assert "source_http_allow_browser_fetch" in (
+    assert "SOURCE_HTTP_ALLOW_BROWSER_FETCH" in (
         SCRIPT_DIR / "security_runtime.py"
     ).read_text(encoding="utf-8")
 
@@ -72,7 +72,7 @@ def test_output_is_confined_and_written_with_opaque_filename(
 ) -> None:
     _runtime()
     http_safety = importlib.import_module(
-        "agent_utilities.protocols.source_connectors.http_safety"
+        "agent_connector_sdk.http.egress"
     )
 
     def resolve_public_test_authority(host: str, port: int | None):

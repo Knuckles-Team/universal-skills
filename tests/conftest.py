@@ -6,9 +6,6 @@ import importlib
 import pytest
 
 
-os.environ["AGENT_UTILITIES_TESTING"] = "true"
-
-
 def pytest_configure(config):
     """Register markers and fail closed for the dedicated SDK contract job."""
     if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":

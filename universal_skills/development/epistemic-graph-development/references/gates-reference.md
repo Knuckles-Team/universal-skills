@@ -67,9 +67,9 @@ contract-enforcing ones. Every script path below was verified to exist.
 | Hook id | Script | Forbids |
 |---|---|---|
 | `check-root-hygiene` | `scripts/check_root_hygiene.py` | Any tracked root entry not declared. **Allowlist, not denylist**, and explicitly **not a ratchet**: non-dot root entries need a one-line reason in `.repo-layout.toml`; conventional dotfiles go in the script's `ALLOWED_DOTFILES`. A declared entry that stops being tracked is ALSO a failure. |
-| `check-sprawl` | `agent-utilities/scripts/check_sprawl.py` (fleet-shared) | `*_v2.py` / `*_old.py` / `*_new.py` clone filenames, `.orig`/`.rej`/`.bak`, the literal `# --- Merged from` marker, tracked binaries over 1 MB. |
-| `check-stubs` | `agent-utilities/scripts/check_stubs.py` | Active stubs and TODOs. |
-| `lane-guard` | `agent-utilities/scripts/check_lane_guard.py` | Editing the canonical checkout; stray `CARGO_TARGET_DIR`. |
+| `check-sprawl` | `graph-os/scripts/check_sprawl.py` (fleet-shared) | `*_v2.py` / `*_old.py` / `*_new.py` clone filenames, `.orig`/`.rej`/`.bak`, the literal `# --- Merged from` marker, tracked binaries over 1 MB. |
+| `check-stubs` | `graph-os/scripts/check_stubs.py` | Active stubs and TODOs. |
+| `lane-guard` | `graph-os/scripts/check_lane_guard.py` | Editing the canonical checkout; stray `CARGO_TARGET_DIR`. |
 | `jscpd-differential` / `dupehound-changed-functions` | `scripts/check_duplication.py enforce`, `scripts/check_dupehound.py` | New structural clones / clone pairs in changed code. |
 | `complexity-staged` | `scripts/check_complexity_staged.py` | Any NEW function over cyclomatic 10 / cognitive 15, and any regression. |
 | `documentation-contract` | `scripts/check_documentation_contract.py` | Cargo/ledger/MkDocs documentation drift. |
@@ -156,7 +156,8 @@ if not sites:
         "mint-lease call-site gate failed: found ZERO calls to "
         "mint_graph_policy_lease — either the scan paths drifted or the "
         "feature was deleted; update this gate deliberately if so, don't "
-        "let it go quietly blind")
+        "let it go quietly blind"
+    )
 ```
 
 ⚠ This grep is a **heuristic**, not a proof of vacuity for any single gate: a

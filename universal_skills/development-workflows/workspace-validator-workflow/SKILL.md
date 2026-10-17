@@ -29,12 +29,12 @@ Clarify with the user if they only want to validate and fix issues, or if they a
 Expected: run_parameters
 
 ### Step 1: submit-validation [skill: repository-manager-mcp]
-Submit validation using the `rm_projects` tool with `action="validate"`. If the user requested a phased bump and phased push, pass `auto_bump=true`, `auto_push=true`, and the requested `bump_part` parameter. This ensures the ecosystem will automatically bump and publish on the very first run if 0 issues are found. Store the reports in `${AGENT_UTILITIES_WORKSPACE_ROOT}/reports`.
+Submit validation using the `rm_projects` tool with `action="validate"`. If the user requested a phased bump and phased push, pass `auto_bump=true`, `auto_push=true`, and the requested `bump_part` parameter. This ensures the ecosystem will automatically bump and publish on the very first run if 0 issues are found. Store the reports in `${WORKSPACE_ROOT}/reports`.
 Expected: job_id
 Depends On: Step 0
 
 ### Step 2: monitor-validation [skill: repository-manager-mcp]
-Poll for validation results by calling `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. While polling is active, do NOT wait idle. Dynamically inspect the output directory `${AGENT_UTILITIES_WORKSPACE_ROOT}/reports/validation-reports-<ts>/` for newly created project results subdirectories (e.g. `wger-agent-results/`). As soon as a repository folder is created and populated with its project summary `summary_<repo_underscores>_<ts>.md`, immediately read it to get a quick, actionable peek into the validation issues and start triaging and fixing that project's failures concurrently without waiting for the overall validation run to complete.
+Poll for validation results by calling `rm_projects` with `action="validate_status"` and `job_id="<the-returned-id>"`. While polling is active, do NOT wait idle. Dynamically inspect the output directory `${WORKSPACE_ROOT}/reports/validation-reports-<ts>/` for newly created project results subdirectories (e.g. `wger-agent-results/`). As soon as a repository folder is created and populated with its project summary `summary_<repo_underscores>_<ts>.md`, immediately read it to get a quick, actionable peek into the validation issues and start triaging and fixing that project's failures concurrently without waiting for the overall validation run to complete.
 Expected: initial_validation_report
 Depends On: Step 1
 

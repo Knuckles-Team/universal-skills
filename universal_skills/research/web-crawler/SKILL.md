@@ -71,7 +71,7 @@ own.
 ## Output and privacy
 
 `--output-dir` is resolved under `WORKSPACE_PATH` when that AgentConfig field is
-configured, otherwise under the agent-utilities XDG data directory. Absolute
+configured, otherwise under the graph-os XDG data directory. Absolute
 paths are accepted only when they remain beneath one of those roots. Existing
 symlink components, traversal outside the allowed roots, and symlink targets
 are rejected. Files are written atomically with private permissions and opaque,

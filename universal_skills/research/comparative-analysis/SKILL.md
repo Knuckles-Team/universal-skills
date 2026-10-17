@@ -61,7 +61,7 @@ sourced live instead of from a static paper file:
 5. **Ingest into the KG (optional, for reuse across sessions)** — once scraped, the vendor
    pages are just markdown; run the standard `kg_ingest` MCP tool over the
    `~/.scholarx/analysis/vendor/` tree so future sessions discover them via
-   `kg_search`/`discover_projects.py --kg-query` (Phase -1) instead of re-scraping.
+   `graph_search`/`discover_projects.py --kg-query` (Phase -1) instead of re-scraping.
 
 This keeps the scraping itself at the agent-tool layer (`web-search`/`web-crawler`, which
 have their own rate-limiting/robots.txt/session handling) rather than reimplementing HTTP
@@ -77,7 +77,7 @@ Pick the mode before anything else — they have different default step sets (G8
 | Mode | When | Engine | Heavy maturity steps? |
 |------|------|--------|------------------------|
 | **Lightweight** (default for code-vs-code feature extraction) | Extracting innovations from a focused OSS repo/paper to feed SDD | Agent exploration + the CA scripts; **no live KG required** | Skipped unless asked |
-| **Deep** | Recurring/large corpora, or when the `agent-utilities-kg` MCP server is up and inputs are ingested | KG MCP tools (Phase -1) | Optional |
+| **Deep** | Recurring/large corpora, or when the `graph-os` MCP server is up and inputs are ingested | KG MCP tools (Phase -1) | Optional |
 
 **Lightweight Mode is the fast inner loop** and the common case. It does not need the KG to be
 running, and it does not run the 11-step maturity audit (governance/bus-factor/SemVer/container
@@ -127,11 +127,11 @@ start Lightweight and promote to Deep without rework.
 
 ### Phase -1: KG-Native Discovery & Analysis (Deep Mode)
 
-The Knowledge Graph (via the `agent-utilities-kg` MCP server) is the **primary source of truth**.
+The Knowledge Graph (via the `graph-os` MCP server) is the **primary source of truth**.
 The KG backend provides **native layered analysis** — use MCP tools first, scripts second.
 
 #### Layer 1 — Vector Discovery (No LLM, instant)
-Use `kg_search` with `mode='discover'` for native cross-referencing:
+Use `graph_search` with `mode='discover'` for native cross-referencing:
 ```
 kg_search(query="multi-agent orchestration", mode="discover", top_k=20)
 ```
@@ -196,7 +196,7 @@ transitive and symmetric relationships from recently added edges.
 | Full codebase-vs-codebase comparison | Scripts (Phase 1-8) |
 | Exhaustive all-concepts cross-ref | `concept_cross_reference.py --kg` |
 
-**Default to MCP**: If the user does not specify local directories, you MUST default to using the `agent-utilities-kg` MCP server (`kg_search`, `kg_analyze`, `kg_query`) to retrieve and analyze data from the Knowledge Graph.
+**Default to MCP**: If the user does not specify local directories, you MUST default to using the `graph-os` MCP server (`graph_search`, `kg_analyze`, `graph_query`) to retrieve and analyze data from the Knowledge Graph.
 
 **Dynamic Ingestion**: If the user specifies a local directory that is not yet in the Knowledge Graph, you MUST first run the `kg_ingest` MCP tool to import it into the graph *before* beginning the comparison.
 
@@ -243,7 +243,7 @@ embedded metadata for downstream analysis scripts.
 proceed past this step with an unanswered item (record each answer so the run is auditable):
 1. **Primary Project**: Which codebase is the primary target for enhancement?
 2. **Mode**: Lightweight (default, code-vs-code) or Deep (KG)? — see Mode Selection above.
-3. **Knowledge Graph Available?**: Is the `agent-utilities-kg` MCP server running? (If No → Lightweight.)
+3. **Knowledge Graph Available?**: Is the `graph-os` MCP server running? (If No → Lightweight.)
 4. **Concept Registry?**: Path to `docs/concept_map.md` / `docs/concepts.yaml` for offline Extend-Before-Invent (`parse_concept_registry.py`). Prefer `concept_map.md` (clean names).
 5. **Architecture Docs?**: Does the project have C4 architecture diagrams?
 6. **Analysis Depth & Output**: Full vs focused; where does the Innovation Ledger + SDD land?
@@ -336,7 +336,7 @@ Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this st
 # - [ ] Design Consistent: Does the implementation follow the same patterns as sibling modules?
 # - [ ] Tests Exist: Is there at least one test that exercises the hot path through this feature?
 
-rm -rf ${AGENT_UTILITIES_WORKSPACE_ROOT}/.specify/ca_repos/<session_id>
+rm -rf ${WORKSPACE_ROOT}/.specify/ca_repos/<session_id>
 ```
 
 ## Output Location Rules

@@ -114,7 +114,7 @@ All `auth.py` files must use these patterns:
 ### CONCEPT ID Standard
 
 - Every project has a unique prefix (no collisions across ecosystem)
-- `docs/concepts.md` references `CONCEPT:ECO-4.0` as the bridge to agent-utilities
+- `docs/concepts.md` references `CONCEPT:ECO-4.0` as the bridge to graph-os
 - Tool descriptions in `mcp_server.py` annotate their CONCEPT ID
 
 ---
@@ -138,8 +138,8 @@ Run the comprehensive drift audit script against all (or targeted) projects:
 
 ```bash
 python scripts/audit_ecosystem.py \
-    --agents-dir ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents \
-    --output ${AGENT_UTILITIES_WORKSPACE_ROOT}/reports/ecosystem-drift-report.md
+    --agents-dir ${WORKSPACE_ROOT}/agent-packages/agents \
+    --output ${WORKSPACE_ROOT}/reports/ecosystem-drift-report.md
 ```
 
 This produces a full drift report with:
@@ -166,7 +166,7 @@ python scripts/generate_concepts.py
 ```
 
 This creates `docs/concepts.md` with unique CONCEPT prefixes, cross-references
-to agent-utilities via `CONCEPT:ECO-4.0`, and tool domain mappings.
+to graph-os via `CONCEPT:ECO-4.0`, and tool domain mappings.
 Expected: concepts_created_count
 Depends On: Step 2
 
@@ -233,8 +233,8 @@ Run the drift audit again to verify all fixes were applied:
 
 ```bash
 python scripts/audit_ecosystem.py \
-    --agents-dir ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents \
-    --output ${AGENT_UTILITIES_WORKSPACE_ROOT}/reports/ecosystem-drift-report-post-fix.md
+    --agents-dir ${WORKSPACE_ROOT}/agent-packages/agents \
+    --output ${WORKSPACE_ROOT}/reports/ecosystem-drift-report-post-fix.md
 ```
 
 Compare pre-fix and post-fix scores. Present delta to user.

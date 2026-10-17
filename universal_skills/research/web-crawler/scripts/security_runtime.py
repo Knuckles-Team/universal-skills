@@ -1,8 +1,8 @@
 """Security boundary for the web-crawler skill.
 
 All outbound destinations, TLS material, proxies, response limits, durable
-content, and output locations are resolved through the shared agent-utilities
-runtime.  This module intentionally contains no deployment-specific endpoint,
+content, and output locations are resolved through the agent-connector-sdk
+runtime (governed HTTP client, DNS-pinned egress, TLS profiles, privacy).  This module intentionally contains no deployment-specific endpoint,
 certificate path, or private-network exception.
 """
 
@@ -16,22 +16,96 @@ import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import urldefrag, urlparse
+from urllib.parse import urldefrag, urljoin, urlparse
 
-from agent_utilities.core import config as config_module
-from agent_utilities.core.http_client import create_http_client
-from agent_utilities.core.paths import data_dir
-from agent_utilities.core.transport_security import resolve_tls_profile
-from agent_utilities.protocols.source_connectors.http_safety import (
-    SourceEgressError,
-    normalize_allowed_hosts,
-    require_safe_source_url,
-    safe_get_bytes,
-)
-from agent_utilities.security.persistence_privacy import (
-    persistence_reference,
-    sanitize_for_persistence,
-)
+from agent_connector_sdk.auth.static import BearerAuth
+from agent_connector_sdk.config import csv_values, setting
+from agent_connector_sdk.http.bodies import read_bounded
+from agent_connector_sdk.http.client import create_http_client
+from agent_connector_sdk.http.egress import validate_base_url, validate_base_url_resolved
+from agent_connector_sdk.http.options import HttpClientOptions
+from agent_connector_sdk.paths import data_dir
+from agent_connector_sdk.privacy import sanitize_for_persistence
+from agent_connector_sdk.privacy_reference import persistence_reference
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
+
+_REDIRECT_STATUS = {301, 302, 303, 307, 308}
+
+
+class SourceEgressError(ValueError):
+    """A source URL or redirect left the permitted public boundary."""
+
+
+def normalize_allowed_hosts(value: Any) -> frozenset[str]:
+    """Lower-case, dot-trimmed host names from a CSV string or iterable."""
+
+    items = csv_values(value) if isinstance(value, str) else list(value or [])
+    return frozenset(str(item).strip().lower().rstrip(".") for item in items if item)
+
+
+def require_safe_source_url(
+    url: str,
+    *,
+    allowed_private_hosts: frozenset[str] = frozenset(),
+    resolve_dns: bool = True,
+) -> None:
+    """Refuse non-HTTP(S), credentialed, or non-public destinations."""
+
+    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    if host in allowed_private_hosts:
+        if urlparse(url).scheme not in {"http", "https"}:
+            raise SourceEgressError("unsupported scheme")
+        return
+    check = validate_base_url_resolved if resolve_dns else validate_base_url
+    decision = check(url, allow_loopback=False)
+    if not decision.allowed:
+        raise SourceEgressError(decision.reason)
+
+
+def safe_get_bytes(
+    url: str,
+    *,
+    timeout: float,
+    max_bytes: int,
+    max_redirects: int,
+    allowed_private_hosts: frozenset[str],
+    allowed_redirect_hosts: frozenset[str],
+) -> tuple[bytes, str | None]:
+    """GET with DNS-pinned egress, bounded body and host-scoped redirects."""
+
+    origin_host = (urlparse(url).hostname or "").lower().rstrip(".")
+    current = url
+    for _ in range(max_redirects + 1):
+        require_safe_source_url(
+            current, allowed_private_hosts=allowed_private_hosts, resolve_dns=False
+        )
+        tls = resolve_tls_profile("source-http")
+        try:
+            options = HttpClientOptions(
+                base_url=current,
+                timeout=timeout,
+                tls=tls,
+                allow_plaintext=urlparse(current).scheme == "http",
+                pin_egress=True,
+                allowed_private_hosts=tuple(sorted(allowed_private_hosts)),
+            )
+            with create_http_client(options) as client:
+                with client.stream("GET", current) as response:
+                    if response.status_code in _REDIRECT_STATUS:
+                        location = response.headers.get("location", "")
+                        if not location:
+                            raise SourceEgressError("redirect without location")
+                        current = urljoin(current, location)
+                        host = (urlparse(current).hostname or "").lower().rstrip(".")
+                        if host != origin_host and host not in allowed_redirect_hosts:
+                            raise SourceEgressError("redirect host not allowed")
+                        continue
+                    response.raise_for_status()
+                    return read_bounded(response, max_bytes), response.charset_encoding
+        finally:
+            tls.cleanup()
+    raise SourceEgressError("too many redirects")
+
 
 MAX_URL_BYTES = 4_096
 MAX_SEED_URLS = 50
@@ -131,25 +205,31 @@ class CrawlerSecurityPolicy:
     )
 
     @classmethod
-    def from_agent_config(
-        cls, config: config_module.AgentConfig | None = None
-    ) -> "CrawlerSecurityPolicy":
-        cfg = config or config_module.AgentConfig()
-        private_hosts = normalize_allowed_hosts(cfg.source_http_allowed_private_hosts)
-        redirect_hosts = normalize_allowed_hosts(cfg.source_http_allowed_redirect_hosts)
+    def from_agent_config(cls) -> "CrawlerSecurityPolicy":
+        private_hosts = normalize_allowed_hosts(
+            setting("SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS", "")
+        )
+        redirect_hosts = normalize_allowed_hosts(
+            setting("SOURCE_HTTP_ALLOWED_REDIRECT_HOSTS", "")
+        )
         if len(private_hosts | redirect_hosts) > 256:
             raise CrawlerSecurityError("crawler_host_allowlist_too_large")
         workspace = None
-        if cfg.workspace_path:
-            workspace = Path(cfg.workspace_path).expanduser().resolve(strict=False)
+        workspace_path = setting("WORKSPACE_PATH", "")
+        if workspace_path:
+            workspace = Path(workspace_path).expanduser().resolve(strict=False)
             if not workspace.is_dir():
                 raise CrawlerSecurityError("crawler_workspace_unavailable")
         return cls(
             allowed_private_hosts=private_hosts,
             allowed_redirect_hosts=redirect_hosts,
-            max_response_bytes=int(cfg.source_http_max_response_bytes),
-            max_redirects=int(cfg.source_http_max_redirects),
-            allow_browser_fetch=bool(cfg.source_http_allow_browser_fetch),
+            max_response_bytes=int(
+                setting("SOURCE_HTTP_MAX_RESPONSE_BYTES", 10 * 1024 * 1024)
+            ),
+            max_redirects=int(setting("SOURCE_HTTP_MAX_REDIRECTS", 5)),
+            allow_browser_fetch=bool(
+                setting("SOURCE_HTTP_ALLOW_BROWSER_FETCH", False)
+            ),
             workspace_root=workspace,
             output_root=(data_dir() / "web-crawler").expanduser().resolve(strict=False),
         )
@@ -426,20 +506,19 @@ class SafeMCPClient:
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
         }
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
         if self.session_id:
             headers["mcp-session-id"] = self.session_id
 
         tls = resolve_tls_profile("graph-os")
-        client_kwargs: dict[str, Any] = {
-            "timeout": self.timeout,
-            "follow_redirects": False,
-            "headers": headers,
-        }
-        client_kwargs.update(tls.httpx_kwargs())
+        options = HttpClientOptions(
+            base_url=self.url,
+            timeout=self.timeout,
+            tls=tls,
+            auth=BearerAuth(self.token) if self.token else None,
+            headers=headers,
+        )
         try:
-            with create_http_client(**client_kwargs) as client:
+            with create_http_client(options) as client:
                 with client.stream("POST", self.url, content=body) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         raise CrawlerSecurityError("crawler_kg_redirect_denied")

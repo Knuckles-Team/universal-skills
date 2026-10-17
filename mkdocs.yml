@@ -1,5 +1,5 @@
 site_name: "universal-skills"
-site_description: "Universal Skills — a library of shared, reusable Pydantic AI agent skills and workflows for the agent-utilities ecosystem."
+site_description: "Universal Skills — a library of shared, reusable Pydantic AI agent skills and workflows for the Graph OS ecosystem."
 site_url: "https://knuckles-team.github.io/universal-skills/"
 repo_name: "Knuckles-Team/universal-skills"
 repo_url: "https://github.com/Knuckles-Team/universal-skills"

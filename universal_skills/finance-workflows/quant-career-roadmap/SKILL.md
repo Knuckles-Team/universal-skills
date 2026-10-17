@@ -13,7 +13,7 @@ team_config: quantitative_trading_team
 tags: [quant, career, roadmap, finance, mentoring, workflow]
 metadata:
   version: '1.3.11'
-  author: agent-utilities
+  author: graph-os
   concept: 'CONCEPT:KG-2.6'
 ---
 

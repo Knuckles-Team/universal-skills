@@ -3,11 +3,12 @@ import argparse
 import sys
 from pathlib import Path
 
+import logging
+
 try:
     import mammoth
     import markdownify
     import pymupdf4llm
-    from agent_utilities.base_utilities import get_logger
 except ImportError:
     print("Error: Missing required dependencies for the 'document-converter' skill.")
     print(
@@ -15,7 +16,7 @@ except ImportError:
     )
     sys.exit(1)
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def convert_docx_to_md(docx_path: Path) -> str:

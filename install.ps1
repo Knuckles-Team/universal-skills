@@ -4,10 +4,9 @@
 
 .DESCRIPTION
   Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and
-  deploys the skills — including universal-installer and agent-os-genesis (alias
-  agent-utilities-genesis) — into every detected AI tool AND the agent-utilities XDG
+  deploys the skills — including universal-installer and graphos-genesis — into every detected AI tool AND the graph-os XDG
   space, preferring symlinks (Windows: a directory JUNCTION when symlinks need admin,
-  then a copy). This is the starting point for agent-os-genesis.
+  then a copy). This is the starting point for graphos-genesis.
 
 .EXAMPLE
   # Run this reviewed file from a release artifact or clone:
@@ -78,5 +77,5 @@ if ($Mcp) {
   }
 }
 
-Info "Done. agent-os-genesis (alias agent-utilities-genesis) + universal-installer are deployed."
-Info "Next: invoke `"agent-os-genesis`" (or `"day0`") in your AI tool to deploy the Agent OS."
+Info "Done. graphos-genesis + universal-installer are deployed."
+Info "Next: invoke `"graphos-genesis`" (or `"day0`") in your AI tool to deploy the Agent OS."

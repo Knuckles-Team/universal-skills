@@ -1,56 +1,69 @@
-import sys
+"""Every skill-workflow's step graph must be well formed.
+
+Parses each workflow ``SKILL.md`` ``### Step N: <id> [depends_on: a, b]`` heading
+and checks that the workflow has steps, that every dependency names a step in the
+same workflow, and that the dependency graph has no cycle.
+"""
+
+import re
+from graphlib import TopologicalSorter
 from pathlib import Path
+
 import pytest
 
-# Ensure agent-utilities is in sys.path if not already loaded
-agent_utils_path = str(
-    Path(__file__).resolve().parent.parent.parent.parent / "agent-utilities"
+STEP_RE = re.compile(
+    r"^###\s+Step\s+(?P<num>\d+):\s*(?P<id>[^\s\[]+)(?:\s*\[depends_on:\s*(?P<deps>[^\]]*)\])?",
+    re.MULTILINE,
 )
-if agent_utils_path not in sys.path:
-    sys.path.insert(0, agent_utils_path)
 
-# The compiler lives in the sibling agent-utilities package and pulls in its full
-# runtime (pydantic_ai, …). Skip cleanly when that stack isn't installed (e.g. the
-# isolated pre-commit uv env); the test runs wherever agent-utilities is available.
-SkillCompiler = pytest.importorskip(
-    "agent_utilities.workflows.skill_compiler"
-).SkillCompiler
-
-# Find all directories under universal_skills/ containing a SKILL.md file
 skills_root = Path(__file__).resolve().parent.parent / "universal_skills"
-skill_dirs = [p.parent for p in skills_root.rglob("SKILL.md")]
+workflow_dirs = sorted(
+    (
+        p.parent
+        for p in skills_root.rglob("SKILL.md")
+        if p.parent.parent.parent == skills_root
+        and p.parent.parent.name.endswith("-workflows")
+    ),
+    key=lambda p: p.as_posix(),
+)
 
-# Sort for deterministic test ordering
-skill_dirs.sort(key=lambda p: p.as_posix())
+
+def parse_steps(text: str) -> dict[str, list[str]]:
+    """Return ``{step_id: [dependency ids]}`` in document order.
+
+    A dependency may name a step by id or by number (``Step 2`` or ``2``).
+    """
+    matches = list(STEP_RE.finditer(text))
+    by_number = {m.group("num"): m.group("id") for m in matches}
+    steps: dict[str, list[str]] = {}
+    for match in matches:
+        raw = (match.group("deps") or "").strip()
+        deps: list[str] = []
+        for token in (d.strip() for d in raw.split(",")):
+            if not token or token == "none":
+                continue
+            numbered = re.fullmatch(r"(?:Step\s+)?(\d+)", token)
+            deps.append(by_number.get(numbered.group(1), token) if numbered else token)
+        steps[match.group("id")] = deps
+    return steps
+
+
+def test_workflows_are_discovered() -> None:
+    assert workflow_dirs
 
 
 @pytest.mark.parametrize(
-    "skill_dir", skill_dirs, ids=lambda p: p.relative_to(skills_root).as_posix()
+    "skill_dir", workflow_dirs, ids=lambda p: p.relative_to(skills_root).as_posix()
 )
-def test_compile_and_validate_workflow(skill_dir):
-    """Compiles the SKILL.md file and asserts zero compilation or dependency errors."""
-    plan = SkillCompiler.compile(skill_dir)
-    assert plan is not None, f"Failed to compile SKILL.md in {skill_dir}"
-    assert len(plan.steps) > 0, f"No steps found in SKILL.md in {skill_dir}"
-
-    # Build dependency index map
-    step_id_to_idx = {step.node_id: i for i, step in enumerate(plan.steps)}
-
-    # Assert all depends_on references exist within the plan
-    for step in plan.steps:
-        for dep in step.depends_on:
-            assert dep in step_id_to_idx, (
-                f"Step '{step.node_id}' in {skill_dir.name} has non-existent dependency '{dep}'"
+def test_workflow_step_graph_is_well_formed(skill_dir: Path) -> None:
+    steps = parse_steps((skill_dir / "SKILL.md").read_text(encoding="utf-8"))
+    assert steps, f"No steps found in SKILL.md in {skill_dir}"
+    for step, deps in steps.items():
+        for dep in deps:
+            assert dep in steps, (
+                f"Step '{step}' in {skill_dir.name} has non-existent dependency '{dep}'"
             )
-
-    # Verify topological wave sorting resolves without circular dependencies
-    from graphlib import TopologicalSorter
-    ts = TopologicalSorter()
-    for step in plan.steps:
-        ts.add(step.node_id, *step.depends_on)
-    ts.prepare()  # Raises CycleError if circular dependency exists
-
-    # Verify mock registration in the knowledge graph
-    reg_outcome = SkillCompiler.register_in_kg(None, skill_dir)
-    assert reg_outcome["registered"] is True
-    assert reg_outcome["workflow_id"] == f"wf_{skill_dir.name}"
+    sorter = TopologicalSorter()
+    for step, deps in steps.items():
+        sorter.add(step, *deps)
+    sorter.prepare()  # raises CycleError on a circular dependency

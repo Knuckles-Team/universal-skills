@@ -113,7 +113,7 @@ four sources:
 [
   {"path_or_url": "${HOME}/obsidian-vault/projects/", "kind": "dir"},
   {"path_or_url": "${HOME}/Downloads/rl-survey-2026.pdf", "kind": "file"},
-  {"path_or_url": "${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities", "kind": "repo"},
+  {"path_or_url": "${WORKSPACE_ROOT}/agent-packages/graph-os", "kind": "repo"},
   {"path_or_url": "https://example.com/articles/epistemic-graphs", "kind": "url"}
 ]
 ```
@@ -129,7 +129,7 @@ graph_ingest(action="job_status", job_id="job:9f21")
 graph_ingest(action="ingest", target_path="${HOME}/Downloads/rl-survey-2026.pdf")
 # -> "Started ingestion job job:9f22 for rl-survey-2026.pdf"
 
-graph_ingest(action="ingest", target_path="${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities")
+graph_ingest(action="ingest", target_path="${WORKSPACE_ROOT}/agent-packages/graph-os")
 # -> classifies CODEBASE -> async job:9f23 (tree-sitter parse)
 
 graph_ingest(action="ingest_url", target_path="https://example.com/articles/epistemic-graphs")
@@ -140,7 +140,7 @@ graph_ingest(action="ingest_url", target_path="https://example.com/articles/epis
 Poll the three job ids until `status: completed`, then collect the resulting
 node ids (e.g. `job_status` returns `{"status": "completed", "node_ids": [...]}`).
 Say ingestion yields: `doc:note-eg-roadmap`, `doc:note-project-x`,
-`doc:rl-survey-2026`, `code:agent-utilities` (repo root), and
+`doc:rl-survey-2026`, `code:graph-os` (repo root), and
 `doc:example.com-epistemic-graphs`.
 
 ### B2. Extract
@@ -200,7 +200,7 @@ graph_write(action="add_edge", source_id="doc:note-eg-roadmap",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
 graph_write(action="add_edge", source_id="doc:rl-survey-2026",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
-graph_write(action="add_edge", source_id="code:agent-utilities",
+graph_write(action="add_edge", source_id="code:graph-os",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
 graph_write(action="add_edge", source_id="doc:example.com-epistemic-graphs",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")

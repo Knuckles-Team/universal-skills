@@ -1,31 +1,25 @@
 #!/usr/bin/env python3
 """CA-011: Concept-seeded cross-reference — map research papers to concept IDs.
 
-Queries the Knowledge Graph for each concept ID in the agent-utilities
-concept registry, finds relevant Article (paper) nodes via semantic search,
-and runs innovation extraction against each match.
+Takes a concept registry (a concept_map.md file) and Article (paper) search
+rows exported from the knowledge graph by a graph-os served search
+(``--matches-json``: ``{"<concept_id>": [row, ...]}``), scores the matches per
+concept, and builds enhancement recommendations.
 
 Usage:
-    # From KG (requires agent-utilities-kg MCP server running):
-    python concept_cross_reference.py --kg
-
-    # From a concept_map.md file:
-    python concept_cross_reference.py --concept-map /path/to/concept_map.md
+    python concept_cross_reference.py --concept-map /path/to/concept_map.md \\
+        --matches-json matches.json
 
     # Filter to specific pillars:
-    python concept_cross_reference.py --kg --pillars ORCH KG
+    python concept_cross_reference.py --concept-map map.md --matches-json m.json --pillars ORCH KG
 
     # Adjust similarity threshold:
-    python concept_cross_reference.py --kg --threshold 0.65
+    python concept_cross_reference.py --concept-map map.md --matches-json m.json --threshold 0.65
 
-    # Output to file:
-    python concept_cross_reference.py --kg --output report.json
-
-    # Batched processing (for 200+ concepts):
-    python concept_cross_reference.py --kg --batch-size 20 --output report.json
-
-    # Resume from a partial run:
-    python concept_cross_reference.py --kg --resume partial_report.json --output report.json
+    # Output to file / batched checkpoints / resume:
+    python concept_cross_reference.py --concept-map map.md --matches-json m.json --output report.json
+    python concept_cross_reference.py ... --batch-size 20 --output report.json
+    python concept_cross_reference.py ... --resume partial_report.json --output report.json
 
 CONCEPT:CA-011 — Concept Cross-Reference Engine
 """
@@ -555,9 +549,10 @@ def main():
         description="CA-011: Concept-seeded cross-reference engine"
     )
     parser.add_argument(
-        "--kg",
-        action="store_true",
-        help="Query concept IDs and Article nodes from the Knowledge Graph.",
+        "--matches-json",
+        type=str,
+        default="",
+        help="JSON file mapping concept_id to Article search rows (from a graph-os search).",
     )
     parser.add_argument(
         "--concept-map",
@@ -615,59 +610,14 @@ def main():
         concepts = parse_concept_map_file(path)
         print(f"Loaded {len(concepts)} concepts from {path}", file=sys.stderr)
 
-    elif args.kg:
-        # Query concept nodes from KG
-        try:
-            from agent_utilities.knowledge_graph.core.engine import (
-                IntelligenceGraphEngine,
-            )
-            from agent_utilities.core.paths import kg_db_path
-
-            engine = IntelligenceGraphEngine(
-                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
-            )
-            results = engine.query_cypher(
-                "MATCH (n) WHERE n.concept_id IS NOT NULL "
-                "RETURN n.concept_id AS concept_id, n.name AS name "
-                "ORDER BY n.concept_id"
-            )
-            if results:
-                concepts = parse_concepts_from_kg(results)
-            else:
-                print(
-                    "No concept nodes found in KG. Falling back to concept_map.md search...",
-                    file=sys.stderr,
-                )
-        except Exception as e:
-            print(
-                f"KG query failed ({type(e).__name__}), falling back to concept_map.md search...",
-                file=sys.stderr,
-            )
-
-        # Fallback: find concept_map.md in common locations
-        if not concepts:
-            workspace_root = Path(
-                os.environ.get("AGENT_UTILITIES_WORKSPACE_ROOT", Path.cwd())
-            ).expanduser()
-            package_root = Path(
-                os.environ.get(
-                    "AGENT_PACKAGES_ROOT", workspace_root / "agent-packages"
-                )
-            ).expanduser()
-            for candidate in [
-                Path.cwd() / "docs" / "concept_map.md",
-                package_root / "agent-utilities" / "docs" / "concept_map.md",
-            ]:
-                if candidate.exists():
-                    concepts = parse_concept_map_file(candidate)
-                    print(
-                        f"Loaded {len(concepts)} concepts from a configured source",
-                        file=sys.stderr,
-                    )
-                    break
+    else:
+        candidate = Path.cwd() / "docs" / "concept_map.md"
+        if candidate.exists():
+            concepts = parse_concept_map_file(candidate)
+            print(f"Loaded {len(concepts)} concepts from docs/concept_map.md", file=sys.stderr)
 
     if not concepts:
-        print(json.dumps({"error": "No concepts found. Use --kg or --concept-map."}))
+        print(json.dumps({"error": "No concepts found. Use --concept-map."}))
         sys.exit(1)
 
     # Filter by pillar if requested
@@ -708,78 +658,68 @@ def main():
     # ── Step 3: Query KG for Article matches per concept ──────────────
     batch_size = args.batch_size if args.batch_size > 0 else len(remaining)
 
-    try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-        from agent_utilities.core.paths import kg_db_path
+    matches: dict = {}
+    if args.matches_json:
+        try:
+            matches = json.loads(Path(args.matches_json).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(json.dumps({"error": f"matches file unreadable: {type(e).__name__}"}))
+            sys.exit(1)
+    else:
+        print(json.dumps({"error": "Provide --matches-json (a graph-os search export)."}))
+        sys.exit(1)
 
-        engine = IntelligenceGraphEngine(
-            graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
+    start_time = time.time()
+
+    for i, concept in enumerate(remaining):
+        print(
+            f"  [{i + 1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
+            file=sys.stderr,
         )
-        start_time = time.time()
 
-        for i, concept in enumerate(remaining):
-            query = f"{concept['name']} {concept['pillar_name']}"
+        try:
+            results = (matches.get(concept['concept_id']) or [])[: args.top_k]
+            # Filter to Article nodes only
+            article_results = [
+                r
+                for r in results
+                if r.get("type", "").lower() in ("article", "document", "")
+            ]
+            result = cross_reference_concept(
+                concept, article_results, args.threshold
+            )
+        except Exception as e:
             print(
-                f"  [{i + 1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
+                f"    ⚠ Search failed for {concept['concept_id']}: {type(e).__name__}",
                 file=sys.stderr,
             )
+            result = {
+                **concept,
+                "match_count": 0,
+                "paper_matches": [],
+                "error": type(e).__name__,
+            }
 
-            try:
-                results = engine.search_hybrid(query, top_k=args.top_k)
-                # Filter to Article nodes only
-                article_results = [
-                    r
-                    for r in results
-                    if r.get("type", "").lower() in ("article", "document", "")
-                ]
-                result = cross_reference_concept(
-                    concept, article_results, args.threshold
-                )
-            except Exception as e:
-                print(
-                    f"    ⚠ Search failed for {concept['concept_id']}: {type(e).__name__}",
-                    file=sys.stderr,
-                )
-                result = {
-                    **concept,
-                    "match_count": 0,
-                    "paper_matches": [],
-                    "error": type(e).__name__,
-                }
+        cross_ref_results.append(result)
 
-            cross_ref_results.append(result)
+        # Write intermediate results after each batch
+        if args.output and batch_size > 0 and (i + 1) % batch_size == 0:
+            elapsed = time.time() - start_time
+            rate = (i + 1) / elapsed if elapsed > 0 else 0
+            eta = (len(remaining) - i - 1) / rate if rate > 0 else 0
+            print(
+                f"    ✔ Batch checkpoint ({i + 1}/{len(remaining)}) — "
+                f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
+                file=sys.stderr,
+            )
+            _write_intermediate(args.output, concepts, cross_ref_results)
 
-            # Write intermediate results after each batch
-            if args.output and batch_size > 0 and (i + 1) % batch_size == 0:
-                elapsed = time.time() - start_time
-                rate = (i + 1) / elapsed if elapsed > 0 else 0
-                eta = (len(remaining) - i - 1) / rate if rate > 0 else 0
-                print(
-                    f"    ✔ Batch checkpoint ({i + 1}/{len(remaining)}) — "
-                    f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
-                    file=sys.stderr,
-                )
-                _write_intermediate(args.output, concepts, cross_ref_results)
-
-        elapsed = time.time() - start_time
-        print(
-            f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
-            f"({len(remaining) / elapsed:.1f} concepts/sec)",
-            file=sys.stderr,
-        )
-
-    except ImportError:
-        print(
-            "agent_utilities not available — cannot query KG directly.", file=sys.stderr
-        )
-        print(
-            "Run this script in an environment with agent-utilities installed,",
-            file=sys.stderr,
-        )
-        print(
-            "or use the MCP tools (kg_search) from an agent session.", file=sys.stderr
-        )
-        sys.exit(1)
+    elapsed = time.time() - start_time
+    print(
+        f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
+        f"({len(remaining) / elapsed:.1f} concepts/sec)",
+        file=sys.stderr,
+    )
 
     # ── Step 4: Build Recommendations ─────────────────────────────
     recommendations = build_enhancement_recommendations(cross_ref_results)

@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Skills `agent-spawner`, `prompt-builder` and `skill-graph-builder` (they existed
+  only for agent-utilities features removed in 3.0.0), the concept-registry parity
+  gate, and generated comparative-analysis result files.
+
 ### Changed
+- The skill library no longer imports or depends on agent-utilities: web-crawler and
+  web-search use the agent-connector-sdk governed HTTP client and DNS-pinned egress;
+  KG-reading scripts take graph-os exports as JSON input; instructions point at
+  graph-os served operations. Dependency floors, pre-commit revisions and pinned
+  Actions refreshed.
 - **`second-brain-sync` now drives the real one-call sync (W3.9).** Rewired
   the primary flow onto `graph_ingest action="sync_second_brain"` — a single
   call that ingests a notes directory/file with full provenance, extracts

@@ -2,7 +2,7 @@
 """Inject current deployment blocks into each provider README and deployment guide.
 
 Every connector README should point operators at the consolidated
-``agent-utilities-deployment`` workflow. This injector renders one machine-neutral
+``graph-os-deployment`` workflow. This injector renders one machine-neutral
 contract per package and inserts or updates it between idempotent markers, so the
 fleet rollout is generated rather than hand-written.
 
@@ -26,9 +26,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 _DEFAULT_AGENTS = REPO / "../../agents"
 BEGIN = (
-    "<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->"
+    "<!-- BEGIN graph-os-deployment (generated; do not edit between markers) -->"
 )
-END = "<!-- END agent-utilities-deployment -->"
+END = "<!-- END graph-os-deployment -->"
 ADDITIONAL_BEGIN = "<!-- BEGIN GENERATED: additional-deployment-options -->"
 ADDITIONAL_END = "<!-- END GENERATED: additional-deployment-options -->"
 DOCS_BEGIN = "<!-- BEGIN GENERATED: deployment-options -->"
@@ -62,13 +62,13 @@ def _block(meta: dict) -> str:
     name, package, image = meta["name"], meta["package"], meta["image"]
     return f"""{BEGIN}
 
-## Deploy with `agent-utilities-deployment`
+## Deploy with `graph-os-deployment`
 
-Provision this package with the consolidated **`agent-utilities-deployment`**
+Provision this package with the consolidated **`graph-os-deployment`**
 workflow. It selects an installed-package, editable-source, or immutable-container
 path; records only runtime secret and TLS-profile references in `AgentConfig`; and
 runs doctor, registration, policy, observability, and rollback gates. Ask your agent
-to **"deploy `{package}` with agent-utilities-deployment"**.
+to **"deploy `{package}` with graph-os-deployment"**.
 
 | Install mode | Command |
 |------|---------|

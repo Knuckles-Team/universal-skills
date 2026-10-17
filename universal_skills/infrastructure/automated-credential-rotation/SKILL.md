@@ -7,11 +7,11 @@ description: >-
   OIDC client secrets, database passwords, LLM/API keys, OTEL/Langfuse keys,
   registry creds) with OpenBao as the source of truth. Rotates at the provider,
   writes the new value to OpenBao, propagates to consumers (Portainer stack env,
-  Keycloak, agent-utilities config), verifies, and revokes the old — never
+  Keycloak, graph-os config), verifies, and revokes the old — never
   echoing a secret value. Dry-run first; supports a 6-month rotation policy. Use
   when asked to rotate credentials/secrets/tokens/keys, set up periodic rotation,
   respond to a leaked credential, or audit secret age. Ties into
-  agent-utilities-deployment and agent-os-genesis. Do NOT use for OS/SSH login or
+  graph-os-deployment and graphos-genesis. Do NOT use for OS/SSH login or
   BMC passwords (use rotate-credentials) or one-off vault writes (use
   secret-vault-manager).
 license: MIT
@@ -79,7 +79,7 @@ This skill *orchestrates existing tools* — it doesn't reinvent them:
      via the tool, never paste the values into the conversation; pull current env from
      OpenBao, not from chat. (If the stack reads the secret from OpenBao at boot, just
      restart the service instead — no value passes through.)
-   - **agent-utilities config**: rewrite `vault://` refs via `setup-config`; restart graph-os.
+   - **graph-os config**: rewrite `vault://` refs via `setup-config`; restart graph-os.
    - **CI variables**: `gitlab-api` update CI/CD variable; GitHub Actions secret via API.
 5. **Verify** — hit the consumer's auth path (provider whoami, DB connect, MCP `/health`).
 6. **Revoke old** — delete/expire the previous token at the provider once verified.
@@ -96,9 +96,9 @@ secrets (Keycloak, DB, registry).
 
 ## Integration
 
-- **agent-utilities-deployment**: after secrets are provisioned (its Step 3 `vault://`
+- **graph-os-deployment**: after secrets are provisioned (its Step 3 `vault://`
   resolution), this skill is the rotation counterpart — same catalog, same OpenBao paths.
-- **agent-os-genesis**: register this skill as the recurring rotation step after SSO
+- **graphos-genesis**: register this skill as the recurring rotation step after SSO
   wiring; genesis provisions the initial secrets, this rotates them on policy.
 
 ## Verification (of this skill)

@@ -35,7 +35,7 @@ ECOSYSTEM_MARKERS = {
     "pydantic-graph": "Graph Agent",
     "fastmcp": "MCP Server",
     "fastapi": "Web Agent / API",
-    "agent-utilities": "Agent-Utilities Ecosystem",
+    "agent-connector-sdk": "Connector SDK Ecosystem",
 }
 
 
@@ -204,7 +204,6 @@ def analyze_project(root_dir: str = ".") -> dict:
     # --- Criterion 3: externalized_prompts (10 pts) ---
     prompt_dirs = [
         root / "prompts",
-        root / "agent_utilities" / "prompts",
     ]
     # Also check any <pkg_name>/prompts/ pattern
     for child in root.iterdir():

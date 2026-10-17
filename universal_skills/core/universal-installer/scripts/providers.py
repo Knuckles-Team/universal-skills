@@ -1,25 +1,13 @@
 #!/usr/bin/env python3
 """Ontology + prompt provider discovery and XDG materialization.
 
-The skill/skill-graph leg (``install.py``) already resolves the
-``agent_utilities.skill_providers`` entry-point locally so it works without
-``agent_utilities`` installed. This module does the same for the other two legs
-of the federation (CONCEPT:AU-KG.ontology.federation-provider-leg /
-CONCEPT:AU-OS.deployment.modular-skill-prompt-contribution):
-``agent_utilities.prompt_providers`` and ``agent_utilities.ontology_providers``.
+The skill/skill-graph leg (``install.py``) resolves the skill-provider
+entry-point locally. This module does the same for the other two legs of the
+federation: the prompt-provider and ontology-provider entry-point groups
+(``PROMPT_PROVIDER_GROUP`` / ``ONTOLOGY_PROVIDER_GROUP`` below).
 
-Two paths, in order of preference:
-
-1. **Fast path** — if ``agent_utilities`` is importable, delegate straight to
-   ``agent_utilities.core.unified_install.install_unified()``. That is the
-   authoritative, federation-aware implementation (it also materializes
-   agent-utilities' OWN base ontologies/prompts under provider name
-   ``agent-utilities``), so prefer it whenever available.
-2. **Fallback** — a local, dependency-free re-implementation of entry-point
-   resolution + materialization, so this skill still works in an environment
-   that has universal-skills but not agent-utilities installed (mirrors the
-   existing ``ImportError``-guarded fallback pattern used for
-   ``skill_utilities``/``skill_graph_utilities`` in ``install.py``).
+Resolution and materialization are local and dependency-free, so this skill
+works in any environment that has universal-skills installed.
 """
 
 from __future__ import annotations
@@ -28,22 +16,19 @@ import logging
 import os
 import shutil
 import sys
-from inspect import signature
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from agent_utilities.base_utilities import get_logger
+    from agent_connector_sdk.utilities import get_logger
 except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 else:
     logger = get_logger(__name__)
 
-# Same entry-point group names agent_utilities.core.providers declares — kept as
-# a standalone local copy (not imported from agent_utilities) so this module
-# still resolves providers when agent_utilities itself is absent, matching the
-# rationale already documented for SKILL_PROVIDER_GROUP in install.py.
+# Published plugin entry-point group names (the contract provider packages
+# declare); they are strings, not an import of any package.
 PROMPT_PROVIDER_GROUP = "agent_utilities.prompt_providers"
 ONTOLOGY_PROVIDER_GROUP = "agent_utilities.ontology_providers"
 
@@ -51,21 +36,21 @@ _IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
 
 def _xdg_data_dir() -> Path:
-    """The agent-utilities XDG *data* dir, OS-aware — the unified-install root.
+    """The graph-os XDG *data* dir, OS-aware — the unified-install root.
 
-    Mirrors ``agent_utilities.core.paths.data_dir()`` / the ``agent-utilities``
+    Mirrors the ``graph-os``
     entry already computed in ``install.py``'s ``get_tool_paths()`` (same
-    ``$XDG_DATA_HOME/agent-utilities`` convention), kept as a local copy for the
+    ``$XDG_DATA_HOME/graph-os`` convention), kept as a local copy for the
     same dependency-free-fallback reason as the rest of this module.
     """
     home = Path("~").expanduser()
     if sys.platform == "win32":
         base = Path(os.environ.get("LOCALAPPDATA", str(home / "AppData" / "Local")))
-        return base / "agent-utilities"
+        return base / "graph-os"
     if sys.platform == "darwin":
-        return home / "Library" / "Application Support" / "agent-utilities"
+        return home / "Library" / "Application Support" / "graph-os"
     xdg_data = Path(os.environ.get("XDG_DATA_HOME") or (home / ".local" / "share"))
-    return xdg_data / "agent-utilities"
+    return xdg_data / "graph-os"
 
 
 def unified_prompts_dir() -> Path:
@@ -150,7 +135,7 @@ def _install_local(
     install_prompts: bool,
     install_ontologies: bool,
 ) -> Dict[str, Dict[str, int]]:
-    """Dependency-free fallback materialization (no ``agent_utilities`` import)."""
+    """Dependency-free fallback materialization ."""
     result: Dict[str, Dict[str, int]] = {"prompts": {}, "ontologies": {}}
     if install_prompts:
         for provider, src in iter_provider_dirs(PROMPT_PROVIDER_GROUP):
@@ -183,44 +168,13 @@ def install_ontologies_and_prompts(
     install_prompts: bool = True,
     install_ontologies: bool = True,
 ) -> Dict[str, Any]:
-    """Materialize the prompt + ontology legs into the agent-utilities XDG tree.
+    """Materialize the prompt + ontology legs into the graph-os XDG tree.
 
-    Prefers ``agent_utilities.core.unified_install.install_unified()`` (the
-    authoritative implementation, also covering AU's own base
-    prompts/ontologies) when ``agent_utilities`` is importable; falls back to
-    the local, dependency-free resolver above otherwise. Returns
+    Uses the local, dependency-free resolver above. Returns
     ``{"prompts": {provider: n}, "ontologies": {provider: n}}``; a skipped leg
     (``install_prompts=False`` / ``install_ontologies=False``) is omitted from
     the returned dict for that key.
     """
     if not install_prompts and not install_ontologies:
         return {}
-    try:
-        from agent_utilities.core.unified_install import install_unified
-
-        # agent-utilities releases before the ``force`` parameter materialize
-        # their unified tree unconditionally.  Prefer the current explicit API,
-        # while retaining that compatible authoritative path instead of treating
-        # a harmless signature difference as a failed provider installation.
-        if "force" in signature(install_unified).parameters:
-            report = install_unified(force=force)
-        else:
-            report = install_unified()
-        out: Dict[str, Any] = {}
-        if install_prompts:
-            out["prompts"] = report.get("prompts", {})
-        if install_ontologies:
-            out["ontologies"] = report.get("ontologies", {})
-        return out
-    except ImportError:
-        logger.debug(
-            "agent_utilities not importable; using local prompt/ontology "
-            "provider resolution."
-        )
-    except Exception as e:  # noqa: BLE001 — the fast path must never hard-fail
-        logger.warning(
-            "install_unified() failed (%s); falling back to local provider "
-            "resolution for prompts/ontologies.",
-            e,
-        )
     return _install_local(force, providers, install_prompts, install_ontologies)

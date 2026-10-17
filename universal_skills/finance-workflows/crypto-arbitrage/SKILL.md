@@ -38,7 +38,7 @@ metadata:
 **Tools**: `graph_query, sx_search`
 
 Identify cointegrated pairs across exchanges.
-Tool: Route to agent-utilities `cross_market_arb.py` CointegrationAnalyzer.
+Tool: Route to the graph-os served cross-market arbitrage operation (cointegration analysis).
 
 ### Step 2: Ou Estimate
 **Agent**: `compute-engine`
@@ -51,7 +51,7 @@ Ornstein-Uhlenbeck parameter estimation for mean-reversion speed.
 **Tools**: `graph_query, graph_analyze`
 
 Check whale alerts, funding rates, DEX volumes.
-Tool: Route to agent-utilities `crypto_connector.py` OnChainAnalytics.
+Tool: Route to the graph-os served on-chain analytics operation.
 
 ### Step 4: Risk Check
 **Agent**: `report-generator`

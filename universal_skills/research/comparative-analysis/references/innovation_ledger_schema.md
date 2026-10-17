@@ -21,7 +21,7 @@ Stored as a JSON array (`ledger.json`) or JSONL (`ledger.jsonl`). One object per
   "verified": "verified",
   "verification_note": "Confirmed in agent.py:1817-2020; JSON plan parsed at :1966.",
   "type": "enhancement",
-  "target_module": "agent_utilities/knowledge_graph/retrieval/hybrid_retriever.py",
+  "target_module": "graph_os/retrieval/hybrid_retriever.py",
   "entry_point": "graph_search",
   "c4_component": "KG Hybrid Retriever",
   "extends_concept": "KG-2.3",

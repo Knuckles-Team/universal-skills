@@ -47,7 +47,7 @@ application of it.
   > dependency order: run steps with no unmet `depends_on` in parallel, then their
   > dependents.
 
-  The machine layer (frontmatter DAG + `team.yaml`) drives the agent-utilities graph-os
+  The machine layer (frontmatter DAG + `team.yaml`) drives the graph-os graph-os
   orchestrator unchanged; the rendered `## Execution` layer is what lets Claude (or any
   agent) run the *same* workflow natively. `scripts/check_atomicity.py` enforces both.
 
@@ -62,14 +62,14 @@ application of it.
 universal-skills is no longer the only home for skills. **Any agent-package can ship
 its own skills, system prompts, and ontology inside its own wheel** and have them
 discovered by the hub via three setuptools entry-point groups it declares in
-`pyproject.toml`: `agent_utilities.skill_providers` (→ `<module>.skills`),
-`agent_utilities.prompt_providers` (→ `<module>.prompts`), and
-`agent_utilities.ontology_providers` (→ `<module>.ontology`). The `universal-installer`
+`pyproject.toml`: the skill-provider entry-point group (→ `<module>.skills`),
+the prompt-provider group (→ `<module>.prompts`), and
+the ontology-provider group (→ `<module>.ontology`). The `universal-installer`
 skill's `get_source_paths()` walks every `skill_providers` entry-point (honouring
 `--skills`/`--group`/`--layer`) and, on the same run, materializes the
-`prompt_providers`/`ontology_providers` legs into the agent-utilities XDG tree
-(preferring `agent_utilities.core.unified_install.install_unified()` when importable);
-`agent-utilities` ingests every `prompt_providers` prompt into the KG prompt library
+`prompt_providers`/`ontology_providers` legs into the graph-os XDG tree
+(resolved locally);
+`graph-os` ingests every `prompt_providers` prompt into the KG prompt library
 and every `ontology_providers` `.ttl` into the federated ontology. So:
 
 - **Package-owned skills live in the package**, not here — relocate clearly-owned
@@ -77,8 +77,7 @@ and every `ontology_providers` `.ttl` into the federated ontology. So:
   XDG skills dir, so workflow step references resolve by name at runtime). A workflow
   that invokes a package-owned skill should list the owning package in its `requires:`
   frontmatter.
-- **System prompts** use the canonical `StructuredPrompt` format — author them with the
-  **`prompt-builder`** skill (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical). `mcp-builder` scaffolds the
+- **System prompts** are owned by graph-os; `mcp-builder` scaffolds the
   prompt + a starter skill + the entry-points automatically.
 
 ## Tech Stack & Architecture
@@ -124,8 +123,7 @@ pip install -e ".[skill-name]"                          # install one skill's ex
 
 A gate that needs a missing tool or the project environment prints
 `SKIPPED (<gate>): <reason>` and passes locally; with `CI` set it exits 2
-(`CANNOT RUN`) instead. The concept-registry check reads a sibling
-agent-utilities checkout (or `AGENT_UTILITIES_OVERVIEW`); CI clones it. Gates
+(`CANNOT RUN`) instead. Gates
 check behaviour or contracts, not hand-kept counts or golden copies, and no gate
 calls an external service.
 
@@ -185,7 +183,7 @@ and tag before publication. Never retry a published version or move its tag.
 ```python
 try:
     import requests
-    from agent_utilities.base_utilities import to_boolean
+    from agent_connector_sdk.utilities import to_boolean
 except ImportError:
     print("Error: Missing required dependencies for the 'skill-name' skill.")
     print("Please install them by running: pip install 'universal-skills[skill-name]'")
@@ -283,7 +281,7 @@ why rather than bypassing it.
 ## Working with Git Worktrees (multi-session)
 
 Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
-edit the canonical checkout** (`${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/<repo>`) — a
+edit the canonical checkout** (`${WORKSPACE_ROOT}/agent-packages/<repo>`) — a
 background `repository-manager` sync can reset its working tree and discard
 uncommitted edits. Take your own git worktree on your own branch instead:
 

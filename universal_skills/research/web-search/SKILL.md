@@ -59,7 +59,7 @@ python scripts/search_duckduckgo.py --query "your search query" --max-results 5 
 
 ### Transport policy
 
-All providers use the agent-utilities outbound-source boundary. TLS verification,
+All providers use the graph-os outbound-source boundary. TLS verification,
 private CA bundles, proxies, approved private hosts, redirect policy, and response
 limits come from `AgentConfig`/XDG configuration (`TLS_PROFILE_REF`,
 `TLS_CA_BUNDLE_REF`, and `SOURCE_HTTP_*`). Provider scripts do not expose a

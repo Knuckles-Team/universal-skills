@@ -175,9 +175,8 @@ def _stable_finding_id(text: str) -> str:
     30-line insertion above existing findings inflated an apparent 125/58
     new placeholder/facade findings down to the 2 that were genuinely new
     once line numbers were dropped from the identity. Mirrors
-    agent-utilities' identical fix for this same defect class
-    (``check_cypher_write_subset.py``/``check_log_exception_redaction.py``'s
-    D-F6-2/D-MT-2 ``(path, symbol, shape, content_hash)`` baseline key) —
+    the ecosystem's identical fix for this same defect class (the
+    ``(path, symbol, shape, content_hash)`` baseline key) —
     reused here rather than inventing a second scheme.
     """
     return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:8]
@@ -763,7 +762,7 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
             # stable under code landing elsewhere; its raw line number is
             # not. Mirrors the (path, symbol, ordinal) half of the same
             # content-anchoring convention used above and in
-            # agent-utilities' check_wiring.py (D-OP-11).
+            # the ecosystem's wiring check.
             for ordinal, _line in enumerate(_facade_branches(n)):
                 facade_handlers.append(f"{mod}:{n.name}@{ordinal}")
             # deceptive except-fallbacks: real try, fabricated/fake-success except

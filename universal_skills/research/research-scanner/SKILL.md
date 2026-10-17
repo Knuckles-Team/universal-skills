@@ -22,7 +22,7 @@ Automated research paper discovery, dynamic relevance scoring, and integration p
 
 ## Overview
 
-Unlike static scanners, the Research Scanner is an **agent-driven workflow**. It dynamically extracts active codebases, architectural concepts, and areas of focus from the `agent-utilities-kg` Knowledge Graph, formulates a targeted taxonomy, and fetches the latest papers using the `scholarx` MCP server.
+Unlike static scanners, the Research Scanner is an **agent-driven workflow**. It dynamically extracts active codebases, architectural concepts, and areas of focus from the `graph-os` Knowledge Graph, formulates a targeted taxonomy, and fetches the latest papers using the `scholarx` MCP server.
 
 This skill orchestrates multiple atomic MCP tools to create a resilient, rate-limited, and context-aware research discovery pipeline.
 
@@ -32,7 +32,7 @@ When triggered to perform a daily scan or research sweep, follow these steps exa
 
 ### Step 2: Extract Topics from the Knowledge Graph
 Identify what the project currently cares about by querying the KG.
-Use `mcp_agent-utilities-kg_kg_query` to fetch relevant domains to get a sense of what's there (Optional context for your reasoning).
+Use `mcp_graph-os_graph_query` to fetch relevant domains to get a sense of what's there (Optional context for your reasoning).
 *Example queries:*
 - Fetch active codebases/pillars: `MATCH (c:CodeNode) RETURN c.name, c.description LIMIT 10`
 - Fetch core architectural concepts: `MATCH (c:ConceptNode) RETURN c.id, c.description LIMIT 10`
@@ -60,10 +60,10 @@ setup. Auth-walled sources authenticate through the shared credential provider �
 keys go in this skill.
 
 ### Step 4: Score the Papers Dynamically
-Use the provided `scripts/dynamic_scorer.py` to evaluate the fetched papers. The script will automatically auto-detect the agent-utilities KG and construct a taxonomy dynamically without needing hardcoded files!
+Use the provided `scripts/dynamic_scorer.py` to evaluate the fetched papers. The script will automatically auto-detect the graph-os KG and construct a taxonomy dynamically without needing hardcoded files!
 
 ```bash
-python ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/research-scanner/scripts/dynamic_scorer.py \
+python ${WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/research-scanner/scripts/dynamic_scorer.py \
     --papers papers.json \
     --min-score 3.0 \
     --output top_papers.json
@@ -71,7 +71,7 @@ python ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/skills/universal-skills/
 This script will evaluate keyword density against all active graph nodes and output the IDs of the top-scoring papers into `top_papers.json`.
 
 ### Step 5: Deduplicate and Bulk Download
-Read the IDs from `top_papers.json`. Check if they already exist in the KG using `kg_search` or `kg_query`.
+Read the IDs from `top_papers.json`. Check if they already exist in the KG using `graph_search` or `graph_query`.
 For the new, highly-relevant IDs, queue them for background downloading using the `scholarx` MCP tool:
 ```json
 {
@@ -82,12 +82,12 @@ For the new, highly-relevant IDs, queue them for background downloading using th
 *Note: Use `list_downloads` and `download_status` to monitor the queue.*
 
 ### Step 6: Ingest into the Knowledge Graph
-Once downloaded, perform a "double-write" by invoking `mcp_agent-utilities-kg_kg_ingest` on the newly downloaded PDFs/markdown files to store them permanently in the Knowledge Graph for other agents to discover.
+Once downloaded, perform a "double-write" by invoking `mcp_graph-os_source_sync` on the newly downloaded PDFs/markdown files to store them permanently in the Knowledge Graph for other agents to discover.
 
 For PulseLink reach sources (Step 3b), ingest declaratively via the `mcp_tool` source
 presets (`pulselink-hackernews`, `pulselink-reddit`, `pulselink-x`, `pulselink-youtube`,
 `pulselink-web`, `pulselink-news`, `pulselink-github`, `pulselink-rss`, `pulselink-v2ex`,
-… — see `agent-utilities` `MCP_TOOL_PRESETS`). Each fetched item then becomes a
+… — see `graph-os` `MCP_TOOL_PRESETS`). Each fetched item then becomes a
 first-class KG `Document` (chunked, embedded, deduplicated, ACL'd) — the same pipeline
 as papers — so `deep-research` and other agents can synthesize across papers **and**
 open-web/social evidence together. Example: ingest with

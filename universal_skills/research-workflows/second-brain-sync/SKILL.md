@@ -26,7 +26,7 @@ metadata:
     - CONCEPT:AU-KG.research.explicit-node-node-contradiction
     - CONCEPT:AU-KG.evolution.mining-flywheel
     - CONCEPT:AU-KG.retrieval.synthesized-cited-answer
-requires: ['graph-os', 'agent-utilities']
+requires: ['graph-os', 'graph-os']
 ---
 
 # Second Brain Sync Workflow
@@ -245,13 +245,6 @@ documents that `graph_ask`/`graph_query` can cross-reference.
 ## References
 - [knowledge-assimilation](../knowledge-assimilation/SKILL.md) — sibling push-based pipeline for research/code content
 - `references/walkthrough.md` — end-to-end "build my epistemic second brain" walkthrough with sample tool calls and outputs
-- `agent_utilities/knowledge_graph/extraction/second_brain_sync.py` — the one-call composition (`sync_second_brain`, `graph_ingest action=sync_second_brain`)
-- `agent_utilities/knowledge_graph/extraction/fact_extractor.py` — atomic-triple extraction core
-- `agent_utilities/knowledge_graph/kb/entity_claim_extractor.py` — entity/claim extraction core (content-addressed `claim_node_id`)
-- `agent_utilities/knowledge_graph/adaptation/contradiction_detector.py` — friction/contradiction surface (`graph_analyze action=contradictions`)
-- `agent_utilities/knowledge_graph/adaptation/belief_revision.py` — the `:BeliefRevisionProposal` confidence-propagation math (`recompute_confidence`/`explain_revision`)
-- `agent_utilities/knowledge_graph/research/claim_flywheel.py` — the governed claim lifecycle (`graph_claims` MCP tool)
-- `agent_utilities/skills/kg-epistemic-answer/SKILL.md` — the four-layer epistemic-answer pattern used in Step 3
 
 ## Execution
 

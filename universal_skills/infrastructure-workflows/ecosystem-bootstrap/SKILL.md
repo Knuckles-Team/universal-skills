@@ -2,7 +2,7 @@
 name: ecosystem-bootstrap
 skill_type: workflow
 description: >
-  Self-deploying bootstrap workflow that unfolds the complete agent-utilities
+  Self-deploying bootstrap workflow that unfolds the complete graph-os
   ecosystem on a fresh machine. Resolves the canonical deployment profile
   (tiny/single-node-prod/enterprise), installs system dependencies via
   systems-manager-mcp, deploys core infrastructure (Docker, Portainer, Technitium DNS),
@@ -35,7 +35,7 @@ metadata:
 
 # Ecosystem Bootstrap Workflow
 
-Self-deploying bootstrap that unfolds agent-utilities and the full agent
+Self-deploying bootstrap that unfolds graph-os and the full agent
 ecosystem on a fresh machine or server. Walks through deployment profile
 selection, prerequisite installation, core infrastructure, service containers,
 MCP server containers, DNS routing, and Knowledge Graph registration.
@@ -44,11 +44,11 @@ MCP server containers, DNS routing, and Knowledge Graph registration.
 
 ### Step 0: select-deployment-profile [skill: user-interaction]
 
-> **Canonical profiles** — agent-utilities day 0 uses three current tiers:
+> **Canonical profiles** — graph-os day 0 uses three current tiers:
 > **tiny** (all-local, zero-infra), **single-node-prod** (one durable host), and
 > **enterprise** (multi-host Kubernetes). Do not translate legacy profile names.
 > The `*-mcp` connector set per profile is the single source of truth in
-> `agent-utilities/deploy/mcp-fleet.registry.yml`.
+> `graph-os/deploy/mcp-fleet.registry.yml`.
 
 Present the deployment profile questionnaire to the user. Ask:
 1. **Deployment profile**: tiny, single-node-prod, or enterprise

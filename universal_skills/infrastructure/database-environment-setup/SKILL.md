@@ -2,7 +2,7 @@
 name: database-environment-setup
 skill_type: skill
 description: >
-  Provision the agent-utilities database environment end-to-end from credentials:
+  Provision the graph-os database environment end-to-end from credentials:
   push the ontology to Stardog (prod) or a local SPARQL endpoint (dev), stand up a
   Postgres carrying Apache AGE + pgvector + ParadeDB pg_search, wire the durable
   backend, and backfill graph relationships into AGE. Resolves secrets from
@@ -30,19 +30,19 @@ metadata:
 
 # Database Environment Setup (Stardog + pg-age)
 
-Stand up the two database environments agent-utilities is built around — **prod**
+Stand up the two database environments graph-os is built around — **prod**
 (Stardog) and **dev** (local SPARQL) — and durably backfill the graph into Apache
 AGE. This skill is the guided front-end to the `setup-databases` CLI / the
 `graph_configure` MCP actions `setup_databases` & `verify_databases`. The detailed
-recipe is owned by the `agent-utilities` package at
+recipe is owned by the `graph-os` package at
 `docs/recipes/databases.md`; it is not bundled with this universal skill. Consult
 the compatible package checkout only when package-specific implementation detail
 is needed.
 
 ## Prerequisites
 
-- **graph-os** (agent-utilities) — the `graph_configure` tool and `setup-databases`
-  console script. Install it with `pip install agent-utilities[owl,postgres]`
+- **graph-os** (graph-os) — the `graph_configure` tool and `setup-databases`
+  console script. Install it with `pip install graph-os[owl,postgres]`
   (add `stardog` for the prod path).
 - **openbao-mcp** *(optional)* — to resolve Vault/OpenBao secrets. Falls back to `.env`.
 - **container-manager-mcp** *(optional)* — to build/deploy the combined Postgres image.

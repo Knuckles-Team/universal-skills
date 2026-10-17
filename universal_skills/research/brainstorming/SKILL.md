@@ -62,7 +62,7 @@ Before asking anything, check:
 
 ### Step 2: analogy-scan [depends_on: explore-context]
 
-Before proposing any new designs, you MUST use the `kg_analogy_search` MCP tool from `agent-utilities-kg` to scan the Knowledge Graph for structurally similar concepts, past designs, or existing solutions within the ecosystem. This ensures we "Extend-Before-Invent".
+Before proposing any new designs, you MUST use the `kg_analogy_search` MCP tool from `graph-os` to scan the Knowledge Graph for structurally similar concepts, past designs, or existing solutions within the ecosystem. This ensures we "Extend-Before-Invent".
 
 ### Step 3: clarify-requirements [depends_on: analogy-scan]
 

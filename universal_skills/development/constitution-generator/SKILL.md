@@ -47,5 +47,5 @@ Your output must be the content for a `constitution.md` file (or a diff if updat
 ## Implementation Steps
 1. **Initialize**: Check if `constitution.md` exists. The human-readable version should be at `agent_data/constitution.md` (or the project root).
 2. **Draft/Refine**: If it doesn't exist, draft a comprehensive version based on the project type. If it exists, apply requested updates while maintaining internal consistency.
-3. **Structured Persistence**: In addition to the markdown file, always save the structured state as a `ProjectConstitution` JSON in `agent_data/constitution.json` using the `SDDManager` from `agent-utilities`.
+3. **Structured Persistence**: In addition to the markdown file, always save the structured state as a `ProjectConstitution` JSON in `agent_data/constitution.json` using the `SDDManager` from the Graph OS spec tooling.
 4. **Validate**: Ensure all normative statements are actionable and clear.

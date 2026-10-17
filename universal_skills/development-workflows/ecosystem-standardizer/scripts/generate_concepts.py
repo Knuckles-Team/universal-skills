@@ -2,7 +2,7 @@
 """Generate docs/concepts.md for every agent-package project.
 
 Assigns unique CONCEPT prefixes, creates concept registries, and
-links back to agent-utilities via ECO-4.0 bridge.
+registers each project's concept prefix.
 """
 
 import re
@@ -10,7 +10,6 @@ import tomllib
 from pathlib import Path
 
 AGENTS_DIR = Path("agent-packages/agents")
-UTILITIES_DIR = Path("agent-packages/agent-utilities")
 TUI_DIR = Path("agent-packages/agent-terminal-ui")
 WEBUI_DIR = Path("agent-packages/agent-webui")
 
@@ -54,7 +53,6 @@ PREFIX_MAP = {
     "tunnel-manager": "TUN",
     "vector-mcp": "VEC",
     # Non-agent projects
-    "agent-utilities": "AU",
     "agent-terminal-ui": "TUI",
     "agent-webui": "WEBUI",
 }
@@ -143,7 +141,6 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
         "",
         f"> **Prefix**: `CONCEPT:{prefix}-*`",
         f"> **Version**: {version}",
-        "> **Bridge**: [`CONCEPT:ECO-4.0`](../../agent-utilities/docs/concepts.md) (Unified Toolkit Ingestion)",
         "",
         "---",
         "",
@@ -180,23 +177,11 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
     lines.extend(
         [
             "",
-            "## Cross-Project References (from agent-utilities)",
+            "## Runtime",
             "",
-            "| Concept ID | Name | Origin |",
-            "|------------|------|--------|",
-            "| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |",
-            "| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |",
-            "| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |",
-            "| `CONCEPT:OS-5.2` | Cognitive Scheduler | agent-utilities |",
-            "| `CONCEPT:AU-OS.governance.reactive-multi-axis-budget` | Guardrail Engine | agent-utilities |",
-            "| `CONCEPT:AU-OS.governance.wasm-micro-agent-sandbox` | Audit Logging | agent-utilities |",
-            "| `CONCEPT:KG-2.0` | Knowledge Graph Core | agent-utilities |",
-            "",
-            "## Synergy with agent-utilities",
-            "",
-            f"This project integrates with `agent-utilities` via `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion). "
-            f"The `{pkg_name}` MCP server registers its tools with the agent-utilities FastMCP middleware, "
-            f"enabling automatic discovery, telemetry, and Knowledge Graph ingestion of all {prefix}-* concepts.",
+            f"The `{pkg_name}` connector publishes its tools through the "
+            f"agent-connector-sdk MCP server; graph-os serves them and ingests "
+            f"all {prefix}-* concepts into the knowledge graph.",
             "",
         ]
     )

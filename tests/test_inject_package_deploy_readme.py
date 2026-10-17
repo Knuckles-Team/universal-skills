@@ -24,10 +24,10 @@ def test_block_uses_only_current_deployment_contract():
         }
     )
 
-    assert "agent-utilities-deployment" in block
+    assert "graph-os-deployment" in block
     assert "AgentConfig" in block
     assert "@sha256:<digest>" in block
-    assert "agent-os-genesis" not in block
+    assert "graphos-genesis" not in block
     assert ":latest" not in block
     assert "seeds secrets" not in block
     assert 'uv tool install "sample-agent[mcp]"' in block

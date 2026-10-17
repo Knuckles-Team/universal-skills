@@ -141,7 +141,7 @@ ingested through the full KBIngestionEngine pipeline, producing:
 ## References
 
 - [knowledge-assimilation](../../research-workflows/knowledge-assimilation/SKILL.md) — Full evolution pipeline
-- The package-specific X architecture guide is owned by `agent-utilities` at
+- The package-specific X architecture guide is owned by `graph-os` at
   `docs/guides/x-assistant.md`; it is not bundled with this workflow.
 
 ## Execution

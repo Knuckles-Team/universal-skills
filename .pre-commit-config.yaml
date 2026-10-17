@@ -23,7 +23,7 @@ repos:
   - id: trailing-whitespace
   - id: end-of-file-fixer
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 6fec9b7edb08fd9989088709d864a7826dc74e80 # v0.15.12
+  rev: 38bfb07c0c64c304f47eb52090f8288150c77730 # v0.17.1
   hooks:
   - id: ruff
     name: ruff check
@@ -33,7 +33,7 @@ repos:
     name: ruff format
     exclude: (^|/)(tests/|test/|scripts/|script/)
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: fc0f09a29bb495f4a91f00266155d6282d52485d # v1.20.2
+  rev: 2834ec6639549dd6796205c8f011dedcd587288b # v2.4.0
   hooks:
   - id: mypy
     args: ["--ignore-missing-imports", "--follow-imports=silent", "--show-column-numbers",
@@ -42,7 +42,7 @@ repos:
     additional_dependencies: ["types-PyYAML==6.0.12.20260518", "types-requests==2.33.0.20260518", "types-setuptools==83.0.0.20260706",
       "types-toml==0.10.8.20260518"]
 - repo: https://github.com/jendrikseipp/vulture
-  rev: b0f67ba0044693aa9ec0d38fe460590facc98004 # v2.16
+  rev: 258fe6a1974e89a2add9a45519a9e9dd9f46154e # v2.16
   hooks:
   - id: vulture
     pass_filenames: false
@@ -50,7 +50,7 @@ repos:
     require_serial: true
     exclude: (^|/)(tests/|test/|scripts/|script/)
 - repo: https://github.com/codespell-project/codespell
-  rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # v2.4.2
+  rev: 57b21406f092110c18776e39b0bda50d37c945c8 # v2.4.3
   hooks:
   - id: codespell
     args: ["-I .codespellignore"]
@@ -62,24 +62,16 @@ repos:
     args: ["--skip", "B101,B404,B603"]
     exclude: ^(tests/|test/|scripts/|script/|__tests__/)
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: d31b7eae1767c43460afb3ba130e0a6602933abe # 1.9.1
+  rev: f96ec7f3b26a32619435686eb5813235f7e3327e # 1.9.1
   hooks:
   - id: nbqa-ruff
     args: ["--fix"]
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 659a7789596d520c849e9c96525119e9fbaa731f # 0.11.8
+  rev: d4acaec07ac3bc6017fba3c3b8e9810af1b615db # 0.13.1
   hooks:
   - id: uv-lock
 - repo: local
   hooks:
-  - id: concept-registry-parity
-    name: concept ids exist in the agent-utilities registry
-    # A live contract with the agent-utilities registry: SKIPPED locally when
-    # no sibling checkout exists; CI clones agent-utilities and fails closed.
-    entry: python3 scripts/gate_env.py --gate concept-registry-parity --project-env -- python -m pytest -q -rs -p no:cacheprovider tests/test_concept_parity.py
-    language: system
-    pass_filenames: false
-    always_run: true
   - id: mermaid-fence-check
     name: mermaid fenced-block structure
     entry: python scripts/check_mermaid_blocks.py

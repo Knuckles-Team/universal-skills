@@ -8,7 +8,7 @@
 
 Universal Skills is a portable catalog of agent capabilities and dependency-ordered
 skill workflows. It supports Claude-compatible `SKILL.md` discovery and the
-agent-utilities provider ecosystem.
+Graph OS provider ecosystem.
 
 ## Catalog model
 
@@ -17,7 +17,7 @@ agent-utilities provider ecosystem.
   skills or exact MCP tools; workflows do not embed business logic.
 - Platform and package operations belong under
   `agent-packages/agents/<package>/<module>/skills/` and are exposed through
-  `agent_utilities.skill_providers`.
+  the skill-provider entry-point group.
 - `assets/` may contain nested templates, but those are package resources rather
   than canonical catalog entries.
 

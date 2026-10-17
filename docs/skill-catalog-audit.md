@@ -33,7 +33,6 @@ This deterministic structural report excludes bundled `assets/` templates and ge
 | Domain | Skill | Type | Status | Findings |
 |---|---|---|---|---|
 | agent-tools | `agent-browser` | skill | clean | No structural or advisory findings |
-| agent-tools | `agent-spawner` | skill | clean | No structural or advisory findings |
 | agent-tools | `agent-workflows` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase; warning: `atomic-workflow-section` — contains a Workflow section; confirm it describes one capability only |
 | agent-tools | `subagent-driven-development` | skill | clean | No structural or advisory findings |
 | agent-tools | `agents-md-generator` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
@@ -41,9 +40,7 @@ This deterministic structural report excludes bundled `assets/` templates and ge
 | agent-tools | `mcp-builder` | skill | clean | No structural or advisory findings |
 | agent-tools | `mcp-client` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | agent-tools | `mcp-installer` | skill | clean | No structural or advisory findings |
-| agent-tools | `prompt-builder` | skill | clean | No structural or advisory findings |
 | agent-tools | `skill-catalog-auditor` | skill | clean | No structural or advisory findings |
-| agent-tools | `skill-graph-builder` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | agent-tools | `skill-workflow-builder` | skill | clean | No structural or advisory findings |
 | agent-tools | `unattended-loop-driver` | skill | clean | No structural or advisory findings |
 | content | `content-draft-writer` | skill | clean | No structural or advisory findings |

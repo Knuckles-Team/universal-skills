@@ -46,7 +46,7 @@ agent-packages/agents/<package>/<module>/skills/<operation-skill>/SKILL.md
 ```
 
 The package publishes its skill directory through the
-`agent_utilities.skill_providers` setuptools entry point. A cross-package universal
+the skill-provider entry-point group setuptools entry point. A cross-package universal
 workflow may invoke that skill by declaring the package and skill in `requires`.
 This keeps installation, versioning, credentials, and compatibility with the owner.
 

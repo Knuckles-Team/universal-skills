@@ -1,13 +1,11 @@
 #!/usr/bin/python
-# coding: utf-8
 
 import hashlib
 import os
 import re
+from collections.abc import Iterable
+from importlib.resources import as_file, files
 from pathlib import Path
-from importlib.resources import files, as_file
-from typing import Iterable, Optional
-
 
 __version__ = "1.3.11"
 
@@ -32,7 +30,6 @@ SKILL_DEFAULTS = {
     "cloudflare-deploy": False,
     "google-workspace": False,
     "jupyter-notebook": False,
-    "skill-graph-builder": True,
     "skill-workflow-builder": True,
     "web-crawler": True,
     "web-search": True,
@@ -69,7 +66,7 @@ def _get_enabled_paths(sub_dir: str, default_enabled: bool = True) -> list[str]:
 
 
 def get_universal_skills_path(
-    category: Optional[str] = None, name: Optional[str] = None
+    category: str | None = None, name: str | None = None
 ) -> list[str]:
     """
     Returns a list of absolute paths pointing to the individual enabled universal skills.
@@ -162,7 +159,7 @@ def get_skill_graph_path() -> list[str]:
     return enabled_paths
 
 
-def resolve_mcp_reference(filename: str) -> Optional[str]:
+def resolve_mcp_reference(filename: str) -> str | None:
     """
     Resolves an MCP configuration filename to its absolute path within the mcp-client skill.
     Supports .json, .md, and extensionless filenames (defaults to .json).

@@ -75,8 +75,8 @@ frontmatter contract doesn't carry them — see §5):
 
 **Graph-only** (`skill_type: graph`):
 - `source_url`, `crawl_depth`, `built_at`, `builder_version`, `file_count`,
-  `kg_ingested`, `index` — provenance/freshness fields written by
-  `skill-graph-builder` (see `sources.json` / `index.json`).
+  `kg_ingested`, `index` — provenance/freshness fields recorded when a skill graph is built
+  (see `sources.json` / `index.json`).
 
 `categories` is **not** a standard — drop it from new skills; it predates the
 `domain`/`skill_type` taxonomy and is unused by tooling.
@@ -134,7 +134,7 @@ adapters.py` adapts a COPY for targets whose frontmatter contract is stricter.
 | Target | Allowed top-level keys | Notes |
 |---|---|---|
 | Codex (`~/.codex/skills`) | `name`, `description`, `license`, `allowed-tools`, `metadata` | Everything else is demoted **into** `metadata` (existing `metadata` sub-keys win on conflict); `description` is sanitized (`<`→`[`, `>`→`]`); discovery is **flat** — nested sub-skills are promoted to the top level and skill-graphs install at the target's top level (not under `skill-graphs/`). (`builtin_skills`/`rename_map` are a general name-collision mechanism, currently empty — no active collision.) |
-| Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor, Grok/Grok Code, OpenCode, Zed, agent-utilities, agent-terminal-ui | unrestricted | Permissive contract — verbatim copy/symlink, unchanged from before this adapter existed. |
+| Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor, Grok/Grok Code, OpenCode, Zed, graph-os, agent-terminal-ui | unrestricted | Permissive contract — verbatim copy/symlink, unchanged from before this adapter existed. |
 
 A contract with every flag off (`demote_to_metadata=False`, `sanitize_description=False`,
 `flat_discovery=False`, empty `rename_map`) is a no-op (`requires_transform` is False):
@@ -171,8 +171,7 @@ must stay valid on Windows, macOS, and Linux:
   `skill_utilities.dedupe_caseless` resolves this.
 
 Enforced by `scripts/check_path_portability.py` (ratchet gate, ceiling 0) and the
-`skill-graph-builder`'s reference-file naming (flat, hash-named `reference/<hash>.md`
-files — see its `SKILL.md`).
+skill-graph reference-file naming (flat, hash-named `reference/<hash>.md` files).
 
 `portable_relpath` treats `max_total` as a hard bound, not merely a preferred
 filename budget.  When several components together exceed it, the filename is

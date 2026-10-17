@@ -9,7 +9,7 @@ team_config: trading_department
 agent: quant_research_analyst
 metadata:
   version: '1.3.11'
-  author: agent-utilities
+  author: graph-os
   concept: 'CONCEPT:KG-2.6'
 ---
 # Alpha Discovery Workflow

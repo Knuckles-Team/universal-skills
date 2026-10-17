@@ -2,10 +2,9 @@
 
 Kept as a thin re-export — NOT a second implementation — solely because
 ``universal_skills.core.skill_installer`` is a cross-repo Python import contract:
-``agent-utilities``' CLI (``agent_utilities/cli/__init__.py``) imports
-``from universal_skills.core.skill_installer.scripts import install`` directly, and
-several ``agents/*`` packages depend on the ``universal-skills[skill-installer]``
-pip extra. Renaming this module out from under them is out of scope for this
+the ``from universal_skills.core.skill_installer.scripts import install`` path and
+the ``universal-skills[skill-installer]`` pip extra are depended on by
+several ``agents/*`` packages. Renaming this module out from under them is out of scope for this
 skill's own repo (it would require synchronized changes across those other
 governed repos). Everything here delegates to the real implementation in
 ``universal_installer.py`` / ``core/universal-installer/scripts/install.py`` — see
@@ -26,10 +25,10 @@ from universal_skills.core.universal_installer import (
 )
 
 __all__ = [
-    "main",
-    "install_skills",
-    "get_source_paths",
     "TOOL_PATHS",
     "detect_present_tools",
+    "get_source_paths",
     "get_tool_paths",
+    "install_skills",
+    "main",
 ]

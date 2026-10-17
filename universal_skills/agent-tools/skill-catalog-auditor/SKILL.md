@@ -57,7 +57,7 @@ errors. Use `--fail-on warning` when establishing a fully clean catalog.
   atomic skills or one explicit MCP tool per step.
 - Put package- or platform-owned operations in that package's
   `<module>/skills/<name>/` and expose them through
-  `agent_utilities.skill_providers`. Keep a universal workflow only when it
+  the skill-provider entry-point group. Keep a universal workflow only when it
   genuinely composes capabilities across packages.
 
 ## Verify changes

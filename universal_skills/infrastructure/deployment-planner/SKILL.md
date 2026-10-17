@@ -58,7 +58,7 @@ This skill automates the process of determining **which services should run on w
 
 | Path | Purpose |
 |---|---|
-| `~/.config/agent-utilities/inventory.yaml` | Host inventory (Ansible format) |
+| `~/.config/graph-os/inventory.yaml` | Host inventory (Ansible format) |
 | Service compose files | Service definitions with resource requirements |
 | Docker daemon configs | Registry mirrors, insecure registries |
 
@@ -392,7 +392,7 @@ Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
 
 1. **Native** (above) — deterministic, no external tools; best for
    planner-owned catalog services. Matches the in-repo golden reference
-   `agent-utilities/deploy/k8s/graphos.yaml`.
+   `graph-os/deploy/k8s/graphos.yaml`.
 2. **kompose transform** — for the ~60 existing compose stacks, start from
    `kompose convert -f compose.yml -o k8s/`, then apply the deterministic
    post-fixups kompose drops:

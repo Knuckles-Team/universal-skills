@@ -146,10 +146,9 @@ def test_scaffold_emits_complete_valid_workflow(tmp_path):
     assert "Expected:" not in text
 
 
-def test_scaffolded_workflow_compiles_with_runtime_compiler(tmp_path):
-    compiler = pytest.importorskip(
-        "agent_utilities.workflows.skill_compiler"
-    ).SkillCompiler
+def test_scaffolded_workflow_step_graph_parses(tmp_path):
+    from test_workflows_compile import parse_steps
+
     root = _catalog(tmp_path)
     _write_atomic_skill(root, "development", "spec-generator")
     _write_atomic_skill(root, "development", "task-planner")
@@ -163,14 +162,11 @@ def test_scaffolded_workflow_compiles_with_runtime_compiler(tmp_path):
         root,
     )
 
-    plan = compiler.compile(destination)
+    steps = parse_steps((destination / "SKILL.md").read_text(encoding="utf-8"))
 
-    assert [step.node_id for step in plan.steps] == [
-        "spec-generator",
-        "task-planner",
-    ]
-    assert plan.steps[0].depends_on == []
-    assert plan.steps[1].depends_on == ["spec-generator"]
+    assert list(steps) == ["spec-generator", "task-planner"]
+    assert steps["spec-generator"] == []
+    assert steps["task-planner"] == ["spec-generator"]
 
 
 def test_scaffold_accepts_one_explicit_mcp_tool(tmp_path):

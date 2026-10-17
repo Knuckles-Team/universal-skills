@@ -14,7 +14,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.3.11'
-  author: agent-utilities
+  author: graph-os
   concept: 'CONCEPT:KG-2.6'
 ---
 # Overnight Research Workflow (Cron: 10PM ET daily)

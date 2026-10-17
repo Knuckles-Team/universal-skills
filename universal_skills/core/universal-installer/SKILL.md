@@ -13,7 +13,7 @@ description: >-
   Codex, Devin, Cursor, or a custom agent path, or wants an agent tool wired up
   end-to-end (skills + MCP servers) in one command. Do NOT use for creating or
   editing skill/ontology/prompt content — use skill-builder /
-  skill-workflow-builder / skill-graph-builder for that.
+  skill-workflow-builder for that.
 license: MIT
 tags: [skills, ontologies, prompts, mcp, installer, deployment, agent-tools]
 metadata:
@@ -30,9 +30,8 @@ one entry point per artifact type:
 - **Skills, skill-graphs, skill-workflows** — into each target tool's skill directory
   (unchanged behavior from `skill-installer`; every capability below is additive).
 - **Ontologies + system prompts** — the other two legs of the
-  `agent_utilities.*_providers` entry-point federation (CONCEPT:AU-KG.ontology.federation-provider-leg /
-  CONCEPT:AU-OS.deployment.modular-skill-prompt-contribution), materialized into the canonical
-  agent-utilities XDG tree (`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<provider>/…`)
+  skill/prompt/ontology provider entry-point federation, materialized into the canonical
+  graph-os XDG tree (`$XDG_DATA_HOME/graph-os/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
 - **graph-os + fleet MCP wiring** — generates/patches supported JSON clients
@@ -46,7 +45,7 @@ one entry point per artifact type:
 > links each skill to the installed package instead of copying, so there are no
 > duplicate files on disk and every skill auto-updates on `pip install -U`.
 > Ontologies and prompts are always **copied** (they are consumed as data by
-> agent-utilities/epistemic-graph, not executed in place).
+> graph-os/epistemic-graph, not executed in place).
 
 > **Refactor-safe (symlink mode).** A `--symlink` install repoints a moved skill's
 > stale link to its new source and prunes broken links left by a renamed/removed
@@ -68,12 +67,12 @@ bootstrap wires both.
 - **Cursor**: `~/.cursor/skills/`
 - **Grok Code** (`grok` / `grok-code`): `~/.grok/skills/`
 - **Zed**: `~/.config/zed/skills/`
-- **agent-utilities / agent-terminal-ui** (canonical XDG store): `$XDG_DATA_HOME/agent-utilities/skills/`
+- **graph-os / agent-terminal-ui** (canonical XDG store): `$XDG_DATA_HOME/graph-os/skills/`
   — always kept current on every global install (opt out with `--no-xdg`).
 
 **MCP config files** (same `--tool` key, MCP-config leg): Claude Code (`~/.claude.json`),
 Claude Desktop, Windsurf, OpenCode, Antigravity, Devin, Codex, Cursor
-(`~/.cursor/mcp.json`), and agent-utilities/agent-terminal-ui — the full set the bundled
+(`~/.cursor/mcp.json`), and graph-os/agent-terminal-ui — the full set the bundled
 `mcp-installer` supports (extended with **Cursor**, previously skill-only-parity).
 `merge`, never overwrite, unless `--force`.
 
@@ -99,7 +98,7 @@ pip install skill-graphs
 
 #### Arguments
 - `--tool`: Target tool (claude, claude-desktop, windsurf, opencode, openclaw,
-  antigravity, codex, devin, cursor, grok, zed, agent-utilities,
+  antigravity, codex, devin, cursor, grok, zed, graph-os,
   agent-terminal-ui, or a custom path).
 - `--all-detected` / `--all`: Install into every detected / every known tool.
 - `--interactive` / `-i`: Interactively pick target tools, source providers, AND
@@ -109,7 +108,7 @@ pip install skill-graphs
   (`universal-skills` and/or installed agent-package names). Default: all.
 - `--from-package <path>`: Install directly from an `agents/*` project checkout
   that is **not yet pip-installed** — parses its `pyproject.toml`
-  `agent_utilities.{skill,prompt,ontology}_providers` entry-points and installs
+  skill, prompt and ontology provider entry-points and installs
   straight from the checkout's source tree. See "Per-package auto-detection".
 - `--skills`, `--group`, `--force`, `--symlink`/`--link`, `--layer`,
   `--install-skill-graphs`, `--no-prune`, `--no-xdg`, `--validate`: unchanged
@@ -133,7 +132,7 @@ install-universal --all-detected --symlink
 install-universal --tool claude --graph-os remote --graph-os-url https://graph-os.example.com/mcp
 
 # Install directly from an unreleased agents/* checkout (skills+prompts+ontology)
-install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
+install-universal --tool claude --from-package ${WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
 ```
 
 > Invoke via the `install-universal` console entry point (installed with the
@@ -142,25 +141,15 @@ install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}
 
 ## Ontology & prompt installation (new)
 
-agent-utilities already defines the full three-leg federation — `agent_utilities.
-skill_providers` / `.prompt_providers` / `.ontology_providers` entry-points,
-resolved by `agent_utilities.core.providers` and materialized by
-`agent_utilities.core.unified_install.install_unified()` into
-`$XDG_DATA_HOME/agent-utilities/{skills,prompts,ontologies}/<provider>/…`. This
-skill's job on the ontology/prompt legs is to make sure that materialization
-happens as part of the SAME install run a user already runs for skills, without
-requiring a separate `agent-utilities install` invocation:
-
-- If `agent_utilities` is importable, `install_unified()` is called directly
-  (best fidelity — reuses AU's own federation-aware logic, including AU's own
-  base ontologies/prompts).
-- Otherwise (agent-utilities not installed in this environment), a local,
-  dependency-free fallback in `scripts/providers.py` resolves the same
-  `agent_utilities.prompt_providers` / `agent_utilities.ontology_providers`
-  entry-points and copies each provider's `*.json` prompts / `*.ttl` (+
-  `shapes/*.ttl`) ontology files into the same XDG layout directly — same
-  target tree, no agent-utilities import required (mirrors the existing
-  skill-provider fallback pattern already used for skills).
+The package federation has three legs — the skill, prompt and ontology provider
+entry-point groups — and graph-os ingests what they contribute. This skill makes
+sure the materialization into
+`$XDG_DATA_HOME/graph-os/{skills,prompts,ontologies}/<provider>/…` happens as part
+of the SAME install run a user already runs for skills, without a separate install
+step. `scripts/providers.py` is a local, dependency-free resolver: it finds each
+installed provider's prompt/ontology entry points and copies the `*.json` prompts
+and `*.ttl` (+ `shapes/*.ttl`) ontology files into that XDG layout directly,
+mirroring the skill-provider resolution used for skills.
 
 Ontologies/prompts always land in the XDG tree (never in a per-tool skill
 directory — Claude Code etc. don't consume `.ttl`/prompt JSON directly); only
@@ -177,8 +166,7 @@ When it is **not yet installed** (a checkout you're developing against, e.g.
 `agent-packages/agents/<pkg>`), pass `--from-package <path>`:
 `scripts/from_package.py` reads that package's `pyproject.toml` directly
 (stdlib `tomllib`, no network/pip needed) for its
-`[project.entry-points."agent_utilities.skill_providers"]` /
-`.prompt_providers` / `.ontology_providers` tables, resolves each value
+skill-, prompt- and ontology-provider entry-point tables, resolves each value
 (`<module>.skills` etc.) to a source directory inside the checkout, and installs
 from there through the same skill/ontology/prompt install paths as a normal
 provider — named by the package's `[project].name`.
@@ -191,7 +179,7 @@ Reuses the bundled **`mcp-installer`** skill's config-merge machinery
 re-implementing it. `scripts/mcp_setup.py` builds two kinds of entries and
 merges them into a supported JSON client's MCP config file. Codex remains a
 skill-install target, but is intentionally skipped by this JSON leg. Register
-GraphOS in Codex through agent-utilities' `setup-config codex` command (or the
+GraphOS in Codex through graph-os' `setup-config codex` command (or the
 equivalent `codex mcp add graph-os -- graph-os --transport stdio`) so Codex owns
 its `config.toml` entry and no env, secret, working directory, or machine path
 is copied.
@@ -224,7 +212,7 @@ entry is the common case) unless `--no-mcp` is given.
 
 After each install run (fleet-provider or `--from-package`), the installer
 writes a small JSON manifest —
-`$XDG_DATA_HOME/agent-utilities/install-manifest.json` — recording, per
+`$XDG_DATA_HOME/graph-os/install-manifest.json` — recording, per
 provider, which artifact types and how many were (re)installed this run and
 when. This is the "make the artifacts **discoverable**" half of KG
 auto-extension: any provider whose skills/prompts/ontologies changed is now
@@ -234,7 +222,7 @@ sitting in the canonical XDG tree the KG ingestion pipeline already scans.
 side's job, not the installer's): actually parse the manifest, mint KG nodes, or
 call `source_sync`. The installer prints the exact follow-up
 (`source_sync source=all mode=delta` via the graph-os MCP connection, or the
-`agent-utilities-source-integration` skill) rather than invoking it itself —
+`graph-os-source-integration` skill) rather than invoking it itself —
 invoking a heavy KG-ingestion tool from inside a lightweight file-copy installer
 would couple the two concerns and require a live graph-os connection this skill
 has no business assuming. If a graph-os-side counterpart wants to consume
@@ -259,7 +247,7 @@ that consumer is **not yet built** — flagged as a deferred follow-up.
 - `scripts/adapters.py` — per-agent-tool `SKILL.md` frontmatter contracts
   (unchanged).
 - `scripts/providers.py` — ontology/prompt entry-point discovery + XDG
-  materialization (agent-utilities-import fast path + dependency-free fallback).
+  materialization (graph-os-import fast path + dependency-free fallback).
 - `scripts/from_package.py` — parse an `agents/*` checkout's `pyproject.toml`
   entry-points and install directly from source.
 - `scripts/mcp_setup.py` — graph-os + fleet MCP config generation, merged via

@@ -2,7 +2,7 @@
 name: langfuse-agent-tracer
 skill_type: workflow
 description: >-
-  Automatically queries Langfuse sessions and traces to isolate agent-utilities execution runs and diagnose spawned agent orchestration errors or performance drops.
+  Automatically queries Langfuse sessions and traces to isolate graph-os execution runs and diagnose spawned agent orchestration errors or performance drops.
 domain: development-workflows
 agent: dev_ops_engineer
 team_config:
@@ -27,7 +27,7 @@ metadata:
 
 **CONCEPT:DEV-001**
 
-Automatically queries Langfuse sessions and traces to isolate agent-utilities execution runs and diagnose spawned agent orchestration errors or performance drops.
+Automatically queries Langfuse sessions and traces to isolate graph-os execution runs and diagnose spawned agent orchestration errors or performance drops.
 
 ## Steps
 

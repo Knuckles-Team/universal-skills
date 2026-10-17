@@ -13,7 +13,7 @@ Usage:
     python extract_innovations.py --source /path/to/paper.md --concept-id KG-2.4
 
     # KG-backed source (pulls Article content from Knowledge Graph):
-    python extract_innovations.py --kg-source "hypergraph inductive reasoning" --target /path/to/codebase
+    python extract_innovations.py --articles-json "hypergraph inductive reasoning" --target /path/to/codebase
 
 CONCEPT:CA-010 — Innovation Extraction Engine
 """
@@ -348,43 +348,30 @@ def extract_from_text(content: str, concept_id: str = "") -> dict:
     }
 
 
-def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
-    """Resolve Article content from the Knowledge Graph via semantic search.
+def load_article_rows(path: str) -> list[dict]:
+    """Load Article rows exported from the knowledge graph to a JSON file.
 
-    Args:
-        query: Natural language search query.
-        top_k: Maximum number of results.
-
-    Returns:
-        List of dicts with 'content', 'target_path', 'score'.
+    Each row carries ``content`` plus optional ``target_path``, ``score`` and
+    ``node_id`` (the shape a graph-os served search returns).
     """
     try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-        from agent_utilities.core.paths import kg_db_path
-
-        engine = IntelligenceGraphEngine(db_path=str(kg_db_path()))
-        results = engine.search_hybrid(query, top_k=top_k)
-        sources = []
-        for r in results:
-            content = r.get("content", r.get("description", ""))
-            if content:
-                sources.append(
-                    {
-                        "content": content,
-                        "target_path": r.get(
-                            "target_path", r.get("file_path", "kg_source")
-                        ),
-                        "score": r.get("score", 0.0),
-                        "node_id": r.get("id", r.get("node_id", "")),
-                    }
-                )
-        return sources
-    except ImportError:
-        print("agent_utilities not available for KG resolution.", file=sys.stderr)
+        rows = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"Articles file unreadable: {type(e).__name__}", file=sys.stderr)
         return []
-    except Exception as e:
-        print(f"KG resolution failed: {type(e).__name__}", file=sys.stderr)
-        return []
+    sources = []
+    for r in rows if isinstance(rows, list) else []:
+        content = r.get("content", r.get("description", ""))
+        if content:
+            sources.append(
+                {
+                    "content": content,
+                    "target_path": r.get("target_path", r.get("file_path", "kg_source")),
+                    "score": r.get("score", 0.0),
+                    "node_id": r.get("id", r.get("node_id", "")),
+                }
+            )
+    return sources
 
 
 def find_synergies(source_signals: dict, target_path: Path | None) -> list[dict]:
@@ -442,7 +429,7 @@ def main():
     sources = []
     target = None
     concept_id = ""
-    kg_source_query = ""
+    articles_file = ""
 
     i = 1
     while i < len(sys.argv):
@@ -460,20 +447,20 @@ def main():
         elif sys.argv[i] == "--concept-id" and i + 1 < len(sys.argv):
             concept_id = sys.argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--kg-source" and i + 1 < len(sys.argv):
-            kg_source_query = sys.argv[i + 1]
+        elif sys.argv[i] == "--articles-json" and i + 1 < len(sys.argv):
+            articles_file = sys.argv[i + 1]
             i += 2
         else:
             sources.append(sys.argv[i])
             i += 1
 
-    # Resolve KG sources if --kg-source is provided
+    # Load exported KG article rows if --articles-json is provided
     kg_articles = []
-    if kg_source_query:
-        kg_articles = resolve_kg_sources(kg_source_query)
+    if articles_file:
+        kg_articles = load_article_rows(articles_file)
         if not kg_articles:
             print(
-                json.dumps({"error": f"No KG articles found for: {kg_source_query}"}),
+                json.dumps({"error": f"No articles found in: {articles_file}"}),
                 file=sys.stderr,
             )
 
@@ -481,7 +468,7 @@ def main():
         print(
             json.dumps(
                 {
-                    "error": "Usage: extract_innovations.py [--source <path>]... [--target <codebase>] [--concept-id <ID>] [--kg-source <query>]"
+                    "error": "Usage: extract_innovations.py [--source <path>]... [--target <codebase>] [--concept-id <ID>] [--articles-json <file>]"
                 }
             )
         )
@@ -568,7 +555,7 @@ def main():
                 "source_count": len(results),
                 "target": target,
                 "concept_id": concept_id,
-                "kg_source_query": kg_source_query if kg_source_query else None,
+                "articles_file": articles_file if articles_file else None,
                 "results": results,
             },
             indent=2,

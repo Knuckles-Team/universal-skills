@@ -7,7 +7,7 @@ TEMPLATE = """# AGENTS.md
 
 ## Tech Stack & Architecture
 - Language/Version: Python 3.10+
-- Core Libraries: `agent-utilities`, `fastmcp`, `pydantic-ai`
+- Core Libraries: `agent-connector-sdk`, `fastmcp`
 - Key principles: Functional patterns, Pydantic for data validation, asynchronous tool execution.
 - Architecture:
     - `mcp_server.py`: Main MCP server entry point and tool registration.
@@ -68,15 +68,14 @@ pre-commit run --all-files
 
 ## Code Style & Conventions
 **Always:**
-- Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent`).
+- Use `agent-connector-sdk` for common patterns (e.g., `create_mcp_server`, the governed HTTP client).
 - Define input/output models using Pydantic.
 - Include descriptive docstrings for all tools (they are used as tool descriptions for LLMs).
 - Check for optional dependencies using `try/except ImportError`.
 
 **Good example:**
 ```python
-from agent_utilities import create_mcp_server
-from fastmcp import FastMCP
+from agent_connector_sdk.mcp.server import create_mcp_server
 
 mcp = create_mcp_server("my-agent")
 
@@ -89,7 +88,7 @@ async def my_tool(param: str) -> str:
 ## Dos and Don'ts
 **Do:**
 - Run `pre-commit` before pushing changes.
-- Use existing patterns from `agent-utilities`.
+- Use existing patterns from `agent-connector-sdk`.
 - Keep tools focused and idempotent where possible.
 
 **Don't:**
@@ -100,7 +99,7 @@ async def my_tool(param: str) -> str:
 ## Safety & Boundaries
 **Always do:**
 - Run lint/test via `pre-commit`.
-- Use `agent-utilities` base classes.
+- Use `agent-connector-sdk` base classes and helpers.
 
 **Ask first:**
 - Major refactors of `mcp_server.py` or `agent.py`.
@@ -108,11 +107,11 @@ async def my_tool(param: str) -> str:
 
 **Never do:**
 - Commit `.env` files or secrets.
-- Modify `agent-utilities` or `universal-skills` files from within this package.
+- Modify `agent-connector-sdk` or `universal-skills` files from within this package.
 
 ## When Stuck
 - Propose a plan first before making large changes.
-- Check `agent-utilities` documentation for existing helpers.
+- Check `agent-connector-sdk` documentation for existing helpers.
 
 ## Working Discipline — think, simplify, stay surgical, verify
 
@@ -160,7 +159,7 @@ why rather than bypassing it.
 ## Working with Git Worktrees (multi-session)
 
 Multiple agents/sessions work the `agent-packages/*` repos concurrently. **Do not
-edit the canonical checkout** (`${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/<repo>`) — a
+edit the canonical checkout** (`${WORKSPACE_ROOT}/agent-packages/<repo>`) — a
 background `repository-manager` sync can reset its working tree and discard
 uncommitted edits. Take your own git worktree on your own branch instead:
 

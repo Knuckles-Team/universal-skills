@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.3.11'
-  author: agent-utilities
+  author: graph-os
   concept: 'CONCEPT:KG-2.6'
 ---
 # Portfolio Rebalance Workflow (Cron: Monday 9AM ET)
@@ -32,7 +32,7 @@ Tool: Route to `data-science-mcp` for heavy optimization compute.
 
 ### Step 3: attribution
 Brinson decomposition of recent performance.
-Tool: Route to agent-utilities `profit_attribution.py`.
+Tool: Route to the graph-os served profit-attribution operation.
 
 ### Step 4: generate-trades
 Compute rebalancing trade list from target vs current weights.

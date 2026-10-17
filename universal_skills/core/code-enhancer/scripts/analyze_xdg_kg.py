@@ -1,106 +1,60 @@
 #!/usr/bin/env python3
-"""CE-021: Cross-repository XDG compliance check using the Knowledge Graph.
+"""CE-021: Cross-repository XDG compliance check.
 
-Instead of parsing ASTs locally, this script queries the Knowledge Graph
-(populated via kg_ingest) to find hardcoded non-XDG standard paths
-(e.g., ~/.appname) across all indexed projects.
+Scans a project's Python sources for hardcoded legacy home-directory paths
+(e.g. ``~/.appname``) instead of the XDG base directories. The scan is local
+and needs no knowledge-graph service.
 
-CONCEPT:CE-021 — KG-Native XDG Compliance Check
+CONCEPT:CE-021 — XDG Compliance Check
 """
 
 import json
 import logging
+import re
+from pathlib import Path
 from typing import Any
 
-try:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-except ImportError:
-    IntelligenceGraphEngine = None
 logger = logging.getLogger(__name__)
+
+_SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", ".tox", "build", "dist"}
+_ALLOWED_PREFIXES = ("~/.local", "~/.config", "~/.cache")
+_TILDE_LITERAL = re.compile(r"""["'](~/[^"'\s]*)["']""")
 
 
 def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
-    """Query the KG for non-XDG compliant paths.
+    """Find string literals that point at non-XDG paths under ``~/``.
 
-    If project_dir is provided, filters by that target_path.
-    Otherwise, checks the entire graph.
+    Scans ``project_dir`` (default: the current directory).
     """
-    engine = IntelligenceGraphEngine.get_active() if IntelligenceGraphEngine else None
-    if not engine:
-        try:
-            from agent_utilities.core.paths import kg_db_path
-            from agent_utilities.knowledge_graph.backends import create_backend
-            import networkx as nx
-
-            backend = create_backend(backend_type="ladybug", db_path=str(kg_db_path()))
-            engine = IntelligenceGraphEngine(graph=nx.MultiDiGraph(), backend=backend)
-        except ImportError as e:
-            logger.warning(f"Skipping XDG KG check due to missing dependency: {type(e).__name__}")
-            return {
-                "domain": "XDG Compliance (KG)",
-                "score": 100,
-                "grade": "N/A",
-                "findings": [
-                    "Check skipped: required agent-utilities/networkx dependencies not found."
-                ],
-                "justifications": [
-                    "Dependencies missing, assuming compliance by default for this check."
-                ],
-            }
-
-    # Query for string literals or path operations that resemble ~/.something
-    # In the AST, these are often captured as Constant or Call nodes depending on parsing depth.
-    # The Knowledge Graph parses file paths and strings into nodes.
-    # For a generalized check, we look for CodeNode or AST nodes whose 'name' or 'value'
-    # starts with '~/' or contains '.local/share' etc.
-
-    # We will use a Cypher query to find suspicious paths.
-    # We look for nodes containing "~/" but NOT "~/.local" or "~/.config" or "~/.cache".
-    cypher = """
-    MATCH (n)
-    WHERE (n.type IN ['StringLiteral', 'Constant', 'Path', 'CodeNode'])
-      AND (
-        (n.value STARTS WITH '~/' AND NOT n.value STARTS WITH '~/.local' AND NOT n.value STARTS WITH '~/.config' AND NOT n.value STARTS WITH '~/.cache')
-        OR (n.name STARTS WITH '~/' AND NOT n.name STARTS WITH '~/.local' AND NOT n.name STARTS WITH '~/.config' AND NOT n.name STARTS WITH '~/.cache')
-      )
-    RETURN n.id AS id, n.name AS name, n.value AS value, n.file_path AS file_path, n.target_path AS target_path
-    """
-
-    results = engine.query_cypher(cypher)
-
-    findings = []
-    failed = False
-
-    # Filter by project_dir if provided
-    for row in results:
-        target = row.get("target_path", "")
-        if project_dir and project_dir not in target:
+    root = Path(project_dir or ".").resolve()
+    findings: list[str] = []
+    for path in sorted(root.rglob("*.py")):
+        if any(part in _SKIP_DIRS for part in path.relative_to(root).parts):
             continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            logger.warning("Skipping unreadable file: %s", type(exc).__name__)
+            continue
+        for number, line in enumerate(text.splitlines(), start=1):
+            for match in _TILDE_LITERAL.finditer(line):
+                value = match.group(1)
+                if not value.startswith(_ALLOWED_PREFIXES):
+                    findings.append(
+                        f"Found non-XDG path '{value}' in {path.relative_to(root)}:{number}"
+                    )
 
-        val = row.get("value") or row.get("name")
-        file_path = row.get("file_path", "unknown file")
-
-        findings.append(f"Found non-XDG path '{val}' in {file_path}")
-        failed = True
-
-    score = 0 if failed else 100
-    grade = "F" if failed else "A"
-
-    if not failed:
-        justifications = [
-            "No non-XDG standard paths found in the Knowledge Graph for this scope."
-        ]
-    else:
-        justifications = [
-            "Found hardcoded legacy home directory paths (~/.appname). Use XDG standard paths instead."
-        ]
-
+    failed = bool(findings)
     return {
-        "domain": "XDG Compliance (KG)",
-        "score": score,
-        "grade": grade,
+        "domain": "XDG Compliance",
+        "score": 0 if failed else 100,
+        "grade": "F" if failed else "A",
         "findings": findings,
-        "justifications": justifications,
+        "justifications": [
+            "Found hardcoded legacy home directory paths (~/.appname). Use XDG standard paths instead."
+            if failed
+            else "No non-XDG standard paths found in this scope."
+        ],
     }
 
 

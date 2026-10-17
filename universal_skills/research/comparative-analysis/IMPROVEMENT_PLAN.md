@@ -1,6 +1,6 @@
 # Comparative-Analysis Skill — Improvement Plan
 
-> Authored after a full run: agent-oss (Quarq) vs agent-utilities → SDD plan → implementation.
+> Authored after a full run: agent-oss (Quarq) vs graph-os → SDD plan → implementation.
 > Goal: optimize the skill for **repeated** code-vs-code innovation-extraction runs that feed SDD.
 > Tackle **after Feature E** of the current synergy epic.
 
@@ -13,7 +13,7 @@
 ## Critical gaps (highest priority)
 
 ### G1 — The KG-cold / no-MCP path is undocumented and is the common case
-The skill's Phase -1 assumes the `agent-utilities-kg` MCP server is running and both codebases are
+The skill's Phase -1 assumes the `graph-os` MCP server is running and both codebases are
 already ingested. In the real run, **none of that was true** — I used Explore agents + direct file
 reads + parsing `docs/concepts.yaml` directly. The skill treats this as a degraded fallback ("scripts
 second") when it was actually the *primary, faster* path.
@@ -108,7 +108,7 @@ Optimizing G1–G4 turns a ~full-session manual analysis into a repeatable, most
 
 All six scripts pass `--self-test`; the full inner loop was validated end-to-end against
 `quarqlabs/agent-oss` (a fake claim was correctly held at `claimed-only` and excluded from SDD
-scaffolding) and `check_wiring.py` was dogfooded against the agent-utilities synergy features
+scaffolding) and `check_wiring.py` was dogfooded against the graph-os synergy features
 (all reachable ≤3 hops). Canonical location: `universal_skills/research/comparative-analysis`
 (the `~/.claude/skills/comparative-analysis` symlink target — both update together).
 

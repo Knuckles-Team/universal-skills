@@ -387,15 +387,15 @@ def main():
         print(
             json.dumps(
                 {
-                    "error": "Usage: discover_projects.py <path1> [path2] [--kg-query <query>] [--mode <mode>]"
+                    "error": "Usage: discover_projects.py <path1> [path2] [--sources-json <file>] [--mode <mode>]"
                 }
             )
         )
         sys.exit(1)
 
-    # Check for --mode and --kg-query flags
+    # Check for --mode and --sources-json flags
     mode = "auto"
-    kg_query = ""
+    sources_json = ""
     session_id = uuid.uuid4().hex[:8]
     temp_dir = Path.cwd() / ".specify" / "ca_repos" / session_id
     cleanup_needed = False
@@ -406,8 +406,8 @@ def main():
         if sys.argv[i] == "--mode" and i + 1 < len(sys.argv):
             mode = sys.argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--kg-query" and i + 1 < len(sys.argv):
-            kg_query = sys.argv[i + 1]
+        elif sys.argv[i] == "--sources-json" and i + 1 < len(sys.argv):
+            sources_json = sys.argv[i + 1]
             i += 2
         else:
             arg = sys.argv[i]
@@ -430,9 +430,10 @@ def main():
 
     projects = []
 
-    # Resolve KG sources if --kg-query is provided (CONCEPT:KG-2.7)
-    if kg_query:
-        kg_sources = _resolve_kg_sources(kg_query)
+    # Sources exported from the knowledge graph (rows from a graph-os served
+    # query: file_path, name, source_type, kg_metadata, relevance_score).
+    if sources_json:
+        kg_sources = _load_source_rows(sources_json)
         for src in kg_sources:
             projects.append(
                 {
@@ -485,48 +486,14 @@ def main():
     print(json.dumps(output, indent=2))
 
 
-def _resolve_kg_sources(query: str) -> list[dict]:
-    """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.7).
-
-    This is optional — if agent_utilities is not installed or no KG
-    engine is available, returns an empty list gracefully.
-
-    Args:
-        query: Search query for KG resolution.
-
-    Returns:
-        List of resolved source dicts with file_path, name, source_type.
-    """
+def _load_source_rows(path: str) -> list[dict]:
+    """Load knowledge-graph source rows exported to a JSON file."""
     try:
-        from agent_utilities.knowledge_graph.source_resolver import KGSourceResolver
-        from agent_utilities.knowledge_graph.engine import IntelligenceGraphEngine
-
-        engine = IntelligenceGraphEngine.get_active()
-        if not engine:
-            print(
-                json.dumps(
-                    {"kg_warning": "No active KG engine — skipping KG resolution"}
-                ),
-                file=sys.stderr,
-            )
-            return []
-
-        resolver = KGSourceResolver(engine=engine)
-        resolved = resolver.resolve_any(query=query, top_k=10)
-        return [r.model_dump() for r in resolved]
-    except ImportError:
-        print(
-            json.dumps(
-                {
-                    "kg_warning": "agent_utilities not installed — KG resolution unavailable"
-                }
-            ),
-            file=sys.stderr,
-        )
+        rows = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(json.dumps({"warning": f"sources file unreadable: {type(e).__name__}"}), file=sys.stderr)
         return []
-    except Exception as e:
-        print(json.dumps({"kg_warning": f"KG resolution failed: {type(e).__name__}"}), file=sys.stderr)
-        return []
+    return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
 
 
 if __name__ == "__main__":

@@ -8,17 +8,18 @@ Usage:
     # Filesystem-only mode (no KG required)
     python rank_relevance.py /path/to/target /path/to/paper1.pdf /path/to/codebase2
 
-    # KG-enabled mode (queries all ingested items)
-    python rank_relevance.py /path/to/target --kg-enabled
+    # Pre-profiled items exported from the knowledge graph (rows from a
+    # graph-os served query: label, id, name, path, keywords, patterns, ...)
+    python rank_relevance.py /path/to/target --items-json items.json
 
     # Show only top N results
-    python rank_relevance.py /path/to/target --kg-enabled --top 10
+    python rank_relevance.py /path/to/target --items-json items.json --top 10
 
 CONCEPT:KG-2.5 — Per-Item Relevance Ranking
 
-Layered KG/engine-native design (see ``_kg_ast.py``): ``--kg-enabled`` mode
-already IS tier 1 — it queries the ingested KG directly for pre-profiled
-Codebase/Article/Document nodes instead of re-walking the filesystem. Filesystem
+Layered KG/engine-native design (see ``_kg_ast.py``): ``--items-json`` mode
+already IS tier 1 — it scores pre-profiled Codebase/Article/Document rows
+exported from the knowledge graph instead of re-walking the filesystem. Filesystem
 mode's ``_extract_codebase_profile`` stays on local stdlib ``ast`` deliberately
 (not a fallback of convenience): entry-point detection needs decorator info
 (``node.decorator_list``), pattern detection needs the Python ``node.bases``
@@ -325,9 +326,9 @@ def main():
         "items", nargs="*", help="Paths to papers/codebases to score (filesystem mode)"
     )
     parser.add_argument(
-        "--kg-enabled",
-        action="store_true",
-        help="Query KG for all ingested items instead of filesystem paths",
+        "--items-json",
+        default="",
+        help="JSON file of knowledge-graph item rows to score instead of filesystem paths",
     )
     parser.add_argument(
         "--top", type=int, default=0, help="Show only top N results (0 = all)"
@@ -342,25 +343,13 @@ def main():
 
     results = []
 
-    if args.kg_enabled:
+    if args.items_json:
         try:
-            from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-            from agent_utilities.core.paths import kg_db_path
-            import networkx as nx
-
-            engine = IntelligenceGraphEngine(
-                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
-            )
-
-            # Query all items (Codebases, Articles, Documents) from KG
-            nodes = engine.query_cypher(
-                "MATCH (n) WHERE labels(n)[0] IN ['Codebase', 'Article', 'Document'] "
-                "RETURN labels(n)[0] AS label, n.id AS id, n.name AS name, n.path AS path, "
-                "n.keywords AS keywords, n.patterns AS patterns, n.modules AS modules, n.content AS content"
-            )
-
+            nodes = json.loads(Path(args.items_json).read_text(encoding="utf-8"))
+            if isinstance(nodes, dict):
+                nodes = nodes.get("rows") or nodes.get("results") or []
             if not nodes:
-                print(json.dumps({"error": "No Codebase or Article items found in Knowledge Graph."}))
+                print(json.dumps({"error": "No Codebase or Article items found in the items file."}))
                 sys.exit(1)
 
             for row in nodes:
@@ -402,7 +391,7 @@ def main():
                 )
 
         except Exception as e:
-            print(json.dumps({"error": f"Failed to query Knowledge Graph: {type(e).__name__}"}))
+            print(json.dumps({"error": f"Failed to read items file: {type(e).__name__}"}))
             sys.exit(1)
     else:
         for item_path in args.items:

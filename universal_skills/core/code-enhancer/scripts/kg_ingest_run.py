@@ -2,9 +2,8 @@
 """CE-032 — KG-native ingest of a code-enhancement run into graph-os.
 
 Turns an ``enhance_repo.py`` report into a graph payload and (best-effort) ingests it into the
-graph-os Knowledge Graph via the **MCP server's HTTP endpoint** — deliberately NOT via a direct
-``import agent_utilities.core`` (that hard dependency is exactly what broke the old XDG/KG check in
-the live run). Talking to the running MCP server keeps the skill decoupled from package internals.
+graph-os Knowledge Graph via the **MCP server's HTTP endpoint** — deliberately NOT via an in-process
+package import (a hard dependency on package internals). Talking to the running MCP server keeps the skill decoupled from package internals.
 
 Graph shape (per run):
     Repo ──OF_REPO── CodeEnhancementRun ──HAS_DOMAIN── DomainScore ──HAS_FINDING── Finding

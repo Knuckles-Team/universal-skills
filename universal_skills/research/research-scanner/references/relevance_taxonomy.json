@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "description": "Relevance taxonomy for scoring research papers against agent-utilities concepts. Customize weights and keywords for your target domain.",
+  "description": "Relevance taxonomy for scoring research papers against ecosystem concepts. Customize weights and keywords for your target domain.",
   "domains": {
     "orchestration": {
       "weight": 3.0,

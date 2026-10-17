@@ -31,9 +31,8 @@ PreToolUse gate** (OS-5.41) consults governance at decision time.
 
 Generate the governance-derived Claude Code permission fence + `.claudeignore`:
 
-```bash
-agent-utilities harness-fence --target ~/.claude            # or <project>/.claude
-# or via MCP:  graph_configure(action="harness_fence", config_key="~/.claude")
+```text
+graph_configure(action="harness_fence", config_key="~/.claude")   # or <project>/.claude
 ```
 
 This writes `settings.json` with `defaultMode=acceptEdits`, an `allow` list of
@@ -42,11 +41,7 @@ wall (rm -rf, force-push, hard reset, secret files, raw curl) regenerated from
 `ActionPolicy` each run — **never** `bypassPermissions`. The companion
 `.claudeignore` keeps secrets out of context entirely.
 
-**Verify before walking away** (`--dry-run` prints without writing):
-
-```bash
-agent-utilities harness-fence --target ~/.claude --dry-run
-```
+**Verify before walking away** by reading the written `settings.json`.
 
 Confirm `defaultMode == "acceptEdits"`, `bypassPermissions` absent, and the deny
 list contains the irreversible + secret rules.
@@ -73,15 +68,15 @@ and anything I need to review.
 
 ## 3. Or run the loop driver directly
 
-The whole loop is a single command — the testable core behind this skill:
+Drive the graph-os Loop engine with repeated served calls:
 
-```bash
-agent-utilities sleep-run --max-cycles 6 --max-topics 5 --workspace .
+```text
+graph_loops(action="run", max_topics=5)
 ```
 
-It drives `LoopController.run_one_cycle` until the loop **converges** (no new
-progress for 2 cycles) or the cap is hit, commits per productive cycle, and
-writes the morning summary into `MEMORY.md`.
+Repeat until the loop **converges** (no new progress for 2 cycles) or you reach
+6 cycles, commit per productive cycle, and write the morning summary into
+`MEMORY.md`.
 
 ## 4. Morning review
 

@@ -20,7 +20,7 @@ the public [organization hub](https://github.com/Knuckles-Team/.github), its
 [build-first queue](https://knuckles-team.github.io/.github/build-first.html),
 and [contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md).
 The queue links owner-native specs in epistemic-graph, connector SDK,
-agent-utilities, graph-os, WebUI, repository-manager, pipelines,
+graph-os, graph-os, WebUI, repository-manager, pipelines,
 agent-terminal-ui, emerald-exchange, tunnel-manager, and the hub itself.
 
 The canonical, complete instructions are packaged by
@@ -29,7 +29,7 @@ Read that `SKILL.md` and its
 [`bootstrap.md`](https://github.com/Knuckles-Team/graph-os/blob/main/graph_os/skills/graph-os-development/references/bootstrap.md)
 from the current public checkout before changing any ecosystem repository.
 The Graph OS package registers the skill through its
-`agent_utilities.skill_providers` entry point; this catalog entry lets a
+the skill-provider entry-point group entry point; this catalog entry lets a
 contributor discover it before installing Graph OS.
 
 Use `spec-generator`, `task-planner`, `sdd-implementer`, `spec-verifier`, and

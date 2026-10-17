@@ -7,7 +7,7 @@ description: >-
   classifies it via the UniversalKnowledgeClassifier, ingests high-value
   content into the Knowledge Graph, and triggers comparative-analysis +
   SDD generation when evolution potential is detected. Extends the pull-based
-  agent-utilities-evolution skill with push-based evolution from incoming content.
+  graph-os-evolution skill with push-based evolution from incoming content.
   Triggers on "assimilate knowledge", "knowledge assimilation", "ingest and evolve",
   "push-based evolution", "discover and ingest", "x research pipeline",
   "self-evolve from X", "run assimilation".
@@ -20,13 +20,13 @@ metadata:
   concepts:
     - CONCEPT:KG-2.7
     - CONCEPT:ECO-4.6
-requires: ['graph-os', 'agent-utilities']
+requires: ['graph-os', 'graph-os']
 ---
 
 # Universal Knowledge Assimilation Engine
 
 Multi-source content discovery → classify → ingest → evolve pipeline.
-Extends the pull-based `agent-utilities-evolution` skill with a **push-based**
+Extends the pull-based `graph-os-evolution` skill with a **push-based**
 pathway where any high-signal content from ANY source automatically triggers
 the self-evolution loop.
 
@@ -139,20 +139,20 @@ Expected: items persisted to KG with proper node types and concept edges
 Depends On: Step 1
 
 ### Step 3: analyze
-Run comparative analysis on evolution candidates against agent-utilities.
+Run comparative analysis on evolution candidates against graph-os.
 
 For each EvolutionCandidateNode created in Steps 1-2:
 
 1. Run relevance sweep:
    ```
    Use mcp_graph-os_graph_analyze with action: "relevance_sweep",
-   query: "<evolution_reasoning>", target: "agent-utilities"
+   query: "<evolution_reasoning>", target: "graph-os"
    ```
 
 2. Run deep extraction for actionable gaps:
    ```
    Use mcp_graph-os_graph_analyze with action: "deep_extract",
-   query: "What specific features, patterns, or techniques from this content could be implemented in agent-utilities?",
+   query: "What specific features, patterns, or techniques from this content could be implemented in graph-os?",
    target: "<source_node_id>"
    ```
 
@@ -213,9 +213,9 @@ Depends On: Step 3
 | GitHub Trending | ai-agents, knowledge-graph, mcp-server | Daily | `mcp_github-mcp_github` |
 | KG Pending | EvolutionCandidate.status = "pending" | Every cycle | `mcp_graph-os_graph_query` |
 
-## Difference from agent-utilities-evolution
+## Difference from graph-os-evolution
 
-| Dimension | agent-utilities-evolution (pull) | knowledge-assimilation (push) |
+| Dimension | graph-os-evolution (pull) | knowledge-assimilation (push) |
 |-----------|--------------------------------|-------------------------------|
 | **Trigger** | Cron (60 min) or manual | Incoming high-potential content |
 | **Sources** | ScholarX papers only | X + ScholarX + GitHub + KG memory |
@@ -229,12 +229,12 @@ Both pipelines share downstream tools: `comparative-analysis`, `sdd-implementer`
 
 ## References
 
-- `agent-utilities-evolution` — pull-based evolution capability owned by the
-  `agent-utilities` package and available only when that package provides it.
+- `graph-os-evolution` — pull-based evolution capability owned by the
+  `graph-os` package and available only when that package provides it.
 - [research-scanner](../../research/research-scanner/SKILL.md) — Paper discovery
 - [comparative-analysis](../../research/comparative-analysis/SKILL.md) — Feature extraction
 - Package-specific X and assimilation implementation guides are owned by
-  `agent-utilities` under `docs/guides/`; they are not bundled with this workflow.
+  `graph-os` under `docs/guides/`; they are not bundled with this workflow.
 
 ## Execution
 

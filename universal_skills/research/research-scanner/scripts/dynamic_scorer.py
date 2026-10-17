@@ -36,28 +36,14 @@ def score_paper(title: str, abstract: str, taxonomy: dict) -> float:
     return round(total_score, 2)
 
 
-def build_taxonomy_from_kg() -> dict:
-    """Query the Knowledge Graph to build a dynamic taxonomy."""
-    try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+def build_taxonomy_from_nodes(nodes: list) -> dict:
+    """Build a dynamic taxonomy from knowledge-graph node rows.
 
-        engine = IntelligenceGraphEngine()
-    except ImportError:
-        print(
-            "❌ Failed to import IntelligenceGraphEngine. Is agent-utilities installed?",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    print("🔍 Querying Knowledge Graph for active concepts and codebases...")
-    nodes = engine.query(
-        "MATCH (n) WHERE n:ConceptNode OR n:CodeNode OR n:ArchitectureNode RETURN n.name as name, labels(n)[0] as type"
-    )
-
+    ``nodes`` are ``{"name": ..., "type": ...}`` rows exported by a graph-os
+    served query over ConceptNode / CodeNode / ArchitectureNode.
+    """
     if not nodes:
-        print(
-            "⚠️ Knowledge Graph is empty or returned no target nodes. Using empty taxonomy."
-        )
+        print("⚠️ No target nodes supplied. Using empty taxonomy.")
         return {}
 
     taxonomy = {}
@@ -85,7 +71,7 @@ def build_taxonomy_from_kg() -> dict:
 
         taxonomy[domain_key] = {"weight": weight, "keywords": keywords}
 
-    print(f"✅ Extracted {len(taxonomy)} dynamic focus areas from the KG.")
+    print(f"✅ Extracted {len(taxonomy)} dynamic focus areas from the node rows.")
     return taxonomy
 
 
@@ -100,7 +86,11 @@ def main():
     )
     parser.add_argument(
         "--taxonomy",
-        help="Path to taxonomy.json (if omitted, will auto-detect from agent-utilities KG)",
+        help="Path to taxonomy.json",
+    )
+    parser.add_argument(
+        "--nodes-json",
+        help="Path to node rows exported from the knowledge graph (builds the taxonomy when --taxonomy is omitted)",
     )
     parser.add_argument(
         "--min-score",
@@ -134,9 +124,15 @@ def main():
             print(f"❌ Error reading taxonomy JSON: {type(e).__name__}", file=sys.stderr)
             sys.exit(1)
     else:
-        # Auto-detect from KG if taxonomy not provided
-        print("ℹ️ Auto-detecting taxonomy from Knowledge Graph...")
-        taxonomy = build_taxonomy_from_kg()
+        if not args.nodes_json:
+            print("❌ Provide --taxonomy or --nodes-json", file=sys.stderr)
+            sys.exit(1)
+        try:
+            rows = json.loads(Path(args.nodes_json).read_text())
+        except Exception as e:
+            print(f"❌ Error reading nodes JSON: {type(e).__name__}", file=sys.stderr)
+            sys.exit(1)
+        taxonomy = build_taxonomy_from_nodes(rows if isinstance(rows, list) else [])
 
     try:
         papers_data = json.loads(papers_path.read_text())

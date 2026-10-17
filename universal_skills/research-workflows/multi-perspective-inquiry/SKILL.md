@@ -22,11 +22,11 @@ metadata:
 
 # Multi-Perspective Inquiry Workflow (STORM, native)
 
-Implements the native perspectival-inquiry engine (agent-utilities concepts KG-2.127 /
+Implements the native perspectival-inquiry engine (graph-os concepts KG-2.127 /
 KG-2.128 / KG-2.129).
 
 Run Stanford's STORM method as a single delegated call to the native perspectival-inquiry
-engine in `agent-utilities` — distinct expert lenses ask different questions, the KG answers
+engine in `graph-os` — distinct expert lenses ask different questions, the KG answers
 each, and the result is a contradiction/agreement/blind-spot map plus a peer-review
 self-critique whose frontier question is submitted as the next research loop.
 

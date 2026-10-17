@@ -6,7 +6,7 @@ discovery in ``install.py``/``providers.py`` is enough. This module covers the
 other case named in the task: a checkout being developed against that has
 **not** been pip-installed yet — parse its own ``pyproject.toml`` directly
 (stdlib ``tomllib``, no network/pip involved) to resolve the same
-``agent_utilities.{skill,prompt,ontology}_providers`` entry-points and its
+skill, prompt and ontology provider entry-points and its
 ``*-mcp`` console scripts, straight from source.
 """
 
@@ -23,7 +23,7 @@ else:  # pragma: no cover - repo requires-python >=3.11
     tomllib = None
 
 try:
-    from agent_utilities.base_utilities import get_logger
+    from agent_connector_sdk.utilities import get_logger
 except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)

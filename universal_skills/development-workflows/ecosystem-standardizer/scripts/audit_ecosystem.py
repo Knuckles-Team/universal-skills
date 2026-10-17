@@ -84,7 +84,7 @@ KNOWN_PREFIXES = {
     "ABOX": "archivebox-api",
     "ARR": "arr-mcp",
     "ATL": "atlassian-agent",
-    "AU": "agent-utilities",
+    "AU": "agent-harness",
     "AUDIO": "audio-transcriber",
     "CMGR": "container-manager-mcp",
     "DSCI": "data-science-mcp",

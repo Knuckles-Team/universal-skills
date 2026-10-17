@@ -202,7 +202,7 @@ def _load_concept_registry(root: Path) -> set[str]:
     """Load known concept IDs from the project's canonical registry.
 
     Recognises BOTH conventions:
-      - ``docs/concepts.yaml`` / ``concepts.yml`` — the agent-utilities standard,
+      - ``docs/concepts.yaml`` / ``concepts.yml`` — the ecosystem standard,
         an auto-generated single-source-of-truth registry of bare concept IDs; and
       - ``AGENTS.md`` ``<!-- CONCEPT:xxx -->`` comments / inline ``CONCEPT:`` refs.
 

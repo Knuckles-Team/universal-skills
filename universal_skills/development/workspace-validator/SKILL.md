@@ -19,8 +19,8 @@ This skill defines the autonomous workflow for systematically validating all pro
 - DO NOT use the CLI `repository-manager` command for validation. You must use the MCP tools to optimize token usage.
 - **NEVER manually edit pyproject.toml versions, commit, tag, or push releases.** All maintenance must be driven automatically via the `repository-manager` using the `auto_bump` and `auto_push` parameters.
 - **Topological Release Order (`CONCEPT:RM-TOPOLOGY`):**
-  - **Phase 3:** `agent-utilities` must be bumped and published first.
-  - **Phase 4:** Core Tools & UIs (including `geniusbot`, `agent-terminal-ui`, `agent-webui`, `universal-skills`, `skill-graphs`) consume `agent-utilities`. Bumping `agent-utilities` triggers automated dependency updates in Phase 4 projects.
+  - **Phase 3:** `graph-os` must be bumped and published first.
+  - **Phase 4:** Core Tools & UIs (including `geniusbot`, `agent-terminal-ui`, `agent-webui`, `universal-skills`, `skill-graphs`) consume `graph-os`. Bumping `graph-os` triggers automated dependency updates in Phase 4 projects.
   - Circular dependencies are prevented by the `repository-manager` skipping dependency updates for any project belonging to a phase lower than the currently bumped phase.
 - **Change-aware start (`CONCEPT:RM-PHASE-START`):** `auto_bump` and `auto_push` do not blindly start at Phase 1. The backend detects the **lowest phase that actually has repository changes** and begins there, cascading to every later phase and skipping unchanged upstream phases (and their inter-phase `wait_minutes`). Because phases are topologically ordered, a change in phase *N* only ever affects phases `>= N`, so this is safe. Practical effect: editing one Phase-4 repo runs Phase 4 onward without sitting through the Phase-3 wait; if nothing changed anywhere, the bump/push is a no-op. A repo counts as changed when it is not both clean and in sync with origin (uncommitted changes, an unpushed feature commit, or an unpushed bump). You do not configure this — it is automatic whenever `auto_bump`/`auto_push` are set.
 
@@ -174,5 +174,5 @@ The validator is built to scale; keep these in mind for very large workspaces:
 - **Validation is cached** (`force_revalidate=false` default): unchanged repos
   return cached results instantly, so repeated full sweeps are cheap. Use
   `force_revalidate=true` only for the failed set and the final gate.
-- **Topological release stays phase-ordered** (`agent-utilities` → dependents) so
+- **Topological release stays phase-ordered** (`graph-os` → dependents) so
   PyPI dependencies publish before the projects that consume them.

@@ -130,8 +130,8 @@ def test_transform_is_noop_without_frontmatter():
 
 def test_get_contract_tolerant_of_case_and_labels():
     assert adapters.get_contract("CODEX") is CODEX
-    assert adapters.get_contract("agent-utilities (xdg)") is adapters.AGENT_CONTRACTS[
-        "agent-utilities"
+    assert adapters.get_contract("graph-os (xdg)") is adapters.AGENT_CONTRACTS[
+        "graph-os"
     ]
     assert adapters.get_contract("/some/custom/path").requires_transform is False
     assert adapters.get_contract("").requires_transform is False

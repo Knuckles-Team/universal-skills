@@ -41,14 +41,6 @@ On-demand via the graph-os MCP orchestration tool:
 graph_orchestrate(action="golden_loop", max_topics=5)
 ```
 
-…or directly:
-
-```bash
-KG_DAEMON_ROLE=client python -c \
-  "from agent_utilities.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
-   import json; print(json.dumps(run_golden_loop_cycle(max_topics=5), default=str, indent=2))"
-```
-
 ## Always-on daemon (optional)
 
 Set `KG_GOLDEN_LOOP=1` (interval `KG_GOLDEN_LOOP_INTERVAL`, default 3600s) on the

@@ -18,7 +18,7 @@ team_config:
     - quant-analyst
 tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensive]
 concept: CONCEPT:EE-042
-requires: ['agent-utilities']
+requires: ['graph-os']
 metadata:
   version: '1.3.11'
 ---

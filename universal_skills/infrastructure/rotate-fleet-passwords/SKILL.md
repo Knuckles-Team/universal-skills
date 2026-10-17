@@ -50,14 +50,14 @@ printed once).
 
 ### 2. Dry-run first
 ```bash
-scripts/rotate-credentials.sh --generate --inventory ~/.config/agent-utilities/inventory.yaml --dry-run
+scripts/rotate-credentials.sh --generate --inventory ~/.config/graph-os/inventory.yaml --dry-run
 ```
 Confirm the host list and intended action — nothing is changed.
 
 ### 3. Rotate
 ```bash
 scripts/rotate-credentials.sh --generate \
-    --inventory ~/.config/agent-utilities/inventory.yaml \
+    --inventory ~/.config/graph-os/inventory.yaml \
     --user genius [--idrac] [--out ~/Workspace/inventory/.env]
 ```
 Each host: `chpasswd` the account → verify `passwd -S` shows `P` → (if `--idrac`) set BMC

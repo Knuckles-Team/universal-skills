@@ -11,7 +11,7 @@ The catalog is intentionally split by ownership:
   `universal_skills/<domain>-workflows/`.
 - Platform and package operations live with their provider under
   `agent-packages/agents/<package>/<module>/skills/` and are discovered through the
-  `agent_utilities.skill_providers` entry-point group.
+  the skill-provider entry-point group entry-point group.
 
 This prevents a universal skill from quietly depending on one deployment, service,
 or private filesystem layout.

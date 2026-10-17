@@ -108,7 +108,7 @@ python scripts/kg_query_runs.py deltas --current reports/ --prior reports_prev/ 
   `-c` concurrency. Domains not applicable to the detected primary language are skipped (a Python
   dependency audit does not run on a Rust repo).
 - **KG-native** ingest/query talk to the **graph-os MCP server over HTTP**, never via a direct
-  `import agent_utilities.*` (that hard dependency previously broke the KG step). Each run is
+  an in-process package import (that hard dependency previously broke the KG step). Each run is
   time-stamped so the KG's bi-temporal layer surfaces per-repo score deltas over time.
 - Every new script supports `--self-test`; `selftest.py` aggregates them plus a fixture run of every
   analyzer.
@@ -207,11 +207,11 @@ Knowledge Graph double-write seeding and multi-project analysis. Ingest the repo
 
 ## Best Practices
 - **Read-Only First**: Always provide the report and wait for user approval before applying destructive changes or major refactors.
-- **Evidence-Backed Findings**: Every recommendation, finding, or proposed change MUST be backed by hard evidence retrieved from the Knowledge Graph using the `agent-utilities-kg` MCP server (e.g., `kg_query`, `kg_search`). You must cite specific file paths, exact line numbers, and existing graph topologies. Never hallucinate recommendations; the KG is your source of truth.
-- **Extend-Before-Invent**: When suggesting new features or modules, first use `kg_analogy_search` or `kg_search` to verify if a relevant concept already exists. Always prefer extending an existing conceptual module over inventing a duplicate.
+- **Evidence-Backed Findings**: Every recommendation, finding, or proposed change MUST be backed by hard evidence retrieved from the Knowledge Graph using the `graph-os` MCP server (e.g., `graph_query`, `graph_search`). You must cite specific file paths, exact line numbers, and existing graph topologies. Never hallucinate recommendations; the KG is your source of truth.
+- **Extend-Before-Invent**: When suggesting new features or modules, first use `kg_analogy_search` or `graph_search` to verify if a relevant concept already exists. Always prefer extending an existing conceptual module over inventing a duplicate.
 - **Wire or Discard**: Implementations must adhere to the Wire-First heuristic (≤3 hops from an entry point). If a feature cannot be wired directly into a hot path or duplicates an existing concept (Similarity ≥ 0.7), it must be extended or discarded. Dead code is prohibited. When recommending architectural changes or creating implementation handoffs, ensure that the proposed code is fully wired into the system architecture's run path (the "hot path") and does not remain a disconnected stub.
 - **Holistic Documentation & Testing**: All SDD handoffs and generated TODOs MUST explicitly require updates to `CHANGELOG.md`, `AGENTS.md`, `README.md`, codebase docstrings, `/docs` (including overview pages and architectural diagrams), and `pytests`. Architecture diagrams are critical for building agent context.
-- **Ecosystem Focus**: Prioritize standards defined in `agent-utilities` (e.g., loading prompts from `prompts/*.md`).
+- **Ecosystem Focus**: Prioritize standards defined in `graph-os` (e.g., loading prompts from `prompts/*.md`).
 - **Context Awareness**: Scale recommendations to project size. Do not suggest complex graph architectures for small projects.
 - **Assumption Validation**: Validate all assumptions before taking them at face value. Check actual file contents, run commands, verify paths.
 - **SDD Dual-Write Integration**: Output reports, TDD specs, and domain designs to the `.specify/` directory structure for compatibility with the SDD toolset. The repository's `.specify/` folder MUST be treated as the **Single Source of Truth**. After generating or modifying any files in the `.specify/` folder, you MUST immediately invoke the `kg_ingest` MCP tool against the `.specify/` directory to sync these changes into the unified Knowledge Graph. This dual-write ensures complete ecosystem parity.

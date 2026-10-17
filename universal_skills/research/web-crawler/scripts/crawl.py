@@ -1241,7 +1241,7 @@ async def main():
     # crawled, cleaned, deduped page is ingested into graph-os / epistemic-graph
     # as it's found (privacy-sanitized content via document_process). Disabled with
     # --no-kg-ingest, and this internal crawl subprocess (invoked by
-    # agent-utilities as ITS OWN crawl4ai fetch backend, e.g.
+    # graph-os as ITS OWN crawl4ai fetch backend, e.g.
     # web_fetch._fetch_via_crawl4ai / skill_graph_pipeline) always passes
     # --no-kg-ingest to avoid recursing back into ingestion or double-ingesting
     # a corpus that pipeline already ingests itself.

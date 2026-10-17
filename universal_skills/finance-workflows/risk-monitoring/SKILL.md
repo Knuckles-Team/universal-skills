@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.3.11'
-  author: agent-utilities
+  author: graph-os
   concept: 'CONCEPT:EE-011'
 ---
 # Risk Monitoring Workflow (Cron: every 5 minutes)

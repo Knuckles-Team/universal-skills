@@ -3,7 +3,7 @@
 
 ``install.py`` installs a skill by copying its ``SKILL.md`` VERBATIM. That is fine
 for Claude-family tools (Claude Code, Windsurf, OpenClaw, Antigravity, Devin,
-Cursor, Grok, OpenCode, Zed, agent-utilities) which accept our full frontmatter —
+Cursor, Grok, OpenCode, Zed, graph-os) which accept our full frontmatter —
 but Codex's ``~/.codex/skills`` rejects top-level keys it doesn't know about
 (``tags``, ``categories``, ``domain``, ``requires``, ``tier``, ``wraps``,
 ``concept``, ``team_config``, ``agent``, ``cron``, ``skill_type``, ``aliases``,
@@ -98,7 +98,7 @@ AGENT_CONTRACTS: dict = {
     "grok-code": _PERMISSIVE,
     "opencode": _PERMISSIVE,
     "zed": _PERMISSIVE,
-    "agent-utilities": _PERMISSIVE,
+    "graph-os": _PERMISSIVE,
     "agent-terminal-ui": _PERMISSIVE,
 }
 
@@ -106,7 +106,7 @@ AGENT_CONTRACTS: dict = {
 def get_contract(tool_key: str) -> AgentContract:
     """Resolve the contract for ``tool_key``.
 
-    Tolerant of case and of decorated labels like ``"agent-utilities (xdg)"`` (the
+    Tolerant of case and of decorated labels like ``"graph-os (xdg)"`` (the
     label ``install.py`` uses for the always-synced XDG target). Anything unknown —
     a custom ``--path`` target, a future tool — defaults to permissive, i.e. no
     behavior change from before this module existed.

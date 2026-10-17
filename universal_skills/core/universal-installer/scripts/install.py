@@ -10,15 +10,10 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from agent_utilities.base_utilities import get_logger, retrieve_package_name
+    from agent_connector_sdk.utilities import get_logger
 except ImportError:
-    # Fallback if agent_utilities is not available
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-
-    def retrieve_package_name():
-        return "universal_skills"
-
 else:
     logger = get_logger(__name__)
 
@@ -81,14 +76,14 @@ except ImportError:
 
 
 # Entry-point group through which any installed agent-package contributes its
-# own skills. Kept as a standalone local copy (not imported from agent-utilities)
-# so the installer still runs when agent-utilities is absent — same rationale as
+# own skills. Kept as a standalone local copy (not imported from graph-os)
+# so the installer still runs when graph-os is absent — same rationale as
 # the ImportError fallbacks above. CONCEPT:OS-5.52.
 SKILL_PROVIDER_GROUP = "agent_utilities.skill_providers"
 
 
 def _iter_skill_providers() -> List[tuple]:
-    """Resolve every ``agent_utilities.skill_providers`` entry-point to a dir.
+    """Resolve every skill-provider entry-point to a dir.
 
     Returns ``(provider_name, asset_dir)`` tuples. Resolves each contributor's
     data directory via ``importlib.resources`` without importing the agent's
@@ -161,20 +156,20 @@ def get_tool_paths() -> dict:
         localappdata = Path(
             os.environ.get("LOCALAPPDATA", "~\\AppData\\Local")
         ).expanduser()
-        agent_utils_path = localappdata / "agent-utilities" / "skills"
+        agent_utils_path = localappdata / "graph-os" / "skills"
     elif is_mac:
         agent_utils_path = (
-            home / "Library" / "Application Support" / "agent-utilities" / "skills"
+            home / "Library" / "Application Support" / "graph-os" / "skills"
         )
     else:
-        # XDG *data* dir (platformdirs user_data_dir), matching agent-utilities'
+        # XDG *data* dir (platformdirs user_data_dir), matching graph-os'
         # ``core.paths.skills_dir()`` which the agent factory auto-loads — NOT the
         # config dir. (macOS/Windows above already use their data dir.)
         xdg_data = Path(
             os.environ.get("XDG_DATA_HOME") or (home / ".local" / "share")
         ).expanduser()
-        agent_utils_path = xdg_data / "agent-utilities" / "skills"
-    paths["agent-utilities"] = agent_utils_path
+        agent_utils_path = xdg_data / "graph-os" / "skills"
+    paths["graph-os"] = agent_utils_path
     paths["agent-terminal-ui"] = agent_utils_path
 
     return paths
@@ -196,7 +191,7 @@ def detect_present_tools() -> dict:
     A tool counts as present when the parent of its skills directory exists
     (e.g. ``~/.claude`` for Claude Code). This keeps ``--all-detected`` from
     materialising skill folders for tools the host doesn't have. Duplicate
-    destinations (agent-utilities/agent-terminal-ui share a dir) are collapsed.
+    destinations (graph-os/agent-terminal-ui share a dir) are collapsed.
     """
     present: dict = {}
     seen: set = set()
@@ -829,9 +824,9 @@ def main():
         dest="no_xdg",
         action="store_true",
         help=(
-            "Do NOT also update the canonical agent-utilities XDG skills store. By "
+            "Do NOT also update the canonical graph-os XDG skills store. By "
             "default every global install ALSO writes there (it is the dir the "
-            "agent-utilities factory + agent-terminal-ui auto-load), so it stays current "
+            "graph-os factory + agent-terminal-ui auto-load), so it stays current "
             "whichever external tool you target."
         ),
     )
@@ -871,8 +866,8 @@ def main():
         dest="install_ontologies",
         action="store_false",
         help=(
-            "Skip the ontology install leg (agent_utilities.ontology_providers, "
-            "materialized into the agent-utilities XDG ontologies/ tree). On by default."
+            "Skip the ontology install leg (the ontology provider group, "
+            "materialized into the graph-os XDG ontologies/ tree). On by default."
         ),
     )
     parser.add_argument(
@@ -880,8 +875,8 @@ def main():
         dest="install_prompts",
         action="store_false",
         help=(
-            "Skip the system-prompt install leg (agent_utilities.prompt_providers, "
-            "materialized into the agent-utilities XDG prompts/ tree). On by default."
+            "Skip the system-prompt install leg (the prompt provider group, "
+            "materialized into the graph-os XDG prompts/ tree). On by default."
         ),
     )
     parser.add_argument(
@@ -963,9 +958,9 @@ def main():
             provider_filter = sel_providers
 
     # ── Resolve destinations ────────────────────────────────────────────────
-    # Build the set of skill dirs to write to. The agent-utilities XDG store is
+    # Build the set of skill dirs to write to. The graph-os XDG store is
     # ALWAYS included (unless --no-xdg, global scope) because it is the canonical dir
-    # the agent-utilities factory + agent-terminal-ui auto-load — we keep it current on
+    # the graph-os factory + agent-terminal-ui auto-load — we keep it current on
     # every run, whichever external tool you also target. A bare ``install-skills``
     # (no --tool/--path) therefore updates exactly that store.
     targets: dict = {}
@@ -998,20 +993,20 @@ def main():
             target = root / WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
         targets[tool_key] = target
 
-    # Always keep the canonical agent-utilities XDG store in sync (global scope only).
+    # Always keep the canonical graph-os XDG store in sync (global scope only).
     if not args.no_xdg and args.scope == "global":
-        targets.setdefault("agent-utilities (xdg)", TOOL_PATHS["agent-utilities"])
+        targets.setdefault("graph-os (xdg)", TOOL_PATHS["graph-os"])
 
     if not targets:
         print(
             "Error: nothing to do — pass --tool / --path / --all-detected / --all, or "
-            "omit them to update just the agent-utilities XDG store (don't combine that "
+            "omit them to update just the graph-os XDG store (don't combine that "
             "with --no-xdg).",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    # Collapse duplicate destinations (e.g. agent-utilities/agent-terminal-ui, or the
+    # Collapse duplicate destinations (e.g. graph-os/agent-terminal-ui, or the
     # XDG store when it is also the explicit target), then install into each.
     seen: set = set()
     for label, target in targets.items():
@@ -1037,9 +1032,8 @@ def main():
             _run_validate(target)
 
     # ── Ontology + prompt legs ───────────────────────────────────────────────
-    # Always XDG-scoped (agent-utilities/epistemic-graph consume these directly;
-    # they are not per-tool artifacts like skills). Prefers agent_utilities'
-    # own install_unified() when importable, falls back to local resolution.
+    # Always XDG-scoped (graph-os/epistemic-graph consume these directly;
+    # they are not per-tool artifacts like skills). Resolved locally.
     manifest_report: dict = {}
     if ontology_prompt_providers is not None:
         manifest_report = ontology_prompt_providers.install_ontologies_and_prompts(
@@ -1129,7 +1123,7 @@ def main():
             logger.info(
                 "Provider prompts/ontologies changed — to refresh the KG, run "
                 "`source_sync source=all mode=delta` via the graph-os MCP "
-                "connection (or the agent-utilities-source-integration skill)."
+                "connection (or the graph-os source onboarding skill)."
             )
 
 

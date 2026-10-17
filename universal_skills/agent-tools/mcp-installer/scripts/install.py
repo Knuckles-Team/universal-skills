@@ -48,22 +48,22 @@ def get_tool_paths() -> Dict[str, Path]:
     else:
         paths["opencode"] = Path("~/.config/opencode/mcp.json").expanduser()
 
-    # Agent Utilities / Agent Terminal UI
+    # Graph OS / Agent Terminal UI
     if is_windows:
         localappdata = Path(
             os.environ.get("LOCALAPPDATA", "~\\AppData\\Local")
         ).expanduser()
-        agent_utils_path = localappdata / "agent-utilities" / "mcp_config.json"
+        agent_utils_path = localappdata / "graph-os" / "mcp_config.json"
     elif is_mac:
         agent_utils_path = Path(
-            "~/Library/Application Support/agent-utilities/mcp_config.json"
+            "~/Library/Application Support/graph-os/mcp_config.json"
         ).expanduser()
     else:
         agent_utils_path = Path(
-            "~/.config/agent-utilities/mcp_config.json"
+            "~/.config/graph-os/mcp_config.json"
         ).expanduser()
 
-    paths["agent-utilities"] = agent_utils_path
+    paths["graph-os"] = agent_utils_path
     paths["agent-terminal-ui"] = agent_utils_path
 
     return paths
@@ -78,7 +78,7 @@ def detect_present_tools() -> Dict[str, Path]:
     A tool counts as present when the parent directory of its config file
     exists. Claude Code's config is ``~/.claude.json`` whose parent is ``$HOME``
     (always present), so it is gated on ``~/.claude``.
-    Duplicate destinations (agent-utilities/agent-terminal-ui share a file) are
+    Duplicate destinations (graph-os/agent-terminal-ui share a file) are
     collapsed so the config is merged once.
     """
     present: Dict[str, Path] = {}
