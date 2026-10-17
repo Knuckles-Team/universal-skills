@@ -31,11 +31,6 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-      # The concept-registry gate checks ids against the agent-utilities registry.
-      - name: Check out the agent-utilities concept registry
-        run: |
-          git clone --depth 1 https://github.com/Knuckles-Team/agent-utilities.git "$RUNNER_TEMP/agent-utilities"
-          echo "AGENT_UTILITIES_OVERVIEW=$RUNNER_TEMP/agent-utilities/docs/overview.md" >> "$GITHUB_ENV"
       - name: Bootstrap
         run: scripts/bootstrap.sh
       - name: Pre-commit gates
