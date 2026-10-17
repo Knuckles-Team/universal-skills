@@ -69,6 +69,14 @@ plane, which reaches the connector over MCP.
   backend; a local command does not bypass authorization or effect controls.
 - Serve declared skills, prompts, ontology, shapes and connector manifest through
   explicit SDK content registration; files in a wheel alone do not prove discovery.
+- Ship the connector's OWL/RDF ontology pack from day one. `ontology/<domain>.ttl`
+  holds the domain model and reuses core classes by IRI. `ontology/pack.ttl` states
+  the connector's own surface and ingest contract as native relationships in the
+  engine's connector-pack vocabulary (`cp:`): connector, features, tools, prompts,
+  skills, source objects, key rules, cursor, access and provenance policy. Keep
+  both in step with the typed declarations; the SDK generates the pack from them
+  and the engine imports it, validates it with SHACL and answers selection
+  questions over it. Use no blank nodes and no nested property maps.
 - Use typed SDK ingestion and graph-owned generated contracts. Source adapters
   and write-back ports require their applicable conformance checks.
 - Preserve user scope, authorization and credential-reference boundaries.
