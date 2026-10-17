@@ -2,7 +2,7 @@
 """Inject current deployment blocks into each provider README and deployment guide.
 
 Every connector README should point operators at the consolidated
-``graph-os-deployment`` workflow. This injector renders one machine-neutral
+``graphos-deployment`` workflow. This injector renders one machine-neutral
 contract per package and inserts or updates it between idempotent markers, so the
 fleet rollout is generated rather than hand-written.
 
@@ -62,13 +62,13 @@ def _block(meta: dict) -> str:
     name, package, image = meta["name"], meta["package"], meta["image"]
     return f"""{BEGIN}
 
-## Deploy with `graph-os-deployment`
+## Deploy with `graphos-deployment`
 
-Provision this package with the consolidated **`graph-os-deployment`**
+Provision this package with the consolidated **`graphos-deployment`**
 workflow. It selects an installed-package, editable-source, or immutable-container
 path; records only runtime secret and TLS-profile references in `AgentConfig`; and
 runs doctor, registration, policy, observability, and rollback gates. Ask your agent
-to **"deploy `{package}` with graph-os-deployment"**.
+to **"deploy `{package}` with graphos-deployment"**.
 
 | Install mode | Command |
 |------|---------|

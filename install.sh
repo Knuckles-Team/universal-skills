@@ -3,8 +3,8 @@
 #
 # Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and then
 # deploys the skills — including universal-installer and graphos-genesis — into EVERY detected AI tool (Claude Code, Antigravity,
-# Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the graph-os XDG space
-# (~/.config/graph-os/skills), preferring SYMLINKS to the installed package
+# Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the graph-os skills data dir
+# ($XDG_DATA_HOME/agent-utilities/skills), preferring SYMLINKS to the installed package
 # (Windows falls back to a directory junction, then a copy).
 #
 # This is the technical starting point for graphos-genesis: once installed, the

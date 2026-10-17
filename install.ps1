@@ -4,8 +4,8 @@
 
 .DESCRIPTION
   Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and
-  deploys the skills — including universal-installer and graphos-genesis — into every detected AI tool AND the graph-os XDG
-  space, preferring symlinks (Windows: a directory JUNCTION when symlinks need admin,
+  deploys the skills — including universal-installer and graphos-genesis — into every detected AI tool AND the skills data dir
+  ($XDG_DATA_HOME/agent-utilities/skills), preferring symlinks (Windows: a directory JUNCTION when symlinks need admin,
   then a copy). This is the starting point for graphos-genesis.
 
 .EXAMPLE

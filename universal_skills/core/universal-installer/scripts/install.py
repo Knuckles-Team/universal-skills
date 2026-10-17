@@ -151,24 +151,24 @@ def get_tool_paths() -> dict:
         paths["opencode"] = home / ".config" / "opencode" / "skills"
         paths["zed"] = home / ".config" / "zed" / "skills"
 
-    # Agent Utilities / Agent Terminal UI (shared config dir)
+    # Graph OS / Agent Terminal UI (shared skills data dir)
     if is_windows:
         localappdata = Path(
             os.environ.get("LOCALAPPDATA", "~\\AppData\\Local")
         ).expanduser()
-        agent_utils_path = localappdata / "graph-os" / "skills"
+        agent_utils_path = localappdata / "agent-utilities" / "skills"
     elif is_mac:
         agent_utils_path = (
-            home / "Library" / "Application Support" / "graph-os" / "skills"
+            home / "Library" / "Application Support" / "agent-utilities" / "skills"
         )
     else:
-        # XDG *data* dir (platformdirs user_data_dir), matching graph-os'
+        # XDG *data* dir (platformdirs user_data_dir), matching AU
         # ``core.paths.skills_dir()`` which the agent factory auto-loads — NOT the
         # config dir. (macOS/Windows above already use their data dir.)
         xdg_data = Path(
             os.environ.get("XDG_DATA_HOME") or (home / ".local" / "share")
         ).expanduser()
-        agent_utils_path = xdg_data / "graph-os" / "skills"
+        agent_utils_path = xdg_data / "agent-utilities" / "skills"
     paths["graph-os"] = agent_utils_path
     paths["agent-terminal-ui"] = agent_utils_path
 

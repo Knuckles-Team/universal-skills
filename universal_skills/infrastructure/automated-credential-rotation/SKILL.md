@@ -11,7 +11,7 @@ description: >-
   echoing a secret value. Dry-run first; supports a 6-month rotation policy. Use
   when asked to rotate credentials/secrets/tokens/keys, set up periodic rotation,
   respond to a leaked credential, or audit secret age. Ties into
-  graph-os-deployment and graphos-genesis. Do NOT use for OS/SSH login or
+  graphos-deployment and graphos-genesis. Do NOT use for OS/SSH login or
   BMC passwords (use rotate-credentials) or one-off vault writes (use
   secret-vault-manager).
 license: MIT
@@ -96,7 +96,7 @@ secrets (Keycloak, DB, registry).
 
 ## Integration
 
-- **graph-os-deployment**: after secrets are provisioned (its Step 3 `vault://`
+- **graphos-deployment**: after secrets are provisioned (its Step 3 `vault://`
   resolution), this skill is the rotation counterpart — same catalog, same OpenBao paths.
 - **graphos-genesis**: register this skill as the recurring rotation step after SSO
   wiring; genesis provisions the initial secrets, this rotates them on policy.

@@ -26,11 +26,23 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import keycloak_client as kc  # noqa: E402
 import policy_rules as pr  # noqa: E402
 
-_CONFIG_ROOT = Path(
-    os.environ.get("GRAPH_OS_CONFIG_DIR")
-    or Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    / "graph-os"
+_XDG_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+_CONFIG_ROOT = Path(os.environ.get("GRAPH_OS_CONFIG_DIR") or _XDG_CONFIG / "graph-os")
+# One-release fallback: read the legacy agent-utilities location when the
+# Graph OS one has no multiplexer config yet.
+_LEGACY_CONFIG_ROOT = Path(
+    os.environ.get("AGENT_UTILITIES_CONFIG_DIR") or _XDG_CONFIG / "agent-utilities"
 )
+if (
+    not (_CONFIG_ROOT / "mcp-multiplexer").exists()
+    and (_LEGACY_CONFIG_ROOT / "mcp-multiplexer").exists()
+):
+    print(
+        f"warning: deprecated config location {_LEGACY_CONFIG_ROOT} in use; "
+        f"move it to {_CONFIG_ROOT} (or set GRAPH_OS_CONFIG_DIR)",
+        file=sys.stderr,
+    )
+    _CONFIG_ROOT = _LEGACY_CONFIG_ROOT
 _MULTIPLEXER_CONFIG = _CONFIG_ROOT / "mcp-multiplexer"
 DEFAULT_POLICY = os.environ.get(
     "MCP_POLICY_FILE", str(_MULTIPLEXER_CONFIG / "eunomia_policy.json")

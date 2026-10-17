@@ -31,7 +31,7 @@ one entry point per artifact type:
   (unchanged behavior from `skill-installer`; every capability below is additive).
 - **Ontologies + system prompts** — the other two legs of the
   skill/prompt/ontology provider entry-point federation, materialized into the canonical
-  graph-os XDG tree (`$XDG_DATA_HOME/graph-os/{prompts,ontologies}/<provider>/…`)
+  harness XDG data tree (`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
 - **graph-os + fleet MCP wiring** — generates/patches supported JSON clients
@@ -67,7 +67,7 @@ bootstrap wires both.
 - **Cursor**: `~/.cursor/skills/`
 - **Grok Code** (`grok` / `grok-code`): `~/.grok/skills/`
 - **Zed**: `~/.config/zed/skills/`
-- **graph-os / agent-terminal-ui** (canonical XDG store): `$XDG_DATA_HOME/graph-os/skills/`
+- **graph-os / agent-terminal-ui** (canonical XDG data store): `$XDG_DATA_HOME/agent-utilities/skills/`
   — always kept current on every global install (opt out with `--no-xdg`).
 
 **MCP config files** (same `--tool` key, MCP-config leg): Claude Code (`~/.claude.json`),
