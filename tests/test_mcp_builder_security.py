@@ -42,7 +42,7 @@ def test_local_templates_default_to_loopback():
 def test_networked_compose_requires_auth_and_limits_host_publish():
     module = _load_scaffold_module()
 
-    for compose in (module.AGENT_COMPOSE_YML, module.MCP_COMPOSE_YML):
+    for compose in (module.MCP_COMPOSE_YML,):
         assert "AUTH_TYPE=${{AUTH_TYPE:?" in compose
         assert '"127.0.0.1:8000:8000"' in compose
         assert '"8000:8000"' not in compose
@@ -204,16 +204,10 @@ def test_generated_deployment_docs_are_current_only_and_tls_bound():
     assert "@sha256:<digest>" in docs
 
 
-@pytest.mark.parametrize("has_agent", [False, True])
-def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_extras(
-    tmp_path,
-    has_agent,
-):
+def test_generated_packaging_uses_sdk_without_recursive_extras(tmp_path):
     module = _load_scaffold_module()
     module.scaffold(
-        "example-provider",
-        output_dir=str(tmp_path),
-        pkg_types="api_client,mcp" + (",agent" if has_agent else ""),
+        "example-provider", output_dir=str(tmp_path), pkg_types="api_client,mcp"
     )
     root = tmp_path / "example-provider"
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
@@ -249,22 +243,16 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
         requirement.startswith(("agent-utilities", "epistemic-graph"))
         for requirement in dependencies
     )
-    if has_agent:
-        assert any(
-            requirement.startswith("agent-utilities[agent-runtime")
-            for requirement in extras["agent"]
-        )
-    else:
-        assert "agent" not in extras
-        assert not any(
-            requirement.startswith("agent-utilities") for requirement in extras["all"]
-        )
+    assert "agent" not in extras
+    assert not any(
+        requirement.startswith("agent-utilities") for requirement in extras["all"]
+    )
     assert all(
         "epistemic-graph[full]" not in requirement
         for group in extras.values()
         for requirement in group
     )
-    assert (root / "example_provider" / "agent_server.py").exists() is has_agent
+    assert not (root / "example_provider" / "agent_server.py").exists()
     assert (root / "example_provider" / "mcp_server.py").is_file()
     assert "example-provider[" not in pyproject
     assert not (root / ".env").exists()

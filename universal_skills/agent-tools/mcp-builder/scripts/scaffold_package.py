@@ -204,16 +204,16 @@ test = [
 # Fleet contribution (CONCEPT:OS-5.52 / AU-KG.ontology.federation-provider-leg): advertise this
 # package's skills, prompts, OWL/RDF ontology, and source-connector presets so
 # agent-utilities discovers + federates them without importing this package's agent code.
-[project.entry-points."agent_utilities.skill_providers"]
+[project.entry-points."agent_connector_sdk.skill_providers"]
 {package_name} = "{pkg_dir}.skills"
 
-[project.entry-points."agent_utilities.prompt_providers"]
+[project.entry-points."agent_connector_sdk.prompt_providers"]
 {package_name} = "{pkg_dir}.prompts"
 
-[project.entry-points."agent_utilities.ontology_providers"]
+[project.entry-points."agent_connector_sdk.ontology_providers"]
 {package_name} = "{pkg_dir}.ontology"
 
-[project.entry-points."agent_utilities.source_connector_providers"]
+[project.entry-points."agent_connector_sdk.source_connector_providers"]
 {package_name} = "{pkg_dir}.connectors"
 
 [tool.uv.workspace]
@@ -279,17 +279,9 @@ tag = True
 search = version = "{{current_version}}"
 replace = version = "{{new_version}}"
 
-[bumpversion:file:a2a.json]
-search = "version": "{{current_version}}"
-replace = "version": "{{new_version}}"
-
 [bumpversion:file:README.md]
 search = Version: {{current_version}}
 replace = Version: {{new_version}}
-
-[bumpversion:file:{pkg_dir}/agent_server.py]
-search = __version__ = "{{current_version}}"
-replace = __version__ = "{{new_version}}"
 
 [bumpversion:file:{pkg_dir}/mcp_server.py]
 search = __version__ = "{{current_version}}"
@@ -412,79 +404,6 @@ COPY . /app
 RUN uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow .[agent]
 
 CMD ["{mcp_cmd}"]
-"""
-
-AGENT_COMPOSE_YML = """\
-version: '3.8'
-
-services:
-  {package_name}-mcp:
-    # MCP serving image (built with `--target mcp`).
-    image: "${{MCP_IMAGE:?set-MCP_IMAGE-to-image@sha256-digest}}"
-    container_name: {package_name}-mcp
-    hostname: {package_name}-mcp
-    restart: always
-    volumes:
-      - type: bind
-        source: ${{CONNECTOR_CONFIG_DIR:?set-CONNECTOR_CONFIG_DIR-to-a-reference-only-config-directory}}
-        target: /etc/connector
-        read_only: true
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=0.0.0.0
-      - PORT=8000
-      - TRANSPORT=streamable-http
-      - AUTH_TYPE=${{AUTH_TYPE:?set-AUTH_TYPE-to-a-configured-auth-provider}}
-      - CONNECTOR_CONFIG_FILE=/etc/connector/config.json
-      - {upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}
-    ports:
-      - "127.0.0.1:8000:8000"
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  {package_name}-agent:
-    # Full agent runtime image. Deployment inputs must be immutable digests.
-    image: "${{AGENT_IMAGE:?set-AGENT_IMAGE-to-image@sha256-digest}}"
-    container_name: {package_name}-agent
-    hostname: {package_name}-agent
-    restart: always
-    depends_on:
-      - {package_name}-mcp
-    volumes:
-      - type: bind
-        source: ${{CONNECTOR_CONFIG_DIR:?set-CONNECTOR_CONFIG_DIR-to-a-reference-only-config-directory}}
-        target: /etc/connector
-        read_only: true
-    command: [ "{agent_cmd}" ]
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=0.0.0.0
-      - PORT={agent_port}
-      - MCP_URL=http://{package_name}-mcp:8000/mcp
-      - CONNECTOR_CONFIG_FILE=/etc/connector/config.json
-      - {upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}
-    ports:
-      - "127.0.0.1:{agent_port}:{agent_port}"
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:{agent_port}/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 """
 
 MCP_COMPOSE_YML = """\
@@ -647,31 +566,6 @@ markers =
 addopts = -m "not integration"
 filterwarnings =
     ignore:.*exclude_args.*
-"""
-
-A2A_JSON = """\
-{{
-  "name": "{package_name}-agent",
-  "type": "agent",
-  "version": "0.1.0",
-  "description": "{description}",
-  "url": "https://github.com/Knuckles-Team/{package_name}/tree/main",
-  "license": "MIT",
-  "capabilities": [
-    {{
-      "id": "run_graph_flow",
-      "name": "Graph Flow Execution",
-      "description": "Execute a workflow through the agent's graph orchestration engine"
-    }}
-  ],
-  "tools": [
-    {{
-      "id": "graph-flow",
-      "type": "flow",
-      "description": "Run complex multi-step workflows via Pydantic-Graph"
-    }}
-  ]
-}}
 """
 
 OPENCODE_JSON = """\
@@ -1246,7 +1140,6 @@ CORE_MODULES = [
 ]
 
 OPTIONAL_MODULES = {{
-    "{pkg_dir}.agent_server": "agent",
     "{pkg_dir}.mcp_server": "mcp",{gql_optional_module}
 }}
 
@@ -1342,91 +1235,6 @@ def mcp_server():
 if __name__ == "__main__":
     mcp_server()
 """
-
-AGENT_SERVER_PY = """\
-#!/usr/bin/python
-import logging
-import sys
-import warnings
-
-from agent_connector_sdk.config import setting
-
-__version__ = "0.1.0"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()],
-)
-logger = logging.getLogger(__name__)
-
-
-def agent_server():
-    from agent_utilities import (
-        build_system_prompt_from_workspace,
-        create_agent_parser,
-        create_agent_server,
-        initialize_workspace,
-        load_identity,
-    )
-
-    warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
-
-    initialize_workspace()
-    meta = load_identity()
-    agent_name = setting("DEFAULT_AGENT_NAME", meta.get("name", "{display_name}"))
-
-    print(f"{{agent_name}} v{{__version__}}", file=sys.stderr)
-    parser = create_agent_parser()
-    args = parser.parse_args()
-
-    if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logger.debug("Debug mode enabled")
-
-    create_agent_server(
-        mcp_url=args.mcp_url,
-        mcp_config=args.mcp_config or "mcp_config.json",
-        host=args.host,
-        port=args.port,
-        provider=args.provider,
-        model_id=args.model_id,
-        router_model=args.model_id,
-        agent_model=args.model_id,
-        base_url=args.base_url,
-        api_key=None,
-        agent_description=setting(
-            "AGENT_DESCRIPTION", meta.get("description", "{description}")
-        ),
-        system_prompt=setting(
-            "AGENT_SYSTEM_PROMPT",
-            meta.get("content") or build_system_prompt_from_workspace(),
-        ),
-        custom_skills_directory=args.custom_skills_directory,
-        enable_web_ui=args.web,
-        enable_otel=args.otel,
-        otel_endpoint=args.otel_endpoint,
-        otel_headers=args.otel_headers,
-        otel_public_key=args.otel_public_key,
-        otel_secret_key=args.otel_secret_key,
-        otel_protocol=args.otel_protocol,
-        debug=args.debug,
-    )
-
-
-if __name__ == "__main__":
-    agent_server()
-"""
-
-MAIN_PY = """\
-#!/usr/bin/python
-from {pkg_dir}.agent_server import agent_server
-
-if __name__ == "__main__":
-    agent_server()
-"""
-
 
 API_CLIENT_SYSTEM = """\
 from typing import Any
@@ -1615,7 +1423,7 @@ def render_starter_skill(display_name: str, slug: str, description: str) -> str:
     """Render a minimal atomic starter SKILL.md for the package (CONCEPT:OS-5.52).
 
     Every package ships at least one skill so it contributes to the XDG skills
-    library via its ``agent_utilities.skill_providers`` entry-point. Authored to
+    library via its ``agent_connector_sdk.skill_providers`` entry-point. Authored to
     the skill-builder atomic standard (kebab name == dir, trigger-oriented
     description, no multi-step DAG) so it passes ``check_atomicity``.
     """
@@ -1654,7 +1462,7 @@ def render_ontology_init(display_name: str, domain: str) -> str:
         "(CONCEPT:AU-KG.ontology.federation-provider-leg).\n\n"
         f"Data-only subpackage carrying ``{domain}.ttl`` (the ``owl:Ontology``\n"
         f"``http://knuckles.team/kg/{domain}`` module) which the agent-utilities hub\n"
-        "federates via the ``agent_utilities.ontology_providers`` entry-point.\n"
+        "federates via the ``agent_connector_sdk.ontology_providers`` entry-point.\n"
         '"""\n'
     )
 
@@ -1781,24 +1589,6 @@ class GraphQL(ApiClientBase):
             raise RuntimeError("GraphQL operation failed; partial results were not accepted")
         return result
 '''
-
-VALIDATE_AGENT_PY = """\
-#!/usr/bin/env python3
-\"\"\"Smoke-validate the A2A agent server entry point.\"\"\"
-
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-try:
-    from {pkg_dir}.agent_server import agent_server  # noqa: F401
-except ImportError as e:
-    print(f"Agent import failed: {{type(e).__name__}}")
-    sys.exit(1)
-
-print("Agent entry point import OK")
-"""
 
 # ── mkdocs + docs site (7 standard pages) ─────────────────────────────────────
 
@@ -2224,10 +2014,6 @@ CAPABILITY_API_JSON = """\
 CAPABILITY_MCP_JSON = """\
 {{"applicable": true, "surface": "mcp", "version": "capability/v1", "http_transport": true, "source": "{pkg_dir}/mcp_server.py"}}
 """
-CAPABILITY_A2A_JSON = """\
-{{"applicable": true, "surface": "a2a", "version": "capability/v1", "source": "{pkg_dir}/agent_server.py"}}
-"""
-
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
 TESTS_CONFTEST = """\
@@ -2403,7 +2189,12 @@ def scaffold(
     """Scaffold a complete agent-package project (SDK contracts)."""
     types = set(pkg_types.split(","))
     types = {value.strip() for value in types}
-    supported = {"api_client", "cli", "mcp", "agent", "graphql"}
+    if "agent" in types:
+        raise ValueError(
+            "--type agent is retired: graph-os hosts agents, and a connector "
+            "depends on agent-connector-sdk only"
+        )
+    supported = {"api_client", "cli", "mcp", "graphql"}
     backends = types & {"api_client", "cli"}
     if (
         len(backends) != 1
@@ -2412,19 +2203,16 @@ def scaffold(
         or ("graphql" in types and "api_client" not in types)
     ):
         raise ValueError(
-            "--type requires api_client,mcp or cli,mcp; optional addition: agent; "
+            "--type requires api_client,mcp or cli,mcp; "
             "graphql is supported only with api_client"
         )
     backend = next(iter(backends))
-    has_agent = "agent" in types
     pkg_dir = to_pkg_dir(package_name)
     if not display_name:
         display_name = to_display(package_name)
     if not description:
         label = "API" if backend == "api_client" else "CLI"
-        description = f"{display_name} {label} + MCP Server" + (
-            " + A2A Server" if has_agent else ""
-        )
+        description = f"{display_name} {label} + MCP Server"
     upper_name = to_upper_env(package_name)
     if not concept_prefix:
         concept_prefix = upper_name.split("_")[0]
@@ -2460,15 +2248,13 @@ def scaffold(
         "display_name": display_name,
         "description": description,
         "backend": backend,
-        "has_agent": has_agent,
+        "has_agent": False,
         "badge_lines": render_public_badges(package_name, mcp_server="mcp" in types),
         "mcp_server": "true" if "mcp" in types else "false",
         "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "agent_cmd": agent_cmd,
-        "agent_entry": f'{agent_cmd} = "{pkg_dir}.agent_server:agent_server"'
-        if "agent" in types
-        else "",
+        "agent_entry": "",
         "short_name": short_name,
         "agent_port": "9000",
         "gql_core_dep": gql_core_dep,
@@ -2478,7 +2264,7 @@ def scaffold(
         "gql_all_extend": gql_all_extend,
         "api_applicable": "true" if "api_client" in types else "false",
         "mcp_applicable": "true" if "mcp" in types else "false",
-        "a2a_applicable": "true" if "agent" in types else "false",
+        "a2a_applicable": "false",
         "api_artifact": (
             ', "artifact": "docs/capabilities/api.json"'
             if "api_client" in types
@@ -2487,9 +2273,7 @@ def scaffold(
         "mcp_artifact": (
             ', "artifact": "docs/capabilities/mcp.json"' if "mcp" in types else ""
         ),
-        "a2a_artifact": (
-            ', "artifact": "docs/capabilities/a2a.json"' if "agent" in types else ""
-        ),
+        "a2a_artifact": "",
         "year": year,
         "date": date,
         "upper_name": upper_name,
@@ -2515,7 +2299,6 @@ def scaffold(
         root / ".codespellignore": (CODESPELLIGNORE, False),
         root / ".vulture_ignore": (VULTURE_IGNORE, False),
         root / "pytest.ini": (PYTEST_INI, False),
-        root / "a2a.json": (A2A_JSON, True),
         root / "opencode.json": (OPENCODE_JSON, False),
         root / "mcp_config.json": (ROOT_MCP_CONFIG_JSON, True),
         root / "AGENTS.md": (ROOT_AGENTS_MD, True),
@@ -2527,7 +2310,6 @@ def scaffold(
         # Docker
         root / "docker/Dockerfile": (DOCKERFILE, True),
         root / "docker/debug.Dockerfile": (DEBUG_DOCKERFILE, True),
-        root / "docker/agent.compose.yml": (AGENT_COMPOSE_YML, True),
         root / "docker/mcp.compose.yml": (MCP_COMPOSE_YML, True),
         root / "docker/starship.toml": (STARSHIP_TOML, True),
         # GitHub workflows
@@ -2548,8 +2330,6 @@ def scaffold(
         root / "docs/platform.md": (DOCS_PLATFORM_MD, True),
         root / "docs/concepts.md": (DOCS_CONCEPTS_MD, True),
         root / "docs/agent-readiness.json": (AGENT_READINESS_JSON, True),
-        # Repo scripts
-        root / "scripts/validate_agent.py": (VALIDATE_AGENT_PY, True),
     }
 
     if "api_client" in types:
@@ -2575,7 +2355,7 @@ def scaffold(
 
     # Canonical system prompt (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical) + fleet contribution
     # (CONCEPT:OS-5.52). The prompt lives in a `prompts/` data subpackage (the
-    # agent_utilities.prompt_providers entry-point target) and is mirrored at the
+    # agent_connector_sdk.prompt_providers entry-point target) and is mirrored at the
     # package root where the runtime workspace loader reads it. Both render from
     # ONE helper so they cannot drift.
     main_agent_content = render_main_agent_json(display_name, description, package_name)
@@ -2660,25 +2440,13 @@ def scaffold(
         files[pkg / "mcp_server.py"] = (MCP_SERVER_PY, True)
         files[root / "docs/capabilities/mcp.json"] = (CAPABILITY_MCP_JSON, True)
 
-    if "agent" in types:
-        files[pkg / "agent_server.py"] = (AGENT_SERVER_PY, True)
-        files[pkg / "__main__.py"] = (MAIN_PY, True)
-        files[root / "docs/capabilities/a2a.json"] = (CAPABILITY_A2A_JSON, True)
-
     if has_graphql:
         files[pkg / f"{gql_module_name}.py"] = (GQL_PY, True)
 
-    if "agent" not in types:
-        for optional_path in (
-            root / "a2a.json",
-            root / "scripts/validate_agent.py",
-            root / "docker/agent.compose.yml",
-        ):
-            files.pop(optional_path, None)
-        files[pkg / "__main__.py"] = (
-            "from .mcp_server import mcp_server\n\nif __name__ == '__main__':\n    mcp_server()\n",
-            False,
-        )
+    files[pkg / "__main__.py"] = (
+        "from .mcp_server import mcp_server\n\nif __name__ == '__main__':\n    mcp_server()\n",
+        False,
+    )
 
     # Flat tests directory
     files[root / "tests" / "__init__.py"] = ("", False)
@@ -2729,7 +2497,6 @@ def scaffold(
             "ENV_EXAMPLE",
             "ROOT_MCP_CONFIG_JSON",
             "MCP_COMPOSE_YML",
-            "AGENT_COMPOSE_YML",
             "PYPROJECT_TOML",
             "INIT_PY",
         }
@@ -2738,7 +2505,7 @@ def scaffold(
     # ── Write all files ──────────────────────────────────────────────────
     for path, (template, needs_format) in files.items():
         template_name = selected_templates.get(template, "")
-        selected = select_template(template_name, template, has_agent)
+        selected = select_template(template_name, template, False)
         selected = select_backend_template(template_name, selected, backend)
         content = selected.format(**ctx) if needs_format else selected
         if _write_generated_text(path, content):
@@ -2754,7 +2521,6 @@ def scaffold(
     for script_name in (
         "security_sanitizer.py",
         "verify_api_integration.py",
-        "validate_a2a_agent.py",
         # Cross-platform import-safety gate (2026-08-13 Windows-coverage
         # program): walks every module in the scaffolded package and fails
         # on ImportError, with --simulate-windows poisoning fcntl/termios/
@@ -2769,8 +2535,6 @@ def scaffold(
         # library-only helper so each generated package owns the same
         # fail-closed staged/delta semantics without hook-time installation.
     ):
-        if script_name == "validate_a2a_agent.py" and not has_agent:
-            continue
         if script_name == "verify_api_integration.py" and backend != "api_client":
             continue
         src = TEMPLATES_DIR / script_name
@@ -2856,7 +2620,7 @@ def scaffold(
 
     print(f"\n🎉 Scaffolded '{package_name}' at {root.resolve()}")
     print(f"   Package dir: {pkg_dir}/")
-    commands = [mcp_cmd] + ([agent_cmd] if "agent" in types else [])
+    commands = [mcp_cmd]
     print(f"   Console scripts: {', '.join(commands)}")
     print(f"   Concept prefix: CONCEPT:{concept_prefix}-*")
     print(f"   Types: {', '.join(types)}")

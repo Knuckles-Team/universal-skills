@@ -23,11 +23,9 @@ def builder():
     [
         "api_client",
         "mcp",
-        "api_client,agent",
         "api_client,mcp,unknown",
         "",
         "cli",
-        "cli,agent",
         "cli,mcp,graphql",
         "api_client,cli,mcp",
         "api_client,mcp,",
@@ -39,30 +37,37 @@ def test_unsupported_surfaces_fail_before_creating_output(tmp_path, types):
     assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize("types", ["api_client,mcp,agent", "cli,mcp,agent"])
+def test_retired_agent_surface_fails_before_creating_output(tmp_path, types):
+    with pytest.raises(ValueError, match="agent is retired"):
+        builder().scaffold("surface-test", output_dir=str(tmp_path), pkg_types=types)
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
-@pytest.mark.parametrize("agent", [False, True])
-def test_selected_surface_files_and_commands(tmp_path, agent, backend):
+def test_selected_surface_files_and_commands(tmp_path, backend):
     module = builder()
     module.scaffold(
-        "surface-test",
-        output_dir=str(tmp_path),
-        pkg_types=backend + ",mcp" + (",agent" if agent else ""),
+        "surface-test", output_dir=str(tmp_path), pkg_types=backend + ",mcp"
     )
     root = tmp_path / "surface-test"
     assert (root / "surface_test/mcp_server.py").is_file()
-    assert (root / "surface_test/agent_server.py").exists() is agent
-    assert (root / "a2a.json").exists() is agent
-    assert (root / "docker/agent.compose.yml").exists() is agent
-    assert (root / "scripts/validate_agent.py").exists() is agent
-    assert (root / "scripts/validate_a2a_agent.py").exists() is agent
+    for absent in (
+        "surface_test/agent_server.py",
+        "a2a.json",
+        "docker/agent.compose.yml",
+        "scripts/validate_agent.py",
+        "scripts/validate_a2a_agent.py",
+    ):
+        assert not (root / absent).exists()
     bump = (root / ".bumpversion.cfg").read_text()
-    assert ("surface_test/agent_server.py" in bump) is agent
-    assert ("a2a.json" in bump) is agent
+    assert "agent_server.py" not in bump
+    assert "a2a.json" not in bump
     readme = (root / "README.md").read_text()
-    assert ("surface-test-agent" in readme) is agent
+    assert "surface-test-agent" not in readme
     docker = (root / "docker/Dockerfile").read_text()
     assert "FROM mcp AS default" in docker
-    assert (" AS agent" in docker) is agent
+    assert " AS agent" not in docker
 
     assert (root / "surface_test/api").exists() is (backend == "api_client")
     assert (root / "surface_test/auth.py").exists() is (backend == "api_client")

@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agent_utilities import create_model
 from connections import create_connection
 from defusedxml import ElementTree as DefusedET
 from defusedxml.common import DefusedXmlException
@@ -169,11 +168,12 @@ def _build_evaluation_tool(tool: dict[str, Any]) -> Tool:
 def build_evaluation_agent(
     model: str, tools: list[dict[str, Any]]
 ) -> Agent[_ToolCallDeps, str]:
-    """Build the agent-utilities-backed evaluator: the configured model, the
-    EVALUATION_PROMPT as its system prompt, and every MCP tool bound (each call
-    proxies to the live connection supplied per-run via ``deps``)."""
+    """Build the evaluator: the configured model, the EVALUATION_PROMPT as its
+    system prompt, and every MCP tool bound (each call proxies to the live
+    connection supplied per-run via ``deps``). ``model`` is a pydantic-ai model
+    id in ``provider:name`` form."""
     return Agent(
-        create_model(model_id=model),
+        model,
         system_prompt=EVALUATION_PROMPT,
         tools=[_build_evaluation_tool(tool) for tool in tools],
         deps_type=_ToolCallDeps,
@@ -380,8 +380,11 @@ Examples:
     parser.add_argument(
         "-m",
         "--model",
-        default="agent-3-7-sonnet-20250219",
-        help="Agent model to use (default: agent-3-7-sonnet-20250219)",
+        default="anthropic:claude-3-7-sonnet-20250219",
+        help=(
+            "pydantic-ai model id in provider:name form "
+            "(default: anthropic:claude-3-7-sonnet-20250219)"
+        ),
     )
 
     stdio_group = parser.add_argument_group("stdio options")

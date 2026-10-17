@@ -132,18 +132,12 @@ def test_stale_au_connector_template_is_rejected(generated, legacy):
     assert "retired connector import" in result.stdout
 
 
-def test_optional_agent_runtime_does_not_exempt_connector_modules(generated):
+@pytest.mark.parametrize("module", ["agent_server.py", "auth.py"])
+def test_no_module_is_exempt_from_the_retired_import_check(generated, module):
     root, _ = generated
-    package = root / "contract_smoke"
-    (package / "agent_server.py").write_text(
-        "from agent_utilities.agent_server import Agent\n"
-    )
-    assert _checker().check_project(root, "contract_smoke") == []
-    (package / "auth.py").write_text(
-        "from agent_utilities.base_utilities import to_boolean\n"
-    )
+    (root / "contract_smoke" / module).write_text("import agent_utilities\n")
     assert any(
-        "auth.py" in error for error in _checker().check_project(root, "contract_smoke")
+        module in error for error in _checker().check_project(root, "contract_smoke")
     )
 
 

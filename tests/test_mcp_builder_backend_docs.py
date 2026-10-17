@@ -64,8 +64,7 @@ def test_api_backend_preserves_shared_templates():
         selector("README_MD", "text", "unknown")
 
 
-@pytest.mark.parametrize("has_agent", [False, True])
-def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
+def test_cli_docs_compose_without_agent_surfaces():
     backend = _load("backend_surfaces")
     surface = _load("surface_templates")
     names = {
@@ -77,7 +76,7 @@ def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
     templates = _templates()
     rendered = {
         name: backend.select_backend_template(
-            name, surface.select_template(name, templates[name], has_agent), "cli"
+            name, surface.select_template(name, templates[name], False), "cli"
         ).format(**CONTEXT)
         for name in names
     }
@@ -95,8 +94,8 @@ def test_cli_docs_compose_with_optional_agent_surfaces(has_agent):
     assert "--version" in rendered["DOCS_USAGE_MD"]
     assert "from docs_example.cli import get_client" in rendered["DOCS_USAGE_MD"]
     assert "authenticated TLS ingress" in rendered["DOCS_DEPLOYMENT_MD"]
-    assert ("docs-example-agent" in rendered["README_MD"]) is has_agent
-    assert ("Run the A2A agent server" in rendered["DOCS_DEPLOYMENT_MD"]) is has_agent
+    assert "docs-example-agent" not in rendered["README_MD"]
+    assert "Run the A2A agent server" not in rendered["DOCS_DEPLOYMENT_MD"]
 
 
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
@@ -133,17 +132,14 @@ def test_spec_contracts_select_backend_without_inventing_receipts(backend):
 
 
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
-@pytest.mark.parametrize("has_agent", [False, True])
-def test_generated_backend_documents_resolve_real_source_paths(
-    backend, has_agent, tmp_path
-):
+def test_generated_backend_documents_resolve_real_source_paths(backend, tmp_path):
     result = subprocess.run(
         [
             sys.executable,
             str(SCRIPTS / "scaffold_package.py"),
             "docs-example",
             "--type",
-            f"{backend},mcp" + (",agent" if has_agent else ""),
+            f"{backend},mcp",
             "--output-dir",
             str(tmp_path),
         ],
@@ -168,10 +164,10 @@ def test_generated_backend_documents_resolve_real_source_paths(
             assert (root / test_path).is_file(), test_path
     expected = "docs_example/cli.py" if backend == "cli" else "docs_example/auth.py"
     assert root / expected in code_paths
-    assert (root / "docs_example/agent_server.py").exists() is has_agent
+    assert not (root / "docs_example/agent_server.py").exists()
     init = (root / "docs_example/__init__.py").read_text()
-    assert ("docs_example.agent_server" in init) is has_agent
-    assert ("_AGENT_AVAILABLE" in init) is has_agent
+    assert "docs_example.agent_server" not in init
+    assert "_AGENT_AVAILABLE" not in init
     configuration = json.loads((root / "mcp_config.json").read_text())
     settings = configuration["mcpServers"]["docs-example"]["env"]
     expected_key = (
@@ -180,17 +176,16 @@ def test_generated_backend_documents_resolve_real_source_paths(
         else "DOCS_EXAMPLE_ALLOW_PLAINTEXT"
     )
     assert settings[expected_key] == ("" if backend == "cli" else "false")
-    for name in ["mcp", *(["agent"] if has_agent else [])]:
-        compose = yaml.safe_load((root / f"docker/{name}.compose.yml").read_text())
-        for service in compose["services"].values():
-            declarations = service["environment"]
-            assert any(value.startswith(expected_key + "=") for value in declarations)
-            if backend == "cli":
-                assert not any("ALLOW_PLAINTEXT" in value for value in declarations)
-                assert any(
-                    "set-absolute-executable-path-inside-container" in value
-                    for value in declarations
-                )
+    compose = yaml.safe_load((root / "docker/mcp.compose.yml").read_text())
+    for service in compose["services"].values():
+        declarations = service["environment"]
+        assert any(value.startswith(expected_key + "=") for value in declarations)
+        if backend == "cli":
+            assert not any("ALLOW_PLAINTEXT" in value for value in declarations)
+            assert any(
+                "set-absolute-executable-path-inside-container" in value
+                for value in declarations
+            )
     docs = "\n".join(path.read_text() for path in (root / "docs").glob("*.md"))
     if backend == "cli":
         assert "DOCS_EXAMPLE_EXECUTABLE" in docs

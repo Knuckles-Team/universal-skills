@@ -29,10 +29,7 @@ DISTRIBUTION = "distribution-demo"
 COMBINATIONS = (
     "api_client,mcp",
     "cli,mcp",
-    "cli,mcp,agent",
-    "api_client,mcp,agent",
     "api_client,mcp,graphql",
-    "api_client,mcp,agent,graphql",
 )
 
 
@@ -148,14 +145,11 @@ def test_sdist_preserves_and_executes_generated_contract_scripts(artifacts):
 
 
 def test_wheel_entry_points_resolve_to_packaged_definitions(artifacts):
-    source, _, wheel, types, _ = artifacts
+    source, _, wheel, _, _ = artifacts
     metadata = next(wheel.glob("*.dist-info/entry_points.txt"))
     entries = configparser.ConfigParser()
     entries.read(metadata)
-    expected = {DISTRIBUTION + "-mcp"}
-    if "agent" in types:
-        expected.add(DISTRIBUTION + "-agent")
-    assert set(entries["console_scripts"]) == expected
+    assert set(entries["console_scripts"]) == {DISTRIBUTION + "-mcp"}
     for target in entries["console_scripts"].values():
         module, name = target.split(":")
         source_path = wheel.joinpath(*module.split(".")).with_suffix(".py")

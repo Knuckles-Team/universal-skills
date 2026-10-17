@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Reject retired connector APIs in a generated SDK-based project.
 
-This static check needs no installed connector dependencies. The separately
-optional agent_server.py may use the AU agent runtime; connector modules may not.
+This static check needs no installed connector dependencies. No module in the
+package may import agent_utilities.
 """
 
 from __future__ import annotations
@@ -85,8 +85,6 @@ def check_project(root: Path, package: str) -> list[str]:
             "pyproject.toml: connector must not require the full engine extra"
         )
     for path in sorted(package_root.rglob("*.py")):
-        if path == package_root / "agent_server.py":
-            continue
         violations.extend(_module_violations(path, root))
     return violations
 

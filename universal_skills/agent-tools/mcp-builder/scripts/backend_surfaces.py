@@ -82,12 +82,6 @@ _REPLACEMENTS = {
             "{upper_name}_EXECUTABLE=${{{upper_name}_EXECUTABLE:?set-absolute-executable-path-inside-container}}",
         ),
     ),
-    "AGENT_COMPOSE_YML": (
-        (
-            "{upper_name}_ALLOW_PLAINTEXT=${{{upper_name}_ALLOW_PLAINTEXT:-false}}",
-            "{upper_name}_EXECUTABLE=${{{upper_name}_EXECUTABLE:?set-absolute-executable-path-inside-container}}",
-        ),
-    ),
     "README_MD": (
         ("full API, deployment", "full connector, deployment"),
         (
