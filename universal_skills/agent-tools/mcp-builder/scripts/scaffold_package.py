@@ -1188,13 +1188,20 @@ jobs:
 ROOT_AGENTS_MD = """\
 # {display_name} engineering contract
 
+## Boundaries
+
+- **Owns:** the behavior of one external system. That covers its API calls, mappings and MCP tools.
+- **Never builds:** domain maths, stores or decisions (route them to epistemic-graph). Shared helpers go to agent-connector-sdk. Serving to other callers goes to graph-os.
+- **Allowed dependencies:** agent-connector-sdk only. It reaches the graph engine through the SDK's EG client adapter.
+
+Route every feature with the [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) before any code. A part this connector does not own goes to its owner's specs.
+
 ## Architecture
 
 `{pkg_dir}/api/` owns service operations; `mcp/` adapts them to tools.
 The connector SDK owns HTTP, credential references, TLS, server policy,
 registration, content publication and ingestion transport. The graph engine
-owns durable storage and semantics. Optional orchestration belongs to
-agent-utilities and must not become an MCP dependency.
+owns durable storage and semantics.
 
 ## Setup and commands
 
