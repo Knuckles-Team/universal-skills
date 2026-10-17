@@ -18,15 +18,14 @@ not permission to copy service-specific state or existing omissions.
 
 ## SDK ownership and registration
 
-Connector code imports agent_connector_sdk, not agent_utilities.mcp,
-agent_utilities.mcp_utilities or agent_utilities.core connector helpers.
+Connector code imports agent_connector_sdk only. It is MCP-only: no agent
+server, no LLM client and no dependency on the agent control plane.
 Use load_config, create_mcp_server and register_tool_surface as shown in the
 [Python guide](python_mcp_server.md). Explicit ConnectorContent registers declared
 skills, prompts, ontology, shapes and connector_manifest.yml.
 
-Verify installed package data and native MCP discovery. Legacy
-agent_utilities.*_providers entry points may remain for an existing consumer,
-but they do not replace explicit native content registration.
+Verify installed package data and native MCP discovery. Explicit ConnectorContent
+registration is the only content-discovery path; do not add provider entry points.
 
 ## Source and effect contracts
 
@@ -55,7 +54,7 @@ Do not add write-back merely because a provider supports writes.
 
 Depend directly on agent-connector-sdk at a reviewed compatible version. Preserve
 its graph-client boundary; do not require epistemic-graph[full] in connectors.
-Optional orchestration belongs in its own extra. Avoid recursive extras and
+Avoid recursive extras and
 import-time live-service initialization.
 
 Current pipelines workflows/hooks own release, publication, Pages, dependency
@@ -107,20 +106,18 @@ docs. The current pipelines public-surface gate checks safe local links and READ
 installation/start paths. Heading, size, badge and privacy conventions need their
 own review; a passing public-surface check does not certify them.
 
-## Optional agent runtime
+## No agent mode
 
-Agent orchestration is optional and owned by current agent-utilities runtime.
-Verify source/installed entry-point and prompt-schema APIs before exposing the
-agent extra. Preserve supported invocation and structured prompts without the
-retired standalone agent_data workspace recipe. Connector modules must remain
-usable without orchestration dependencies.
+Connectors have no agent mode. Orchestration, routing and model calls belong to
+the agent control plane, which reaches a connector only through its MCP surface.
+Do not add an agent extra, agent server, A2A card or model client.
 
 ## Verification
 
 An isolated smoke test parses generated Python/metadata, inspects tool/content
 registration, and validates manifests against authoritative schemas without live
-calls. Run applicable source/effect fixture suites and reject stale AU connector
-templates explicitly. Report missing environments/checks; do not bypass gates.
+calls. Run applicable source/effect fixture suites and reject any dependency on the
+retired control-plane package explicitly. Report missing environments/checks; do not bypass gates.
 
 New integrations load readiness resources from
 universal_skills.agent-tools.mcp-builder.scripts. Consumers of retired paths need

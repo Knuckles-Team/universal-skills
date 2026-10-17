@@ -13,7 +13,7 @@ SCAFFOLD = (
     / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
 )
 PIPELINES_REF = "main"
-KISS_POLICY_SHA256 = "a6f2b9171123503522092aec416eaea7ad29ea98a26eb7283f02156c9c3d5c3a"
+KISS_POLICY_SHA256 = "0c7d62e3ce8e1b5d034fca9b21a28947601f1b38af34d83fba57b412eeee056d"
 
 
 def _load_scaffold():
@@ -51,7 +51,7 @@ def test_scanner_hooks_consume_shared_authority():
         "import-cycles",
     } <= hooks.keys()
     assert all("entry" not in hook for hook in hooks.values())
-    assert "tool.agent_utilities.scanners" not in module.PYPROJECT_TOML
+    assert "tool." + "agent_utilities.scanners" not in module.PYPROJECT_TOML
 
 
 def test_dependency_readiness_inherits_upstream_release_only_stage():

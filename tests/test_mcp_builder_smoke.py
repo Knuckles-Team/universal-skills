@@ -132,18 +132,15 @@ def test_stale_au_connector_template_is_rejected(generated, legacy):
     assert "retired connector import" in result.stdout
 
 
-def test_optional_agent_runtime_does_not_exempt_connector_modules(generated):
+def test_no_module_is_exempt_from_the_retired_import_rule(generated):
     root, _ = generated
     package = root / "contract_smoke"
     (package / "agent_server.py").write_text(
         "from agent_utilities.agent_server import Agent\n"
     )
-    assert _checker().check_project(root, "contract_smoke") == []
-    (package / "auth.py").write_text(
-        "from agent_utilities.base_utilities import to_boolean\n"
-    )
     assert any(
-        "auth.py" in error for error in _checker().check_project(root, "contract_smoke")
+        "agent_server.py" in error
+        for error in _checker().check_project(root, "contract_smoke")
     )
 
 
@@ -181,8 +178,8 @@ LIVE_DISCOVERY = textwrap.dedent("""\
             tools = await client.list_tools()
             assert {tool.name for tool in tools} == {"system_operations"}
             prompts = {prompt.name for prompt in await client.list_prompts()}
-            assert {"main_agent", "contract_smoke_specialist"} <= prompts
-            prompt = await client.get_prompt("main_agent")
+            assert {"contract_smoke_specialist"} <= prompts
+            prompt = await client.get_prompt("contract_smoke_specialist")
             assert "Contract Smoke" in prompt.messages[0].content.text
             resources = {str(resource.uri) for resource in await client.list_resources()}
             expected = {

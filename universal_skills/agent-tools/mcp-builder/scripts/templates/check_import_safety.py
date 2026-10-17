@@ -34,9 +34,9 @@ Windows coverage.
 
 Usage::
 
-    python3 scripts/check_import_safety.py --package agent_utilities
-    python3 scripts/check_import_safety.py --package agent_utilities --simulate-windows
-    python3 scripts/check_import_safety.py --package agent_utilities --exclude agent_utilities.some.heavy_optional_module
+    python3 scripts/check_import_safety.py --package my_connector
+    python3 scripts/check_import_safety.py --package my_connector --simulate-windows
+    python3 scripts/check_import_safety.py --package my_connector --exclude my_connector.some.heavy_optional_module
 """
 
 from __future__ import annotations
@@ -52,8 +52,7 @@ from pathlib import Path
 
 # Stdlib modules that exist only on POSIX. An unconditional top-level import
 # of any of these is exactly the defect class this gate exists to catch --
-# see agent_utilities/knowledge_graph/core/file_lock.py for the guarded
-# (sys.platform == "win32" branch) pattern every call site should follow.
+# guard such imports behind a ``sys.platform == "win32"`` branch.
 POSIX_ONLY_STDLIB_MODULES = ("fcntl", "termios", "pwd", "resource", "grp")
 
 
@@ -166,7 +165,7 @@ def detect_package_from_pyproject(pyproject_path: Path = Path("pyproject.toml"))
 
     ``gitlab-api`` -> ``gitlab_api``, the one substitution every package in
     this fleet actually uses (confirmed: repository-manager ->
-    repository_manager, agent-utilities -> agent_utilities, ...). Lets the
+    repository_manager, ...). Lets the
     scaffold-generated pre-commit hook invoke this script with no
     per-package templating/shell derivation.
     """
@@ -182,7 +181,7 @@ def main() -> int:
     parser.add_argument(
         "--package",
         default=None,
-        help="top-level package/module name to walk, e.g. agent_utilities. If omitted, derived from pyproject.toml's [project].name (hyphens -> underscores).",
+        help="top-level package/module name to walk, e.g. my_connector. If omitted, derived from pyproject.toml's [project].name (hyphens -> underscores).",
     )
     parser.add_argument(
         "--script",

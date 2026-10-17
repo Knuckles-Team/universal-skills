@@ -1,1 +1,3 @@
-agent-utilities[mcp]>=2.0.0,<3.0.0
+pydantic-ai-slim[openai]>=1.0.0
+defusedxml>=0.7.1
+mcp>=1.0.0

@@ -40,7 +40,7 @@ def test_unsupported_surfaces_fail_before_creating_output(tmp_path, types):
 
 
 @pytest.mark.parametrize("backend", ["api_client", "cli"])
-@pytest.mark.parametrize("agent", [False, True])
+@pytest.mark.parametrize("agent", [False])
 def test_selected_surface_files_and_commands(tmp_path, agent, backend):
     module = builder()
     module.scaffold(

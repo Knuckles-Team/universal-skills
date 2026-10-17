@@ -2,7 +2,7 @@
 
 The generator creates a portable connector repository. Required artifacts are
 conditional on one backend (`api_client` or `cli`) with mandatory `mcp`. Add
-`agent` for either backend or `graphql` for API clients only. Existing
+`graphql` for API clients only. Connectors are MCP-only; there is no agent mode. Existing
 project-owned files remain unchanged on rerun; review their compatibility instead
 of overwriting them. Current SDK and pipelines source remain authoritative.
 
@@ -10,7 +10,7 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 
 | Artifact | Contract |
 |---|---|
-| pyproject.toml, requirements.txt | Direct reviewed agent-connector-sdk dependency; explicit package discovery/data; optional agent runtime separated; no recursive extras or mandatory embedded graph engine. |
+| pyproject.toml, requirements.txt | Direct reviewed agent-connector-sdk dependency; `agent-connector-sdk>=0.2.0,<1.0.0` as the only framework dependency; explicit package discovery/data; no recursive extras or mandatory embedded graph engine. |
 | .bumpversion.cfg, LICENSE, CHANGELOG.md | Consistent versions and maintainer metadata; an Unreleased scaffold with a reproducible generation date, never invented release history. |
 | README.md, AGENTS.md, CLAUDE.md | Public entry point and current contributor guidance validated by pipelines public-surface; CLAUDE imports AGENTS. |
 | .pre-commit-config.yaml | Shared pipelines hooks and lint, test, docs, security, generated-contract and supply-chain checks at reviewed revisions. |
@@ -31,7 +31,7 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 | skills/, prompts/, ontology/, optional shapes | Portable provider content and native discovery; no deployment-specific ontology; prompt body in instructions.core_directive. |
 | kg_ingest.py | SDK typed ChangeSet and IngestBinding submission; no AU native ingestion or embedded graph dependency. |
 | Requested source/effect ports | Provenance, checkpoints, receipt validation, deterministic retries; authorized/idempotent effects with preview and reconciliation. |
-| Optional agent entry point | Current agent-utilities runtime API behind its own extra. |
+| _version.py | Single version source read by setuptools-free bump2version and imported by mcp_server.py. |
 
 ## Documentation and discovery
 
@@ -63,7 +63,7 @@ and normal repository gates. Test CLI process limits and argument safety with is
 executables, and API contracts through mock transports. Verify every supported
 backend/type combination in wheel and source distributions. Preserve rerun and documentation ownership contracts.
 
-Reject stale AU connector imports or native_ingest; missing content registration;
+Reject imports or dependencies on the retired control-plane package, and native_ingest; missing content registration;
 undeclared ingestion types; retired modes presented as current APIs; recursive
 extras or mandatory epistemic-graph[full]; credentials, private endpoints or TLS
 bypasses; authorization bypasses or unsafe effect retries; mutable sources where
