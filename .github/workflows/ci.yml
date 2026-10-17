@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/pipelines
-          ref: 7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e
+          ref: 58e9bbc62557f2d4a07438070b1ceebb5864a81f
           path: .ci/pipelines
           persist-credentials: false
       - name: Bootstrap repository build environment

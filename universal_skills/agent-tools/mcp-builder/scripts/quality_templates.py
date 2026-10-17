@@ -1,6 +1,6 @@
 """Consume reviewed pipeline contracts instead of copying their implementation."""
 
-PIPELINES_THEME_REV = "7b3d18d72b5622d455ece3bbe45a9482bc6e8b5e"
+PIPELINES_THEME_REV = "58e9bbc62557f2d4a07438070b1ceebb5864a81f"
 
 # Verbatim templates: GitHub expressions and YAML braces are not str.format input.
 PRECOMMIT_CONFIG = """\

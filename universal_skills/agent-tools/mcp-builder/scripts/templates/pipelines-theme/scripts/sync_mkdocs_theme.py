@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import re
 import sys
 from dataclasses import dataclass
@@ -24,8 +23,6 @@ THEME_FILES = (
     ThemeFile("extra.css", "stylesheets/extra.css"),
     ThemeFile("assets/graph-mark.svg", "assets/graph-mark.svg"),
     ThemeFile("assets/favicon.svg", "assets/favicon.svg"),
-    ThemeFile("assets/runtime-architecture.mmd", "assets/runtime-architecture.mmd"),
-    ThemeFile("assets/runtime-architecture.svg", "assets/runtime-architecture.svg"),
     ThemeFile(
         "assets/brands/epistemic-graph-logo-v1.png",
         "assets/brands/epistemic-graph-logo-v1.png",
@@ -52,15 +49,13 @@ THEME_FILES = (
 )
 
 
-RUNTIME_PROVENANCE = re.compile(
-    rb"<!-- Generated compatibility copy; do not edit\.\n"
-    rb"Source: https://raw\.githubusercontent\.com/Knuckles-Team/epistemic-graph/"
-    rb"[0-9a-f]{40}/docs/assets/runtime-architecture\.svg\n"
-    rb"SHA-256: (?P<digest>[0-9a-f]{64})\n"
-    rb"Synchronize: https://github\.com/Knuckles-Team/\.github/blob/main/docs/runtime-diagram\.md\n"
-    rb"-->\n(?P<payload>.*)",
-    re.DOTALL,
+RUNTIME_DIAGRAM_URL = (
+    "https://raw.githubusercontent.com/Knuckles-Team/epistemic-graph/main/"
+    "docs/assets/runtime-architecture.svg"
 )
+# Any reference to the diagram file; the only accepted target is RUNTIME_DIAGRAM_URL.
+RUNTIME_DIAGRAM_REFERENCE = re.compile(r"[^\s\"'()<>]*runtime-architecture\.svg")
+PAGE_SUFFIXES = {".md", ".html", ".yml", ".yaml"}
 
 
 class ThemeSyncError(Exception):
@@ -93,32 +88,24 @@ def _check_file(destination: Path, expected: bytes, repository: Path) -> str | N
     return None
 
 
-def _runtime_diagram_content(destination: Path, expected: bytes) -> bytes:
-    """Keep the canonical sync tool's provenance without accepting SVG drift."""
-    if not destination.is_file():
-        return expected
-    actual = destination.read_bytes()
-    if not actual.startswith(b"<!--"):
-        return expected
-    provenance = RUNTIME_PROVENANCE.fullmatch(actual)
-    if (
-        provenance is None
-        or provenance["digest"] != hashlib.sha256(expected).hexdigest().encode()
-        or provenance["payload"] != expected
-    ):
-        raise ThemeSyncError(
-            "runtime diagram provenance or payload differs; use the canonical "
-            "sync guide: https://github.com/Knuckles-Team/.github/blob/main/docs/runtime-diagram.md"
-        )
-    return actual
-
-
-def _expected_content(item: ThemeFile, source_file: Path, destination: Path) -> bytes:
-    """Resolve exact theme bytes while preserving validated runtime provenance."""
-    expected = source_file.read_bytes()
-    if item.source == "assets/runtime-architecture.svg":
-        return _runtime_diagram_content(destination, expected)
-    return expected
+def _runtime_reference_mismatches(content_root: Path, repository: Path) -> list[str]:
+    """Pages may show the runtime diagram only through the single canonical URL."""
+    mismatches: list[str] = []
+    if not content_root.is_dir():
+        return mismatches
+    for page in sorted(content_root.rglob("*")):
+        if page.suffix not in PAGE_SUFFIXES or not page.is_file():
+            continue
+        text = page.read_text(encoding="utf-8", errors="replace")
+        if any(
+            match.group(0) != RUNTIME_DIAGRAM_URL
+            for match in RUNTIME_DIAGRAM_REFERENCE.finditer(text)
+        ):
+            mismatches.append(
+                f"runtime diagram must be referenced as {RUNTIME_DIAGRAM_URL}: "
+                f"{page.relative_to(repository)}"
+            )
+    return mismatches
 
 
 def sync_theme(
@@ -136,6 +123,16 @@ def sync_theme(
     if not source.is_dir():
         raise ThemeSyncError(f"canonical theme directory does not exist: {source}")
 
+    mismatches = _sync_files(source, content_root, repository, mode=mode)
+    if mode == "check":
+        mismatches.extend(_runtime_reference_mismatches(content_root, repository))
+    return mismatches
+
+
+def _sync_files(
+    source: Path, content_root: Path, repository: Path, *, mode: Literal["sync", "check"]
+) -> list[str]:
+    """Write or compare every theme file and describe each divergence."""
     mismatches: list[str] = []
     for item in THEME_FILES:
         source_file = source / item.source
@@ -143,16 +140,14 @@ def sync_theme(
             raise ThemeSyncError(f"canonical theme file does not exist: {source_file}")
         destination_root = content_root if item.content_relative else repository
         destination = _contained(destination_root, Path(item.destination), item.destination)
-        expected = _expected_content(item, source_file, destination)
+        expected = source_file.read_bytes()
         if mode == "check":
             mismatch = _check_file(destination, expected, repository)
             if mismatch:
                 mismatches.append(mismatch)
             continue
-
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(expected)
-
     return mismatches
 
 
