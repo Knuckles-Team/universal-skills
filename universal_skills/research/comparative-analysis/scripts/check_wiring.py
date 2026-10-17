@@ -23,7 +23,7 @@ CONCEPT:CA-016 — Wiring Audit (Import-Graph Reachability)
 Layered KG/engine-native design (see ``_kg_ast.py``): this check is deliberately
 kept on local stdlib ``ast`` for two reasons, not convenience. (1) It is designed
 to run standalone against ANY local checkout — including un-ingested third-party
-comparison targets — with zero graph-os/KG dependency, which is the whole point
+comparison targets — with zero arbora/KG dependency, which is the whole point
 of a lightweight, offline Wire-First gate. (2) Even against an ingested target,
 the exact hop-count this CI gate pass/fails on needs the source-level
 ``ast.ImportFrom.level`` value. Native inventory retains resolved and unresolved

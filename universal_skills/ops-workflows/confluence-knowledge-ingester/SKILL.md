@@ -17,7 +17,7 @@ team_config:
     intake-agent: [graph_query, nc_files]
     processor-agent: [graph_analyze, document_tools]
     validator-agent: [graph_query]
-tags: ['atlassian', 'confluence', 'wiki', 'knowledge-base', 'atlassian-agent', 'graph-os']
+tags: ['atlassian', 'confluence', 'wiki', 'knowledge-base', 'atlassian-agent', 'arbora']
 concept: CONCEPT:KG-2.12
 metadata:
   version: '1.3.11'
@@ -45,14 +45,14 @@ Expected: `confluence_page_data`
 Present the fetched Confluence page content summary. Prompt the user for a preferred saving path in the workspace for markdown conversion and future ingestion.
 Expected: `save_path, file_metadata`
 
-### Step 2: Graph Os
+### Step 2: Arbora
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
-Write the formatted page content to save_path and call mcp_graph-os_graph_ingest tool with the target path to natively ingest the Confluence document into the Knowledge Graph.
+Write the formatted page content to save_path and call mcp_arbora_graph_ingest tool with the target path to natively ingest the Confluence document into the Knowledge Graph.
 Expected: `ingestion_job_status`
 
-### Step 3: KG Persistence [depends_on: graph-os]
+### Step 3: KG Persistence [depends_on: arbora]
 **Agent**: `validator-agent`
 **Tools**: `graph_write`
 
@@ -71,7 +71,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — Atlassian Agent; Step 1 — User Interaction; Step 2 — Graph Os
+- **Run first (in parallel):** Step 0 — Atlassian Agent; Step 1 — User Interaction; Step 2 — Arbora
 - **After level 0:** Step 3 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

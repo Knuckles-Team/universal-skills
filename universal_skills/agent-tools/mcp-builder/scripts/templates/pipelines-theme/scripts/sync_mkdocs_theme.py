@@ -34,7 +34,7 @@ THEME_FILES = (
         "assets/brands/agent-utilities-logo-v1.png",
         "assets/brands/agent-utilities-logo-v1.png",
     ),
-    ThemeFile("assets/brands/graph-os-logo-v1.png", "assets/brands/graph-os-logo-v1.png"),
+    ThemeFile("assets/brands/arbora-logo-v1.png", "assets/brands/arbora-logo-v1.png"),
     ThemeFile(
         "assets/brands/agent-connector-sdk-logo-v1.png",
         "assets/brands/agent-connector-sdk-logo-v1.png",

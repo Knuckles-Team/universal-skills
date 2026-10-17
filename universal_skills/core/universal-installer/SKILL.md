@@ -6,7 +6,7 @@ description: >-
   Install and wire the whole fleet contribution surface into an agent tool in one
   step: skills, skill-graphs, skill-workflows, ontologies, and system prompts —
   plus generating/patching supported JSON-client MCP configuration to wire
-  graph-os (portable local stdio, or a remote instance) and auto-detected agents/* MCP
+  arbora (portable local stdio, or a remote instance) and auto-detected agents/* MCP
   server. Supports installing from pip-installed providers or directly from an
   agents/* project checkout. Use when the user wants to install skills or
   ontologies or prompts into Windsurf, Claude Code, OpenCode, Antigravity,
@@ -35,8 +35,8 @@ one entry point per artifact type:
   agent-utilities XDG tree (`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
-- **graph-os + fleet MCP wiring** — generates/patches supported JSON clients
-  with a portable installed `graph-os` stdio entry (or a remote URL), plus one
+- **arbora + fleet MCP wiring** — generates/patches supported JSON clients
+  with a portable installed `arbora` stdio entry (or a remote URL), plus one
   entry per auto-detected `agents/*` MCP server — see
   "MCP server wiring" below.
 - **Per-package auto-detection**, including installing directly from an
@@ -103,7 +103,7 @@ pip install skill-graphs
   agent-terminal-ui, or a custom path).
 - `--all-detected` / `--all`: Install into every detected / every known tool.
 - `--interactive` / `-i`: Interactively pick target tools, source providers, AND
-  the graph-os MCP wiring mode (new — see below). Auto-enabled on a bare
+  the arbora MCP wiring mode (new — see below). Auto-enabled on a bare
   TTY-attached invocation.
 - `--providers`: Comma-separated skill/prompt/ontology providers to install from
   (`universal-skills` and/or installed agent-package names). Default: all.
@@ -116,21 +116,21 @@ pip install skill-graphs
   from `skill-installer` (see below for the full description of each).
 - `--no-ontologies` / `--no-prompts`: Skip the ontology / prompt install leg
   (both run by default — see below).
-- `--graph-os {stdio,remote,skip}`: How to wire graph-os into the target's MCP
+- `--arbora {stdio,remote,skip}`: How to wire arbora into the target's MCP
   config (default `stdio`; interactive picker asks if not given and a TTY is
   attached). See "MCP server wiring".
-- `--graph-os-url <url>`: Remote graph-os URL, required when `--graph-os remote`.
+- `--arbora-url <url>`: Remote arbora URL, required when `--arbora remote`.
 - `--no-mcp`: Skip MCP config wiring entirely (skills/ontologies/prompts only).
 
 ```bash
-# RECOMMENDED for Claude: symlink the atomic layer, wire graph-os + fleet MCP servers
-install-universal --tool claude --symlink --layer atomic --graph-os stdio
+# RECOMMENDED for Claude: symlink the atomic layer, wire arbora + fleet MCP servers
+install-universal --tool claude --symlink --layer atomic --arbora stdio
 
 # Install everything into every detected tool (interactive picker if TTY-attached)
 install-universal --all-detected --symlink
 
-# Wire a remote graph-os instead of the installed local stdio launcher
-install-universal --tool claude --graph-os remote --graph-os-url https://graph-os.example.com/mcp
+# Wire a remote arbora instead of the installed local stdio launcher
+install-universal --tool claude --arbora remote --arbora-url https://arbora.example.com/mcp
 
 # Install directly from an unreleased agents/* checkout (skills+prompts+ontology)
 install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
@@ -191,19 +191,19 @@ Reuses the bundled **`mcp-installer`** skill's config-merge machinery
 re-implementing it. `scripts/mcp_setup.py` builds two kinds of entries and
 merges them into a supported JSON client's MCP config file. Codex remains a
 skill-install target, but is intentionally skipped by this JSON leg. Register
-GraphOS in Codex through agent-utilities' `setup-config codex` command (or the
-equivalent `codex mcp add graph-os -- graph-os --transport stdio`) so Codex owns
+Arbora in Codex through agent-utilities' `setup-config codex` command (or the
+equivalent `codex mcp add arbora -- arbora --transport stdio`) so Codex owns
 its `config.toml` entry and no env, secret, working directory, or machine path
 is copied.
 
-1. **`graph-os`**:
-   - `--graph-os stdio` (default): wires the installed portable launcher as
-     `"command": "graph-os", "args": ["--transport", "stdio"]`. Runtime
+1. **`arbora`**:
+   - `--arbora stdio` (default): wires the installed portable launcher as
+     `"command": "arbora", "args": ["--transport", "stdio"]`. Runtime
      topology and state resolve through AgentConfig, not client env fields.
-   - `--graph-os remote --graph-os-url <url>`: wires `{"url": "<url>"}` — the
+   - `--arbora remote --arbora-url <url>`: wires `{"url": "<url>"}` — the
      Streamable-HTTP/remote shape every `agents/*` README documents as the
      alternative to stdio.
-   - `--graph-os skip`: no graph-os entry is written.
+   - `--arbora skip`: no arbora entry is written.
 2. **Auto-detected `agents/*` servers** — for every provider discovered on this
    install run (pip-installed or `--from-package`) that also declares an
    `[project.scripts]` `*-mcp` entry point, adds
@@ -214,10 +214,10 @@ is copied.
    what that package's own README documents.
 
 **Interactive decision point.** `--interactive`/bare-TTY invocation asks,
-per the picker in `install.py`'s `_run_interactive()`: *"Wire graph-os as (1)
+per the picker in `install.py`'s `_run_interactive()`: *"Wire arbora as (1)
 local stdio (installed console script), (2) a remote instance (enter URL), or (3)
 skip?"* — mirrors the tool/provider pickers already there. Non-interactively,
-`--graph-os` defaults to `stdio` (never silently skipped, since a graph-os
+`--arbora` defaults to `stdio` (never silently skipped, since an arbora
 entry is the common case) unless `--no-mcp` is given.
 
 ## Ontology / skill / prompt auto-extension hook for the KG (new, partial)
@@ -230,14 +230,14 @@ when. This is the "make the artifacts **discoverable**" half of KG
 auto-extension: any provider whose skills/prompts/ontologies changed is now
 sitting in the canonical XDG tree the KG ingestion pipeline already scans.
 
-**What this skill does NOT do** (by design — this is the graph-os/epistemic-graph
+**What this skill does NOT do** (by design — this is the arbora/epistemic-graph
 side's job, not the installer's): actually parse the manifest, mint KG nodes, or
 call `source_sync`. The installer prints the exact follow-up
-(`source_sync source=all mode=delta` via the graph-os MCP connection, or the
+(`source_sync source=all mode=delta` via the arbora MCP connection, or the
 `agent-utilities-source-integration` skill) rather than invoking it itself —
 invoking a heavy KG-ingestion tool from inside a lightweight file-copy installer
-would couple the two concerns and require a live graph-os connection this skill
-has no business assuming. If a graph-os-side counterpart wants to consume
+would couple the two concerns and require a live arbora connection this skill
+has no business assuming. If an arbora-side counterpart wants to consume
 `install-manifest.json` directly (rather than re-scanning the whole XDG tree),
 that consumer is **not yet built** — flagged as a deferred follow-up.
 
@@ -246,7 +246,7 @@ that consumer is **not yet built** — flagged as a deferred follow-up.
 - Prefer `--symlink` for the skill/skill-graph leg on any host you'll keep
   `pip install -U`-ing.
 - Run with `--interactive` (or bare, TTY-attached) the first time on a new host —
-  it walks tools, providers, AND the graph-os wiring decision in one pass.
+  it walks tools, providers, AND the arbora wiring decision in one pass.
 - Use `--from-package` while developing a new `agents/*` connector, before it's
   released to pip — no need to `pip install -e` first.
 - After any run that changed provider content, follow the printed `source_sync`
@@ -254,7 +254,7 @@ that consumer is **not yet built** — flagged as a deferred follow-up.
 
 ## Resources
 - `scripts/install.py` — skill/skill-graph install core (unchanged logic from
-  `skill-installer`) + the new `--from-package`/`--graph-os`/ontology-prompt CLI
+  `skill-installer`) + the new `--from-package`/`--arbora`/ontology-prompt CLI
   wiring.
 - `scripts/adapters.py` — per-agent-tool `SKILL.md` frontmatter contracts
   (unchanged).
@@ -262,5 +262,5 @@ that consumer is **not yet built** — flagged as a deferred follow-up.
   materialization (agent-utilities-import fast path + dependency-free fallback).
 - `scripts/from_package.py` — parse an `agents/*` checkout's `pyproject.toml`
   entry-points and install directly from source.
-- `scripts/mcp_setup.py` — graph-os + fleet MCP config generation, merged via
+- `scripts/mcp_setup.py` — arbora + fleet MCP config generation, merged via
   the bundled `mcp-installer`.

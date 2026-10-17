@@ -10,8 +10,8 @@ description: >-
   Triggers on "search X", "ingest X posts", "browse X", "x to kg",
   "x research", "social media ingestion".
 domain: social-workflows
-tags: ['social', 'x', 'ingestion', 'graph-os', 'knowledge-graph', 'evolution']
-requires: ['graph-os']
+tags: ['social', 'x', 'ingestion', 'arbora', 'knowledge-graph', 'evolution']
+requires: ['arbora']
 metadata:
   version: '1.3.11'
   author: Genius
@@ -66,7 +66,7 @@ When `auto_ingest=True`, the browse tool automatically:
 
 Expected: posts with content, engagement metrics, classification results
 
-### Step 1: graph-os
+### Step 1: arbora
 For search results (not auto-ingested), manually ingest each result into the KG
 using the XIngestionBridge pattern.
 
@@ -74,7 +74,7 @@ For each result from Step 0:
 
 1. Create SocialPost node:
 ```
-Use mcp_graph-os_graph_write with action: "add_node",
+Use mcp_arbora_graph_write with action: "add_node",
 node_type: "SocialPost",
 node_id: "social:x:<post_id>",
 properties: '{
@@ -91,10 +91,10 @@ properties: '{
 
 2. Create Person node and link:
 ```
-Use mcp_graph-os_graph_write with action: "add_node",
+Use mcp_arbora_graph_write with action: "add_node",
 node_type: "Person", node_id: "person:x:<handle>"
 
-Use mcp_graph-os_graph_write with action: "add_edge",
+Use mcp_arbora_graph_write with action: "add_edge",
 source_id: "social:x:<id>", target_id: "person:x:<handle>",
 rel_type: "CREATED_BY_PERSON"
 ```
@@ -107,7 +107,7 @@ Use read_url_content with url: "<article_url>"
 ```
 Then ingest via:
 ```
-Use mcp_graph-os_graph_ingest with action: "ingest", target_path: "<url>"
+Use mcp_arbora_graph_ingest with action: "ingest", target_path: "<url>"
 ```
 Link SocialPost → Article via PROMOTES_RESEARCH edge.
 
@@ -148,6 +148,6 @@ ingested through the full KBIngestionEngine pipeline, producing:
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — x-search-agent; Step 1 — graph-os
+- **Run first (in parallel):** Step 0 — x-search-agent; Step 1 — arbora
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

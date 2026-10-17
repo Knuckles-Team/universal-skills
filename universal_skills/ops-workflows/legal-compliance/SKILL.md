@@ -54,7 +54,7 @@ Validate findings against applicable FederalStatute, StateStatute, and
 MunicipalCode entries in the KG. Flag non-compliance issues.
 
 ### Step 3: KG Persistence
-**Agent**: `graph-os`
+**Agent**: `arbora`
 
 Persist findings as LegalMatter + CaseLaw + RegulatoryFiling nodes in KG.
 Create edges linking to applicable statutes via governedByStatute.
@@ -78,4 +78,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 
 - **Run first (in parallel):** Step 0 — Legal Research; Step 1 — Contract Analysis; Step 2 — Compliance Validation; Step 3 — KG Persistence; Step 4 — Human Escalation
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

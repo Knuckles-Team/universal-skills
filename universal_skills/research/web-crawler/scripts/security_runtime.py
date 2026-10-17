@@ -387,7 +387,7 @@ class CrawlerSecurityPolicy:
 
 
 class SafeMCPClient:
-    """Bounded MCP streamable-HTTP client using the shared graph-os TLS profile."""
+    """Bounded MCP streamable-HTTP client using the shared arbora TLS profile."""
 
     def __init__(
         self,
@@ -431,7 +431,7 @@ class SafeMCPClient:
         if self.session_id:
             headers["mcp-session-id"] = self.session_id
 
-        tls = resolve_tls_profile("graph-os")
+        tls = resolve_tls_profile("arbora")
         client_kwargs: dict[str, Any] = {
             "timeout": self.timeout,
             "follow_redirects": False,

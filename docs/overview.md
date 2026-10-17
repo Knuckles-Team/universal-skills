@@ -33,7 +33,7 @@ universal_skills/<domain>-workflows/<workflow-name>/
 Each `### Step N:` binds one atomic skill with `[skill: <name>]` or one MCP tool
 with `[mcp_tool: <server.tool>]`. `depends_on` forms an acyclic graph. The
 `## Execution` section renders the same graph for native execution, while the
-standard footer allows graph-os delegation. `references/team.yaml` must describe
+standard footer allows arbora delegation. `references/team.yaml` must describe
 the same specialist set and execution mode.
 
 ## Package-owned capabilities

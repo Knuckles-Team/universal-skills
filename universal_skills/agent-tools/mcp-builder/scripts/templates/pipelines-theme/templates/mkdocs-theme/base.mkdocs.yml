@@ -61,11 +61,11 @@ extra:
         role: operator experience
         url: https://knuckles-team.github.io/agent-webui/
         repository: https://github.com/Knuckles-Team/agent-webui
-      - slug: graph-os
-        name: Graph OS
+      - slug: arbora
+        name: Arbora
         role: public runtime gateway
-        url: https://knuckles-team.github.io/graph-os/
-        repository: https://github.com/Knuckles-Team/graph-os
+        url: https://knuckles-team.github.io/arbora/
+        repository: https://github.com/Knuckles-Team/arbora
       - slug: agent-utilities
         name: Agent Utilities
         role: agent control plane

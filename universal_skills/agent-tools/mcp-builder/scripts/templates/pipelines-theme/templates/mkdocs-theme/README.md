@@ -16,7 +16,7 @@ This folder is the canonical source for the five ecosystem documentation sites. 
 
 ## MkDocs configuration
 
-The repository's `mkdocs.yml` inherits `templates/mkdocs-theme/base.mkdocs.yml` and supplies `extra.ecosystem.current` with its own slug (`agent-webui`, `graph-os`, `agent-utilities`, `epistemic-graph`, or `agent-connector-sdk`). It continues to own its site name, URL, content directory, and navigation. For local builds, check out the exact pinned `pipelines` revision into `.pipeline-theme`, run the `sync` command above, then run `mkdocs build --strict`.
+The repository's `mkdocs.yml` inherits `templates/mkdocs-theme/base.mkdocs.yml` and supplies `extra.ecosystem.current` with its own slug (`agent-webui`, `arbora`, `agent-utilities`, `epistemic-graph`, or `agent-connector-sdk`). It continues to own its site name, URL, content directory, and navigation. For local builds, check out the exact pinned `pipelines` revision into `.pipeline-theme`, run the `sync` command above, then run `mkdocs build --strict`.
 
 Use `.site-hero`, `.site-card-grid` / `.site-card`, `.site-ownership__grid` / `.site-ownership__item`, and the ordered `.site-flow` components for landing-page structure. Prefer semantic HTML and retain visible keyboard focus. The common theme uses native `<details>` for the site switcher and does not require custom JavaScript.
 

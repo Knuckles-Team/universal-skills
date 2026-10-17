@@ -4,10 +4,10 @@ domain: research
 skill_type: skill
 description: >-
   Bounded, privacy-aware website and sitemap crawler with AgentConfig-managed
-  egress, TLS, output confinement, and optional GraphOS document ingestion. Use
+  egress, TLS, output confinement, and optional Arbora document ingestion. Use
   when fetching one page, crawling a site or sitemap, or ingesting approved web
-  content into GraphOS.
-tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledge-graph, graph-os, ingest]
+  content into Arbora.
+tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledge-graph, arbora, ingest]
 license: MIT
 metadata:
   version: '1.3.11'
@@ -77,7 +77,7 @@ symlink components, traversal outside the allowed roots, and symlink targets
 are rejected. Files are written atomically with private permissions and opaque,
 content-neutral names.
 
-Before content crosses stdout, disk, or GraphOS persistence boundaries, the
+Before content crosses stdout, disk, or Arbora persistence boundaries, the
 shared persistence privacy guard redacts recognized personal identifiers,
 secrets, machine-specific paths, and runtime identity terms. Logs contain only
 counts and stable error categories—not URLs, endpoints, filesystem paths,
@@ -110,13 +110,13 @@ packaged code, not runtime input.
 
 ## Knowledge Graph ingestion
 
-Knowledge Graph ingestion is active when a GraphOS endpoint is supplied at
-runtime through `--kg-endpoint` or `GRAPH_OS_URL`; `--no-kg-ingest` disables it.
-`GRAPH_OS_TOKEN`, when needed, is runtime-only and is never logged or persisted
+Knowledge Graph ingestion is active when an Arbora endpoint is supplied at
+runtime through `--kg-endpoint` or `ARBORA_URL`; `--no-kg-ingest` disables it.
+`ARBORA_TOKEN`, when needed, is runtime-only and is never logged or persisted
 by this skill.
 
-The endpoint is validated by the same SSRF policy on every request. GraphOS TLS,
-CA, mTLS, and proxy settings resolve through the `graph-os` transport profile.
+The endpoint is validated by the same SSRF policy on every request. Arbora TLS,
+CA, mTLS, and proxy settings resolve through the `arbora` transport profile.
 Redirects are rejected, JSON-RPC request/response bodies and session headers are
 bounded, and malformed SSE/JSON fails closed.
 
@@ -138,7 +138,7 @@ SOURCE_HTTP_MAX_REDIRECTS=3
 SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS=[]
 SOURCE_HTTP_ALLOWED_REDIRECT_HOSTS=[]
 SOURCE_HTTP_ALLOW_BROWSER_FETCH=false
-GRAPH_OS_TLS_PROFILE=graph-os-production
+ARBORA_TLS_PROFILE=arbora-production
 TLS_PROFILES_REF=secret://runtime/tls-profiles
 ```
 

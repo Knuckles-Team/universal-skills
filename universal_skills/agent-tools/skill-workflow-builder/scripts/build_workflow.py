@@ -28,7 +28,7 @@ STEP_RE = re.compile(
 DESCRIPTION_MAX = 1024
 INLINE_KEYS = ("description", "expected", "instructions", "prompt", "command")
 DELEGATION_FOOTER = (
-    "**Execution:** If graph-os is reachable, offload the whole DAG via "
+    "**Execution:** If arbora is reachable, offload the whole DAG via "
     "`graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) "
     "for true parallel/swarm execution. Otherwise execute the steps natively in "
     "dependency order: run steps with no unmet `depends_on` in parallel, then "

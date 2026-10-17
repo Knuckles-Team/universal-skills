@@ -222,7 +222,7 @@ An improvement is complete only when the applicable criteria pass.
 - `team_config` and `references/team.yaml` agree, and `requires` names every external
   package dependency.
 - `## Execution` accurately renders dependency waves and ends with the standard
-  graph-os/native delegation footer.
+  arbora/native delegation footer.
 - Mutations follow assessment → approval → execution → independent verification.
 
 ### Package-owned skill

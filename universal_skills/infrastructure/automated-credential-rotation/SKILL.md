@@ -79,7 +79,7 @@ This skill *orchestrates existing tools* — it doesn't reinvent them:
      via the tool, never paste the values into the conversation; pull current env from
      OpenBao, not from chat. (If the stack reads the secret from OpenBao at boot, just
      restart the service instead — no value passes through.)
-   - **agent-utilities config**: rewrite `vault://` refs via `setup-config`; restart graph-os.
+   - **agent-utilities config**: rewrite `vault://` refs via `setup-config`; restart arbora.
    - **CI variables**: `gitlab-api` update CI/CD variable; GitHub Actions secret via API.
 5. **Verify** — hit the consumer's auth path (provider whoami, DB connect, MCP `/health`).
 6. **Revoke old** — delete/expire the previous token at the provider once verified.

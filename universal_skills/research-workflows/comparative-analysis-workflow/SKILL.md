@@ -109,7 +109,7 @@ Expected: `generate_comparison_report_artifacts`
 **Agent**: `synthesis-agent`
 **Tools**: `graph_write`
 
-Ingest final reports, wiring audits, and relationship edges into Graph-OS Knowledge Graph, and purge temporary file paths.
+Ingest final reports, wiring audits, and relationship edges into Arbora Knowledge Graph, and purge temporary file paths.
 Expected: `kg_persistence_cleanup_artifacts`
 
 ## Output
@@ -128,4 +128,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 3:** Step 10 — Generate Comparison Report
 - **After level 4:** Step 11 — KG Persistence Cleanup
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

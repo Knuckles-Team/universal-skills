@@ -9,7 +9,7 @@ Enforces the governing rule (see AGENTS.md / STANDARDS.md):
     1024 chars (agents route on the description alone).
   * A skill-workflow (skill_type: workflow, under ``universal_skills/<domain>-workflows/``) is the dual-mode
     grouping of atomic skills: a ``depends_on`` DAG (machine layer) PLUS a
-    rendered Claude-executable ``## Execution`` layer ending in the graph-os
+    rendered Claude-executable ``## Execution`` layer ending in the arbora
     delegation footer.
 
 Severity model so the gate is both meaningful and green:
@@ -243,7 +243,7 @@ def check(root: Path) -> tuple[list[str], list[str]]:
                 if "## Execution" not in body or DELEGATION_MARKER not in body:
                     warnings.append(
                         f"{rel}: workflow missing dual-mode Claude layer "
-                        f"(`## Execution` section + graph-os delegation footer)"
+                        f"(`## Execution` section + arbora delegation footer)"
                     )
 
     return errors, warnings

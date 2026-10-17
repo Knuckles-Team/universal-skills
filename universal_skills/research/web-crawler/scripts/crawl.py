@@ -546,7 +546,7 @@ async def crawl_chunked(
 
     markdown = extract_markdown(result, policy)
     if kg_ingestor and markdown.strip():
-        # The header-chunking below is a local file-splitting convenience; graph-os
+        # The header-chunking below is a local file-splitting convenience; arbora
         # ingests the whole cleaned page as one Document (it does its own chunking).
         kg_ingestor.submit(result.url, markdown)
     header_pattern = re.compile(r"^(# .+|## .+)$", re.MULTILINE)
@@ -1014,17 +1014,17 @@ async def main():
         "--no_kg_ingest",
         action="store_true",
         help="Disable native Knowledge Graph ingestion (default: ON). Every "
-        "successfully crawled, deduped page is ingested into graph-os / "
+        "successfully crawled, deduped page is ingested into arbora / "
         "epistemic-graph (Document+Chunk with provenance) as it is crawled; "
         "pass this to get file-only output. Degrades automatically (with a "
-        "warning) if graph-os is unreachable.",
+        "warning) if arbora is unreachable.",
     )
     parser.add_argument(
         "--kg-endpoint",
         "--kg_endpoint",
         type=str,
         default="",
-        help="graph-os gateway base URL for KG ingestion (else $GRAPH_OS_URL).",
+        help="arbora gateway base URL for KG ingestion (else $ARBORA_URL).",
     )
 
     args = parser.parse_args()
@@ -1238,7 +1238,7 @@ async def main():
             return
 
     # Native Knowledge Graph ingestion (CONCEPT:AU-KG.ingest.chunk-overlap-stage) — default ON. Every
-    # crawled, cleaned, deduped page is ingested into graph-os / epistemic-graph
+    # crawled, cleaned, deduped page is ingested into arbora / epistemic-graph
     # as it's found (privacy-sanitized content via document_process). Disabled with
     # --no-kg-ingest, and this internal crawl subprocess (invoked by
     # agent-utilities as ITS OWN crawl4ai fetch backend, e.g.
@@ -1247,13 +1247,13 @@ async def main():
     # a corpus that pipeline already ingests itself.
     kg_ingestor = None
     if not args.no_kg_ingest:
-        kg_endpoint = args.kg_endpoint or os.getenv("GRAPH_OS_URL", "").strip()
+        kg_endpoint = args.kg_endpoint or os.getenv("ARBORA_URL", "").strip()
         if kg_endpoint:
             try:
                 kg_ingestor = KGIngestor(
                     kg_endpoint,
                     policy=policy,
-                    token=os.getenv("GRAPH_OS_TOKEN", "").strip(),
+                    token=os.getenv("ARBORA_TOKEN", "").strip(),
                 )
             except Exception:
                 logger.warning("Knowledge Graph endpoint configuration was rejected")

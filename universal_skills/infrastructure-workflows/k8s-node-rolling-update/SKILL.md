@@ -153,7 +153,7 @@ Run Step 0 first. Map Steps 1 through 8 over `ordered_targets` strictly
 sequentially, then run Step 9 once. A condition in Step 5 may skip the reboot
 action but may not skip readiness and service verification.
 
-**Execution:** If graph-os is reachable, offload the whole DAG via
+**Execution:** If arbora is reachable, offload the whole DAG via
 `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill)
 for true parallel/swarm execution. Otherwise execute the steps natively in
 dependency order: run steps with no unmet `depends_on` in parallel, then their

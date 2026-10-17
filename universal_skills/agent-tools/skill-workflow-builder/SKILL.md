@@ -6,7 +6,7 @@ description: >-
   Scaffold and validate a dependency-ordered workflow that only groups existing
   atomic skills or explicitly named MCP tools. Use when creating or repairing a
   dual-mode workflow in a universal_skills domain ending in -workflows, with a
-  matching DAG, team configuration, native execution waves, and graph-os delegation.
+  matching DAG, team configuration, native execution waves, and arbora delegation.
   Do not use to author an atomic skill or to embed business logic in workflow steps.
 license: MIT
 tags: [workflow, scaffolding, dag, validation, atomicity]
@@ -75,7 +75,7 @@ The builder writes:
 - a pure `### Step N:` dependency DAG;
 - `references/team.yaml` matching the frontmatter team configuration exactly;
 - a generated `## Execution` section whose waves match the DAG; and
-- the standard graph-os delegation footer.
+- the standard arbora delegation footer.
 
 Use `--root <path-to-universal_skills>` for another checkout. Use `--interactive`
 instead of `--steps-json` to collect bindings without inline step prose.

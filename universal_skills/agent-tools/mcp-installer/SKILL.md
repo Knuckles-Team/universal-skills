@@ -30,11 +30,11 @@ supported JSON-based client's configuration.
 
 Codex is intentionally not a JSON target. Register servers through its native
 `codex mcp add` command so Codex owns the corresponding `config.toml` entry. For
-GraphOS, agent-utilities provides `setup-config codex`, which canonicalizes this
+Arbora, agent-utilities provides `setup-config codex`, which canonicalizes this
 portable launcher without env, secrets, or machine paths:
 
 ```bash
-codex mcp add graph-os -- graph-os --transport stdio
+codex mcp add arbora -- arbora --transport stdio
 ```
 
 ## Tools

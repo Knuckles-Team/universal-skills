@@ -109,7 +109,7 @@ Expected: `generate_report_artifacts`
 **Agent**: `synthesis-agent`
 **Tools**: `graph_write`
 
-Persist the generated report, grading metrics, and identified conceptual/code linkages in Graph-OS Knowledge Graph.
+Persist the generated report, grading metrics, and identified conceptual/code linkages in Arbora Knowledge Graph.
 Expected: `kg_persistence_artifacts`
 
 ## Output
@@ -127,4 +127,4 @@ Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` 
 - **After level 2:** Step 10 — Generate Report
 - **After level 3:** Step 11 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

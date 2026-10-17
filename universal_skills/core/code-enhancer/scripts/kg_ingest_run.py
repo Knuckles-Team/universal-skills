@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""CE-032 — KG-native ingest of a code-enhancement run into graph-os.
+"""CE-032 — KG-native ingest of a code-enhancement run into arbora.
 
 Turns an ``enhance_repo.py`` report into a graph payload and (best-effort) ingests it into the
-graph-os Knowledge Graph via the **MCP server's HTTP endpoint** — deliberately NOT via a direct
+arbora Knowledge Graph via the **MCP server's HTTP endpoint** — deliberately NOT via a direct
 ``import agent_utilities.core`` (that hard dependency is exactly what broke the old XDG/KG check in
 the live run). Talking to the running MCP server keeps the skill decoupled from package internals.
 
@@ -103,16 +103,16 @@ def build_kg_payload(report: dict[str, Any]) -> dict[str, Any]:
 def ingest_via_mcp(
     payload: dict[str, Any], endpoint: str | None = None
 ) -> dict[str, Any]:
-    """Best-effort POST of the payload to the graph-os MCP ``graph_write`` endpoint.
+    """Best-effort POST of the payload to the arbora MCP ``graph_write`` endpoint.
 
-    Returns a status dict; never raises. When no endpoint is configured (env ``GRAPH_OS_MCP_URL``
+    Returns a status dict; never raises. When no endpoint is configured (env ``ARBORA_MCP_URL``
     or ``--endpoint``), returns ``{"status": "skipped"}`` so batch runs don't fail without a KG.
     """
-    url = endpoint or os.environ.get("GRAPH_OS_MCP_URL")
+    url = endpoint or os.environ.get("ARBORA_MCP_URL")
     if not url:
         return {
             "status": "skipped",
-            "reason": "no GRAPH_OS_MCP_URL configured",
+            "reason": "no ARBORA_MCP_URL configured",
             "nodes": len(payload["nodes"]),
             "edges": len(payload["edges"]),
         }
@@ -190,10 +190,10 @@ def _self_test() -> int:
 
 def main() -> int:
     p = argparse.ArgumentParser(
-        description="Ingest a code-enhancement run into graph-os (CE-032)."
+        description="Ingest a code-enhancement run into arbora (CE-032)."
     )
     p.add_argument("report", nargs="?", help="Path to a *.enhance.json report.")
-    p.add_argument("--endpoint", help="graph-os MCP base URL (else $GRAPH_OS_MCP_URL).")
+    p.add_argument("--endpoint", help="arbora MCP base URL (else $ARBORA_MCP_URL).")
     p.add_argument(
         "--dry-run", action="store_true", help="Build the payload but do not ingest."
     )

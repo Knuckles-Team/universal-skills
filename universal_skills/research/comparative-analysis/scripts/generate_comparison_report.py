@@ -16,7 +16,7 @@ Building the analysis library (see ``_kg_ast.py``): after assembling the report,
 every per-project/per-domain result is best-effort persisted into the KG as a
 ``ComparativeAnalysisRun`` node (``kg_write_analysis``) — a growing, queryable
 history of every comparative-analysis run, not just this run's local JSON/MD
-files. No-ops silently without ``GRAPH_OS_URL`` configured.
+files. No-ops silently without ``ARBORA_URL`` configured.
 """
 
 import json
@@ -95,7 +95,7 @@ def load_results(paths: list[str]) -> dict[str, dict[str, dict]]:
 def persist_to_kg(projects: dict[str, dict[str, dict]]) -> int:
     """Best-effort persist every per-project/per-domain result into the KG.
 
-    Returns the count of runs actually written (0 when ``GRAPH_OS_URL`` isn't
+    Returns the count of runs actually written (0 when ``ARBORA_URL`` isn't
     configured or the gateway is unreachable) — never raises, so a KG outage
     never blocks report generation.
     """

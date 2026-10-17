@@ -14,7 +14,7 @@ metadata:
 
 # Spec Verifier
 
-Verify one feature directory at repository root: `specs/<stable-id>/`. Read `spec.md`, `plan.md`, `tasks.md`, applicable design artifacts and `checklists/`, plus `.specify/memory/constitution.md`. Use the live repository and relevant related repositories as evidence. The tracked spec files are authoritative; graph-os is a derived index to query for concept drift when available.
+Verify one feature directory at repository root: `specs/<stable-id>/`. Read `spec.md`, `plan.md`, `tasks.md`, applicable design artifacts and `checklists/`, plus `.specify/memory/constitution.md`. Use the live repository and relevant related repositories as evidence. The tracked spec files are authoritative; arbora is a derived index to query for concept drift when available.
 
 Evaluate every user story and functional requirement against acceptance criteria, design decisions, executable tasks, and a test scenario. Check that `plan.md` names existing components and wiring to reuse, interfaces, data flows, migration and failure handling, architecture boundaries, and cross-repository contracts. Verify that tasks cover integration into a real execution path and the affected documentation. Resolve public requirement IDs and related public spec paths; mark absent or stale links as failures, not completed work. Reject a spec that requires a private draft, plan repository, internal GitLab host, homelab inventory, or local workspace path to understand or complete it. Check that every cross-repository ID has one normative owner and that consumer links do not claim a second owner.
 

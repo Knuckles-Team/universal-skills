@@ -317,14 +317,14 @@ python scripts/analyze_architecture_diff.py /path/to/source /path/to/target > re
 ```
 
 ### Step 10: generate_comparison_report [depends_on: security_reliability_check, documentation_dx_review, concept_cross_reference, architecture_gap_analysis]
-Compile intermediate JSON results across all domains and modes into a single, cohesive comparative markdown report. This step ALSO best-effort persists every per-project/per-domain result into the KG as a `ComparativeAnalysisRun` node (`_kg_ast.kg_write_analysis`, native — no extra flag needed) whenever `GRAPH_OS_URL` is configured, building a growing, queryable **library of every comparative-analysis run** (score trends over time, cross-project Cypher queries) rather than leaving results only as local JSON/MD files. It silently no-ops without a configured gateway, so this step never depends on the KG being up:
+Compile intermediate JSON results across all domains and modes into a single, cohesive comparative markdown report. This step ALSO best-effort persists every per-project/per-domain result into the KG as a `ComparativeAnalysisRun` node (`_kg_ast.kg_write_analysis`, native — no extra flag needed) whenever `ARBORA_URL` is configured, building a growing, queryable **library of every comparative-analysis run** (score trends over time, cross-project Cypher queries) rather than leaving results only as local JSON/MD files. It silently no-ops without a configured gateway, so this step never depends on the KG being up:
 - Requires: `scripts/generate_comparison_report.py`
 ```bash
 python scripts/generate_comparison_report.py results/*.json --output report.md
 ```
 
 ### Step 11: kg_persistence_cleanup [depends_on: generate_comparison_report]
-Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this step is the human/MCP-driven audit + cleanup backstop: verify that each recommended feature passes the Wiring Audit Checklist, ingest anything Step 10 could not reach (e.g. the full report Markdown itself, or a session that ran with no `GRAPH_OS_URL` configured) via `kg_ingest`, and clean up temporary cloned repository directories:
+Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this step is the human/MCP-driven audit + cleanup backstop: verify that each recommended feature passes the Wiring Audit Checklist, ingest anything Step 10 could not reach (e.g. the full report Markdown itself, or a session that ran with no `ARBORA_URL` configured) via `kg_ingest`, and clean up temporary cloned repository directories:
 - Requires: `kg_ingest` MCP tool and standard cleanup commands.
 ```bash
 # Verify Wiring Audit Checklist:

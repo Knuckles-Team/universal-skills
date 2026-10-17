@@ -77,4 +77,4 @@ The workflow input must include a tracked `specs/<stable-id>/plan.md` and applic
 - **After Step 3:** Step 4 — `$sdd-implementer`.
 - **After Step 4:** Step 5 — `$automated-test-runner`.
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

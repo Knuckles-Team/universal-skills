@@ -40,7 +40,7 @@ def test_codex_is_not_a_json_config_target() -> None:
     assert all(".codex" not in str(path) for path in installer.TOOL_PATHS.values())
 
 
-def test_graph_os_json_launcher_is_portable_and_contains_no_runtime_state() -> None:
+def test_arbora_json_launcher_is_portable_and_contains_no_runtime_state() -> None:
     setup = _load(
         "test_mcp_setup",
         ROOT
@@ -51,8 +51,8 @@ def test_graph_os_json_launcher_is_portable_and_contains_no_runtime_state() -> N
         / "mcp_setup.py",
     )
 
-    entry = setup.build_graph_os_entry()
-    assert entry == {"command": "graph-os", "args": ["--transport", "stdio"]}
+    entry = setup.build_arbora_entry()
+    assert entry == {"command": "arbora", "args": ["--transport", "stdio"]}
     encoded = json.dumps(entry)
     assert "env" not in entry
     assert "workspace" not in encoded.lower()
@@ -78,4 +78,4 @@ def test_touched_installer_skills_keep_canonical_catalog_metadata() -> None:
         / "mcp-installer"
         / "SKILL.md"
     ).read_text(encoding="utf-8")
-    assert "codex mcp add graph-os -- graph-os --transport stdio" in mcp_skill
+    assert "codex mcp add arbora -- arbora --transport stdio" in mcp_skill

@@ -2,7 +2,7 @@
 name: research-scanner-workflow
 skill_type: workflow
 description: >-
-  Discover research papers using ScholarX and bulk ingest them into the Graph-OS Knowledge Graph
+  Discover research papers using ScholarX and bulk ingest them into the Arbora Knowledge Graph
 domain: development-workflows
 agent: dev_ops_engineer
 team_config:
@@ -29,7 +29,7 @@ metadata:
 
 **CONCEPT:DEV-001**
 
-Discover research papers using ScholarX and bulk ingest them into the Graph-OS Knowledge Graph
+Discover research papers using ScholarX and bulk ingest them into the Arbora Knowledge Graph
 
 ## Steps
 
@@ -51,11 +51,11 @@ Search for the research papers based on the search parameters using the `scholar
 
 Submit bulk download jobs for the discovered paper IDs via `scholarx_storage` with `action='bulk_download'`. Check the download queue status via `action='status'`.
 
-### Step 3: Graph Os
+### Step 3: Arbora
 **Agent**: `publisher-agent`
 **Tools**: `rep_rm_git, gl_merge_requests`
 
-Ingest the newly downloaded research PDFs into the Knowledge Graph via the ingest action `mcp_graph-os_graph_ingest` with `action='ingest'`.
+Ingest the newly downloaded research PDFs into the Knowledge Graph via the ingest action `mcp_arbora_graph_ingest` with `action='ingest'`.
 
 ### Step 4: present-research-summary [skill: user-interaction]
 **Agent**: `scanner-agent`
@@ -79,7 +79,7 @@ Create appropriate typed nodes with metadata and link to existing domain entitie
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
 
-- **Run first (in parallel):** Step 0 — collect-research-request; Step 1 — search-papers; Step 2 — download-papers; Step 3 — Graph Os; Step 4 — present-research-summary
+- **Run first (in parallel):** Step 0 — collect-research-request; Step 1 — search-papers; Step 2 — download-papers; Step 3 — Arbora; Step 4 — present-research-summary
 - **After level 0:** Step 5 — KG Persistence
 
-**Execution:** If graph-os is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.
+**Execution:** If arbora is reachable, offload the whole DAG via `graph_orchestrate action=execute_workflow` (or the `kg-delegate` skill) for true parallel/swarm execution. Otherwise execute the steps natively in dependency order: run steps with no unmet `depends_on` in parallel, then their dependents.

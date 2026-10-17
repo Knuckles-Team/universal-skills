@@ -1,5 +1,5 @@
 name: Code Enhancement Swarm
-task_pattern: Perform deep multi-domain code enhancement audits and persist reports in Graph-OS
+task_pattern: Perform deep multi-domain code enhancement audits and persist reports in Arbora
 specialist_ids:
   - analysis-agent
   - security-agent

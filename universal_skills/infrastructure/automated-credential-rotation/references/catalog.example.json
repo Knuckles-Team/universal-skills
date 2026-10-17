@@ -41,7 +41,7 @@
       "bao_path": "db/postgres/password",
       "cadence_days": 182,
       "consumers": [
-        {"kind": "agent_utilities_config", "ref": "graph-os", "env": "GRAPH_DB_URI"}
+        {"kind": "agent_utilities_config", "ref": "arbora", "env": "GRAPH_DB_URI"}
       ],
       "verify": "pg-age connectivity check"
     }

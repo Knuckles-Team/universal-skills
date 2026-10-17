@@ -5,7 +5,7 @@ skill_type: skill
 description: >-
   Compatibility alias for the consolidated web-crawler single-page workflow.
   Use when an existing workflow names web-fetch; prefer web-crawler for new
-  fetch, crawl, sitemap, rendered-page, or GraphOS-ingestion tasks.
+  fetch, crawl, sitemap, rendered-page, or Arbora-ingestion tasks.
 tags: [web, fetch, compatibility, web-crawler]
 license: MIT
 metadata:
@@ -29,4 +29,4 @@ It validates DNS, redirects, private addresses, TLS profiles, response limits,
 and durable output through the same central policy. JSON output contains an
 opaque source reference rather than the URL. It does not accept authenticated
 sessions, insecure TLS switches, or embedded LLM extraction. Perform analysis
-of the sanitized result through the governed agent or GraphOS runtime.
+of the sanitized result through the governed agent or Arbora runtime.
