@@ -87,11 +87,16 @@ PKG_NAME = __name__.rsplit(".", 1)[0] if "." in __name__ else None
 
 
 def _get_pkg_name():
-    """Derive package name from test location."""
+    """Derive the import package from pyproject.toml, not the checkout directory."""
     import pathlib
-    test_dir = pathlib.Path(__file__).resolve().parent
-    project_dir = test_dir.parent
-    return project_dir.name.replace("-", "_")
+    import tomllib
+
+    project_dir = pathlib.Path(__file__).resolve().parent.parent
+    data = tomllib.loads((project_dir / "pyproject.toml").read_text(encoding="utf-8"))
+    packages = data.get("tool", {}).get("pipelines_hooks", {}).get("packages")
+    if packages:
+        return packages[0]
+    return data["project"]["name"].replace("-", "_")
 
 
 @pytest.fixture
