@@ -20,7 +20,7 @@ def _call(runtime, client, surface):
 
     async def run():
         async with Client(server) as native:
-            return await native.call_tool("auth_operations", {"action": "mobile"})
+            return await native.call_tool("mobile", {})
 
     return asyncio.run(run())
 
@@ -47,7 +47,7 @@ def test_required_uri_format_refuses_without_following(
         seen.append(request)
         return httpx.Response(307, headers={"location": location})
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
