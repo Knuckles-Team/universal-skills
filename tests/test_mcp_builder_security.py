@@ -237,14 +237,14 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
     assert "Python 3.12–3.14" in installation_md
     assert "Python 3.11" not in agents_md
     assert "Python 3.11" not in installation_md
-    assert dockerfile.count(PYTHON_312_BASE) == 2
+    assert dockerfile.count(PYTHON_312_BASE) == 1
     assert debug_dockerfile.count(PYTHON_312_BASE) == 1
     assert "Python 3.11" not in generated_text
     assert "python:3.11" not in generated_text
     metadata = tomllib.loads(pyproject)
     dependencies = metadata["project"]["dependencies"]
     extras = metadata["project"]["optional-dependencies"]
-    assert "agent-connector-sdk[mcp]>=0.2.1,<1.0.0" in dependencies
+    assert "agent-connector-sdk[mcp]>=0.3.0,<1.0.0" in dependencies
     assert not any(
         requirement.startswith(("agent-utilities", "epistemic-graph"))
         for requirement in dependencies

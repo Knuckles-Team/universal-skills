@@ -47,7 +47,7 @@ def test_ready_claim_requires_named_native_budget(catalog, budget, monkeypatch):
     assert receipt["ready"] is True
     assert receipt["native_mcp"]["exposed_operations"] == 8
     assert (
-        receipt["disclosure"]["retrievals"]["items_operations"]["client"]
+        receipt["disclosure"]["retrievals"]["get_items"]["client"]
         == budget["client"]
     )
     with pytest.raises(Exception, match="Schema budget exceeded"):

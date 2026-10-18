@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 
 if __package__:
     from .openapi_provider_overlay import apply_provider_overlay
@@ -190,8 +191,23 @@ def verify_contract(document, contract, source_sha256, **provider_options):
     return inventory
 
 
+def operation_tool_name(action):
+    """Stable snake_case MCP tool name for one OpenAPI operationId."""
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", action)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+
+def operation_input_schema(contract, action):
+    """The operation's own input schema: its fields without the ``action`` key."""
+    inputs = copy.deepcopy(contract["operations"][action]["input"])
+    inputs.get("properties", {}).pop("action", None)
+    inputs["required"] = [key for key in inputs.get("required", []) if key != "action"]
+    inputs["$defs"] = contract["definitions"]
+    return inputs
+
+
 def verify_mcp(contract, tools):
-    """Compare actual native tools/list results, including every action branch."""
+    """Compare native tools/list results: exactly one tool per API operation."""
     try:
         from agent_connector_sdk.manifest.tool_schema import read_field
     except ImportError as exc:
@@ -202,11 +218,16 @@ def verify_mcp(contract, tools):
     by_name = dict(zip(names, tools, strict=True))
     covered = []
     for domain, actions in contract["domains"].items():
-        name = f"{domain}_operations"
-        if name not in by_name:
-            raise ValueError(f"Unreachable MCP domain: {domain}")
-        _verify_tool_schema(by_name[name], contract["schemas"][domain], name)
-        covered.extend(actions)
+        for action in actions:
+            name = operation_tool_name(action)
+            if name not in by_name:
+                raise ValueError(f"Unreachable MCP operation: {action}")
+            schemas = (
+                operation_input_schema(contract, action),
+                contract["schemas"][domain][1],
+            )
+            _verify_tool_schema(by_name[name], schemas, name)
+            covered.append(action)
     require_complete_coverage(contract, contract["operations"], covered)
     return {"domains": len(contract["domains"]), "exposed_operations": len(covered)}
 

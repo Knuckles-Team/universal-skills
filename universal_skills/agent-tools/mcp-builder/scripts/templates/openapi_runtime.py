@@ -61,7 +61,7 @@ def validate(value, definition):
         raise ValueError("Value does not satisfy the declared OpenAPI schema")
 
 
-class OpenApiClient:
+class OpenApiClientBase:
     """Dispatch only catalogued actions; perform each HTTP request exactly once."""
 
     def __init__(
@@ -160,15 +160,46 @@ class OpenApiClient:
             return result
 
 
+def operation_tool_name(action):
+    """Stable snake_case MCP tool name for one OpenAPI operationId."""
+    name = regex.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", action)
+    return regex.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+
+def operation_input_schema(action):
+    """The operation's own input schema: its fields without the ``action`` key."""
+    source = CONTRACT["operations"][action]["input"]
+    inputs = json.loads(json.dumps(source))
+    inputs.get("properties", {}).pop("action", None)
+    inputs["required"] = [key for key in inputs.get("required", []) if key != "action"]
+    inputs["$defs"] = CONTRACT["definitions"]
+    return inputs
+
+
+def operation_annotations(operation):
+    """Annotations from the HTTP verb: GET read-only, DELETE destructive."""
+    method = operation["method"]
+    read_only = method in {"GET", "HEAD", "OPTIONS"}
+    return ToolAnnotations(
+        title=operation.get("summary") or operation["action"],
+        readOnlyHint=read_only,
+        destructiveHint=method == "DELETE",
+        idempotentHint=method in {"GET", "HEAD", "OPTIONS", "PUT", "DELETE"},
+        openWorldHint=True,
+    )
+
+
 class OpenApiTool(Tool):
-    """One domain, discriminated action inputs, and declared response variants."""
+    """One OpenAPI operation, its typed inputs, and its declared responses."""
 
     domain: str = Field(exclude=True)
+    action: str = Field(exclude=True)
     client_factory: Any = Field(exclude=True)
 
     async def run(self, arguments):
         validate(arguments, self.parameters)
-        operation = CONTRACT["operations"][arguments["action"]]
+        arguments = {**arguments, "action": self.action}
+        operation = CONTRACT["operations"][self.action]
         require_authorization(operation, CONTRACT)
         client = self.client_factory()
         confirmation = await confirm_write(operation, arguments, client)
@@ -179,27 +210,21 @@ class OpenApiTool(Tool):
 
 
 def register_domain(mcp, domain, client_factory):
+    """Register one MCP tool per OpenAPI operation of ``domain``."""
     configure_discovery(mcp, setting("__PACKAGE_ENV___MCP_CLIENT_BUDGET"))
-    operations = [
-        CONTRACT["operations"][action] for action in CONTRACT["domains"][domain]
-    ]
-    read_only = all(operation["read_only"] for operation in operations)
-    inputs, outputs = CONTRACT["schemas"][domain]
-    mcp.add_tool(
-        OpenApiTool(
-            name=f"{domain}_operations",
-            domain=domain,
-            client_factory=client_factory,
-            description="Bound OpenAPI operations: "
-            + ", ".join(CONTRACT["domains"][domain]),
-            parameters=inputs,
-            output_schema=outputs,
-            tags={domain},
-            annotations=ToolAnnotations(
-                readOnlyHint=read_only,
-                destructiveHint=not read_only,
-                idempotentHint=False,
-                openWorldHint=True,
-            ),
+    outputs = CONTRACT["schemas"][domain][1]
+    for action in CONTRACT["domains"][domain]:
+        operation = CONTRACT["operations"][action]
+        mcp.add_tool(
+            OpenApiTool(
+                name=operation_tool_name(action),
+                domain=domain,
+                action=action,
+                client_factory=client_factory,
+                description=operation.get("summary") or action,
+                parameters=operation_input_schema(action),
+                output_schema=outputs,
+                tags={domain, "operation"},
+                annotations=operation_annotations(operation),
+            )
         )
-    )

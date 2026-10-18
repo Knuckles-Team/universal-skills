@@ -18,7 +18,7 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package using the maintained SDK scaffold. A connector
-depends on `agent-connector-sdk[mcp]>=0.2.1,<1.0.0` and nothing else from the agent
+depends on `agent-connector-sdk[mcp]>=0.3.0,<1.0.0` and nothing else from the agent
 ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
 
 Use current main revisions of
@@ -60,6 +60,22 @@ plane, which reaches the connector over MCP.
 
 ## Contracts
 
+- **One tool per API operation** is the default build method. Generate one MCP
+  tool per method and endpoint (GET, POST, PUT, DELETE...) through the SDK's
+  `register_tool_surface(client_cls=..., get_client=...)` or the OpenAPI converter.
+  Each tool has a stable snake_case `<prefix>_<operation>` name, a typed input
+  schema with required and optional fields, a description from the spec summary or
+  docstring, and verb annotations: GET `readOnlyHint=true`, DELETE
+  `destructiveHint=true`, PUT and DELETE `idempotentHint=true`, non-GET
+  `readOnlyHint=false`. Do not condense operations into `action`-routed or
+  `params_json` dispatch tools; a fleet gateway scales the catalog through lazy
+  `find` and load. Check the served `tools/list` count against the API operation
+  count with `scripts/check_tool_parity.py`.
+- **Image standard.** The Dockerfile installs the package from its built wheel or
+  from PyPI at an exact version (`pip install --only-binary :all: <pkg>[mcp]==<version>`),
+  never from a source copy (`pip install ".[mcp]"`). Runtime images build no tools
+  from source. Pin the Python 3.14 slim base image by digest and run as a non-root
+  user. Tag images `<version>-mcp`.
 - Preserve 100% of the supported source operation or command catalog across API
   and MCP surfaces. Require deterministic inventory, schema and dispatch parity;
   distinguish mocked transport coverage from live endpoint checks. Do not replace

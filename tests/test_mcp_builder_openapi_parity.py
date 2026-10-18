@@ -210,18 +210,31 @@ def test_partial_or_duplicate_transport_claim_rejected(catalog, actions):
         parity.require_complete_coverage(contract, contract["operations"], actions)
 
 
+def operation_tools(contract):
+    tools = []
+    for domain, actions in contract["domains"].items():
+        for action in actions:
+            tools.append(
+                {
+                    "name": parity.operation_tool_name(action),
+                    "inputSchema": parity.operation_input_schema(contract, action),
+                    "outputSchema": copy.deepcopy(contract["schemas"][domain][1]),
+                }
+            )
+    return tools
+
+
 def test_mcp_omission_and_schema_drift_rejected(catalog):
     pytest.importorskip("agent_connector_sdk")
     contract = catalog[3]
-    inputs, outputs = contract["schemas"]["items"]
-    tool = {"name": "items_operations", "inputSchema": inputs, "outputSchema": outputs}
-    assert parity.verify_mcp(contract, [tool])["exposed_operations"] == 8
+    tools = operation_tools(contract)
+    assert parity.verify_mcp(contract, tools)["exposed_operations"] == 8
     with pytest.raises(ValueError, match="Unreachable"):
-        parity.verify_mcp(contract, [])
-    wrong = copy.deepcopy(tool)
-    wrong["inputSchema"]["oneOf"].pop()
+        parity.verify_mcp(contract, tools[1:])
+    wrong = copy.deepcopy(tools)
+    wrong[0]["inputSchema"]["properties"]["invented"] = {"type": "string"}
     with pytest.raises(ValueError, match="schema"):
-        parity.verify_mcp(contract, [wrong])
+        parity.verify_mcp(contract, wrong)
 
 
 def test_native_reference_expansion_preserves_sibling_constraints(catalog):
@@ -240,32 +253,35 @@ def test_native_reference_expansion_preserves_sibling_constraints(catalog):
     source.write_text(json.dumps(document))
     generate(source, package)
     contract = json.loads((package / "openapi_contract.json").read_text())
-    inputs, outputs = contract["schemas"]["items"]
-    tool = {
-        "name": "items_operations",
-        "inputSchema": dereference_refs(inputs),
-        "outputSchema": dereference_refs(outputs),
-    }
-    assert parity.verify_mcp(contract, [tool])["exposed_operations"] == 8
+    tools = [
+        {
+            **tool,
+            "inputSchema": dereference_refs(tool["inputSchema"]),
+            "outputSchema": dereference_refs(tool["outputSchema"]),
+        }
+        for tool in operation_tools(contract)
+    ]
+    assert parity.verify_mcp(contract, tools)["exposed_operations"] == 8
     variant = next(
-        item
-        for item in tool["inputSchema"]["oneOf"]
-        if item["properties"]["action"]["enum"] == ["getItems"]
+        tool["inputSchema"]
+        for tool in tools
+        if tool["name"] == parity.operation_tool_name("getItems")
     )
     assert variant["properties"]["query"]["properties"]["token"]["minLength"] == 5
     variant["properties"]["query"]["properties"]["token"]["minLength"] = 1
     with pytest.raises(ValueError, match="schema"):
-        parity.verify_mcp(contract, [tool])
+        parity.verify_mcp(contract, tools)
 
 
 def test_client_unsupported_unicode_regex_is_explicit(catalog):
     pytest.importorskip("agent_connector_sdk")
     contract = catalog[3]
-    inputs, outputs = copy.deepcopy(contract["schemas"]["items"])
-    inputs["properties"] = {"label": {"type": "string", "pattern": r"\p{L}+"}}
-    tool = {"name": "items_operations", "inputSchema": inputs, "outputSchema": outputs}
+    tools = operation_tools(contract)
+    tools[0]["inputSchema"]["properties"] = {
+        "label": {"type": "string", "pattern": r"\p{L}+"}
+    }
     with pytest.raises(ValueError, match="unsupported by client validation"):
-        parity.verify_mcp(contract, [tool])
+        parity.verify_mcp(contract, tools)
 
 
 def test_omitted_security_is_unknown_not_public(catalog):
@@ -328,7 +344,7 @@ def test_real_client_and_native_mcp_transport(catalog, monkeypatch):
     )
 
     def factory(transport, operation):
-        return runtime.OpenApiClient(
+        return runtime.OpenApiClientBase(
             "https://fixture.invalid", httpx.Auth(), transport=transport
         )
 
@@ -427,7 +443,7 @@ def test_optional_files_preserve_multipart_media(catalog, monkeypatch, body):
         seen.append(request)
         return httpx.Response(204)
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://fixture.invalid",
         httpx.Auth(),
         transport=httpx.MockTransport(respond),

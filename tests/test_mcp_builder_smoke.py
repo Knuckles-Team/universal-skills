@@ -171,12 +171,14 @@ LIVE_DISCOVERY = textwrap.dedent("""\
     assert require_valid_connector_package(package).connector == "contract-smoke"
     server = build_server(command_args=["--transport", "stdio", "--auth-type", "none"])
     assert auth._client is None
-    assert registered_tools(server)["system_operations"].tags >= {"granular", "gated", "system"}
+    operation = registered_tools(server)["contract_smoke_get_system_status"]
+    assert operation.tags >= {"granular", "gated", "operation"}
+    assert operation.annotations.read_only_hint is True
 
     async def verify():
         async with Client(server) as client:
             tools = await client.list_tools()
-            assert {tool.name for tool in tools} == {"system_operations"}
+            assert {tool.name for tool in tools} == {"contract_smoke_get_system_status"}
             prompts = {prompt.name for prompt in await client.list_prompts()}
             assert {"contract_smoke_specialist"} <= prompts
             prompt = await client.get_prompt("contract_smoke_specialist")

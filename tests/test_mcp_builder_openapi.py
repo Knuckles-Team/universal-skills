@@ -21,6 +21,13 @@ generate = importlib.import_module("openapi_converter").generate
 compile_contract = importlib.import_module("openapi_schema").compile_contract
 
 
+def parity_name(action):
+    import re
+
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", action)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+
 def _require_runtime():
     for name in ("agent_connector_sdk.http.client", "regex"):
         if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":
@@ -107,7 +114,7 @@ def test_exact_method_route_and_body(runtime, method):
         seen.append(request)
         return httpx.Response(200, json={"ok": True})
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
@@ -140,7 +147,7 @@ def test_bad_input_never_requests(runtime, arguments):
     def forbidden(request):
         pytest.fail("invalid input reached provider")
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(forbidden),
@@ -152,7 +159,7 @@ def test_bad_input_never_requests(runtime, arguments):
 
 
 def test_writes_disabled_by_default(runtime):
-    client = runtime.OpenApiClient("https://provider.example", auth=httpx.Auth())
+    client = runtime.OpenApiClientBase("https://provider.example", auth=httpx.Auth())
     with pytest.raises(PermissionError):
         client.execute("items", {"action": "deleteItem", "path": {"id": "abc"}})
     client.close()
@@ -165,7 +172,7 @@ def test_tool_confirmation_result_never_dispatches_until_exact_true(
     from mcp.types import InputRequiredResult
 
     requests = []
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         write_mode="read-write",
@@ -175,24 +182,24 @@ def test_tool_confirmation_result_never_dispatches_until_exact_true(
             )
         ),
     )
-    arguments = {"action": "deleteItem", "path": {"id": "one"}}
+    arguments = {"path": {"id": "one"}}
     pending = InputRequiredResult(request_state="test-state")
 
     async def confirm(context, action, *, confirmation_arguments):
         assert action == "deleteItem"
-        assert confirmation_arguments == arguments
+        assert confirmation_arguments == {"action": "deleteItem", **arguments}
         return pending if decision == "pending" else decision
 
     execution = importlib.import_module(runtime.__package__ + ".openapi_execution")
     monkeypatch.setattr(execution, "ctx_confirm_destructive", confirm)
     monkeypatch.setattr(execution, "get_context", lambda: object())
-    inputs, outputs = runtime.CONTRACT["schemas"]["items"]
     tool = runtime.OpenApiTool(
-        name="items_operations",
+        name=runtime.operation_tool_name("deleteItem"),
         domain="items",
+        action="deleteItem",
         client_factory=lambda: client,
-        parameters=inputs,
-        output_schema=outputs,
+        parameters=runtime.operation_input_schema("deleteItem"),
+        output_schema=runtime.CONTRACT["schemas"]["items"][1],
     )
     try:
         if decision == "pending":
@@ -217,7 +224,7 @@ def test_failed_write_is_never_retried(runtime, status):
         calls.append(request)
         return httpx.Response(status, headers={"location": "https://other.example/"})
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
@@ -267,7 +274,7 @@ def test_head_response_and_typed_output(runtime):
         calls.append(request)
         return httpx.Response(204)
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
@@ -281,7 +288,7 @@ def test_head_response_and_typed_output(runtime):
 
 
 def test_response_constraints_reject_bad_provider_data(runtime):
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(
@@ -295,7 +302,7 @@ def test_response_constraints_reject_bad_provider_data(runtime):
 
 def test_auth_requirement_is_enforced_before_request(runtime):
     runtime.CONTRACT["operations"]["getItem"]["security"] = [{"api_key": []}]
-    client = runtime.OpenApiClient("https://provider.example", auth=httpx.Auth())
+    client = runtime.OpenApiClientBase("https://provider.example", auth=httpx.Auth())
     with pytest.raises(PermissionError):
         client.execute("items", {"action": "getItem", "path": {"id": "abc"}})
     client.close()
@@ -303,14 +310,14 @@ def test_auth_requirement_is_enforced_before_request(runtime):
 
 def test_plaintext_requires_explicit_endpoint_opt_in(runtime):
     with pytest.raises(ValueError, match="allow_plaintext"):
-        runtime.OpenApiClient("http://provider.example", auth=httpx.Auth())
+        runtime.OpenApiClientBase("http://provider.example", auth=httpx.Auth())
     seen = []
 
     def handler(request):
         seen.append(request)
         return httpx.Response(200, json={"ok": True})
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "http://provider.example",
         auth=httpx.Auth(),
         allow_plaintext=True,
@@ -335,7 +342,7 @@ def test_credentials_never_follow_redirect(runtime, location):
         seen.append(request)
         return httpx.Response(302, headers={"location": location})
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.BasicAuth("fixture", "not-a-secret"),
         allow_plaintext=True,
@@ -359,7 +366,7 @@ def test_plaintext_opt_in_preserves_https_verification(runtime, monkeypatch):
         return httpx.MockTransport(lambda _: httpx.Response(200, json={"ok": True}))
 
     monkeypatch.setattr(sdk_client.httpx, "HTTPTransport", transport)
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         allow_plaintext=True,
@@ -371,7 +378,7 @@ def test_plaintext_opt_in_preserves_https_verification(runtime, monkeypatch):
 
 def test_tampered_contract_cannot_escape_origin(runtime):
     runtime.CONTRACT["operations"]["getItem"]["path"] = "https://other.example/{id}"
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(lambda _: pytest.fail("cross-origin request")),
@@ -412,7 +419,7 @@ def test_declared_response_representation(
         domain: domain_schemas(contract, domain) for domain in contract["domains"]
     }
     runtime.CONTRACT = contract
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(
@@ -490,7 +497,7 @@ def test_scaffold_public_converter_registered_tool_call(
     async def call():
         async with Client(server) as client:
             result = await client.call_tool(
-                "items_operations", {"action": "getItem", "path": {"id": "abc"}}
+                "get_item", {"path": {"id": "abc"}}
             )
             assert result.structured_content["data"] == {"ok": True}
 
@@ -562,4 +569,8 @@ def test_registrar_keeps_sdk_domain_toggle(runtime, monkeypatch):
     assert tool_surface.register_tool_surface(
         server, service="fixture", tools_module=registrar
     ) == ["items"]
-    assert set(tool_surface.registered_tools(server)) == {"items_operations"}
+    assert set(tool_surface.registered_tools(server)) == {
+        parity_name(action) for action in importlib.import_module(
+            "fixture_connector.openapi_runtime"
+        ).CONTRACT["domains"]["items"]
+    }

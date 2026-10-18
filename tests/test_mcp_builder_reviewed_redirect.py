@@ -191,7 +191,7 @@ def test_reviewed_redirect_returns_location_without_following(
             content=b"<p>Redirecting</p>",
         )
 
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
@@ -214,7 +214,7 @@ def test_reviewed_redirect_returns_location_without_following(
             async def run():
                 async with Client(server) as native:
                     return await native.call_tool(
-                        "auth_operations", {"action": "mobile"}
+                        "mobile", {}
                     )
 
             assert asyncio.run(run()).structured_content == expected
@@ -247,7 +247,7 @@ def test_redirect_refusals_make_one_request(redirect_runtime, action, status, he
         seen.append(request)
         return httpx.Response(status, headers=headers)
 
-    client = redirect_runtime.OpenApiClient(
+    client = redirect_runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(handler),
@@ -262,7 +262,7 @@ def test_redirect_refusals_make_one_request(redirect_runtime, action, status, he
 
 def test_redirect_body_remains_bounded(redirect_runtime, monkeypatch):
     monkeypatch.setattr(redirect_runtime, "MAX_BYTES", 4)
-    client = redirect_runtime.OpenApiClient(
+    client = redirect_runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         transport=httpx.MockTransport(

@@ -19,7 +19,7 @@ def test_real_modern_sdk_confirmation_never_dispatches_unconfirmed(
     from mcp.shared.exceptions import MCPError
 
     requests, elicitations = [], []
-    client = runtime.OpenApiClient(
+    client = runtime.OpenApiClientBase(
         "https://provider.example",
         auth=httpx.Auth(),
         write_mode="read-write",
@@ -61,8 +61,8 @@ def test_real_modern_sdk_confirmation_never_dispatches_unconfirmed(
     async def run():
         async with Client(server, elicitation_handler=consent, timeout=10) as native:
             assert native.protocol_version == "2026-07-28"
-            arguments = {"action": "deleteItem", "path": {"id": "one"}}
-            name = "items_operations"
+            arguments = {"path": {"id": "one"}}
+            name = "delete_item"
             if surface == "search-proxy":
                 name, arguments = "call_tool", {"name": name, "arguments": arguments}
             call = native.call_tool(name, arguments)

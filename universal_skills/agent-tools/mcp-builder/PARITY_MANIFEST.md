@@ -10,7 +10,7 @@ of overwriting them. Current SDK and pipelines source remain authoritative.
 
 | Artifact | Contract |
 |---|---|
-| pyproject.toml, requirements.txt | Direct reviewed agent-connector-sdk dependency; `agent-connector-sdk[mcp]>=0.2.1,<1.0.0` as the only framework dependency; explicit package discovery/data; no recursive extras or mandatory embedded graph engine. |
+| pyproject.toml, requirements.txt | Direct reviewed agent-connector-sdk dependency; `agent-connector-sdk[mcp]>=0.3.0,<1.0.0` as the only framework dependency; explicit package discovery/data; no recursive extras or mandatory embedded graph engine. |
 | .bumpversion.cfg, LICENSE, CHANGELOG.md | Consistent versions and maintainer metadata; an Unreleased scaffold with a reproducible generation date, never invented release history. |
 | README.md, AGENTS.md, CLAUDE.md | Public entry point and current contributor guidance validated by pipelines public-surface; CLAUDE imports AGENTS. |
 | .pre-commit-config.yaml | Shared pipelines hooks and lint, test, docs, security, generated-contract and supply-chain checks at reviewed revisions. |

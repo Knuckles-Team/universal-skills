@@ -95,7 +95,7 @@ def _client(runtime, requests, mode="read-only", scheme=None):
         requests.append(request)
         return httpx.Response(204)
 
-    return runtime.OpenApiClient(
+    return runtime.OpenApiClientBase(
         "https://provider.example",
         auth=SyntheticAuth(),
         credential_scheme=scheme,
@@ -125,7 +125,7 @@ def _call(runtime, client, action, surface, effects):
 
     async def invoke():
         async with Client(server, elicitation_handler=consent, timeout=10) as native:
-            return await native.call_tool(domain + "_operations", {"action": action})
+            return await native.call_tool(runtime.operation_tool_name(action), {})
 
     return asyncio.run(invoke())
 
@@ -457,7 +457,7 @@ def test_public_redirect_correction_keeps_raw_authorization_binding(
         return httpx.Response(307, headers={"location": location}, content=b"ignored")
 
     with closing(
-        runtime.OpenApiClient(
+        runtime.OpenApiClientBase(
             "https://provider.example",
             auth=httpx.Auth(),
             transport=httpx.MockTransport(respond),
