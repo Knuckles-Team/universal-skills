@@ -29,30 +29,46 @@
     {
       "id": "US-WEB-RESEARCH-R001.1",
       "title": "Call the operation",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0a76a444f58c"
+      ],
+      "verified_by": [
+        "tests/test_web_research_skill.py:97"
+      ]
     },
     {
       "id": "US-WEB-RESEARCH-R001.2",
       "title": "Delete local scraping",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0a76a444f58c"
+      ],
+      "verified_by": [
+        "tests/test_web_research_skill.py:139"
+      ]
     },
     {
       "id": "US-WEB-RESEARCH-R001.3",
       "title": "Alias",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0a76a444f58c"
+      ],
+      "verified_by": [
+        "tests/test_web_research_skill.py:154"
+      ]
     },
     {
       "id": "US-WEB-RESEARCH-R001.4",
       "title": "Refusal",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "0a76a444f58c"
+      ],
+      "verified_by": [
+        "tests/test_web_research_skill.py:165"
+      ]
     },
     {
       "id": "US-WEB-RESEARCH-R001.5",
