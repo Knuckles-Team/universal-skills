@@ -17,42 +17,29 @@ def builder():
     return module
 
 
-@pytest.mark.parametrize("agent", [False])
-def test_generated_image_installs_local_source_and_selected_extra(tmp_path, agent):
+def test_generated_image_installs_the_published_wheel_never_source(tmp_path):
     module = builder()
-    module.scaffold("unpublished-api", output_dir=str(tmp_path),
-                    pkg_types="api_client,mcp" + (",agent" if agent else ""))
+    module.scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
     root = tmp_path / "unpublished-api"
     docker = (root / "docker/Dockerfile").read_text()
-    assert "WORKDIR /src" in docker
-    assert "COPY pyproject.toml README.md LICENSE ./" in docker
-    assert "COPY unpublished_api/ ./unpublished_api/" in docker
-    for relative in ("pyproject.toml", "README.md", "LICENSE", "unpublished_api/connector_manifest.yml"):
-        assert (root / relative).is_file()
-    assert '"unpublished-api[mcp]' not in docker
-    assert '"unpublished-api[agent]' not in docker
-    assert '--prerelease=allow ".[mcp]"' in docker
-    assert ('--prerelease=allow ".[agent]"' in docker) is agent
-    assert "COPY --from=builder-mcp /usr/local /usr/local" in docker
+    assert 'pip install --only-binary :all: "unpublished-api[mcp]==${VERSION}"' in docker
+    assert '".[mcp]"' not in docker
+    assert "COPY " not in docker
+    assert "cargo" not in docker and "build-essential" not in docker
+    assert "python:3.14-slim@sha256:" in docker
+    assert "USER 10001" in docker
     assert "FROM mcp AS default" in docker
-    assert "COPY . " not in docker
     assert "git clone" not in docker
     config = configparser.ConfigParser(interpolation=None)
     config.read(root / ".bumpversion.cfg")
     assert not any("docker/Dockerfile" in name for name in config.sections())
 
 
-@pytest.mark.parametrize("agent", [False])
-def test_source_build_docs_use_repository_context_and_exact_commit(tmp_path, agent):
-    builder().scaffold("unpublished-api", output_dir=str(tmp_path),
-                       pkg_types="api_client,mcp" + (",agent" if agent else ""))
+def test_image_docs_build_from_the_published_release(tmp_path):
+    builder().scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
     root = tmp_path / "unpublished-api"
     readme = (root / "README.md").read_text()
-    assert "docker build --file docker/Dockerfile --target mcp -t unpublished-api:mcp-local ." in readme
-    assert ("docker build --file docker/Dockerfile --target agent" in readme) is agent
+    assert "--build-arg VERSION=<version> -t unpublished-api:<version>-mcp ." in readme
     deployment = (root / "docs/deployment.md").read_text()
-    assert "git rev-parse --verify 'HEAD^{commit}'" in deployment
-    assert 'git archive --format=tar "$SOURCE_COMMIT"' in deployment
-    assert "org.opencontainers.image.revision=$SOURCE_COMMIT" in deployment
-    assert "does not freeze the index-resolved dependency closure" in deployment
-    assert "runtime artifact contract" in deployment
+    assert "pip install --only-binary :all:" in deployment
+    assert "never installs the" in deployment

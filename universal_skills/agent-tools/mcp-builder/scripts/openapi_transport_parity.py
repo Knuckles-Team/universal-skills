@@ -15,10 +15,18 @@ from contextlib import closing
 from urllib.parse import parse_qsl
 
 if __package__:
-    from .openapi_parity import require_complete_coverage, verify_contract
+    from .openapi_parity import (
+        operation_tool_name,
+        require_complete_coverage,
+        verify_contract,
+    )
     from .openapi_source_parity import verify_source_request
 else:
-    from openapi_parity import require_complete_coverage, verify_contract
+    from openapi_parity import (
+        operation_tool_name,
+        require_complete_coverage,
+        verify_contract,
+    )
     from openapi_source_parity import verify_source_request
 
 
@@ -163,7 +171,10 @@ async def _probe_surface(surface, operation, fixture, *, adapters):
 async def _dispatch(surface, operation, arguments, *, client, mcp_call):
     if surface == "api":
         return client.execute(operation["domain"], arguments)
-    result = await mcp_call(f"{operation['domain']}_operations", arguments, client)
+    tool_arguments = {key: value for key, value in arguments.items() if key != "action"}
+    result = await mcp_call(
+        operation_tool_name(operation["action"]), tool_arguments, client
+    )
     if getattr(result, "is_error", False) or getattr(result, "isError", False):
         raise ValueError("Native MCP dispatch returned an error")
     return result.structured_content

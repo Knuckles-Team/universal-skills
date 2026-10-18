@@ -180,7 +180,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
 dependencies = [
-    "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",{gql_core_dep}
+    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_core_dep}
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -189,9 +189,9 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",{gql_all_dep}
+    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_all_dep}
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
@@ -283,34 +283,12 @@ replace = __version__ = "{{new_version}}"
 
 DOCKERFILE = """\
 # syntax=docker/dockerfile:1
-# MCP serving image; the default target is the MCP server.
+# MCP serving image. It installs the published wheel from PyPI, never the
+# source tree, and builds no tools from source.
 #
-#   docker build --file docker/Dockerfile -t {package_name}:local .
-# Build from the repository root with --file docker/Dockerfile.
-FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS builder-base
-COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
-ENV UV_COMPILE_BYTECODE=1 \\
-    UV_LINK_MODE=copy \\
-    UV_SYSTEM_PYTHON=1 \\
-    UV_HTTP_TIMEOUT=3600
-# A few transitive deps ship no manylinux wheel and build from sdist, needing a C++
-# toolchain. Install it in the builder only — final stages copy just /usr/local.
-RUN apt-get update \\
-    && apt-get install -y --no-install-recommends build-essential \\
-    && rm -rf /var/lib/apt/lists/*
-
-# Build the connector from this checkout, including generated runtime data.
-# Copy only the package and its wheel metadata, not credentials or local tooling.
-WORKDIR /src
-COPY pyproject.toml README.md LICENSE ./
-COPY {pkg_dir}/ ./{pkg_dir}/
-
-# MCP serving dependency closure.
-FROM builder-base AS builder-mcp
-RUN --mount=type=cache,target=/root/.cache/uv \\
-    uv pip install --system --break-system-packages --prerelease=allow ".[mcp]"
-
-FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS runtime-base
+#   docker build --file docker/Dockerfile --build-arg VERSION=<version> -t {package_name}:<version>-mcp .
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS mcp
+ARG VERSION
 ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
@@ -320,15 +298,12 @@ ENV HOST=${{HOST}} \\
     TRANSPORT=${{TRANSPORT}} \\
     AUTH_TYPE=${{AUTH_TYPE}} \\
     PYTHONUNBUFFERED=1 \\
-    PATH="/root/.local/bin:/usr/local/bin:${{PATH}}" \\
-    UV_HTTP_TIMEOUT=3600 \\
-    UV_SYSTEM_PYTHON=1 \\
-    UV_COMPILE_BYTECODE=1 \\
-    UV_LINK_MODE=copy
-
-# MCP serving image.
-FROM runtime-base AS mcp
-COPY --from=builder-mcp /usr/local /usr/local
+    PIP_NO_CACHE_DIR=1 \\
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN test -n "${{VERSION}}" \\
+    && pip install --only-binary :all: "{package_name}[mcp]==${{VERSION}}" \\
+    && useradd --create-home --uid 10001 --shell /usr/sbin/nologin mcp
+USER 10001
 CMD ["{mcp_cmd}"]
 
 FROM mcp AS default
@@ -876,11 +851,11 @@ it is documentation-only and is never contacted by the generator.
 
 <!-- MCP-CONFIG-EXAMPLES:END -->
 
-Container builds install this checkout, so the connector need not be published first.
-Run from the repository root:
+Container builds install the published wheel for one exact version. Publish the
+release first, then run from the repository root:
 
 ```bash
-docker build --file docker/Dockerfile --target mcp -t {package_name}:mcp-local .
+docker build --file docker/Dockerfile --target mcp --build-arg VERSION=<version> -t {package_name}:<version>-mcp .
 ```
 
 Deploy reviewed images by digest (`{package_name}@sha256:<digest>`) and include
@@ -1153,7 +1128,7 @@ from agent_connector_sdk.mcp.server import create_mcp_server
 from agent_connector_sdk.mcp.tool_surface import register_tool_surface
 
 from . import mcp as tool_modules
-from ._version import __version__
+from ._version import __version__{client_imports}
 
 
 def get_mcp_instance(*, command_args=None):
@@ -1172,8 +1147,11 @@ def get_mcp_instance(*, command_args=None):
             manifest_path=package_root / "connector_manifest.yml",
         ),
     )
+    # One typed, annotated MCP tool per API operation (SDK default).
     register_tool_surface(
-        mcp, service="{package_name}", tools_module=tool_modules
+        mcp,
+        service="{package_name}",
+        tools_module=tool_modules,{client_kwargs}
     )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
@@ -1259,56 +1237,17 @@ class SystemStatusResponse(BaseModel):
 """
 
 MCP_SYSTEM_PY = """\
-import json
-
-from agent_connector_sdk.mcp.action_dispatch import resolve_action
-from agent_connector_sdk.mcp.concurrency import run_blocking
-from fastmcp import Context, FastMCP
-from fastmcp.dependencies import Depends
-from pydantic import Field
-
-from ..auth import get_client
+from fastmcp import FastMCP
 
 
-def register_system_tools(mcp: FastMCP):
-    \"\"\"Register system tag dynamic tools.\"\"\"
+def register_system_tools(mcp: FastMCP) -> None:
+    \"\"\"Register system tools that do not wrap an API-client method.
 
-    @mcp.tool(tags={{"system"}})
-    async def system_operations(
-        action: str = Field(
-            description="Action to perform. Must be one of: 'status', 'info'."
-        ),
-        params_json: str = Field(
-            default="{{}}", description="JSON string of parameters to pass to the action."
-        ),
-        client=Depends(get_client),
-        ctx: Context | None = Field(
-            default=None, description="MCP context for progress reporting"
-        ),
-    ) -> dict:
-        \"\"\"Manage system tag operations. CONCEPT:{concept_prefix}-001\"\"\"
-        if ctx:
-            await ctx.info("Executing system tool...")
-
-        try:
-            kwargs = json.loads(params_json)
-        except Exception as e:
-            return {{"error": f"Invalid params_json: {{type(e).__name__}}"}}
-
-        kwargs = {{k: v for k, v in kwargs.items() if v is not None}}
-
-        # Action-router trio: resolve_action validates/canonicalizes (and serves the
-        # discovery payload), run_blocking runs the sync client call off the event loop.
-        resolved = resolve_action(
-            action, {{"status", "info"}}, service="{package_name}"
-        )
-        if isinstance(resolved, dict):
-            return resolved
-        action = resolved
-
-        if action == "status":
-            return await run_blocking(client.get_system_status, **kwargs)
-        return {{"info": "System operations dynamic placeholder."}}
+    Every API operation is already one MCP tool, registered from the client
+    class by ``register_tool_surface``. Add only non-client tools here, such as
+    KG ingest tools. Do not add ``action``-routed dispatch tools.
+    CONCEPT:{concept_prefix}-001
+    \"\"\"
 """
 
 MCP_INIT_PY = """\
@@ -1722,22 +1661,18 @@ readiness assets. A generated workflow file or accepted dispatch alone does not
 prove delivery. Keep the run URL, source revision and live verification results in
 the publication evidence.
 
-## Build from a reviewed source commit
+## Build from the published release
 
-The production Dockerfile installs the local package and its selected runtime
-extra from the repository root. It does not download `{package_name}` from an
-index. The build copies the complete `{pkg_dir}/` directory, including generated
-OpenAPI contracts, prompts, skills, ontology and connector data. Runtime images
-contain the installed package; source tooling remains outside the final stage.
+The production Dockerfile installs the published `{package_name}[mcp]` wheel at
+an exact version with `pip install --only-binary :all:`. It never installs the
+source tree and builds no tools from source. The base image is Python 3.14 slim,
+pinned by digest, and the server runs as a non-root user.
 
-Use an exact reviewed commit as the build context:
+Publish the release first, then build the image for that version:
 
 ```bash
-SOURCE_COMMIT=$(git rev-parse --verify 'HEAD^{{commit}}')
-git archive --format=tar "$SOURCE_COMMIT" | docker build \\
-  --file docker/Dockerfile --target mcp \\
-  --label "org.opencontainers.image.revision=$SOURCE_COMMIT" \\
-  --tag {package_name}:mcp-local -
+docker build --file docker/Dockerfile --target mcp \\
+  --build-arg VERSION=<version> --tag {package_name}:<version>-mcp .
 ```
 
 For an enabled agent surface, select `--target agent`. The shared
@@ -2250,6 +2185,16 @@ def scaffold(
         "year": year,
         "date": date,
         "upper_name": upper_name,
+        "client_kwargs": (
+            "\n        client_cls=ApiClientSystem,\n        get_client=get_client,"
+            if backend == "api_client"
+            else ""
+        ),
+        "client_imports": (
+            "\nfrom .api import ApiClientSystem\nfrom .auth import get_client"
+            if backend == "api_client"
+            else ""
+        ),
     }
 
     root = (Path(output_dir) if in_place else Path(output_dir) / package_name).resolve()

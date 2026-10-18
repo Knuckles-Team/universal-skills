@@ -18,6 +18,7 @@ from pathlib import Path
 if __package__:
     from .openapi_discovery import inspect_discovery
     from .openapi_parity import (
+        operation_tool_name,
         require_declared_authorization,
         verify_contract,
         verify_mcp,
@@ -26,6 +27,7 @@ if __package__:
 else:
     from openapi_discovery import inspect_discovery
     from openapi_parity import (
+        operation_tool_name,
         require_declared_authorization,
         verify_contract,
         verify_mcp,
@@ -76,7 +78,13 @@ async def native_tools(package, contract, budget=None, *, ready=False):
             )
         if budget is not None:
             return await inspect_discovery(
-                instance, [f"{name}_operations" for name in contract["domains"]], budget
+                instance,
+                [
+                    operation_tool_name(action)
+                    for actions in contract["domains"].values()
+                    for action in actions
+                ],
+                budget,
             )
         async with Client(instance) as client:
             return await asyncio.wait_for(client.list_tools(), timeout=45), None

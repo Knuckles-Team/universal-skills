@@ -1,8 +1,8 @@
 # OpenAPI connector generation
 
 `openapi_converter.py` compiles OpenAPI 3 into operation-bound SDK clients and
-one condensed MCP tool for each domain. Named registrar callables preserve the
-SDK domain toggles without duplicating registrar bodies. The first non-Deprecated tag determines
+one MCP tool for each API operation, named from its snake_case operationId. Named
+domain registrar callables preserve the SDK domain toggles. The first non-Deprecated tag determines
 the domain; absent tags use the first path segment. Names, paths and methods are
 sorted. Duplicate operation identifiers and normalized domain collisions fail.
 
@@ -11,7 +11,7 @@ python scripts/openapi_converter.py provider-openapi.json package_name --auth-sc
 ```
 
 The output includes `openapi_contract.json`, the runtime/request/response modules, named SDK
-registrars for every domain, `ApiClientSystem(OpenApiClient)`, and `auth.py` with a public client factory even when
+registrars for every domain, `ApiClientSystem(OpenApiClientBase)`, and `auth.py` with a public client factory even when
 no authentication scheme is selected. `openapi_auth_scheme.py` represents selected
 header or bearer authentication explicitly; `auth.py` resolves references through the SDK.
 Package metadata declares
@@ -24,8 +24,8 @@ query and header parameter styles. Unsupported features fail during compilation.
 Multiple request media types are rejected until a representation-complete adapter
 can validate and exercise each one; selecting only the first is not full parity.
 
-Tools accept an action enum bound to an exact method and route. They do not
-accept arbitrary URLs or methods. Credential references use SDK API-key or
+Each tool is bound to one exact method and route, with that operation's typed
+input schema and verb annotations. Tools do not accept arbitrary URLs or methods. Credential references use SDK API-key or
 bearer auth, and operator TLS policy is preserved. The provider base URL is its
 origin, without the OpenAPI path prefix. Writes default to disabled and require
 operator enablement plus native MCP confirmation. HTTP requests have finite

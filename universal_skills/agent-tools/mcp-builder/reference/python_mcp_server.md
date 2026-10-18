@@ -9,7 +9,7 @@ The only framework dependency is the SDK; no agent control-plane package, LLM
 client or provider entry point belongs in a connector:
 
     [project]
-    dependencies = ["agent-connector-sdk[mcp]>=0.2.1,<1.0.0"]
+    dependencies = ["agent-connector-sdk[mcp]>=0.3.0,<1.0.0"]
 
     [project.scripts]
     example-connector-mcp = "example_connector.mcp_server:mcp_server"
@@ -54,13 +54,19 @@ native MCP prompts, ontology and SHACL resources, and manifest://connector.
 Prompt JSON needs instructions.core_directive. Missing or malformed declared
 content must fail, not disappear from discovery. Test actual listed content.
 
-## Condensed tools
+## One tool per API operation
 
-Export register_<domain>_tools callables from the package mcp module and pass that
-module to register_tool_surface exactly once. The SDK registers condensed tools
-with granular and gated tags, honoring domain toggles. There is no selectable
-MCP_TOOL_MODE or verbose 1:1 surface. Legacy manifest/client arguments accepted by
-the registrar are compatibility no-ops, not an operation exposure mechanism.
+Pass the API client class and its factory to register_tool_surface exactly once
+(`client_cls=ApiClientSystem, get_client=get_client`). The SDK registers one MCP
+tool per API operation, one per method and endpoint. Each tool is named
+`<prefix>_<operation>` and has a typed input schema with required and optional
+fields. The schema comes from the OpenAPI manifest or the method signature and
+type hints. The description comes from the spec summary or the docstring.
+Annotations follow the HTTP verb: GET is read-only, DELETE is destructive, and PUT
+and DELETE are idempotent. A fleet gateway scales the catalog through lazy `find`
+and load. Do not write `action`-routed dispatch tools or `params_json` tools. The
+package mcp module registers only tools that do not wrap a client method, such as
+KG ingest tools. `action_dispatch=True` is a compatibility mode, off by default.
 
 Keep tools as thin API adapters with typed, bounded inputs and accurate effect
 annotations. SDK action dispatch and policy/authorization boundaries govern effects;
