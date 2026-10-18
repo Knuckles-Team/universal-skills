@@ -36,6 +36,28 @@ jobs:
       - name: Pre-commit gates
         run: uvx pre-commit run --all-files --show-diff-on-failure
 
+  backward-python:
+    # The one backward-support leg (pipelines reference/gate-standard.md
+    # "Python version"): the environment is 3.14, requires-python keeps a 3.12
+    # floor, so install the lock on 3.12 and import the package.
+    name: backward-python (3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          python-version: '3.12'
+      - name: Install and import on the 3.12 floor
+        run: |
+          set -euo pipefail
+          uv sync --frozen --no-dev --python 3.12
+          uv run --frozen --no-sync python -c 'import sys, universal_skills; print(sys.version)'
+
   mcp-builder-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 15

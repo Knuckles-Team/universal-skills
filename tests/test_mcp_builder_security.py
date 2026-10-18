@@ -16,8 +16,8 @@ SCAFFOLD = (
     / "scaffold_package.py"
 )
 PYTHON_312_BASE = (
-    "python:3.12-slim@sha256:"
-    "57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
+    "python:3.14-slim@sha256:"
+    "a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170"
 )
 
 
@@ -229,7 +229,7 @@ def test_generated_packaging_uses_sdk_and_optional_runtime_without_recursive_ext
         if path.is_file() and path.suffix != ".png"
     )
 
-    assert 'requires-python = ">=3.12, <3.15"' in pyproject
+    assert 'requires-python = ">=3.12"' in pyproject
     assert 'target-version = "py312"' in pyproject
     assert 'python_version = "3.12"' in pyproject
     assert "py310" not in pyproject

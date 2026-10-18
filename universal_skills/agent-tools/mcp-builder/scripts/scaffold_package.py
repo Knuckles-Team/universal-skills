@@ -177,8 +177,8 @@ name = "{package_name}"
 version = "0.1.0"
 description = "{description}"
 readme = "README.md"
-classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
-requires-python = ">=3.12, <3.15"
+classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
+requires-python = ">=3.12"
 dependencies = [
     "agent-connector-sdk[mcp]>=0.2.1,<1.0.0",{gql_core_dep}
 ]
@@ -287,7 +287,7 @@ DOCKERFILE = """\
 #
 #   docker build --file docker/Dockerfile -t {package_name}:local .
 # Build from the repository root with --file docker/Dockerfile.
-FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS builder-base
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS builder-base
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \\
     UV_LINK_MODE=copy \\
@@ -310,7 +310,7 @@ FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \\
     uv pip install --system --break-system-packages --prerelease=allow ".[mcp]"
 
-FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS runtime-base
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS runtime-base
 ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
@@ -335,7 +335,7 @@ FROM mcp AS default
 """
 
 DEBUG_DOCKERFILE = """\
-FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
 COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /uvx /bin/
 
 ARG HOST=127.0.0.1
@@ -1002,7 +1002,7 @@ jobs:
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: '3.12'
+          python-version: '3.14'
 
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
