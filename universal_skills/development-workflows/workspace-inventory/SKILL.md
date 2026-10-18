@@ -33,7 +33,7 @@ Full workspace discovery — list available workspace actions, repositories, and
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
 
-Use the rm_workspace tool to list the available actions for the workspace
+Use the `rm_workspace_*` tools (one per workspace operation) for the workspace
 Expected: `list, setup`
 
 ### Step 1: list-managed-repositories [skill: repository-manager-mcp]

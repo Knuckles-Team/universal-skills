@@ -245,7 +245,7 @@ Depends On: Step 3, Step 4, Step 5, Step 6, Step 7, Step 8
 If user requested it in Step 0, run `workspace-validator-workflow` workflow to validate
 all projects pass linting, tests, and pre-commit:
 
-Use the `rm_projects` MCP tool with `action="validate"` and `type="all"`.
+Use the `rm_projects_validate` MCP tool with `type="all"`.
 Expected: validation_results
 Depends On: Step 9
 
