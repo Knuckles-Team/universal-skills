@@ -91,14 +91,24 @@ def dockerfile_findings(repo: Path) -> list[str]:
     return findings
 
 
-def served_tools(repo: Path, package: str) -> list[Any]:
-    """The tools the connector's MCP server serves, read in process."""
+def served_tools(repo: Path, package: str) -> tuple[list[Any], list[dict[str, str]]]:
+    """The tools the connector's MCP server serves, and its split report, read in process.
+
+    The report (``agent_connector_sdk.mcp.action_split.action_split_report``,
+    SDK >= 0.3.5) names the tool that serves each action of a split
+    action-routed tool; it is empty on older SDKs.
+    """
     sys.path.insert(0, str(repo))
     server = importlib.import_module(f"{package}.mcp_server")
     sys.argv = [sys.argv[0], "--transport", "stdio"]
     built = server.get_mcp_instance()
     instance = built[0] if isinstance(built, tuple) else built
-    return asyncio.run(instance.local_provider.list_tools())
+    tools = asyncio.run(instance.local_provider.list_tools())
+    try:
+        from agent_connector_sdk.mcp.action_split import action_split_report
+    except ImportError:
+        return tools, []
+    return tools, action_split_report(instance)
 
 
 def _schema(tool: Any) -> dict[str, Any]:
@@ -114,16 +124,36 @@ def declared_retired_tools(repo: Path) -> set[str]:
     return {str(name) for name in section.get("retired-tools", [])}
 
 
-def lost_tools(previous: set[str], served: set[str], retired: set[str]) -> list[str]:
+def covered_tools(report: list[dict[str, str]], served: set[str]) -> set[str]:
+    """Names whose actions a served per-operation tool covers, from the split report.
+
+    Both the action-routed tool and each ``<tool>_<action>`` name the SDK did
+    not register count, as long as the tool named as serving them is served.
+    """
+    covered: set[str] = set()
+    for entry in report:
+        if entry.get("served_by") in served:
+            covered.update({entry.get("split", ""), entry.get("tool", "")})
+    return covered - {""}
+
+
+def lost_tools(
+    previous: set[str],
+    served: set[str],
+    retired: set[str],
+    covered: set[str] | None = None,
+) -> list[str]:
     """Previous-release tools with no successor and no explicit retirement.
 
-    A successor is the same name, or a split ``<name>_<action>`` tool.
+    A successor is the same name, a split ``<name>_<action>`` tool, or a
+    per-operation tool that covers it (``covered``, from the SDK split report).
     """
     return sorted(
         name
         for name in previous
         if name not in served
         and name not in retired
+        and name not in (covered or set())
         and not any(other.startswith(name + "_") for other in served)
     )
 
@@ -136,7 +166,7 @@ def check(
     expected: int | None,
     previous: set[str] | None = None,
 ) -> dict[str, Any]:
-    tools = served_tools(repo, package)
+    tools, report = served_tools(repo, package)
     names = {tool.name for tool in tools}
     operations = [tool for tool in tools if "operation" in (tool.tags or set())]
     action_tools = sorted(
@@ -166,7 +196,8 @@ def check(
     if action_tools:
         failures.append(f"action-dispatch tools still served: {action_tools}")
     failures.extend(dockerfile_findings(repo))
-    lost = lost_tools(previous or set(), names, declared_retired_tools(repo))
+    covered = covered_tools(report, names)
+    lost = lost_tools(previous or set(), names, declared_retired_tools(repo), covered)
     if lost:
         failures.append(
             f"{len(lost)} tools of the previous release have no successor "
@@ -181,6 +212,7 @@ def check(
         "untyped": untyped,
         "action_tools": action_tools,
         "lost": lost,
+        "covered_by_operation": sorted(covered & (previous or set())),
         "names": sorted(names),
         "failures": failures,
     }
