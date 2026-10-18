@@ -25,6 +25,7 @@ import importlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -46,9 +47,30 @@ def census_operations(path: Path, connector: str) -> set[str]:
         }
 
 
+NO_BINARY = re.compile(r"--no-binary[=\s]+([^\s\\]+)")
+
+
+def _normalize(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def declared_source_builds(repo: Path) -> set[str]:
+    """``[tool.pipelines] allow-source-build`` from the repo's pyproject."""
+    path = repo / "pyproject.toml"
+    if not path.is_file():
+        return set()
+    section = tomllib.loads(path.read_text(encoding="utf-8")).get("tool", {}).get("pipelines", {})
+    return {_normalize(name) for name in section.get("allow-source-build", [])}
+
+
 def dockerfile_findings(repo: Path) -> list[str]:
-    """Source installs or source tool builds in the repository's Dockerfiles."""
+    """Source installs or source tool builds in the repository's Dockerfiles.
+
+    ``--no-binary`` is accepted only for exact names the repo declares in
+    ``[tool.pipelines] allow-source-build``; never for ``:all:``.
+    """
     findings: list[str] = []
+    allowed = declared_source_builds(repo)
     for path in sorted(repo.glob("**/*Dockerfile*")):
         if ".git" in path.parts or path.name.startswith("debug."):
             continue
@@ -60,6 +82,12 @@ def dockerfile_findings(repo: Path) -> list[str]:
             findings.append(f"{rel}: builds tools from source")
         if "--only-binary" not in text and "pip install" in text:
             findings.append(f"{rel}: pip install without --only-binary :all:")
+        for raw in NO_BINARY.findall(text):
+            for name in raw.split(","):
+                if _normalize(name) not in allowed:
+                    findings.append(
+                        f"{rel}: --no-binary {name} is not in [tool.pipelines] allow-source-build"
+                    )
     return findings
 
 

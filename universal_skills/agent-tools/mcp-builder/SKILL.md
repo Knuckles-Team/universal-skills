@@ -73,7 +73,10 @@ plane, which reaches the connector over MCP.
   count with `scripts/check_tool_parity.py`.
 - **Image standard.** The Dockerfile installs the package from its built wheel or
   from PyPI at an exact version (`pip install --only-binary :all: <pkg>[mcp]==<version>`),
-  never from a source copy (`pip install ".[mcp]"`). Runtime images build no tools
+  never from a source copy (`pip install ".[mcp]"`). A dependency that ships only an sdist is
+  named in `[tool.pipelines] allow-source-build` (scaffold `--allow-source-build`) and
+  exempted by name with `--no-binary <name>`; `check_tool_parity.py` rejects any
+  other `--no-binary`. Runtime images build no tools
   from source. Pin the Python 3.14 slim base image by digest and run as a non-root
   user. Tag images `<version>-mcp`.
 - Preserve 100% of the supported source operation or command catalog across API

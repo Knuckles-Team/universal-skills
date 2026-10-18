@@ -43,3 +43,48 @@ def test_image_docs_build_from_the_published_release(tmp_path):
     deployment = (root / "docs/deployment.md").read_text()
     assert "pip install --only-binary :all:" in deployment
     assert "never installs the" in deployment
+
+
+def test_named_source_builds_are_exempt_only_by_name(tmp_path):
+    import tomllib
+
+    builder().scaffold(
+        "unpublished-api",
+        output_dir=str(tmp_path),
+        pkg_types="api_client,mcp",
+        allow_source_build="Uptime_Kuma.API",
+    )
+    root = tmp_path / "unpublished-api"
+    docker = (root / "docker/Dockerfile").read_text()
+    assert "pip install --only-binary :all: --no-binary uptime-kuma-api unpublished-api[mcp]==0.1.0" in docker
+    data = tomllib.loads((root / "pyproject.toml").read_text())
+    assert data["tool"]["pipelines"]["allow-source-build"] == ["uptime-kuma-api"]
+
+
+def test_default_scaffold_declares_no_source_builds(tmp_path):
+    builder().scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
+    root = tmp_path / "unpublished-api"
+    assert "--no-binary" not in (root / "docker/Dockerfile").read_text()
+    assert "[tool.pipelines]" not in (root / "pyproject.toml").read_text()
+
+
+@pytest.mark.parametrize("name", [":all:", "*", "a b"])
+def test_source_build_wildcards_refused(name):
+    with pytest.raises(ValueError, match="exact package names"):
+        builder().source_build_names(name)
+
+
+def test_parity_rejects_undeclared_no_binary(tmp_path):
+    spec = importlib.util.spec_from_file_location("parity_check", SCRIPT.with_name("check_tool_parity.py"))
+    parity = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parity)
+    (tmp_path / "docker").mkdir()
+    docker = tmp_path / "docker/Dockerfile"
+    docker.write_text("RUN pip install --only-binary :all: --no-binary pyspark spark-mcp[mcp]==1.0\n")
+    assert parity.dockerfile_findings(tmp_path) == [
+        "docker/Dockerfile: --no-binary pyspark is not in [tool.pipelines] allow-source-build"
+    ]
+    (tmp_path / "pyproject.toml").write_text('[tool.pipelines]\nallow-source-build = ["pyspark"]\n')
+    assert parity.dockerfile_findings(tmp_path) == []
+    docker.write_text("RUN pip install --only-binary :all: --no-binary :all: spark-mcp[mcp]==1.0\n")
+    assert parity.dockerfile_findings(tmp_path)

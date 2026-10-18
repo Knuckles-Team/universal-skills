@@ -17,6 +17,7 @@ See PARITY_MANIFEST.md (sibling of SKILL.md) for the definitive checklist.
 """
 
 import argparse
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -220,7 +221,7 @@ check_untyped_defs = true
 # Shared public documentation contract. The hook authority is declared in
 # .pre-commit-config.yaml; these values identify this generated repository and
 # keep its README/AGENTS surface deterministic without network access.
-[tool.pipelines_hooks]
+{pipelines_section}[tool.pipelines_hooks]
 packages = ["{pkg_dir}"]
 
 [tool.pipelines_hooks.stdout_writes]
@@ -305,7 +306,7 @@ ENV HOST=${{HOST}} \\
     PYTHONUNBUFFERED=1 \\
     PIP_NO_CACHE_DIR=1 \\
     PIP_DISABLE_PIP_VERSION_CHECK=1
-RUN pip install --only-binary :all: {package_name}[mcp]==0.1.0 \\
+RUN pip install --only-binary :all:{no_binary_flags} {package_name}[mcp]==0.1.0 \\
     && useradd --create-home --uid 10001 --shell /usr/sbin/nologin mcp
 USER 10001
 CMD ["{mcp_cmd}"]
@@ -2099,6 +2100,15 @@ def test_prefix_registered():
 # ── Main Scaffolding Logic ───────────────────────────────────────────────────
 
 
+def source_build_names(raw: str) -> list[str]:
+    """Exact, normalized package names; wildcards are refused."""
+    names = [item.strip() for item in raw.split(",") if item.strip()]
+    for name in names:
+        if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", name):
+            raise ValueError(f"--allow-source-build needs exact package names, not {name!r}")
+    return sorted({re.sub(r"[-_.]+", "-", name).lower() for name in names})
+
+
 def scaffold(
     package_name: str,
     output_dir: str = ".",
@@ -2109,8 +2119,16 @@ def scaffold(
     doc_urls: str = "",
     in_place: bool = False,
     generated_on: str | None = None,
+    allow_source_build: str = "",
 ):
-    """Scaffold a complete SDK-only MCP connector project."""
+    """Scaffold a complete SDK-only MCP connector project.
+
+    ``allow_source_build`` names sdist-only dependencies (comma-separated). They
+    go into ``[tool.pipelines] allow-source-build`` for the release readiness
+    gate and are exempted from the Dockerfile's ``--only-binary :all:`` with
+    ``--no-binary <name>``; every other package stays wheel-only.
+    """
+    source_builds = source_build_names(allow_source_build)
     types = set(pkg_types.split(","))
     types = {value.strip() for value in types}
     supported = {"api_client", "cli", "mcp", "graphql"}
@@ -2188,6 +2206,14 @@ def scaffold(
         "year": year,
         "date": date,
         "upper_name": upper_name,
+        "no_binary_flags": "".join(f" --no-binary {name}" for name in source_builds),
+        "pipelines_section": (
+            "# sdist-only dependencies the release readiness gate may build from source.\n"
+            "[tool.pipelines]\n"
+            f"allow-source-build = [{', '.join(repr(name).replace(chr(39), chr(34)) for name in source_builds)}]\n\n"
+            if source_builds
+            else ""
+        ),
         "client_kwargs": (
             "\n        client_cls=ApiClientSystem,\n        get_client=get_client,"
             if backend == "api_client"
@@ -2610,6 +2636,12 @@ if __name__ == "__main__":
         help="ISO generation date; defaults to SOURCE_DATE_EPOCH or today in UTC, never a delivery date",
     )
 
+    parser.add_argument(
+        "--allow-source-build",
+        default="",
+        help="Comma-separated sdist-only dependencies the release gate and image may build from source",
+    )
+
     args = parser.parse_args()
     scaffold(
         package_name=args.package_name,
@@ -2621,4 +2653,5 @@ if __name__ == "__main__":
         doc_urls=args.doc_urls,
         in_place=args.in_place,
         generated_on=args.generated_on,
+        allow_source_build=args.allow_source_build,
     )
