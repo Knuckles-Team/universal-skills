@@ -35,7 +35,7 @@ Identifies stopped or unhealthy containers inside Portainer stacks, aggregates l
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
-Retrieve active stacks list using portainer_stack get_stacks tool, and retrieve the full list of running and stopped containers using portainer_docker docker_list_containers tool.
+Retrieve active stacks list using the portainer_get_stacks tool, and retrieve the full list of running and stopped containers using the portainer_list_containers tool.
 Expected: `portainer_stacks, containers_status`
 
 ### Step 1: User Interaction
@@ -49,7 +49,7 @@ Expected: `stack_triage_dashboard`
 **Agent**: `verifier-agent`
 **Tools**: `pt_docker, cnt_cm_container_operations`
 
-For the identified failed containers, fetch the diagnostic logs using portainer_docker docker_get_container_logs tool. Suggest precise stack-level updates or restart commands.
+For the identified failed containers, fetch the diagnostic logs using the portainer_get_container_logs tool. Suggest precise stack-level updates or restart commands.
 Expected: `container_diagnostics, resolution_plan`
 
 ### Step 3: KG Persistence [depends_on: Step 0, Step 2]

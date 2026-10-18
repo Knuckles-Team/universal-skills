@@ -24,11 +24,11 @@ metadata:
 
 ### Step 1: container-health
 Check container health for all trading services.
-Tool: `portainer_docker(action="docker_list_containers")`
+Tool: `portainer_list_containers()`
 
 ### Step 2: error-traces
 Query recent error traces from observability.
-Tool: `langfuse_observability(action="trace_list", tags=["finance"])`
+Tool: `langfuse_trace_list(tags=["finance"])`
 
 ### Step 3: system-resources
 Check disk/memory/CPU on trading nodes.
@@ -36,7 +36,7 @@ Tool: `systems_manager` resource checks.
 
 ### Step 4: dns-check
 Verify DNS resolution for all trading services.
-Tool: `technitium_zones(action="get_records")`
+Tool: `technitium_dns_get_records()`
 
 ### Step 5: kg-persist
 Store HealthSnapshot node in KG.

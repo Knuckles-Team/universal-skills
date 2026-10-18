@@ -22,11 +22,11 @@ team_config:
     - execution-specialist
     - attribution-analyst
   tool_assignments:
-    market-analyst: [graph_search, document_process, emerald_market_data]
+    market-analyst: [graph_search, document_process, emerald_exchange_get_quote, emerald_exchange_get_historical]
     alpha-strategist: [graph_query, ontology_query, emerald_signals, emerald_strategy]
     risk-manager: [graph_query, graph_analyze, emerald_risk]
-    execution-specialist: [emerald_orders, emerald_market_making]
-    attribution-analyst: [graph_write, emerald_portfolio]
+    execution-specialist: [emerald_exchange_submit_order, emerald_exchange_cancel_order, emerald_exchange_get_order_status, emerald_market_making]
+    attribution-analyst: [graph_write, emerald_exchange_get_positions, emerald_exchange_get_account]
 tags: [microstructure, knowledge-graph, signal-fusion, paper-first, lifecycle]
 concept: CONCEPT:EE-040
 metadata:
@@ -107,7 +107,7 @@ Expected: `fused-conviction`, `convergence-gate-result`
 
 ### Step 5: paper-decisions [depends_on: Step 4]
 **Agent**: `execution-specialist`
-**Tools**: `emerald_orders, emerald_market_making`
+**Tools**: `emerald_exchange_submit_order, emerald_market_making`
 
 Compose/reuse the trading team and run paper-first decisions: size via Kelly
 through the risk guards, route to the PAPER backend, and apply the queue-position /

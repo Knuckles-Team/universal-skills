@@ -65,7 +65,7 @@ Tool: `emerald_risk(action="drawdown_check")`
 **Tools**: `graph_query, sx_search`
 
 Submit paired orders via exchange backend.
-Tool: `emerald_orders(action="submit", ...)` for both legs.
+Tool: `emerald_exchange_submit_order(...)` for both legs.
 
 ### Step 6: KG Persistence [depends_on: execute-arb]
 **Agent**: `report-generator`

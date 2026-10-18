@@ -48,10 +48,10 @@ detector is registered before it is backtested and weighted before it gates.
 
 ### Step 0: pull-order-flow
 **Agent**: `quant_analyst`
-**Tools**: `emerald_market_data`
+**Tools**: `emerald_exchange_get_quote, emerald_exchange_get_historical`
 
 Pull a trailing top-of-book + buy/sell-volume window for the target symbol via
-`emerald_market_data` and shape it into the surveillance window
+`emerald_exchange_get_historical` and shape it into the surveillance window
 `{buy_vol, sell_vol, p_mean, signed_flow, price_changes, baseline_sigma}`
 (`signed_flow = buy_vol − sell_vol` per bucket; `price_changes` from the
 microprice/`p_mean` series). `baseline_sigma` is the expected noise-trader flow
