@@ -105,12 +105,36 @@ def _schema(tool: Any) -> dict[str, Any]:
     return getattr(tool, "parameters", None) or {}
 
 
+def declared_retired_tools(repo: Path) -> set[str]:
+    """``[tool.pipelines] retired-tools`` from the repo's pyproject."""
+    path = repo / "pyproject.toml"
+    if not path.is_file():
+        return set()
+    section = tomllib.loads(path.read_text(encoding="utf-8")).get("tool", {}).get("pipelines", {})
+    return {str(name) for name in section.get("retired-tools", [])}
+
+
+def lost_tools(previous: set[str], served: set[str], retired: set[str]) -> list[str]:
+    """Previous-release tools with no successor and no explicit retirement.
+
+    A successor is the same name, or a split ``<name>_<action>`` tool.
+    """
+    return sorted(
+        name
+        for name in previous
+        if name not in served
+        and name not in retired
+        and not any(other.startswith(name + "_") for other in served)
+    )
+
+
 def check(
     repo: Path,
     package: str,
     *,
     census: set[str],
     expected: int | None,
+    previous: set[str] | None = None,
 ) -> dict[str, Any]:
     tools = served_tools(repo, package)
     names = {tool.name for tool in tools}
@@ -142,6 +166,12 @@ def check(
     if action_tools:
         failures.append(f"action-dispatch tools still served: {action_tools}")
     failures.extend(dockerfile_findings(repo))
+    lost = lost_tools(previous or set(), names, declared_retired_tools(repo))
+    if lost:
+        failures.append(
+            f"{len(lost)} tools of the previous release have no successor "
+            f"(list them in [tool.pipelines] retired-tools to retire): {lost[:20]}"
+        )
     return {
         "package": package,
         "served_tools": len(tools),
@@ -150,6 +180,8 @@ def check(
         "missing": missing,
         "untyped": untyped,
         "action_tools": action_tools,
+        "lost": lost,
+        "names": sorted(names),
         "failures": failures,
     }
 
@@ -162,6 +194,15 @@ def main() -> int:
     parser.add_argument("--connector")
     parser.add_argument("--expected", type=int)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--previous",
+        type=Path,
+        help="file of tool names served by the previous release (one per line); "
+        "every one needs a successor or a [tool.pipelines] retired-tools entry",
+    )
+    parser.add_argument(
+        "--dump-names", type=Path, help="write the served tool names to this file"
+    )
     args = parser.parse_args()
     census: set[str] = set()
     if args.census:
@@ -170,9 +211,20 @@ def main() -> int:
         census = census_operations(args.census, args.connector)
         if not census:
             parser.error(f"no census operations for {args.connector}")
-    result = check(
-        args.repo.resolve(), args.package, census=census, expected=args.expected
+    previous = (
+        {line.strip() for line in args.previous.read_text().splitlines() if line.strip()}
+        if args.previous
+        else None
     )
+    result = check(
+        args.repo.resolve(),
+        args.package,
+        census=census,
+        expected=args.expected,
+        previous=previous,
+    )
+    if args.dump_names:
+        args.dump_names.write_text("\n".join(result["names"]) + "\n")
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
