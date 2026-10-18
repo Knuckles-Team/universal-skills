@@ -23,7 +23,7 @@ Query Uptime Kuma monitor lists for inactive/down status metrics, auto-resolve t
 ## Steps
 
 ### Step 0: read-monitor-states [skill: uptime-kuma-agent]
-Retrieve current states for all configured system monitors using `uptime_kuma_monitors` with `action='get_monitors'`.
+Retrieve current states for all configured system monitors using `uptime_kuma_get_monitors`.
 
 ### Step 1: confirm-healing [skill: user-interaction]
 Scan the response payloads to isolate monitors returning down/offline statuses (e.g., status 0). Request confirmation from the user to launch a targeted self-healing execution.
@@ -42,7 +42,7 @@ Trigger service restoration commands. Restart the target container using `docker
 Depends On: Step 2, Step 3
 
 ### Step 5: verify-monitor-recovery [skill: uptime-kuma-agent]
-Verify recovery by pulling the latest status check heartbeats via `uptime_kuma_status` with `action='get_heartbeats'` to confirm the monitor transitions back to active (online).
+Verify recovery by pulling the latest status check heartbeats via `uptime_kuma_get_heartbeats` to confirm the monitor transitions back to active (online).
 Depends On: Step 4
 
 ### Step 6: report-recovery [skill: user-interaction]

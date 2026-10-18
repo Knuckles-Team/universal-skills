@@ -44,7 +44,7 @@ Expected: `jira_issues`
 **Agent**: `processor-agent`
 **Tools**: `graph_analyze, document_tools`
 
-Detect configuration and query Plane for active or stale work items assigned to the user using the plane_work_items tool with list_work_items or search_work_items actions.
+Detect configuration and query Plane for active or stale work items assigned to the user using `plane_list_work_items` or search_work_items actions.
 Expected: `plane_work_items`
 
 ### Step 2: User Interaction
@@ -65,7 +65,7 @@ Expected: `jira_update_results`
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
-Push selected comment updates or status changes back to Plane using the plane_work_items tool with create_work_item_comment or update_work_item actions.
+Push selected comment updates or status changes back to Plane using `plane_create_work_item_comment` or update_work_item actions.
 Expected: `plane_update_results`
 
 ### Step 5: KG Persistence [depends_on: Step 4]

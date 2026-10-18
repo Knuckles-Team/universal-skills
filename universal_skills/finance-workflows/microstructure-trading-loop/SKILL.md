@@ -23,9 +23,9 @@ team_config:
     - attribution-analyst
   tool_assignments:
     market-analyst: [graph_search, document_process, emerald_exchange_get_quote, emerald_exchange_get_historical]
-    alpha-strategist: [graph_query, ontology_query, emerald_signals, emerald_strategy]
-    risk-manager: [graph_query, graph_analyze, emerald_risk]
-    execution-specialist: [emerald_exchange_submit_order, emerald_exchange_cancel_order, emerald_exchange_get_order_status, emerald_market_making]
+    alpha-strategist: [graph_query, ontology_query, emerald_signals_*, emerald_strategy_*]
+    risk-manager: [graph_query, graph_analyze, emerald_risk_*]
+    execution-specialist: [emerald_orders_submit, emerald_orders_cancel, emerald_orders_status, emerald_market_making_*]
     attribution-analyst: [graph_write, emerald_exchange_get_positions, emerald_exchange_get_account]
 tags: [microstructure, knowledge-graph, signal-fusion, paper-first, lifecycle]
 concept: CONCEPT:EE-040
@@ -88,7 +88,7 @@ Expected: `registered-signals`, `seeded-team-config`
 **Agent**: `risk-manager`
 **Tools**: `graph_analyze, graph_query`
 
-Backtest each candidate microstructure signal via emerald `emerald_strategy`
+Backtest each candidate microstructure signal via emerald `emerald_strategy_*`
 (`backtest`) / data-science-mcp `quant_validation`, computing deflated Sharpe,
 PBO, and hit-rate. Write the measured results back onto each `MicrostructureSignal`
 node as priors (`FinanceEngineMixin.record_backtest_outcome`), discarding signals
@@ -97,17 +97,17 @@ Expected: `signal-priors-written`
 
 ### Step 4: seed-fusion [depends_on: Step 3]
 **Agent**: `alpha-strategist`
-**Tools**: `graph_query, emerald_signals`
+**Tools**: `graph_query, emerald_signals_*`
 
 Seed `BayesianSignalFusion` from the stored priors
 (`seed_from_kg`: weight = directional_accuracy × standalone_sharpe) and fuse the
-live signal directions through emerald `emerald_signals` (`fuse`). Require the
+live signal directions through emerald `emerald_signals_*` (`fuse`). Require the
 convergence gate to pass before any decision is emitted.
 Expected: `fused-conviction`, `convergence-gate-result`
 
 ### Step 5: paper-decisions [depends_on: Step 4]
 **Agent**: `execution-specialist`
-**Tools**: `emerald_exchange_submit_order, emerald_market_making`
+**Tools**: `emerald_orders_submit, emerald_market_making_*`
 
 Compose/reuse the trading team and run paper-first decisions: size via Kelly
 through the risk guards, route to the PAPER backend, and apply the queue-position /

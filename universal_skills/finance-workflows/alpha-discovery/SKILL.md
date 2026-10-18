@@ -22,15 +22,15 @@ Tool: `emerald_exchange_get_historical(symbol=..., period="1y")`
 
 ### Step 2: feature-engineering
 Generate alpha factors with IC/IR scoring.
-Tool: `emerald_signals(action="alpha", ticker=...)`
+Tool: `emerald_signals_alpha(ticker=...)`
 
 ### Step 3: regime-detection
 Classify current market regime (Bull/Bear/Sideways/Crisis).
-Tool: `emerald_signals(action="regime", ticker=...)`
+Tool: `emerald_signals_regime(ticker=...)`
 
 ### Step 4: signal-fusion
 Bayesian fusion of all signal sources.
-Tool: `emerald_signals(action="fuse", ticker=...)`
+Tool: `emerald_signals_fuse(ticker=...)`
 
 ### Step 5: kg-persist
 Store AlphaFactor and TradingSignal nodes in KG.

@@ -39,11 +39,11 @@ Compute rebalancing trade list from target vs current weights.
 
 ### Step 5: risk-check
 Pre-trade risk validation on all rebalancing trades.
-Tool: `emerald_risk(action="drawdown_check")`
+Tool: `emerald_risk_drawdown_check()`
 
 ### Step 6: execute
 Submit rebalancing orders (paper mode default).
-Tool: `emerald_exchange_submit_order(...)` for each trade.
+Tool: `emerald_orders_submit(...)` for each trade.
 
 ## Execution
 

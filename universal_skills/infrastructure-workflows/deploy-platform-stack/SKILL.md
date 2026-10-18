@@ -33,7 +33,7 @@ End-to-end deployment of an infrastructure platform using docker-compose files a
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
 
-Use portainer_environment to get the endpoint ID where the stack will be deployed.
+Use `portainer_get_endpoints` to get the endpoint ID where the stack will be deployed.
 Expected: `endpoint, id`
 
 ### Step 1: create-portainer-stack [skill: portainer-mcp]

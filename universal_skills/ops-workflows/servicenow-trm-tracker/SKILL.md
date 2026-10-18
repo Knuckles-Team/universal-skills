@@ -37,7 +37,7 @@ Fetch active ServiceNow TRM (Technology Reference Model) Requests
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
 
-Query the ServiceNow TRM requests table (typically `u_trm_request` or relevant `dmn_demand` table) using the `servicenow_table_api` action with `action='get_table'`. Order by creation date descending via `params_json` containing a query like `{"sysparm_query": "active=true^ORDERBYdescsys_created_on", "sysparm_limit": 20}`.
+Query the ServiceNow TRM requests table (typically `u_trm_request` or relevant `dmn_demand` table) using `servicenow_get_table`. Order by creation date descending with `sysparm_query="active=true^ORDERBYdescsys_created_on"` and `sysparm_limit=20`.
 
 ### Step 1: TRM-Selection Interaction [skill: user-interaction]
 **Agent**: `processor-agent`
@@ -49,7 +49,7 @@ Present the latest TRM compliance evaluation queue to the user. Prompt them to s
 **Agent**: `validator-agent`
 **Tools**: `graph_query`
 
-Fetch full fields and developer requirements for the selected TRM record using `servicenow_table_api` with `action='get_table_record'`.
+Fetch full fields and developer requirements for the selected TRM record using `servicenow_get_table_record`.
 
 ### Step 3: TRM-Assessment Presentation [skill: user-interaction]
 **Agent**: `report-agent`

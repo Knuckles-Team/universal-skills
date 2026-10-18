@@ -28,7 +28,7 @@ infrastructure:
 ### Step 1: hypothesis-generation
 **Agent**: quant_research_analyst
 Generate trading hypothesis from KG signals, market data, and research.
-Tool: `emerald_signals(action="alpha", ticker=...)`
+Tool: `emerald_signals_alpha(ticker=...)`
 
 ### Step 2: trading-debate
 **Agent**: chief_trading_officer
@@ -38,7 +38,7 @@ Tool: `graph_orchestrate(action="start_debate", task=hypothesis)`
 ### Step 3: risk-assessment
 **Agent**: risk_compliance_officer
 Pre-trade risk assessment and Kelly criterion position sizing.
-Tool: `emerald_risk(action="kelly", win_rate=..., win_loss_ratio=...)`
+Tool: `emerald_risk_kelly(win_rate=..., win_loss_ratio=...)`
 
 ### Step 4: backtest
 **Agent**: quant_research_analyst
@@ -48,7 +48,7 @@ Tool: `graph_analyze(action="evaluate_alpha", query=hypothesis)`
 ### Step 5: strategy-promotion
 **Agent**: chief_trading_officer
 Promote strategy: Draft → Backtesting → Paper → Live.
-Tool: `emerald_strategy(action="promote", strategy_id=...)`
+Tool: `emerald_strategy_promote(strategy_id=...)`
 
 ### Step 6: human-approval
 **Agent**: chief_trading_officer

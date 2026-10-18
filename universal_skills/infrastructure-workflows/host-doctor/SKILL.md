@@ -26,7 +26,7 @@ team_config:
     - remediation-agent
   tool_assignments:
     discovery-agent: [tun_tm_system, tun_tm_hosts]
-    inspector-agent: [tun_tm_remote, sm_process_operations, sm_storage_health, fan_manager_sel, fan_manager_sensors]
+    inspector-agent: [tun_tm_remote, sm_process_operations, sm_storage_health, fan_manager_ipmi_sel_*, fan_manager_ipmi_sensors_*]
     remediation-agent: [sm_process_operations, sm_system_operations]
 tags: [infra, host, diagnostics, onboarding, process, zombie, swap, storage, smart, bmc, ipmi, drive-fault, remediation]
 concept: CONCEPT:INFRA-001
@@ -76,7 +76,7 @@ Expected: `runaways, zombies, swap, candidates`
 
 ### Step 3: storage_bmc_health
 **Agent**: `inspector-agent`
-**Tools**: `sm_storage_health, fan_manager_sel, fan_manager_sensors`
+**Tools**: `sm_storage_health, fan_manager_ipmi_sel_*, fan_manager_ipmi_sensors_*`
 
 Run `sm_storage_health` (action `report`) to check **physical** disk health that the
 filesystem/process steps miss: SMART for every drive incl. RAID `megaraid` passthrough,
@@ -85,7 +85,7 @@ BMC-flagged disk with clean SMART media is classified as a **link/aging fault**
 (reseat/replace), not media wear. For a remote host pass `host=<inventory-key>`; for
 out-of-band BMC pass `params_json={"oob":true}` (the iDRAC credential is read from
 OpenBao `apps/idrac` at runtime). For deeper BMC detail use the fan-manager IPMI tools
-(`fan_manager_sel` for the System Event Log history, `fan_manager_sensors` action `type`
+(`fan_manager_ipmi_sel_*` for the System Event Log history, `fan_manager_ipmi_sensors_*` action `type`
 sensor_type `Drive Slot`). Flags failed/predicted-fail/faulted drives as **replace
 candidates** (hardware action — never auto-remediated).
 Expected: `disks, bmc_drive_faults, faults`

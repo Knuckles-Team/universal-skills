@@ -58,14 +58,14 @@ Tool: Route to agent-utilities `crypto_connector.py` OnChainAnalytics.
 **Tools**: `graph_write, document_tools`
 
 Pre-trade risk validation.
-Tool: `emerald_risk(action="drawdown_check")`
+Tool: `emerald_risk_drawdown_check()`
 
 ### Step 5: Execute Arb
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
 
 Submit paired orders via exchange backend.
-Tool: `emerald_exchange_submit_order(...)` for both legs.
+Tool: `emerald_orders_submit(...)` for both legs.
 
 ### Step 6: KG Persistence [depends_on: execute-arb]
 **Agent**: `report-generator`
