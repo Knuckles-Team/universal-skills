@@ -49,7 +49,7 @@ Search for the research papers based on the search parameters using the `scholar
 **Agent**: `validator-agent`
 **Tools**: `rep_rm_projects, gl_pipelines`
 
-Submit bulk download jobs for the discovered paper IDs via `scholarx_storage` with `action='bulk_download'`. Check the download queue status via `action='status'`.
+Submit bulk download jobs for the discovered paper IDs via `scholarx_download_papers`. Check the download queue status via `action='status'`.
 
 ### Step 3: Arbora
 **Agent**: `publisher-agent`

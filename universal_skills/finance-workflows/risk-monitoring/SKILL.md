@@ -24,7 +24,7 @@ metadata:
 
 ### Step 1: portfolio-scan
 Query active positions from exchange backend.
-Tool: `emerald_portfolio(action="positions")`
+Tool: `emerald_exchange_get_positions()`
 
 ### Step 2: drawdown-check
 Check portfolio drawdown against configured limits.

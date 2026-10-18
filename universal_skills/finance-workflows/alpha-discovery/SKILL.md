@@ -18,7 +18,7 @@ metadata:
 
 ### Step 1: data-ingest
 Fetch market data for target universe.
-Tool: `emerald_market_data(action="historical", symbol=..., period="1y")`
+Tool: `emerald_exchange_get_historical(symbol=..., period="1y")`
 
 ### Step 2: feature-engineering
 Generate alpha factors with IC/IR scoring.

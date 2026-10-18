@@ -24,7 +24,7 @@ metadata:
 
 ### Step 1: fetch-positions
 Get current portfolio state from exchange.
-Tool: `emerald_portfolio(action="positions")` + `emerald_portfolio(action="account")`
+Tool: `emerald_exchange_get_positions()` + `emerald_exchange_get_account()`
 
 ### Step 2: optimize
 Run portfolio optimization (MVO/Risk-Parity/Black-Litterman).
@@ -43,7 +43,7 @@ Tool: `emerald_risk(action="drawdown_check")`
 
 ### Step 6: execute
 Submit rebalancing orders (paper mode default).
-Tool: `emerald_orders(action="submit", ...)` for each trade.
+Tool: `emerald_exchange_submit_order(...)` for each trade.
 
 ## Execution
 
