@@ -60,9 +60,9 @@ Expected: `surveillance-window`
 
 ### Step 1: compute-surveillance [depends_on: Step 0]
 **Agent**: `quant_analyst`
-**Tools**: `emerald_signals`
+**Tools**: `emerald_signals_*`
 
-Call `emerald_signals` action `surveillance` (`CONCEPT:EE-042`) with the window.
+Call `emerald_signals_surveillance` (`CONCEPT:EE-042`) with the window.
 It routes to the engine `surveillance_risk` kernel and returns
 `kyle_lambda` (price impact), `informed_share` (VPIN α), `detection_hazard`,
 `cumulative_suspicion`, `stealth_ratio`, and `legal_risk_score` ∈ [0,1]; it also
@@ -72,9 +72,9 @@ Expected: `surveillance-scores`, `registered-signal-id`
 
 ### Step 2: backtest-priors [depends_on: Step 1]
 **Agent**: `quant_analyst`
-**Tools**: `emerald_strategy`
+**Tools**: `emerald_strategy_*`
 
-Backtest the surveillance signal's directional returns via `emerald_strategy`
+Backtest the surveillance signal's directional returns via `emerald_strategy_*`
 action `backtest` (deflated Sharpe + PBO + hit-rate) and write the measured priors
 back onto the registered `MicrostructureSignal` (`CONCEPT:EE-033`). This closes the
 self-weighting loop: `BayesianSignalFusion.seed_from_kg` then weights the detector
@@ -83,7 +83,7 @@ Expected: `signal-priors-written`
 
 ### Step 3: evaluate-posture [depends_on: Step 2]
 **Agent**: `quant_analyst`
-**Tools**: `emerald_market_making, emerald_risk`
+**Tools**: `emerald_market_making_*, emerald_risk_*`
 
 Run `MarketMakingController.decide` over the live book: the Kyle legal-risk gate
 (`CONCEPT:EE-043`) surfaces `legal_risk_score`/`informed_share` and withdraws

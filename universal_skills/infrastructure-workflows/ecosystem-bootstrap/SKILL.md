@@ -80,7 +80,7 @@ Expected: portainer_container_id, dns_container_id, agent_network_id
 Depends On: Step 1
 
 ### Step 3: verify-portainer [skill: portainer-mcp]
-Verify Portainer is accessible and complete initial setup. Use `portainer_auth` to authenticate, then `portainer_environment` with `action='get_endpoints'` to confirm the local Docker endpoint is registered. All subsequent container deployments will use Portainer stacks.
+Verify Portainer is accessible and complete initial setup. Use `portainer_authenticate` to authenticate, then `portainer_get_endpoints` with `action='get_endpoints'` to confirm the local Docker endpoint is registered. All subsequent container deployments will use Portainer stacks.
 Expected: portainer_auth_token, endpoint_id
 Depends On: Step 2
 

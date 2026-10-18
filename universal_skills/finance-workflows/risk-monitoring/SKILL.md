@@ -28,19 +28,19 @@ Tool: `emerald_exchange_get_positions()`
 
 ### Step 2: drawdown-check
 Check portfolio drawdown against configured limits.
-Tool: `emerald_risk(action="drawdown_check")`
+Tool: `emerald_risk_drawdown_check()`
 
 ### Step 3: daily-loss-check
 Check daily P&L against loss limits.
-Tool: `emerald_risk(action="daily_loss_check", daily_pnl=...)`
+Tool: `emerald_risk_daily_loss_check(daily_pnl=...)`
 
 ### Step 4: regime-check
 Check for regime shifts using KS-test.
-Tool: `emerald_signals(action="regime")`
+Tool: `emerald_signals_regime()`
 
 ### Step 5: circuit-breaker
 If ANY threshold is breached, halt trading immediately.
-Tool: `emerald_orders(action="halt")` if risk score >= 1.0
+Tool: `emerald_orders_halt()` if risk score >= 1.0
 
 ### Step 6: kg-persist
 Store RiskSnapshot node in KG with timestamp and metrics.

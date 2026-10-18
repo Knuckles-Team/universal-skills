@@ -31,7 +31,7 @@ flow and **never prints a secret value** — outputs carry names, versions, and
 status only. Default mode is **dry-run**: produce a plan, review it, then execute.
 
 This skill *orchestrates existing tools* — it doesn't reinvent them:
-- **OpenBao** (`openbao_mcp_kv` / `openbao_mcp_logical`) — store of record.
+- **OpenBao** (`openbao_read_secret` / `openbao_write_secret`) — store of record.
 - **Portainer** (`port__stack` `update_stack`) — inject rotated env into stacks + restart.
 - **Keycloak** (`keycloak-agent`) — OIDC client-secret regeneration.
 - **GitLab** (`gitlab-api`) / **GitHub** (`gith__*`) — provider PAT/token rotation + CI vars.
@@ -70,7 +70,7 @@ This skill *orchestrates existing tools* — it doesn't reinvent them:
    - Keycloak client: regenerate the client secret (`keycloak-agent`).
    - DB password: generate with `rotation_lib.generate_secret --kind password`; `ALTER USER`.
    - Generic API/LLM/OTEL key: rotate in the provider console/API.
-3. **Write to OpenBao** — `openbao_mcp_kv action=kv2_put mount_path=secret
+3. **Write to OpenBao** — `openbao_write_secret mount_path=secret
    secret_path=<bao_path> params_json={"data":{"value":"<new>","rotated_at":"<ts>"}}`.
    Then `kv2_get` and assert the returned version is greater than before.
 4. **Propagate to consumers** (from the catalog):

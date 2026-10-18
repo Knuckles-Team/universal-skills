@@ -38,14 +38,14 @@ metadata:
 **Tools**: `graph_query, sx_search`
 
 Pick a validated strategy from the Knowledge Graph.
-Tool: `emerald_strategy(action="list")`
+Tool: `emerald_strategy_list()`
 
 ### Step 2: Export
 **Agent**: `compute-engine`
 **Tools**: `graph_analyze`
 
 Convert to target format (PineScript/MQL5/TDX).
-Tool: `emerald_strategy(action="export", strategy_id=..., format="pinescript")`
+Tool: `emerald_strategy_export(strategy_id=..., format="pinescript")`
 
 ### Step 3: Deploy Freqtrade
 **Agent**: `risk-assessor`

@@ -23,7 +23,7 @@ metadata:
 
 ### Step 1: hypothesis-generation
 Generate N hypotheses from KG signals and market data.
-Tool: `emerald_signals(action="alpha")` + KG research query.
+Tool: `emerald_signals_alpha()` + KG research query.
 
 ### Step 2: batch-backtest
 Run all hypotheses through qlib backtest queue on GPU node.
