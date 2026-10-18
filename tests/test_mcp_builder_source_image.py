@@ -22,7 +22,7 @@ def test_generated_image_installs_the_published_wheel_never_source(tmp_path):
     module.scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
     root = tmp_path / "unpublished-api"
     docker = (root / "docker/Dockerfile").read_text()
-    assert 'pip install --only-binary :all: "unpublished-api[mcp]==${VERSION}"' in docker
+    assert "pip install --only-binary :all: unpublished-api[mcp]==0.1.0" in docker
     assert '".[mcp]"' not in docker
     assert "COPY " not in docker
     assert "cargo" not in docker and "build-essential" not in docker
@@ -32,14 +32,14 @@ def test_generated_image_installs_the_published_wheel_never_source(tmp_path):
     assert "git clone" not in docker
     config = configparser.ConfigParser(interpolation=None)
     config.read(root / ".bumpversion.cfg")
-    assert not any("docker/Dockerfile" in name for name in config.sections())
+    assert any("docker/Dockerfile" in name for name in config.sections())
 
 
 def test_image_docs_build_from_the_published_release(tmp_path):
     builder().scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
     root = tmp_path / "unpublished-api"
     readme = (root / "README.md").read_text()
-    assert "--build-arg VERSION=<version> -t unpublished-api:<version>-mcp ." in readme
+    assert "--target mcp -t unpublished-api:<version>-mcp ." in readme
     deployment = (root / "docs/deployment.md").read_text()
     assert "pip install --only-binary :all:" in deployment
     assert "never installs the" in deployment

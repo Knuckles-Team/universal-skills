@@ -270,6 +270,10 @@ replace = Version: {{new_version}}
 search = __version__ = "{{current_version}}"
 replace = __version__ = "{{new_version}}"
 
+[bumpversion:file(dockerpin):docker/Dockerfile]
+search = {package_name}[mcp]=={{current_version}}
+replace = {package_name}[mcp]=={{new_version}}
+
 """
 
 # Verbatim golden gitlab-api pre-commit gate (no format placeholders — the
@@ -286,9 +290,10 @@ DOCKERFILE = """\
 # MCP serving image. It installs the published wheel from PyPI, never the
 # source tree, and builds no tools from source.
 #
-#   docker build --file docker/Dockerfile --build-arg VERSION=<version> -t {package_name}:<version>-mcp .
+# The pin below tracks the package version through .bumpversion.cfg.
+#
+#   docker build --file docker/Dockerfile --target mcp -t {package_name}:<version>-mcp .
 FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS mcp
-ARG VERSION
 ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"
@@ -300,8 +305,7 @@ ENV HOST=${{HOST}} \\
     PYTHONUNBUFFERED=1 \\
     PIP_NO_CACHE_DIR=1 \\
     PIP_DISABLE_PIP_VERSION_CHECK=1
-RUN test -n "${{VERSION}}" \\
-    && pip install --only-binary :all: "{package_name}[mcp]==${{VERSION}}" \\
+RUN pip install --only-binary :all: {package_name}[mcp]==0.1.0 \\
     && useradd --create-home --uid 10001 --shell /usr/sbin/nologin mcp
 USER 10001
 CMD ["{mcp_cmd}"]
@@ -851,11 +855,11 @@ it is documentation-only and is never contacted by the generator.
 
 <!-- MCP-CONFIG-EXAMPLES:END -->
 
-Container builds install the published wheel for one exact version. Publish the
+Container builds install the published wheel for the pinned version. Publish the
 release first, then run from the repository root:
 
 ```bash
-docker build --file docker/Dockerfile --target mcp --build-arg VERSION=<version> -t {package_name}:<version>-mcp .
+docker build --file docker/Dockerfile --target mcp -t {package_name}:<version>-mcp .
 ```
 
 Deploy reviewed images by digest (`{package_name}@sha256:<digest>`) and include
@@ -1671,8 +1675,7 @@ pinned by digest, and the server runs as a non-root user.
 Publish the release first, then build the image for that version:
 
 ```bash
-docker build --file docker/Dockerfile --target mcp \\
-  --build-arg VERSION=<version> --tag {package_name}:<version>-mcp .
+docker build --file docker/Dockerfile --target mcp --tag {package_name}:<version>-mcp .
 ```
 
 For an enabled agent surface, select `--target agent`. The shared
