@@ -105,6 +105,21 @@ def test_parity_fails_on_previous_tools_without_successor(tmp_path):
     assert parity.lost_tools(previous, served, {"x_old_tool"}) == []
 
 
+def test_parity_counts_a_covering_operation_tool_as_successor():
+    parity = _parity()
+    previous = {"x_branches", "x_branches_get", "x_search_code", "x_gone"}
+    served = {"x_get_branch", "x_code_search"}
+    report = [
+        {"tool": "x_branches", "action": "get", "split": "x_branches_get",
+         "outcome": "covered", "served_by": "x_get_branch", "reason": "table"},
+        {"tool": "x_search", "action": "code", "split": "x_search_code",
+         "outcome": "covered", "served_by": "x_not_served", "reason": "name"},
+    ]
+    covered = parity.covered_tools(report, served)
+    assert covered == {"x_branches", "x_branches_get"}
+    assert parity.lost_tools(previous, served, set(), covered) == ["x_gone", "x_search_code"]
+
+
 def test_parity_reads_declared_retired_tools(tmp_path):
     parity = _parity()
     assert parity.declared_retired_tools(tmp_path) == set()
