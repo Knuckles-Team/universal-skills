@@ -19,6 +19,7 @@ def pytest_configure(config):
         "markers",
         "concept(id): mark test with a concept ID for traceability",
     )
+    config.addinivalue_line("markers", "spec(id): bind a test to a spec requirement row")
 
 
 @pytest.fixture(autouse=True)

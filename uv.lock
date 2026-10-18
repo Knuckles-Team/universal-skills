@@ -4493,12 +4493,6 @@ test = [
 web-artifacts = [
     { name = "requests" },
 ]
-web-crawler = [
-    { name = "crawl4ai" },
-    { name = "playwright" },
-    { name = "psutil" },
-    { name = "requests" },
-]
 web-search = [
     { name = "ddgs" },
     { name = "requests" },
@@ -4509,7 +4503,6 @@ requires-dist = [
     { name = "bcrypt", marker = "extra == 'developer-utilities'", specifier = ">=5.0.0" },
     { name = "build", marker = "extra == 'test'", specifier = ">=1.5.0" },
     { name = "crawl4ai", marker = "extra == 'skill-graph-builder'", specifier = ">=0.9.2" },
-    { name = "crawl4ai", marker = "extra == 'web-crawler'", specifier = ">=0.9.2" },
     { name = "cryptography", marker = "extra == 'developer-utilities'", specifier = ">=50.0.2" },
     { name = "ddgs", marker = "extra == 'web-search'", specifier = ">=9.16.0" },
     { name = "defusedxml", marker = "extra == 'document-tools'", specifier = ">=0.7.1" },
@@ -4538,11 +4531,9 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'document-tools'", specifier = ">=12.3.0" },
     { name = "playwright", marker = "extra == 'browser-tools'", specifier = ">=1.63.0" },
     { name = "playwright", marker = "extra == 'skill-graph-builder'", specifier = ">=1.63.0" },
-    { name = "playwright", marker = "extra == 'web-crawler'", specifier = ">=1.63.0" },
     { name = "psutil", marker = "extra == 'code-enhancer'", specifier = ">=7.2.2" },
     { name = "psutil", marker = "extra == 'skill-graph-builder'", specifier = ">=7.2.2" },
     { name = "psutil", marker = "extra == 'system-tools'", specifier = ">=7.2.2" },
-    { name = "psutil", marker = "extra == 'web-crawler'", specifier = ">=7.2.2" },
     { name = "psycopg2-binary", marker = "extra == 'database-tools'", specifier = ">=2.9.12" },
     { name = "pygments", marker = "extra == 'document-tools'", specifier = ">=2.20.0" },
     { name = "pymssql", marker = "extra == 'database-tools'", specifier = ">=2.3.13" },
@@ -4573,7 +4564,6 @@ requires-dist = [
     { name = "requests", marker = "extra == 'security-tools'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'skill-graph-builder'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'web-artifacts'", specifier = ">=2.34.2" },
-    { name = "requests", marker = "extra == 'web-crawler'", specifier = ">=2.34.2" },
     { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
     { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },

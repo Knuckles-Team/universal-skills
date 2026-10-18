@@ -3,30 +3,22 @@ name: web-fetch
 domain: research
 skill_type: skill
 description: >-
-  Compatibility alias for the consolidated web-crawler single-page workflow.
-  Use when an existing workflow names web-fetch; prefer web-crawler for new
-  fetch, crawl, sitemap, rendered-page, or Arbora-ingestion tasks.
+  Fetch one page as a cited Document through web-crawler and Arbora
+  research.web. Use when a workflow names web-fetch; it forwards one URL.
 tags: [web, fetch, compatibility, web-crawler]
 license: MIT
 metadata:
   version: '1.3.11'
   author: Repository Maintainers
 ---
+# Web Fetch
 
-# Web Fetch Compatibility Alias
-
-Use `web-crawler` for all new work. This alias keeps existing single-page
-commands functional without maintaining a second HTTP, browser, TLS, privacy,
-or output stack.
+`scripts/fetch.py` forwards to `web-crawler` with one URL and `max_pages` 1.
+It holds no code of its own beyond the forward.
 
 ```bash
 python scripts/fetch.py --url "https://example.org/page"
-python scripts/fetch.py --url "https://example.org/page" --json
+python scripts/fetch.py --url "https://example.org/page" --backend archivebox
 ```
 
-The command always uses web-crawler's bounded AgentConfig-managed HTTP path.
-It validates DNS, redirects, private addresses, TLS profiles, response limits,
-and durable output through the same central policy. JSON output contains an
-opaque source reference rather than the URL. It does not accept authenticated
-sessions, insecure TLS switches, or embedded LLM extraction. Perform analysis
-of the sanitized result through the governed agent or Arbora runtime.
+Output and refusals are those of `web-crawler`.
