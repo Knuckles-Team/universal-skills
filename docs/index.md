@@ -16,6 +16,11 @@ The catalog is intentionally split by ownership:
 This prevents a universal skill from quietly depending on one deployment, service,
 or private filesystem layout.
 
+## Architecture Explorer
+
+Open the [Architecture Explorer](https://knuckles-team.github.io/universal-skills/architecture/#skills) to see where these skills sit in the
+ecosystem. It zooms from the whole runtime into each part and lists the spec rows that govern it.
+
 ## Catalog review
 
 The catalog has a checked-in, reproducible structural review:
