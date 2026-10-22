@@ -142,7 +142,7 @@ def test_invalid_sources_fail_closed(checkout, failure):
         status_path.write_text(json.dumps(status))
     result = build(checkout)
     assert result.returncode != 0, result.stdout
-    assert "US-PAGES-001" in result.stderr or "absent.md" in result.stderr
+    assert "US-PAGES" in result.stderr or "absent.md" in result.stderr
 
 
 def test_synthetic_accepted_receipts(checkout):

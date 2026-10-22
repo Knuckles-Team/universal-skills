@@ -76,9 +76,9 @@ repository's public commit URL; and `kind: passing_acceptance` with the same
 commit and a public Actions run URL. Missing, malformed, or mismatched receipts
 fail the build. Offline validation checks receipt structure; a maintainer must
 audit merge ancestry and passing results before recording acceptance. The real
-US-PAGES-001 status remains `SPECIFIED` / `NOT_AUDITED` until that audit.
+US-PAGES status remains `SPECIFIED` / `NOT_AUDITED` until that audit.
 
-This slice publishes only the explicit public US-PAGES-001 package. Additional
+This slice publishes only the explicit public US-PAGES package. Additional
 specs need an explicit source/navigation decision. It does not verify live
 GitHub URLs or deployed Pages routes. Post-merge deployment smoke results,
 organization-template adoption, and the full spec acceptance audit remain open.

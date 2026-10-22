@@ -1,4 +1,4 @@
-# US-PAGES-001 test specification
+# US-PAGES test specification
 
 Use one real open spec and a synthetic accepted fixture with exact merged-code and passing-test receipts. Never mark a real spec accepted to satisfy a fixture. Record the existing catalog, architecture, and roadmap URLs before layout changes.
 

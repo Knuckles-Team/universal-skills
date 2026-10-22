@@ -8,5 +8,5 @@ This repository owns the specs with the ID prefix `US`.
 
 ## Local specifications
 
-- [`US-PAGES-001`](US-PAGES-001/spec.md) — Consolidate published documentation.
+- [`US-PAGES`](US-PAGES-001/spec.md) — Consolidate published documentation.
 - [`US-WEB-RESEARCH`](web-research/spec.md) — Web research skills call the served operation.
