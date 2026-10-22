@@ -12,6 +12,7 @@
       "title": "Scaffold declares the fleet name",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "17a06546e4a5",
         "d36c90407ebd"
       ],
       "verified_by": [
