@@ -26,7 +26,11 @@ test = [
     "pytest-timeout>=2.4.0",
     "PyYAML>=6.0.3",
     "httpx>=0.28.1",
-    "jsonschema>=4.25.1"
+    "jsonschema>=4.25.1",
+    # The mcp-builder scaffold imports these at runtime; the schema-budget
+    # test builds and imports a generated package.
+    "rfc3986-validator>=0.1.1",
+    "rfc3339-validator>=0.1.4",
 ]
 agent-browser = []
 agent-spawner = []
