@@ -1,4 +1,4 @@
-# US-PAGES-001: Consolidate published documentation
+# US-PAGES — Consolidate published documentation
 
 **Delivery:** SPECIFIED
 

@@ -44,7 +44,7 @@ def status_markdown(status):
         raise TypeError("US-PAGES-001/status.json: status must be an object")
     if (
         status.get("schema_version") != 1
-        or status.get("spec_id") != "US-PAGES-001"
+        or status.get("spec_id") != "US-PAGES"
         or status.get("owner_repo") != "universal-skills"
     ):
         raise ValueError("US-PAGES-001/status.json: invalid identity or schema")
@@ -100,7 +100,7 @@ def status_markdown(status):
         [
             "## Owner-native status",
             "",
-            "Stable ID: **US-PAGES-001**. Owner: [universal-skills](https://github.com/Knuckles-Team/universal-skills).",
+            "Stable ID: **US-PAGES**. Owner: [universal-skills](https://github.com/Knuckles-Team/universal-skills).",
             f"Delivery: **{delivery}**. Acceptance: **{acceptance}**.",
             "",
             *(

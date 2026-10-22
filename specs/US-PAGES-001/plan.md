@@ -1,4 +1,4 @@
-# US-PAGES-001 design plan
+# US-PAGES design plan
 
 ## Existing architecture
 

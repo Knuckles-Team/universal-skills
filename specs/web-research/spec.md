@@ -14,7 +14,7 @@ The rows are in [requirements.md](requirements.md). The proving tests are in [te
 
 ## Why a new spec
 
-The search covered `specs/` of this repository. The only spec is `US-PAGES-001`, which owns published documentation. No spec owns the web skills.
+The search covered `specs/` of this repository. The only spec is `US-PAGES`, which owns published documentation. No spec owns the web skills.
 
 ## Scope and interfaces
 

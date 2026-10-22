@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "spec_id": "US-PAGES-001",
+  "spec_id": "US-PAGES",
   "owner_repo": "universal-skills",
   "requirement_ids": [
-    "US-PAGES-001",
+    "US-PAGES-R002",
     "US-PAGES-R001"
   ],
   "delivery_state": "SPECIFIED",
@@ -11,7 +11,7 @@
   "evidence": [],
   "requirements": [
     {
-      "id": "US-PAGES-001",
+      "id": "US-PAGES-R002",
       "title": "Consolidate published documentation",
       "delivery_state": "LANDED",
       "evidence": [

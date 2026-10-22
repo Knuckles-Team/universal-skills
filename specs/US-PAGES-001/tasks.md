@@ -1,4 +1,4 @@
-# US-PAGES-001 work items
+# US-PAGES work items
 
 - [x] Add Pages contribution navigation and public spec-workflow skill links.
 - [x] Remove sibling provider README freshness dependency from universal-skills checks.
@@ -13,7 +13,7 @@
 
 Checkboxes show task progress only; they do not prove acceptance.
 
-No task above cites a `requirements.md` ID by name. `US-PAGES-001` (consolidate published
+No task above cites a `requirements.md` ID by name. `US-PAGES-R002` (consolidate published
 documentation) is closed by the tasks above. `US-PAGES-R001` (shared documentation hierarchy
 across the fleet's sites) is not yet covered by an existing task:
 
