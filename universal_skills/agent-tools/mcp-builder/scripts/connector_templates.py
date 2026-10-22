@@ -82,7 +82,8 @@ from agent_connector_sdk.ingest import (
     current_ingest,
 )
 
-_BINDING = IngestBinding(connector=__SOURCE__, stream=__DOMAIN__)
+# The connector name is the declared fleet name (SDK-CONNECTOR-CONTROL-R071).
+_BINDING = IngestBinding.for_package(__name__, stream=__DOMAIN__)
 
 
 async def _submit(changes: ChangeSet, ingest: KnowledgeIngest | None) -> dict[str, int]:
@@ -250,6 +251,7 @@ sys.path.insert(0, str(ROOT))
 try:
     from agent_connector_sdk.manifest.live_contract import validate_live_tool_contract
     from agent_connector_sdk.manifest.loader import (
+        load_manifest,
         load_tool_presets,
         require_valid_connector_package,
     )
@@ -315,7 +317,8 @@ async def generate(check: bool) -> None:
     _write_or_check(
         PACKAGE / "connectors/tool_schema_fingerprints.json",
         {
-            "connector": "__SOURCE__",
+            # The manifest carries the one connector identity, the fleet name.
+            "connector": load_manifest(PACKAGE / "connector_manifest.yml").connector,
             "algorithm": COMPATIBILITY_FINGERPRINT_ALGORITHM,
             "tools": pinned,
         },
