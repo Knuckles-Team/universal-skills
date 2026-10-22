@@ -1022,6 +1022,18 @@ jobs:
 ROOT_AGENTS_MD = """\
 # {display_name} engineering contract
 
+<!-- agent-contract:start -->
+## Agent contract
+
+Tool-neutral rules for any AI agent or human working in this repository. This block is maintained by the fleet standard; edit outside the markers.
+
+- **Owner boundary:** this repository owns one external system's calls, mappings and MCP tools (spec prefix `CONN-{display_name}-`); it depends on the connector SDK only. Feature routing across repositories: [ecosystem boundaries](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md).
+- **Setup:** run `scripts/bootstrap.sh`. It is idempotent and non-interactive: it pins uv and Python, syncs the locked environment, installs the git hooks and prints the gate command.
+- **Gates:** `uvx pre-commit run --all-files` must pass before you push. Do not bypass hooks to get green.
+- **Commits:** one logical change per commit with a `Spec: <ID>` trailer (or `Spec: none (<reason>)`), plus a `Co-Authored-By:` trailer naming the assisting agent. Stage explicit paths only; never `git add -A` or `git add .`. Use your own configured Git identity, never a tool or bot name.
+- **Org rules:** [organization AGENTS.md](https://github.com/Knuckles-Team/.github/blob/main/AGENTS.md).
+<!-- agent-contract:end -->
+
 ## Architecture
 
 `{pkg_dir}/api/` owns service operations; `mcp/` adapts them to tools.
@@ -2479,6 +2491,9 @@ def scaffold(
         # false-positive limitation. Wired into .pre-commit-config.yaml's
         # check-import-safety hook below.
         "check_import_safety.py",
+        # One-command agent setup (PIPE-CONNSPEC-R009): pinned uv and Python,
+        # locked sync, git hooks, prints the gate command.
+        "bootstrap.sh",
         # Structural scanner dispatcher.  It is copied as a single, standard
         # library-only helper so each generated package owns the same
         # fail-closed staged/delta semantics without hook-time installation.
@@ -2489,6 +2504,8 @@ def scaffold(
         dst = root / "scripts" / script_name
         if src.is_file():
             if _copy_generated_file(src, dst):
+                if script_name.endswith(".sh"):
+                    dst.chmod(0o755)
                 print(f"  ✅ {dst.relative_to(root.parent)} (bundled golden script)")
         else:
             print(
