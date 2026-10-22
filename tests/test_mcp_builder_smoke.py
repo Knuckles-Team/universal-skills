@@ -168,7 +168,7 @@ LIVE_DISCOVERY = textwrap.dedent("""\
 
     socket.socket.connect = no_network
     package = Path("contract_smoke")
-    assert require_valid_connector_package(package).connector == "contract-smoke"
+    assert require_valid_connector_package(package).connector == "contract-smoke-mcp"
     server = build_server(command_args=["--transport", "stdio", "--auth-type", "none"])
     assert auth._client is None
     operation = registered_tools(server)["contract_smoke_get_system_status"]
@@ -185,7 +185,7 @@ LIVE_DISCOVERY = textwrap.dedent("""\
             assert "Contract Smoke" in prompt.messages[0].content.text
             resources = {str(resource.uri) for resource in await client.list_resources()}
             expected = {
-                "manifest://connector", "ontology://contract-smoke/contract-smoke.ttl",
+                "manifest://connector", "ontology://contract-smoke-mcp/contract-smoke.ttl",
                 "skill://contract-smoke-starter/SKILL.md",
             }
             assert expected <= resources, resources
@@ -193,16 +193,16 @@ LIVE_DISCOVERY = textwrap.dedent("""\
                 contents = await client.read_resource(uri)
                 assert contents and contents[0].text.strip()
             for path in (package / "ontology/shapes").glob("*.ttl"):
-                assert f"shapes://contract-smoke/{path.name}" in resources
+                assert f"shapes://contract-smoke-mcp/{path.name}" in resources
             manifest = await client.read_resource("manifest://connector")
-            assert json.loads(manifest[0].text)["connector"] == "contract-smoke"
+            assert json.loads(manifest[0].text)["connector"] == "contract-smoke-mcp"
             pack = await build_content_pack(
                 McpClientSession(client, feed=ChangeFeed()),
-                connector="contract-smoke",
+                connector="contract-smoke-mcp",
                 kinds=(ToolArtifactKind(), SkillArtifactKind(),
                        PromptArtifactKind(), ResourceArtifactKind()),
             )
-            assert pack.connector == "contract-smoke"
+            assert pack.connector == "contract-smoke-mcp"
             assert pack.server_package_version == "0.1.0"
             assert expected <= pack.resource_uris
             assert "connector://status" not in pack.resource_uris
