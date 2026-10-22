@@ -1,6 +1,6 @@
 # US-PAGES-001 work items
 
-- [x] Add Pages contribution navigation and public Spec Kit links.
+- [x] Add Pages contribution navigation and public spec-workflow skill links.
 - [x] Remove sibling provider README freshness dependency from universal-skills checks.
 - [x] Inventory Pages URLs and declare one tracked source for each page.
 - [x] Implement build-time inclusion or direct links for root guides and specs.

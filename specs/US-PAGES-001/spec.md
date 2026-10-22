@@ -28,7 +28,7 @@ must remain until a replacement build reads another tracked source.
 ## Requirements
 
 1. Publish contributor instructions and links to the repository's universal
-   Spec Kit skills from the Pages navigation.
+   spec-workflow skills from the Pages navigation.
 2. Define one canonical source for each document and render or link it into
    Pages without maintaining divergent copies.
 3. Link each published spec to its stable ID, owning repository, implementation
