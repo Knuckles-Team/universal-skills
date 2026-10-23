@@ -31,7 +31,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SDK_DEP = "agent-connector-sdk[mcp]>=0.3.0,<1.0.0"
+SDK_DEP = "agent-connector-sdk[mcp]>=0.3.11,<1.0.0"
 AGENT_MODE = "REMOVE agent mode"
 #: AU-named env-drift internals a connector wrapper calls on the checker module.
 ENV_DRIFT_RENAMES = {

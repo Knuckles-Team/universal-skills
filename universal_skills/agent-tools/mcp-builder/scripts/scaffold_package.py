@@ -30,7 +30,8 @@ from scaffold_dates import generation_date
 from docs_assets import staged_theme_files, check_shared_theme, validate_theme_destinations
 from spec_templates import render_spec_files
 from quality_templates import (
-    PRECOMMIT_CONFIG,
+    PRECOMMIT_CONFIG,  # noqa: F401  (re-exported for the scaffold tests)
+    render_precommit_config,
     SCANNER_CI_YML,
     PIPELINE_YML,
     PAGES_YML,
@@ -181,7 +182,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
 dependencies = [
-    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_core_dep}
+    "agent-connector-sdk[{sdk_extras}]>=0.3.11,<1.0.0",
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -190,15 +191,20 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_all_dep}
+    "agent-connector-sdk[{sdk_extras}]>=0.3.11,<1.0.0",
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
 [project.scripts]
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
+
+# The one place the fleet name is declared (SDK-CONNECTOR-CONTROL-R071). The
+# content pack, manifest and ingest binding all resolve it from here.
+[project.entry-points."agent_connector_sdk.connector"]
+{fleet_name} = "{pkg_dir}"
 
 [tool.uv.workspace]
 members = ["."]
@@ -586,6 +592,7 @@ MANIFEST_IN = """\
 include LICENSE
 include README.md
 include requirements.txt
+include AGENTS.md
 # Scanner policies and wrappers are included in source distributions so a
 # checkout recreated from the sdist has the same reviewed quality surface.
 # They remain source-checkout tooling, not runtime wheel/package data; hooks
@@ -1140,6 +1147,7 @@ import sys
 from pathlib import Path
 
 from agent_connector_sdk.config import load_config
+from agent_connector_sdk.connector_identity import connector_name
 from agent_connector_sdk.mcp.content import ConnectorContent
 from agent_connector_sdk.mcp.server import create_mcp_server
 from agent_connector_sdk.mcp.tool_surface import register_tool_surface
@@ -1157,17 +1165,16 @@ def get_mcp_instance(*, command_args=None):
         version=__version__,
         instructions="{description}",
         command_args=command_args,
-        content=ConnectorContent(
-            connector="{package_name}",
+        content=ConnectorContent.for_package(
+            __name__,
             package_root=package_root,
             package_version=__version__,
-            manifest_path=package_root / "connector_manifest.yml",
         ),
     )
     # One typed, annotated MCP tool per API operation (SDK default).
     register_tool_surface(
         mcp,
-        service="{package_name}",
+        service=connector_name(__name__),
         tools_module=tool_modules,{client_kwargs}
     )
     for middleware in middlewares:
@@ -1509,8 +1516,14 @@ def render_source_presets(package_name: str, domain: str) -> str:
     return _json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
-GQL_PY = r'''"""GraphQL operations over the same governed SDK transport as REST."""
+GQL_PY = r'''"""GraphQL operations over the same governed SDK transport as REST.
+
+The parser comes from the SDK ``graphql`` extra and schema discovery from the
+SDK introspection helpers; this module pins no ``gql`` library and ships no
+GraphQL client of its own.
+"""
 from typing import Any
+
 from .api.api_client_base import ApiClientBase
 
 
@@ -1525,6 +1538,18 @@ class GraphQL(ApiClientBase):
         if "errors" in result:
             raise RuntimeError("GraphQL operation failed; partial results were not accepted")
         return result
+
+    async def list_types(self) -> dict[str, Any]:
+        """Introspect every schema type through the SDK helper."""
+        from agent_connector_sdk.mcp.graphql import ctx_graphql_list_types
+
+        return await ctx_graphql_list_types(self.execute_gql)
+
+    async def type_details(self, type_name: str) -> dict[str, Any]:
+        """Introspect one type's fields through the SDK helper."""
+        from agent_connector_sdk.mcp.graphql import ctx_graphql_get_type_details
+
+        return await ctx_graphql_get_type_details(self.execute_gql, type_name)
 '''
 
 
@@ -2078,12 +2103,13 @@ def test_manifest_loads_with_the_sdk_model():
     \"\"\"connector_manifest.yml validates against agent-connector-sdk.\"\"\"
     from pathlib import Path
 
+    from agent_connector_sdk.connector_identity import connector_name
     from agent_connector_sdk.manifest.loader import load_manifest
 
     import {pkg_dir}
 
     manifest = load_manifest(Path({pkg_dir}.__file__).parent / "connector_manifest.yml")
-    assert manifest.connector == "{package_name}"
+    assert manifest.connector == connector_name({pkg_dir}.__name__)
 """
 
 TESTS_CONCEPT_PARITY = """\
@@ -2132,8 +2158,13 @@ def scaffold(
     in_place: bool = False,
     generated_on: str | None = None,
     allow_source_build: str = "",
+    fleet_name: str = "",
 ):
     """Scaffold a complete SDK-only MCP connector project.
+
+    ``fleet_name`` is the connector's one declared fleet name (the
+    ``agent_connector_sdk.connector`` entry point); it defaults to the console
+    script name ``<short>-mcp``. Nothing else in the package spells it.
 
     ``allow_source_build`` names sdist-only dependencies (comma-separated). They
     go into ``[tool.pipelines] allow-source-build`` for the release readiness
@@ -2180,12 +2211,17 @@ def scaffold(
     date = generated.isoformat()
 
     has_graphql = "graphql" in types
-    gql_core_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
-    gql_extra = 'gql = [ "gql[requests]>=4.0.0",]\n' if has_graphql else ""
-    gql_all_dep = ' "gql[requests]>=4.0.0",' if has_graphql else ""
+    # GraphQL comes from the SDK `graphql` extra, never a `gql` pin (R040, R016).
+    sdk_extras = "mcp,graphql" if has_graphql else "mcp"
+    gql_extra = (
+        'graphql = [ "agent-connector-sdk[graphql]>=0.3.11,<1.0.0",]\n'
+        if has_graphql
+        else ""
+    )
+    fleet_name = fleet_name or mcp_cmd
     gql_module_name = f"{to_pkg_dir(short_name)}_gql"
     gql_optional_module = (
-        f'\n    "{pkg_dir}.{gql_module_name}": "gql",' if has_graphql else ""
+        f'\n    "{pkg_dir}.{gql_module_name}": "graphql",' if has_graphql else ""
     )
     gql_all_extend = ', "_GQL_AVAILABLE"' if has_graphql else ""
 
@@ -2200,9 +2236,9 @@ def scaffold(
         "concept_prefix": concept_prefix,
         "mcp_cmd": mcp_cmd,
         "short_name": short_name,
-        "gql_core_dep": gql_core_dep,
+        "sdk_extras": sdk_extras,
+        "fleet_name": fleet_name,
         "gql_extra": gql_extra,
-        "gql_all_dep": gql_all_dep,
         "gql_optional_module": gql_optional_module,
         "gql_all_extend": gql_all_extend,
         "api_applicable": "true" if "api_client" in types else "false",
@@ -2248,7 +2284,7 @@ def scaffold(
         root / "pyproject.toml": (PYPROJECT_TOML, True),
         root / ".bumpversion.cfg": (BUMPVERSION_CFG, True),
         root / ".pre-commit-config.yaml": (
-            PRECOMMIT_CONFIG.replace("__PACKAGE__", pkg_dir),
+            render_precommit_config(pkg_dir),
             False,
         ),
         root / ".dockerignore": (DOCKERIGNORE, True),
@@ -2341,7 +2377,7 @@ def scaffold(
     files[pkg / "ontology" / "pack.ttl"] = (
         render_pack_ttl(
             display_name,
-            package_name,
+            fleet_name,
             ontology_domain,
             starter_slug,
             f"{ontology_domain.replace('-', '_')}_specialist",
@@ -2349,7 +2385,7 @@ def scaffold(
         False,
     )
     files[pkg / "kg_ingest.py"] = (
-        render_kg_ingest(display_name, pkg.name, package_name, ontology_domain),
+        render_kg_ingest(display_name, pkg.name, fleet_name, ontology_domain),
         False,
     )
     files[pkg / "prompts" / f"{ontology_domain.replace('-', '_')}_specialist.json"] = (
@@ -2368,18 +2404,18 @@ def scaffold(
 
     files[pkg / "connector_manifest.yml"] = (
         render_connector_manifest(
-            package_name,
+            fleet_name,
             ontology_domain,
             render_ontology_ttl(display_name, ontology_domain),
         ),
         False,
     )
     files[pkg / "connectors" / "tool_schema_fingerprints.json"] = (
-        render_empty_fingerprints(package_name),
+        render_empty_fingerprints(fleet_name),
         False,
     )
     files[root / "scripts" / "generate_tool_schemas.py"] = (
-        render_schema_generator(pkg_dir, package_name),
+        render_schema_generator(pkg_dir, fleet_name),
         False,
     )
 
@@ -2654,6 +2690,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--fleet-name",
+        default="",
+        help="The connector's fleet name, declared once as the agent_connector_sdk.connector entry point (default: <short>-mcp)",
+    )
+
+    parser.add_argument(
         "--allow-source-build",
         default="",
         help="Comma-separated sdist-only dependencies the release gate and image may build from source",
@@ -2671,4 +2713,5 @@ if __name__ == "__main__":
         in_place=args.in_place,
         generated_on=args.generated_on,
         allow_source_build=args.allow_source_build,
+        fleet_name=args.fleet_name,
     )

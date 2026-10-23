@@ -18,7 +18,7 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package using the maintained SDK scaffold. A connector
-depends on `agent-connector-sdk[mcp]>=0.3.0,<1.0.0` and nothing else from the agent
+depends on `agent-connector-sdk[mcp]>=0.3.11,<1.0.0` and nothing else from the agent
 ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
 
 Use current main revisions of
@@ -37,7 +37,7 @@ Run from this skill directory, choosing only the requested package surfaces:
 
 The output is an SDK-only package: `pyproject.toml` with the SDK dependency,
 `<pkg>/_version.py`, `<pkg>/mcp_server.py` (SDK `create_mcp_server` +
-`register_tool_surface` + `ConnectorContent`), `<pkg>/connector_manifest.yml`,
+`register_tool_surface` + `ConnectorContent.for_package`), `<pkg>/connector_manifest.yml`,
 bundled skills/prompts/ontology, `tests/` using the SDK and an in-process FastMCP
 client, and `.github/workflows/pipeline.yml` calling
 `Knuckles-Team/pipelines` `python_pipeline.yml@main` with `PYPI_API_TOKEN`.
@@ -47,7 +47,7 @@ no external template repository.
 
 | Backend | Required types | Optional additions |
 |---|---|---|
-| REST or GraphQL API | `api_client,mcp` | `graphql` |
+| REST or GraphQL API | `api_client,mcp` | `graphql` (SDK `graphql` extra, no `gql` pin) |
 | Local CLI | `cli,mcp` | none |
 
 Every generated package serves MCP. CLI backends need no HTTP base URL or API
@@ -55,6 +55,8 @@ credentials. Select exactly one backend; MCP remains the default container entry
 
 The generator preserves existing project-owned files. Inspect the generated diff
 and resolve current authority changes before treating a scaffold as ready.
+Pass `--fleet-name <name>` when the fleet name is not `<short>-mcp`; it is declared
+once, in the entry point (see the checklist).
 There is no agent mode. Orchestration and model calls belong to the agent control
 plane, which reaches the connector over MCP.
 
@@ -106,6 +108,33 @@ plane, which reaches the connector over MCP.
   deployed workflow revision and public documentation URL before claiming delivery.
 - Keep generated files environment-neutral. Never generate credentials, private
   endpoints, personal identities, a committed .env or a TLS-verification bypass.
+
+## SDK conformance checklist
+
+A generated connector must meet every rule below on first generation, so new
+connectors do not reintroduce the drift the SDK centralization audit found.
+`scripts/check_connector_contract.py <root> --package <pkg>` enforces rules 1 to 8
+statically and prints the violated `US-MCP-BUILDER` row beside each finding; the
+scaffold also runs it as the `connector-sdk-contract` pre-commit hook. The SDK
+rows are in agent-connector-sdk `specs/centralized-capabilities/`.
+
+| Rule | Row | SDK row | The connector must |
+|---|---|---|---|
+| 1 | `US-MCP-BUILDER-R001` | `SDK-CENTRALIZED-CAPABILITIES-R001`, `SDK-CENTRALIZED-CAPABILITIES-R040` | Build every HTTP client with `agent_connector_sdk.http` (`create_http_client`), so SDK retries, 429 handling and egress pinning apply. Pin neither `requests` nor `httpx`; ship no retry loop. |
+| 2 | `US-MCP-BUILDER-R002` | `SDK-CENTRALIZED-CAPABILITIES-R008` | Resolve TLS with `resolve_tls_profile`. Never set `verify=False`, silence TLS warnings or build an SSL context. |
+| 3 | `US-MCP-BUILDER-R003` | `SDK-CENTRALIZED-CAPABILITIES-R009` | Accept `env://` and `openbao://` references and resolve them through the SDK (`bearer_auth`, `api_key_auth`, the credential resolver). Parse no references by hand and read no token from a plain environment variable. |
+| 4 | `US-MCP-BUILDER-R004` | `SDK-CENTRALIZED-CAPABILITIES-R016`, `SDK-CENTRALIZED-CAPABILITIES-R040` | Declare optional dependencies only as SDK extras (`graphql`, `db`, `mssql`, `feeds`, `dataprep`, `market`, `stream`, `integrity`; `vector` once the SDK ships it). For a GraphQL API use the `graphql` extra and the SDK introspection helpers, never a `gql` pin. |
+| 5 | `US-MCP-BUILDER-R005` | `SDK-CENTRALIZED-CAPABILITIES-R030` | Declare the fleet name once, as the single `agent_connector_sdk.connector` entry point (SDK-CONNECTOR-CONTROL-R071). Build content with `ConnectorContent.for_package` and ingest with `IngestBinding.for_package`; spell no connector name anywhere else. |
+| 6 | `US-MCP-BUILDER-R006` | `SDK-CENTRALIZED-CAPABILITIES-R015` | Ship one tool per API operation with verb hints (reads read-only), the safe `scripts/bootstrap.sh` (no piped installer), the standard `AGENTS.md` agent-contract section, and a `specs/` tree per the pipelines spec standard with tests bound. |
+| 7 | `US-MCP-BUILDER-R007` | none | Keep `.bumpversion.cfg` to files that exist, `__version__` in `_version.py` alone, and the Dockerfile image pin tracked by bumpversion at the same version. |
+| 8 | `US-MCP-BUILDER-R008` | `SDK-CENTRALIZED-CAPABILITIES-R030` | Enable the pipelines `connector-name` hook with `args: [--strict]`, enable `sdk-conformance` strict, and run `check-cli-help` from a plain install (`python -m <pkg>.mcp_server --help`, no `uv run`, no `find`). |
+
+Rule 8 note: pipelines main does not publish `sdk-conformance` yet, so the scaffold
+emits it commented out as pending, in strict mode (`SDK_CONFORMANCE_PUBLISHED` in
+`scripts/quality_templates.py`). Flip the constant when the hook is published.
+
+The checklist is also the review list: a hand edit that breaks a rule is a defect in
+the connector, not a reason to relax the scaffold.
 
 ## Load the relevant reference
 
