@@ -182,7 +182,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
 dependencies = [
-    "agent-connector-sdk[{sdk_extras}]>=0.3.11,<1.0.0",
+    "agent-connector-sdk[{sdk_extras}]>=0.3.19,<1.0.0",
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -191,9 +191,9 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.19,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk[{sdk_extras}]>=0.3.11,<1.0.0",
+    "agent-connector-sdk[{sdk_extras}]>=0.3.19,<1.0.0",
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
@@ -1351,43 +1351,53 @@ def render_ontology_init(display_name: str, domain: str) -> str:
     )
 
 
+#: Core class of the parent ontology every scaffolded class extends. A steward
+#: narrows it to a more specific core class once the record type is known.
+CORE_PARENT_CLASS = ":Concept"
+
+
 def render_ontology_ttl(display_name: str, domain: str) -> str:
-    """Per-package OWL/RDF stub in the shared kg# namespace — hand-expand it."""
+    """Per-package OWL/RDF ontology in the shared kg# namespace, linked to the parent."""
     cap = "".join(w.capitalize() for w in domain.replace("-", " ").split())
     t = """@prefix : <http://knuckles.team/kg#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# TODO: replace this stub with the real domain model. Classes/properties live in the
-# SHARED : (kg#) namespace; only the owl:Ontology node gets the per-package IRI. Do NOT
-# redefine classes another package owns (:MediaAsset/:Blob/:Document/:Person) — reuse them.
+# Classes and properties live in the shared : (kg#) namespace; only the owl:Ontology
+# node gets the per-package IRI. Each class extends a core class of the parent
+# ontology (owl:imports <http://knuckles.team/kg>). Reuse the classes another package
+# owns (:MediaAsset, :Blob, :Document, :Person) and never redefine them.
+# Name a response field like its property (full_name -> :fullName) and the SDK
+# proposes the field mapping from the tool output schema by name.
 
 :__CAP__Resource a owl:Class ;
     rdfs:label "__DISPLAY__ Resource" ;
-    rdfs:comment "A primary object managed by __DISPLAY__ (STUB — rename/expand)." .
+    rdfs:comment "A primary record managed by __DISPLAY__." ;
+    rdfs:subClassOf __PARENT__ .
 
 :managedBy a owl:ObjectProperty ;
     rdfs:label "managed by" ;
-    rdfs:comment "Links a __DISPLAY__ resource to the Person responsible (STUB)." ;
+    rdfs:comment "Links a __DISPLAY__ resource to the Person responsible." ;
     rdfs:domain :__CAP__Resource ;
     rdfs:range :Person .
 
 :__DOMAIN__Id a owl:DatatypeProperty ;
     rdfs:label "__DOMAIN__ id" ;
-    rdfs:comment "External identifier of the __DISPLAY__ resource (STUB)." ;
+    rdfs:comment "External identifier of the __DISPLAY__ resource." ;
     rdfs:domain :__CAP__Resource ;
     rdfs:range xsd:string .
 
 <http://knuckles.team/kg/__DOMAIN__> a owl:Ontology ;
     rdfs:label "__DISPLAY__ Ontology" ;
-    rdfs:comment "__DISPLAY__ domain extensions federated into the KG hub. STUB." ;
+    rdfs:comment "__DISPLAY__ domain extensions federated into the KG hub." ;
     owl:imports <http://knuckles.team/kg> .
 """
     return (
         t.replace("__CAP__", cap)
         .replace("__DISPLAY__", display_name)
         .replace("__DOMAIN__", domain.replace("-", ""))
+        .replace("__PARENT__", CORE_PARENT_CLASS)
     )
 
 
@@ -2214,7 +2224,7 @@ def scaffold(
     # GraphQL comes from the SDK `graphql` extra, never a `gql` pin (R040, R016).
     sdk_extras = "mcp,graphql" if has_graphql else "mcp"
     gql_extra = (
-        'graphql = [ "agent-connector-sdk[graphql]>=0.3.11,<1.0.0",]\n'
+        'graphql = [ "agent-connector-sdk[graphql]>=0.3.19,<1.0.0",]\n'
         if has_graphql
         else ""
     )

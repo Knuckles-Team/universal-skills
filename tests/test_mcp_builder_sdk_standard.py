@@ -176,10 +176,10 @@ def test_secrets_resolve_through_the_sdk(checker, api_project, scratch):
 def test_graphql_uses_the_sdk_extra_and_helpers(checker, graphql_project, scratch):
     project = _pyproject(graphql_project)["project"]
     assert project["dependencies"] == [
-        "agent-connector-sdk[mcp,graphql]>=0.3.11,<1.0.0"
+        "agent-connector-sdk[mcp,graphql]>=0.3.19,<1.0.0"
     ]
     assert project["optional-dependencies"]["graphql"] == [
-        "agent-connector-sdk[graphql]>=0.3.11,<1.0.0"
+        "agent-connector-sdk[graphql]>=0.3.19,<1.0.0"
     ]
     assert "gql" not in (graphql_project / "pyproject.toml").read_text().replace(
         "graphql", ""
@@ -373,8 +373,79 @@ def test_skill_checklist_names_every_rule_and_sdk_row():
     section = text.split("## SDK conformance checklist", 1)[1].split("\n## ", 1)[0]
     for row in range(1, 9):
         assert f"US-MCP-BUILDER-R00{row}" in section
+    assert "US-MCP-BUILDER-R010" in section
     for row in SDK_ROWS:
         assert f"SDK-CENTRALIZED-CAPABILITIES-{row}" in section
     assert "agent_connector_sdk.connector" in section
     assert "for_package" in section
     assert "sdk-conformance" in section and "pending" in section.lower()
+
+
+# --- US-MCP-BUILDER-R010: ontology linked to the parent, SDK default resources --
+
+EG_ONTOLOGY = Path(__file__).resolve().parents[3] / "epistemic-graph/crates/eg-core/ontology"
+PARENT_IRI = "http://knuckles.team/kg"
+#: Core classes of the parent ontology a scaffolded class may extend.
+CORE_PARENTS = {":Concept", ":Dataset", ":Document", ":Person", ":Artifact"}
+
+
+def _domain_ontology(root: Path) -> tuple[Path, str]:
+    path = next(
+        p
+        for p in (root / root.name.replace("-", "_") / "ontology").glob("*.ttl")
+        if p.name != "pack.ttl" and "owl:Ontology" in p.read_text(encoding="utf-8")
+    )
+    return path, path.read_text(encoding="utf-8")
+
+
+def test_scaffold_links_the_ontology_to_the_parent_without_a_todo(
+    checker, api_project, scratch
+):
+    _, text = _domain_ontology(api_project)
+    code = re.sub(r"(?m)^\s*#.*$", "", text)
+    assert f"owl:imports <{PARENT_IRI}>" in code
+    assert "TODO" not in text and "STUB" not in text
+    blocks = [b for b in code.split("\n\n") if "a owl:Class" in b]
+    assert blocks
+    for block in blocks:
+        parent = re.search(r"rdfs:subClassOf\s+(:\w+)\s*\.", block)
+        assert parent and parent.group(1) in CORE_PARENTS, block
+    if EG_ONTOLOGY.is_dir():
+        core = "\n".join(p.read_text(encoding="utf-8") for p in EG_ONTOLOGY.glob("*.ttl"))
+        for parent in CORE_PARENTS:
+            assert re.search(rf"(?m)^{parent} a owl:Class", core), parent
+    assert _violations(checker, api_project, "demo_conn", "R010") == []
+    path, text = _domain_ontology(scratch)
+    path.write_text(
+        text.replace(f"    owl:imports <{PARENT_IRI}> .", "    rdfs:label \"x\" .")
+        .replace("    rdfs:subClassOf :Concept .", "    rdfs:label \"y\" .")
+        + "# TODO map me\n",
+        encoding="utf-8",
+    )
+    found = _violations(checker, scratch, "demo_conn", "R010")
+    assert any("owl:imports" in v for v in found)
+    assert any("subClassOf" in v for v in found)
+    assert any("TODO" in v for v in found)
+
+
+def test_scaffold_relies_on_sdk_default_resource_declarations(api_project):
+    assert not list(api_project.rglob("data_resources.json"))
+    dependencies = _pyproject(api_project)["project"]["dependencies"]
+    assert any(">=0.3.19" in d for d in dependencies if "agent-connector-sdk" in d)
+    derivation = pytest.importorskip("agent_connector_sdk.artifacts.resource_derivation")
+    from types import SimpleNamespace
+
+    _, text = _domain_ontology(api_project)
+    terms = derivation.scan_ontology([text])
+    tool = SimpleNamespace(
+        name="list_democonn_resources",
+        parameters={"type": "object", "properties": {"page": {}}},
+        output_schema={
+            "type": "array",
+            "items": {"type": "object", "properties": {"id": {"type": "string"}}},
+        },
+        annotations=SimpleNamespace(read_only_hint=True),
+    )
+    (descriptor,) = derivation.derive_descriptors("demo-conn", [tool], terms)
+    assert descriptor.mapping_status == "proposed"
+    assert descriptor.ontology_class == "http://knuckles.team/kg#DemoConnResource"
