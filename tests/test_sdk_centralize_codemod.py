@@ -1,7 +1,6 @@
 """Golden-file tests for the requests -> SDK governed client codemod (sdk_centralize.py)."""
 
 import filecmp
-import shutil
 import sys
 from pathlib import Path
 
@@ -20,19 +19,31 @@ def _tree(root: Path) -> dict[str, bytes]:
     return {str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file() and "__pycache__" not in p.parts}
 
 
+def _materialize(src: Path, dest: Path) -> None:
+    """Copy a fixture tree, restoring ``*.py.fixture`` to ``*.py`` (hooks and pytest never see fixture code)."""
+    for p in src.rglob("*"):
+        if p.is_file():
+            out = dest / p.relative_to(src)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out = out.with_name(out.name.removesuffix(".fixture"))
+            out.write_bytes(p.read_bytes())
+
+
 @pytest.mark.parametrize("name", AUTO)
 def test_auto_matches_golden_after_tree(name, tmp_path):
     work = tmp_path / name
-    shutil.copytree(FIXTURES / name / "before", work)
+    _materialize(FIXTURES / name / "before", work)
     result = sdk_centralize.run(work, apply=True, sdk_version="0.3.12")
     assert result.verdict == "AUTO"
-    assert _tree(work) == _tree(FIXTURES / name / "after")
+    golden = tmp_path / "golden"
+    _materialize(FIXTURES / name / "after", golden)
+    assert _tree(work) == _tree(golden)
 
 
 @pytest.mark.parametrize("name", AUTO)
 def test_dry_run_writes_nothing_and_apply_is_idempotent(name, tmp_path):
     work = tmp_path / name
-    shutil.copytree(FIXTURES / name / "before", work)
+    _materialize(FIXTURES / name / "before", work)
     before = _tree(work)
     dry = sdk_centralize.run(work, apply=False, sdk_version="0.3.12")
     assert dry.verdict == "AUTO" and _tree(work) == before
@@ -45,7 +56,7 @@ def test_dry_run_writes_nothing_and_apply_is_idempotent(name, tmp_path):
 @pytest.mark.parametrize(("name", "code"), sorted(EXCEPTIONS.items()))
 def test_exception_repos_are_classified_and_unchanged(name, code, tmp_path):
     work = tmp_path / name
-    shutil.copytree(FIXTURES / name / "before", work)
+    _materialize(FIXTURES / name / "before", work)
     before = _tree(work)
     result = sdk_centralize.run(work, apply=True, sdk_version="0.3.12")
     assert result.verdict == "EXCEPTION"
@@ -55,7 +66,7 @@ def test_exception_repos_are_classified_and_unchanged(name, code, tmp_path):
 
 def test_generated_client_has_governed_shape(tmp_path):
     work = tmp_path / "x"
-    shutil.copytree(FIXTURES / "lgtm-mcp" / "before", work)
+    _materialize(FIXTURES / "lgtm-mcp" / "before", work)
     sdk_centralize.run(work, apply=True, sdk_version="0.3.12")
     text = (work / "lgtm_mcp/api/api_client_base.py").read_text()
     assert "requests" not in text and "create_http_client" in text and "BearerAuth(token)" in text
