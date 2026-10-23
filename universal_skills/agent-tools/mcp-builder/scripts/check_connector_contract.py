@@ -100,7 +100,7 @@ def check_project(root: Path, package: str) -> list[str]:
     return violations
 
 
-# --- SDK centralized-capability rules (US-MCP-BUILDER-R001..R008) ------------
+# --- SDK centralized-capability rules (US-MCP-BUILDER-R001..R008, R010) ------------
 # Each rule is a static check over a generated project. The bracketed row names
 # the universal-skills requirement; the SDK row (SDK-CENTRALIZED-CAPABILITIES-Rnnn)
 # names the capability it protects.
@@ -360,6 +360,32 @@ def _hook_violations(root: Path) -> list[str]:
     return out
 
 
+PARENT_ONTOLOGY = "http://knuckles.team/kg"
+
+
+def _ontology_violations(package_root: Path) -> list[str]:
+    """US-MCP-BUILDER-R010: the domain ontology links to the parent and has no TODO."""
+    out = []
+    for path in sorted((package_root / "ontology").glob("*.ttl")):
+        text = path.read_text(encoding="utf-8")
+        if "owl:Ontology" not in text:
+            continue
+        name = f"{package_root.name}/ontology/{path.name}"
+        code = re.sub(r"(?m)^\s*#.*$", "", text)
+        if not re.search(rf"owl:imports\s+<{re.escape(PARENT_ONTOLOGY)}>", code):
+            out.append(
+                f"{name}: must declare owl:imports <{PARENT_ONTOLOGY}> [US-MCP-BUILDER-R010]"
+            )
+        if "TODO" in text:
+            out.append(f"{name}: contains a TODO [US-MCP-BUILDER-R010]")
+        out.extend(
+            f"{name}: class without rdfs:subClassOf a parent class [US-MCP-BUILDER-R010]"
+            for block in code.split("\n\n")
+            if re.search(r"\ba owl:Class\b", block) and "rdfs:subClassOf" not in block
+        )
+    return out
+
+
 def check_sdk_rules(root: Path, package: str) -> list[str]:
     """Return violations of the SDK centralized-capability rules."""
     package_root = root / package
@@ -373,6 +399,7 @@ def check_sdk_rules(root: Path, package: str) -> list[str]:
         *_delivery_violations(root),
         *_bumpversion_violations(root, project, package_root),
         *_hook_violations(root),
+        *_ontology_violations(package_root),
     ]
 
 

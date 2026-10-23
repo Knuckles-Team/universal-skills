@@ -11,3 +11,4 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] **US-MCP-BUILDER-R007:** Version bookkeeping.
 - [ ] **US-MCP-BUILDER-R008:** Pipelines hooks in strict mode.
 - [ ] **US-MCP-BUILDER-R009:** Checklist in the skill.
+- [ ] **US-MCP-BUILDER-R010:** Ontology linked to the parent, data resources from SDK defaults.

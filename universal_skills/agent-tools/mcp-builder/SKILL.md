@@ -18,7 +18,7 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package using the maintained SDK scaffold. A connector
-depends on `agent-connector-sdk[mcp]>=0.3.11,<1.0.0` and nothing else from the agent
+depends on `agent-connector-sdk[mcp]>=0.3.19,<1.0.0` and nothing else from the agent
 ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
 
 Use current main revisions of
@@ -113,7 +113,7 @@ plane, which reaches the connector over MCP.
 
 A generated connector must meet every rule below on first generation, so new
 connectors do not reintroduce the drift the SDK centralization audit found.
-`scripts/check_connector_contract.py <root> --package <pkg>` enforces rules 1 to 8
+`scripts/check_connector_contract.py <root> --package <pkg>` enforces rules 1 to 9
 statically and prints the violated `US-MCP-BUILDER` row beside each finding; the
 scaffold also runs it as the `connector-sdk-contract` pre-commit hook. The SDK
 rows are in agent-connector-sdk `specs/centralized-capabilities/`.
@@ -128,6 +128,7 @@ rows are in agent-connector-sdk `specs/centralized-capabilities/`.
 | 6 | `US-MCP-BUILDER-R006` | `SDK-CENTRALIZED-CAPABILITIES-R015` | Ship one tool per API operation with verb hints (reads read-only), the safe `scripts/bootstrap.sh` (no piped installer), the standard `AGENTS.md` agent-contract section, and a `specs/` tree per the pipelines spec standard with tests bound. |
 | 7 | `US-MCP-BUILDER-R007` | none | Keep `.bumpversion.cfg` to files that exist, `__version__` in `_version.py` alone, and the Dockerfile image pin tracked by bumpversion at the same version. |
 | 8 | `US-MCP-BUILDER-R008` | `SDK-CENTRALIZED-CAPABILITIES-R030` | Enable the pipelines `connector-name` hook with `args: [--strict]`, enable `sdk-conformance` strict, and run `check-cli-help` from a plain install (`python -m <pkg>.mcp_server --help`, no `uv run`, no `find`). |
+| 9 | `US-MCP-BUILDER-R010` | `SDK-CONNECTOR-CONTROL-R073`, `SDK-CONNECTOR-CONTROL-R074.7` | Link the domain ontology to the parent: `owl:imports <http://knuckles.team/kg>`, and every class `rdfs:subClassOf` a core class of the parent ontology (the scaffold uses `:Concept`; narrow it to a more specific core class when one fits). Leave no TODO in the ontology. Write no data-resource declarations: the SDK derives them from read-only tools that return records and proposes the ontology mapping by field name. Add `data_resources.json` only to override a default. |
 
 Rule 8 note: pipelines main does not publish `sdk-conformance` yet, so the scaffold
 emits it commented out as pending, in strict mode (`SDK_CONFORMANCE_PUBLISHED` in
