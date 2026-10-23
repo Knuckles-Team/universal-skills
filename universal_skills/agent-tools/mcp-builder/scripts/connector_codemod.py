@@ -2,6 +2,7 @@
 """Deterministic, idempotent AU -> agent-connector-sdk codemod for one connector repo.
 
 usage: connector_codemod.py <repo> [--map au-to-sdk-map.tsv] [--sdk-root <checkout>] [--dry-run]
+       connector_codemod.py <repo> --sdk-centralize [--apply] [--sdk-version X] [--bump]   (requests -> SDK governed client)
 
 * Rewrites ``from agent_utilities... import X`` per the map (EXISTS/ADD rows).
   Rows tagged ``[REWRITE...]`` are rewritten at the import but reported: the
@@ -217,7 +218,18 @@ def main() -> int:
     ap.add_argument("--map", type=Path, default=Path(__file__).with_name("au-to-sdk-map.tsv"))
     ap.add_argument("--sdk-root", type=Path, help="agent-connector-sdk checkout (default: installed SDK)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--sdk-centralize", action="store_true", help="requests.Session -> SDK governed client migration (see sdk_centralize.py)")
+    ap.add_argument("--apply", action="store_true", help="with --sdk-centralize: write the changes (default is a dry run)")
+    ap.add_argument("--sdk-version", help="with --sdk-centralize: SDK floor (default: latest on PyPI)")
+    ap.add_argument("--bump", action="store_true", help="with --sdk-centralize --apply: patch-bump via the repo's bumpversion config")
     a = ap.parse_args()
+    if a.sdk_centralize:
+        sys.path.insert(0, str(Path(__file__).parent))
+        import sdk_centralize
+
+        result = sdk_centralize.run(a.repo, a.apply and not a.dry_run, a.sdk_version, bump=a.bump)
+        print(result.line())
+        return 0
     global SDK_ROOT
     SDK_ROOT = a.sdk_root
     amap = load_map(a.map)
