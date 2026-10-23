@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/agent-connector-sdk
-          ref: 0a014d904b0e9329b2b171ec88b89b16df1352c9
+          ref: 977fe94ef84d32c4341fa735e81d1cea476c77ff
           path: .ci/agent-connector-sdk
           persist-credentials: false
       - name: Check out shared Pages contract
