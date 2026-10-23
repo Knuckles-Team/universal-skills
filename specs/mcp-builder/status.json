@@ -12,7 +12,8 @@
     "US-MCP-BUILDER-R006",
     "US-MCP-BUILDER-R007",
     "US-MCP-BUILDER-R008",
-    "US-MCP-BUILDER-R009"
+    "US-MCP-BUILDER-R009",
+    "US-MCP-BUILDER-R010"
   ],
   "requirements": [
     {
@@ -76,6 +77,15 @@
       "title": "Checklist in the skill",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R010",
+      "title": "Ontology linked to the parent, data resources from SDK defaults",
+      "delivery_state": "LANDED",
+      "landed_in": [
+        "0232d7a47552"
+      ],
       "verified_by": []
     }
   ]
