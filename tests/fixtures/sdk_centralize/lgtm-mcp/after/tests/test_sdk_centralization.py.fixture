@@ -34,22 +34,26 @@ def test_request_goes_through_the_governed_client():
     assert isinstance(client._session, httpx.Client)
     client.request("GET", "/ping")
     assert seen
-    assert seen[0].url.path.endswith("/ping")
-    assert seen[0].headers["Authorization"] == "Bearer runtime-value"
+    assert seen[-1].url.path.endswith("/ping")
+    assert seen[-1].headers["Authorization"] == "Bearer runtime-value"
 
 
 # spec: CONN-LGTM-MCP-SDK-CENTRALIZATION-R003
 def test_transient_status_is_retried_by_the_sdk_client(monkeypatch):
     monkeypatch.setattr("time.sleep", lambda _s: None)
     calls = []
+    state = {"flaky": False}
 
     def handler(request):
         calls.append(request)
-        if len(calls) == 1:
+        if state["flaky"] and len(calls) == 1:
             return httpx.Response(503, headers={"Retry-After": "0"})
         return httpx.Response(200, json={"ok": True})
 
-    _client(handler).request("GET", "/ping")
+    client = _client(handler)
+    state["flaky"] = True
+    calls.clear()
+    client.request("GET", "/ping")
     assert len(calls) == 2
 
 
