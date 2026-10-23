@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "spec_id": "US-MCP-BUILDER",
+  "owner_repo": "universal-skills",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "US-MCP-BUILDER-R001",
+    "US-MCP-BUILDER-R002",
+    "US-MCP-BUILDER-R003",
+    "US-MCP-BUILDER-R004",
+    "US-MCP-BUILDER-R005",
+    "US-MCP-BUILDER-R006",
+    "US-MCP-BUILDER-R007",
+    "US-MCP-BUILDER-R008",
+    "US-MCP-BUILDER-R009"
+  ],
+  "requirements": [
+    {
+      "id": "US-MCP-BUILDER-R001",
+      "title": "Governed HTTP client",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R002",
+      "title": "TLS profile",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R003",
+      "title": "Credential references",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R004",
+      "title": "Optional dependencies through SDK extras",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R005",
+      "title": "Fleet identity declared once",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R006",
+      "title": "Tool surface, bootstrap, agent contract and specs",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R007",
+      "title": "Version bookkeeping",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R008",
+      "title": "Pipelines hooks in strict mode",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-MCP-BUILDER-R009",
+      "title": "Checklist in the skill",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    }
+  ]
+}

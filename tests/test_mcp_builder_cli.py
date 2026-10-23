@@ -129,6 +129,7 @@ LIVE_CLI_CONTRACT = textwrap.dedent("""\
     import socket
     import subprocess
     import sys
+    import tomllib
     from unittest.mock import patch
 
     from fastmcp import Client
@@ -144,7 +145,10 @@ LIVE_CLI_CONTRACT = textwrap.dedent("""\
 
     socket.socket.connect = no_network
     package = Path("cli_smoke")
-    assert require_valid_connector_package(package).connector == "cli-smoke"
+    (fleet,) = tomllib.loads(Path("pyproject.toml").read_text())["project"][
+        "entry-points"
+    ]["agent_connector_sdk.connector"]
+    assert require_valid_connector_package(package).connector == fleet
     assert not any(key.startswith("CLI_SMOKE_") for key in os.environ)
     with patch.object(subprocess, "Popen", side_effect=AssertionError("build invoked CLI")):
         server = build_server(command_args=["--transport", "stdio", "--auth-type", "none"])
@@ -166,7 +170,7 @@ LIVE_CLI_CONTRACT = textwrap.dedent("""\
                 assert prompt.messages[0].content.text.strip()
                 resources = {str(item.uri) for item in await client.list_resources()}
                 expected = {
-                    "manifest://connector", "ontology://cli-smoke/cli-smoke.ttl",
+                    "manifest://connector", f"ontology://{fleet}/cli-smoke.ttl",
                     "skill://cli-smoke-starter/SKILL.md",
                 }
                 assert expected <= resources
@@ -174,7 +178,7 @@ LIVE_CLI_CONTRACT = textwrap.dedent("""\
                     contents = await client.read_resource(uri)
                     assert contents and contents[0].text.strip()
                 manifest = await client.read_resource("manifest://connector")
-                assert json.loads(manifest[0].text)["connector"] == "cli-smoke"
+                assert json.loads(manifest[0].text)["connector"] == fleet
             assert cli._client is None
             executable = Path("fixture-program").resolve()
             executable.write_text("#!" + sys.executable + "\\nimport sys\\nassert sys.argv[1:] == ['--version']\\nprint('fixture 1.0')\\n")

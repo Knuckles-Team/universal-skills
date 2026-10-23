@@ -9,7 +9,7 @@ The only framework dependency is the SDK; no agent control-plane package, LLM
 client or provider entry point belongs in a connector:
 
     [project]
-    dependencies = ["agent-connector-sdk[mcp]>=0.3.0,<1.0.0"]
+    dependencies = ["agent-connector-sdk[mcp]>=0.3.11,<1.0.0"]
 
     [project.scripts]
     example-connector-mcp = "example_connector.mcp_server:mcp_server"

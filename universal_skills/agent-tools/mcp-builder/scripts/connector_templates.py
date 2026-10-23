@@ -58,7 +58,12 @@ def render_empty_fingerprints(source: str) -> str:
 
 
 def render_kg_ingest(display_name: str, pkg_dir: str, source: str, domain: str) -> str:
-    """Map source data through SDK models; never reproduce engine DTOs."""
+    """Map source data through SDK models; never reproduce engine DTOs.
+
+    ``source`` is accepted for call compatibility; the binding resolves the fleet
+    name from the package entry point (``IngestBinding.for_package``).
+    """
+    del source
     del pkg_dir
     template = '''\
 """Typed source observations for __DISPLAY__, submitted through the SDK.
@@ -82,7 +87,8 @@ from agent_connector_sdk.ingest import (
     current_ingest,
 )
 
-_BINDING = IngestBinding(connector=__SOURCE__, stream=__DOMAIN__)
+# The fleet name is declared once, as the package's entry point; no literal here.
+_BINDING = IngestBinding.for_package(__name__, __DOMAIN__)
 
 
 async def _submit(changes: ChangeSet, ingest: KnowledgeIngest | None) -> dict[str, int]:
@@ -157,7 +163,6 @@ async def ingest_blob(
 '''
     return (
         template.replace("__DISPLAY__", display_name)
-        .replace("__SOURCE__", repr(source))
         .replace("__DOMAIN__", repr(domain))
         .replace("__RESOURCE__", repr(_resource_name(domain)))
     )
@@ -226,6 +231,7 @@ def test_submit_failure_propagates():
 
 def render_schema_generator(pkg_dir: str, source: str) -> str:
     """Capture live tools/list; pin only real declared extraction presets."""
+    del source  # the generated script reads the fleet name from the entry point
     return (
         dedent('''\
 #!/usr/bin/env python3
@@ -248,6 +254,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 try:
+    from agent_connector_sdk.connector_identity import connector_name
     from agent_connector_sdk.manifest.live_contract import validate_live_tool_contract
     from agent_connector_sdk.manifest.loader import (
         load_tool_presets,
@@ -315,7 +322,7 @@ async def generate(check: bool) -> None:
     _write_or_check(
         PACKAGE / "connectors/tool_schema_fingerprints.json",
         {
-            "connector": "__SOURCE__",
+            "connector": connector_name("__PACKAGE__"),
             "algorithm": COMPATIBILITY_FINGERPRINT_ALGORITHM,
             "tools": pinned,
         },
@@ -330,5 +337,4 @@ if __name__ == "__main__":
     asyncio.run(generate(parser.parse_args().check))
 ''')
         .replace("__PACKAGE__", pkg_dir)
-        .replace("__SOURCE__", source)
     )

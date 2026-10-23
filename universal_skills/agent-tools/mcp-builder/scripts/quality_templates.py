@@ -3,7 +3,35 @@
 PIPELINES_THEME_REV = "3c6158a5fd7c938ed57347279401e0991c174448"
 
 # Verbatim templates: GitHub expressions and YAML braces are not str.format input.
-PRECOMMIT_CONFIG = """\
+# The pipelines `sdk-conformance` hook is not published on pipelines main yet
+# (checked 2026-10-22). Until it is, the scaffold emits it commented out so
+# `pre-commit validate-config` still passes; flip this to True when it lands and
+# the hook is emitted live in strict mode. Tracked by US-MCP-BUILDER-R008.
+SDK_CONFORMANCE_PUBLISHED = False
+
+_SDK_CONFORMANCE_LIVE = """\
+  - id: sdk-conformance
+    args: [--strict]
+"""
+_SDK_CONFORMANCE_PENDING = """\
+  # PENDING (pipelines has not published `sdk-conformance`): enable as below
+  # as soon as it exists, in strict mode.
+  # - id: sdk-conformance
+  #   args: [--strict]
+"""
+
+
+def render_precommit_config(pkg_dir: str) -> str:
+    """The connector pre-commit config for one package."""
+    conformance = (
+        _SDK_CONFORMANCE_LIVE if SDK_CONFORMANCE_PUBLISHED else _SDK_CONFORMANCE_PENDING
+    )
+    return PRECOMMIT_TEMPLATE.replace("__SDK_CONFORMANCE__", conformance).replace(
+        "__PACKAGE__", pkg_dir
+    )
+
+
+PRECOMMIT_TEMPLATE = """\
 default_language_version:
   python: python3
 default_install_hook_types: [pre-commit, pre-push]
@@ -40,7 +68,11 @@ repos:
   - id: spec-decomposition
   - id: spec-standard
   - id: spec-status
-  # Inherit the upstream manual stage; ordinary code checks do not call it.
+  # Fleet identity: every connector-name literal agrees with the one declared
+  # `agent_connector_sdk.connector` entry point. Strict: no undeclared connector.
+  - id: connector-name
+    args: [--strict]
+__SDK_CONFORMANCE__  # Inherit the upstream manual stage; ordinary code checks do not call it.
   - id: dependency-readiness
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -76,6 +108,12 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+  - id: check-cli-help
+    name: Server entry point starts from a plain install
+    entry: python -m __PACKAGE__.mcp_server --help
+    language: system
+    pass_filenames: false
+    always_run: true
   - id: pytest
     name: Generated connector contracts
     entry: python -m pytest tests -q
@@ -84,6 +122,9 @@ repos:
     always_run: true
     stages: [pre-push]
 """
+
+#: The rendered config for the placeholder package, for readers that parse it.
+PRECOMMIT_CONFIG = render_precommit_config("__PACKAGE__")
 
 SCANNER_CI_YML = """\
 name: Connector quality

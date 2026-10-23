@@ -61,7 +61,17 @@ def test_manifest_hashes_actual_ontology_and_declares_no_fake_sources(templates)
     }
 
 
+def _declare_fleet_name(root: Path, package: str, fleet: str) -> None:
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "example"\nversion = "0.0.0"\n\n'
+        '[project.entry-points."agent_connector_sdk.connector"]\n'
+        f'{fleet} = "{package}"\n',
+        encoding="utf-8",
+    )
+
+
 def _package(tmp_path: Path, templates) -> Path:
+    _declare_fleet_name(tmp_path, "example", "example-mcp")
     package = tmp_path / "example"
     (package / "connectors").mkdir(parents=True)
     (package / "__init__.py").write_text("", encoding="utf-8")
@@ -85,13 +95,18 @@ def test_manifest_passes_current_sdk_package_validation(tmp_path, templates):
     assert manifest.connector == "example-mcp"
 
 
-def test_ingestion_uses_real_sdk_models_with_fake_submission(tmp_path, templates):
+def test_ingestion_uses_real_sdk_models_with_fake_submission(
+    tmp_path, templates, monkeypatch
+):
     ingest = pytest.importorskip("agent_connector_sdk.ingest")
-    source = tmp_path / "kg_ingest.py"
-    source.write_text(
+    package = tmp_path / "generated_kg_ingest"
+    package.mkdir()
+    (package / "__init__.py").write_text(
         templates.render_kg_ingest("Example", "example", "example-mcp", "example")
     )
-    module = _module(source, "generated_kg_ingest")
+    _declare_fleet_name(tmp_path, "generated_kg_ingest", "example-mcp")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    module = importlib.import_module("generated_kg_ingest")
     calls = []
 
     class FakeIngest:
