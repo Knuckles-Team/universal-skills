@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "spec_id": "US-MCP-BUILDER-SCAFFOLD",
+  "owner_repo": "universal-skills",
+  "delivery_state": "VERIFIED",
+  "requirement_ids": [
+    "US-MCP-BUILDER-SCAFFOLD-R001"
+  ],
+  "requirements": [
+    {
+      "id": "US-MCP-BUILDER-SCAFFOLD-R001",
+      "title": "Scaffold declares the fleet name",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "17a06546e4a5",
+        "6830d82c8020",
+        "d36c90407ebd"
+      ],
+      "verified_by": [
+        "tests/test_mcp_builder_fleet_name.py:12"
+      ]
+    }
+  ]
+}

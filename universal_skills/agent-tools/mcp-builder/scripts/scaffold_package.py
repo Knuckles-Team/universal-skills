@@ -181,7 +181,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
 dependencies = [
-    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_core_dep}
+    "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",{gql_core_dep}
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -190,15 +190,19 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",{gql_all_dep}
+    "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",{gql_all_dep}
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
 [project.scripts]
 {mcp_cmd} = "{pkg_dir}.mcp_server:mcp_server"
+
+# The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
+[project.entry-points."agent_connector_sdk.connector"]
+{mcp_cmd} = "{pkg_dir}"
 
 [tool.uv.workspace]
 members = ["."]
@@ -1157,12 +1161,7 @@ def get_mcp_instance(*, command_args=None):
         version=__version__,
         instructions="{description}",
         command_args=command_args,
-        content=ConnectorContent(
-            connector="{package_name}",
-            package_root=package_root,
-            package_version=__version__,
-            manifest_path=package_root / "connector_manifest.yml",
-        ),
+        content=ConnectorContent.for_package(__name__, package_root, __version__),
     )
     # One typed, annotated MCP tool per API operation (SDK default).
     register_tool_surface(
@@ -2083,7 +2082,7 @@ def test_manifest_loads_with_the_sdk_model():
     import {pkg_dir}
 
     manifest = load_manifest(Path({pkg_dir}.__file__).parent / "connector_manifest.yml")
-    assert manifest.connector == "{package_name}"
+    assert manifest.connector == "{mcp_cmd}"
 """
 
 TESTS_CONCEPT_PARITY = """\
@@ -2368,14 +2367,14 @@ def scaffold(
 
     files[pkg / "connector_manifest.yml"] = (
         render_connector_manifest(
-            package_name,
+            mcp_cmd,
             ontology_domain,
             render_ontology_ttl(display_name, ontology_domain),
         ),
         False,
     )
     files[pkg / "connectors" / "tool_schema_fingerprints.json"] = (
-        render_empty_fingerprints(package_name),
+        render_empty_fingerprints(mcp_cmd),
         False,
     )
     files[root / "scripts" / "generate_tool_schemas.py"] = (
