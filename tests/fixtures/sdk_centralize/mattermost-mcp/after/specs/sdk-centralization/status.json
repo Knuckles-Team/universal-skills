@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION",
+  "owner_repo": "mattermost-mcp",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R001",
+    "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R002",
+    "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R003"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R001",
+      "title": "Requests use the governed SDK client",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R002",
+      "title": "SDK floor and dependency set",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "CONN-MATTERMOST-MCP-SDK-CENTRALIZATION-R003",
+      "title": "Production wiring and hot path",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    }
+  ]
+}
