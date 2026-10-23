@@ -24,8 +24,8 @@ from __future__ import annotations
 import ast
 import json
 import re
-import shutil
 import subprocess
+import sys
 import tomllib
 import urllib.request
 from dataclasses import dataclass, field
@@ -405,7 +405,6 @@ class ClientPlan:
         if matched:
             self.edits.append(Edit(first, first - 1, f"{indent}auth: httpx.Auth | None = None\n"))
         self.edits.append(Edit(last + 1, last, "".join(f"{indent}{ln}\n" for ln in create)))
-        imp = self.import_node
         new_imps = [
             "import httpx",
             "from agent_connector_sdk.http.client import create_http_client",
@@ -415,7 +414,48 @@ class ClientPlan:
         for n in ("ApiKeyAuth", "BearerAuth"):
             if n in text_all:
                 new_imps.append(f"from agent_connector_sdk.auth.static import {n}")
-        self.edits.append(Edit(imp.lineno, imp.end_lineno or imp.lineno, "".join(f"{ln}\n" for ln in new_imps)))
+        self._place_imports(new_imps)
+
+    def _place_imports(self, new_imps: list[str]) -> None:
+        """Replace ``import requests`` and keep the surrounding third-party import paragraph isort-ordered.
+
+        Ordering rule (ruff/isort default): ``import x`` lines first, then ``from x import`` lines,
+        each sorted by module name. Only done when the whole paragraph is third-party; otherwise the
+        new lines are placed at the position of ``import requests``.
+        """
+        imp = self.import_node
+        body = self.tree.body
+        i = body.index(imp)
+        lo = hi = i
+        def adjacent(a: ast.stmt, b: ast.stmt) -> bool:
+            return isinstance(a, ast.Import | ast.ImportFrom) and isinstance(b, ast.Import | ast.ImportFrom) and b.lineno == (a.end_lineno or a.lineno) + 1
+        while lo > 0 and adjacent(body[lo - 1], body[lo]):
+            lo -= 1
+        while hi + 1 < len(body) and adjacent(body[hi], body[hi + 1]):
+            hi += 1
+        para = body[lo : hi + 1]
+        stdlib = sys.stdlib_module_names
+
+        def top(n: ast.stmt) -> str:
+            return (n.names[0].name if isinstance(n, ast.Import) else (n.module or "")).split(".")[0]
+
+        if any(top(n) in stdlib or top(n) == "__future__" or (isinstance(n, ast.ImportFrom) and n.level) for n in para):
+            self.edits.append(Edit(imp.lineno, imp.end_lineno or imp.lineno, "".join(f"{ln}\n" for ln in new_imps)))
+            return
+        stmts: list[tuple[int, str, str]] = []  # (kind 0=import 1=from, module, text)
+        lines = self.src.splitlines(keepends=True)
+        for n in para:
+            if n is imp:
+                continue
+            text = "".join(lines[n.lineno - 1 : n.end_lineno])
+            stmts.append((0 if isinstance(n, ast.Import) else 1, (n.names[0].name if isinstance(n, ast.Import) else n.module or "").lower(), text))
+        for ln in new_imps:
+            kind = 0 if ln.startswith("import ") else 1
+            mod = ln.split()[1].lower()
+            stmts.append((kind, mod, ln + "\n"))
+        stmts.sort(key=lambda t: (t[0], t[1]))
+        first, last = para[0], para[-1]
+        self.edits.append(Edit(first.lineno, last.end_lineno or last.lineno, "".join(t[2] for t in stmts)))
 
     def render(self) -> str:
         lines = self.src.splitlines(keepends=True)
@@ -778,12 +818,6 @@ def _project_name(repo: Path) -> str:
         return repo.name
 
 
-def _isort(path: Path) -> None:
-    ruff = shutil.which("ruff")
-    if ruff:
-        subprocess.run([ruff, "check", "--select", "I", "--fix", "--quiet", "--isolated", str(path)], check=False)
-
-
 def _readme_index(repo: Path, name: str) -> None:
     readme = repo / "specs/README.md"
     if not readme.exists():
@@ -855,7 +889,6 @@ def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) ->
             res.applied.append("specs/sdk-centralization/ (6 files) + tests/test_sdk_centralization.py")
             if apply:
                 base.write_text(new_src)
-                _isort(base)
                 name = _project_name(repo)
                 module = ".".join(base.relative_to(repo).with_suffix("").parts)
                 sd = repo / "specs/sdk-centralization"
