@@ -181,7 +181,7 @@ readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
 dependencies = [
-    "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",{gql_core_dep}
+    "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",{gql_core_dep}
 ]
 [[project.authors]]
 name = "Repository Maintainers"
@@ -190,9 +190,9 @@ name = "Repository Maintainers"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",]
 {gql_extra}all = [
-    "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",{gql_all_dep}
+    "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",{gql_all_dep}
 ]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
