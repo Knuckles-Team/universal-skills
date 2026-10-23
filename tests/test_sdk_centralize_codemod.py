@@ -11,7 +11,7 @@ sys.path.insert(0, str(SCRIPTS))
 import sdk_centralize  # noqa: E402
 
 FIXTURES = Path(__file__).parent / "fixtures/sdk_centralize"
-AUTO = ["caddy-mcp", "lgtm-mcp", "mattermost-mcp"]
+AUTO = ["caddy-mcp", "lgtm-mcp", "mattermost-mcp", "wger-agent"]
 EXCEPTIONS = {"ciso-assistant-api": "retry-loop", "owncast-agent": "catches-requests-errors"}
 
 

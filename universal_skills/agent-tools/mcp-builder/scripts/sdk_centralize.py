@@ -31,6 +31,11 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sdk_centralize_tests as sct  # noqa: E402
+
+#: attribute names a connector stores its base URL under (first match wins).
+URL_ATTRS = ("base_url", "url", "_base_url")
 SESSION_METHODS = {"request", "get", "post", "put", "patch", "delete", "head", "options"}
 #: requests-only keyword arguments with no safe httpx spelling.
 BAD_KWARGS = {"verify", "cert", "proxies", "stream", "auth", "hooks", "cookies"}
@@ -236,6 +241,58 @@ def _rewrite_auth_tree(
     return matched
 
 
+def import_edits(src: str, tree: ast.Module, anchor: ast.stmt, new_imps: list[str], drop: list[ast.stmt]) -> list[tuple[int, int, str]]:
+    """Line edits ``(start, end, text)`` that add ``new_imps`` near ``anchor`` and delete the ``drop`` imports.
+
+    When the anchor's import paragraph is all third-party, the paragraph is re-sorted isort-style
+    (``import x`` lines first, then ``from x import`` lines, each by module name); otherwise the new
+    lines take the anchor's position (or follow it when the anchor stays).
+    """
+    body = tree.body
+    i = body.index(anchor)
+    lo = hi = i
+
+    def adjacent(a: ast.stmt, b: ast.stmt) -> bool:
+        return isinstance(a, ast.Import | ast.ImportFrom) and isinstance(b, ast.Import | ast.ImportFrom) and b.lineno == (a.end_lineno or a.lineno) + 1
+
+    while lo > 0 and adjacent(body[lo - 1], body[lo]):
+        lo -= 1
+    while hi + 1 < len(body) and adjacent(body[hi], body[hi + 1]):
+        hi += 1
+    para = body[lo : hi + 1]
+    stdlib = sys.stdlib_module_names
+    lines = src.splitlines(keepends=True)
+    out: list[tuple[int, int, str]] = []
+    for d in drop:
+        if d not in para:
+            out.append((d.lineno, d.end_lineno or d.lineno, ""))
+
+    def top(n: ast.stmt) -> str:
+        return (n.names[0].name if isinstance(n, ast.Import) else (n.module or "")).split(".")[0]
+
+    block = "".join(f"{ln}\n" for ln in new_imps)
+    if any(top(n) in stdlib or top(n) == "__future__" or (isinstance(n, ast.ImportFrom) and n.level) for n in para):
+        if anchor in drop:
+            out.append((anchor.lineno, anchor.end_lineno or anchor.lineno, block))
+        elif block:
+            out.append(((anchor.end_lineno or anchor.lineno) + 1, anchor.end_lineno or anchor.lineno, block))
+        for d in drop:
+            if d in para and d is not anchor:
+                out.append((d.lineno, d.end_lineno or d.lineno, ""))
+        return out
+    stmts: list[tuple[int, str, str]] = []  # (kind 0=import 1=from, module, text)
+    for n in para:
+        if n in drop:
+            continue
+        text = "".join(lines[n.lineno - 1 : n.end_lineno])
+        stmts.append((0 if isinstance(n, ast.Import) else 1, (n.names[0].name if isinstance(n, ast.Import) else n.module or "").lower(), text))
+    for ln in new_imps:
+        stmts.append((0 if ln.startswith("import ") else 1, ln.split()[1].lower(), ln + "\n"))
+    stmts.sort(key=lambda t: (t[0], t[1]))
+    out.append((para[0].lineno, para[-1].end_lineno or para[-1].lineno, "".join(t[2] for t in stmts)))
+    return out
+
+
 class ClientPlan:
     def __init__(self, repo: Path, path: Path, src: str, tree: ast.Module):
         self.repo, self.path, self.src, self.tree = repo, path, src, tree
@@ -313,7 +370,11 @@ class ClientPlan:
         if tls_idx is None:
             raise exc("no-tls-profile-line", "self.tls_profile = ... resolve_tls_profile('<name>') not found")
         self.tls_idx = tls_idx
-        if not any(isinstance(st, ast.Assign) and _self_attr(st.targets[0], "base_url") for st in self.init.body):
+        self.url_attr = next(
+            (u for u in URL_ATTRS if any(isinstance(st, ast.Assign) and _self_attr(st.targets[0], u) for st in self.init.body)),
+            "",
+        )
+        if not self.url_attr:
             raise exc("no-self-base-url")
 
     def _check_uses(self) -> None:
@@ -364,10 +425,11 @@ class ClientPlan:
 
     def _check_init_signature(self) -> None:
         args = {a.arg: src_of(self.src, a.annotation) if a.annotation else "" for a in self.init.args.args}
-        if "base_url" not in args:
+        self.url_param = next((u for u in ("base_url", "url") if u in args), "")
+        if not self.url_param:
             raise exc("no-base-url-param")
-        if "None" in args["base_url"]:
-            raise exc("optional-base-url", f"base_url: {args['base_url']}")
+        if "None" in args[self.url_param]:
+            raise exc("optional-base-url", f"{self.url_param}: {args[self.url_param]}")
 
     def _top(self, node: ast.AST) -> ast.stmt:
         for st in self.init.body:
@@ -390,12 +452,12 @@ class ClientPlan:
         first = min(t.lineno for t in tops)
         last = max(t.end_lineno or t.lineno for t in tops)
         indent = " " * self.setup[0].col_offset
-        opts = ["base_url=self.base_url", "tls=self.tls_profile"]
+        opts = [f"base_url=self.{self.url_attr}", "tls=self.tls_profile"]
         if matched:
             opts.append("auth=auth")
         if hoisted:
             opts.append("headers={" + ", ".join(f"{k!r}: {v}" for k, v in hoisted.items()) + "}")
-        opts.append('allow_plaintext=self.base_url.startswith("http://")')
+        opts.append(f'allow_plaintext=self.{self.url_attr}.startswith("http://")')
         create = [f"self.{a} = create_http_client(", "    HttpClientOptions("]
         create += [f"        {o}," for o in opts]
         create += ["    )", ")"]
@@ -417,45 +479,9 @@ class ClientPlan:
         self._place_imports(new_imps)
 
     def _place_imports(self, new_imps: list[str]) -> None:
-        """Replace ``import requests`` and keep the surrounding third-party import paragraph isort-ordered.
-
-        Ordering rule (ruff/isort default): ``import x`` lines first, then ``from x import`` lines,
-        each sorted by module name. Only done when the whole paragraph is third-party; otherwise the
-        new lines are placed at the position of ``import requests``.
-        """
+        """Replace ``import requests`` by the SDK imports (see ``import_edits``)."""
         imp = self.import_node
-        body = self.tree.body
-        i = body.index(imp)
-        lo = hi = i
-        def adjacent(a: ast.stmt, b: ast.stmt) -> bool:
-            return isinstance(a, ast.Import | ast.ImportFrom) and isinstance(b, ast.Import | ast.ImportFrom) and b.lineno == (a.end_lineno or a.lineno) + 1
-        while lo > 0 and adjacent(body[lo - 1], body[lo]):
-            lo -= 1
-        while hi + 1 < len(body) and adjacent(body[hi], body[hi + 1]):
-            hi += 1
-        para = body[lo : hi + 1]
-        stdlib = sys.stdlib_module_names
-
-        def top(n: ast.stmt) -> str:
-            return (n.names[0].name if isinstance(n, ast.Import) else (n.module or "")).split(".")[0]
-
-        if any(top(n) in stdlib or top(n) == "__future__" or (isinstance(n, ast.ImportFrom) and n.level) for n in para):
-            self.edits.append(Edit(imp.lineno, imp.end_lineno or imp.lineno, "".join(f"{ln}\n" for ln in new_imps)))
-            return
-        stmts: list[tuple[int, str, str]] = []  # (kind 0=import 1=from, module, text)
-        lines = self.src.splitlines(keepends=True)
-        for n in para:
-            if n is imp:
-                continue
-            text = "".join(lines[n.lineno - 1 : n.end_lineno])
-            stmts.append((0 if isinstance(n, ast.Import) else 1, (n.names[0].name if isinstance(n, ast.Import) else n.module or "").lower(), text))
-        for ln in new_imps:
-            kind = 0 if ln.startswith("import ") else 1
-            mod = ln.split()[1].lower()
-            stmts.append((kind, mod, ln + "\n"))
-        stmts.sort(key=lambda t: (t[0], t[1]))
-        first, last = para[0], para[-1]
-        self.edits.append(Edit(first.lineno, last.end_lineno or last.lineno, "".join(t[2] for t in stmts)))
+        self.edits += [Edit(a, b, t) for a, b, t in import_edits(self.src, self.tree, imp, new_imps, [imp])]
 
     def render(self) -> str:
         lines = self.src.splitlines(keepends=True)
@@ -489,39 +515,23 @@ def scan_exceptions(repo: Path, files: list[Path], base: Path | None) -> list[st
                 reasons.append(f"tls-handbuilt: {rel}")
             if re.search(r"max_retries|Retry-After|backoff", text, re.I) and re.search(r"sleep\(", text) and re.search(r"for\s+\w+\s+in\s+range\(|while\s", text):
                 reasons.append(f"retry-loop: {rel}")
-            if p != base:
-                for n in ast.walk(tree):
-                    if (
-                        isinstance(n, ast.Attribute)
-                        and isinstance(n.value, ast.Name)
-                        and n.value.id == "requests"
-                        and n.attr in {"exceptions", "HTTPError", "RequestException", "ConnectionError", "Timeout"}
-                    ):
-                        reasons.append(f"catches-requests-errors: {rel}:{n.lineno}")
-                        break
             if p == base and re.search(r"next_page|while\s+True", text) and re.search(r"page|offset|cursor", text):
                 reasons.append(f"pagination-in-base: {rel}")
-        elif _test_binds_requests(tree, text):
-            reasons.append(f"tests-bind-requests: {rel}")
     return list(dict.fromkeys(reasons))
 
 
-def _test_binds_requests(tree: ast.Module, text: str) -> bool:
-    """A test that uses the requests API (attribute use, from-import, patch string) or its mocks."""
-    if re.search(r"configure_requests_session|import responses|import requests_mock|from responses", text):
+def _builds_session(text: str) -> bool:
+    """True when the module really calls ``requests.Session`` (a docstring mention does not count)."""
+    if "requests.Session" not in text:
+        return False
+    try:
+        return any(_is_requests_session(n) for n in ast.walk(ast.parse(text)))
+    except SyntaxError:
         return True
-    for n in ast.walk(tree):
-        if isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] == "requests":
-            return True
-        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "requests":
-            return True
-        if isinstance(n, ast.Constant) and isinstance(n.value, str) and re.search(r"(^|\.)requests\.(Session|get|post|request|exceptions|adapters)", n.value):
-            return True
-    return False
 
 
 def find_base(repo: Path, files: list[Path]) -> tuple[Path | None, list[Path]]:
-    cands = [p for p in files if not is_test(repo, p) and "requests.Session" in p.read_text(errors="replace")]
+    cands = [p for p in files if not is_test(repo, p) and _builds_session(p.read_text(errors="replace"))]
     return (cands[0] if len(cands) == 1 else None), cands
 
 
@@ -833,6 +843,31 @@ def _readme_index(repo: Path, name: str) -> None:
     readme.write_text(text)
 
 
+def plan_file_rewrites(repo: Path, files: list[Path], base: Path | None) -> tuple[dict[Path, str], list[str]]:
+    """Per-file requests -> httpx rewrites (tests and error handling); blockers become EXCEPTION reasons."""
+    base_dotted = None
+    if base is not None:
+        parts = list(base.relative_to(repo).with_suffix("").parts)
+        base_dotted = ".".join(parts[1:] if parts[0] == "src" else parts)
+    out: dict[Path, str] = {}
+    reasons: list[str] = []
+    for p in files:
+        if p == base:
+            continue
+        text = p.read_text(errors="replace")
+        if "requests" not in text and "responses" not in text:
+            continue
+        test = is_test(repo, p)
+        r = sct.rewrite_file(text, str(p.relative_to(repo)), is_test=test, base_dotted=base_dotted, place_imports=import_edits)
+        reasons += [f"{code}: {detail}" for code, detail in r.blockers]
+        if r.text is not None and not r.blockers:
+            if base is None:  # no client migration in this repo: requests stays the transport
+                reasons.append(f"{'tests-bind-requests' if test else 'catches-requests-errors'}: {p.relative_to(repo)}")
+            else:
+                out[p] = r.text
+    return out, reasons
+
+
 def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) -> Result:
     repo = repo.resolve()
     res = Result(repo.name)
@@ -870,14 +905,16 @@ def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) ->
         if not is_test(repo, p)
     ):
         reasons.append("requests-use-without-session-base: direct requests.<verb> calls")
+    rewrites, rw_reasons = plan_file_rewrites(repo, files, base)
+    reasons += rw_reasons
     if reasons:
         res.verdict = "EXCEPTION"
-        res.reasons = reasons
+        res.reasons = list(dict.fromkeys(reasons))
         return res
 
     def imports(mod: str) -> bool:
         pat = re.compile(rf"^\s*(import {mod}\b|from {mod}\b)", re.M)
-        return any(pat.search(p.read_text(errors="replace")) for p in files if p != base)
+        return any(pat.search(rewrites.get(p, p.read_text(errors="replace"))) for p in files if p != base)
 
     imp_requests = imports("requests")
     imp_httpx = imports("httpx") or (base is not None and plan is None and "httpx" in base.read_text())
@@ -887,7 +924,11 @@ def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) ->
                 f"{plan.rel}: requests.Session -> create_http_client/HttpClientOptions (resolve_tls_profile({plan.tls_name!r}))"
             )
             res.applied.append("specs/sdk-centralization/ (6 files) + tests/test_sdk_centralization.py")
+            for p in rewrites:
+                res.applied.append(f"{p.relative_to(repo)}: requests tests/errors -> httpx / patched create_http_client")
             if apply:
+                for p, t in rewrites.items():
+                    p.write_text(t)
                 base.write_text(new_src)
                 name = _project_name(repo)
                 module = ".".join(base.relative_to(repo).with_suffix("").parts)
@@ -902,8 +943,9 @@ def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) ->
                 if bm and bm.group(1) in {p.arg for p in params} and bm.group(1) not in req:
                     req.append(bm.group(1))
                 call = ", ".join(
-                    'base_url="https://service.example.invalid"' if a == "base_url" else f'{a}="runtime-value"' for a in req
+                    'base_url="https://service.example.invalid"' if a == plan.url_param else f'{a}="runtime-value"' for a in req
                 )
+                call = call.replace('base_url="https://service.example.invalid"', f'{plan.url_param}="https://service.example.invalid"')
                 (repo / "tests").mkdir(exist_ok=True)
                 (repo / "tests/test_sdk_centralization.py").write_text(
                     test_file(name, module, plan.cls.name, plan.attr, call, "BearerAuth(" in new_src)
