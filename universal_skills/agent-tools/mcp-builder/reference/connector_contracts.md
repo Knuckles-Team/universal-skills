@@ -20,9 +20,9 @@ not permission to copy service-specific state or existing omissions.
 
 Connector code imports agent_connector_sdk only. It is MCP-only: no agent
 server, no LLM client and no dependency on the agent control plane.
-Use load_config, create_mcp_server and register_tool_surface as shown in the
-[Python guide](python_mcp_server.md). Explicit ConnectorContent registers declared
-skills, prompts, ontology, shapes and connector_manifest.yml.
+Declare a `Connector` and start it with the SDK `run()` entry, as shown in the
+[Python guide](python_mcp_server.md). The SDK serves the package's skills, prompts,
+ontology, shapes and the data-source declaration by convention.
 
 Verify installed package data and native MCP discovery. Explicit ConnectorContent
 registration is the only content-discovery path; do not add provider entry points.

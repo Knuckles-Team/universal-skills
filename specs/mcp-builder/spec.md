@@ -1,12 +1,12 @@
-# US-MCP-BUILDER — The mcp-builder scaffold meets the SDK centralized-capability rules
+# US-MCP-BUILDER — The mcp-builder scaffold builds connectors on SDK components
 
-Owner: universal-skills. Cross-repo IDs: `SDK-CENTRALIZED-CAPABILITIES-R001`, `SDK-CENTRALIZED-CAPABILITIES-R008`, `SDK-CENTRALIZED-CAPABILITIES-R009`, `SDK-CENTRALIZED-CAPABILITIES-R015`, `SDK-CENTRALIZED-CAPABILITIES-R016`, `SDK-CENTRALIZED-CAPABILITIES-R030`, `SDK-CENTRALIZED-CAPABILITIES-R040`, `SDK-CONNECTOR-CONTROL-R071`.
+Owner: universal-skills. Cross-repo IDs: `SDK-CONNECTOR-CONTROL-R019.1`, `SDK-CONNECTOR-CONTROL-R028.4`, `SDK-QUALITY-RELEASE-R005.1`, `SDK-SOURCE-INGEST-R004.29`.
 
 References: [SDK-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
 
 ## Purpose and user stories
 
-A maintainer runs the `mcp-builder` scaffold to start a connector. The generated connector must already meet every SDK centralized-capability rule. The 2026-10-22 audit of 79 connectors found own HTTP clients, copied retries, `gql` wrappers, hand-parsed secret references, connector-name literals, stale bumpversion entries and failing hooks. Each came from a connector that started without the rule.
+A maintainer runs the `mcp-builder` scaffold to start a connector. The generated connector holds only what is specific to one external system and uses SDK components for the server, tests, version lookup and auth. The shared pipelines own gates, container files and release.
 
 ## Requirements and acceptance
 
@@ -18,6 +18,6 @@ The search covered `specs/` of this repository. `US-PAGES` owns published docume
 
 ## Scope and interfaces
 
-In scope: `universal_skills/agent-tools/mcp-builder/` (`SKILL.md`, `scripts/scaffold_connector.py`, `scripts/scaffold_package.py`, its templates and `scripts/check_connector_contract.py`).
+In scope: `universal_skills/agent-tools/mcp-builder/` (`SKILL.md`, `scripts/scaffold_connector.py`).
 
 Out of scope: the SDK capabilities themselves (SDK owns them), the pipelines hook bodies (pipelines owns them), and migrating existing connectors (each connector repository owns its own fix).

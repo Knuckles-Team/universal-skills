@@ -17,61 +17,14 @@ def builder():
     return module
 
 
-def test_generated_image_installs_the_published_wheel_never_source(tmp_path):
-    module = builder()
-    module.scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
-    root = tmp_path / "unpublished-api"
-    docker = (root / "docker/Dockerfile").read_text()
-    assert "pip install --only-binary :all: unpublished-api[mcp]==0.1.0" in docker
-    assert '".[mcp]"' not in docker
-    assert "COPY " not in docker
-    assert "cargo" not in docker and "build-essential" not in docker
-    assert "python:3.14-slim@sha256:" in docker
-    assert "USER 10001" in docker
-    assert "FROM mcp AS default" in docker
-    assert "git clone" not in docker
-    config = configparser.ConfigParser(interpolation=None)
-    config.read(root / ".bumpversion.cfg")
-    assert any("docker/Dockerfile" in name for name in config.sections())
 
 
-def test_image_docs_build_from_the_published_release(tmp_path):
-    builder().scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
-    root = tmp_path / "unpublished-api"
-    readme = (root / "README.md").read_text()
-    assert "--target mcp -t unpublished-api:<version>-mcp ." in readme
-    deployment = (root / "docs/deployment.md").read_text()
-    assert "pip install --only-binary :all:" in deployment
-    assert "never installs the" in deployment
 
 
-def test_named_source_builds_are_exempt_only_by_name(tmp_path):
-    import tomllib
-
-    builder().scaffold(
-        "unpublished-api",
-        output_dir=str(tmp_path),
-        pkg_types="api_client,mcp",
-        allow_source_build="Uptime_Kuma.API",
-    )
-    root = tmp_path / "unpublished-api"
-    docker = (root / "docker/Dockerfile").read_text()
-    assert "pip install --only-binary :all: --no-binary uptime-kuma-api unpublished-api[mcp]==0.1.0" in docker
-    data = tomllib.loads((root / "pyproject.toml").read_text())
-    assert data["tool"]["pipelines"]["allow-source-build"] == ["uptime-kuma-api"]
 
 
-def test_default_scaffold_declares_no_source_builds(tmp_path):
-    builder().scaffold("unpublished-api", output_dir=str(tmp_path), pkg_types="api_client,mcp")
-    root = tmp_path / "unpublished-api"
-    assert "--no-binary" not in (root / "docker/Dockerfile").read_text()
-    assert "[tool.pipelines]" not in (root / "pyproject.toml").read_text()
 
 
-@pytest.mark.parametrize("name", [":all:", "*", "a b"])
-def test_source_build_wildcards_refused(name):
-    with pytest.raises(ValueError, match="exact package names"):
-        builder().source_build_names(name)
 
 
 def test_parity_rejects_undeclared_no_binary(tmp_path):

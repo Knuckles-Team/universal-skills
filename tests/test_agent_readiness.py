@@ -506,28 +506,6 @@ def test_generator_is_source_only_and_does_not_scrape_html_or_import_runtime():
     assert "generated HTML" in source
 
 
-def test_builder_scaffold_carries_the_readiness_contract(tmp_path):
-    scaffold_path = SCRIPT.with_name("scaffold_package.py")
-    spec = importlib.util.spec_from_file_location(
-        "_readiness_scaffold_test", scaffold_path
-    )
-    assert spec and spec.loader
-    scaffold = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = scaffold
-    spec.loader.exec_module(scaffold)
-
-    scaffold.scaffold("readiness-provider", output_dir=str(tmp_path))
-    root = tmp_path / "readiness-provider"
-    assert (root / "docs" / "agent-readiness.json").is_file()
-    assert (root / "docs" / "agent-readiness.schema.json").is_file()
-    assert (root / "scripts" / "generate_agent_readiness.py").is_file()
-    assert (root / "scripts" / "agent_readiness_tck.py").is_file()
-    assert (root / "llms.txt").is_file()
-    manifest = json.loads(
-        (root / "agent-readiness-manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["content_signals"] == {"policy": "unset"}
-    assert manifest["capabilities"]["mcp"]["applicable"] is True
 
 
 def _mcp_artifact(root: Path, *, http_transport: bool) -> None:

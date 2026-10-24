@@ -4,89 +4,160 @@
   "owner_repo": "universal-skills",
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "US-MCP-BUILDER-R001",
-    "US-MCP-BUILDER-R002",
-    "US-MCP-BUILDER-R003",
-    "US-MCP-BUILDER-R004",
-    "US-MCP-BUILDER-R005",
-    "US-MCP-BUILDER-R006",
-    "US-MCP-BUILDER-R007",
-    "US-MCP-BUILDER-R008",
-    "US-MCP-BUILDER-R009",
-    "US-MCP-BUILDER-R010"
+    "US-MCP-BUILDER-R011",
+    "US-MCP-BUILDER-R011.1",
+    "US-MCP-BUILDER-R011.2",
+    "US-MCP-BUILDER-R011.3",
+    "US-MCP-BUILDER-R011.4",
+    "US-MCP-BUILDER-R011.5",
+    "US-MCP-BUILDER-R011.6",
+    "US-MCP-BUILDER-R011.7",
+    "US-MCP-BUILDER-R011.8",
+    "US-MCP-BUILDER-R011.9",
+    "US-MCP-BUILDER-R011.10",
+    "US-MCP-BUILDER-R011.11",
+    "US-MCP-BUILDER-R011.12",
+    "US-MCP-BUILDER-R011.13"
   ],
   "requirements": [
     {
-      "id": "US-MCP-BUILDER-R001",
-      "title": "Governed HTTP client",
+      "id": "US-MCP-BUILDER-R011",
+      "title": "Connector scaffold on SDK components",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "US-MCP-BUILDER-R011.1",
+        "US-MCP-BUILDER-R011.2",
+        "US-MCP-BUILDER-R011.3",
+        "US-MCP-BUILDER-R011.4",
+        "US-MCP-BUILDER-R011.5",
+        "US-MCP-BUILDER-R011.6",
+        "US-MCP-BUILDER-R011.7",
+        "US-MCP-BUILDER-R011.8",
+        "US-MCP-BUILDER-R011.9",
+        "US-MCP-BUILDER-R011.10",
+        "US-MCP-BUILDER-R011.11",
+        "US-MCP-BUILDER-R011.12",
+        "US-MCP-BUILDER-R011.13"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R002",
-      "title": "TLS profile",
+      "id": "US-MCP-BUILDER-R011.1",
+      "title": "Minimal tree",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:88"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R003",
-      "title": "Credential references",
+      "id": "US-MCP-BUILDER-R011.2",
+      "title": "Deterministic output",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:96"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R004",
-      "title": "Optional dependencies through SDK extras",
+      "id": "US-MCP-BUILDER-R011.3",
+      "title": "Identity and version in pyproject only",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:102"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R005",
-      "title": "Fleet identity declared once",
+      "id": "US-MCP-BUILDER-R011.4",
+      "title": "Shared workflows for release and PR",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:119"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R006",
-      "title": "Tool surface, bootstrap, agent contract and specs",
+      "id": "US-MCP-BUILDER-R011.5",
+      "title": "One tool per operation with risk classes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:201"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R007",
-      "title": "Version bookkeeping",
+      "id": "US-MCP-BUILDER-R011.6",
+      "title": "Sources declared as data",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:212"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R008",
-      "title": "Pipelines hooks in strict mode",
+      "id": "US-MCP-BUILDER-R011.7",
+      "title": "Content served over MCP",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:222"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R009",
-      "title": "Checklist in the skill",
+      "id": "US-MCP-BUILDER-R011.8",
+      "title": "Ontology rolls up to a core class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:233"
+      ]
     },
     {
-      "id": "US-MCP-BUILDER-R010",
-      "title": "Ontology linked to the parent, data resources from SDK defaults",
-      "delivery_state": "LANDED",
-      "landed_in": [
-        "0232d7a47552"
-      ],
-      "verified_by": []
+      "id": "US-MCP-BUILDER-R011.9",
+      "title": "Pipelines connector gates pass",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:271"
+      ]
+    },
+    {
+      "id": "US-MCP-BUILDER-R011.10",
+      "title": "Ontology graph check passes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:306"
+      ]
+    },
+    {
+      "id": "US-MCP-BUILDER-R011.11",
+      "title": "SDK conformance plugin passes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:324"
+      ]
+    },
+    {
+      "id": "US-MCP-BUILDER-R011.12",
+      "title": "Client from one SDK auth declaration",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:337"
+      ]
+    },
+    {
+      "id": "US-MCP-BUILDER-R011.13",
+      "title": "Dependencies through SDK extras",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:349"
+      ]
     }
   ]
 }

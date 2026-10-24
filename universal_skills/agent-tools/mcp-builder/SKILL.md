@@ -17,177 +17,103 @@ metadata:
 
 # MCP Builder
 
-Build one MCP-only connector package using the maintained SDK scaffold. A connector
-depends on `agent-connector-sdk[mcp]>=0.3.19,<1.0.0` and nothing else from the agent
-ecosystem: no agent server, no LLM client, no A2A card, no provider entry points.
+Build one MCP-only connector package on the SDK's components. A connector depends on
+`agent-connector-sdk[mcp]>=0.5.1,<0.6` and nothing else from the agent ecosystem: no
+agent server, no LLM client, no provider entry points. The connector holds only what
+is specific to one external system; the SDK and the shared pipelines own the rest.
 
 Use current main revisions of
-[agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk),
-[pipelines](https://github.com/Knuckles-Team/pipelines), and the relevant golden
-packages as evidence. Read repository instructions and record exact revisions
-before adapting a template. SDK source owns connector APIs; pipelines owns shared
-gates and delivery automation. A missing contract in a golden example is not
-permission to omit it.
+[agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk) and
+[pipelines](https://github.com/Knuckles-Team/pipelines) as the authority. Record the
+revisions you read.
 
 ## Scaffold a connector
 
     python3 scripts/scaffold_connector.py example-mcp --output-dir /path/to/output
 
-The output is deterministic (no date, user or host name) and holds only what is
-specific to one connector. The SDK owns the server, tests, version lookup and
-ontology shapes; the shared pipelines workflows own gates and release.
+Output is deterministic (no date, user or host name). `scaffold_connector.py` is the
+only generator.
 
     example-mcp/
-      pyproject.toml                 name, version (only here), one SDK dep, one entry point
+      pyproject.toml                 name, version (only here), one SDK dependency, one entry point
       README.md   AGENTS.md          connector section only
-      .pre-commit-config.yaml        connector-name --strict, release-standard
-      .github/workflows/pipeline.yml       PyPI + Docker Hub via shared pipelines
+      .pre-commit-config.yaml        the pipelines reference config (connector-standard, secrets, spec)
+      .github/workflows/pipeline.yml       python_pipeline (connector) + container_pipeline (render_connector)
       .github/workflows/connector-pr.yml   shared PR gates
-      docker/Dockerfile              required by release-standard until pipelines renders it
-      example_mcp/__init__.py        docstring only
-      example_mcp/__main__.py        agent_connector_sdk.run(package=...)   [SDK>=0.5.0]
-      example_mcp/client.py          the one vendor-client constructor
-      example_mcp/tools.py           one tool per API operation + source_meta
+      example_mcp/__init__.py        connector = Connector(api=Api, get_client=get_client, instructions=...)
+      example_mcp/__main__.py        from agent_connector_sdk import run; run()
+      example_mcp/api_client.py      class Api: one public method per API operation
+      example_mcp/auth.py            client_factory(url_env=, auth=, tls=, delegation=)
+      example_mcp/connector_sources.py     SOURCES = (source_meta(tool=...), ...)
       example_mcp/prompts/*.json     fastmcp prompts (title, tags, meta)
       example_mcp/skills/<name>/SKILL.md
       example_mcp/ontology/<domain>.ttl    classes extend an EG core class
       specs/README.md  specs/<CONN-ID>/{spec,plan,requirements,tasks,test-spec}.md + status.json
-      tests/test_tools.py            tests of the connector's own tool logic only
+      tests/test_api_client.py       tests of the connector's own client logic only
 
 Nothing else is written. Do not add `mcp_server.py`, `_version.py`, `.bumpversion.cfg`,
-`connector_sources.py`, `certification.json`, a shapes file, `mcp_config.json`,
-`conftest.py`, `kg_ingest.py`, `auth.py` or copies of SDK tests: each belongs to the
-SDK or pipelines, and everything the connector offers is served over MCP.
+`docker/` files, `certification.json`, a shapes file, `mcp_config.json`, `conftest.py`,
+`kg_ingest.py` boilerplate or copies of SDK tests: the SDK and pipelines own them, and
+everything the connector offers is served over MCP.
 
 ## How to build each part
 
-1. **Tools: one per API operation.** Each HTTP method on each endpoint is its own
-   tool named `<prefix>_<verb>_<noun>`. Never condense into `action` or `params_json`
-   dispatch tools. Classify every tool by annotation: reads `readOnlyHint=true`,
-   writes `readOnlyHint=false`, deletes `destructiveHint=true` (PUT and DELETE also
-   `idempotentHint=true`). The SDK refuses to start with an unclassified tool
-   (`assert_tools_classified`, `split_tool_classes`).
-2. **Data sources: declare, never file.** A read tool that returns records carries
-   `meta=source_meta(source_id=..., record_type=..., id_field=..., ontology_class=...,
-   fields={...})`. The server serves the assembled declaration as `connector://resources`.
-   Use `for_each` on a source to fan out per parent record. Write no manifest file.
+1. **Tools: one per API operation.** Each HTTP method on each endpoint is one public
+   method of `Api`; the SDK serves one tool per method, named `<prefix>_<method>`
+   (`Connector(tool_prefix=...)` overrides the prefix). The verb in the method docstring
+   (`GET /items/{id}: ...`) sets the annotations: GET is read-only, PUT and DELETE are
+   idempotent, DELETE is destructive and asks the caller to confirm. Never condense
+   operations into `action` or `params_json` dispatch tools. Tools that are not client
+   methods go in `<pkg>/tools.py` as `register_<tag>_tools(mcp)`, or in
+   `Connector(extra_registrations=...)`. Check the served count against the API
+   operation count with `scripts/check_tool_parity.py`.
+2. **Data sources: declared data.** `connector_sources.py` holds `SOURCES` built with
+   `source_meta(tool=..., source_id=..., record_type=..., id_field=..., ontology_class=...,
+   fields={...})`, plus optional `FIELD_SETS` and `SCHEMA_VERSION`. Use `for_each` on a
+   source to fan out per parent record. The SDK builds the declaration with
+   `load_declaration` and serves it as `connector://resources`. Write no manifest file
+   and no `declaration()` function. Set `record_type` to the ontology class name.
 3. **Ontology.** `ontology/<domain>.ttl` in the shared `:` namespace. Every class gets
-   `rdfs:subClassOf` an epistemic-graph core class (the scaffold uses `:Concept`;
-   narrow it when a core class fits). Never `owl:imports` the core ontology. Give each
-   class an object property to a core class. Shapes are generated by the SDK.
+   `rdfs:subClassOf` an epistemic-graph core class (the scaffold uses `:Concept`; narrow
+   it when a core class fits) and an object property to a core class. Never
+   `owl:imports` the core ontology. Shapes and attestations are generated at release.
    Check with `pipelines-hook connector-ontology-map graph-check`.
 4. **Prompts and skills.** Prompts are `prompts/<name>.json`, served as fastmcp prompts
    with title (`identity.role`), tags and `_meta` (role, topic, version, `serves`).
-   Skills are `skills/<name>/SKILL.md` directories, served by the SDK skills provider.
-   Both reach the graph over MCP; ship no separate file listing them.
-5. **Use SDK components, never your own.** Auth and credential references:
-   `agent_connector_sdk.auth` (`bearer_auth`, delegation; `client_factory` at >=0.5.0).
-   TLS: `resolve_tls_profile`. HTTP, retries, 429 and egress pinning:
-   `create_http_client`. Paging: `PaginationIterator`. Limits: `RateLimiter`.
-   GraphQL: `GraphQLClient` (`agent-connector-sdk[graphql]`). Vector search:
-   the `vector` extra. Optional dependencies are SDK extras only.
-6. **Server.** `agent_connector_sdk.run(package="<pkg>")` and the console script
-   `agent_connector_sdk.cli:serve` build the server (health route, middleware,
-   transports, content registration, metadata version). Write no server bootstrap.
-7. **Tests.** Write tests of your own tool logic only. The SDK pytest conformance
-   plugin generates fleet-name, content, ontology-parent, source, startup and version
-   tests. Copy none of them, and add no `conftest.py` for them.
+   Skills are `skills/<name>/SKILL.md` directories served by the SDK skills provider.
+5. **Use SDK components, never your own.** Auth, TLS, delegation and credential
+   rotation: `client_factory` with one declaration (`Bearer`, `ApiKey`, `Basic`,
+   `ClientCredentials`, `RefreshToken`, `SessionLogin`, `NoAuth`). Paging:
+   `PaginationIterator`. Limits: `RateLimiter`. GraphQL: `GraphQLClient`
+   (`agent-connector-sdk[graphql]`). Vector search: the SDK `vector` extra. Optional
+   dependencies are SDK extras only. Do not pin `requests`, `httpx` or `gql`.
+6. **Server.** The `agent_connector_sdk.connector` entry point
+   (`<fleet> = "<pkg>:connector"`) and the console script
+   `<fleet> = "agent_connector_sdk.cli:serve"` start the server: health route,
+   middleware, transports, content, metadata version. Write no server bootstrap.
+7. **Tests.** Write tests of your own client logic only. The SDK pytest plugin
+   generates the fleet-name, content, ontology, source, startup and version tests in
+   any environment that installs the SDK. Copy none of them; add no `conftest.py`.
 8. **Version and release.** The version lives in `pyproject.toml` only; read it with
-   `importlib.metadata`. Release and PR gates are the shared pipelines workflows
-   (`python_pipeline.yml`, `container_pipeline.yml`, `connector_pr_pipeline.yml` at `@main`),
-   which publish to PyPI and Docker Hub.
-
-### Requires agent-connector-sdk>=0.5.0
-
-Steps 5 (`client_factory`), 6 (`run`, `cli:serve`), 7 (conformance plugin), the
-metadata version in step 8 and `load_declaration()` ship in SDK 0.5.0. Until it is
-released the scaffold pins `>=0.5.0`, so the generated server starts only after that
-release; the tool, content and ontology parts already run on 0.4.x and are tested.
-`scripts/scaffold_connector.py` is covered by `tests/test_mcp_builder_connector_scaffold.py`
-(`US-MCP-BUILDER-R011`).
-
-## Earlier generator
-
-`scripts/scaffold_package.py` writes the pre-0.5.0 layout (own `mcp_server.py`,
-`_version.py`, manifest and tests) and serves CLI backends. Do not use it for a new
-REST or GraphQL connector. Rows R001 to R010 below describe that layout.
+   `importlib.metadata`. Pipelines bumps it, renders the container files, and
+   generates the ontology shapes at build time. The shared workflows publish to PyPI
+   and Docker Hub.
 
 ## Contracts
 
-- **One tool per API operation** is the default build method. Generate one MCP
-  tool per method and endpoint (GET, POST, PUT, DELETE...) through the SDK's
-  `register_tool_surface(client_cls=..., get_client=...)` or the OpenAPI converter.
-  Each tool has a stable snake_case `<prefix>_<operation>` name, a typed input
-  schema with required and optional fields, a description from the spec summary or
-  docstring, and verb annotations: GET `readOnlyHint=true`, DELETE
-  `destructiveHint=true`, PUT and DELETE `idempotentHint=true`, non-GET
-  `readOnlyHint=false`. Do not condense operations into `action`-routed or
-  `params_json` dispatch tools; a fleet gateway scales the catalog through lazy
-  `find` and load. Check the served `tools/list` count against the API operation
-  count with `scripts/check_tool_parity.py`.
-- **Image standard.** The Dockerfile installs the package from its built wheel or
-  from PyPI at an exact version (`pip install --only-binary :all: <pkg>[mcp]==<version>`),
-  never from a source copy (`pip install ".[mcp]"`). A dependency that ships only an sdist is
-  named in `[tool.pipelines] allow-source-build` (scaffold `--allow-source-build`) and
-  exempted by name with `--no-binary <name>`; `check_tool_parity.py` rejects any
-  other `--no-binary`. Runtime images build no tools
-  from source. Pin the Python 3.14 slim base image by digest and run as a non-root
-  user. Tag images `<version>-mcp`.
-- Preserve 100% of the supported source operation or command catalog across API
-  and MCP surfaces. Require deterministic inventory, schema and dispatch parity;
-  distinguish mocked transport coverage from live endpoint checks. Do not replace
-  a full integration with placeholder or selected operations.
-- Keep vendor requests and pagination in the API client, or subprocess execution
-  in the CLI adapter. MCP tools validate inputs and use SDK registration for either
-  backend; a local command does not bypass authorization or effect controls.
-- Serve declared skills, prompts, ontology, shapes and connector manifest through
-  explicit SDK content registration; files in a wheel alone do not prove discovery.
-- Ship the connector's OWL/RDF ontology pack from day one. `ontology/<domain>.ttl`
-  holds the domain model and reuses core classes by IRI. `ontology/pack.ttl` states
-  the connector's own surface and ingest contract as native relationships in the
-  engine's connector-pack vocabulary (`cp:`): connector, features, tools, prompts,
-  skills, source objects, key rules, cursor, access and provenance policy. Keep
-  both in step with the typed declarations; the SDK generates the pack from them
-  and the engine imports it, validates it with SHACL and answers selection
-  questions over it. Use no blank nodes and no nested property maps.
-- Use typed SDK ingestion and graph-owned generated contracts. Source adapters
-  and write-back ports require their applicable conformance checks.
+- Preserve 100% of the supported source operation catalog across API and MCP surfaces.
+  Require deterministic inventory, schema and dispatch parity; distinguish mocked
+  transport coverage from live endpoint checks. Do not replace a full integration
+  with placeholder or selected operations.
+- Keep vendor requests and pagination in the API client. MCP tools validate inputs and
+  use SDK registration; they do not bypass authorization or effect controls.
+- Use typed SDK ingestion. Source adapters and write-back ports require their
+  applicable conformance checks.
 - Preserve user scope, authorization and credential-reference boundaries.
   Scaffolding does not authorize external writes, deployment, credential creation,
-  publication or changes to live services. Required approval and policy gates remain.
-- Include GitHub Pages in authorized public connector publication, using the
-  existing generated workflow. Keep private publication private. Verify the
-  deployed workflow revision and public documentation URL before claiming delivery.
+  publication or changes to live services.
 - Keep generated files environment-neutral. Never generate credentials, private
   endpoints, personal identities, a committed .env or a TLS-verification bypass.
-
-## SDK conformance checklist
-
-A generated connector must meet every rule below on first generation, so new
-connectors do not reintroduce the drift the SDK centralization audit found.
-`scripts/check_connector_contract.py <root> --package <pkg>` enforces rules 1 to 9
-statically and prints the violated `US-MCP-BUILDER` row beside each finding; the
-scaffold also runs it as the `connector-sdk-contract` pre-commit hook. The SDK
-rows are in agent-connector-sdk `specs/centralized-capabilities/`.
-
-| Rule | Row | SDK row | The connector must |
-|---|---|---|---|
-| 1 | `US-MCP-BUILDER-R001` | `SDK-CENTRALIZED-CAPABILITIES-R001`, `SDK-CENTRALIZED-CAPABILITIES-R040` | Build every HTTP client with `agent_connector_sdk.http` (`create_http_client`), so SDK retries, 429 handling and egress pinning apply. Pin neither `requests` nor `httpx`; ship no retry loop. |
-| 2 | `US-MCP-BUILDER-R002` | `SDK-CENTRALIZED-CAPABILITIES-R008` | Resolve TLS with `resolve_tls_profile`. Never set `verify=False`, silence TLS warnings or build an SSL context. |
-| 3 | `US-MCP-BUILDER-R003` | `SDK-CENTRALIZED-CAPABILITIES-R009` | Accept `env://` and `openbao://` references and resolve them through the SDK (`bearer_auth`, `api_key_auth`, the credential resolver). Parse no references by hand and read no token from a plain environment variable. |
-| 4 | `US-MCP-BUILDER-R004` | `SDK-CENTRALIZED-CAPABILITIES-R016`, `SDK-CENTRALIZED-CAPABILITIES-R040` | Declare optional dependencies only as SDK extras (`graphql`, `db`, `mssql`, `feeds`, `dataprep`, `market`, `stream`, `integrity`; `vector` once the SDK ships it). For a GraphQL API use the `graphql` extra and the SDK introspection helpers, never a `gql` pin. |
-| 5 | `US-MCP-BUILDER-R005` | `SDK-CENTRALIZED-CAPABILITIES-R030` | Declare the fleet name once, as the single `agent_connector_sdk.connector` entry point (SDK-CONNECTOR-CONTROL-R071). Build content with `ConnectorContent.for_package` and ingest with `IngestBinding.for_package`; spell no connector name anywhere else. |
-| 6 | `US-MCP-BUILDER-R006` | `SDK-CENTRALIZED-CAPABILITIES-R015` | Ship one tool per API operation with verb hints (reads read-only), the safe `scripts/bootstrap.sh` (no piped installer), the standard `AGENTS.md` agent-contract section, and a `specs/` tree per the pipelines spec standard with tests bound. |
-| 7 | `US-MCP-BUILDER-R007` | none | Keep `.bumpversion.cfg` to files that exist, `__version__` in `_version.py` alone, and the Dockerfile image pin tracked by bumpversion at the same version. |
-| 8 | `US-MCP-BUILDER-R008` | `SDK-CENTRALIZED-CAPABILITIES-R030` | Enable the pipelines `connector-name` hook with `args: [--strict]`, enable `sdk-conformance` strict, and run `check-cli-help` from a plain install (`python -m <pkg>.mcp_server --help`, no `uv run`, no `find`). |
-| 9 | `US-MCP-BUILDER-R010` | `SDK-CONNECTOR-CONTROL-R073`, `SDK-CONNECTOR-CONTROL-R074.7` | Link the domain ontology to the parent: `owl:imports <http://knuckles.team/kg>`, and every class `rdfs:subClassOf` a core class of the parent ontology (the scaffold uses `:Concept`; narrow it to a more specific core class when one fits). Leave no TODO in the ontology. Write no data-resource declarations: the SDK derives them from read-only tools that return records and proposes the ontology mapping by field name. Add `data_resources.json` only to override a default. |
-
-Rule 8 note: pipelines main does not publish `sdk-conformance` yet, so the scaffold
-emits it commented out as pending, in strict mode (`SDK_CONFORMANCE_PUBLISHED` in
-`scripts/quality_templates.py`). Flip the constant when the hook is published.
-
-The checklist is also the review list: a hand edit that breaks a rule is a defect in
-the connector, not a reason to relax the scaffold.
 
 ## Load the relevant reference
 
@@ -197,7 +123,7 @@ the connector, not a reason to relax the scaffold.
   ingestion/effects, packaging, quality gates and source authorities.
 - [Python server](reference/python_mcp_server.md): factory, tools and explicit content.
 - [Context helpers](reference/ctx_helpers.md): confirmation, progress and safe logging.
-- [File parity](PARITY_MANIFEST.md): generated repository and package obligations.
+- [File parity](PARITY_MANIFEST.md): the generated tree and who owns every other file.
 - [Documentation readiness](DOCUMENTATION_STANDARD_VNEXT.md): bounded source-only
   discovery, ownership manifests, public docs and served-surface checks.
 - [MCP design](reference/mcp_best_practices.md): tool boundaries and transport choices.

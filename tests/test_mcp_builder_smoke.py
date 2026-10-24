@@ -77,71 +77,10 @@ def _checker():
     return module
 
 
-def test_generated_package_data_and_sdk_boundary(generated):
-    root, _ = generated
-    assert _checker().check_project(root, "contract_smoke") == []
-    project = tomllib.loads((root / "pyproject.toml").read_text())
-    package = root / "contract_smoke"
-    assert not (package / "agent_server.py").exists()
-    patterns = project["tool"]["setuptools"]["package-data"]["contract_smoke"]
-    content = [package / "connector_manifest.yml"]
-    content.extend(
-        path
-        for directory in ("prompts", "ontology", "skills", "connectors")
-        for path in (package / directory).rglob("*")
-        if path.is_file()
-    )
-    assert any(path.suffix == ".ttl" for path in content)
-    assert any(path.name == "SKILL.md" for path in content)
-    for path in content:
-        relative = path.relative_to(package).as_posix()
-        assert any(fnmatch.fnmatch(relative, pattern) for pattern in patterns), relative
 
 
-@pytest.mark.parametrize(
-    "legacy",
-    [
-        "from agent_utilities.mcp.server_factory import create_mcp_server\n",
-        "import agent_utilities.knowledge_graph.memory.native_ingest\n",
-        "import importlib\nlegacy = importlib.import_module('agent_utilities.mcp.config')\n",
-    ],
-)
-def test_stale_au_connector_template_is_rejected(generated, legacy):
-    root, env = generated
-    stale = root / "contract_smoke/mcp/stale.py"
-    stale.write_text(legacy, encoding="utf-8")
-    violations = _checker().check_project(root, "contract_smoke")
-    assert any(
-        "retired connector import" in value and "stale.py" in value
-        for value in violations
-    )
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(SCRIPTS / "check_connector_contract.py"),
-            str(root),
-            "--package",
-            "contract_smoke",
-        ],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert result.returncode == 1
-    assert "retired connector import" in result.stdout
 
 
-def test_no_module_is_exempt_from_the_retired_import_rule(generated):
-    root, _ = generated
-    package = root / "contract_smoke"
-    (package / "agent_server.py").write_text(
-        "from agent_utilities.agent_server import Agent\n"
-    )
-    assert any(
-        "agent_server.py" in error
-        for error in _checker().check_project(root, "contract_smoke")
-    )
 
 
 LIVE_DISCOVERY = textwrap.dedent("""\
