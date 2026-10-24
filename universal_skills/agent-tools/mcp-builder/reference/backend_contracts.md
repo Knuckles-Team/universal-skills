@@ -1,14 +1,13 @@
 # API and CLI backend contracts
 
-A connector has one backend and an SDK-governed MCP surface. Use `api_client,mcp`
-for API integrations, optionally adding `graphql`; use `cli,mcp` for a local
-command integration. GraphQL requires the API backend. There is no `agent` type:
-connectors are MCP-only. Mixed backends, missing MCP and unknown types are invalid selections.
+A connector has one backend: an HTTP API (REST or GraphQL; GraphQL uses the SDK
+`graphql` extra). The `Api` class in `<pkg>/api_client.py` has one method per
+operation and the SDK serves one tool per method. A local command line is not a
+connector backend: wrap the command in the system's own API or build it as an
+SDK source adapter. There is no `agent` type: connectors are MCP-only.
 
-The maintained generator owns executable templates. Adapt the current
-[SDK transport templates](../scripts/transport_templates.py) and
-[scaffolder](../scripts/scaffold_package.py), following
-[connector contracts](connector_contracts.md); do not maintain parallel example
+The generator `scripts/scaffold_connector.py` is the only scaffold; follow
+[connector contracts](connector_contracts.md) and write no parallel example
 clients with different authentication, error or registration behavior.
 
 ## API evidence and coverage

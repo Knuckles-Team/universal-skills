@@ -75,7 +75,7 @@ repository is used as a template and no substitution pass is needed.
 Run from this skill directory:
 
 ```bash
-python3 scripts/scaffold_package.py example-api --type api_client,mcp --generation-date 2026-10-12 --output-dir /path/to/output
+python3 scripts/scaffold_connector.py example-api --output-dir /path/to/output
 python3 scripts/github_publish.py manifest /path/to/output/example-api > /path/to/evidence/files.json
 ```
 

@@ -34,41 +34,8 @@ def templates():
     return module
 
 
-def test_cli_source_imports_only_sdk_config(templates):
-    source = templates.CLI_PY.format(**CONTEXT)
-    tree = ast.parse(source)
-    modules = {
-        node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
-    }
-    sdk = {name for name in modules if name and name.startswith("agent_connector_sdk")}
-    assert sdk == {"agent_connector_sdk.config"}
-    assert "BASE_URL" not in source
-    assert "TOKEN_REF" not in source
-    assert "httpx" not in source
-    assert "capture_output" not in source
-    assert "shell=False" in source
 
 
-def test_cli_mcp_exposes_only_read_only_action(templates):
-    tree = ast.parse(templates.CLI_MCP_SYSTEM_PY.format(**CONTEXT))
-    tool = next(
-        node for node in ast.walk(tree) if isinstance(node, ast.AsyncFunctionDef)
-    )
-    assert [argument.arg for argument in tool.args.args] == ["action", "client"]
-    decorator = tool.decorator_list[0]
-    annotations = next(
-        item.value for item in decorator.keywords if item.arg == "annotations"
-    )
-    assert ast.literal_eval(annotations) == {
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False,
-    }
-    assert any(
-        isinstance(node, ast.ImportFrom) and node.level == 2 and node.module == "cli"
-        for node in ast.walk(tree)
-    )
 
 
 def test_generated_cli_runtime_contracts(templates, tmp_path):

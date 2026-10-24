@@ -14,9 +14,7 @@ Usage::
     python check_workspace_source_drift.py --check     # exit 1 on drift (pre-commit)
     python check_workspace_source_drift.py --json      # machine-readable findings
 
-Wire ``--check`` as a pre-commit hook (the mcp-builder scaffold does —
-see the ``workspace-source-drift`` hook in ``scaffold_package.py``'s
-``PRECOMMIT_CONFIG``).
+Wire ``--check`` as a pre-commit hook where a workspace needs it.
 """
 
 from __future__ import annotations
