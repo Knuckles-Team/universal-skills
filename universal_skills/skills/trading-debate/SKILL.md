@@ -4,7 +4,7 @@ domain: finance
 skill_type: skill
 description: Run the TradingAgents swarm debate to vet financial hypotheses via Knowledge Graph orchestration.
 metadata:
-  version: '1.4.0'
+  version: '1.5.0'
 ---
 
 # Trading Debate Skill

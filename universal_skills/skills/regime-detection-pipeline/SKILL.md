@@ -22,7 +22,7 @@ team_config:
 tags: [regime, hmm, volatility, classification]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.4.0'
+  version: '1.5.0'
 ---
 
 # Regime Detection Pipeline Workflow
