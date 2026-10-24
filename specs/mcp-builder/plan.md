@@ -10,6 +10,10 @@ Governing spec: [spec.md](spec.md).
 
 The scaffold writes `pyproject.toml` with the `agent_connector_sdk.connector` entry point and SDK extras, `mcp_server.py` and `kg_ingest.py` with `for_package`, and a pre-commit config with the strict hooks. `check_connector_contract.py` is copied into each generated project and runs the same rules as the `connector-sdk-contract` hook. The skill tests scaffold a demo connector and assert each row.
 
+## Connector scaffold (R011)
+
+`scripts/scaffold_connector.py` writes the minimal tree: `pyproject.toml`, `<pkg>/{tools.py,client.py,__main__.py}`, prompts, skills, ontology, specs, one test file, two workflow callers and the release Dockerfile. The SDK run entry, conformance plugin and metadata version need agent-connector-sdk 0.5.0. `scaffold_package.py` and rows R001 to R010 describe the earlier layout.
+
 ## Interfaces and data model
 
 `scaffold(..., fleet_name=)` and `--fleet-name` set the declared name (default `<short>-mcp`). `check_sdk_rules(root, package)` returns findings that end with the violated `US-MCP-BUILDER` row.
