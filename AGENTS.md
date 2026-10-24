@@ -156,6 +156,23 @@ updated files for the normal checked PR commit; the release workflow creates
 the tag at its verified source commit after review. Report the planned version
 and tag before publication. Never retry a published version or move its tag.
 
+## Release
+
+Bump first, tag last. A tag whose commit still carries the previous version rebuilds
+the old version under the new tag and PyPI refuses it.
+
+1. Bump the version with `bump2version --config-file .bumpversion.cfg --allow-dirty --no-commit --no-tag <patch|minor|major>`
+   (run `python scripts/gen_bumpversion.py` first if skill paths changed). Refresh the lock
+   and any recorded fixture that embeds the version in the same PR.
+2. Merge the bump PR.
+3. At the merged commit, check `git show <commit>:pyproject.toml` carries the intended
+   version and that it is unpublished:
+   `curl -s -o /dev/null -w '%{http_code}' https://pypi.org/pypi/universal-skills/X.Y.Z/json` must print `404`.
+4. Only then push the tag `vX.Y.Z` on that commit.
+5. Confirm the wheel and sdist are on PyPI.
+6. Tag on the wrong commit and nothing published: delete the tag and re-tag. Anything
+   published: cut the next patch; never move a published tag.
+
 ## Project Structure Quick Reference
 - `universal_skills/<domain>/<skill>/` → Atomic skills grouped by domain.
 - `universal_skills/<domain>-workflows/<workflow>/` → Pure dependency DAGs over atomic skills or exact MCP tools.
