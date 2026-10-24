@@ -166,11 +166,9 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
 
     readiness_resources = {
         "universal_skills/agent-tools/mcp-builder/SKILL.md",
-        "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py",
+        "universal_skills/agent-tools/mcp-builder/scripts/scaffold_connector.py",
         "universal_skills/agent-tools/mcp-builder/scripts/github_publish.py",
         "universal_skills/agent-tools/mcp-builder/scripts/github_pages.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/transport_templates.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/connector_templates.py",
         "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness.py",
         "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness_schema.json",
     }
@@ -216,15 +214,11 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
     )
     assert installation.returncode == 0, installation.stdout + installation.stderr
     installed_scripts = installed / "universal_skills/agent-tools/mcp-builder/scripts"
-    theme_source = (
-        installed_scripts / "templates/pipelines-theme/scripts/sync_mkdocs_theme.py"
-    )
-    assert Path(importlib.util.cache_from_source(str(theme_source))).is_file()
     generated = tmp_path / "generated"
     scaffold = subprocess.run(
         [
             sys.executable,
-            str(installed_scripts / "scaffold_package.py"),
+            str(installed_scripts / "scaffold_connector.py"),
             "installed-wheel",
             "--output-dir",
             str(generated),
@@ -236,31 +230,8 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         timeout=60,
     )
     assert scaffold.returncode == 0, scaffold.stdout + scaffold.stderr
-    emitted_theme = generated / "installed-wheel/.pipeline-theme"
-    assert (emitted_theme / "provenance.json").is_file()
-    assert not list(emitted_theme.rglob("__pycache__"))
-    assert not list(emitted_theme.rglob("*.pyc"))
-    inventory = subprocess.run(
-        [
-            sys.executable,
-            str(installed_scripts / "github_publish.py"),
-            "manifest",
-            str(generated / "installed-wheel"),
-        ],
-        cwd=tmp_path,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert inventory.returncode == 0, inventory.stdout + inventory.stderr
-    import json
-
-    captured = json.loads(inventory.stdout)
-    assert ".github/workflows/pages.yml" in captured
-    assert "installed_wheel/connector_manifest.yml" in captured
-    assert captured["scripts/check_connector_contract.py"]["mode"] == "100644"
-    assert "passed" not in captured
+    assert (generated / "installed-wheel/pyproject.toml").is_file()
+    assert (generated / "installed-wheel/installed_wheel/connector_sources.py").is_file()
     resource_check = subprocess.run(
         [
             sys.executable,

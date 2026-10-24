@@ -92,20 +92,6 @@ def test_fixture_git_commands_preserve_the_calling_repository(tmp_path, monkeypa
     ) == before
 
 
-@pytest.fixture(scope="module")
-def generated(tmp_path_factory):
-    parent = tmp_path_factory.mktemp("generated-site")
-    _run(
-        [
-            sys.executable,
-            str(SCRIPTS / "scaffold_package.py"),
-            "site-contract",
-            "--output-dir",
-            str(parent),
-        ],
-        parent,
-    )
-    return parent / "site-contract"
 
 
 def _capability(root: Path) -> tuple[Path, dict]:
