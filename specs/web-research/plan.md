@@ -4,7 +4,7 @@ Governing spec: [spec.md](spec.md).
 
 ## Existing system and reuse
 
-`universal_skills/research/web-crawler/scripts/crawl.py` holds 1,360 lines of fetch, crawl and extraction code. `scripts/security_runtime.py` holds 478 lines of egress policy. `web-fetch` forwards to `web-crawler`. These scripts duplicate the connector path of `ARBORA-OPS-R067`.
+`universal_skills/skills/web-crawler/scripts/crawl.py` holds 1,360 lines of fetch, crawl and extraction code. `scripts/security_runtime.py` holds 478 lines of egress policy. `web-fetch` forwards to `web-crawler`. These scripts duplicate the connector path of `ARBORA-OPS-R067`.
 
 ## Architecture
 

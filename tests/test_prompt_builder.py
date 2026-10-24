@@ -26,7 +26,7 @@ validate_canonical = pytest.importorskip(
 
 REPO = Path(__file__).resolve().parents[1]
 PROMPT_BUILDER = (
-    REPO / "universal_skills" / "agent-tools" / "prompt-builder" / "scripts"
+    REPO / "universal_skills" / "skills" / "prompt-builder" / "scripts"
 )
 
 pytestmark = pytest.mark.skipif(

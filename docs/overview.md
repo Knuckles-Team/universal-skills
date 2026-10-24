@@ -46,7 +46,7 @@ agent-packages/agents/<package>/<module>/skills/<operation-skill>/SKILL.md
 ```
 
 The package publishes its skill directory through the
-`agent_utilities.skill_providers` setuptools entry point. A cross-package universal
+`agent_connector_sdk.connector` entry point (skills under `<module>/skills/<name>/SKILL.md`). A cross-package universal
 workflow may invoke that skill by declaring the package and skill in `requires`.
 This keeps installation, versioning, credentials, and compatibility with the owner.
 
@@ -68,7 +68,7 @@ python scripts/check_atomicity.py --strict
 python scripts/gen_bumpversion.py --check
 
 # Full structural and routing inventory
-python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py \
+python universal_skills/skills/skill-catalog-auditor/scripts/audit_catalog.py \
   universal_skills --fail-on never
 
 # Executable verification

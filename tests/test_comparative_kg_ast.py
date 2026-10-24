@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = ROOT / "universal_skills/research/comparative-analysis"
+SKILL = ROOT / "universal_skills/skills/comparative-analysis"
 SCRIPT = SKILL / "scripts/_kg_ast.py"
 
 

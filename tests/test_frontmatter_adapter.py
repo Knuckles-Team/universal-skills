@@ -14,7 +14,7 @@ import pytest
 yaml = pytest.importorskip("yaml")
 
 SCRIPTS = Path(__file__).resolve().parent.parent / (
-    "universal_skills/core/universal-installer/scripts"
+    "universal_skills/skills/universal-installer/scripts"
 )
 
 

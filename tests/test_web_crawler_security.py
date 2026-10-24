@@ -9,7 +9,7 @@ import pytest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIR = PROJECT_ROOT / "universal_skills" / "research" / "web-crawler" / "scripts"
+SCRIPT_DIR = PROJECT_ROOT / "universal_skills" / "skills" / "web-crawler" / "scripts"
 
 
 def _runtime():

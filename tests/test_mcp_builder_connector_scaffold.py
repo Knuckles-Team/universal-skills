@@ -21,7 +21,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
-    / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_connector.py"
+    / "universal_skills/skills/mcp-builder/scripts/scaffold_connector.py"
 )
 FLEET = "demo-mcp"
 EXPECTED = {

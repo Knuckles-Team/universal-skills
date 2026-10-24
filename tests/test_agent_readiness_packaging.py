@@ -9,7 +9,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-READINESS_PACKAGE = "universal_skills.agent-tools.mcp-builder.scripts"
+READINESS_PACKAGE = "universal_skills.skills.mcp-builder.scripts"
 READINESS_RESOURCES = {"agent_readiness.py", "agent_readiness_schema.json"}
 RETIRED_SKILLS = {"agent-builder", "agent-package-builder"}
 

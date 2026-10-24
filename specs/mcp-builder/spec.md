@@ -18,6 +18,6 @@ The search covered `specs/` of this repository. `US-PAGES` owns published docume
 
 ## Scope and interfaces
 
-In scope: `universal_skills/agent-tools/mcp-builder/` (`SKILL.md`, `scripts/scaffold_connector.py`).
+In scope: `universal_skills/skills/mcp-builder/` (`SKILL.md`, `scripts/scaffold_connector.py`).
 
 Out of scope: the SDK capabilities themselves (SDK owns them), the pipelines hook bodies (pipelines owns them), and migrating existing connectors (each connector repository owns its own fix).

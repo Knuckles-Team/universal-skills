@@ -35,11 +35,6 @@ CFG = REPO / ".bumpversion.cfg"
 BASE_STANZAS = [
     ("pyproject.toml", 'version = "{current_version}"', 'version = "{new_version}"'),
     ("README.md", "Version: {current_version}", "Version: {new_version}"),
-    (
-        "universal_skills/skill_utilities.py",
-        '__version__ = "{current_version}"',
-        '__version__ = "{new_version}"',
-    ),
 ]
 VERSION_LINE = re.compile(r"^\s*version:\s*.+$")
 METADATA_LINE = re.compile(r"^metadata:\s*$")

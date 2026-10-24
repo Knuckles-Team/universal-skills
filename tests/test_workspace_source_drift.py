@@ -23,7 +23,7 @@ from pathlib import Path
 SCRIPTS_DIR = (
     Path(__file__).parents[1]
     / "universal_skills"
-    / "agent-tools"
+    / "skills"
     / "mcp-builder"
     / "scripts"
 )

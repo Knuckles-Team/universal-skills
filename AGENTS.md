@@ -72,17 +72,14 @@ application of it.
 ## Modular contribution — skills & prompts ship in their owning package (CONCEPT:OS-5.52)
 
 universal-skills is no longer the only home for skills. **Any agent-package can ship
-its own skills, system prompts, and ontology inside its own wheel** and have them
-discovered by the hub via three setuptools entry-point groups it declares in
-`pyproject.toml`: `agent_utilities.skill_providers` (→ `<module>.skills`),
-`agent_utilities.prompt_providers` (→ `<module>.prompts`), and
-`agent_utilities.ontology_providers` (→ `<module>.ontology`). The `universal-installer`
-skill's `get_source_paths()` walks every `skill_providers` entry-point (honouring
-`--skills`/`--group`/`--layer`) and, on the same run, materializes the
-`prompt_providers`/`ontology_providers` legs into the agent-utilities XDG tree
-(preferring `agent_utilities.core.unified_install.install_unified()` when importable);
-`agent-utilities` ingests every `prompt_providers` prompt into the KG prompt library
-and every `ontology_providers` `.ttl` into the federated ontology. So:
+its own skills, system prompts, and ontology inside its own wheel** by declaring one
+`agent_connector_sdk.connector` entry point in `pyproject.toml` (`<pkg>:connector` for a
+connector, a bare `<pkg>` for a content-only package). The SDK finds content by convention
+under that package: `skills/<name>/SKILL.md` (flat, one level), `prompts/` and `ontology/`.
+The `universal-installer` skill walks `installed_connectors()` (honouring
+`--skills`/`--group`/`--layer`) and, on the same run, materializes the connectors' `prompts/`
+and `ontology/` directories into the agent-utilities XDG tree; arbora serves the same content
+natively. So:
 
 - **Package-owned skills live in the package**, not here — relocate clearly-owned
   skills to their agent-package's `<module>/skills/` (they still install into the same

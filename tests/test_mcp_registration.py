@@ -30,7 +30,7 @@ def test_codex_is_not_a_json_config_target() -> None:
         "test_mcp_installer",
         ROOT
         / "universal_skills"
-        / "agent-tools"
+        / "skills"
         / "mcp-installer"
         / "scripts"
         / "install.py",
@@ -45,7 +45,7 @@ def test_arbora_json_launcher_is_portable_and_contains_no_runtime_state() -> Non
         "test_mcp_setup",
         ROOT
         / "universal_skills"
-        / "core"
+        / "skills"
         / "universal-installer"
         / "scripts"
         / "mcp_setup.py",
@@ -64,7 +64,7 @@ def test_touched_installer_skills_keep_canonical_catalog_metadata() -> None:
         ("agent-tools", "mcp-installer"),
         ("core", "universal-installer"),
     ):
-        skill = ROOT / "universal_skills" / domain / name / "SKILL.md"
+        skill = ROOT / "universal_skills" / "skills" / name / "SKILL.md"
         metadata = _frontmatter(skill)
         assert metadata["name"] == name
         assert metadata["domain"] == domain
@@ -74,7 +74,7 @@ def test_touched_installer_skills_keep_canonical_catalog_metadata() -> None:
     mcp_skill = (
         ROOT
         / "universal_skills"
-        / "agent-tools"
+        / "skills"
         / "mcp-installer"
         / "SKILL.md"
     ).read_text(encoding="utf-8")

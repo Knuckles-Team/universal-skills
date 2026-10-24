@@ -14,7 +14,7 @@ import pytest
 from test_mcp_builder_openapi import _require_runtime
 from test_mcp_builder_reviewed_redirect import redirect_case as redirect_case
 
-SCRIPTS = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts"
+SCRIPTS = Path(__file__).parents[1] / "universal_skills/skills/mcp-builder/scripts"
 sys.path.insert(0, str(SCRIPTS))
 converter = importlib.import_module("openapi_converter")
 parity = importlib.import_module("openapi_parity")

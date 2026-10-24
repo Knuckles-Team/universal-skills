@@ -27,7 +27,7 @@ pytest.importorskip("tomlkit", reason="dependency-modernizer requires tomlkit")
 SCRIPT = (
     Path(__file__).resolve().parent.parent
     / "universal_skills"
-    / "development"
+    / "skills"
     / "dependency-modernizer"
     / "scripts"
     / "bump_dependencies.py"

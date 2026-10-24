@@ -11,7 +11,7 @@ The catalog is intentionally split by ownership:
   `universal_skills/<domain>-workflows/`.
 - Platform and package operations live with their provider under
   `agent-packages/agents/<package>/<module>/skills/` and are discovered through the
-  `agent_utilities.skill_providers` entry-point group.
+  `agent_connector_sdk.connector` entry point.
 
 This prevents a universal skill from quietly depending on one deployment, service,
 or private filesystem layout.
@@ -34,7 +34,7 @@ The catalog has a checked-in, reproducible structural review:
 Run the same audit locally:
 
 ```bash
-python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py \
+python universal_skills/skills/skill-catalog-auditor/scripts/audit_catalog.py \
   universal_skills --format markdown
 ```
 
