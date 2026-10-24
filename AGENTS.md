@@ -171,8 +171,7 @@ the old version under the new tag and PyPI refuses it.
    published: cut the next patch; never move a published tag.
 
 ## Project Structure Quick Reference
-- `universal_skills/<domain>/<skill>/` → Atomic skills grouped by domain.
-- `universal_skills/<domain>-workflows/<workflow>/` → Pure dependency DAGs over atomic skills or exact MCP tools.
+- `universal_skills/skills/<name>/` → Every skill and workflow, flat (served by the SDK content convention); the skill's `domain` frontmatter names its category.
 - `universal_skills/skill_utilities.py` → Logic for discovering skill paths and checking ENABLE/DISABLE flags.
 - `pyproject.toml` → Defines optional dependencies for every individual skill.
 
