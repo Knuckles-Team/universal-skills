@@ -77,6 +77,8 @@ jobs:
           uv pip install --refresh --python /tmp/scaffold-venv/bin/python pytest rdflib pyyaml codespell \
             "agent-connector-sdk[mcp]>=0.5.1,<0.6" \
             "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
+          # The SDK pytest plugin resolves this repository's own connector declaration.
+          uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
       - name: Scaffold tests
         run: |
           set -o pipefail
