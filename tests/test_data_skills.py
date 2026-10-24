@@ -20,11 +20,11 @@ def load_script(name: str, relative: str):
 
 profiler = load_script(
     "dataset_profiler_script",
-    "universal_skills/data/dataset-profiler/scripts/profile_dataset.py",
+    "universal_skills/skills/dataset-profiler/scripts/profile_dataset.py",
 )
 quality = load_script(
     "data_quality_script",
-    "universal_skills/data/data-quality-auditor/scripts/validate_dataset.py",
+    "universal_skills/skills/data-quality-auditor/scripts/validate_dataset.py",
 )
 
 

@@ -33,7 +33,7 @@ sys.path.insert(
     str(
         Path(__file__).resolve().parent.parent
         / "universal_skills"
-        / "core"
+        / "skills"
         / "universal-installer"
         / "scripts"
     ),

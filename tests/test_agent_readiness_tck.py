@@ -13,7 +13,7 @@ import pytest
 SCRIPT = (
     Path(__file__).parents[1]
     / "universal_skills"
-    / "agent-tools"
+    / "skills"
     / "mcp-builder"
     / "scripts"
     / "agent_readiness_tck.py"

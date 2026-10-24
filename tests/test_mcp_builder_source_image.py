@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts/check_tool_parity.py"
+SCRIPT = Path(__file__).parents[1] / "universal_skills/skills/mcp-builder/scripts/check_tool_parity.py"
 
 
 

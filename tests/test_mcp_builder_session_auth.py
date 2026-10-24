@@ -11,7 +11,7 @@ import pytest
 
 SCRIPTS = (
     Path(__file__).resolve().parents[1]
-    / "universal_skills/agent-tools/mcp-builder/scripts"
+    / "universal_skills/skills/mcp-builder/scripts"
 )
 sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(SCRIPTS / "templates"))

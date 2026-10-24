@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = (
     ROOT
     / "universal_skills"
-    / "agent-tools"
+    / "skills"
     / "skill-catalog-auditor"
     / "scripts"
     / "audit_catalog.py"

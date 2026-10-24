@@ -17,7 +17,7 @@ agent-utilities provider ecosystem.
   skills or exact MCP tools; workflows do not embed business logic.
 - Platform and package operations belong under
   `agent-packages/agents/<package>/<module>/skills/` and are exposed through
-  `agent_utilities.skill_providers`.
+  the package's `agent_connector_sdk.connector` entry point.
 - `assets/` may contain nested templates, but those are package resources rather
   than canonical catalog entries.
 
@@ -27,7 +27,7 @@ The content and data domains include evidence-aware drafting, publication prefli
 dataset profiling, deterministic data-quality validation, and data-dictionary
 authoring.
 
-Connector packages use [mcp-builder](universal_skills/agent-tools/mcp-builder/SKILL.md)
+Connector packages use [mcp-builder](universal_skills/skills/mcp-builder/SKILL.md)
 for SDK scaffolding and shared pipeline contracts.
 
 ## Catalog quality and roadmap
@@ -41,7 +41,7 @@ for SDK scaffolding and shared pipeline contracts.
 Reproduce the catalog audit locally:
 
 ```bash
-python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py \
+python universal_skills/skills/skill-catalog-auditor/scripts/audit_catalog.py \
   universal_skills --format markdown
 ```
 
@@ -97,10 +97,10 @@ Use the bundled builders rather than copying a legacy entry:
 
 ```bash
 # Atomic skill: creates only explicitly requested resource directories
-python universal_skills/core/skill-builder/scripts/init_skill.py --help
+python universal_skills/skills/skill-builder/scripts/init_skill.py --help
 
 # Pure DAG workflow: resolves atomic skills or explicit MCP tools
-python universal_skills/agent-tools/skill-workflow-builder/scripts/build_workflow.py --help
+python universal_skills/skills/skill-workflow-builder/scripts/build_workflow.py --help
 ```
 
 Before opening a change:

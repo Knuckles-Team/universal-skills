@@ -125,7 +125,7 @@ The body of the `SKILL.md` should follow this general hierarchy:
 `universal-installer` is the **only** thing that emits a target agent's copy of a skill —
 authors never hand-write a per-tool variant. The canonical `SKILL.md` under
 `universal_skills/` stays **Claude-native** (full frontmatter, unrestricted
-`description`); at install time, `universal_skills/core/universal-installer/scripts/
+`description`); at install time, `universal_skills/skills/universal-installer/scripts/
 adapters.py` adapts a COPY for targets whose frontmatter contract is stricter.
 
 **Per-agent allowed-top-level table.** Every target tool has an `AgentContract`

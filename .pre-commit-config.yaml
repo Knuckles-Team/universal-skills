@@ -78,7 +78,7 @@ repos:
     language: python
     types: [markdown]
     pass_filenames: true
-    exclude: .*universal_skills/research/comparative-analysis/references/report_template\.md$
+    exclude: .*universal_skills/skills/comparative-analysis/references/report_template\.md$
   - id: check-agent-standards
     name: check agent standards
     entry: |-
@@ -138,7 +138,7 @@ repos:
   hooks:
   - id: skill-catalog-structure
     name: skill catalog structural integrity
-    entry: python universal_skills/agent-tools/skill-catalog-auditor/scripts/audit_catalog.py universal_skills --fail-on error
+    entry: python universal_skills/skills/skill-catalog-auditor/scripts/audit_catalog.py universal_skills --fail-on error
     language: system
     pass_filenames: false
     always_run: true

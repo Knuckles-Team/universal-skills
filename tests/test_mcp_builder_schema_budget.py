@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from test_mcp_builder_openapi_parity import catalog as catalog
 
-SCRIPTS = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts"
+SCRIPTS = Path(__file__).parents[1] / "universal_skills/skills/mcp-builder/scripts"
 sys.path.insert(0, str(SCRIPTS))
 budgets = importlib.import_module("openapi_schema_budget")
 discovery = importlib.import_module("openapi_discovery")

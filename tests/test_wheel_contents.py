@@ -62,10 +62,10 @@ def _is_generated_or_cache(relative_path: PurePosixPath) -> bool:
         return True
     if relative_path.suffix in {".pyc", ".pyo", ".skill"}:
         return True
-    if relative_path.parts[:3] == ("research", "comparative-analysis", "results"):
+    if relative_path.parts[:3] == ("skills", "comparative-analysis", "results"):
         return True
     return (
-        relative_path.parts[:2] == ("research", "comparative-analysis")
+        relative_path.parts[:2] == ("skills", "comparative-analysis")
         and relative_path.name.startswith("results_")
         and relative_path.suffix == ".json"
     )
@@ -100,9 +100,9 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         "build/nested/wheel_leak.py": "BUILD_JUNK = True\n",
         "dist/nested/wheel_leak.py": "DIST_JUNK = True\n",
         "egg-info/nested/wheel_leak.py": "EGG_INFO_JUNK = True\n",
-        "agent-tools/mcp-builder/build/nested/wheel_leak.py": "BUILD_JUNK = True\n",
-        "agent-tools/mcp-builder/dist/nested/wheel_leak.py": "DIST_JUNK = True\n",
-        "agent-tools/mcp-builder/generated.egg-info/nested/wheel_leak.py": "EGG_INFO_JUNK = True\n",
+        "skills/mcp-builder/build/nested/wheel_leak.py": "BUILD_JUNK = True\n",
+        "skills/mcp-builder/dist/nested/wheel_leak.py": "DIST_JUNK = True\n",
+        "skills/mcp-builder/generated.egg-info/nested/wheel_leak.py": "EGG_INFO_JUNK = True\n",
     }
     for relative_path, contents in generated_package_junk.items():
         junk = project / "universal_skills" / relative_path
@@ -110,9 +110,9 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         junk.write_text(contents, encoding="utf-8")
 
     near_miss_resources = {
-        "agent-tools/mcp-builder/build-tools/readiness_fixture.md": "BUILD_TOOL_RESOURCE\n",
-        "agent-tools/mcp-builder/dist-tools/readiness_fixture.md": "DIST_TOOL_RESOURCE\n",
-        "agent-tools/mcp-builder/egg-info-tools/readiness_fixture.md": "EGG_INFO_TOOL_RESOURCE\n",
+        "skills/mcp-builder/build-tools/readiness_fixture.md": "BUILD_TOOL_RESOURCE\n",
+        "skills/mcp-builder/dist-tools/readiness_fixture.md": "DIST_TOOL_RESOURCE\n",
+        "skills/mcp-builder/egg-info-tools/readiness_fixture.md": "EGG_INFO_TOOL_RESOURCE\n",
     }
     for relative_path, contents in near_miss_resources.items():
         resource = project / "universal_skills" / relative_path
@@ -165,16 +165,16 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
     assert not missing, f"wheel omitted catalog resources: {missing[:20]}"
 
     readiness_resources = {
-        "universal_skills/agent-tools/mcp-builder/SKILL.md",
-        "universal_skills/agent-tools/mcp-builder/scripts/scaffold_connector.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/github_publish.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/github_pages.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness.py",
-        "universal_skills/agent-tools/mcp-builder/scripts/agent_readiness_schema.json",
+        "universal_skills/skills/mcp-builder/SKILL.md",
+        "universal_skills/skills/mcp-builder/scripts/scaffold_connector.py",
+        "universal_skills/skills/mcp-builder/scripts/github_publish.py",
+        "universal_skills/skills/mcp-builder/scripts/github_pages.py",
+        "universal_skills/skills/mcp-builder/scripts/agent_readiness.py",
+        "universal_skills/skills/mcp-builder/scripts/agent_readiness_schema.json",
     }
     assert readiness_resources <= members
     assert (
-        "universal_skills/agent-tools/mcp-builder/scripts/github_template.py"
+        "universal_skills/skills/mcp-builder/scripts/github_template.py"
         not in members
     )
     assert not any(
@@ -213,7 +213,7 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
         timeout=120,
     )
     assert installation.returncode == 0, installation.stdout + installation.stderr
-    installed_scripts = installed / "universal_skills/agent-tools/mcp-builder/scripts"
+    installed_scripts = installed / "universal_skills/skills/mcp-builder/scripts"
     generated = tmp_path / "generated"
     scaffold = subprocess.run(
         [
@@ -240,7 +240,7 @@ def test_wheel_contains_catalog_resources_without_build_junk(tmp_path: Path) -> 
             (
                 "import importlib, importlib.resources, json, sys; "
                 "sys.path.insert(0, sys.argv[1]); "
-                "package = 'universal_skills.agent-tools.mcp-builder.scripts'; "
+                "package = 'universal_skills.skills.mcp-builder.scripts'; "
                 "module = importlib.import_module(package + '.agent_readiness'); "
                 "assert callable(module.main); "
                 "schema = json.loads(importlib.resources.files(package)"

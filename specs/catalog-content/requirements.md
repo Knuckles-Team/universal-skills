@@ -1,0 +1,10 @@
+# US-CONTENT requirements
+
+Every requirement this specification owns, with the proof that closes it. Delivery state and evidence for each ID are recorded in `status.json`; this file defines what each ID means. The design is in [`spec.md`](spec.md) and [`plan.md`](plan.md), the test contract in [`test-spec.md`](test-spec.md), and the work order in [`tasks.md`](tasks.md).
+
+| ID | Requirement | Verification |
+|---|---|---|
+| `US-CONTENT-R001` | **`universal_skills` is served as a content-only connector.** The package declares exactly one entry point, `agent_connector_sdk.connector = "universal_skills"`, and no provider entry-point group. Children `.1` to `.3` deliver it. | See each child. |
+| `US-CONTENT-R001.1` | `pyproject.toml` declares `[project.entry-points."agent_connector_sdk.connector"]` with the single value `universal_skills` (bare package, content only), depends on `agent-connector-sdk[mcp]>=0.5.0,<0.6.0`, and declares no `agent_utilities.skill_providers` or other provider group. The SDK pytest plugin supplies the conformance checks, so the repository holds no copy of them. Proving test: `tests/test_catalog_content.py::test_declares_one_content_only_entry_point`. | The test reads `pyproject.toml` and finds one entry point of the group, the bare package, the SDK floor and cap, and no provider group. |
+| `US-CONTENT-R001.2` | Every skill lives at `universal_skills/skills/<name>/SKILL.md`, one level deep, and its frontmatter `name` equals its folder name. Supporting files stay inside the skill folder so they are served with it. Proving test: `tests/test_catalog_content.py::test_every_skill_is_flat_and_named_by_folder`. | The test finds no `SKILL.md` outside `skills/<name>/` (other than bundled assets) and no name that differs from its folder. |
+| `US-CONTENT-R001.3` | The server the SDK builds for `universal_skills` lists one `skill://<name>/SKILL.md` resource for every skill folder. Proving test: `tests/test_catalog_content.py::test_server_lists_every_skill`. | The test builds the server in process and compares the listed skill names with the folders. |

@@ -11,7 +11,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).parents[1]
-    / "universal_skills/agent-tools/mcp-builder/scripts/templates/generated_schema_clones.py"
+    / "universal_skills/skills/mcp-builder/scripts/templates/generated_schema_clones.py"
 )
 
 

@@ -35,7 +35,7 @@ def test_canonical_builder_is_discoverable_with_resolvable_references(monkeypatc
     monkeypatch.setattr(skill_utilities, "files", lambda _: CATALOG)
     monkeypatch.setenv("MCP_BUILDER_ENABLE", "true")
     paths = skill_utilities.get_universal_skills_path(name="mcp-builder")
-    assert paths == [str(CATALOG / "agent-tools/mcp-builder")]
+    assert paths == [str(CATALOG / "skills/mcp-builder")]
     skill = Path(paths[0]) / "SKILL.md"
     for target in re.findall(r"\[[^]]+\]\(([^)]+)\)", skill.read_text()):
         if "://" not in target and not target.startswith("#"):
@@ -59,7 +59,7 @@ def test_current_catalog_and_report_have_only_the_canonical_builder():
     result = subprocess.run(
         [
             sys.executable,
-            str(CATALOG / "agent-tools/skill-catalog-auditor/scripts/audit_catalog.py"),
+            str(CATALOG / "skills/skill-catalog-auditor/scripts/audit_catalog.py"),
             str(CATALOG),
             "--format",
             "json",

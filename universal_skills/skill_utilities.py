@@ -9,9 +9,6 @@ from importlib.resources import files, as_file
 from typing import Iterable, Optional
 
 
-__version__ = "1.4.0"
-
-
 def get_universal_skills_package_name() -> str:
     """
     Returns the package name of universal_skills.
@@ -111,17 +108,21 @@ def get_universal_skills_path(
                 return enabled_paths  # Found (even if disabled), stop search
         return []
 
-    # If a category is requested, just search that one. Otherwise, search all.
+    # Skills sit flat under ``skills/``; a category is the skill's ``domain`` frontmatter.
     if category:
-        cat_dir = abs_root_path / category
-        if cat_dir.is_dir():
-            for skill_dir in cat_dir.iterdir():
-                if is_skill_dir(skill_dir):
-                    item_name = skill_dir.name
-                    item_default = SKILL_DEFAULTS.get(item_name, True)
-                    env_var_name = f"{item_name.upper().replace('-', '_')}_ENABLE"
-                    if to_boolean(os.environ.get(env_var_name, item_default)):
-                        enabled_paths.append(str(skill_dir.resolve()))
+        for skill_dir in sorted((abs_root_path / "skills").iterdir()):
+            if not is_skill_dir(skill_dir):
+                continue
+            head = (skill_dir / "SKILL.md").read_text(
+                encoding="utf-8", errors="replace"
+            )
+            if f"\ndomain: {category}\n" not in head.split("\n---", 2)[0] + "\n":
+                continue
+            item_name = skill_dir.name
+            item_default = SKILL_DEFAULTS.get(item_name, True)
+            env_var_name = f"{item_name.upper().replace('-', '_')}_ENABLE"
+            if to_boolean(os.environ.get(env_var_name, item_default)):
+                enabled_paths.append(str(skill_dir.resolve()))
         return enabled_paths
 
     # Get All: Recursively find all skill directories
@@ -183,7 +184,7 @@ def resolve_mcp_reference(filename: str) -> Optional[str]:
         # Resolve via importlib.resources
         ref_base = (
             files(get_universal_skills_package_name())
-            / "agent-tools"
+            / "skills"
             / "mcp-client"
             / "references"
             / target_file

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPTS = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts"
+SCRIPTS = Path(__file__).parents[1] / "universal_skills/skills/mcp-builder/scripts"
 sys.path.insert(0, str(SCRIPTS))
 overlay_module = importlib.import_module("openapi_provider_overlay")
 

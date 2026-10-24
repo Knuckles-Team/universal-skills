@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 classifiers = [ "Development Status :: 5 - Production/Stable", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
-dependencies = [ ]
+dependencies = ["agent-connector-sdk[mcp]>=0.5.0,<0.6.0"]
 
 [project.optional-dependencies]
 test = [
@@ -136,15 +136,9 @@ all = [
 install-universal = "universal_skills.core.universal_installer:main"
 install-skills = "universal_skills.core.skill_installer:main"
 
-# Discovered by agent-utilities' own skill-provider sweep
-# (`agent_utilities.core.providers.resolve_skill_provider_dirs`, the SAME
-# resolution every other package's skills reach a served MCP server through)
-# so a host with universal-skills installed alongside agent-utilities serves
-# this whole corpus the same way as any other provider's own skills, with no
-# separate scanner or install step. The target is the package root because
-# its skills live several directories deep (`<category>/<name>/SKILL.md`);
-# the resolver already walks recursively for every provider.
-[project.entry-points."agent_utilities.skill_providers"]
+# Content is found by convention under the package (`universal_skills/skills/<name>/SKILL.md`);
+# the one declaration below is a content-only connector (SDK-CONNECTOR-CONTROL-R071.1).
+[project.entry-points."agent_connector_sdk.connector"]
 universal-skills = "universal_skills"
 
 [[project.authors]]
@@ -166,7 +160,7 @@ universal_skills = [
 # repository-manager. Keep its two authority resources declared on their owning
 # namespace package as an explicit contract in addition to the catalog-wide
 # resource glob above.
-"universal_skills.agent-tools.mcp-builder.scripts" = [
+"universal_skills.skills.mcp-builder.scripts" = [
     "agent_readiness.py",
     "agent_readiness_schema.json",
 ]
@@ -188,8 +182,8 @@ universal_skills = [
     "*/egg-info/*",
     "*.egg-info/*",
     "**/*.skill",
-    "research/comparative-analysis/results/*",
-    "research/comparative-analysis/results_*.json",
+    "skills/comparative-analysis/results/*",
+    "skills/comparative-analysis/results_*.json",
 ]
 
 [tool.setuptools.packages.find]

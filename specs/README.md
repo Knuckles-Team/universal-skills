@@ -11,3 +11,4 @@ This repository owns the specs with the ID prefix `US`.
 - [`US-PAGES`](US-PAGES-001/spec.md) — Consolidate published documentation.
 - [`US-WEB-RESEARCH`](web-research/spec.md) — Web research skills call the served operation.
 - [`US-MCP-BUILDER`](mcp-builder/spec.md) — The mcp-builder scaffold builds connectors on SDK components.
+- [`US-CONTENT`](catalog-content/spec.md) — The catalog is served by the SDK content convention.

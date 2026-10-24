@@ -12,7 +12,7 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OFFICE_SCRIPTS = (
-    PROJECT_ROOT / "universal_skills" / "docs" / "document-tools" / "scripts"
+    PROJECT_ROOT / "universal_skills" / "skills" / "document-tools" / "scripts"
 )
 SCRIPT_KINDS = ("docx_scripts", "pptx_scripts", "xlsx_scripts")
 HELPER_PATHS = tuple(

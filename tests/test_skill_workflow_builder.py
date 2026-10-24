@@ -9,7 +9,7 @@ import yaml
 script_path = (
     Path(__file__).resolve().parent.parent
     / "universal_skills"
-    / "agent-tools"
+    / "skills"
     / "skill-workflow-builder"
     / "scripts"
     / "build_workflow.py"

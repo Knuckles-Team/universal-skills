@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = (
     PROJECT_ROOT
     / "universal_skills"
-    / "docs"
+    / "skills"
     / "document-tools"
     / "scripts"
     / "docx_scripts"

@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator
 
 SCRIPTS = (
     Path(__file__).resolve().parents[1]
-    / "universal_skills/agent-tools/mcp-builder/scripts"
+    / "universal_skills/skills/mcp-builder/scripts"
 )
 sys.path.insert(0, str(SCRIPTS))
 patterns = importlib.import_module("unicode_patterns")

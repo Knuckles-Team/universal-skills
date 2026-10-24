@@ -11,7 +11,7 @@ def _load_script(module_name: str, script_name: str):
     script_path = (
         Path(__file__).resolve().parent.parent
         / "universal_skills"
-        / "core"
+        / "skills"
         / "skill-builder"
         / "scripts"
         / script_name
@@ -43,8 +43,8 @@ def _description() -> str:
 @pytest.mark.parametrize(
     "relative_path",
     [
-        Path("core/skill-builder"),
-        Path("agent-tools/skill-workflow-builder"),
+        Path("skills/skill-builder"),
+        Path("skills/skill-workflow-builder"),
     ],
 )
 def test_builder_meta_skills_satisfy_atomic_contract(relative_path):

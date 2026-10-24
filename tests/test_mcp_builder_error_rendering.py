@@ -9,7 +9,7 @@ import pytest
 
 TEMPLATE = (
     Path(__file__).parents[1]
-    / "universal_skills/agent-tools/mcp-builder/scripts/templates/error_rendering.py"
+    / "universal_skills/skills/mcp-builder/scripts/templates/error_rendering.py"
 )
 
 

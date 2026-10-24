@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "spec_id": "US-CONTENT",
+  "owner_repo": "universal-skills",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "US-CONTENT-R001",
+    "US-CONTENT-R001.1",
+    "US-CONTENT-R001.2",
+    "US-CONTENT-R001.3"
+  ],
+  "requirements": [
+    {
+      "id": "US-CONTENT-R001",
+      "title": "Served by convention (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "US-CONTENT-R001.1",
+        "US-CONTENT-R001.2",
+        "US-CONTENT-R001.3"
+      ]
+    },
+    {
+      "id": "US-CONTENT-R001.1",
+      "title": "One content-only declaration",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-CONTENT-R001.2",
+      "title": "Content sits where the convention expects it",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "US-CONTENT-R001.3",
+      "title": "Every skill is served natively",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    }
+  ]
+}

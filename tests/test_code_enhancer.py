@@ -19,7 +19,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent / (
-    "universal_skills/core/code-enhancer/scripts"
+    "universal_skills/skills/code-enhancer/scripts"
 )
 
 

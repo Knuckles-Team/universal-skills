@@ -11,7 +11,7 @@ import httpx
 import pytest
 from test_mcp_builder_openapi import _require_runtime
 
-SCRIPTS = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts"
+SCRIPTS = Path(__file__).parents[1] / "universal_skills/skills/mcp-builder/scripts"
 sys.path.insert(0, str(SCRIPTS))
 evidence = importlib.import_module("openapi_provider_evidence")
 overlay_module = importlib.import_module("openapi_provider_overlay")
