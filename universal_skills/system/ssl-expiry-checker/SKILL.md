@@ -8,7 +8,7 @@ domain: system
 license: MIT
 tags: [security, network, ssl, monitoring, tls]
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
   author: Genius
 requires:
   - systems-manager-mcp

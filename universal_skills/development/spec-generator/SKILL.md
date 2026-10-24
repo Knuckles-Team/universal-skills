@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [spec generator]
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
   author: Genius
 ---
 
