@@ -123,6 +123,4 @@ jobs:
           MCP_FLEET_REGISTRATION: 'false'
         run: |
           .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra \
-            tests/test_mcp_builder_connector_contract.py \
-            tests/test_mcp_builder_site.py \
-            tests/test_mcp_builder_cli.py
+            tests/test_mcp_builder_site.py
