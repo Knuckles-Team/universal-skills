@@ -7,14 +7,9 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts/scaffold_package.py"
+SCRIPT = Path(__file__).parents[1] / "universal_skills/agent-tools/mcp-builder/scripts/check_tool_parity.py"
 
 
-def builder():
-    spec = importlib.util.spec_from_file_location("source_image_scaffold", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 
@@ -28,7 +23,7 @@ def builder():
 
 
 def test_parity_rejects_undeclared_no_binary(tmp_path):
-    spec = importlib.util.spec_from_file_location("parity_check", SCRIPT.with_name("check_tool_parity.py"))
+    spec = importlib.util.spec_from_file_location("parity_check", SCRIPT)
     parity = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(parity)
     (tmp_path / "docker").mkdir()
@@ -44,7 +39,7 @@ def test_parity_rejects_undeclared_no_binary(tmp_path):
 
 
 def _parity():
-    spec = importlib.util.spec_from_file_location("parity_lost", SCRIPT.with_name("check_tool_parity.py"))
+    spec = importlib.util.spec_from_file_location("parity_lost", SCRIPT)
     parity = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(parity)
     return parity
