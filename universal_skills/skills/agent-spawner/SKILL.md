@@ -9,7 +9,7 @@ description: >-
 tags: [agent, delegation, arbora, pydantic-ai, orchestration]
 license: MIT
 metadata:
-  version: '1.4.0'
+  version: '1.5.0'
   author: Repository Maintainers
 ---
 

@@ -13,7 +13,7 @@ domain: social-workflows
 tags: ['social', 'x', 'ingestion', 'arbora', 'knowledge-graph', 'evolution']
 requires: ['arbora']
 metadata:
-  version: '1.4.0'
+  version: '1.5.0'
   author: Genius
   concepts:
     - CONCEPT:ECO-4.6
