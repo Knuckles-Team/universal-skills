@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_id": "US-MCP-BUILDER",
   "owner_repo": "universal-skills",
-  "delivery_state": "SPECIFIED",
+  "delivery_state": "VERIFIED",
   "requirement_ids": [
     "US-MCP-BUILDER-R011",
     "US-MCP-BUILDER-R011.1",
@@ -23,9 +23,20 @@
     {
       "id": "US-MCP-BUILDER-R011",
       "title": "Connector scaffold on SDK components",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "194946ca6443",
+        "545aff2f8d88",
+        "768aefce0622",
+        "ab2071875a33"
+      ],
+      "verified_by": [
+        "tests/test_mcp_builder_connector_scaffold.py:102",
+        "tests/test_mcp_builder_connector_scaffold.py:119",
+        "tests/test_mcp_builder_connector_scaffold.py:201",
+        "tests/test_mcp_builder_connector_scaffold.py:212",
+        "tests/test_mcp_builder_connector_scaffold.py:222"
+      ],
       "rollup_of": [
         "US-MCP-BUILDER-R011.1",
         "US-MCP-BUILDER-R011.2",
@@ -45,8 +56,10 @@
     {
       "id": "US-MCP-BUILDER-R011.1",
       "title": "Minimal tree",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:88"
       ]
@@ -54,8 +67,10 @@
     {
       "id": "US-MCP-BUILDER-R011.2",
       "title": "Deterministic output",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:96"
       ]
@@ -63,8 +78,10 @@
     {
       "id": "US-MCP-BUILDER-R011.3",
       "title": "Identity and version in pyproject only",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:102"
       ]
@@ -72,8 +89,10 @@
     {
       "id": "US-MCP-BUILDER-R011.4",
       "title": "Shared workflows for release and PR",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:119"
       ]
@@ -81,8 +100,10 @@
     {
       "id": "US-MCP-BUILDER-R011.5",
       "title": "One tool per operation with risk classes",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:201"
       ]
@@ -90,8 +111,10 @@
     {
       "id": "US-MCP-BUILDER-R011.6",
       "title": "Sources declared as data",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:212"
       ]
@@ -99,8 +122,10 @@
     {
       "id": "US-MCP-BUILDER-R011.7",
       "title": "Content served over MCP",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:222"
       ]
@@ -108,8 +133,10 @@
     {
       "id": "US-MCP-BUILDER-R011.8",
       "title": "Ontology rolls up to a core class",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:233"
       ]
@@ -117,8 +144,10 @@
     {
       "id": "US-MCP-BUILDER-R011.9",
       "title": "Pipelines connector gates pass",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "194946ca6443"
+      ],
       "verified_by": [
         "tests/test_mcp_builder_connector_scaffold.py:271"
       ]
@@ -126,37 +155,45 @@
     {
       "id": "US-MCP-BUILDER-R011.10",
       "title": "Ontology graph check passes",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:306"
+        "tests/test_mcp_builder_connector_scaffold.py:316"
       ]
     },
     {
       "id": "US-MCP-BUILDER-R011.11",
       "title": "SDK conformance plugin passes",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:324"
+        "tests/test_mcp_builder_connector_scaffold.py:334"
       ]
     },
     {
       "id": "US-MCP-BUILDER-R011.12",
       "title": "Client from one SDK auth declaration",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:337"
+        "tests/test_mcp_builder_connector_scaffold.py:347"
       ]
     },
     {
       "id": "US-MCP-BUILDER-R011.13",
       "title": "Dependencies through SDK extras",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "545aff2f8d88"
+      ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:349"
+        "tests/test_mcp_builder_connector_scaffold.py:359"
       ]
     }
   ]
