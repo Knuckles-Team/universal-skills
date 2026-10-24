@@ -362,3 +362,10 @@ def test_optional_dependencies_are_sdk_extras_only(connector):
     assert project["dependencies"] == ["agent-connector-sdk[mcp]>=0.5.1,<0.6"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"agent_connector_sdk.connector"}
+
+
+def test_agents_md_documents_bump_first_release(connector):
+    text = (connector / "AGENTS.md").read_text(encoding="utf-8")
+    assert "## Release" in text
+    assert f"https://pypi.org/pypi/{FLEET}/X.Y.Z/json" in text
+    assert "{fleet}" not in text

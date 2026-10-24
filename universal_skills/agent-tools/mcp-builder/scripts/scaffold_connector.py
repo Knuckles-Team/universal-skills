@@ -231,6 +231,24 @@ AGENTS = """# {fleet}
 {Display} connector. The operations are the methods of `{pkg}/api_client.py`; the SDK
 serves one tool per method. `{pkg}/auth.py` builds the client, `{pkg}/connector_sources.py`
 declares the data sources. Everything else is an SDK component or a shared pipelines file.
+
+## Release
+
+Bump first, tag last. A tag whose commit still carries the previous version rebuilds the
+old version under the new tag and PyPI refuses it; the shared `python_pipeline.yml` guard
+fails when the tag differs from the package version or the version is already on PyPI.
+
+1. Bump the version first: it lives in `pyproject.toml` (and `.bumpversion.cfg` when the
+   repo has one; then use `bump2version --config-file .bumpversion.cfg --allow-dirty --no-commit --no-tag <part>`).
+   Refresh the lock and any recorded fixture that embeds the version in the same PR.
+2. Merge the bump PR.
+3. At the merged commit, check `git show <commit>:pyproject.toml` carries the intended
+   version and that it is unpublished:
+   `curl -s -o /dev/null -w '%{{http_code}}' https://pypi.org/pypi/{fleet}/X.Y.Z/json` must print `404`.
+4. Only then push the tag `vX.Y.Z` on that commit.
+5. Confirm the wheel and sdist are on PyPI.
+6. Tag on the wrong commit and nothing published: delete the tag and re-tag. Anything
+   published: cut the next patch; never move a published tag.
 """
 
 # The reference pre-commit configuration of pipelines (templates/connector/pre-commit-config.yaml).
