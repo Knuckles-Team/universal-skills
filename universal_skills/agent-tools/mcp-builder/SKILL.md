@@ -36,7 +36,7 @@ only generator.
 
     example-mcp/
       pyproject.toml                 name, version (only here), one SDK dependency, one entry point
-      README.md   AGENTS.md          connector section only
+      README.md   AGENTS.md          connector section + Release section (bump first, tag last)
       .pre-commit-config.yaml        the pipelines reference config (connector-standard, secrets, spec)
       .github/workflows/pipeline.yml       python_pipeline (connector) + container_pipeline (render_connector)
       .github/workflows/connector-pr.yml   shared PR gates
