@@ -71,28 +71,6 @@ required releases block release/install claims; do not lower dependency bounds o
 invent lock entries. If a pipeline policy conflicts with approved immutable pins,
 retain the pins and report the conflict until that specific change is authorized.
 
-The generated scanner workflow prepares its project test environment before
-running hooks: `python scripts/bootstrap_environment.py --github`. Commit a valid
-`uv.lock` and declare the `test` extra first. The approved runner supplies Python
-at the declared minimum version, uv, pre-commit and scanners; the bootstrap does
-not download Python or build dependencies. It checks the lock, then performs a
-frozen wheel-only sync into ignored `.ci/connector-venv`. Missing wheels or
-incompatible lock inputs stop the workflow.
-
-When SDK or EG uses an explicit immutable Git source, the bootstrap verifies the
-same full revision in pyproject and lock, checks out clean source, and admits only
-that source instead of installing its distribution. Registry dependencies remain
-installed normally. The project itself runs from source. Import origins, source
-revisions, input hashes and installed distributions are recorded in the private
-`.ci/connector-environment.json` receipt. This validates a test environment with
-source overlays; it does not certify release wheels or native extension closure.
-Hooks use the captured runner pre-commit CLI with the prepared Python first on
-PATH, ambient Python import overrides cleared and fleet registration disabled.
-Both uv commands explicitly bind `--project` and `--directory` to the verified
-repository root. Ambient `UV_PROJECT`, `UV_WORKING_DIR` and
-`UV_WORKING_DIRECTORY` overrides are removed. Approved runner proxy and index
-settings remain available; they cannot replace the frozen project/lock binding.
-
 Retain applicable CCCC complexity, KISS, duplication, architecture and scanner
 distribution checks. Reuse shared implementations/profiles rather than another
 hand-maintained policy. Provision native tools only through an approved existing
