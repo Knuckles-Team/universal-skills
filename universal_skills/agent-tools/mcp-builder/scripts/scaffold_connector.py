@@ -455,6 +455,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     written = scaffold(args.fleet_name, args.output_dir)
     print(f"{args.fleet_name}: wrote {len(written)} files under {args.output_dir / args.fleet_name}")
+    print("Before the first push run: pipelines-hook connector-name --strict")
+    print("  and: pipelines-hook connector-ontology-map graph-check (see SKILL.md)")
     return 0
 
 

@@ -98,6 +98,8 @@ everything the connector offers is served over MCP.
    `importlib.metadata`. Pipelines bumps it, renders the container files, and
    generates the ontology shapes at build time. The shared workflows publish to PyPI
    and Docker Hub.
+   Check a new connector with `connector-name --strict`, the `connector-standard` file
+   check and `connector-ontology-map graph-check` before the first push.
 
 ## Contracts
 
