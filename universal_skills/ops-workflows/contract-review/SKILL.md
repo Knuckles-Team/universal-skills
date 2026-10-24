@@ -24,7 +24,7 @@ team_config:
     report-generator: [graph_write, document_tools]
 concept: KG-2.12
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
 ---
 
 # Contract Review Workflow

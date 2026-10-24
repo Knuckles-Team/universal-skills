@@ -13,7 +13,7 @@ requires:
   - portainer-agent
   - tunnel-manager
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
 ---
 
 # Uptime Kuma Self-Healer Workflow

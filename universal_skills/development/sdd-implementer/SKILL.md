@@ -6,7 +6,7 @@ description: Implements verified Spec Kit tasks from tracked specs/<stable-id>/t
 license: MIT
 tags: [sdd implementer]
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
   author: Genius
 ---
 

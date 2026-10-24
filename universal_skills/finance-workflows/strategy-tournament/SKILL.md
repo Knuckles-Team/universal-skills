@@ -22,7 +22,7 @@ team_config:
 tags: [tournament, evaluation, metrics, selection]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
 ---
 
 # Strategy Tournament Workflow

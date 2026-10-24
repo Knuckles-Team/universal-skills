@@ -18,7 +18,7 @@ team_config:
 tags: ['social', 'streaming', 'broadcast', 'owncast-agent']
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.3.11'
+  version: '1.4.0'
 ---
 
 # Social Media Influencer Workflow
