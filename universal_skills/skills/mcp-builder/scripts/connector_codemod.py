@@ -205,7 +205,7 @@ def process_pyproject(path: Path, report, dry: bool) -> None:
         out.append(line)
     text = "".join(out)
     for m in re.findall(r"agent[-_]utilities[\w.\[\]-]*", text):
-        report.append(f"  REVIEW pyproject mention {m} (entry-point group names are graph-os discovery, kept)")
+        report.append(f"  REVIEW pyproject mention {m} (entry-point group names are arbora discovery, kept)")
     if text != src:
         report.append("  PYPROJECT rewritten -> " + SDK_DEP)
         if not dry:
