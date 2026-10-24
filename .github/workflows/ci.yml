@@ -58,6 +58,31 @@ jobs:
           uv sync --frozen --no-dev --python 3.12
           uv run --frozen --no-sync python -c 'import sys, universal_skills; print(sys.version)'
 
+  connector-scaffold:
+    # Generates a connector, installs it and runs the SDK conformance plugin, the
+    # pipelines connector gates and the ontology graph check (US-MCP-BUILDER-R011).
+    # Nothing in this job may skip.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          python-version: '3.14'
+      - name: Install the SDK, the pipelines hooks and test tools
+        run: |
+          uv venv /tmp/scaffold-venv
+          uv pip install --python /tmp/scaffold-venv/bin/python pytest rdflib pyyaml codespell \
+            "agent-connector-sdk[mcp]>=0.5.1,<0.6" \
+            "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
+      - name: Scaffold tests
+        run: |
+          set -o pipefail
+          /tmp/scaffold-venv/bin/python -m pytest tests/test_mcp_builder_connector_scaffold.py -q -rs -p no:cacheprovider | tee /tmp/scaffold.out
+          if grep -q skipped /tmp/scaffold.out; then echo "a scaffold test skipped" >&2; exit 1; fi
+
   mcp-builder-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 15
