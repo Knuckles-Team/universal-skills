@@ -109,7 +109,7 @@ def test_identity_and_version_live_in_pyproject_only(connector):
         FLEET: "demo_mcp:connector"
     }
     assert project["scripts"] == {FLEET: "agent_connector_sdk.cli:serve"}
-    assert project["dependencies"] == ["agent-connector-sdk[mcp]>=0.5.1,<0.6"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
             assert "__version__" not in text.decode(), path
@@ -359,7 +359,7 @@ def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
 # spec: US-MCP-BUILDER-R011.13
 def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
-    assert project["dependencies"] == ["agent-connector-sdk[mcp]>=0.5.1,<0.6"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"agent_connector_sdk.connector"}
 

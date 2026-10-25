@@ -9,7 +9,7 @@ description = "LGTM Observability and Alertmanager MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",]
+dependencies = [ "scion-sdk[mcp]>=0.3.12,<1.0.0",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,8 +18,8 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",]
-all = [ "agent-connector-sdk[mcp]>=0.3.12,<1.0.0",]
+mcp = [ "scion-sdk[mcp]>=0.3.12,<1.0.0",]
+all = [ "scion-sdk[mcp]>=0.3.12,<1.0.0",]
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
