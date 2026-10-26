@@ -77,19 +77,19 @@ def check_project(root: Path, package: str) -> list[str]:
         for value in dependencies
     }
     violations = []
-    if "agent-connector-sdk" not in names:
-        violations.append("pyproject.toml: connector requires agent-connector-sdk")
-    if RETIRED_PACKAGE.replace("_", "-") in names:
+    if sum(re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] in {"agent-connector-sdk", "scion-sdk"} for value in dependencies) != 1:
+        violations.append("pyproject.toml: connector requires exactly one SDK distribution (scion-sdk or legacy agent-connector-sdk)")
+    if names & {RETIRED_PACKAGE.replace("_", "-"), "meristem"}:
         violations.append(
-            "pyproject.toml: connectors depend on agent-connector-sdk only"
+            "pyproject.toml: connectors depend on scion-sdk only"
         )
     for extra, values in project.get("optional-dependencies", {}).items():
-        if any(RETIRED_PACKAGE.replace("_", "-") in value.lower() for value in values):
+        if any(re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] in {RETIRED_PACKAGE.replace("_", "-"), "meristem"} for value in values):
             violations.append(
                 f"pyproject.toml: extra {extra!r} pulls the retired package"
             )
     if any(
-        re.match(r"epistemic[-_]graph\[[^]]*\bfull\b", value.lower())
+        re.match(r"(?:epistemic[-_]graph|medulla)\[[^]]*\bfull\b", value.lower())
         for value in dependencies
     ):
         violations.append(
@@ -117,20 +117,20 @@ EXTRA_OWNED = {
         "the SDK base install carries httpx; do not pin it (SDK R001, R040)",
     ),
     "gql": ("R004", "use the SDK graphql extra (SDK R016, R040)"),
-    "graphql-core": ("R004", "declare agent-connector-sdk[graphql] (SDK R016, R040)"),
-    "psycopg": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "psycopg2": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "psycopg2-binary": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "pymysql": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "pymongo": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "oracledb": ("R004", "declare agent-connector-sdk[db] (SDK R020, R040)"),
-    "pyodbc": ("R004", "declare agent-connector-sdk[mssql] (SDK R020, R040)"),
-    "feedparser": ("R004", "declare agent-connector-sdk[feeds] (SDK R021, R040)"),
-    "pyarrow": ("R004", "declare agent-connector-sdk[dataprep] (SDK R024, R040)"),
-    "pandas": ("R004", "declare agent-connector-sdk[market] (SDK R023, R040)"),
-    "yfinance": ("R004", "declare agent-connector-sdk[market] (SDK R023, R040)"),
-    "websockets": ("R004", "declare agent-connector-sdk[stream] (SDK R022, R040)"),
-    "rdflib": ("R004", "declare agent-connector-sdk[integrity] (SDK R028, R040)"),
+    "graphql-core": ("R004", "declare scion-sdk[graphql] (SDK R016, R040)"),
+    "psycopg": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "psycopg2": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "psycopg2-binary": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "pymysql": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "pymongo": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "oracledb": ("R004", "declare scion-sdk[db] (SDK R020, R040)"),
+    "pyodbc": ("R004", "declare scion-sdk[mssql] (SDK R020, R040)"),
+    "feedparser": ("R004", "declare scion-sdk[feeds] (SDK R021, R040)"),
+    "pyarrow": ("R004", "declare scion-sdk[dataprep] (SDK R024, R040)"),
+    "pandas": ("R004", "declare scion-sdk[market] (SDK R023, R040)"),
+    "yfinance": ("R004", "declare scion-sdk[market] (SDK R023, R040)"),
+    "websockets": ("R004", "declare scion-sdk[stream] (SDK R022, R040)"),
+    "rdflib": ("R004", "declare scion-sdk[integrity] (SDK R028, R040)"),
 }
 
 _SOURCE_RULES = (

@@ -100,7 +100,7 @@ def src_of(src: str, node: ast.AST) -> str:
 def latest_sdk_version(explicit: str | None) -> str:
     if explicit:
         return explicit
-    with urllib.request.urlopen("https://pypi.org/pypi/agent-connector-sdk/json", timeout=20) as r:  # noqa: S310
+    with urllib.request.urlopen("https://pypi.org/pypi/scion-sdk/json", timeout=20) as r:  # noqa: S310
         return json.load(r)["info"]["version"]
 
 
@@ -561,11 +561,21 @@ def _drop_pin(text: str, name: str) -> str:
 
 def edit_pyproject(repo: Path, sdk: str, imports_requests: bool, imports_httpx: bool, res: Result, apply: bool) -> None:
     path = repo / "pyproject.toml"
+    dependency_lists = []
+    if path.exists():
+        project = tomllib.loads(path.read_text()).get("project", {})
+        dependency_lists.append(project.get("dependencies", []))
+        dependency_lists.extend(project.get("optional-dependencies", {}).values())
+    dependency_lists.extend(rq.read_text().splitlines() for rq in sorted(repo.glob("requirements*.txt")))
+    for dependencies in dependency_lists:
+        aliases = [d for d in dependencies if pkg_name(d) in {"agent-connector-sdk", "scion-sdk"}]
+        if len(aliases) > 1:
+            raise exc("ambiguous-sdk-dependencies", "declare exactly one SDK distribution per dependency list")
     if path.exists():
         src = path.read_text()
         text = re.sub(
-            r"(agent-connector-sdk(?:\[[^\]]*\])?)>=[0-9][0-9A-Za-z.]*",
-            lambda m: f"{m.group(1)}>={sdk}",
+            r"(?:agent-connector-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*",
+            lambda m: f"scion-sdk{m.group(1) or ''}>={sdk}",
             src,
         )
         if not imports_requests:
@@ -583,7 +593,7 @@ def edit_pyproject(repo: Path, sdk: str, imports_requests: bool, imports_httpx: 
                 path.write_text(text)
     for rq in sorted(repo.glob("requirements*.txt")):
         s = rq.read_text()
-        t = re.sub(r"(?m)^(agent-connector-sdk(?:\[[^\]]*\])?)>=[0-9][0-9A-Za-z.]*", lambda m: f"{m.group(1)}>={sdk}", s)
+        t = re.sub(r"(?m)^(?:agent-connector-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*", lambda m: f"scion-sdk{m.group(1) or ''}>={sdk}", s)
         if not imports_requests:
             t = re.sub(r"(?mi)^requests(?:\[[^\]]*\])?\s*[<>=!~].*\n?", "", t)
         if not imports_httpx:
@@ -607,18 +617,18 @@ def replace_driver_pins(text: str, res: Result) -> str:
             hit = [p for p in pkgs if p in pins]
             if not hit:
                 continue
-            sdk_entry = next((d for d in deps if pkg_name(d) == "agent-connector-sdk"), None)
+            sdk_entry = next((d for d in deps if pkg_name(d) == "scion-sdk"), None)
             if len(pkgs) > 1 and len(hit) != len(pkgs):
                 res.notes.append(f"extra '{extra}' not applied: only {hit} of {pkgs} pinned (partial coverage)")
                 continue
             if not sdk_entry:
-                res.notes.append(f"extra '{extra}' not applied: no agent-connector-sdk entry in the same list as {hit}")
+                res.notes.append(f"extra '{extra}' not applied: no scion-sdk entry in the same list as {hit}")
                 continue
             for p in hit:
                 text = _drop_pin(text, pins[p].split("[")[0].split(">")[0].split("=")[0].split("<")[0].strip())
-            m = re.match(r"agent-connector-sdk(?:\[([^\]]*)\])?(.*)", sdk_entry)
+            m = re.match(r"scion-sdk(?:\[([^\]]*)\])?(.*)", sdk_entry)
             extras = sorted({*(x.strip() for x in (m.group(1) or "").split(",") if x.strip()), extra})
-            text = text.replace(f'"{sdk_entry}"', f'"agent-connector-sdk[{",".join(extras)}]{m.group(2)}"', 1)
+            text = text.replace(f'"{sdk_entry}"', f'"scion-sdk[{",".join(extras)}]{m.group(2)}"', 1)
     return text
 
 
@@ -678,7 +688,7 @@ def spec_files(name: str, module_path: str, cls_name: str, client: bool = True) 
          f"{name} must send every vendor request through the SDK governed HTTP client with its resolved TLS profile and SDK auth. It must not build its own session. This row follows {_cite('R001')}.",
          "A unit test shows the API client holds an httpx client and a request carries the configured credential through a mock transport"),
         (ids[1], "SDK floor and dependency set",
-         f"The package must require the current agent-connector-sdk floor and must not pin requests or httpx while nothing imports them directly. Optional drivers come from SDK extras. This row follows {_cite('R002')}.",
+         f"The package must require the current scion-sdk floor and must not pin requests or httpx while nothing imports them directly. Optional drivers come from SDK extras. This row follows {_cite('R002')}.",
          "pyproject.toml shows the floor and no unused requests pin"),
         (ids[2], "Production wiring and hot path",
          f"`{cls_name}.__init__` in `{module_path}` calls `create_http_client`, and every domain client reaches it through `request`. A transient 503 is retried by the SDK policy. This row follows {_cite('R001')}.",
@@ -739,7 +749,7 @@ import tomllib
 def test_dependencies_have_no_unused_requests_pin():
     root = pathlib.Path(__file__).resolve().parents[1]
     deps = tomllib.loads((root / "pyproject.toml").read_text())["project"]["dependencies"]
-    assert any(d.startswith("agent-connector-sdk") for d in deps)
+    assert any(d.startswith("scion-sdk") for d in deps)
     assert not any(d.lower().startswith("requests") for d in deps)
 '''
 
@@ -805,7 +815,7 @@ def test_transient_status_is_retried_by_the_sdk_client(monkeypatch):
 def test_dependencies_have_no_unused_requests_pin():
     root = pathlib.Path(__file__).resolve().parents[1]
     deps = tomllib.loads((root / "pyproject.toml").read_text())["project"]["dependencies"]
-    assert any(d.startswith("agent-connector-sdk") for d in deps)
+    assert any(d.startswith("scion-sdk") for d in deps)
     assert not any(d.lower().startswith("requests") for d in deps)
 '''
 

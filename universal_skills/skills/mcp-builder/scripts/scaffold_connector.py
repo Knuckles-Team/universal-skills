@@ -10,7 +10,7 @@ the ontology shapes. The shared pipelines workflows own gates and release.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires agent-connector-sdk>=0.5.1 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.5.1 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -58,7 +58,7 @@ version = "0.1.0"
 description = "MCP connector for {Display}."
 readme = "README.md"
 requires-python = ">=3.12, <3.15"
-dependencies = ["agent-connector-sdk[mcp]>={sdk},<0.6"]
+dependencies = ["scion-sdk[mcp]>={sdk},<0.6"]
 
 [project.license]
 text = "MIT"

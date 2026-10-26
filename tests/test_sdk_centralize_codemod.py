@@ -15,6 +15,18 @@ AUTO = ["caddy-mcp", "lgtm-mcp", "mattermost-mcp"]
 EXCEPTIONS = {"ciso-assistant-api": "retry-loop", "owncast-agent": "catches-requests-errors"}
 
 
+@pytest.fixture(autouse=True)
+def isolated_git_environment(monkeypatch):
+    """Fixture repositories must never inherit the invoking commit hook's index."""
+    import os
+    import subprocess
+
+    names = subprocess.check_output(["git", "rev-parse", "--local-env-vars"], text=True).splitlines()
+    for name in names:
+        if name in os.environ:
+            monkeypatch.delenv(name)
+
+
 def _tree(root: Path) -> dict[str, bytes]:
     return {str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file() and "__pycache__" not in p.parts}
 
@@ -93,3 +105,46 @@ def test_bump_skips_already_tagged_versions(tmp_path):
     sdk_centralize.bump_patch(repo, res, apply=True)
     assert 'version = "1.2.5"' in (repo / "pyproject.toml").read_text()
     assert '==1.2.5"' in (repo / "docker/Dockerfile").read_text()
+
+
+@pytest.mark.parametrize("distribution", ["agent-connector-sdk", "scion-sdk"])
+def test_sdk_alias_migration_preserves_constraints_and_extras(distribution, tmp_path):
+    (tmp_path / "pyproject.toml").write_text(
+        f'[project]\nname = "connector"\ndependencies = ["{distribution}[mcp]>=0.3.11,<1.0.0"]\n'
+    )
+    sdk_centralize.edit_pyproject(tmp_path, "0.3.12", True, True, sdk_centralize.Result("connector"), True)
+    assert '"scion-sdk[mcp]>=0.3.12,<1.0.0"' in (tmp_path / "pyproject.toml").read_text()
+
+
+def test_sdk_alias_collision_is_refused_without_writes(tmp_path):
+    path = tmp_path / "pyproject.toml"
+    source = '[project]\nname = "connector"\ndependencies = ["agent-connector-sdk>=0.3.11", "scion-sdk>=0.3.11"]\n'
+    path.write_text(source)
+    with pytest.raises(sdk_centralize.PatternException, match="ambiguous-sdk-dependencies"):
+        sdk_centralize.edit_pyproject(tmp_path, "0.3.12", True, True, sdk_centralize.Result("connector"), True)
+    assert path.read_text() == source
+
+
+@pytest.mark.parametrize("dependencies, valid", [
+    (["agent-connector-sdk[mcp]>=0.5.1,<0.6"], True),
+    (["scion-sdk[mcp]>=0.5.1,<0.6"], True),
+    (["agent-connector-sdk>=0.5.1", "scion-sdk>=0.5.1"], False),
+    (["scion-sdk>=0.5.1", "meristem>=0.5.1"], False),
+    (["scion-sdk>=0.5.1", "medulla[full]>=0.5.1"], False),
+])
+def test_connector_contract_distribution_aliases(dependencies, valid, tmp_path):
+    import check_connector_contract
+
+    (tmp_path / "connector").mkdir()
+    (tmp_path / "pyproject.toml").write_text(f'[project]\ndependencies = {dependencies!r}\n')
+    assert (not check_connector_contract.check_project(tmp_path, "connector")) is valid
+
+
+@pytest.mark.parametrize("distribution", ["agent-utilities", "meristem"])
+def test_legacy_connector_codemod_accepts_harness_alias(distribution, tmp_path):
+    import connector_codemod
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text(f'[project]\ndependencies = ["{distribution}[all]>=0.5.0"]\n')
+    connector_codemod.process_pyproject(path, [], False)
+    assert '"scion-sdk[mcp]>=0.3.11,<1.0.0"' in path.read_text()

@@ -30,9 +30,10 @@ import ast
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-SDK_DEP = "agent-connector-sdk[mcp]>=0.3.11,<1.0.0"
+SDK_DEP = "scion-sdk[mcp]>=0.3.11,<1.0.0"
 AGENT_MODE = "REMOVE agent mode"
 #: AU-named env-drift internals a connector wrapper calls on the checker module.
 ENV_DRIFT_RENAMES = {
@@ -186,7 +187,13 @@ def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
 
 def process_pyproject(path: Path, report, dry: bool) -> None:
     src = path.read_text()
-    text = re.sub(r"\"agent-utilities(\[[^\]]*\])?[^\"]*\"", f'"{SDK_DEP}"', src)
+    project = tomllib.loads(src).get("project", {})
+    for dependencies in [project.get("dependencies", []), *project.get("optional-dependencies", {}).values()]:
+        names = {re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] for value in dependencies}
+        if {"agent-utilities", "meristem"} <= names or {"agent-connector-sdk", "scion-sdk"} <= names:
+            raise ValueError("declare exactly one alias for each distribution")
+    text = re.sub(r"\"(?:agent-utilities|meristem)(\[[^\]]*\])?[^\"]*\"", f'"{SDK_DEP}"', src)
+    text = re.sub(r'"agent-connector-sdk(?=[\[<>=!~;" ])', '"scion-sdk', text)
     # de-duplicate identical dependency lines produced by the rewrite
     seen: set[str] = set()
     out = []
@@ -196,7 +203,7 @@ def process_pyproject(path: Path, report, dry: bool) -> None:
             if key in seen:
                 continue
             seen.add(key)
-        if re.match(r"\s*agent-utilities\s*=\s*\{", line):
+        if re.match(r"\s*(?:agent-utilities|meristem)\s*=\s*\{", line):
             report.append(f"  DELETE uv source {key}")
             continue
         if re.match(r"\s*[\w-]+\s*=\s*\"[\w.]+agent_server:\w+\"", line):
