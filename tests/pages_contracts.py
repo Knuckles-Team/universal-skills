@@ -75,6 +75,36 @@ def test_shared_pages_workflow_contract():
     }
 
 
+def test_shared_pages_triggers_and_generated_theme_assets_contract():
+    workflow = yaml.safe_load(
+        (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+    )
+    triggers = workflow.get("on", workflow.get(True))
+    assert isinstance(triggers, dict)
+    assert "workflow_dispatch" in triggers
+    push = triggers["push"]
+    assert "specs/**" in push["paths"]
+    assert ".config/spec-dashboard.json" in push["paths"]
+
+    generated_assets = (
+        "docs/stylesheets/extra.css",
+        "docs/assets/graph-mark.svg",
+        "docs/assets/favicon.svg",
+        "docs/assets/brands/epistemic-graph-logo-v1.png",
+        "docs/assets/brands/agent-utilities-logo-v1.png",
+        "docs/assets/brands/arbora-logo-v1.png",
+        "docs/assets/brands/agent-connector-sdk-logo-v1.png",
+        "docs/assets/brands/agent-webui-logo-v1.png",
+        "docs/assets/brands/geniusbot-logo-v1.png",
+        "docs/assets/brands/agent-terminal-ui-logo-v1.png",
+        "docs/glossary.md",
+    )
+    for relative_path in generated_assets:
+        generated = ROOT / relative_path
+        assert generated.is_file(), relative_path
+        assert generated.stat().st_size > 0, relative_path
+
+
 def test_canonical_sources_and_existing_urls(checkout):
     result = build(checkout)
     assert result.returncode == 0, result.stderr

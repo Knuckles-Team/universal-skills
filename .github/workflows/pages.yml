@@ -1,15 +1,17 @@
 name: Deploy GitHub Pages
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
+      - '.config/spec-dashboard.json'
       - 'docs/**'
       - 'mkdocs.yml'
       - 'README.md'
       - 'CONTRIBUTING.md'
-      - 'specs/US-PAGES-001/**'
+      - 'specs/**'
       - 'scripts/pages_sources.py'
       - '.github/workflows/pages.yml'
 
