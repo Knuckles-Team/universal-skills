@@ -37,24 +37,31 @@ only generator.
     example-mcp/
       pyproject.toml                 name, version (only here), one SDK dependency, one entry point
       README.md   AGENTS.md          connector section + Release section (bump first, tag last)
-      .pre-commit-config.yaml        the pipelines reference config (connector-standard, secrets, spec)
+      .pre-commit-config.yaml        the pipelines reference config (connector-standard, secrets, spec, dependency-readiness)
+      .github/spec-dashboard.json    connector-owned source selection for the shared dashboard
       .github/workflows/pipeline.yml       python_pipeline (connector) + container_pipeline (render_connector)
       .github/workflows/connector-pr.yml   shared PR gates
+      .github/workflows/pages.yml          dashboard-enabled Pages caller + workflow_dispatch
+      pages/index.md                  minimal source for the shared Pages workflow
       example_mcp/__init__.py        connector = Connector(api=Api, get_client=get_client, instructions=...)
       example_mcp/__main__.py        from agent_connector_sdk import run; run()
       example_mcp/api_client.py      class Api: one public method per API operation
       example_mcp/auth.py            client_factory(url_env=, auth=, tls=, delegation=)
       example_mcp/connector_sources.py     SOURCES = (source_meta(tool=...), ...)
       example_mcp/prompts/*.json     fastmcp prompts (title, tags, meta)
-      example_mcp/skills/<name>/SKILL.md
+      example_mcp/skills/<name>/SKILL.md       one connector operation skill
+      example_mcp/skills/<fleet>-development/SKILL.md  repository development contract
       example_mcp/ontology/<domain>.ttl    classes extend an EG core class
       specs/README.md  specs/<CONN-ID>/{spec,plan,requirements,tasks,test-spec}.md + status.json
       tests/test_api_client.py       tests of the connector's own client logic only
 
-Nothing else is written. Do not add `mcp_server.py`, `_version.py`, `.bumpversion.cfg`,
-`docker/` files, `certification.json`, a shapes file, `mcp_config.json`, `conftest.py`,
-`kg_ingest.py` boilerplate or copies of SDK tests: the SDK and pipelines own them, and
-everything the connector offers is served over MCP.
+The scaffold writes only connector-owned delivery callers and content. The reusable
+Pages workflow, dashboard renderer, hook implementations, release jobs, container
+files, attestations and shapes remain owned by `pipelines` or the SDK. Do not add
+`mcp_server.py`, `_version.py`, `.bumpversion.cfg`, `docker/` files,
+`certification.json`, a shapes file, `mcp_config.json`, `conftest.py`, `kg_ingest.py`
+boilerplate or copies of SDK tests: the SDK and pipelines own them, and everything
+the connector offers is served over MCP.
 
 ## How to build each part
 
