@@ -285,6 +285,17 @@ def test_pipelines_connector_gates_pass(connector, tmp_path):
             text=True,
         )
         assert done.returncode == 0, module + done.stdout + done.stderr
+    standard = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; from pipelines_hooks.connector import standard; sys.exit(standard.main([]))",
+        ],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    assert standard.returncode == 0, "connector-standard" + standard.stdout + standard.stderr
 
 
 # The epistemic-graph revision whose ontology the graph check composes. Move it deliberately.
