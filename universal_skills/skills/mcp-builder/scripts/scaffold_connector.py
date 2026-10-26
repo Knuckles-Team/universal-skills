@@ -239,8 +239,14 @@ cite the owning spec row in the commit trailer.
 
 ## Setup and gates
 
-Use the pinned environment from `uv sync --locked`. Run the repository gate from
-the checkout root:
+On the first checkout, create the lockfile before using locked commands:
+
+```bash
+uv lock
+uv sync --locked
+```
+
+Run the repository gate from the checkout root:
 
 ```bash
 uvx pre-commit run --all-files
@@ -260,6 +266,12 @@ replace those shared hooks with local copies or bypass a failing check.
 - Keep `{pkg}/skills/` package data intact when adding skills.
 - Documentation lives under `pages/` and is published by the shared Pages
   workflow; source status records live under `specs/`.
+- The scaffold leaves `shared_theme_enabled: false` because the shared Pages
+  workflow requires canonical theme outputs in the content tree. If this
+  connector adopts the shared theme, use the pinned pipelines checkout and its
+  `scripts/sync_mkdocs_theme.py sync` command to generate the assets, review
+  them, commit them, and only then enable the caller flag. Never hand-copy or
+  reimplement the provider assets.
 
 ## Delivery discipline
 
@@ -440,7 +452,9 @@ jobs:
     uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main
     with:
       content_source: pages
-      shared_theme_enabled: true
+      # Canonical theme assets are not scaffolded. Opt in only after running
+      # pipelines/scripts/sync_mkdocs_theme.py sync from a pinned checkout.
+      shared_theme_enabled: false
       spec_dashboard_enabled: true
       spec_dashboard_config: .github/spec-dashboard.json
     permissions:

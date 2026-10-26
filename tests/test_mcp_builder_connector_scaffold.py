@@ -153,7 +153,7 @@ def test_standard_connector_delivery_contract_is_scaffolded(connector):
     assert caller["uses"] == "Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main"
     assert caller["with"] == {
         "content_source": "pages",
-        "shared_theme_enabled": True,
+        "shared_theme_enabled": False,
         "spec_dashboard_enabled": True,
         "spec_dashboard_config": ".github/spec-dashboard.json",
     }
@@ -172,6 +172,21 @@ def test_standard_connector_delivery_contract_is_scaffolded(connector):
     ):
         assert heading in development
     assert "dependency-readiness" in development
+
+
+# spec: US-MCP-BUILDER-R011.1
+def test_generated_pages_caller_has_a_safe_shared_theme_preflight(connector):
+    """A minimal tree must not opt into a theme whose canonical assets it lacks."""
+    pages = yaml.safe_load((connector / ".github/workflows/pages.yml").read_text())
+    caller = pages["jobs"]["publish-pages"]
+    assert caller["with"]["content_source"] == "pages"
+    assert caller["with"]["shared_theme_enabled"] is False
+    assert (connector / "pages/index.md").read_text().startswith("# demo-mcp")
+    assert not any(path.startswith(".pipeline-theme/") for path in _files(connector))
+    assert not any(
+        path.startswith("pages/assets/") or path.startswith("pages/stylesheets/")
+        for path in _files(connector)
+    )
 
 
 

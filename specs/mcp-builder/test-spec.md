@@ -4,7 +4,7 @@ Governing spec: [spec.md](spec.md).
 
 | Test ID | Requirement | Proving test | Expected observation |
 |---|---|---|---|
-| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Minimal tree holds on a generated connector. |
+| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Exact 26-file connector-owned tree holds on a generated connector. |
 | T-002 | `US-MCP-BUILDER-R011.2` | `tests/test_mcp_builder_connector_scaffold.py::test_generation_is_deterministic` | Deterministic output holds on a generated connector. |
 | T-003 | `US-MCP-BUILDER-R011.3` | `tests/test_mcp_builder_connector_scaffold.py::test_identity_and_version_live_in_pyproject_only` | Identity and version in pyproject only holds on a generated connector. |
 | T-004 | `US-MCP-BUILDER-R011.4` | `tests/test_mcp_builder_connector_scaffold.py::test_workflows_call_the_shared_pipelines_for_pypi_and_docker` | Shared workflows for release and PR holds on a generated connector. |
@@ -17,3 +17,4 @@ Governing spec: [spec.md](spec.md).
 | T-011 | `US-MCP-BUILDER-R011.11` | `tests/test_mcp_builder_connector_scaffold.py::test_generated_package_passes_the_sdk_conformance_plugin` | SDK conformance plugin passes holds on a generated connector. |
 | T-012 | `US-MCP-BUILDER-R011.12` | `tests/test_mcp_builder_connector_scaffold.py::test_client_is_one_sdk_auth_declaration_with_no_own_transport` | Client from one SDK auth declaration holds on a generated connector. |
 | T-013 | `US-MCP-BUILDER-R011.13` | `tests/test_mcp_builder_connector_scaffold.py::test_optional_dependencies_are_sdk_extras_only` | Dependencies through SDK extras holds on a generated connector. |
+| T-014 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_generated_pages_caller_has_a_safe_shared_theme_preflight` | A generated Pages caller leaves shared theme disabled until canonical provider assets are generated; no theme assets are duplicated in the minimal tree. |

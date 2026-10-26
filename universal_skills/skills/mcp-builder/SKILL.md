@@ -41,7 +41,7 @@ only generator.
       .github/spec-dashboard.json    connector-owned source selection for the shared dashboard
       .github/workflows/pipeline.yml       python_pipeline (connector) + container_pipeline (render_connector)
       .github/workflows/connector-pr.yml   shared PR gates
-      .github/workflows/pages.yml          dashboard-enabled Pages caller + workflow_dispatch
+      .github/workflows/pages.yml          dashboard Pages caller + workflow_dispatch (theme opt-in after canonical sync)
       pages/index.md                  minimal source for the shared Pages workflow
       example_mcp/__init__.py        connector = Connector(api=Api, get_client=get_client, instructions=...)
       example_mcp/__main__.py        from agent_connector_sdk import run; run()
@@ -57,7 +57,10 @@ only generator.
 
 The scaffold writes only connector-owned delivery callers and content. The reusable
 Pages workflow, dashboard renderer, hook implementations, release jobs, container
-files, attestations and shapes remain owned by `pipelines` or the SDK. Do not add
+files, attestations and shapes remain owned by `pipelines` or the SDK. Shared theme
+assets are intentionally not generated: the Pages caller leaves `shared_theme_enabled`
+off until a pinned pipelines checkout generates the canonical files with
+`scripts/sync_mkdocs_theme.py sync`. Do not add
 `mcp_server.py`, `_version.py`, `.bumpversion.cfg`, `docker/` files,
 `certification.json`, a shapes file, `mcp_config.json`, `conftest.py`, `kg_ingest.py`
 boilerplate or copies of SDK tests: the SDK and pipelines own them, and everything
