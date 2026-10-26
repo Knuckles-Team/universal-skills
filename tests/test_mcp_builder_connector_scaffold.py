@@ -18,6 +18,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
+import yaml
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
@@ -25,7 +26,9 @@ SCRIPT = (
 )
 FLEET = "demo-mcp"
 EXPECTED = {
+    ".github/spec-dashboard.json",
     ".github/workflows/connector-pr.yml",
+    ".github/workflows/pages.yml",
     ".github/workflows/pipeline.yml",
     ".pre-commit-config.yaml",
     "AGENTS.md",
@@ -37,7 +40,9 @@ EXPECTED = {
     "demo_mcp/connector_sources.py",
     "demo_mcp/ontology/demo.ttl",
     "demo_mcp/prompts/demo-operator.json",
+    "demo_mcp/skills/demo-mcp-development/SKILL.md",
     "demo_mcp/skills/demo-operations/SKILL.md",
+    "pages/index.md",
     "pyproject.toml",
     "specs/README.md",
     "specs/demo-mcp/plan.md",
@@ -125,6 +130,63 @@ def test_workflows_call_the_shared_pipelines_for_pypi_and_docker(connector):
     assert "pipelines/.github/workflows/container_pipeline.yml@main" in release
     pr = (connector / ".github/workflows/connector-pr.yml").read_text()
     assert "connector_pr_pipeline.yml@main" in pr
+
+
+def test_standard_connector_delivery_contract_is_scaffolded(connector):
+    """New connectors carry callers/configuration for the shared delivery policy."""
+    hooks = yaml.safe_load((connector / ".pre-commit-config.yaml").read_text())
+    pipeline_repo = next(
+        repo for repo in hooks["repos"] if repo["repo"] == "https://github.com/Knuckles-Team/pipelines"
+    )
+    assert [hook["id"] for hook in pipeline_repo["hooks"]] == [
+        "connector-standard",
+        "secrets",
+        "spec",
+        "tests-fast",
+        "dependency-readiness",
+    ]
+
+    pages = yaml.safe_load((connector / ".github/workflows/pages.yml").read_text())
+    triggers = pages.get("on", pages.get(True))
+    assert "workflow_dispatch" in triggers
+    caller = pages["jobs"]["publish-pages"]
+    assert caller["uses"] == "Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main"
+    assert caller["with"] == {
+        "content_source": "pages",
+        "shared_theme_enabled": False,
+        "spec_dashboard_enabled": True,
+        "spec_dashboard_config": ".github/spec-dashboard.json",
+    }
+    assert json.loads((connector / ".github/spec-dashboard.json").read_text()) == {
+        "version": 1,
+        "sources": [{"glob": "specs/*/status.json", "kind": "spec"}],
+    }
+    assert (connector / "pages/index.md").is_file()
+
+    development = (connector / "demo_mcp/skills/demo-mcp-development/SKILL.md").read_text()
+    for heading in (
+        "## Rapid delivery: the 5-minute contract",
+        "## Setup and gates",
+        "## Connector-specific checks",
+        "## Delivery discipline",
+    ):
+        assert heading in development
+    assert "dependency-readiness" in development
+
+
+# spec: US-MCP-BUILDER-R011.1
+def test_generated_pages_caller_has_a_safe_shared_theme_preflight(connector):
+    """A minimal tree must not opt into a theme whose canonical assets it lacks."""
+    pages = yaml.safe_load((connector / ".github/workflows/pages.yml").read_text())
+    caller = pages["jobs"]["publish-pages"]
+    assert caller["with"]["content_source"] == "pages"
+    assert caller["with"]["shared_theme_enabled"] is False
+    assert (connector / "pages/index.md").read_text().startswith("# demo-mcp")
+    assert not any(path.startswith(".pipeline-theme/") for path in _files(connector))
+    assert not any(
+        path.startswith("pages/assets/") or path.startswith("pages/stylesheets/")
+        for path in _files(connector)
+    )
 
 
 
