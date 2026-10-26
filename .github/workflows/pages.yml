@@ -19,6 +19,11 @@ permissions:
 jobs:
   publish-pages:
     uses: Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main
+    with:
+      content_source: docs
+      shared_theme_enabled: true
+      spec_dashboard_enabled: true
+      spec_dashboard_config: .config/spec-dashboard.json
     permissions:
       contents: read
       pages: write

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,6 +46,33 @@ def build(checkout):
         text=True,
         check=False,
     )
+
+
+def test_shared_pages_workflow_contract():
+    workflow = yaml.safe_load(
+        (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+    )
+    jobs = workflow["jobs"]
+    pages_jobs = [
+        job
+        for job in jobs.values()
+        if isinstance(job, dict)
+        and job.get("uses")
+        == "Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main"
+    ]
+    assert len(pages_jobs) == 1
+    assert pages_jobs[0]["with"] == {
+        "content_source": "docs",
+        "shared_theme_enabled": True,
+        "spec_dashboard_enabled": True,
+        "spec_dashboard_config": ".config/spec-dashboard.json",
+    }
+    assert json.loads(
+        (ROOT / ".config/spec-dashboard.json").read_text(encoding="utf-8")
+    ) == {
+        "version": 1,
+        "sources": [{"glob": "specs/*/status.json", "kind": "spec"}],
+    }
 
 
 def test_canonical_sources_and_existing_urls(checkout):
