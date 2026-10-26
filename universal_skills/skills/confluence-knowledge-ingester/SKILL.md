@@ -20,7 +20,7 @@ team_config:
 tags: ['atlassian', 'confluence', 'wiki', 'knowledge-base', 'atlassian-agent', 'arbora']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.5.0'
+  version: '1.5.1'
 ---
 
 # Confluence Knowledge Ingester Workflow

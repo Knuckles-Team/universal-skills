@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
 metadata:
-  version: '1.5.0'
+  version: '1.5.1'
   author: Genius
 ---
 # Developer Utilities

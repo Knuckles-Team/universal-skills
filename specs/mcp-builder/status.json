@@ -26,16 +26,17 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "194946ca6443",
-        "545aff2f8d88",
+        "6b640594c734",
         "768aefce0622",
+        "9a21e191c8b6",
         "ab2071875a33"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:102",
-        "tests/test_mcp_builder_connector_scaffold.py:119",
-        "tests/test_mcp_builder_connector_scaffold.py:201",
-        "tests/test_mcp_builder_connector_scaffold.py:212",
-        "tests/test_mcp_builder_connector_scaffold.py:222"
+        "tests/test_mcp_builder_connector_scaffold.py:101",
+        "tests/test_mcp_builder_connector_scaffold.py:107",
+        "tests/test_mcp_builder_connector_scaffold.py:124",
+        "tests/test_mcp_builder_connector_scaffold.py:177",
+        "tests/test_mcp_builder_connector_scaffold.py:263"
       ],
       "rollup_of": [
         "US-MCP-BUILDER-R011.1",
@@ -55,13 +56,15 @@
     },
     {
       "id": "US-MCP-BUILDER-R011.1",
-      "title": "Minimal tree",
+      "title": "Exact connector-owned tree",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734",
+        "9a21e191c8b6"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:88"
+        "tests/test_mcp_builder_connector_scaffold.py:177",
+        "tests/test_mcp_builder_connector_scaffold.py:93"
       ]
     },
     {
@@ -69,10 +72,10 @@
       "title": "Deterministic output",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:96"
+        "tests/test_mcp_builder_connector_scaffold.py:101"
       ]
     },
     {
@@ -80,10 +83,10 @@
       "title": "Identity and version in pyproject only",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:102"
+        "tests/test_mcp_builder_connector_scaffold.py:107"
       ]
     },
     {
@@ -91,10 +94,10 @@
       "title": "Shared workflows for release and PR",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:119"
+        "tests/test_mcp_builder_connector_scaffold.py:124"
       ]
     },
     {
@@ -102,10 +105,10 @@
       "title": "One tool per operation with risk classes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:201"
+        "tests/test_mcp_builder_connector_scaffold.py:263"
       ]
     },
     {
@@ -113,10 +116,10 @@
       "title": "Sources declared as data",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:212"
+        "tests/test_mcp_builder_connector_scaffold.py:274"
       ]
     },
     {
@@ -124,10 +127,10 @@
       "title": "Content served over MCP",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:222"
+        "tests/test_mcp_builder_connector_scaffold.py:284"
       ]
     },
     {
@@ -135,10 +138,10 @@
       "title": "Ontology rolls up to a core class",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:233"
+        "tests/test_mcp_builder_connector_scaffold.py:295"
       ]
     },
     {
@@ -149,7 +152,7 @@
         "194946ca6443"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:271"
+        "tests/test_mcp_builder_connector_scaffold.py:333"
       ]
     },
     {
@@ -157,10 +160,10 @@
       "title": "Ontology graph check passes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:316"
+        "tests/test_mcp_builder_connector_scaffold.py:389"
       ]
     },
     {
@@ -168,10 +171,10 @@
       "title": "SDK conformance plugin passes",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:334"
+        "tests/test_mcp_builder_connector_scaffold.py:407"
       ]
     },
     {
@@ -179,10 +182,10 @@
       "title": "Client from one SDK auth declaration",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:347"
+        "tests/test_mcp_builder_connector_scaffold.py:420"
       ]
     },
     {
@@ -190,10 +193,10 @@
       "title": "Dependencies through SDK extras",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "545aff2f8d88"
+        "6b640594c734"
       ],
       "verified_by": [
-        "tests/test_mcp_builder_connector_scaffold.py:359"
+        "tests/test_mcp_builder_connector_scaffold.py:432"
       ]
     }
   ]
