@@ -25,7 +25,7 @@ def test_declares_one_content_only_entry_point() -> None:
     points = project["entry-points"]
     assert points == {GROUP: {project["name"]: "universal_skills"}}
     assert any(
-        d.startswith("agent-connector-sdk") and ">=0.5.0,<0.6.0" in d
+        d.startswith("scion-sdk") and ">=0.5.6,<0.6.0" in d
         for d in project["dependencies"]
     )
 
