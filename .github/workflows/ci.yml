@@ -75,7 +75,7 @@ jobs:
         run: |
           uv venv /tmp/scaffold-venv
           uv pip install --refresh --python /tmp/scaffold-venv/bin/python pytest rdflib pyyaml codespell \
-            "agent-connector-sdk[mcp]>=0.5.1,<0.6" \
+            "scion-sdk[mcp]>=0.5.6,<0.6" \
             "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
           # The SDK pytest plugin resolves this repository's own connector declaration.
           uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
@@ -96,9 +96,9 @@ jobs:
       - name: Check out reviewed SDK contract
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
-          repository: Knuckles-Team/agent-connector-sdk
+          repository: Knuckles-Team/scion-sdk
           ref: 16908f3591e80be84b6bd5df356b4a2e9a666010
-          path: .ci/agent-connector-sdk
+          path: .ci/scion-sdk
           persist-credentials: false
       - name: Check out shared Pages contract
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -110,12 +110,12 @@ jobs:
       - name: Bootstrap repository build environment
         run: scripts/bootstrap.sh
       - name: Bootstrap SDK and its pinned generated EG client
-        working-directory: .ci/agent-connector-sdk
+        working-directory: .ci/scion-sdk
         # Canonical SDK bootstrap uses its frozen lock and pinned EG source
         # contract, with --no-install-package epistemic-graph (no native build).
         run: bash scripts/bootstrap.sh
       - name: Install existing pinned Pages test requirements
-        run: uv pip install --python .ci/agent-connector-sdk/.venv/bin/python -r .github/requirements-pages.txt
+        run: uv pip install --python .ci/scion-sdk/.venv/bin/python -r .github/requirements-pages.txt
       - name: Require real SDK behavior and built artifact tests
         env:
           MCP_BUILDER_REQUIRE_SDK: '1'
@@ -124,5 +124,5 @@ jobs:
           PIPELINES_CONTRACT_ROOT: ${{ github.workspace }}/.ci/pipelines
           MCP_FLEET_REGISTRATION: 'false'
         run: |
-          .ci/agent-connector-sdk/.venv/bin/python -m pytest -q -ra \
+          .ci/scion-sdk/.venv/bin/python -m pytest -q -ra \
             tests/test_mcp_builder_site.py
