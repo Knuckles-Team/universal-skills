@@ -2,7 +2,7 @@
 
 ## Existing system and reuse
 
-The SDK owns every capability named in the rows (`SDK-CENTRALIZED-CAPABILITIES-R001`, `SDK-CENTRALIZED-CAPABILITIES-R003`, `SDK-CENTRALIZED-CAPABILITIES-R008`). mattermost-mcp adds no module that repeats one. Each row deletes connector code and calls the SDK module.
+The SDK owns every capability named in the rows (`SCION-CENTRALIZED-CAPABILITIES-R001`, `SCION-CENTRALIZED-CAPABILITIES-R003`, `SCION-CENTRALIZED-CAPABILITIES-R008`). mattermost-mcp adds no module that repeats one. Each row deletes connector code and calls the SDK module.
 
 ## Live call path
 

@@ -10,7 +10,7 @@ caddy-mcp must use the agent-connector-sdk capability for each concern the SDK c
 
 ## Why a new spec
 
-Search: `git grep -n "SDK" -- specs` found no row that owns SDK capability use in caddy-mcp. The SDK index spec `SDK-CENTRALIZED-CAPABILITIES` owns the capabilities. This spec owns the connector side of each one.
+Search: `git grep -n "SDK" -- specs` found no row that owns SDK capability use in caddy-mcp. The SDK index spec `SCION-CENTRALIZED-CAPABILITIES` owns the capabilities. This spec owns the connector side of each one.
 
 ## Requirements
 

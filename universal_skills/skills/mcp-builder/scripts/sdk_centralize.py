@@ -49,8 +49,8 @@ SDK_EXTRAS = {
     "stream": ["websockets"],
 }
 SPEC_ROWS = {
-    "R001": "SDK-CENTRALIZED-CAPABILITIES-R001, SDK-CENTRALIZED-CAPABILITIES-R003, SDK-CENTRALIZED-CAPABILITIES-R008",
-    "R002": "SDK-CENTRALIZED-CAPABILITIES-R040, SDK-CENTRALIZED-CAPABILITIES-R001",
+    "R001": "SCION-CENTRALIZED-CAPABILITIES-R001, SCION-CENTRALIZED-CAPABILITIES-R003, SCION-CENTRALIZED-CAPABILITIES-R008",
+    "R002": "SCION-CENTRALIZED-CAPABILITIES-R040, SCION-CENTRALIZED-CAPABILITIES-R001",
 }
 
 
@@ -702,7 +702,7 @@ def spec_files(name: str, module_path: str, cls_name: str, client: bool = True) 
         f"# {sid} — Shared SDK capabilities in {name}\n\n**Owner:** {name}.\n\n"
         "See [`requirements.md`](requirements.md) for each row and [`status.json`](status.json) for its generated state.\n\n"
         f"## Purpose\n\n{name} must use the agent-connector-sdk capability for each concern the SDK centralizes. A connector copy of a centralized capability splits policy across the fleet.\n\n"
-        f"## Why a new spec\n\nSearch: `git grep -n \"SDK\" -- specs` found no row that owns SDK capability use in {name}. The SDK index spec `SDK-CENTRALIZED-CAPABILITIES` owns the capabilities. This spec owns the connector side of each one.\n\n"
+        f"## Why a new spec\n\nSearch: `git grep -n \"SDK\" -- specs` found no row that owns SDK capability use in {name}. The SDK index spec `SCION-CENTRALIZED-CAPABILITIES` owns the capabilities. This spec owns the connector side of each one.\n\n"
         "## Requirements\n\n" + "".join(f"- `{i}`: {t}.\n" for i, t, _, _ in rows)
     )
     live = (

@@ -1,8 +1,8 @@
 # US-CONTENT — The catalog is served by the SDK content convention
 
-Owner: universal-skills. Cross-repo IDs: `SDK-CONNECTOR-CONTROL-R071.1`, `SDK-QUALITY-RELEASE-R005.1`.
+Owner: universal-skills. Cross-repo IDs: `SCION-CONNECTOR-CONTROL-R071.1`, `SCION-QUALITY-RELEASE-R005.1`.
 
-References: [SDK-CONNECTOR-CONTROL](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs)
+References: [SCION-CONNECTOR-CONTROL](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs)
 
 ## Purpose and user stories
 

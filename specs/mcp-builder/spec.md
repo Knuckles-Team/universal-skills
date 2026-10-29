@@ -1,8 +1,8 @@
 # US-MCP-BUILDER — The mcp-builder scaffold builds connectors on SDK components
 
-Owner: universal-skills. Cross-repo IDs: `SDK-CONNECTOR-CONTROL-R019.1`, `SDK-CONNECTOR-CONTROL-R028.4`, `SDK-QUALITY-RELEASE-R005.1`, `SDK-SOURCE-INGEST-R004.29`.
+Owner: universal-skills. Cross-repo IDs: `SCION-CONNECTOR-CONTROL-R019.1`, `SCION-CONNECTOR-CONTROL-R028.4`, `SCION-QUALITY-RELEASE-R005.1`, `SCION-SOURCE-INGEST-R004.29`.
 
-References: [SDK-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
+References: [SCION-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
 
 ## Purpose and user stories
 

@@ -12,7 +12,7 @@
   "requirements": [
     {
       "id": "US-CONTENT-R001",
-      "title": "Served by convention (rollup)",
+      "title": "`universal_skills` is served as a content-only connector",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -24,24 +24,30 @@
     },
     {
       "id": "US-CONTENT-R001.1",
-      "title": "One content-only declaration",
+      "title": "`pyproject.toml` declares `[project.entry-points.\"agent_connector_sdk.connector\"]` with the single value `universal_skills` (bare package, content only), depends on `agent-connector-sdk[mcp]>=0.5.0,<0.6.0`, and declares no `agent_utilities.skill_providers` or other provider group. The SDK pytest plugin supplies the conformance checks, so the repository holds no copy of them. Proving test: `tests/test_catalog_content.py::test_declares_one_content_only_entry_point`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_catalog_content.py:22"
+      ]
     },
     {
       "id": "US-CONTENT-R001.2",
-      "title": "Content sits where the convention expects it",
+      "title": "Every skill lives at `universal_skills/skills/<name>/SKILL.md`, one level deep, and its frontmatter `name` equals its folder name. Supporting files stay inside the skill folder so they are served with it. Proving test: `tests/test_catalog_content.py::test_every_skill_is_flat_and_named_by_folder`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_catalog_content.py:33"
+      ]
     },
     {
       "id": "US-CONTENT-R001.3",
-      "title": "Every skill is served natively",
+      "title": "The server the SDK builds for `universal_skills` lists one `skill://<name>/SKILL.md` resource for every skill folder. Proving test: `tests/test_catalog_content.py::test_server_lists_every_skill`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_catalog_content.py:43"
+      ]
     }
   ]
 }

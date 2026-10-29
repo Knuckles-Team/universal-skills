@@ -137,7 +137,7 @@ install-universal = "universal_skills.core.universal_installer:main"
 install-skills = "universal_skills.core.skill_installer:main"
 
 # Content is found by convention under the package (`universal_skills/skills/<name>/SKILL.md`);
-# the one declaration below is a content-only connector (SDK-CONNECTOR-CONTROL-R071.1).
+# the one declaration below is a content-only connector (SCION-CONNECTOR-CONTROL-R071.1).
 [project.entry-points."agent_connector_sdk.connector"]
 universal-skills = "universal_skills"
 
