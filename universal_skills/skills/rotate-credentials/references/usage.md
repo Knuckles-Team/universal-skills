@@ -14,7 +14,7 @@ rotates the in-band iDRAC/BMC user-2 password too (`--idrac`).
 ## Common invocations
 ```bash
 # Generate a fresh unified password for genius across the whole inventory
-rotate-credentials.sh --generate --inventory ~/.config/agent-utilities/inventory.yaml \
+rotate-credentials.sh --generate --inventory ~/.config/arbora/inventory.yaml \
     --out ~/Workspace/inventory/.env
 
 # Set a specific password on explicit hosts, also rotate iDRAC user-2

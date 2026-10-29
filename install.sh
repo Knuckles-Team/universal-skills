@@ -4,8 +4,8 @@
 # Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and then
 # deploys the skills — including universal-installer and agent-os-genesis (alias
 # agent-utilities-genesis) — into EVERY detected AI tool (Claude Code, Antigravity,
-# Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the agent-utilities XDG space
-# (~/.config/agent-utilities/skills), preferring SYMLINKS to the installed package
+# Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the Arbora XDG space
+# (~/.config/arbora/skills), preferring SYMLINKS to the installed package
 # (Windows falls back to a directory junction, then a copy).
 #
 # This is the technical starting point for agent-os-genesis: once installed, the

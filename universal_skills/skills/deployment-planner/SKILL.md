@@ -58,7 +58,7 @@ This skill automates the process of determining **which services should run on w
 
 | Path | Purpose |
 |---|---|
-| `~/.config/agent-utilities/inventory.yaml` | Host inventory (Ansible format) |
+| `~/.config/arbora/inventory.yaml` | Host inventory (Ansible format) |
 | Service compose files | Service definitions with resource requirements |
 | Docker daemon configs | Registry mirrors, insecure registries |
 

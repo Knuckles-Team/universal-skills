@@ -28,21 +28,20 @@ _IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
 
 def _xdg_data_dir() -> Path:
-    """The agent-utilities XDG *data* dir, OS-aware — the unified-install root.
+    """The Arbora XDG *data* dir, OS-aware — the unified-install root.
 
-    Mirrors ``agent_utilities.core.paths.data_dir()`` / the ``agent-utilities``
-    entry already computed in ``install.py``'s ``get_tool_paths()`` (same
-    ``$XDG_DATA_HOME/agent-utilities`` convention), kept as a local copy for the
+    Mirrors the ``arbora`` entry already computed in ``install.py``'s
+    ``get_tool_paths()`` (same ``$XDG_DATA_HOME/arbora`` convention), kept as a local copy for the
     same dependency-free-fallback reason as the rest of this module.
     """
     home = Path("~").expanduser()
     if sys.platform == "win32":
         base = Path(os.environ.get("LOCALAPPDATA", str(home / "AppData" / "Local")))
-        return base / "agent-utilities"
+        return base / "arbora"
     if sys.platform == "darwin":
-        return home / "Library" / "Application Support" / "agent-utilities"
+        return home / "Library" / "Application Support" / "arbora"
     xdg_data = Path(os.environ.get("XDG_DATA_HOME") or (home / ".local" / "share"))
-    return xdg_data / "agent-utilities"
+    return xdg_data / "arbora"
 
 
 def unified_prompts_dir() -> Path:
