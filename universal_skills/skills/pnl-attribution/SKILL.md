@@ -5,14 +5,14 @@ description: >-
   Ingest market data, backtest a supplied multi-factor strategy with Qlib, and
   render the per-factor performance breakdown in `backtest_report` as a
   formatted attribution document. Use when a researcher wants an evidence-linked
-  P&L attribution report; this workflow does not place trades.
+  PnL attribution report; this workflow does not place trades.
 domain: finance-workflows
 license: MIT
 requires: []
 agent: quant-workflow-orchestrator
 team_config:
   name: pnl-attribution-team
-  task_pattern: multi-factor backtest and P&L attribution report
+  task_pattern: multi-factor backtest and PnL attribution report
   execution_mode: sequential
   specialist_ids:
     - quant-data-ingest

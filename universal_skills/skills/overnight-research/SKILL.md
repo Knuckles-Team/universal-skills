@@ -8,7 +8,8 @@ tags: [finance, research, overnight, automation]
 team_config: trading_department
 agent: quant_research_analyst
 cron:
-  schedule: "0 22 * * *"
+  minute: "0"
+  hour: "22"
   enabled: true
   timezone: "America/New_York"
   max_concurrent: 1

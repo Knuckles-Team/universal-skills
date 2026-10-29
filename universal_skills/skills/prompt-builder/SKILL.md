@@ -5,7 +5,7 @@ skill_type: skill
 description: >-
   Author and validate canonical system-prompt JSON blueprints for agent-utilities
   agents and agent-packages. Use when creating or fixing a main_agent.json / a
-  prompts/*.json system prompt, when an agent-package needs its system prompt, or
+  prompts directory JSON system prompt, when an agent-package needs its system prompt, or
   when a prompt must conform to the StructuredPrompt canonical schema. Produces
   schema-valid blueprints with the body in instructions.core_directive plus
   schema_version/source/skills/tools, and validates them against the one shared

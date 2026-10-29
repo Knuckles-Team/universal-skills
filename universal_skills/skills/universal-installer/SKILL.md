@@ -6,9 +6,9 @@ description: >-
   Install and wire the whole fleet contribution surface into an agent tool in one
   step: skills, skill-graphs, skill-workflows, ontologies, and system prompts —
   plus generating/patching supported JSON-client MCP configuration to wire
-  arbora (portable local stdio, or a remote instance) and auto-detected agents/* MCP
+  arbora (portable local stdio, or a remote instance) and auto-detected agents MCP
   server. Supports installing from pip-installed providers or directly from an
-  agents/* project checkout. Use when the user wants to install skills or
+  agents project checkout. Use when the user wants to install skills or
   ontologies or prompts into Windsurf, Claude Code, OpenCode, Antigravity,
   Codex, Devin, Cursor, or a custom agent path, or wants an agent tool wired up
   end-to-end (skills + MCP servers) in one command. Do NOT use for creating or

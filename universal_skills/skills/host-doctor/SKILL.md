@@ -26,7 +26,7 @@ team_config:
     - remediation-agent
   tool_assignments:
     discovery-agent: [tun_tm_system, tun_tm_hosts]
-    inspector-agent: [tun_tm_remote, sm_process_operations, sm_storage_health, fan_manager_ipmi_sel_*, fan_manager_ipmi_sensors_*]
+    inspector-agent: [tun_tm_remote, sm_process_operations, sm_storage_health, fan_manager_ipmi_sel, fan_manager_ipmi_sensors]
     remediation-agent: [sm_process_operations, sm_system_operations]
 tags: [infra, host, diagnostics, onboarding, process, zombie, swap, storage, smart, bmc, ipmi, drive-fault, remediation]
 concept: CONCEPT:INFRA-001
