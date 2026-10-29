@@ -22,7 +22,7 @@ team_config:
 tags: [correlation, cross-asset, matrix, risk]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Cross Asset Correlation Workflow

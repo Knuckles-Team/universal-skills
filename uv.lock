@@ -4567,7 +4567,7 @@ wheels = [
 
 [[package]]
 name = "universal-skills"
-version = "1.5.1"
+version = "1.5.2"
 source = { editable = "." }
 dependencies = [
     { name = "scion-sdk", extra = ["mcp"] },

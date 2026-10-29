@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [content, publishing, quality-gate, accessibility, rights]
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 

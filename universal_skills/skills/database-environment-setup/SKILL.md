@@ -25,7 +25,7 @@ tags:
 requires:
   - arbora
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Database Environment Setup (Stardog + pg-age)

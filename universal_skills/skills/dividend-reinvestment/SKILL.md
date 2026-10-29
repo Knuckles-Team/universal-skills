@@ -22,7 +22,7 @@ team_config:
 tags: [dividend, reinvestment, allocation, accounting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Dividend Reinvestment Workflow

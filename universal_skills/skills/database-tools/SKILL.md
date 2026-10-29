@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [database, sql, postgresql, mysql, mssql, querying, schema, data-extraction]
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 # Database Tools

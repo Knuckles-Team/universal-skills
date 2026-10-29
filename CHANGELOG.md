@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2]
+
+### Changed
+- Release 1.5.2 on `scion-sdk[mcp]>=0.5.6,<0.6.0` (1.5.0 on PyPI depended on the retired `agent-connector-sdk`). The v1.5.1 tag points at an older commit, so the release is re-cut as 1.5.2.
+- The release workflow now runs only on `v*` tags (and manual dispatch) with `require-tag: true`; main pushes run CI only.
+
+
 ### Changed
 - **`second-brain-sync` now drives the real one-call sync (W3.9).** Rewired
   the primary flow onto `graph_ingest action="sync_second_brain"` — a single

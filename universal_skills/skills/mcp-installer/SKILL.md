@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [mcp, installer, deployment, agent-tools, config]
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 # MCP Installer Skill

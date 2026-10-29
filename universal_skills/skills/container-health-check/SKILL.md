@@ -22,7 +22,7 @@ team_config:
 tags: ['docker', 'health', 'monitoring', 'containers']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Container Health Check Workflow

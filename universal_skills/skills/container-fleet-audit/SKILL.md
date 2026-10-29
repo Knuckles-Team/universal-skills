@@ -20,7 +20,7 @@ team_config:
 tags: [health, infrastructure, docker, fleet, audit]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 

@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [dependencies, pyproject, pypi, modernization, fleet, tomlkit]
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 

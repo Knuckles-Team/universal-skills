@@ -22,7 +22,7 @@ team_config:
 tags: [tax-harvest, lot-ledger, unrealized-gains, accounting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Tax Lot Optimization Workflow
