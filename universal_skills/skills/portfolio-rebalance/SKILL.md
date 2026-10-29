@@ -9,7 +9,9 @@ tags: [finance, portfolio, rebalance, optimization]
 team_config: trading_department
 agent: chief_trading_officer
 cron:
-  schedule: "0 9 * * 1"
+  minute: "0"
+  hour: "9"
+  weekday: "1"
   enabled: true
   timezone: "America/New_York"
   max_concurrent: 1

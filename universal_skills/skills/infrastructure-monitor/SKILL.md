@@ -9,7 +9,7 @@ tags: [finance, infrastructure, monitoring, cron]
 team_config: trading_department
 agent: risk_compliance_officer
 cron:
-  schedule: "*/15 * * * *"
+  minute: "0,15,30,45"
   enabled: true
   timezone: "America/New_York"
   max_concurrent: 1

@@ -3,7 +3,7 @@ name: ml-classification-project
 skill_type: workflow
 description: >-
   Build the ML-classification portfolio project: engineer technical-indicator
-  features, train an XGBoost model to predict whether the S&P 500 will be up or
+  features, train an XGBoost model to predict whether the S and P 500 will be up or
   down tomorrow, benchmark it against a coin flip, and publish a GitHub repo.
 domain: finance-workflows
 agent: quant_researcher
@@ -27,7 +27,7 @@ benchmark honestly against a coin flip. See
 **Agent**: `quant_researcher`
 **Tools**: `data-science-mcp`
 
-Pull S&P 500 history via yfinance and engineer technical-indicator features
+Pull S and P 500 history via yfinance and engineer technical-indicator features
 (returns, moving averages, RSI, volatility, momentum). Ensure features use only
 past data — no lookahead.
 Expected: `feature-matrix`

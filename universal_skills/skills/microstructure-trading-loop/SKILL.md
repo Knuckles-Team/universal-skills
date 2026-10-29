@@ -23,9 +23,9 @@ team_config:
     - attribution-analyst
   tool_assignments:
     market-analyst: [graph_search, document_process, emerald_exchange_get_quote, emerald_exchange_get_historical]
-    alpha-strategist: [graph_query, ontology_query, emerald_signals_*, emerald_strategy_*]
-    risk-manager: [graph_query, graph_analyze, emerald_risk_*]
-    execution-specialist: [emerald_orders_submit, emerald_orders_cancel, emerald_orders_status, emerald_market_making_*]
+    alpha-strategist: [graph_query, ontology_query, emerald_signals, emerald_strategy]
+    risk-manager: [graph_query, graph_analyze, emerald_risk]
+    execution-specialist: [emerald_orders_submit, emerald_orders_cancel, emerald_orders_status, emerald_market_making]
     attribution-analyst: [graph_write, emerald_exchange_get_positions, emerald_exchange_get_account]
 tags: [microstructure, knowledge-graph, signal-fusion, paper-first, lifecycle]
 concept: CONCEPT:EE-040

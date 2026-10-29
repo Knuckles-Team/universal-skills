@@ -5,7 +5,7 @@ skill_type: skill
 description: >-
   Agentic research paper discovery pipeline. Extracts focus topics from the Knowledge Graph,
   dynamically builds a relevance taxonomy, fetches daily papers via the scholarx MCP,
-  and also sweeps open-web & social sources (Hacker News, Reddit, X, YouTube, news, web)
+  and also sweeps open-web and social sources (Hacker News, Reddit, X, YouTube, news, web)
   via the PulseLink MCP, scores them locally, and ingests the most valuable items.
   Triggers on "scan for papers", "find new research", "check arxiv", "research scan",
   proactively discover research that could enhance a codebase.
