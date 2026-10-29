@@ -83,8 +83,7 @@ def test_shared_pages_triggers_and_generated_theme_assets_contract():
     assert isinstance(triggers, dict)
     assert "workflow_dispatch" in triggers
     push = triggers["push"]
-    assert "specs/**" in push["paths"]
-    assert ".config/spec-dashboard.json" in push["paths"]
+    assert push == {"tags": ["v*"]}
 
     generated_assets = (
         "docs/stylesheets/extra.css",
