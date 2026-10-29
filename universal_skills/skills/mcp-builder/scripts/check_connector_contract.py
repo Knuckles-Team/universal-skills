@@ -106,7 +106,7 @@ def check_project(root: Path, package: str) -> list[str]:
 # names the capability it protects.
 
 #: Packages the SDK owns or an SDK extra already pins. A connector declares the
-#: extra instead (SDK-CENTRALIZED-CAPABILITIES-R040).
+#: extra instead (SCION-CENTRALIZED-CAPABILITIES-R040).
 EXTRA_OWNED = {
     "requests": (
         "R001",

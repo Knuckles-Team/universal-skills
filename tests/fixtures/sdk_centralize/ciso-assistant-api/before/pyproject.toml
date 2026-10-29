@@ -37,7 +37,7 @@ ciso-assistant-api = "ciso_assistant_api.connectors"
 [project.entry-points."agent_connector_sdk.prompt_providers"]
 ciso-assistant-api = "ciso_assistant_api.prompts"
 
-# The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
+# The one declared connector identity: the fleet name (SCION-CONNECTOR-CONTROL-R071).
 [project.entry-points."agent_connector_sdk.connector"]
 ciso-assistant-mcp = "ciso_assistant_api"
 
