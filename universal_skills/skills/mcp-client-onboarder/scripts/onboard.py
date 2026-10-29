@@ -35,9 +35,9 @@ import keycloak_client as kc  # noqa: E402
 import policy_rules as pr  # noqa: E402
 
 _CONFIG_ROOT = Path(
-    os.environ.get("AGENT_UTILITIES_CONFIG_DIR")
+    os.environ.get("ARBORA_CONFIG_DIR")
     or Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    / "agent-utilities"
+    / "arbora"
 )
 _MULTIPLEXER_CONFIG = _CONFIG_ROOT / "mcp-multiplexer"
 DEFAULT_POLICY = os.environ.get(

@@ -4,7 +4,7 @@ domain: agent-tools
 skill_type: skill
 description: >-
   Install and merge a pre-configured MCP JSON file for Windsurf, Claude Code,
-  Claude Desktop, OpenCode, Antigravity, Devin, agent-utilities, or an explicit
+  Claude Desktop, OpenCode, Antigravity, Devin, arbora, or an explicit
   JSON target. Use when an MCP client supports the mcpServers JSON convention;
   use the client's native command instead for Codex registration.
 license: MIT
@@ -25,7 +25,7 @@ supported JSON-based client's configuration.
 - **claude-desktop**: `~/.config/Claude/claude_desktop_config.json` (Linux XDG path)
 - **opencode**: `~/.config/opencode/mcp.json`
 - **antigravity**: `~/.gemini/antigravity/mcp_config.json`
-- **agent-utilities** / **agent-terminal-ui**: `~/.config/agent-utilities/mcp_config.json`
+- **arbora** / **agent-terminal-ui**: `~/.config/arbora/mcp_config.json`
 - **devin**: `~/.config/devin/mcp_config.json`
 
 Codex is intentionally not a JSON target. Register servers through its native

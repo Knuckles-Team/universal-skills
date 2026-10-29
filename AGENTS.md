@@ -78,7 +78,7 @@ connector, a bare `<pkg>` for a content-only package). The SDK finds content by 
 under that package: `skills/<name>/SKILL.md` (flat, one level), `prompts/` and `ontology/`.
 The `universal-installer` skill walks `installed_connectors()` (honouring
 `--skills`/`--group`/`--layer`) and, on the same run, materializes the connectors' `prompts/`
-and `ontology/` directories into the agent-utilities XDG tree; arbora serves the same content
+and `ontology/` directories into the Arbora XDG tree; arbora serves the same content
 natively. So:
 
 - **Package-owned skills live in the package**, not here — relocate clearly-owned

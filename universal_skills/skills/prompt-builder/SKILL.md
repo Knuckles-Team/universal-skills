@@ -79,4 +79,4 @@ per-package `test_prompt_parity.py`, so "valid here" means "valid in CI".
   `[project.entry-points."agent_connector_sdk.connector"]` entry point and
   placing it in the package's `prompts/` directory (see [mcp-builder](../mcp-builder/SKILL.md)).
 - For per-agent overrides without editing the package, drop a `*.json` into the
-  XDG overlay `~/.config/agent-utilities/prompts/`.
+  XDG overlay `~/.config/arbora/prompts/`.

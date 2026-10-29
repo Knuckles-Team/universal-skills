@@ -3,7 +3,7 @@
 # over SSH, verify each, and report. Optionally rotate the in-band iDRAC/BMC user too.
 #
 #   rotate-credentials.sh --hosts "10.0.0.10 10.0.0.11 ..." [options]
-#   rotate-credentials.sh --inventory ~/.config/agent-utilities/inventory.yaml [options]
+#   rotate-credentials.sh --inventory ~/.config/arbora/inventory.yaml [options]
 #
 # Options:
 #   --user NAME        OS account to set the password for (default: genius)

@@ -31,7 +31,7 @@ one entry point per artifact type:
   (unchanged behavior from `skill-installer`; every capability below is additive).
 - **Ontologies + system prompts** — the other two legs of the
   `agent_connector_sdk.connector` convention (`prompts/` and `ontology/` under the package), materialized into the canonical
-  agent-utilities XDG tree (`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<provider>/…`)
+  Arbora XDG tree (`$XDG_DATA_HOME/arbora/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
 - **arbora + fleet MCP wiring** — generates/patches supported JSON clients
@@ -67,12 +67,12 @@ bootstrap wires both.
 - **Cursor**: `~/.cursor/skills/`
 - **Grok Code** (`grok` / `grok-code`): `~/.grok/skills/`
 - **Zed**: `~/.config/zed/skills/`
-- **agent-utilities / agent-terminal-ui** (canonical XDG store): `$XDG_DATA_HOME/agent-utilities/skills/`
+- **arbora / agent-terminal-ui** (canonical XDG store): `$XDG_DATA_HOME/arbora/skills/`
   — always kept current on every global install (opt out with `--no-xdg`).
 
 **MCP config files** (same `--tool` key, MCP-config leg): Claude Code (`~/.claude.json`),
 Claude Desktop, Windsurf, OpenCode, Antigravity, Devin, Codex, Cursor
-(`~/.cursor/mcp.json`), and agent-utilities/agent-terminal-ui — the full set the bundled
+(`~/.cursor/mcp.json`), and arbora/agent-terminal-ui — the full set the bundled
 `mcp-installer` supports (extended with **Cursor**, previously skill-only-parity).
 `merge`, never overwrite, unless `--force`.
 
@@ -98,7 +98,7 @@ pip install skill-graphs
 
 #### Arguments
 - `--tool`: Target tool (claude, claude-desktop, windsurf, opencode, openclaw,
-  antigravity, codex, devin, cursor, grok, zed, agent-utilities,
+  antigravity, codex, devin, cursor, grok, zed, arbora,
   agent-terminal-ui, or a custom path).
 - `--all-detected` / `--all`: Install into every detected / every known tool.
 - `--interactive` / `-i`: Interactively pick target tools, source providers, AND
@@ -145,7 +145,7 @@ Content is found by convention under each connector package declared through the
 `agent_connector_sdk.connector` entry point (`installed_connectors()`, each
 `ResolvedConnector.dirs`): `skills/`, `prompts/` and `ontology/`. This skill makes sure
 the prompt and ontology legs are materialized into
-`$XDG_DATA_HOME/agent-utilities/{prompts,ontologies}/<connector>/…` as part of the SAME
+`$XDG_DATA_HOME/arbora/{prompts,ontologies}/<connector>/…` as part of the SAME
 install run a user already runs for skills. `scripts/providers.py` copies each connector's
 `*.json` prompts and `*.ttl` (+ `shapes/*.ttl`) ontology files into that layout. It needs
 `agent-connector-sdk` and no agent-utilities import.
@@ -211,7 +211,7 @@ entry is the common case) unless `--no-mcp` is given.
 
 After each install run (fleet-provider or `--from-package`), the installer
 writes a small JSON manifest —
-`$XDG_DATA_HOME/agent-utilities/install-manifest.json` — recording, per
+`$XDG_DATA_HOME/arbora/install-manifest.json` — recording, per
 provider, which artifact types and how many were (re)installed this run and
 when. This is the "make the artifacts **discoverable**" half of KG
 auto-extension: any provider whose skills/prompts/ontologies changed is now
