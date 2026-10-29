@@ -2,7 +2,7 @@
 
 ## Existing architecture
 
-`docs/*.md` feeds MkDocs via `mkdocs.yml`. `.github/workflows/pages.yml` invokes `Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main` on main changes to `docs/**`, `mkdocs.yml`, or `README.md`. Root `CONTRIBUTING.md` and `specs/` are tracked sources outside the current MkDocs tree. The organization hub indexes public specs across repositories.
+`docs/*.md` feeds MkDocs via `mkdocs.yml`. `.github/workflows/pages.yml` invokes `Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main` on version tag pushes (`v*`) and manual dispatch. Root `CONTRIBUTING.md` and `specs/` are tracked sources outside the current MkDocs tree. The organization hub indexes public specs across repositories.
 
 ## Design to implement
 
