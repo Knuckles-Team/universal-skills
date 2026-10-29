@@ -1,9 +1,11 @@
 name: Build|Upload|Release Python Package
 
+# A v* tag publishes; main pushes run CI only.
 on:
   push:
-    branches:
-      - 'main'
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,6 +13,8 @@ permissions:
 jobs:
   publish-pypi:
     uses: Knuckles-Team/pipelines/.github/workflows/python_pipeline.yml@main
+    with:
+      require-tag: true
     permissions:
       contents: write
     secrets:

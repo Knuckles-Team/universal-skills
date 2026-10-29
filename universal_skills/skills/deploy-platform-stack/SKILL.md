@@ -18,7 +18,7 @@ team_config:
 tags: ['deployment', 'portainer', 'docker', 'stack', 'infrastructure']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
 ---
 
 # Deploy Platform Stack Workflow

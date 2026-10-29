@@ -6,7 +6,7 @@ description: Interactive codebase explanations
 license: MIT
 tags: []
 metadata:
-  version: '1.5.1'
+  version: '1.5.2'
   author: Genius
 ---
 
