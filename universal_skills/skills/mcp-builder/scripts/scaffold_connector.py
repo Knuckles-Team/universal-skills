@@ -232,8 +232,8 @@ cite the owning spec row in the commit trailer.
   create a second implementation of a connector capability.
 - Keep changes scoped to this connector. A change owned by the SDK, Arbora or
   the knowledge graph belongs in that repository instead.
-- Every delivered requirement needs a bound test. Generated `status.json`
-  files are produced by `pipelines-hook spec-status`; never hand-edit them.
+- Every delivered requirement needs a bound test. Spec status is computed by
+  `pipelines-hook spec-status` at read time; `status.json` is never committed.
 - One logical change per commit, with `Spec: <ID>` and the assisting agent
   trailer adjacent in the final paragraph.
 
@@ -536,25 +536,6 @@ Entry point `agent_connector_sdk.connector`: `{fleet} = "{pkg}:connector"`.
 }
 
 
-def _status(spec_id: str, fleet: str) -> str:
-    row = {
-        "id": f"{spec_id}-R001",
-        "title": "One tool per operation",
-        "delivery_state": "SPECIFIED",
-        "landed_in": [],
-        "verified_by": [],
-    }
-    status = {
-        "schema_version": 2,
-        "spec_id": spec_id,
-        "owner_repo": fleet,
-        "delivery_state": "SPECIFIED",
-        "requirement_ids": [row["id"]],
-        "requirements": [row],
-    }
-    return json.dumps(status, indent=2) + "\n"
-
-
 def tree(fleet: str) -> dict[str, str]:
     """Return every generated file as relative path -> text."""
     n = _names(fleet)
@@ -590,7 +571,7 @@ def tree(fleet: str) -> dict[str, str]:
     out[f"{pkg}/prompts/{n['short']}-operator.json"] = prompt + "\n"
     for name, text in SPEC_FILES.items():
         out[f"{spec}/{name}"] = fmt(text)
-    out[f"{spec}/status.json"] = _status(n["spec_id"], fleet)
+    out[".gitignore"] = "# Spec status is computed at read time, never committed.\nspecs/*/status.json\n"
     return dict(sorted(out.items()))
 
 
