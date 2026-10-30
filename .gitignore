@@ -225,3 +225,6 @@ __marimo__/
 *errors*.txt
 failed_tests.txt
 trace.txt
+
+# Spec status is computed at read time (pipelines-hook spec-status --write), never committed.
+specs/*/status.json
