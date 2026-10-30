@@ -28,7 +28,6 @@ SPEC_FILES = {
     "requirements.md",
     "tasks.md",
     "test-spec.md",
-    "status.json",
 }
 
 
