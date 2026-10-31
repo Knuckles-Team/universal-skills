@@ -257,6 +257,8 @@ environment. The canonical `.pre-commit-config.yaml` delegates
 `connector-standard`, `secrets`, `spec`, `tests-fast` and
 `dependency-readiness` to `Knuckles-Team/pipelines` at `rev: main`; do not
 replace those shared hooks with local copies or bypass a failing check.
+The generated starter test is `tests/test_api_client.py::test_each_operation_calls_its_endpoint`;
+keep that path and test name in sync when changing the starter operations.
 
 ## Connector-specific checks
 
