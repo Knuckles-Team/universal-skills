@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# roll_update.sh — roll OS package updates across the homelab's RKE2 cluster one node at a
+# roll_update.sh — roll OS package updates across an RKE2 cluster one node at a
 # time: cordon -> drain -> SSH apt upgrade -> conditional reboot -> wait Ready -> uncordon.
 # Aborts the whole run rather than cascading if any node fails a step.
 #

@@ -12,7 +12,7 @@ per-source (§B). Every tool call below is a real `arbora` MCP tool
 
 The user points at a folder of plain notes (an Obsidian vault, or a directory
 synced down from Nextcloud/Paperless-ngx via their own connector presets —
-see `SKILL.md` Step 0): `${HOME}/notes/homelab/`, containing (among others)
+see `SKILL.md` Step 0): `${HOME}/notes/team/`, containing (among others)
 `caching-note.md` — "The team must validate that the new caching layer
 clearly improves database performance under sustained load." — and the KG
 already holds an EARLIER claim from a prior sync: `claim:db-perf-2026-06`,
@@ -23,12 +23,12 @@ load."
 
 ```text
 graph_ingest(action="sync_second_brain",
-  target_path="${HOME}/notes/homelab/", corpus_name="homelab-notes")
+  target_path="${HOME}/notes/team/", corpus_name="team-notes")
 ```
 Response (trimmed):
 ```jsonc
 {
-  "corpus_id": "corpus:homelab-notes",
+  "corpus_id": "corpus:team-notes",
   "notes_seen": 6, "notes_synced": 6, "notes_skipped_unchanged": 0,
   "facts": 17, "claims": 6,
   "claims_proposed": ["claim:9f2a1b...", "claim:1c7bd4...", "..."],
@@ -73,7 +73,7 @@ graph_claims(action="accept", claim_id="claim:9f2a1b...", reason="confirmed by b
 
 ```text
 graph_query(cypher="MATCH (p:BeliefRevisionProposal) WHERE p.corpus_id = $corpus_id AND p.status = 'proposal' RETURN p",
-  params_json='{"corpus_id": "corpus:homelab-notes"}')
+  params_json='{"corpus_id": "corpus:team-notes"}')
 ```
 ```jsonc
 {"rows": [{"p": {
@@ -97,7 +97,7 @@ automatically.
 
 ### A4. Re-sync is idempotent
 
-Running A1 again over the SAME `${HOME}/notes/homelab/` with nothing changed
+Running A1 again over the SAME `${HOME}/notes/team/` with nothing changed
 returns `"notes_synced": 0, "notes_skipped_unchanged": 6, "facts": 0,
 "claims": 0, "contradictions": []` — every note is content-hash addressed, so
 an unchanged corpus never mints a duplicate fact, claim, or proposal. Editing

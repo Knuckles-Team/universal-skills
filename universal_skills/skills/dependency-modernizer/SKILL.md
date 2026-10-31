@@ -114,9 +114,9 @@ siblings, and land each changed repo on its own review branch:
 
 ```bash
 python scripts/bump_dependencies.py \
-    "/home/apps/workspace/agent-packages/agents/*" \
-    "/home/apps/workspace/agent-packages/skills/*" \
-    --workspace-root /home/apps/workspace/agent-packages \
+    "~/workspace/packages/agents/*" \
+    "~/workspace/packages/skills/*" \
+    --workspace-root ~/workspace/packages \
     --commit --branch-prefix chore/bump-deps-
 ```
 
@@ -124,7 +124,7 @@ Preview a fleet bump that also considers prereleases, keeping any existing
 upper caps:
 
 ```bash
-python scripts/bump_dependencies.py "/home/apps/workspace/agent-packages/agents/*" \
+python scripts/bump_dependencies.py "~/workspace/packages/agents/*" \
     --keep-caps --include-prerelease
 ```
 
