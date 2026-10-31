@@ -3,7 +3,7 @@ mode: append
 ---
 ## Constitution content
 
-Create `.specify/memory/constitution.md` from the pipelines `specs/_template/constitution.md`: one page that links the organization constitution and standards by public URL and adds only principles specific to this repository. Run `pipelines-hook spec-standard`; its constitution check passes once the file exists.
+Create `.specify/memory/constitution.md` from `.specify/templates/constitution-template.md`: one page that links the organization constitution and standards by public URL and adds only principles specific to this repository. Run `pipelines-hook spec-standard`; its constitution check passes once the file exists.
 
 ## Workspace conventions
 

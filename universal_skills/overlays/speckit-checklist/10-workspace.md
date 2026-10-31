@@ -3,7 +3,7 @@ mode: append
 ---
 ## Gate
 
-The checklist is binary and starts from the pipelines `specs/_template/checklists/requirements.md`. An unchecked item fails the gate for a touched spec, and each failed item names a specific fix. Checklist items test the quality of the requirements, not the behavior of the code.
+The checklist is binary and starts from `.specify/templates/checklist-template.md`. An unchecked item fails the gate for a touched spec, and each failed item names a specific fix. Checklist items test the quality of the requirements, not the behavior of the code.
 
 ## Workspace conventions
 
