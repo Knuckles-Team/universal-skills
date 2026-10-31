@@ -33,7 +33,7 @@ Each step names its skill and the files it writes, in the
 [organization contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md).
 Read the [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md),
 the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md) and the
-[spec templates](https://github.com/Knuckles-Team/pipelines/tree/main/specs/_template), and pick an open row in
+[spec templates](.specify/templates), and pick an open row in
 [Canopy](https://knuckles-team.github.io/.github/architecture/). Commit with a `Spec: <ROW-ID>` trailer and a bound test.
 
 A reviewable feature has `spec.md`, `plan.md`, `test-spec.md`, and `tasks.md`; add `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, and `checklists/` when applicable. The design names architecture, interfaces, existing components to reuse, runtime wiring, cross-repository contracts, migration and failure behavior, and test scenarios. Link related public repository specs by stable ID and include the complete cross-repository contract locally. Tasks trace requirements to tests and include the repository's configured CCCC, `jscpd`, Dupehound, and KISS checks. If a gate is not configured, document the gap instead of claiming it passed.

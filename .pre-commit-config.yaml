@@ -160,3 +160,8 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+- repo: https://github.com/Knuckles-Team/pipelines
+  rev: main # shared gate repository tracked at head
+  hooks:
+  - id: spec-templates
+    stages: [pre-push]

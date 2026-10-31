@@ -10,6 +10,6 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Synced: 2026-10-31
 - Source digest: sha256:73abce6f02a2e7d8283f116d5ef934c079ecbc3bdc764a79e6243ed97c6a9aae
 - Local overlays:
-  - `overlays/speckit-analyze/10-workspace.md` (sha256 6f031ff2ef5e2ca8)
+  - `overlays/speckit-analyze/10-workspace.md` (sha256 2a2cce984fefbef2)
 
 Refresh with `python scripts/sync_upstream_skills.py --update spec-kit`; verify with `--check`.

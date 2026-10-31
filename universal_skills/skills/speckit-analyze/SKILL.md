@@ -263,7 +263,7 @@ $ARGUMENTS
 
 ## Outputs and gates
 
-Run `pipelines-hook spec-standard` first and treat its findings as the baseline: a row with no task line, a task naming no row, a behavior row with neither a bound test nor a test-spec entry, an orphan `FR-` or `SC-` label, an open clarification marker. Write `specs/<stable-id>/checklists/analysis.md` (lower case; plain bullets, no unchecked task boxes) with requirement-to-task-to-test coverage and end it with **Pass**, **Fail** or **Needs revision** and a coverage fraction. Fill `specs/<stable-id>/checklists/requirements.md` from the pipelines `specs/_template/checklists/requirements.md`; an unchecked item fails the gate. Report an unavailable tool or undefined threshold as a gap, never as a pass.
+Run `pipelines-hook spec-standard` first and treat its findings as the baseline: a row with no task line, a task naming no row, a behavior row with neither a bound test nor a test-spec entry, an orphan `FR-` or `SC-` label, an open clarification marker. Write `specs/<stable-id>/checklists/analysis.md` (lower case; plain bullets, no unchecked task boxes) with requirement-to-task-to-test coverage and end it with **Pass**, **Fail** or **Needs revision** and a coverage fraction. Fill `specs/<stable-id>/checklists/requirements.md` from `.specify/templates/checklist-template.md`; an unchecked item fails the gate. Report an unavailable tool or undefined threshold as a gap, never as a pass.
 
 ## Workspace conventions
 
