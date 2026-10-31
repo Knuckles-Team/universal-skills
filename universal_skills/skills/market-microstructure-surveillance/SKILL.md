@@ -34,7 +34,7 @@ trading and protects a market maker from adverse selection. It computes the Kyle
 surveillance scores (engine `surveillance_risk`, `CONCEPT:KG-2.20k`), turns the
 detector into a self-weighting `MicrostructureSignal` (the EE-033 priors loop),
 evaluates the legal-risk quoting posture (`CONCEPT:EE-043`), and writes the result
-back into the knowledge graph as a `SurveillanceSignal` (`CONCEPT:AU-KG.ontology.kyle-insider-stealth-surveillance`).
+back into the knowledge graph as a `SurveillanceSignal` (`CONCEPT:MERISTEM-KG.ontology.kyle-insider-stealth-surveillance`).
 
 This is **detection and maker-protection** — surfacing toxic/informed/stealth flow
 and widening or pulling quotes against it. It is NOT a tool for concealing trades
@@ -97,7 +97,7 @@ Expected: `quote-posture`, `graduation-eligibility`
 **Agent**: `quant_analyst`
 **Tools**: `graph_write`
 
-Persist a `SurveillanceSignal` node (`CONCEPT:AU-KG.ontology.kyle-insider-stealth-surveillance`) carrying the scores plus a
+Persist a `SurveillanceSignal` node (`CONCEPT:MERISTEM-KG.ontology.kyle-insider-stealth-surveillance`) carrying the scores plus a
 `grounded_in` edge to the source paper (`Article` arxiv:2605.27684) and a
 `relates_to` edge to the relevant ecosystem `Concept`, then emit a surveillance
 report flagging toxic/stealth windows. The OWL bridge reasons over the new node

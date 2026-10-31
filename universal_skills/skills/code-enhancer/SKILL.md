@@ -124,7 +124,7 @@ tries three mechanisms **in this order** for every symbol/concept lookup:
 1. **The ingested code KG (arbora)** — a read-only Cypher query over the already-ingested
    `:Code` graph (`kg_native.kg_repo_symbols`/`kg_repo_concepts`, `POST /graph/query`) or the
    composed `code_context` answer (`POST /graph/code`, action=`code_context` — definition,
-   callers, blast-radius, CONCEPT markers, docs — CONCEPT:AU-KG.retrieval.synthesized-cited-answer).
+   callers, blast-radius, CONCEPT markers, docs — CONCEPT:MERISTEM-KG.retrieval.synthesized-cited-answer).
    Zero re-parsing when the target repo is already ingested (`source_sync`/`kg_ingest_run.py`).
 2. **The engine AST** (`SyncEpistemicGraphClient.graph.index_repository`) — on-demand
    `eg-native-inventory/v1` extraction through the Rust engine's out-of-process socket for a

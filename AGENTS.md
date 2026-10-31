@@ -105,7 +105,7 @@ natively. So:
   that invokes a package-owned skill should list the owning package in its `requires:`
   frontmatter.
 - **System prompts** use the canonical `StructuredPrompt` format — author them with the
-  **`prompt-builder`** skill (CONCEPT:AU-ORCH.routing.resolve-body-single-canonical). `mcp-builder` scaffolds the
+  **`prompt-builder`** skill (CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical). `mcp-builder` scaffolds the
   prompt + a starter skill + the entry-points automatically.
 
 ## Tech Stack & Architecture
