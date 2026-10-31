@@ -22,6 +22,21 @@ def checkout(tmp_path):
     shutil.copy(
         ROOT / "scripts/pages_sources.py", tmp_path / "scripts/pages_sources.py"
     )
+    # Status is generated, never committed: give the copy the file a local
+    # `pipelines-hook spec-status --write` would have produced.
+    (tmp_path / "specs/US-PAGES-001/status.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "spec_id": "US-PAGES",
+                "owner_repo": "universal-skills",
+                "delivery_state": "SPECIFIED",
+                "acceptance_state": "NOT_AUDITED",
+                "evidence": [],
+            }
+        ),
+        encoding="utf-8",
+    )
     # Public skill links must resolve in this checkout, without importing skills.
     for source in (ROOT / "universal_skills").rglob("SKILL.md"):
         target = tmp_path / source.relative_to(ROOT)
@@ -238,3 +253,11 @@ def test_synthetic_accepted_receipts(checkout):
     result = build(checkout)
     assert result.returncode != 0
     assert "matching implementation and acceptance receipts" in result.stderr
+
+
+def test_build_without_generated_status(checkout):
+    (checkout / "specs/US-PAGES-001/status.json").unlink()
+    result = build(checkout)
+    assert result.returncode == 0, result.stderr
+    output = (checkout / "site/specs/US-PAGES-001/spec/index.html").read_text()
+    assert "Owner-native status" not in output
