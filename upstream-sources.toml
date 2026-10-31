@@ -1,0 +1,54 @@
+# Upstream skill sources (US-CONTENT-R002).
+# Each [[source]] pins a repository at a full commit SHA. Never put a branch or tag
+# in `commit`; `track` names the branch that `--update` follows.
+# Edit pins only with: python scripts/sync_upstream_skills.py --update <id>
+
+[[source]]
+id = "spec-kit"
+repository = "https://github.com/github/spec-kit"
+track = "main"
+commit = "7370e592f3cd9c06e5b698983957e227c75b30e2"
+license = "MIT"
+license_path = "LICENSE"
+transform = "command-md"
+paths = ["templates/commands/*.md"]
+
+[[source.skill]]
+name = "speckit-constitution"
+path = "templates/commands/constitution.md"
+trigger = "Use when a repository needs a new or updated constitution at .specify/memory/constitution.md."
+
+[[source.skill]]
+name = "speckit-specify"
+path = "templates/commands/specify.md"
+trigger = "Use when the user describes a feature and needs specs/<id>/spec.md and its requirement rows."
+
+[[source.skill]]
+name = "speckit-clarify"
+path = "templates/commands/clarify.md"
+trigger = "Use when a spec holds ambiguities or [NEEDS CLARIFICATION] markers to resolve before planning."
+
+[[source.skill]]
+name = "speckit-plan"
+path = "templates/commands/plan.md"
+trigger = "Use when a clarified spec needs plan.md and its design artifacts."
+
+[[source.skill]]
+name = "speckit-tasks"
+path = "templates/commands/tasks.md"
+trigger = "Use when a plan needs a dependency-ordered tasks.md."
+
+[[source.skill]]
+name = "speckit-analyze"
+path = "templates/commands/analyze.md"
+trigger = "Use after tasks.md exists to check spec, plan and tasks for consistency and gaps before implementing."
+
+[[source.skill]]
+name = "speckit-checklist"
+path = "templates/commands/checklist.md"
+trigger = "Use when a feature needs a quality checklist that tests the requirements, not the code."
+
+[[source.skill]]
+name = "speckit-implement"
+path = "templates/commands/implement.md"
+trigger = "Use when tasks.md is ready and the work is to build the feature and its bound tests."

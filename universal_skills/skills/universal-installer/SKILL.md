@@ -228,6 +228,25 @@ has no business assuming. If an arbora-side counterpart wants to consume
 `install-manifest.json` directly (rather than re-scanning the whole XDG tree),
 that consumer is **not yet built** — flagged as a deferred follow-up.
 
+## Upstream skill updates
+
+The catalog vendors skills from pinned upstream repositories listed in
+`upstream-sources.toml` (for example the spec-kit command prompts as
+`speckit-*`). To bring them to upstream's latest, work in a branch of the
+`universal-skills` checkout and do the following, in order:
+
+- Run `python scripts/sync_upstream_skills.py --update <source-id>` for each
+  source. It moves the pin to upstream's latest commit and re-syncs the
+  snapshot and the vendored skills, so the diff is reviewable.
+- Run `python scripts/sync_upstream_skills.py --check --verify-pin`. It must
+  pass. A failure means a vendored file was edited by hand; move that change
+  into `universal_skills/overlays/<skill>/` and sync again.
+- Run the repository tests and `uvx pre-commit run --all-files`.
+- Commit the manifest, snapshot, vendored skills and overlays by explicit path,
+  push the branch and open a pull request. Never push to the default branch.
+
+Overlay files and the manifest format are specified by `US-CONTENT-R002`.
+
 ## Best Practices
 
 - Prefer `--symlink` for the skill/skill-graph leg on any host you'll keep
@@ -240,6 +259,8 @@ that consumer is **not yet built** — flagged as a deferred follow-up.
   hint so the KG picks up the new/changed skills, prompts, and ontology.
 
 ## Resources
+- `scripts/sync_upstream_skills.py` (repository root) — vendor, update and check
+  skills from pinned upstream repositories.
 - `scripts/install.py` — skill/skill-graph install core (unchanged logic from
   `skill-installer`) + the new `--from-package`/`--arbora`/ontology-prompt CLI
   wiring.
