@@ -1,11 +1,11 @@
 ---
-name: epistemic-graph-development
+name: medulla-development
 domain: development
 skill_type: skill
 description: >-
-  Develop inside the epistemic-graph (EG) Rust engine without creating sprawl.
+  Develop inside the medulla Rust engine without creating sprawl.
   Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or
-  second route to an existing capability in agent-packages/epistemic-graph.
+  second route to an existing capability in the medulla repository.
   Supplies twelve guardrails with what enforces each; the authorization model
   end to end (claims to VerifiedRequestContext to allows_method to the dispatch
   chokepoint, the RBAC/RLS axis, and the measured kg:read
@@ -18,15 +18,15 @@ description: >-
   when the agent must write, refactor, review, or plan work in the EG Rust
   workspace. Not for the Python agent-utilities side or deploying the engine.
 license: MIT
-tags: [epistemic-graph, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
+tags: [medulla, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
   version: '1.5.2'
   author: Genius
 ---
-# Epistemic Graph (EG) Development
+# Medulla Development
 
-`agent-packages/epistemic-graph` is a Cargo workspace: **48 member crates under
-`crates/` plus the root facade package `epistemic-graph` (`src/`)**, root version
+The medulla repository is a Cargo workspace: **48 member crates under
+`crates/` plus the root facade package `medulla-engine` (`src/`)**, root version
 `2.27.0`. Its failure mode is not bugs — it is **sprawl**: a second predicate that
 answers a question already answered, a hand-copied list of another crate's tables,
 a shared helper extracted across a boundary it should not cross.
@@ -35,6 +35,20 @@ a shared helper extracted across a boundary it should not cross.
 the tree; anything unverified is marked. Verify again — the tree moves.
 
 ---
+
+## Spec-driven flow
+
+Run this before any code. Full table and gates: the Spec-driven development section of `AGENTS.md` and the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md).
+
+1. Read `.specify/memory/constitution.md`; create it from pipelines `specs/_template/constitution.md` if absent (`spec-generator`).
+2. Specify the feature: `spec-intake-wizard` gathers the inputs, `spec-generator` writes `specs/<stable-id>/spec.md` and `requirements.md`.
+3. Clarify: resolve every `[NEEDS CLARIFICATION: ...]` marker (`spec-generator`).
+4. Plan: `plan.md` from pipelines `specs/_template/plan.md`, including Build contract, Production caller chain and Cross-repo seams (`spec-generator`).
+5. Tasks: `tasks.md` lines `- [ ] T001 [P] [US1] <ROW-ID> ...` (`task-planner`).
+6. Analyze: fix the gaps and fill `checklists/requirements.md` (`spec-verifier`).
+7. Implement and land with the delivery contract in this skill (`feature-development-pipeline`); release through pipelines `releases/*.yml` bundles.
+
+Never write code for a row that is not SPECIFIED. Feature directories use the stable spec ID, never a numbered prefix. The state is computed from rows, `Spec:` trailers and test bindings; never write `status.json` or a `Status:` line.
 
 ## Rapid delivery: the 5-minute contract
 
@@ -61,7 +75,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 - Run the targeted tests only, never a full suite.
 
 **Landing**
-- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown, `status.json`) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
+- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
 - Many open PRs land together as a merge train (one integration branch, one CI run), built with the orchestrator's merge-train tool.
 - Full CI on main catches what the fast subset missed; regressions are fixed forward immediately.
 - Landing in this repo: delivery agents open the PR and do not run per-PR build-host builds or merge. The orchestrator lands EG in batches about every 20 minutes, validated by one warm integration build (`cargo check --workspace --all-features` plus contract regeneration) on the least-loaded build host.
@@ -127,20 +141,20 @@ reachable only through `cluster`, which is outside `default`.
 `src/raft/store.rs` — replacing two graph-name comparisons with the fail-closed
 `match … scope().graph_name() { Some(g) => …, None => false }` shape, i.e. code
 written *specifically to satisfy G12* — and its own verification line reads
-*"cargo test -p epistemic-graph --lib at --test-threads=4 reports 1270 passed, 0
+*"cargo test -p medulla-engine --lib at --test-threads=4 reports 1270 passed, 0
 failed, 3 ignored."* `--lib` at default features never compiled a line of it.
 Separately, `src/raft/cross_shard_txn.rs:845` calls the 3-argument
-`eg_mutation_store::read_record` (`crates/eg-mutation-store/src/store/persist.rs:348`);
+`eg_mutation_store::read_record` (`crates/medulla-mutation-store/src/store/persist.rs:348`);
 that call site is *also* compiled by no default build, so nothing in the repo's
 routine gate suite has ever type-checked it.
 
 **So: name the build in every acceptance claim.** `1,270 passed` is a statement
-about `-p epistemic-graph --lib` under `default`, and about nothing else. If your
+about `-p medulla-engine --lib` under `default`, and about nothing else. If your
 diff touches a path behind a non-default feature, you owe a second run:
 
 ```bash
-cargo check -p epistemic-graph --features raft          # or the feature that gates your path
-cargo test  -p epistemic-graph --lib --features <set> -j 8 -- --test-threads=4
+cargo check -p medulla-engine --features raft          # or the feature that gates your path
+cargo test  -p medulla-engine --lib --features <set> -j 8 -- --test-threads=4
 ```
 
 ### G4 in practice — the scoped PRE-EXISTING run, before the full one
@@ -155,7 +169,7 @@ evidence. Do this, in order, before the full run:
    all 48 crates (verified), so this mapping is exact:
    ```bash
    git diff --name-only main...HEAD -- '*.rs' \
-     | sed -E 's#^crates/([^/]+)/.*#\1#; s#^(src|benches|tests)/.*#epistemic-graph#' \
+     | sed -E 's#^crates/([^/]+)/.*#\1#; s#^(src|benches|tests)/.*#medulla-engine#' \
      | sort -u
    ```
 2. **Name the pre-existing test modules that already exercise what you changed** —
@@ -174,7 +188,7 @@ evidence. Do this, in order, before the full run:
    ```
 4. **Run the remainder BY NAME first**, then the crate, then everything:
    ```bash
-   cargo test -p epistemic-graph --lib wired_catalog_tests -j 8 -- --test-threads=4
+   cargo test -p medulla-engine --lib wired_catalog_tests -j 8 -- --test-threads=4
    cargo test -p <touched crate>  --lib -j 8 -- --test-threads=4
    ```
    `--test-threads=4` is not optional — the suite deadlocks at the 24-thread
@@ -195,7 +209,7 @@ Both verified 2026-09-03; neither is gated, so neither will stop you.
   list as "nothing to enforce". If you write that consumer, fail closed on empty.
 - **`policy:export` is cleared by a read scope.** `Method::PolicyExport` carries
   `authz_action = "policy:export"` with `mutates = false`
-  (`crates/eg-capabilities/src/domains/security.rs:15`).
+  (`crates/medulla-capabilities/src/domains/security.rs:15`).
   `coarse_kg_admin_only` (`src/server/auth.rs:632`) matches only an `admin:`/
   `security:` prefix or an `:admin`/`:control` suffix, so `policy:export` falls
   past that filter (`src/server/auth.rs:185`) to
@@ -223,7 +237,7 @@ this section; re-open them (**G6**).
 
 | # | Stage | Where | Establishes |
 |---|---|---|---|
-| 1 | **Claims arrive as an untrusted wire DTO** | `RequestContextClaims`, `crates/eg-types/src/acl.rs:17` — `principal`, `tenant`, `audience`, `agent_id`, `roles`, `scopes`, `policy_version`, `delegation`, `node`, `priority` | Nothing. Its own doc: *"Callers must not treat a deserialized value as trusted until the server has verified the envelope MAC, deployment audience/tenant/policy version, request binding, and delegation chain."* |
+| 1 | **Claims arrive as an untrusted wire DTO** | `RequestContextClaims`, `crates/medulla-types/src/acl.rs:17` — `principal`, `tenant`, `audience`, `agent_id`, `roles`, `scopes`, `policy_version`, `delegation`, `node`, `priority` | Nothing. Its own doc: *"Callers must not treat a deserialized value as trusted until the server has verified the envelope MAC, deployment audience/tenant/policy version, request binding, and delegation chain."* |
 | 2 | **Envelope verification** | `verify_request_with_security_dir` (`src/server/auth.rs:1773`) → `verify_envelope_v2_with` (`:1681`) | `eg2.` prefix → HMAC over the request → clock-skew window → `validate_context_claims` (`:1110`) → `bind_verified_identity` (`:1550`) → non-empty idempotency key → **durable replay-nonce consumption** (`:1709`). Order matters: the nonce is spent last, so a claims-invalid request costs no ledger write. |
 | 3 | **Claims → identity binding** | `validate_context_claims` (`:1110`) | Required claims non-empty; no duplicate role/scope/delegation entries; `req.agent_id` matches; **the delegation chain must run principal → agent_id** (empty iff `principal == agent_id`); audience/tenant/policy-version equal the deployment's; a present `node` claim exact-matches this node. |
 | 4 | **IdP binding** | `bind_verified_identity` (`:1550` under `oidc`; `:1658` without it) | Every claimed role must appear in the verified token's roles, and **every claimed scope must appear in its scopes or roles** — `"request context asserts unverified scope '{scope}'"`. `require_oidc()` (`:1482`) **defaults to true**, so a build with no configured issuer fails closed rather than accepting HMAC-only identity. **A caller cannot self-assert `kg:read`;** the IdP grants it. |
@@ -233,7 +247,7 @@ this section; re-open them (**G6**).
 `action` and `mutates` are never chosen at the call site — they come from the
 capability ledger: `eg_capabilities::policy(&req.method)` yields
 `MethodPolicy { authz_action, mutates, durability_domain, audited, emits_cdc, … }`
-(`crates/eg-capabilities/src/lib.rs`; rows in `src/domains/*.rs`).
+(`crates/medulla-capabilities/src/lib.rs`; rows in `src/domains/*.rs`).
 `allows_method` then decides in five ordered steps: (1) `allows_action(action)`
 (`:148`) — the **exact** scope, a **domain wildcard** (`graph:*`), or global `*`
 → allow; (2) `kg:admin` → allow, unconditionally; (3)
@@ -274,7 +288,7 @@ correlation, not an authority claim"*, so only a privileged aggregate reader or
 **(4)** when `is_admin_authz_action(action)` (`src/server/access.rs:1126` —
 `action == "security:admin" || action.starts_with("admin:")`), additionally
 `require_admin_capability` (`access.rs:1137`) → `IsolationLayer::has_admin_capability`
-(`crates/eg-core/src/isolation.rs:1894`): an agent **registered in `rbac.redb`**
+(`crates/medulla-core/src/isolation.rs:1894`): an agent **registered in `rbac.redb`**
 with `AgentRole::System` or an explicit RBAC `Admin` grant. No provisioned policy
 at all is a **deny**, not a default-open (`access.rs:1152`).
 
@@ -318,7 +332,7 @@ admin-tier, which is a property of one ledger row, not of this code.
 ### Three measured findings
 
 **1 — a bare read scope reaches 221 of 412 methods.** Re-derived for this skill
-by parsing `crates/eg-capabilities/src/domains/*.rs` and reimplementing
+by parsing `crates/medulla-capabilities/src/domains/*.rs` and reimplementing
 `coarse_kg_admin_only`'s four string tests (script in the reference below):
 **412 rows · 234 non-mutating · 221 reachable by a caller holding only
 `kg:read` · 45 distinct actions.** Recheck these historical counts against the
@@ -335,22 +349,22 @@ the general fix is a **declared** coarse posture on the `MethodPolicy` row with
 no `Default` impl, so a new method fails to compile until it states its answer.
 
 **2 — `RunUdf` executes caller-supplied code, unaudited, in a default build.**
-`crates/eg-capabilities/src/domains/compute.rs:113` declares it
+`crates/medulla-capabilities/src/domains/compute.rs:113` declares it
 `mutates: false`, `authz_action: "udf:exec"`, `audited: false` — so it clears
 `kg:read` and leaves no audit-chain record — and its ledger row carries **no
 `#[cfg]`**, unlike `Quantum`, `Asr`, `TtsSynthesize` and `PolicyExport`.
 ⚠ **Correction to how this is usually stated:** the `Method` variant *is*
-feature-gated (`crates/eg-types/src/protocol.rs:2866`, `#[cfg(feature = "wasm-udf")]`;
+feature-gated (`crates/medulla-types/src/protocol.rs:2866`, `#[cfg(feature = "wasm-udf")]`;
 dispatch arm `src/server/dispatch.rs:11949`) — but `wasm-udf` is inside `full`,
 which is inside `default` (verified with the G3 closure script), **so it is
 compiled and routed in a default build anyway.** The conclusion holds; the
-reason "there is no cfg gate" does not. The sandbox is real (`crates/eg-wasm`:
+reason "there is no cfg gate" does not. The sandbox is real (`crates/medulla-wasm`:
 wasmtime, fuel + memory limits, no host capabilities) — the finding is about who
 may invoke it, and that nothing records that they did.
 
 **3 — whether a read scope should clear `policy:export` is an OPEN DESIGN
 QUESTION, not a bug.** `Method::PolicyExport` declares `"policy:export"`,
-`mutates = false` (`crates/eg-capabilities/src/domains/security.rs:15`), so it
+`mutates = false` (`crates/medulla-capabilities/src/domains/security.rs:15`), so it
 falls through to `kg:read || kg:write`. **`src/server/policy_export/mod.rs:100-105`
 records that the non-admin tier was chosen deliberately:** naming it
 `"security:admin"` — the obvious first choice, matching
@@ -374,22 +388,22 @@ script that re-derives `412 / 234 / 221 / 45 / 22 / 5 / 50` — are in
 
 ## 2. Where code goes — the layer model
 
-**48 member crates under `crates/` plus the root facade `epistemic-graph`
+**48 member crates under `crates/` plus the root facade `medulla-engine`
 (`src/`).** Source of truth: `Cargo.toml` `[workspace] members`, the crates'
 `Cargo.toml` dependencies, and their public interfaces. The current layer model is:
 
-**0 contract leaves** (`eg-types` — the DAG's bottom and the only crate
-everything can see — `eg-durable`, `eg-quantum-core`, `eg-resource`,
-`eg-sqlite-format`, `eg-wasm`, `eg-viz-core`) → **1 shared seams**
-(`eg-modality`, `eg-mutation-store`, `eg-capabilities`) → **2 modality/index
-leaves** (13 crates) → **3 core** (`eg-core`) → **4 storage/transaction**
-(`eg-tsdb`, `eg-jobs`, `eg-statechart`, `eg-kvcache`, **plus
+**0 contract leaves** (`medulla-types` — the DAG's bottom and the only crate
+everything can see — `medulla-durable`, `medulla-quantum-core`, `medulla-resource`,
+`medulla-sqlite-format`, `medulla-wasm`, `medulla-viz-core`) → **1 shared seams**
+(`medulla-modality`, `medulla-mutation-store`, `medulla-capabilities`) → **2 modality/index
+leaves** (13 crates) → **3 core** (`medulla-core`) → **4 storage/transaction**
+(`medulla-tsdb`, `medulla-jobs`, `medulla-statechart`, `medulla-kvcache`, **plus
 `src/server/persistence/`**) → **replication** (**`src/raft/`**) → **5
-query/reasoning** (`eg-compute`, `eg-query`, `eg-epistemic`, `eg-plan`,
-`eg-rdf`, `eg-shacl`, `eg-shex`, `eg-graphql`) → **6 server/protocol adapter**
-(`src/` — there is deliberately **no `eg-server` crate**) → **7 binary
+query/reasoning** (`medulla-compute`, `medulla-query`, `medulla-epistemic`, `medulla-plan`,
+`medulla-rdf`, `medulla-shacl`, `medulla-shex`, `medulla-graphql`) → **6 server/protocol adapter**
+(`src/` — there is deliberately **no `medulla-server` crate**) → **7 binary
 composition** (`[[bin]]` targets behind `required-features`). Plus four
-default-off specialty sub-DAGs (quantum ×6, viz ×5, providers ×2, `eg-pyengine`).
+default-off specialty sub-DAGs (quantum ×6, viz ×5, providers ×2, `medulla-pyengine`).
 
 Two subtrees the layer table used to omit: **`src/server/persistence/`** (13
 files, 21,637 lines) is **Layer-4 storage living inside the Layer-6 facade** —
@@ -404,7 +418,7 @@ blockers (42.6%) — so that burn-down is a storage/consensus workstream.
 > server dispatch.**
 
 **Enforced by Cargo, not by a lint** — `crates/*` cannot depend on the root
-`epistemic-graph` package because the root depends on them, and no
+`medulla-engine` package because the root depends on them, and no
 `crates/*/Cargo.toml` declares it. ⚠ That covers `[dependencies]` only;
 `[dev-dependencies]` cycles exist and build fine. ⚠ The numbering is a
 **target**: three shipped crates already violate it, so use the table to answer
@@ -438,8 +452,8 @@ git grep -n '<Symbol>' -- src/ crates/ tests/ benches/ examples/
 git grep -n 'pub\( *(crate)\)\? \(fn\|struct\|enum\|const\|trait\) <Symbol>' -- src/ crates/
 ```
 
-**Why all four.** Measured on `eg-modality`, 2026-09-04: **23 manifests declare
-it as a direct dependency**, but `cargo tree -i eg-modality -e normal --offline`
+**Why all four.** Measured on `medulla-modality`, 2026-09-04: **23 manifests declare
+it as a direct dependency**, but `cargo tree -i medulla-modality -e normal --offline`
 returns **11 nodes** — the rest are optional or behind a non-default feature.
 `cargo tree` alone under default features hides more than half the consumers;
 the manifests alone tell you nothing about which of them compile the path you
@@ -447,7 +461,7 @@ are touching; and neither sees a trait object, a macro-generated call, or a
 string-keyed registry — which is exactly why **G7** forbids deleting on island
 evidence alone. Visibility is the fourth question: a `pub(crate)` item's blast
 radius is one crate and `cargo check -p <crate>` is a complete consumer test; a
-`pub` item in `eg-types` can be reached by all 48, and only `--all-features`
+`pub` item in `medulla-types` can be reached by all 48, and only `--all-features`
 sees them all.
 
 ---
@@ -572,9 +586,9 @@ of them is probably pinning the bug.
 
 ## 5. The MutationBatch v1 contract — the two-axis rule
 
-**Authority:** `crates/eg-types/src/mutation_batch/` — `model/request.rs`
+**Authority:** `crates/medulla-types/src/mutation_batch/` — `model/request.rs`
 (`MutationDomain` + its three predicates), `model/identity.rs` (`MutationScope`,
-`MutationScopeIdentity`), `validation.rs`. Ledger: `crates/eg-mutation-store/`.
+`MutationScopeIdentity`), `validation.rs`. Ledger: `crates/medulla-mutation-store/`.
 
 - **Domain** (`MutationDomain`, 14 variants) names the **operation family**.
 - **Scope** (`MutationScope::Graph { graph } | Native { domain, resource }`)
@@ -626,7 +640,7 @@ never from memory — a count without a command behind it is inadmissible.
 - [ ] **Is this constant / predicate / table-list defined in a crate the consumer
       cannot see changes to?** If crate A declares the set and crate B scans for
       it, B will silently go stale. Both must import from a crate they *share* —
-      in practice `eg-types`. That asymmetry is exactly how the private-payload
+      in practice `medulla-types`. That asymmetry is exactly how the private-payload
       scan came to know about transaction recovery but not SPARQL.
 - [ ] **Is this a second route to an existing capability?** A second call site for
       a minted authority, a second commit route for the same batch, a second
@@ -644,9 +658,9 @@ never from memory — a count without a command behind it is inadmissible.
 
 | Adding | Home |
 |---|---|
-| A shared constant / wire DTO / predicate two crates consult | `eg-types` (the only crate everything can see) |
-| A graph-core capability | `eg-core` |
-| A compute domain | `eg-compute` |
+| A shared constant / wire DTO / predicate two crates consult | `medulla-types` (the only crate everything can see) |
+| A graph-core capability | `medulla-core` |
+| A compute domain | `medulla-compute` |
 | A protocol method | `protocol.rs` variant + `handlers/<domain>.rs` fn + a ONE-LINER `dispatch.rs` arm + a client method + a round-trip test |
 | A new operation family | a new `handlers/<domain>.rs`, never another arm in an existing file |
 | A store-authoritative capability | its own crate with its own `MutationScopeIdentity`; never a bare `Database` |
@@ -665,7 +679,7 @@ things that are still open today.** The rules themselves:
 | # | Pattern | The rule |
 |---|---|---|
 | **7.1** | A predicate consulted by both a validator and a producer is answering two questions | Before reusing a predicate, name its caller and the exact question that caller is asking. Two callers means two questions until proven identical. |
-| **7.2** | A hand-copied list of another crate's tables/events cannot stay correct | When a scan in crate A must know a set produced in crate B, the set moves to a crate both can import — in practice `eg-types`. |
+| **7.2** | A hand-copied list of another crate's tables/events cannot stay correct | When a scan in crate A must know a set produced in crate B, the set moves to a crate both can import — in practice `medulla-types`. |
 | **7.3** | Extracting a shared helper silently ADDS a control to paths that never had one — or REMOVES one | An extraction changes the *set of call sites* a control runs on. Enumerate the paths that lacked it, before and after. **A performance optimization that skips a filter is a security change, and no gate in this repo observes it** — the RLS view cache is still open. |
 | **7.4** | Binding identity to a physical path breaks legitimate relocation | Identity derived from a physical location cannot distinguish substitution from relocation. Give relocation one explicit adoption entry point at the boundary that knows it is happening, never at each of the N owners. |
 | **7.5** | A fix that passes only the test its author wrote has demonstrated almost nothing | Run the pre-existing suite and say which pre-existing test would have caught the bug. If none would have, you have not written the test yet. |
@@ -680,9 +694,9 @@ things that are still open today.** The rules themselves:
 
 ```bash
 export CARGO_INCREMENTAL=0
-cargo check -p eg-types                          # fastest inner loop
-cargo check -p epistemic-graph                   # full closure
-cargo test -p epistemic-graph --lib -j 8 -- --test-threads=4
+cargo check -p medulla-types                          # fastest inner loop
+cargo check -p medulla-engine                   # full closure
+cargo test -p medulla-engine --lib -j 8 -- --test-threads=4
 ```
 
 - **Do NOT export `CARGO_TARGET_DIR`.** The committed `.cargo/config.toml` already sets
@@ -740,14 +754,14 @@ before publishing a count.**
 
 | Path | What it is |
 |---|---|
-| `agent-packages/epistemic-graph/AGENTS.md` | Authoritative repo doc. Its "Module Structure" tree is stale (5 crates vs 48); its "Workspace & server dispatch conventions" section is current. |
-| `agent-packages/epistemic-graph/Cargo.toml` | The 48-crate member list and the feature graph. `default = ["graph", "algorithms", "metrics", "full"]` — a **superset** of `full`, not equal to it. |
-| `agent-packages/epistemic-graph/.pre-commit-config.yaml` | All 60 hooks. |
-| `agent-packages/epistemic-graph/.repo-layout.toml` | Root-entry justification manifest read by `check_root_hygiene.py`. |
-| `agent-packages/epistemic-graph/arch-lint.toml` | arch-lint policy. Declares `preset = "minimal"` + `fail_on = "error"` and disables AL001, but 0.5.0 ignores the preset and runs the other 7 rules — see §3. Its `exclude` does not cover `target-isolated/`. |
-| `agent-packages/epistemic-graph/.importlinter` | Python client contracts. |
-| `epistemic-graph/specs/` | Public repository-owned requirements, architecture, and acceptance evidence for current work. |
-| `epistemic-graph/scripts/method_policy_inventory.py` | Re-derives the authorization method inventory discussed in §1. |
+| `agent-packages/medulla-engine/AGENTS.md` | Authoritative repo doc. Its "Module Structure" tree is stale (5 crates vs 48); its "Workspace & server dispatch conventions" section is current. |
+| `agent-packages/medulla-engine/Cargo.toml` | The 48-crate member list and the feature graph. `default = ["graph", "algorithms", "metrics", "full"]` — a **superset** of `full`, not equal to it. |
+| `agent-packages/medulla-engine/.pre-commit-config.yaml` | All 60 hooks. |
+| `agent-packages/medulla-engine/.repo-layout.toml` | Root-entry justification manifest read by `check_root_hygiene.py`. |
+| `agent-packages/medulla-engine/arch-lint.toml` | arch-lint policy. Declares `preset = "minimal"` + `fail_on = "error"` and disables AL001, but 0.5.0 ignores the preset and runs the other 7 rules — see §3. Its `exclude` does not cover `target-isolated/`. |
+| `agent-packages/medulla-engine/.importlinter` | Python client contracts. |
+| `medulla-engine/specs/` | Public repository-owned requirements, architecture, and acceptance evidence for current work. |
+| `medulla-engine/scripts/method_policy_inventory.py` | Re-derives the authorization method inventory discussed in §1. |
 
 ### The `references/` directory — what is in each file
 

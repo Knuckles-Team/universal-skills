@@ -1,6 +1,6 @@
 # Epistemic-graph failure-pattern reference
 
-Deep reference for `epistemic-graph-development`: the seven documented EG
+Deep reference for `medulla-development`: the seven documented EG
 failure patterns in full — each with the source-tree `file:line` evidence
 re-verified against the current tree, and the rule it was promoted into. The
 parent [`SKILL.md`](../SKILL.md) carries the rule statements and the index of
@@ -34,15 +34,15 @@ recurred three times in one session (B-3, B-5, D-4).
 Producers declared their own event families in `src/server/dispatch.rs`
 (`SPARQL_RECOVERY_EVENT`, `SPARQL_COMPENSATION_EVENT`) and
 `src/server/handlers/txn.rs`, while the scan hard-coded
-`"transaction_recovery_plan"` inside `eg-mutation-store`. A set declared in one
+`"transaction_recovery_plan"` inside `medulla-mutation-store`. A set declared in one
 crate cannot be seen by the other. Also: `COMPILED_BATCH_INCARNATION` was
-duplicated across `src/server/mutation_batch.rs` and `crates/eg-tsdb/src/store.rs`.
+duplicated across `src/server/mutation_batch.rs` and `crates/medulla-tsdb/src/store.rs`.
 
 > **Rule:** when a scan in crate A must know a set produced in crate B, the set
 > moves to a crate both can import. Today that is
 > `eg_types::mutation_batch::PRIVATE_PAYLOAD_EVENT_TYPES` and
 > `eg_types::mutation_batch::COMPILED_BATCH_INCARNATION` — both now verified in
-> `crates/eg-types/src/mutation_batch/model/identity.rs`.
+> `crates/medulla-types/src/mutation_batch/model/identity.rs`.
 
 ### 7.3 Extracting a shared helper silently ADDS a control to paths that never had one — or REMOVES one
 
@@ -55,20 +55,20 @@ the one legitimate scan. Every SPARQL-HTTP update saga then failed with
 `"private recovery payload has no digest-bound parent"` on seal-write and every
 read after. Fixed by splitting `private_payload_digest` (hot path, no `event_type`
 inspection) from `recovery_plan_digest` (scan only, filtered by the declared set) —
-both verified in `crates/eg-mutation-store/src/store/ledger.rs:202` and `:227`.
+both verified in `crates/medulla-mutation-store/src/store/ledger.rs:202` and `:227`.
 
-**Removed:** the RLS view cache. `crates/eg-core/src/rls_view_cache.rs` defines
+**Removed:** the RLS view cache. `crates/medulla-core/src/rls_view_cache.rs` defines
 `FilteredViewCache: HashMap<String, (u64, Arc<GraphView>)>` keyed by **actor string
 + graph-content version only** — no policy, role, grant, or identity digest. On a
 hit, `rls.filter_view` is **never called**. `invalidate_filtered_view_cache` is
 invoked from exactly two whole-image graph transitions
-(`crates/eg-core/src/graph.rs:6183` and `:6253`). The permission mutators in
-`crates/eg-core/src/isolation.rs` — `try_add_grant`, `try_remove_grant`,
+(`crates/medulla-core/src/graph.rs:6183` and `:6253`). The permission mutators in
+`crates/medulla-core/src/isolation.rs` — `try_add_grant`, `try_remove_grant`,
 `try_register_agent` — contain **zero** invalidation calls. Revoke a grant and the
 actor keeps being served rows the current policy forbids.
 
 > **Status re-verified on the current tree: STILL OPEN.** `grep -c
-> invalidate_filtered_view_cache crates/eg-core/src/isolation.rs` = **0**, and the
+> invalidate_filtered_view_cache crates/medulla-core/src/isolation.rs` = **0**, and the
 > cache is consulted from 6 read sites: `src/server/access.rs:301`,
 > `src/server/handlers/rdf.rs:131/162/462`, `src/server/handlers/query.rs:5627/5684`.
 > (The report's `query.rs:5332/5390` line numbers have shifted.) Any fix must
@@ -84,7 +84,7 @@ actor keeps being served rows the current policy forbids.
 ### 7.4 Binding identity to a physical path breaks legitimate relocation
 
 *Evidence:* `SEC-FINDING-V1-INCARNATION-BREAKS-RESTORE-20260903.md`.
-`StoreIncarnation::derive` (`crates/eg-mutation-store/src/store/identity.rs:65`,
+`StoreIncarnation::derive` (`crates/medulla-mutation-store/src/store/identity.rs:65`,
 `pub(crate)`) canonicalizes the path and calls `physical_root_id` (`:765`), which
 hashes `PHYSICAL_ROOT_DOMAIN` + `metadata.dev()` + `metadata.ino()` — **and nothing
 else**. `initialize` re-derives on every open and fails closed on mismatch. Correct
@@ -143,7 +143,7 @@ builds — evidence the suite already encoded the invariant nobody re-read.
   **eight** near-identical scope-identity builders appeared. Extract the shared
   primitive BEFORE fan-out, not after. (Partially collapsed today:
   `MutationScopeIdentity::fixed_native`/`fixed_graph` now back `rbac_persist.rs:64`,
-  `eg-jobs/src/store.rs:2382`, `eg-statechart/src/store.rs:738`, and
+  `medulla-jobs/src/store.rs:2382`, `medulla-statechart/src/store.rs:738`, and
   `src/server/persistence/redb_backend.rs:1347`; `src/server/blob/store.rs:454`
   still hand-rolls the four-constructor form.)
 - **File-partitioned lanes prevent edit collisions, not pattern collisions.**
@@ -156,6 +156,6 @@ builds — evidence the suite already encoded the invariant nobody re-read.
 |---|---|
 | D-4 `requires_native_scope` double duty | **Stale as written.** The predicate no longer serves the validator — its only call sites are `src/server/mutation_batch.rs:137` and `:178`, both producer-side; the `NOTE:` at `request.rs:140` is an out-of-date source comment. What remains open is narrower: the producer derives scope from the domain tag, not the commit route. Fix belongs at the graph-routed callers. |
 | RLS view-cache staleness | **Open on the current tree** (verified §7.3 below). |
-| C-1 the `security` feature is a second architecture | Verified today: **636** `cfg(feature = "security")` arms vs **64** `cfg(not(feature = "security"))` arms across `src/` and `crates/`. `security` is in `full`, which is `default`, so the negative arms are an alternate, unauthenticated implementation reachable only via `--no-default-features`. Deferred; proposal in `evidence/proposals/EG-SECURITY-DEGATING-SLICE.md`. |
+| C-1 the `security` feature is a second architecture | Verified today: **636** `cfg(feature = "security")` arms vs **64** `cfg(not(feature = "security"))` arms across `src/` and `crates/`. `security` is in `full`, which is `default`, so the negative arms are an alternate, unauthenticated implementation reachable only via `--no-default-features`. Deferred; proposal in `evidence/proposals/MEDULLA-SECURITY-DEGATING-SLICE.md`. |
 | D-3 `txn.rs:683` compares a tenant against a graph name | Real pre-existing bug; fix needs the tenant threaded through `ReconcileTxnCandidate`. |
-| D-2 three `private_interfaces` warnings in `eg-mutation-store` | `StoreHandle` is more private than `initialize_in`/`bind_scope_in`/`validate_handle_write`. Pre-existing. |
+| D-2 three `private_interfaces` warnings in `medulla-mutation-store` | `StoreHandle` is more private than `initialize_in`/`bind_scope_in`/`validate_handle_write`. Pre-existing. |

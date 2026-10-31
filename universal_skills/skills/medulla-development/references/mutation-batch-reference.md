@@ -1,6 +1,6 @@
 # MutationBatch v1 contract reference
 
-Deep reference for `epistemic-graph-development`: the full MutationBatch v1
+Deep reference for `medulla-development`: the full MutationBatch v1
 contract — scope and domain as two independent axes, the three domain classes
 with the validator's exact accept/reject table, the three `const fn` predicates
 and the different question each one answers, the store-plus-identity consumer
@@ -14,11 +14,11 @@ before you compile, commit, or validate a batch, or before you give a store its
 
 ## The MutationBatch v1 contract
 
-**Authority:** `crates/eg-types/src/mutation_batch/` — `model/request.rs`
+**Authority:** `crates/medulla-types/src/mutation_batch/` — `model/request.rs`
 (`MutationDomain` + its three predicates), `model/identity.rs`
 (`MutationScope`, `MutationScopeIdentity`, `PRIVATE_PAYLOAD_EVENT_TYPES`,
 `COMPILED_BATCH_INCARNATION`), `validation.rs` (`validate_operations`).
-Ledger: `crates/eg-mutation-store/`.
+Ledger: `crates/medulla-mutation-store/`.
 
 ### Scope and domain are TWO INDEPENDENT AXES
 
@@ -58,7 +58,7 @@ graph OCC counter, while the RBAC `security-control` store is a `ControlPlane`
 ### Three predicates — each answers a DIFFERENT question
 
 All three are `const fn` on `MutationDomain` in
-`crates/eg-types/src/mutation_batch/model/request.rs`:
+`crates/medulla-types/src/mutation_batch/model/request.rs`:
 
 | Predicate | Line | Question | Consumer |
 |---|---|---|---|
@@ -67,7 +67,7 @@ All three are `const fn` on `MutationDomain` in
 | `requires_native_scope()` | 140 | "What scope should a compiled batch default to?" — the `forbidden_in_graph_scope` set **plus `SqlCatalog` and `Broker`** | the **producer** default in `src/server/mutation_batch.rs`: `graph_scope = !domain.requires_native_scope()` |
 
 `SqlCatalog` and `Broker` are exactly where the validator's and producer's answers
-diverge: both default to native (eg-query's `sql_scope_key`; the broker's own
+diverge: both default to native (medulla-query's `sql_scope_key`; the broker's own
 compile sites) yet both also travel legitimately through the graph kernel — a wire
 `INSERT INTO nodes` really is a graph-row mutation written in SQL, and `Broker`
 owns no mutation store at all.
@@ -99,7 +99,7 @@ pub struct RbacStore {
 }
 ```
 
-`MutationStore` (`crates/eg-mutation-store/src/store/identity.rs:127`) holds
+`MutationStore` (`crates/medulla-mutation-store/src/store/identity.rs:127`) holds
 `database`, `handle`, `physical_path`, `private_integrity` as private **fields**.
 `MutationStore::write() -> MutationWrite` (`:150`) is the **intended** mint path: it
 calls `validate_physical_root()`, sets `Durability::Immediate`, and then
@@ -110,10 +110,10 @@ calls `validate_physical_root()`, sets `Durability::Immediate`, and then
 > `identity.rs:142` hands out the raw redb handle, and **17 production sites call
 > `.database().begin_write()`**, skipping `validate_physical_root` and
 > `validate_handle_write` entirely: `src/server/kv.rs:193,218,328`;
-> `src/server/blob/store.rs:570,643,699,1315`; `crates/eg-jobs/src/store.rs:1241,1297,1362`;
-> `crates/eg-statechart/src/store.rs:267`; `crates/eg-tsdb/src/store.rs:562,582,774,812,934,977`
-> (plus `crates/eg-mutation-store/src/store/recovery.rs:131` inside the owning crate,
-> and test-only sites in `rbac_persist.rs`, `eg-tsdb`, `store/tests.rs`). 71
+> `src/server/blob/store.rs:570,643,699,1315`; `crates/medulla-jobs/src/store.rs:1241,1297,1362`;
+> `crates/medulla-statechart/src/store.rs:267`; `crates/medulla-tsdb/src/store.rs:562,582,774,812,934,977`
+> (plus `crates/medulla-mutation-store/src/store/recovery.rs:131` inside the owning crate,
+> and test-only sites in `rbac_persist.rs`, `medulla-tsdb`, `store/tests.rs`). 71
 > `.database()` call sites exist in total. This is the parent `SKILL.md` §6's *"enforce at the chokepoint,
 > not one entrypoint"* checklist item failing in this very repo: a control wired into
 > one constructor while a public accessor next to it lets every caller around it.
@@ -121,7 +121,7 @@ calls `validate_physical_root()`, sets `Durability::Immediate`, and then
 > the call site — and do not read the existence of `write()` as proof the invariant
 > holds.
 
-**Worked reference — `crates/eg-core/src/rbac_persist.rs`:**
+**Worked reference — `crates/medulla-core/src/rbac_persist.rs`:**
 
 ```rust
 const RBAC_SCOPE_TENANT: &str = "native";
@@ -173,8 +173,8 @@ without committing** (redb's `Drop for WriteTransaction` aborts) → on
 
 > **Common miswrite:** `identity.graph_name()`. `MutationScopeIdentity` has **no**
 > `graph_name()` — it is on `MutationScope`
-> (`crates/eg-types/src/mutation_batch/model/identity.rs:105`, returning
+> (`crates/medulla-types/src/mutation_batch/model/identity.rs:105`, returning
 > `Option<&LogicalName>`: `Some` for `Graph`, `None` for `Native`). The correct chain is
 > `identity.scope().graph_name()`. Related: `MutationVersionScope` and
 > `NON_GRAPH_SOURCE_VERSION` are genuinely gone from the tree — the only remaining
-> mention is an explanatory comment at `crates/eg-types/src/lib.rs:146`.
+> mention is an explanatory comment at `crates/medulla-types/src/lib.rs:146`.
