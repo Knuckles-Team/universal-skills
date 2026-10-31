@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FR-014: SDD handoff generator for code-enhancer skill.
 
-Produces structured TODO items compatible with spec-generator -> task-planner
+Produces structured TODO items compatible with speckit-specify -> speckit-tasks
 -> sdd-implementer pipeline. Outputs both JSON and Markdown to .specify/specs/.
 
 CONCEPT:CE-014 — SDD Handoff

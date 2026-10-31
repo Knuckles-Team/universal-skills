@@ -217,7 +217,7 @@ def generate_report(
             "## 🔄 SDD Handoff",
             "",
             "Run `generate_sdd_handoff.py` with this report's JSON data to produce",
-            "structured TODO items compatible with the `spec-generator` → `task-planner` →",
+            "structured TODO items compatible with the `speckit-specify` → `speckit-tasks` →",
             "`sdd-implementer` pipeline. Output will be saved to `.specify/specs/`.",
             "",
         ]

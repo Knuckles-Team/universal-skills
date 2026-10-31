@@ -145,7 +145,7 @@ its design appears here.
 |---|---|---|
 | Sourced blog post | Existing, rebuilt example | `web-search` **E** → `content-outline-builder` **E** → `content-draft-writer` **E** → `citation-auditor` **E** → `copy-editor` **E** → `publication-preflight` **E** |
 | Academic alpha scanner | Existing, rebuilt example | `scholarx-operations` **X** → `citation-auditor` **E** → `factor-hypothesis-extractor` **E** → `quant-data-ingest` **E** → `qlib-backtester` **E** |
-| SDD full lifecycle | Existing, rebuilt example | `spec-intake-wizard` **E** → `spec-generator` **E** → `spec-verifier` **E** → `task-planner` **E** → `sdd-implementer` **E** → `automated-test-runner` **E** |
+| SDD full lifecycle | Existing, rebuilt example | `speckit-specify` **E** → `speckit-plan` **E** → `speckit-tasks` **E** → `speckit-analyze` **E** → `sdd-implementer` **E** → `automated-test-runner` **E** |
 | Dataset readiness assessment | Existing, added example | `dataset-profiler` **E** → (`data-quality-auditor` **E** ∥ `data-dictionary-builder` **E**) |
 | Evidence-backed research brief | Proposed | `web-search` **E** → `web-fetch` **E** → `citation-auditor` **E** → `content-outline-builder` **E** → `content-draft-writer` **E** → `copy-editor` **E** → `publication-preflight` **E** |
 | Safe service remediation | Proposed | `telemetry-snapshot` **P** → `incident-classifier` **P** → `remediation-plan-validator` **P** → `change-approval-gate` **P** → `package-service-operations` **X** → `remediation-verifier` **P** |
