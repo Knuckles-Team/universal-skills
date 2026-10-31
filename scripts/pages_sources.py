@@ -129,14 +129,21 @@ def on_files(files, config):
         )
     )
     package = root / "specs" / "US-PAGES-001"
-    status = json.loads((package / "status.json").read_text(encoding="utf-8"))
-    rendered_status = status_markdown(status)
+    # Delivery status is computed at read time and never committed, so a build
+    # from a clean checkout has none; a locally generated file adds the section.
+    status_file = package / "status.json"
+    status = (
+        json.loads(status_file.read_text(encoding="utf-8"))
+        if status_file.is_file()
+        else None
+    )
+    rendered_status = status_markdown(status) if status is not None else ""
     for name in ("spec.md", "requirements.md", "plan.md", "test-spec.md", "tasks.md"):
         source = package / name
         markdown = public_links(
             source.read_text(encoding="utf-8"), source, root, repo_url
         )
-        if name == "spec.md":
+        if name == "spec.md" and status is not None:
             for field, key in (
                 ("Delivery", "delivery_state"),
                 ("Acceptance", "acceptance_state"),
