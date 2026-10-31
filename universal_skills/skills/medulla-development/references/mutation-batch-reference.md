@@ -1,6 +1,6 @@
 # MutationBatch v1 contract reference
 
-Deep reference for `epistemic-graph-development`: the full MutationBatch v1
+Deep reference for `medulla-development`: the full MutationBatch v1
 contract — scope and domain as two independent axes, the three domain classes
 with the validator's exact accept/reject table, the three `const fn` predicates
 and the different question each one answers, the store-plus-identity consumer

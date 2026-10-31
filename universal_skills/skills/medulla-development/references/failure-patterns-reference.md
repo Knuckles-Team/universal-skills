@@ -1,6 +1,6 @@
 # Epistemic-graph failure-pattern reference
 
-Deep reference for `epistemic-graph-development`: the seven documented EG
+Deep reference for `medulla-development`: the seven documented EG
 failure patterns in full — each with the source-tree `file:line` evidence
 re-verified against the current tree, and the rule it was promoted into. The
 parent [`SKILL.md`](../SKILL.md) carries the rule statements and the index of

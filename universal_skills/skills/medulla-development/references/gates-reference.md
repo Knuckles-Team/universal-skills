@@ -1,6 +1,6 @@
 # Epistemic-graph gate reference
 
-Deep reference for `epistemic-graph-development`: every architecture-,
+Deep reference for `medulla-development`: every architecture-,
 contract- and hygiene-enforcing hook `.pre-commit-config.yaml` declares, the
 script behind it and exactly what it refuses; which non-Rust hooks have a
 scope that is routinely misread; the per-hook measured PASS/FAIL state on the

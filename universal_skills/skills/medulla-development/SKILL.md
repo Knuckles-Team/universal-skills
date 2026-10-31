@@ -1,11 +1,11 @@
 ---
-name: epistemic-graph-development
+name: medulla-development
 domain: development
 skill_type: skill
 description: >-
-  Develop inside the epistemic-graph (EG) Rust engine without creating sprawl.
+  Develop inside the medulla Rust engine without creating sprawl.
   Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or
-  second route to an existing capability in agent-packages/epistemic-graph.
+  second route to an existing capability in the medulla repository.
   Supplies twelve guardrails with what enforces each; the authorization model
   end to end (claims to VerifiedRequestContext to allows_method to the dispatch
   chokepoint, the RBAC/RLS axis, and the measured kg:read
@@ -18,14 +18,14 @@ description: >-
   when the agent must write, refactor, review, or plan work in the EG Rust
   workspace. Not for the Python agent-utilities side or deploying the engine.
 license: MIT
-tags: [epistemic-graph, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
+tags: [medulla, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
   version: '1.5.2'
   author: Genius
 ---
-# Epistemic Graph (EG) Development
+# Medulla Development
 
-`agent-packages/epistemic-graph` is a Cargo workspace: **48 member crates under
+The medulla repository is a Cargo workspace: **48 member crates under
 `crates/` plus the root facade package `epistemic-graph` (`src/`)**, root version
 `2.27.0`. Its failure mode is not bugs — it is **sprawl**: a second predicate that
 answers a question already answered, a hand-copied list of another crate's tables,
@@ -35,6 +35,20 @@ a shared helper extracted across a boundary it should not cross.
 the tree; anything unverified is marked. Verify again — the tree moves.
 
 ---
+
+## Spec-driven flow
+
+Run this before any code. Full table and gates: the Spec-driven development section of `AGENTS.md` and the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md).
+
+1. Read `.specify/memory/constitution.md`; create it from pipelines `specs/_template/constitution.md` if absent (`spec-generator`).
+2. Specify the feature: `spec-intake-wizard` gathers the inputs, `spec-generator` writes `specs/<stable-id>/spec.md` and `requirements.md`.
+3. Clarify: resolve every `[NEEDS CLARIFICATION: ...]` marker (`spec-generator`).
+4. Plan: `plan.md` from pipelines `specs/_template/plan.md`, including Build contract, Production caller chain and Cross-repo seams (`spec-generator`).
+5. Tasks: `tasks.md` lines `- [ ] T001 [P] [US1] <ROW-ID> ...` (`task-planner`).
+6. Analyze: fix the gaps and fill `checklists/requirements.md` (`spec-verifier`).
+7. Implement and land with the delivery contract in this skill (`feature-development-pipeline`); release through pipelines `releases/*.yml` bundles.
+
+Never write code for a row that is not SPECIFIED. Feature directories use the stable spec ID, never a numbered prefix. The state is computed from rows, `Spec:` trailers and test bindings; never write `status.json` or a `Status:` line.
 
 ## Rapid delivery: the 5-minute contract
 
@@ -61,7 +75,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 - Run the targeted tests only, never a full suite.
 
 **Landing**
-- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown, `status.json`) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
+- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
 - Many open PRs land together as a merge train (one integration branch, one CI run), built with the orchestrator's merge-train tool.
 - Full CI on main catches what the fast subset missed; regressions are fixed forward immediately.
 - Landing in this repo: delivery agents open the PR and do not run per-PR build-host builds or merge. The orchestrator lands EG in batches about every 20 minutes, validated by one warm integration build (`cargo check --workspace --all-features` plus contract regeneration) on the least-loaded build host.

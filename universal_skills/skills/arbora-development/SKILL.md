@@ -40,6 +40,20 @@ Use only the repository-owned `specs/<id>/` and public code/contracts as the
 implementation authority. The spec must be self-contained for contributors
 without private drafts, inventory, credentials, or a live deployment.
 
+## Spec-driven flow
+
+Run this before any code. Full table and gates: the Spec-driven development section of `AGENTS.md` and the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md).
+
+1. Read `.specify/memory/constitution.md`; create it from pipelines `specs/_template/constitution.md` if absent (`spec-generator`).
+2. Specify the feature: `spec-intake-wizard` gathers the inputs, `spec-generator` writes `specs/<stable-id>/spec.md` and `requirements.md`.
+3. Clarify: resolve every `[NEEDS CLARIFICATION: ...]` marker (`spec-generator`).
+4. Plan: `plan.md` from pipelines `specs/_template/plan.md`, including Build contract, Production caller chain and Cross-repo seams (`spec-generator`).
+5. Tasks: `tasks.md` lines `- [ ] T001 [P] [US1] <ROW-ID> ...` (`task-planner`).
+6. Analyze: fix the gaps and fill `checklists/requirements.md` (`spec-verifier`).
+7. Implement and land with the delivery contract in this skill (`feature-development-pipeline`); release through pipelines `releases/*.yml` bundles.
+
+Never write code for a row that is not SPECIFIED. Feature directories use the stable spec ID, never a numbered prefix. The state is computed from rows, `Spec:` trailers and test bindings; never write `status.json` or a `Status:` line.
+
 ---
 
 ## Rapid delivery: the 5-minute contract
@@ -67,7 +81,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 - Run the targeted tests only, never a full suite.
 
 **Landing**
-- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown, `status.json`) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
+- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
 - Many open PRs land together as a merge train (one integration branch, one CI run), built with the orchestrator's merge-train tool.
 - Full CI on main catches what the fast subset missed; regressions are fixed forward immediately.
 - Landing in this repo: `gh pr merge --auto --merge` when the PR opens. The required checks are the fast PR subset. If the PR goes DIRTY, merge `origin/main` into it and push.

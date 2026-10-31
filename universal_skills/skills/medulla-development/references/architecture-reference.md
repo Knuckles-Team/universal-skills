@@ -1,6 +1,6 @@
 # Epistemic-graph architecture reference
 
-Deep reference for `epistemic-graph-development`: the 48-crate component
+Deep reference for `medulla-development`: the 48-crate component
 inventory grouped by layer with what each crate OWNS, the specialty sub-DAGs,
 the three crates that already violate the layer numbering, how the
 dependency-direction rule is actually enforced (Cargo, not a lint) and where

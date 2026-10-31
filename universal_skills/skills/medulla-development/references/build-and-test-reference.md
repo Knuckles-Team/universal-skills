@@ -1,6 +1,6 @@
 # Epistemic-graph build and test reference
 
-Deep reference for `epistemic-graph-development`: the disk budget a build in
+Deep reference for `medulla-development`: the disk budget a build in
 this workspace actually needs and why worktree *placement* is the lever, the
 Rust idioms this workspace has already paid for once, and the reporting rules
 that govern how a number leaves your hands. The parent

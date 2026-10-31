@@ -69,7 +69,7 @@ This deterministic structural report excludes bundled `assets/` templates and ge
 | development | `constitution-generator` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | development | `dependency-modernizer` | skill | clean | No structural or advisory findings |
 | development | `diagnose` | skill | clean | No structural or advisory findings |
-| development | `epistemic-graph-development` | skill | warning | warning: `body-too-long` — SKILL.md body is 737 lines; use progressive disclosure |
+| development | `medulla-development` | skill | warning | warning: `body-too-long` — SKILL.md body is 737 lines; use progressive disclosure |
 | development | `gates-and-code-placement` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | development | `git-in-shared-repos` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase |
 | development | `arbora-development` | skill | warning | warning: `description-no-trigger` — description lacks an explicit trigger phrase; warning: `atomic-cross-skill-orchestration` — references multiple atomic skills; verify this is not a workflow: sdd-implementer, spec-generator, spec-verifier, task-planner |
