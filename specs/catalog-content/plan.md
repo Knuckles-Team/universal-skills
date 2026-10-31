@@ -14,6 +14,10 @@ The SDK finds content by convention under the package named by its `agent_connec
 
 The only interface is the entry point `universal-skills = "universal_skills"`. Layout follows fastmcp's `SkillsDirectoryProvider`, which wins over the raw MCP spec.
 
+## Upstream skill sources
+
+`upstream-sources.toml` pins each source at a full commit SHA. `scripts/sync_upstream_skills.py` fetches the pin into a throwaway git repository, reads blobs with `cat-file` and never runs them. It stores a pristine snapshot in `universal_skills/upstream/<source>/`, renders each skill into `universal_skills/skills/<name>/` and merges `universal_skills/overlays/<name>/*.md` after the render. The pre-commit hook runs `--check` offline against the snapshot, so a hand edit to a vendored file fails the commit. `--update` moves the pin; the `universal-installer` skill carries the procedure.
+
 ## Live integration path
 
 arbora resolves the installed distribution through the entry point and serves its skills.
