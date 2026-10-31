@@ -28,7 +28,13 @@ Branch from `main`, keep each commit to one logical change, push with
 
 ## Contribute a feature
 
-Use the installed Spec Kit agent commands in order: `constitution` only when governance needs amendment, then `specify`, `clarify` where needed, `plan`, `tasks`, `analyze`, and `implement`. The spelling varies by integration: `/speckit.specify` in command mode, `/speckit-specify` in skills mode, and `$speckit-specify` in Codex skills mode. These are agent invocations, not terminal `specify` subcommands. The universal skills can create or review the same artifacts; do not run both generators over the same file without reviewing the diff. Keep the Spec Kit template structure and put project-specific detail into the matching sections and design artifacts.
+Every feature follows one process: constitution, route, specify, clarify, plan, tasks, analyze, implement, land, release.
+Each step names its skill and the files it writes, in the
+[organization contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md).
+Read the [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md),
+the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md) and the
+[spec templates](https://github.com/Knuckles-Team/pipelines/tree/main/specs/_template), and pick an open row in
+[Canopy](https://knuckles-team.github.io/.github/architecture/). Commit with a `Spec: <ROW-ID>` trailer and a bound test.
 
 A reviewable feature has `spec.md`, `plan.md`, `test-spec.md`, and `tasks.md`; add `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, and `checklists/` when applicable. The design names architecture, interfaces, existing components to reuse, runtime wiring, cross-repository contracts, migration and failure behavior, and test scenarios. Link related public repository specs by stable ID and include the complete cross-repository contract locally. Tasks trace requirements to tests and include the repository's configured CCCC, `jscpd`, Dupehound, and KISS checks. If a gate is not configured, document the gap instead of claiming it passed.
 
