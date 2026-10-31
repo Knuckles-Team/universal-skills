@@ -45,6 +45,7 @@ EXPECTED = {
     ".gitignore",
     "pages/index.md",
     "pyproject.toml",
+    ".specify/memory/constitution.md",
     "specs/README.md",
     "specs/demo-mcp/plan.md",
     "specs/demo-mcp/requirements.md",
@@ -442,3 +443,12 @@ def test_agents_md_documents_bump_first_release(connector):
     assert "## Release" in text
     assert f"https://pypi.org/pypi/{FLEET}/X.Y.Z/json" in text
     assert "{fleet}" not in text
+
+
+# spec: US-MCP-BUILDER-R011.14
+def test_connector_inherits_the_organization_constitution(connector):
+    text = (connector / ".specify" / "memory" / "constitution.md").read_text(encoding="utf-8")
+    assert "inherits the [organization constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) version 1.0.0" in text
+    assert "**Inherits**: organization constitution v1.0.0" in text
+    assert "### R-II. One tool per API operation" in text
+    assert "{" not in text

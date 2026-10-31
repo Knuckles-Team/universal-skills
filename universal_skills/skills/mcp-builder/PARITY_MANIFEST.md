@@ -10,6 +10,7 @@ connector-specific files. Project-owned files stay unchanged on rerun.
 | `<pkg>/api_client.py`, `auth.py` | Connector. One method per operation; one `client_factory` declaration. |
 | `<pkg>/connector_sources.py` | Connector. Declared data sources as data. |
 | `<pkg>/prompts/`, `skills/`, `ontology/` | Connector content, served by convention over MCP. |
+| `.specify/memory/constitution.md` | Connector. Inherits the pipelines organization constitution and adds the connector articles. |
 | `specs/`, `README.md`, `AGENTS.md`, `tests/` | Connector. Specs follow the pipelines spec standard. |
 | `.pre-commit-config.yaml` | Pipelines hook reference, including the aggregate connector gate, copied from the shared connector template. Hook implementations and policy remain in pipelines. |
 | `.github/spec-dashboard.json`, `.github/workflows/pages.yml`, `pages/index.md` | Connector-owned dashboard source, Pages caller and minimal source page. The reusable Pages workflow and dashboard renderer remain in pipelines; `workflow_dispatch` is retained for an explicit source-bound publish. The caller leaves `shared_theme_enabled` off until the canonical pipelines theme generator has produced and reviewed the required content-tree assets. |
