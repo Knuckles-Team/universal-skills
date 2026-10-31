@@ -79,8 +79,8 @@ fix it, and re-run targeting just that host with the same `--password`.
 ## OpenBao agent-apps-rw token rotation (6-month runbook)
 
 A separate credential from the OS passwords above, but the **same rotation discipline**:
-a single secret that, if it expires, takes the whole MCP fleet down. The homelab OpenBao
-(`http://openbao.arpa`, KV v2) stores per-service secrets at `apps/<service>`; every
+a single secret that, if it expires, takes the whole MCP fleet down. The fleet OpenBao
+(`$BAO_ADDR`, KV v2) stores per-service secrets at `apps/<service>`; every
 `*-mcp` service is injected with a shared **`agent-apps-rw`** token (policy `agent-apps-rw`:
 `crud apps/data/*`, `list apps/metadata/*`) so connectors can read/write their secrets.
 Rotate this token on a fixed 6-month cadence.
@@ -97,13 +97,13 @@ heartbeat renewal inside the period (see cadence below), and you re-mint cleanly
 
 ### Mint a fresh periodic token (break-glass)
 Use the **root token** as break-glass only — `BAO_ROOT_TOKEN` lives in
-`services/openbao/.env`. Mint a renewable periodic token scoped to the `agent-apps-rw`
+the OpenBao service env file. Mint a renewable periodic token scoped to the `agent-apps-rw`
 policy:
 
 ```bash
 # Break-glass: read the root token from the openbao service env (do NOT echo/commit it)
-export BAO_ADDR=http://openbao.arpa
-export BAO_ROOT_TOKEN="$(grep -E '^BAO_ROOT_TOKEN=' services/openbao/.env | cut -d= -f2-)"
+export BAO_ADDR=https://openbao.example.com
+export BAO_ROOT_TOKEN="$(grep -E '^BAO_ROOT_TOKEN=' "$OPENBAO_ENV_FILE" | cut -d= -f2-)"
 
 # Mint a periodic, renewable token bound to the agent-apps-rw policy
 NEW_TOKEN="$(curl -sf -X POST \
@@ -186,7 +186,7 @@ curl -sf -X POST -H "X-Vault-Token: ${BAO_ROOT_TOKEN}" \
 ```
 
 ### Operator checklist
-- [ ] Read `BAO_ROOT_TOKEN` from `services/openbao/.env` (break-glass; never echo/commit).
+- [ ] Read `BAO_ROOT_TOKEN` from the OpenBao service env file (`$OPENBAO_ENV_FILE`) (break-glass; never echo/commit).
 - [ ] Mint periodic token: `POST /v1/auth/token/create` `policies=[agent-apps-rw] period=768h renewable=true`.
 - [ ] Stash new token at `apps/_meta-agent-apps-rw` (KV v2).
 - [ ] Replace the injected token in **every `*-mcp` service env**.

@@ -35,8 +35,8 @@ rotate-credentials.sh --generate --inventory <file> --dry-run
   and BMCs (iDRAC IPMI user passwords cap at 16 bytes — the script's `user test 2 16`
   verifies the first 16; for full-length BMC support use 16-char passwords).
 
-## Known host quirks (homelab)
-- A host whose `chpasswd`/`passwd` **SIGILLs / core-dumps** (seen on GR1080 — corrupt
+## Known host quirks
+- A host whose `chpasswd`/`passwd` **SIGILLs / core-dumps** (for example a host with corrupt
   libcrypt/PAM) will report FAILED. Fix the host's libc/PAM, then re-run for just that host.
 - `--idrac` only rotates the BMC **user table** (works even if BMC LAN is down). It does
   NOT enable IPMI-over-LAN; do that separately if remote ipmitool/SoL is needed.
