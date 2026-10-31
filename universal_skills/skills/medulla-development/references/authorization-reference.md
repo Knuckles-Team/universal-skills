@@ -58,7 +58,7 @@ Six of the 221 carry a `#[cfg(feature = ...)]` on their ledger row:
 | `PolicyExport` | `policy:export` | `policy_export` | no |
 
 `RunUdf` carries **no `cfg` on its ledger row**; its `Method` variant is gated
-(`crates/eg-types/src/protocol.rs:2866`, `#[cfg(feature = "wasm-udf")]`) but
+(`crates/medulla-types/src/protocol.rs:2866`, `#[cfg(feature = "wasm-udf")]`) but
 `wasm-udf` **is** in the default closure — see §1's finding 2.
 
 ## Two definitions of "admin", and the 50 methods between them
@@ -96,7 +96,7 @@ the repository root and it needs no build:
 python3 - <<'PY'
 import re, glob, collections
 rows = []
-for f in sorted(glob.glob('crates/eg-capabilities/src/domains/*.rs')):
+for f in sorted(glob.glob('crates/medulla-capabilities/src/domains/*.rs')):
     if f.endswith('mod.rs'):
         continue
     cfg = None

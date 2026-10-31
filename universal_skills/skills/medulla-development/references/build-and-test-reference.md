@@ -26,11 +26,11 @@ consumes memory. Prefer a disk-backed `TMPDIR`.
 
 ### Rust idioms this workspace has already paid for
 
-- **Bind before yielding.** In `eg-mutation-store`, a block's or function's tail
+- **Bind before yielding.** In `medulla-mutation-store`, a block's or function's tail
   expression outlives the local it borrows, so returning a redb `AccessGuard` or a
   `list_tables` iterator directly fails borrowck with **E0597**. Bind to a local,
   then return it. The comment appears **twice**, both in
-  `crates/eg-mutation-store/src/store/identity.rs` (`:314` and `:573`) — none in
+  `crates/medulla-mutation-store/src/store/identity.rs` (`:314` and `:573`) — none in
   `store/ledger.rs`. (`src/raft/tests.rs:2081`/`:2132` cite E0597 for an unrelated
   shape in a different crate.)
 - **crates.io only.** No `git = ` source; no `path = ` outside the workspace.

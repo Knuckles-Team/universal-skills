@@ -59,7 +59,7 @@ contract-enforcing ones. Every script path below was verified to exist.
 
 | Hook id | Scope | Enforces |
 |---|---|---|
-| `import-linter-architecture` | Python client `epistemic_graph/`, config `.importlinter` | `epistemic_graph.quant` and `epistemic_graph.embedded` must not import `.client`, `.pool`, or `.parser` — transitively. |
+| `import-linter-architecture` | Python client `medulla/`, config `.importlinter` | `medulla.quant` and `medulla.embedded` must not import `.client`, `.pool`, or `.parser` — transitively. |
 | `dependency-cruiser-architecture` | **`clients/js/` ONLY** — `depcruise --config clients/js/.dependency-cruiser.cjs clients/js/index.mjs` | JS client module rules. It is NOT the Rust crate-graph gate. |
 
 ### Hygiene / anti-sprawl
@@ -76,7 +76,7 @@ contract-enforcing ones. Every script path below was verified to exist.
 | `scale-documentation` | `scripts/check_scale_documentation.py` | Unanchored scaling claims. |
 | `constrained-parallelism` | `scripts/constrained_parallelism_gate.sh` | Tests that only pass on a many-core host. Runs `--lib` plus concurrency-sensitive integration binaries under `taskset -c 0,1`. |
 
-**Gate-suite state.** An older `EG-HOOK-FAILURE-CENSUS` aggregate ("40 passed / 6
+**Gate-suite state.** An older `MEDULLA-HOOK-FAILURE-CENSUS` aggregate ("40 passed / 6
 failed", base `f90753d4`) is **stale** — it does not hold on the current tree, and an
 aggregate count never tells you *what* broke. Re-measure per hook. The read-only
 Python gates below were re-run by this skill on `1d83cf4b`:
@@ -137,7 +137,7 @@ evidence each one rests on, so a rule can be checked rather than believed.
 ### §4.1 — the empty-universe survey
 
 ```bash
-cd agent-packages/epistemic-graph
+cd agent-packages/medulla-engine
 for f in scripts/check_*.py; do
   echo "$(grep -cE 'found ZERO|if not (sites|matches|files|hits|found|candidates|rows)\b|len\(.*\) == 0' "$f") $f"
 done | sort -n
@@ -212,10 +212,10 @@ gate reads:
 
 | The gate reads | The gate demands | Where it actually lives |
 |---|---|---|
-| `crates/eg-types/src/mutation_batch.rs` | `pub enum MutationCommitPhase`, `BeforeRows`, `AfterRowsBeforeMetadata`, `BeforeCommit`, `AfterCommitBeforeAck` | `crates/eg-types/src/mutation_batch/model/request.rs:185` |
-| same | `struct CertificationFaultSpec`, `const ENV: &str = "EPISTEMIC_GRAPH_CERTIFICATION_FAULT"`, `std::process::abort()`, `spec.request_id != batch.context.request_id`, `operation.domain == spec.domain`, `std::env::var_os(ENV)`, `#[serde(deny_unknown_fields)]` | `crates/eg-types/src/mutation_batch/fault.rs:7`, `:22`, `:57`, … |
-| `crates/eg-mutation-store/src/lib.rs` | the four `MutationCommitPhase::*` arms | `crates/eg-mutation-store/src/store/apply.rs:39,103,203,207` |
-| same | `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)` | `crates/eg-mutation-store/src/store/apply.rs:201`, as **`pub fn commit(write: MutationWrite, batch: &MutationBatch)`** |
+| `crates/medulla-types/src/mutation_batch.rs` | `pub enum MutationCommitPhase`, `BeforeRows`, `AfterRowsBeforeMetadata`, `BeforeCommit`, `AfterCommitBeforeAck` | `crates/medulla-types/src/mutation_batch/model/request.rs:185` |
+| same | `struct CertificationFaultSpec`, `const ENV: &str = "EPISTEMIC_GRAPH_CERTIFICATION_FAULT"`, `std::process::abort()`, `spec.request_id != batch.context.request_id`, `operation.domain == spec.domain`, `std::env::var_os(ENV)`, `#[serde(deny_unknown_fields)]` | `crates/medulla-types/src/mutation_batch/fault.rs:7`, `:22`, `:57`, … |
+| `crates/medulla-mutation-store/src/lib.rs` | the four `MutationCommitPhase::*` arms | `crates/medulla-mutation-store/src/store/apply.rs:39,103,203,207` |
+| same | `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)` | `crates/medulla-mutation-store/src/store/apply.rs:201`, as **`pub fn commit(write: MutationWrite, batch: &MutationBatch)`** |
 
 A file became a module directory; a function moved into a submodule; a parameter
 was renamed and its type **tightened** from a raw `WriteTransaction` to the
