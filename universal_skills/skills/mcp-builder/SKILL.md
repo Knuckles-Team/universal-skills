@@ -52,6 +52,7 @@ only generator.
       example_mcp/skills/<name>/SKILL.md       one connector operation skill
       example_mcp/skills/<fleet>-development/SKILL.md  repository development contract
       example_mcp/ontology/<domain>.ttl    classes extend an EG core class
+      .specify/memory/constitution.md  inherits the organization constitution; connector articles
       specs/README.md  specs/<CONN-ID>/{spec,plan,requirements,tasks,test-spec}.md (status computed, never committed)
       tests/test_api_client.py       tests of the connector's own client logic only
 

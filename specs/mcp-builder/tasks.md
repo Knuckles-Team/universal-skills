@@ -16,3 +16,4 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] **US-MCP-BUILDER-R011.11:** SDK conformance plugin passes.
 - [ ] **US-MCP-BUILDER-R011.12:** Client from one SDK auth declaration.
 - [ ] **US-MCP-BUILDER-R011.13:** Dependencies through SDK extras.
+- [ ] **US-MCP-BUILDER-R011.14:** The connector inherits the organization constitution.
