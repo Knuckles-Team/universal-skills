@@ -16,6 +16,20 @@ metadata:
 
 Produce the **intent specification** for one stable feature ID. Use GitHub Spec Kit's resolved `spec-template` and `specs/<stable-id>/spec.md` convention. The repository root is the path base. Keep `.specify/` for Spec Kit project configuration, templates, and `.specify/memory/constitution.md`; do not place feature artifacts beneath `.specify/` or `agent_data/`.
 
+## Planning flow
+
+Run the steps in order. Each step names the files it writes and the gate that checks them (`pipelines-hook spec-standard` unless stated). Keep row IDs, `Spec:` trailers and test bindings throughout; the state is computed, never written.
+
+| Step | Writes | Gate |
+|---|---|---|
+| 1. Constitution | `.specify/memory/constitution.md` from the pipelines `specs/_template/constitution.md` | Constitution check (advisory until present) |
+| 2. Specify | `spec.md` (stories, `FR-`/`SC-` labels, Edge Cases, Assumptions) and the `requirements.md` rows | Narrative, title, ID and file-set checks |
+| 3. Clarify | Resolves each `[NEEDS CLARIFICATION: ...]` marker in `spec.md` and `requirements.md` | Clarification check fails while one remains |
+| 4. Plan | `plan.md` from `specs/_template/plan.md`: Summary, Technical Context, Constitution Check, Project Structure, Phase 0 to 2, Complexity Tracking, Build contract, Production caller chain, Cross-repo seams. Also `research.md`, `data-model.md`, `contracts/` and `quickstart.md` where the plan calls for them | Plan check (sections and Technical Context fields) |
+| 5. Tasks | `tasks.md`, one `- [ ] T001 [P] [US1] <ID>-R012.4 description` line per row (use the task-planner skill) | Task-line check |
+| 6. Analyze | Fixes the gaps the analysis reports: a row with no task or no test, a task naming no row, an orphan `FR-`/`SC-` label, an open marker in any design file; fills `checklists/requirements.md` from `specs/_template/checklists/requirements.md` (use the spec-verifier skill) | Consistency analysis and checklist check (fail for a touched spec) |
+| 7. Implement | Code and bound tests (`# spec: <ID>`), commits with a `Spec:` trailer | `pipelines-hook spec-status` computes `LANDED` and `VERIFIED` |
+
 ## Inputs and authority
 
 Read the feature request, existing repository code and docs, relevant `specs/`, the repository constitution, and any source ledger or draft plan entry. Treat drafts as private input to distill, never as a dependency of the published spec. Query arbora code context, search, and concept tools when available to find existing components and concept IDs. Files in the owning public repository are the reviewable source of truth; KG records are a derived index. If arbora is unavailable, continue from repository evidence and record the missing lookup as an open question. Do not invent ledger completion or claim a component exists without evidence.
