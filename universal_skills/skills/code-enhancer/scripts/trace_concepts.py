@@ -41,7 +41,7 @@ _DECORATOR_CONCEPT_RE = re.compile(
 
 def _decorator_concept_ids(decorators: str) -> list[str]:
     """Extract concept IDs from a symbol's decorator source (e.g.
-    ``@pytest.mark.concept("AU-001")``) — replaces the old ast.Call/ast.Attribute
+    ``@pytest.mark.concept("MERISTEM-001")``) — replaces the old ast.Call/ast.Attribute
     walk in ``_extract_concept_from_decorator`` with a regex over the engine/local
     tier's already-extracted decorator text."""
     if not decorators:

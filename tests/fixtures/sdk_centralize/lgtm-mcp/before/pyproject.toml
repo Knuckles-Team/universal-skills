@@ -31,7 +31,7 @@ lgtm-mcp = "lgtm_mcp.skills"
 [project.entry-points."agent_connector_sdk.prompt_providers"]
 lgtm-mcp = "lgtm_mcp.prompts"
 
-# CONCEPT:AU-KG.ontology.package-federation-migration — federate this package's OWL/RDF ontology modules into the
+# CONCEPT:MERISTEM-KG.ontology.package-federation-migration — federate this package's OWL/RDF ontology modules into the
 # agent-connector-sdk hub (http://knuckles.team/kg/grafana and
 # http://knuckles.team/kg/observability). The loader globs every *.ttl in the
 # module's ontology/ dir, so one entry-point covers both. Resolved via

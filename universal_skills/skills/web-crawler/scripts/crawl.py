@@ -1237,7 +1237,7 @@ async def main():
             logger.error("Browser transport configuration is unsupported")
             return
 
-    # Native Knowledge Graph ingestion (CONCEPT:AU-KG.ingest.chunk-overlap-stage) — default ON. Every
+    # Native Knowledge Graph ingestion (CONCEPT:MERISTEM-KG.ingest.chunk-overlap-stage) — default ON. Every
     # crawled, cleaned, deduped page is ingested into arbora / epistemic-graph
     # as it's found (privacy-sanitized content via document_process). Disabled with
     # --no-kg-ingest, and this internal crawl subprocess (invoked by

@@ -45,18 +45,18 @@ agent_utilities.create_agent_parser	REMOVE agent mode: delete agent_server.py / 
 agent_utilities.create_agent_server	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.create_embedding_model	agent_connector_sdk.embeddings.create_embedding_model (R014.17; external store only; EG-ingested content embedded by EG)	EXISTS
 agent_utilities.create_model	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.domains.finance.cross_market_arb.CostAwareThresholdFilter	refused (MethodNotServedError) until EG serves it; handoff EG-FINANCE	EG-HANDOFF
+agent_utilities.domains.finance.cross_market_arb.CostAwareThresholdFilter	refused (MethodNotServedError) until EG serves it; handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
 agent_utilities.domains.finance.insider_equilibrium	EG finance.signal_models op=insider_equilibrium via agent_connector_sdk.compute	EG
 agent_utilities.domains.finance.insider_equilibrium.InsiderEquilibriumInputs	EG InsiderInputs request dict via agent_connector_sdk.compute	EG
 agent_utilities.domains.finance.insider_equilibrium.intensity_schedule	EG finance.signal_models op=insider_equilibrium (schedule) via agent_connector_sdk.compute	EG
 agent_utilities.domains.finance.insider_equilibrium.penalty_policy_analysis	EG finance.signal_models op=insider_equilibrium (policy) via agent_connector_sdk.compute	EG
 agent_utilities.domains.finance.insider_equilibrium.solve_equilibrium	EG finance.signal_models op=insider_equilibrium via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.regime_detector.RegimeDetector	EG finance.detect_regimes via agent_connector_sdk.compute; heuristic label handoff EG-FINANCE	EG
+agent_utilities.domains.finance.regime_detector.RegimeDetector	EG finance.detect_regimes via agent_connector_sdk.compute; heuristic label handoff MEDULLA-FINANCE	EG
 agent_utilities.domains.finance.signal_fusion.BayesianSignalFusion	EG finance.signal_models op=bayes_fuse via agent_connector_sdk.compute (ontology-selected)	EG
-agent_utilities.domains.finance.signal_fusion.LaplaceEnsembleFusion	refused (MethodNotServedError) until EG serves it; handoff EG-FINANCE	EG-HANDOFF
+agent_utilities.domains.finance.signal_fusion.LaplaceEnsembleFusion	refused (MethodNotServedError) until EG serves it; handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
 agent_utilities.governance	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.governance.concept_hierarchy.OKF_MARKER_RE	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.governance.concept_reservation	EG handoff EG-WORK-COORDINATION	HANDOFF
+agent_utilities.governance.concept_reservation	EG handoff MEDULLA-WORK-COORDINATION	HANDOFF
 agent_utilities.governance.lanes	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.governance.queue	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.graph.builder	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
@@ -88,7 +88,7 @@ agent_utilities.knowledge_graph.core.file_lock.lock_exclusive	agent_connector_sd
 agent_utilities.knowledge_graph.core.file_lock.lock_exclusive_nb	agent_connector_sdk.file_lock.lock_exclusive_nb	ADD
 agent_utilities.knowledge_graph.core.file_lock.unlock	agent_connector_sdk.file_lock.unlock	ADD
 agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.core.owl_bridge.register_promotable_node_types	EG handoff EG-ONTOLOGY (folded into ontology import)	HANDOFF
+agent_utilities.knowledge_graph.core.owl_bridge.register_promotable_node_types	EG handoff MEDULLA-ONTOLOGY (folded into ontology import)	HANDOFF
 agent_utilities.knowledge_graph.core.session.GraphSession	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.session.SessionRequiredError	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.session.resolve_session	agent_connector_sdk.identity.current_actor (authenticated + tenant) [REWRITE]	EXISTS
@@ -117,7 +117,7 @@ agent_utilities.knowledge_graph.ontology.connector_manifest_gate.check_manifest_
 agent_utilities.knowledge_graph.ontology.connector_manifest_gate.precheck_source	REMOVE: EG validates SourceIngest against the published Connector Manifest	REMOVE
 agent_utilities.knowledge_graph.ontology.leanix_metamodel.compile_leanix_metamodel	CONNECTOR-OWN leanix_agent.ontology_compiler.compile_leanix_metamodel	MOVED
 agent_utilities.knowledge_graph.ontology.leanix_metamodel.export_leanix_ttl	CONNECTOR-OWN leanix_agent.ontology_compiler.export_leanix_ttl	MOVED
-agent_utilities.knowledge_graph.ontology.lifecycle.OntologyLifecycle	EG handoff EG-ONTOLOGY; connector seam leanix_agent.metamodel.OntologyImporter	HANDOFF
+agent_utilities.knowledge_graph.ontology.lifecycle.OntologyLifecycle	EG handoff MEDULLA-ONTOLOGY; connector seam leanix_agent.metamodel.OntologyImporter	HANDOFF
 agent_utilities.knowledge_graph.pipeline.runner	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.pipeline.runner.PipelineRunner	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.pipeline.types.PipelineContext	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
@@ -145,7 +145,7 @@ agent_utilities.mcp.verbose_tools.register_tool_surface	agent_connector_sdk.mcp.
 agent_utilities.mcp_utilities.create_mcp_server	agent_connector_sdk.mcp.server.create_mcp_server [AU symbol already gone; REWRITE]	EXISTS
 agent_utilities.models.AgentDeps	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.models.GraphResponse	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.models.domains.finance.MicrostructureSignalNode	plain EG node record (connector signal_records.py; vocab trading.ttl); typed method handoff EG-FINANCE	EG-HANDOFF
+agent_utilities.models.domains.finance.MicrostructureSignalNode	plain EG node record (connector signal_records.py; vocab trading.ttl); typed method handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
 agent_utilities.models.knowledge_graph.ArticleNode	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.models.knowledge_graph.PersonNode	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.models.knowledge_graph.PipelineConfig	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE

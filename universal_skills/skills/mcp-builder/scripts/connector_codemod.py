@@ -10,7 +10,7 @@ usage: connector_codemod.py <repo> [--map au-to-sdk-map.tsv] [--sdk-root <checko
 * Deletes agent-mode files (``*/agent_server.py`` and tests whose only AU
   imports are agent-mode REMOVE symbols). Every other REMOVE use is reported.
 * Rewrites ``"agent_utilities.x.y"`` string literals (mock.patch targets).
-* In a file importing agent_connector_sdk.mcp.env_drift, renames the AU-named
+* In a file importing agent_connector_sdk.mcp.env_drift, renames the Meristem-named
   checker internals (see ENV_DRIFT_RENAMES).
 * Rewrites the .pre-commit-config.yaml env-drift hook module; other AU hook
   modules are reported.
@@ -35,7 +35,7 @@ from pathlib import Path
 
 SDK_DEP = "scion-sdk[mcp]>=0.3.11,<1.0.0"
 AGENT_MODE = "REMOVE agent mode"
-#: AU-named env-drift internals a connector wrapper calls on the checker module.
+#: Meristem-named env-drift internals a connector wrapper calls on the checker module.
 ENV_DRIFT_RENAMES = {
     "_agent_utilities_reads": "framework_reads",
     "_agent_utilities_dynamic_families": "framework_dynamic_families",

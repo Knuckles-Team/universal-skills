@@ -102,7 +102,7 @@ def check_project(root: Path, package: str) -> list[str]:
 
 # --- SDK centralized-capability rules (US-MCP-BUILDER-R001..R008, R010) ------------
 # Each rule is a static check over a generated project. The bracketed row names
-# the universal-skills requirement; the SDK row (SDK-CENTRALIZED-CAPABILITIES-Rnnn)
+# the universal-skills requirement; the SDK row (SCION-CENTRALIZED-CAPABILITIES-Rnnn)
 # names the capability it protects.
 
 #: Packages the SDK owns or an SDK extra already pins. A connector declares the

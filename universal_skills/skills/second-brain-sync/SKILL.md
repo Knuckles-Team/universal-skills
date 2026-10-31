@@ -20,12 +20,12 @@ metadata:
   version: '1.5.2'
   author: Genius
   concepts:
-    - CONCEPT:AU-KG.enrichment.atomic-triple-extraction
-    - CONCEPT:AU-KG.enrichment.entity-claim-extraction
-    - CONCEPT:AU-KG.enrichment.second-brain-note-sync
-    - CONCEPT:AU-KG.research.explicit-node-node-contradiction
-    - CONCEPT:AU-KG.evolution.mining-flywheel
-    - CONCEPT:AU-KG.retrieval.synthesized-cited-answer
+    - CONCEPT:MERISTEM-KG.enrichment.atomic-triple-extraction
+    - CONCEPT:MERISTEM-KG.enrichment.entity-claim-extraction
+    - CONCEPT:MERISTEM-KG.enrichment.second-brain-note-sync
+    - CONCEPT:MERISTEM-KG.research.explicit-node-node-contradiction
+    - CONCEPT:MERISTEM-KG.evolution.mining-flywheel
+    - CONCEPT:MERISTEM-KG.retrieval.synthesized-cited-answer
 requires: ['arbora', 'agent-utilities']
 ---
 
@@ -73,7 +73,7 @@ tagged `file`, `dir`, `repo`, or `url`).
 
 **Nextcloud or Paperless-ngx sources** aren't read directly by this skill —
 reuse the existing connector presets/skills that already own those APIs
-(`AU-KG.ingest.mcp-tool-connector` — one reuse path, never a new connector):
+(`MERISTEM-KG.ingest.mcp-tool-connector` — one reuse path, never a new connector):
 run the `nextcloud-files`/`nextcloud-ingest` skill (or `paperless-documents`/
 `paperless-ngx-kg-ingestion`) to pull the notes/documents into a local sync
 directory (or straight into KG Document nodes), then point Step 1's
