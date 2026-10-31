@@ -27,12 +27,36 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - name: Restore pre-commit environments
+        id: hook-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-partial-
+
       - name: Bootstrap
         run: scripts/bootstrap.sh
+      - name: Install pre-commit environments
+        id: hook-install
+        run: |
+          set -euo pipefail
+          uvx pre-commit install-hooks --config .pre-commit-config.yaml
+
+      - name: Save pre-commit environments
+        if: success() && steps.hook-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Save partly installed pre-commit environments
+        if: (failure() || cancelled()) && steps.hook-install.outcome != 'success' && steps.hook-install.outcome != 'skipped'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-partial-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Pre-commit gates
         run: uvx pre-commit run --all-files --show-diff-on-failure
 
