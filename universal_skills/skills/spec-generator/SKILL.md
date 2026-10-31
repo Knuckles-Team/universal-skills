@@ -14,7 +14,7 @@ metadata:
 
 # SDD Spec Generator
 
-Produce the **intent specification** for one stable feature ID. Use GitHub Spec Kit's resolved `spec-template` and `specs/<stable-id>/spec.md` convention. The repository root is the path base. Keep `.specify/` for Spec Kit project configuration, templates, and `.specify/memory/constitution.md`; do not place feature artifacts beneath `.specify/` or `agent_data/`.
+Produce the **intent specification** for one stable feature ID. Use GitHub Spec Kit's resolved `spec-template` and `specs/<stable-id>/spec.md` convention. The repository root is the path base. Keep `.specify/` for the vended templates in `.specify/templates/` and `.specify/memory/constitution.md` (never edit the templates; pipelines vends them); do not place feature artifacts beneath `.specify/` or `agent_data/`.
 
 ## Planning flow
 
@@ -22,13 +22,17 @@ Run the steps in order. Each step names the files it writes and the gate that ch
 
 | Step | Writes | Gate |
 |---|---|---|
-| 1. Constitution | `.specify/memory/constitution.md` from the pipelines `specs/_template/constitution.md` | Constitution check (advisory until present) |
+| 1. Constitution | `.specify/memory/constitution.md` from `.specify/templates/constitution-template.md` | Constitution check (advisory until present) |
 | 2. Specify | `spec.md` (stories, `FR-`/`SC-` labels, Edge Cases, Assumptions) and the `requirements.md` rows | Narrative, title, ID and file-set checks |
 | 3. Clarify | Resolves each `[NEEDS CLARIFICATION: ...]` marker in `spec.md` and `requirements.md` | Clarification check fails while one remains |
-| 4. Plan | `plan.md` from `specs/_template/plan.md`: Summary, Technical Context, Constitution Check, Project Structure, Phase 0 to 2, Complexity Tracking, Build contract, Production caller chain, Cross-repo seams. Also `research.md`, `data-model.md`, `contracts/` and `quickstart.md` where the plan calls for them | Plan check (sections and Technical Context fields) |
+| 4. Plan | `plan.md` from `.specify/templates/plan-template.md`: Summary, Technical Context, Constitution Check, Project Structure, Phase 0 to 2, Complexity Tracking, Build contract, Production caller chain, Cross-repo seams. Also `contracts/`, `data-model.md`, `quickstart.md` and `research.md` where the plan calls for them (see Optional artifacts below) | Plan check (sections and Technical Context fields) |
 | 5. Tasks | `tasks.md`, one `- [ ] T001 [P] [US1] <ID>-R012.4 description` line per row (use the task-planner skill) | Task-line check |
-| 6. Analyze | Fixes the gaps the analysis reports: a row with no task or no test, a task naming no row, an orphan `FR-`/`SC-` label, an open marker in any design file; fills `checklists/requirements.md` from `specs/_template/checklists/requirements.md` (use the spec-verifier skill) | Consistency analysis and checklist check (fail for a touched spec) |
+| 6. Analyze | Fixes the gaps the analysis reports: a row with no task or no test, a task naming no row, an orphan `FR-`/`SC-` label, an open marker in any design file; fills `checklists/requirements.md` from `.specify/templates/checklist-template.md` (use the spec-verifier skill) | Consistency analysis and checklist check (fail for a touched spec) |
 | 7. Implement | Code and bound tests (`# spec: <ID>`), commits with a `Spec:` trailer | `pipelines-hook spec-status` computes `LANDED` and `VERIFIED` |
+
+## Optional artifacts
+
+Add each optional artifact only where it carries content, and the analysis check requires it there: `contracts/` holds one human-written `.md` contract per cross-repo seam (wire shape, refusal codes, owner row IDs on both sides; no generated contract); `data-model.md` when a row names new types, ontology classes or tables; `quickstart.md` when a row is a `served` behaviour row, naming the scenario or test command that runs its proof; `research.md` only when Phase 0 lists unknowns. File and directory names are lower-case kebab-case; plans live only in `specs/<family>/plan.md`, templates only in `.specify/templates/`, the constitution only in `.specify/memory/`. `checklists/requirements.md` is filled before landing.
 
 ## Inputs and authority
 
@@ -36,7 +40,7 @@ Read the feature request, existing repository code and docs, relevant `specs/`, 
 
 Use a stable, human-readable ID that survives branch changes. Keep the same ID in the feature directory, document heading, public requirement register, and related repositories. Link exact public requirement IDs, public issue/PR evidence, and related public `specs/<id>/` documents by repository and path. Never link or name private draft repositories, plan paths, internal GitLab hosts, homelab inventory, or a contributor's local workspace. Copy every necessary design, interface, acceptance criterion, and test condition into owner-native specs so a contributor with only public GitHub access can implement and verify the deliverable. If the feature crosses repositories, name the one normative owner of each behavior and the public contract connecting its consumers; each owning repository keeps its own complete local spec.
 
-Start from the repository constitution at `.specify/memory/constitution.md`. If it is absent, create it from the pipelines `specs/_template/constitution.md`: one page that links the organization standards by public URL. Check the draft against the constitution before you write the plan.
+Start from the repository constitution at `.specify/memory/constitution.md`. If it is absent, create it from `.specify/templates/constitution-template.md`: one page that links the organization standards by public URL. Check the draft against the constitution before you write the plan.
 
 Resolve only ambiguities that block a testable requirement. If the user has not answered, write the marker `[NEEDS CLARIFICATION: <question>]` in `spec.md` and state the effect on implementation. Do not silently choose a behavior. The landing gate refuses a spec that still holds a marker, so resolve and delete each marker before the row lands.
 
