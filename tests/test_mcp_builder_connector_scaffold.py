@@ -8,8 +8,10 @@ agent-connector-sdk>=0.5.1, `uv` and the pipelines hooks.
 
 from __future__ import annotations
 
+import ast
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -84,6 +86,27 @@ def _files(root: Path) -> dict[str, bytes]:
         for p in sorted(root.rglob("*"))
         if p.is_file()
     }
+
+
+_LOCAL_REFERENCE_RE = re.compile(
+    r"`(?P<path>(?:tests|demo_mcp)/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)"
+    r"(?:::(?P<test>test_[A-Za-z_][A-Za-z0-9_]*))?`"
+)
+
+
+def _local_references(root: Path) -> list[tuple[str, str | None]]:
+    """Return explicit package/test references from generated Markdown.
+
+    The pattern intentionally requires a concrete repository-local root and a
+    backtick-delimited reference. Generic command examples, URLs, and
+    placeholders such as ``tests/<test>.py`` are documentation, not paths to
+    validate.
+    """
+    refs: list[tuple[str, str | None]] = []
+    for path in root.rglob("*.md"):
+        for match in _LOCAL_REFERENCE_RE.finditer(path.read_text(encoding="utf-8")):
+            refs.append((match.group("path"), match.group("test")))
+    return refs
 
 
 @pytest.fixture(scope="module")
@@ -173,6 +196,35 @@ def test_standard_connector_delivery_contract_is_scaffolded(connector):
     ):
         assert heading in development
     assert "dependency-readiness" in development
+    assert "tests/test_api_client.py::test_each_operation_calls_its_endpoint" in development
+
+
+def test_generated_local_references_bind_to_real_sources_and_tests(connector):
+    """Generated Markdown names only repository-local files and real tests."""
+    refs = _local_references(connector)
+    assert ("tests/test_api_client.py", "test_each_operation_calls_its_endpoint") in refs
+    assert ("demo_mcp/api_client.py", None) in refs
+    for relative, test_name in refs:
+        target = connector / relative
+        assert target.is_file(), relative
+        if test_name is None:
+            continue
+        tree = ast.parse(target.read_text(encoding="utf-8"), filename=relative)
+        names = {
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        assert test_name in names, f"{relative}::{test_name}"
+
+
+def test_local_reference_validator_ignores_placeholders_and_commands(tmp_path):
+    (tmp_path / "notes.md").write_text(
+        "Use `tests/<test>.py` as a placeholder and run "
+        "`scripts/sync_mkdocs_theme.py sync` from the pipelines checkout.\n",
+        encoding="utf-8",
+    )
+    assert _local_references(tmp_path) == []
 
 
 # spec: US-MCP-BUILDER-R011.1
