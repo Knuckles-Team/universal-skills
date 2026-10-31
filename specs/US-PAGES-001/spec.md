@@ -19,7 +19,7 @@ must remain until a replacement build reads another tracked source.
 
 ## Users and acceptance scenarios
 
-1. A contributor can follow Pages navigation to the contribution guide and the public `spec-generator`, `task-planner`, `spec-verifier`, and `sdd-full-lifecycle` skill sources.
+1. A contributor can follow Pages navigation to the contribution guide and the public `speckit-specify`, `speckit-tasks`, `speckit-analyze`, and `sdd-full-lifecycle` skill sources.
 2. A maintainer edits one canonical tracked file and sees the change after Pages builds, without updating a duplicate.
 3. A spec reader sees a stable ID, owner, separate delivery and acceptance states, related public specs, and acceptance receipts when available; open work is visibly open.
 4. A cloud PR author runs required checks from a clean checkout with fixtures or disposable dependencies.

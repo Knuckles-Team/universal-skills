@@ -13,10 +13,10 @@ team_config:
   task_pattern: spec-driven development from intake through automated verification
   execution_mode: sequential
   specialist_ids:
-    - spec-intake-wizard
-    - spec-generator
-    - task-planner
-    - spec-verifier
+    - speckit-specify
+    - speckit-plan
+    - speckit-tasks
+    - speckit-analyze
     - sdd-implementer
     - automated-test-runner
 tags: [sdd, specification, planning, implementation, testing]
@@ -30,27 +30,27 @@ metadata:
 
 ## Steps
 
-### Step 0: spec-intake-wizard [skill: spec-intake-wizard]
+### Step 0: speckit-specify [skill: speckit-specify]
 
-Invoke `$spec-intake-wizard` with the workflow request.
-
-Expected: `intake_result`
-
-### Step 1: spec-generator [skill: spec-generator] [depends_on: Step 0]
-
-Invoke `$spec-generator` with `intake_result`.
+Invoke `$speckit-specify` with the workflow request.
 
 Expected: `specification`
 
-### Step 2: task-planner [skill: task-planner] [depends_on: Step 1]
+### Step 1: speckit-plan [skill: speckit-plan] [depends_on: Step 0]
 
-Invoke `$task-planner` with `specification` and the supplied `specs/<stable-id>/plan.md` and design artifacts.
+Invoke `$speckit-plan` with `specification` and the supplied design plan.
+
+Expected: `plan`
+
+### Step 2: speckit-tasks [skill: speckit-tasks] [depends_on: Step 1]
+
+Invoke `$speckit-tasks` with `specification`, `plan.md` and the design artifacts.
 
 Expected: `tasks`
 
-### Step 3: spec-verifier [skill: spec-verifier] [depends_on: Step 2]
+### Step 3: speckit-analyze [skill: speckit-analyze] [depends_on: Step 2]
 
-Invoke `$spec-verifier` with `specification`, `plan.md`, and `tasks`.
+Invoke `$speckit-analyze` with `specification`, `plan.md` and `tasks`.
 
 Expected: `verified_specification`
 
@@ -70,10 +70,10 @@ Expected: `test_result`
 
 The workflow input must include a tracked `specs/<stable-id>/plan.md` and applicable design artifacts produced with the repository’s Spec Kit plan command. The current DAG has no atomic plan-generation skill; it must stop before task planning if the design is absent. `.specify/memory/constitution.md` governs each step. Git-tracked `specs/` files are authoritative; KG sync is derived.
 
-- **Run first:** Step 0 — `$spec-intake-wizard`.
-- **After Step 0:** Step 1 — `$spec-generator`.
-- **After Step 1:** Step 2 — `$task-planner`.
-- **After Step 2:** Step 3 — `$spec-verifier`.
+- **Run first:** Step 0 — `$speckit-specify`.
+- **After Step 0:** Step 1 — `$speckit-plan`.
+- **After Step 1:** Step 2 — `$speckit-tasks`.
+- **After Step 2:** Step 3 — `$speckit-analyze`.
 - **After Step 3:** Step 4 — `$sdd-implementer`.
 - **After Step 4:** Step 5 — `$automated-test-runner`.
 

@@ -132,9 +132,9 @@ def test_canonical_sources_and_existing_urls(checkout):
         assert (checkout / "site" / name).is_file(), name
     guide = (checkout / "site/contributing/index.html").read_text()
     for skill in (
-        "spec-generator",
-        "task-planner",
-        "spec-verifier",
+        "speckit-specify",
+        "speckit-tasks",
+        "speckit-analyze",
         "sdd-full-lifecycle",
     ):
         assert f"/{skill}/SKILL.md" in guide

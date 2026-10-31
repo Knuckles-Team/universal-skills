@@ -2,9 +2,9 @@ name: sdd-full-lifecycle-team
 task_pattern: spec-driven development from intake through automated verification
 execution_mode: sequential
 specialist_ids:
-  - spec-intake-wizard
-  - spec-generator
-  - task-planner
-  - spec-verifier
+  - speckit-specify
+  - speckit-plan
+  - speckit-tasks
+  - speckit-analyze
   - sdd-implementer
   - automated-test-runner

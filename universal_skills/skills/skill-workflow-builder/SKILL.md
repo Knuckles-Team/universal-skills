@@ -38,7 +38,7 @@ arbitrary unresolved name as an atomic skill.
 [
   {
     "step": 1,
-    "skill": "spec-intake-wizard",
+    "skill": "speckit-specify",
     "agent": "planning-specialist",
     "depends_on": []
   },
@@ -47,7 +47,7 @@ arbitrary unresolved name as an atomic skill.
     "skill": "scholarx-operations",
     "package": "scholarx",
     "agent": "research-specialist",
-    "depends_on": ["spec-intake-wizard"]
+    "depends_on": ["speckit-specify"]
   }
 ]
 ```
@@ -66,7 +66,7 @@ python universal_skills/skills/skill-workflow-builder/scripts/build_workflow.py 
   scaffold issue-planning \
   --domain development-workflows \
   --description "Plan a repository issue through specification and task decomposition. Use when the user asks to turn an existing issue into an implementation-ready plan." \
-  --steps-json '[{"step":1,"skill":"spec-generator","agent":"planning-specialist","depends_on":[]},{"step":2,"skill":"task-planner","agent":"planning-specialist","depends_on":["spec-generator"]}]'
+  --steps-json '[{"step":1,"skill":"speckit-specify","agent":"planning-specialist","depends_on":[]},{"step":2,"skill":"speckit-tasks","agent":"planning-specialist","depends_on":["speckit-specify"]}]'
 ```
 
 The builder writes:

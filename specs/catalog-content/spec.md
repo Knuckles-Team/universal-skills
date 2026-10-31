@@ -6,7 +6,7 @@ References: [SCION-CONNECTOR-CONTROL](https://github.com/Knuckles-Team/agent-con
 
 ## Purpose and user stories
 
-A person installs `universal-skills` next to arbora. arbora serves every skill in it as a native MCP skill resource, with the same declaration every connector uses.
+A maintainer lists an upstream repository and a commit; the catalog gains its skills and moves to upstream's latest with one reviewable change. A person installs `universal-skills` next to arbora. arbora serves every skill in it as a native MCP skill resource, with the same declaration every connector uses.
 
 ## Requirements and acceptance
 
@@ -18,4 +18,4 @@ The search covered `specs/` of this repository. The existing specs own published
 
 ## Scope and interfaces
 
-In scope: the package layout under `universal_skills/skills/`, the entry-point declaration and the SDK dependency. Out of scope: the content of any single skill.
+In scope: the package layout under `universal_skills/skills/`, the entry-point declaration and the SDK dependency. The catalog can also hold skills vendored from pinned upstream repositories (`upstream-sources.toml`, `scripts/sync_upstream_skills.py`, `universal_skills/overlays/`). Out of scope: the content of any single skill.

@@ -19,7 +19,7 @@ team_config:
     builder-agent: [rep_rm_projects]
     validator-agent: [rep_rm_projects, gl_pipelines]
     publisher-agent: [rep_rm_git, gl_merge_requests]
-tags: ['github', 'sdd', 'planning', 'spec-generator', 'github-agent']
+tags: ['github', 'sdd', 'planning', 'speckit-specify', 'github-agent']
 concept: CONCEPT:DEV-001
 metadata:
   version: '1.5.2'
@@ -54,14 +54,14 @@ Expected: `validation_report, root_cause_analysis`
 Create high-fidelity Spec-Driven Development (SDD) spec.md files for the validated issues under the repository's .specify/ directory using standard spec templates.
 Expected: `spec_markdown, specify_sync`
 
-### Step 3: Task Planner
+### Step 3: Speckit Tasks
 **Agent**: `publisher-agent`
 **Tools**: `rep_rm_git, gl_merge_requests`
 
 Generate a comprehensive execution plan and a structured tasks checklist (tasks.md) mapping out dependencies, file changes, and testing tasks to implement the specs.
 Expected: `implementation_plan, tasks_md`
 
-### Step 4: KG Persistence [depends_on: task-planner]
+### Step 4: KG Persistence [depends_on: speckit-tasks]
 **Agent**: `publisher-agent`
 **Tools**: `graph_write`
 

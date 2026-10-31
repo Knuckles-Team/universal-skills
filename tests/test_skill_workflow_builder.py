@@ -63,15 +63,15 @@ def _steps() -> list[dict]:
     return [
         {
             "step": 1,
-            "skill": "spec-generator",
+            "skill": "speckit-specify",
             "agent": "planning-specialist",
             "depends_on": [],
         },
         {
             "step": 2,
-            "skill": "task-planner",
+            "skill": "speckit-tasks",
             "agent": "planning-specialist",
-            "depends_on": ["spec-generator"],
+            "depends_on": ["speckit-specify"],
         },
     ]
 
@@ -106,8 +106,8 @@ def test_validate_steps_dag_missing_reference():
 
 def test_scaffold_emits_complete_valid_workflow(tmp_path):
     root = _catalog(tmp_path)
-    _write_atomic_skill(root, "development", "spec-generator")
-    _write_atomic_skill(root, "development", "task-planner")
+    _write_atomic_skill(root, "development", "speckit-specify")
+    _write_atomic_skill(root, "development", "speckit-tasks")
 
     destination = scaffold_workflow_files(
         workflow_name="feature-planning",
@@ -133,13 +133,13 @@ def test_scaffold_emits_complete_valid_workflow(tmp_path):
     assert parsed["frontmatter"]["team_config"] == team
     assert team["specialist_ids"] == ["planning-specialist"]
     assert team["tool_assignments"] == {
-        "planning-specialist": ["spec-generator", "task-planner"]
+        "planning-specialist": ["speckit-specify", "speckit-tasks"]
     }
     assert parsed["steps"][0]["depends_on"] == []
-    assert parsed["steps"][1]["depends_on"] == ["spec-generator"]
+    assert parsed["steps"][1]["depends_on"] == ["speckit-specify"]
 
     text = skill_md.read_text(encoding="utf-8")
-    assert "### Step 1: spec-generator [depends_on: none]" in text
+    assert "### Step 1: speckit-specify [depends_on: none]" in text
     assert "## Execution" in text
     assert "After level 0" in text
     assert build_workflow.DELEGATION_FOOTER in text
@@ -151,8 +151,8 @@ def test_scaffolded_workflow_compiles_with_runtime_compiler(tmp_path):
         "agent_utilities.workflows.skill_compiler"
     ).SkillCompiler
     root = _catalog(tmp_path)
-    _write_atomic_skill(root, "development", "spec-generator")
-    _write_atomic_skill(root, "development", "task-planner")
+    _write_atomic_skill(root, "development", "speckit-specify")
+    _write_atomic_skill(root, "development", "speckit-tasks")
     destination = scaffold_workflow_files(
         "feature-planning",
         "development-workflows",
@@ -166,11 +166,11 @@ def test_scaffolded_workflow_compiles_with_runtime_compiler(tmp_path):
     plan = compiler.compile(destination)
 
     assert [step.node_id for step in plan.steps] == [
-        "spec-generator",
-        "task-planner",
+        "speckit-specify",
+        "speckit-tasks",
     ]
     assert plan.steps[0].depends_on == []
-    assert plan.steps[1].depends_on == ["spec-generator"]
+    assert plan.steps[1].depends_on == ["speckit-specify"]
 
 
 def test_scaffold_accepts_one_explicit_mcp_tool(tmp_path):
@@ -274,11 +274,11 @@ def test_scaffold_rejects_missing_atomic_skill_without_writing(tmp_path):
 
 def test_scaffold_rejects_inline_logic_and_invalid_domain(tmp_path):
     root = _catalog(tmp_path)
-    _write_atomic_skill(root, "development", "spec-generator")
+    _write_atomic_skill(root, "development", "speckit-specify")
     steps = [
         {
             "step": 1,
-            "skill": "spec-generator",
+            "skill": "speckit-specify",
             "depends_on": [],
             "description": "Write a specification inline",
         }
@@ -300,8 +300,8 @@ def test_scaffold_rejects_inline_logic_and_invalid_domain(tmp_path):
 
 def test_validator_detects_team_and_execution_drift(tmp_path):
     root = _catalog(tmp_path)
-    _write_atomic_skill(root, "development", "spec-generator")
-    _write_atomic_skill(root, "development", "task-planner")
+    _write_atomic_skill(root, "development", "speckit-specify")
+    _write_atomic_skill(root, "development", "speckit-tasks")
     destination = scaffold_workflow_files(
         "feature-planning",
         "development-workflows",
