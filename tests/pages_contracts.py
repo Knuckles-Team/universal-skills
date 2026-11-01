@@ -24,7 +24,7 @@ def checkout(tmp_path):
     )
     # Status is generated, never committed: give the copy the file a local
     # `pipelines-hook spec-status --write` would have produced.
-    (tmp_path / "specs/US-PAGES-001/status.json").write_text(
+    (tmp_path / "specs/pages/status.json").write_text(
         json.dumps(
             {
                 "schema_version": 1,
@@ -138,13 +138,13 @@ def test_canonical_sources_and_existing_urls(checkout):
         "sdd-full-lifecycle",
     ):
         assert f"/{skill}/SKILL.md" in guide
-    page = checkout / "site/specs/US-PAGES-001/spec/index.html"
+    page = checkout / "site/specs/pages/spec/index.html"
     output = page.read_text()
     assert "SPECIFIED" in output and "NOT_AUDITED" in output
     assert "Acceptance evidence pending" in output
     for link in ("../plan/", "../test-spec/", "../tasks/"):
         assert f'href="{link}"' in output
-    spec = checkout / "specs/US-PAGES-001/spec.md"
+    spec = checkout / "specs/pages/spec.md"
     spec.write_text(spec.read_text() + "\nCanonical edit appears on rebuild.\n")
     contribution = checkout / "CONTRIBUTING.md"
     contribution.write_text(
@@ -176,7 +176,7 @@ def test_canonical_sources_and_existing_urls(checkout):
     ],
 )
 def test_invalid_sources_fail_closed(checkout, failure):
-    package = checkout / "specs/US-PAGES-001"
+    package = checkout / "specs/pages"
     spec = package / "spec.md"
     status_path = package / "status.json"
     status = json.loads(status_path.read_text())
@@ -214,11 +214,11 @@ def test_invalid_sources_fail_closed(checkout, failure):
         status_path.write_text(json.dumps(status))
     result = build(checkout)
     assert result.returncode != 0, result.stdout
-    assert "US-PAGES" in result.stderr or "absent.md" in result.stderr
+    assert "specs/pages" in result.stderr or "US-PAGES" in result.stderr or "absent.md" in result.stderr
 
 
 def test_synthetic_accepted_receipts(checkout):
-    package = checkout / "specs/US-PAGES-001"
+    package = checkout / "specs/pages"
     status_path = package / "status.json"
     status = json.loads(status_path.read_text())
     commit = "a" * 40
@@ -242,7 +242,7 @@ def test_synthetic_accepted_receipts(checkout):
     status_path.write_text(json.dumps(status))
     result = build(checkout)
     assert result.returncode == 0, result.stderr
-    output = (checkout / "site/specs/US-PAGES-001/spec/index.html").read_text()
+    output = (checkout / "site/specs/pages/spec/index.html").read_text()
     assert f'href="{prefix}commit/{commit}"' in output
     assert f'href="{prefix}actions/runs/123"' in output
     assert "owner-reported metadata" in output
@@ -256,8 +256,8 @@ def test_synthetic_accepted_receipts(checkout):
 
 
 def test_build_without_generated_status(checkout):
-    (checkout / "specs/US-PAGES-001/status.json").unlink()
+    (checkout / "specs/pages/status.json").unlink()
     result = build(checkout)
     assert result.returncode == 0, result.stderr
-    output = (checkout / "site/specs/US-PAGES-001/spec/index.html").read_text()
+    output = (checkout / "site/specs/pages/spec/index.html").read_text()
     assert "Owner-native status" not in output
