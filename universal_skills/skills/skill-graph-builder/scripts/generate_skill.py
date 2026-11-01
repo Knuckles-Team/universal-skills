@@ -285,8 +285,8 @@ def _resolve_out_dir(target_type: str, output_dir: str | None) -> Path:
         return pkg_root
     # pkg_root.parent.parent → .../agent-packages/skills ; its sibling skill-graphs repo.
     workspace_root = pkg_root.parent.parent
-    repo = workspace_root / "skill-graphs" / "skill_graphs"
-    if (workspace_root / "skill-graphs").exists() and repo.is_dir():
+    repo = workspace_root / "skill-graphs" / "skill_graphs" / "skills"
+    if repo.is_dir():
         return repo
     cache = Path.home() / ".cache" / "universal-skills" / "skill-graphs"
     cache.mkdir(parents=True, exist_ok=True)
