@@ -24,3 +24,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T018 [US4] US-CONTENT-R004.1 Content: the delivery procedure.
 - [ ] T019 [US4] US-CONTENT-R004.2 Frontmatter and catalog registration.
 - [ ] T020 [US4] US-CONTENT-R004.3 Validation test: procedure, prohibitions and neutral text.
+- [x] T021 [US2] US-CONTENT-R005 Link the delivery practice reference and the constitution articles from the delivery skills.
