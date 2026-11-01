@@ -47,7 +47,7 @@ Required cloud PR checks must run with deterministic fixtures or provision their
 ### Pages sources and offline checks
 
 MkDocs renders the contribution guide from this file and the public
-US-PAGES-001 package from `specs/US-PAGES-001/` using its native
+US-PAGES package from `specs/pages/` using its native
 `scripts/pages_sources.py` hook. Generated pages exist only in the build;
 edit the tracked source, never a second copy under `docs/`.
 Repository-relative guide links resolve to public GitHub sources. Spec package
@@ -61,8 +61,8 @@ targets; a strict MkDocs build validates local page links and anchors.
 | `/contributing/` | `CONTRIBUTING.md` |
 | `/skill-catalog-audit/` | `docs/skill-catalog-audit.md` |
 | `/skill-catalog-improvement-roadmap/` | `docs/skill-catalog-improvement-roadmap.md` |
-| `/specs/US-PAGES-001/spec/` | `specs/US-PAGES-001/spec.md` plus `status.json` |
-| `/specs/US-PAGES-001/{plan,test-spec,tasks}/` | Corresponding tracked package Markdown |
+| `/specs/pages/spec/` | `specs/pages/spec.md` plus `status.json` |
+| `/specs/pages/{plan,test-spec,tasks}/` | Corresponding tracked package Markdown |
 
 The dedicated **Pages check** workflow runs on every PR using only this checkout
 and disposable documentation dependencies. Its separately collected
