@@ -107,7 +107,7 @@ def test_shared_pages_triggers_and_generated_theme_assets_contract():
         "docs/assets/brands/epistemic-graph-logo-v1.png",
         "docs/assets/brands/agent-utilities-logo-v1.png",
         "docs/assets/brands/arbora-logo-v1.png",
-        "docs/assets/brands/agent-connector-sdk-logo-v1.png",
+        "docs/assets/brands/scion-sdk-logo-v1.png",
         "docs/assets/brands/agent-webui-logo-v1.png",
         "docs/assets/brands/geniusbot-logo-v1.png",
         "docs/assets/brands/agent-terminal-ui-logo-v1.png",
