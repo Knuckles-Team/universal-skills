@@ -30,6 +30,7 @@ jobs:
       contents: read
     uses: Knuckles-Team/pipelines/.github/workflows/gates_pipeline.yml@main
     with:
+      config: .pre-commit-config.yaml
       setup-command: scripts/bootstrap.sh
 
   gates-all-files:
@@ -39,6 +40,7 @@ jobs:
       contents: read
     uses: Knuckles-Team/pipelines/.github/workflows/gates_pipeline.yml@main
     with:
+      config: .pre-commit-config.yaml
       all-files: true
       setup-command: scripts/bootstrap.sh
       timeout-minutes: 60
