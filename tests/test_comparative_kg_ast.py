@@ -55,7 +55,7 @@ def _install_native_client(monkeypatch, result: dict, captured: dict) -> None:
         def __exit__(self, *_exc):
             captured["exited"] = True
 
-    class FakeSyncEpistemicGraphClient:
+    class FakeSyncMedullaClient:
         @classmethod
         def connect(cls, **kwargs):
             captured["connect"] = kwargs
@@ -63,8 +63,8 @@ def _install_native_client(monkeypatch, result: dict, captured: dict) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "epistemic_graph",
-        SimpleNamespace(SyncEpistemicGraphClient=FakeSyncEpistemicGraphClient),
+        "medulla",
+        SimpleNamespace(SyncMedullaClient=FakeSyncMedullaClient),
     )
 
 
@@ -102,7 +102,7 @@ def test_parse_symbols_degrades_when_native_package_is_unavailable(
 ):
     source = tmp_path / "fallback.py"
     source.write_text('def documented():\n    """Present."""\n')
-    monkeypatch.setitem(sys.modules, "epistemic_graph", None)
+    monkeypatch.setitem(sys.modules, "medulla", None)
 
     result = kg_ast.parse_symbols(source)
 
@@ -124,8 +124,8 @@ def test_parse_symbols_degrades_when_native_engine_is_unavailable(
 
     monkeypatch.setitem(
         sys.modules,
-        "epistemic_graph",
-        SimpleNamespace(SyncEpistemicGraphClient=UnavailableClient),
+        "medulla",
+        SimpleNamespace(SyncMedullaClient=UnavailableClient),
     )
 
     result = kg_ast.parse_symbols(source)
@@ -164,4 +164,4 @@ def test_documentation_analyzer_reaches_native_inventory(monkeypatch, tmp_path):
 
 
 def test_legacy_parser_import_is_gone():
-    assert "from epistemic_graph.parser" not in SCRIPT.read_text()
+    assert "from medulla.parser" not in SCRIPT.read_text()

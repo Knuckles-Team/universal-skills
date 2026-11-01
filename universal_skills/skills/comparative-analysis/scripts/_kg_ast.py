@@ -12,7 +12,7 @@ this file have" prefers, in this order:
    silently skipped when no gateway is configured or the target isn't ingested
    (comparative-analysis routinely targets un-ingested third-party repos).
 2. **epistemic-graph's native repository inventory** — ``parse_symbols()`` calls
-   ``SyncEpistemicGraphClient.graph.index_repository()`` with logical source
+   ``SyncMedullaClient.graph.index_repository()`` with logical source
    names and bytes. This is the sole clean-break EG 3.0 AST contract and returns
    the strict ``eg-native-inventory/v1`` result: acknowledged files, qualified
    symbols with exact ranges, graph nodes/edges, completeness evidence, and
@@ -266,7 +266,7 @@ def parse_symbols(file_path: Path) -> dict[str, Any]:
         return {"nodes": [], "edges": [], "symbols_extracted": 0, "tier": "error"}
 
     try:
-        from epistemic_graph import SyncEpistemicGraphClient
+        from medulla import SyncMedullaClient
     except ImportError:
         result = _local_fallback_parse(
             str(file_path), source.decode("utf-8", "replace")
@@ -274,7 +274,7 @@ def parse_symbols(file_path: Path) -> dict[str, Any]:
         return result
 
     try:
-        with SyncEpistemicGraphClient.connect(
+        with SyncMedullaClient.connect(
             graph_name="agent:comparative-analysis",
             verified_context=_native_request_context(),
         ) as client:
