@@ -415,12 +415,12 @@ def test_pipelines_connector_gates_pass(connector, tmp_path):
 
 # The epistemic-graph revision whose ontology the graph check composes. Move it deliberately.
 EG_REF = "4a1780082fbe6bf7756718316e4997ec23712eb8"
-EG_URL = os.environ.get("EPISTEMIC_GRAPH_URL", "https://github.com/Knuckles-Team/epistemic-graph")
+EG_URL = os.environ.get("MEDULLA_URL", "https://github.com/Knuckles-Team/epistemic-graph")
 
 
 def _core_ontology(base: Path) -> Path:
     """A repository holding the core ontology files at the pinned revision."""
-    local = os.environ.get("EPISTEMIC_GRAPH_REPO")
+    local = os.environ.get("MEDULLA_REPO")
     if local and Path(local).is_dir():
         return Path(local)
     repo = base / "epistemic-graph"

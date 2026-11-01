@@ -296,13 +296,13 @@ def _engine_context() -> dict[str, Any]:
     agent_id = "service:universal-skills:code-enhancer"
     return {
         "principal": agent_id,
-        "tenant": os.environ.get("EPISTEMIC_GRAPH_TENANT", "tenant:default"),
-        "audience": os.environ.get("EPISTEMIC_GRAPH_AUDIENCE", "epistemic-graph"),
+        "tenant": os.environ.get("MEDULLA_TENANT", "tenant:default"),
+        "audience": os.environ.get("MEDULLA_AUDIENCE", "epistemic-graph"),
         "agent_id": agent_id,
         "roles": ["graph-client"],
         "scopes": ["compute:parse"],
         "policy_version": os.environ.get(
-            "EPISTEMIC_GRAPH_POLICY_VERSION", "policy:current"
+            "MEDULLA_POLICY_VERSION", "policy:current"
         ),
         "delegation": [],
     }

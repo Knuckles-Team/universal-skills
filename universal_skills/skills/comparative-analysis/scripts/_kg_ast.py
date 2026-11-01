@@ -184,13 +184,13 @@ def _native_request_context() -> dict[str, Any]:
     identity = "service:comparative-analysis"
     return {
         "principal": identity,
-        "tenant": os.environ.get("EPISTEMIC_GRAPH_TENANT", "tenant:default"),
-        "audience": os.environ.get("EPISTEMIC_GRAPH_AUDIENCE", "epistemic-graph"),
+        "tenant": os.environ.get("MEDULLA_TENANT", "tenant:default"),
+        "audience": os.environ.get("MEDULLA_AUDIENCE", "epistemic-graph"),
         "agent_id": identity,
         "roles": ["graph-client"],
         "scopes": ["compute:parse"],
         "policy_version": os.environ.get(
-            "EPISTEMIC_GRAPH_POLICY_VERSION", "policy:initial"
+            "MEDULLA_POLICY_VERSION", "policy:initial"
         ),
         "delegation": [],
     }
