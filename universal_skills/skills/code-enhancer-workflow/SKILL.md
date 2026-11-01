@@ -113,7 +113,7 @@ Persist the generated report, grading metrics, and identified conceptual/code li
 Expected: `kg_persistence_artifacts`
 
 ## Output
-- Unified multi-domain codebase enhancement audit report in `.specify/`
+- Unified multi-domain codebase enhancement audit report in `specs/<feature>/`
 - Prioritized TODO checklist and SDD-ready implementation specification
 - Nodes and edges persisted to Knowledge Graph representing code quality and compliance status
 

@@ -22,11 +22,10 @@ distinct failure mode that the others miss:
      (dead data).
 
 Usage:
-    analyze_liveness.py <repo_path> [--coverage coverage.json] [--baseline base.json]
+    analyze_liveness.py <repo_path> [--coverage coverage.json]
                         [--entry-points a.b.c,d.e] [--json]
 
-Exit code is non-zero when a ``--baseline`` is supplied and any category REGRESSED
-(more findings than the baseline) — so it ratchets as a CI guardrail gate.
+Every finding is reported; none is hidden behind a baseline (constitution article XII).
 """
 
 from __future__ import annotations
@@ -167,18 +166,12 @@ def _stable_finding_id(text: str) -> str:
 
     A finding string that embeds a raw line number (``f"{mod}:{i}"``,
     ``f"{mod}:{n.name}@{line}"``) looks stable across one run but is not: any
-    diff of two runs' finding lists (before/after a change, or a future
-    baseline ratchet built on top of this analyzer's raw output — the same
-    shape ``check_liveness.py``'s own ``--baseline`` counts-only ratchet
-    could grow into) treats a pure line-shift as a brand-new finding.
+    diff of two runs' finding lists (before/after a change) treats a pure
+    line-shift as a brand-new finding.
     Verified live: re-running this analyzer before/after an unrelated
     30-line insertion above existing findings inflated an apparent 125/58
     new placeholder/facade findings down to the 2 that were genuinely new
-    once line numbers were dropped from the identity. Mirrors
-    agent-utilities' identical fix for this same defect class
-    (``check_cypher_write_subset.py``/``check_log_exception_redaction.py``'s
-    D-F6-2/D-MT-2 ``(path, symbol, shape, content_hash)`` baseline key) —
-    reused here rather than inventing a second scheme.
+    once line numbers were dropped from the identity.
     """
     return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:8]
 
@@ -537,7 +530,7 @@ def _facade_except_handlers(func: ast.AST) -> list[int]:
 
 def analyze_liveness(argv: list[str]) -> dict[str, Any]:
     args = list(argv)
-    cov_path = baseline_path = None
+    cov_path = None
     entry_points: set[str] = set()
     paths: list[str] = []
     i = 0
@@ -546,9 +539,6 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         if a == "--coverage":
             i += 1
             cov_path = args[i]
-        elif a == "--baseline":
-            i += 1
-            baseline_path = args[i]
         elif a == "--entry-points":
             i += 1
             entry_points = {x.strip() for x in args[i].split(",") if x.strip()}
@@ -852,20 +842,9 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
         "coverage_available": coverage_available,
     }
 
-    # ── Ratchet gate ─────────────────────────────────────────────────────────
-    if baseline_path and Path(baseline_path).exists():
-        base = json.loads(Path(baseline_path).read_text()).get("counts", {})
-        regressed = {
-            k: (v, base.get(k, 0)) for k, v in counts.items() if v > base.get(k, 0)
-        }
-        result["regressed"] = regressed
-        result["gate"] = "fail" if regressed else "pass"
     return result
 
 
 if __name__ == "__main__":
     out = analyze_liveness(sys.argv[1:])
     print(json.dumps(out, indent=2, default=str))
-    # ratchet exit code for CI
-    if out.get("gate") == "fail":
-        sys.exit(1)

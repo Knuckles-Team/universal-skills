@@ -30,11 +30,11 @@ reflects only what is relevant to the project.
 
 ### Decision Rules (synthesized)
 
-- Functions should be small (≤50 lines), focused, and at one level of
+- Functions stay inside the statement limit in the thresholds table of the organization constitution (articles XI and XII), focused, and at one level of
   abstraction.
-- Parameters should be few (≤5) and meaningful — avoid flag arguments and
+- Parameters stay inside the positional-argument limit in the same table and meaningful — avoid flag arguments and
   grab-bag lists.
-- Keep nesting depth shallow (≤4) — prefer early returns and extraction.
+- Keep nesting inside the indentation limit in the same table — prefer early returns and extraction.
 - Separate setup, validation, computation, and side effects when they are
   different concerns.
 - Choose clarity and explicitness over clever compactness.
@@ -46,9 +46,11 @@ reflects only what is relevant to the project.
 | Check | Threshold A | Threshold F | Deduction |
 |-------|------------|------------|-----------|
 | Avg function length | <20 lines | ≥75 lines | -10 to -20 |
-| Functions >50 lines | <5% | >20% | -5 to -20 |
-| Functions >5 params | 0% | ≥20% | up to -15 |
-| Max nesting depth >4 | 0 funcs | >5 funcs | -3 per func |
+| Functions over the statement limit | <5% | >20% | -5 to -20 |
+| Functions over the positional-argument limit | 0% | ≥20% | up to -15 |
+| Nesting over the indentation limit | 0 funcs | >5 funcs | -3 per func |
+
+The limits are in `scripts/constitution_limits.py`, which mirrors the thresholds table of the organization constitution (articles XI and XII).
 
 ---
 
@@ -163,7 +165,7 @@ Implementing DDD (Vernon)
 | Check | What | Deduction |
 |-------|------|-----------|
 | Transaction boundaries | `transaction`/`commit`/`atomic` usage | -10 if missing |
-| Service file size | >300 lines = fat service | -10 |
+| Service file size | over the file line limit = fat service | -10 |
 
 ---
 

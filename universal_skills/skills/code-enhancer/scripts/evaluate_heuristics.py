@@ -16,6 +16,15 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from constitution_limits import (  # noqa: E402 - needs the sys.path insert above
+    MAX_INDENT_DEPTH,
+    MAX_LINES_PER_FILE,
+    MAX_POSITIONAL_ARGS,
+    MAX_STATEMENTS_PER_FUNCTION,
+    statement_count,
+)
+
 # ---------------------------------------------------------------------------
 # Heuristic Categories — contextually activated
 # ---------------------------------------------------------------------------
@@ -247,6 +256,7 @@ def _scan_python_functions(root: Path) -> list[dict]:
                         "name": node.name,
                         "file": str(py_file.relative_to(root)),
                         "length": length,
+                        "statements": statement_count(node),
                         "params": param_count,
                         "nesting": max_depth,
                     }
@@ -284,36 +294,38 @@ def check_h1_construction(root: Path, functions: list[dict]) -> tuple[int, list[
         return 70, ["No Python functions found to analyze"]
 
     # Function length
-    long_fns = [f for f in functions if f["length"] > 50]
+    long_fns = [
+        f for f in functions if f["statements"] > MAX_STATEMENTS_PER_FUNCTION
+    ]
     long_pct = len(long_fns) / len(functions) * 100 if functions else 0
     if long_pct > 20:
         score -= 20
         findings.append(
-            f"{len(long_fns)} functions ({long_pct:.0f}%) exceed 50 lines [Clean Code: keep functions small]"
+            f"{len(long_fns)} functions ({long_pct:.0f}%) exceed the constitution statement limit [Clean Code: keep functions small]"
         )
     elif long_pct > 10:
         score -= 10
-        findings.append(f"{len(long_fns)} functions ({long_pct:.0f}%) exceed 50 lines")
+        findings.append(f"{len(long_fns)} functions ({long_pct:.0f}%) exceed the constitution statement limit")
     elif long_pct > 5:
         score -= 5
 
     # Parameter count
-    many_params = [f for f in functions if f["params"] > 5]
+    many_params = [f for f in functions if f["params"] > MAX_POSITIONAL_ARGS]
     if many_params:
         pct = len(many_params) / len(functions) * 100
         deduction = min(15, int(pct))
         score -= deduction
         findings.append(
-            f"{len(many_params)} functions have >5 parameters [Clean Code: few and meaningful params]"
+            f"{len(many_params)} functions have >{MAX_POSITIONAL_ARGS} parameters [Clean Code: few and meaningful params]"
         )
 
     # Nesting depth
-    deep_fns = [f for f in functions if f["nesting"] > 4]
+    deep_fns = [f for f in functions if f["nesting"] > MAX_INDENT_DEPTH]
     if deep_fns:
         deduction = min(15, len(deep_fns) * 3)
         score -= deduction
         findings.append(
-            f"{len(deep_fns)} functions have nesting depth >4 [Code Complete: straightforward control flow]"
+            f"{len(deep_fns)} functions have nesting depth >{MAX_INDENT_DEPTH} [Code Complete: straightforward control flow]"
         )
 
     # Average function length
@@ -558,7 +570,7 @@ def check_h6_enterprise(root: Path) -> tuple[int, list[str]]:
         # Check for fat services (anti-pattern)
         if "service" in pf.name.lower():
             lines = content.split("\n")
-            if len(lines) > 300:
+            if len(lines) > MAX_LINES_PER_FILE:
                 has_thin_service = False
 
     if not has_transaction:
@@ -570,7 +582,7 @@ def check_h6_enterprise(root: Path) -> tuple[int, list[str]]:
     if not has_thin_service:
         score -= 10
         findings.append(
-            "Fat service detected (>300 lines) [PoEAA: service layer coordinates, doesn't compute]"
+            "Fat service detected (over the constitution file line limit) [PoEAA: service layer coordinates, doesn't compute]"
         )
 
     return max(0, score), findings

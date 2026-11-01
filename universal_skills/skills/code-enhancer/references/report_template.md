@@ -86,5 +86,5 @@ pie title Finding Distribution
 ...
 
 ## 🔄 SDD Handoff
-Link to .specify/specs/ output.
+Link to the `specs/<feature>/` output.
 ```

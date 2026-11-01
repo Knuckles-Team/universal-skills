@@ -15,6 +15,15 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from constitution_limits import (  # noqa: E402 - needs the sys.path insert above
+    MAX_CYCLOMATIC,
+    MAX_INDENT_DEPTH,
+    MAX_LINES_PER_FILE,
+    MAX_STATEMENTS_PER_FUNCTION,
+    statement_count,
+)
+
 
 def _cyclomatic_complexity(node: ast.AST) -> int:
     """Compute McCabe cyclomatic complexity for a function/method node."""
@@ -64,6 +73,7 @@ def _analyze_file(filepath: Path) -> dict:
                     "name": node.name,
                     "line": node.lineno,
                     "length": length,
+                    "statements": statement_count(node),
                     "complexity": cc,
                     "nesting_depth": depth,
                 }
@@ -176,12 +186,16 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     duplicate_blocks = sum(1 for c in hash_counts.values() if c > 1)
     duplication_ratio = duplicate_blocks / max(len(all_hashes), 1)
 
-    # Long functions (>50 lines)
-    long_functions = [f for f in all_functions if f["length"] > 50]
-    # Complex functions (CC > 10)
-    complex_functions = [f for f in all_functions if f["complexity"] > 10]
-    # Deep nesting (>4)
-    deep_functions = [f for f in all_functions if f["nesting_depth"] > 4]
+    # Limits come from the constitution thresholds table (constitution_limits.py)
+    long_functions = [
+        f for f in all_functions if f["statements"] > MAX_STATEMENTS_PER_FUNCTION
+    ]
+    complex_functions = [
+        f for f in all_functions if f["complexity"] > MAX_CYCLOMATIC
+    ]
+    deep_functions = [
+        f for f in all_functions if f["nesting_depth"] > MAX_INDENT_DEPTH
+    ]
 
     # ----------------------------------------------------------------
     # Structural analysis: composite heuristics (replaces >1000L check)
@@ -204,10 +218,10 @@ def analyze_codebase(root_dir: str = ".") -> dict:
         except Exception:
             pass
 
-    # Classify large files (>500 lines) as data, cohesive, or monolithic
+    # Classify files over the constitution line limit as data, cohesive, or monolithic
     structural_issues: list[dict] = []
     for filepath_str, line_count in file_sizes.items():
-        if line_count < 500:
+        if line_count <= MAX_LINES_PER_FILE:
             continue
         filepath = Path(filepath_str)
         if filepath.name.startswith("test_") or filepath.name == "__init__.py":
@@ -270,11 +284,13 @@ def analyze_codebase(root_dir: str = ".") -> dict:
             fn_len = end - fn.lineno + 1
             fn_cc = _cyclomatic_complexity(fn)
             # Industry thresholds:
-            #   - Function >200 lines: definitely needs splitting
-            #   - Function CC > 15: hard to test and maintain
-            #   - Function nesting > 4: cognitive overload
+            # Limits: constitution thresholds (constitution_limits.py)
             fn_depth = _max_nesting_depth(fn)
-            if fn_len > 200 or fn_cc > 15 or fn_depth > 5:
+            if (
+                statement_count(fn) > MAX_STATEMENTS_PER_FUNCTION
+                or fn_cc > MAX_CYCLOMATIC
+                or fn_depth > MAX_INDENT_DEPTH
+            ):
                 func_issues.append(
                     {
                         "name": fn.name,
@@ -292,7 +308,11 @@ def analyze_codebase(root_dir: str = ".") -> dict:
                     m_len = end - method.lineno + 1
                     m_cc = _cyclomatic_complexity(method)
                     m_depth = _max_nesting_depth(method)
-                    if m_len > 200 or m_cc > 15 or m_depth > 5:
+                    if (
+                        statement_count(method) > MAX_STATEMENTS_PER_FUNCTION
+                        or m_cc > MAX_CYCLOMATIC
+                        or m_depth > MAX_INDENT_DEPTH
+                    ):
                         func_issues.append(
                             {
                                 "name": f"{cls.name}.{method.name}",
@@ -367,7 +387,7 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     findings: list[str] = []
 
     # Complexity penalty
-    if avg_complexity > 10:
+    if avg_complexity > MAX_CYCLOMATIC:
         score -= 15
         findings.append(f"High avg cyclomatic complexity: {avg_complexity:.1f}")
     elif avg_complexity > 7:
@@ -376,7 +396,7 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     elif avg_complexity > 5:
         score -= 3
 
-    # Long function penalty (>50 lines — informational, >200 lines — actionable)
+    # Long function penalty (statement limit from the constitution)
     very_long_functions = [f for f in all_functions if f["length"] > 200]
     if very_long_functions:
         score -= min(15, len(very_long_functions) * 3)
@@ -427,7 +447,7 @@ def analyze_codebase(root_dir: str = ".") -> dict:
     # Deep nesting penalty
     if len(deep_functions) > 5:
         score -= 10
-        findings.append(f"{len(deep_functions)} functions with nesting depth >4")
+        findings.append(f"{len(deep_functions)} functions with nesting depth >{MAX_INDENT_DEPTH}")
     elif len(deep_functions) > 0:
         score -= 5
 

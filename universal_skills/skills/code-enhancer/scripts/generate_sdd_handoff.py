@@ -2,7 +2,7 @@
 """FR-014: SDD handoff generator for code-enhancer skill.
 
 Produces structured TODO items compatible with speckit-specify -> speckit-tasks
--> sdd-implementer pipeline. Outputs both JSON and Markdown to .specify/specs/.
+-> sdd-implementer pipeline. Outputs both JSON and Markdown to specs/<feature>/.
 
 CONCEPT:CE-014 — SDD Handoff
 """
@@ -172,7 +172,7 @@ def generate_sdd_handoff(
     """Generate SDD-compatible handoff from enhancement results.
 
     IMPORTANT: output_dir should be the individual project root, NOT the
-    monorepo root. Each project gets its own .specify/ folder so that
+    monorepo root. Each project gets its own specs/ folder so that
     SDD tasks are addressed in the correct project context.
 
     Example:
@@ -180,7 +180,7 @@ def generate_sdd_handoff(
         - Wrong:    output_dir="agent-packages"  (monorepo root)
 
     Returns:
-        dict with spec and tasks data, also writes to .specify/ if output_dir given.
+        dict with spec and tasks data, also writes to specs/<feature>/ if output_dir given.
     """
     timestamp = datetime.now(timezone.utc).isoformat()
     feature_id = f"code-enhancement-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
@@ -277,10 +277,10 @@ def generate_sdd_handoff(
         },
     }
 
-    # Write to .specify/ if output_dir given
+    # Write to specs/<feature>/ if output_dir given
     if output_dir:
         out_root = Path(output_dir)
-        spec_dir = out_root / ".specify" / "specs" / feature_id
+        spec_dir = out_root / "specs" / feature_id
         spec_dir.mkdir(parents=True, exist_ok=True)
 
         # Write spec.json
@@ -342,7 +342,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("results_file", help="JSON file with domain results")
     parser.add_argument(
-        "--output-dir", "-o", help="Project root for .specify/ output", default=None
+        "--output-dir", "-o", help="Project root for specs/ output", default=None
     )
     parser.add_argument("--name", "-n", help="Project name", default="Unknown")
     args = parser.parse_args()

@@ -129,7 +129,7 @@ def kg_code_context(
     query: str, target: str = "how", top_k: int = 10, endpoint: str | None = None
 ) -> dict[str, Any] | None:
     """The composed, cited ``code_context`` answer (``POST /graph/code``, action=
-    code_context — CONCEPT:MERISTEM-KG.retrieval.synthesized-cited-answer). ``target``
+    code_context). ``target``
     is the intent: ``how`` | ``usage`` | ``impact``."""
     return _post(
         "/graph/code",

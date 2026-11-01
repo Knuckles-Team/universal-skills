@@ -41,7 +41,7 @@ _DECORATOR_CONCEPT_RE = re.compile(
 
 def _decorator_concept_ids(decorators: str) -> list[str]:
     """Extract concept IDs from a symbol's decorator source (e.g.
-    ``@pytest.mark.concept("MERISTEM-001")``) — replaces the old ast.Call/ast.Attribute
+    ``@pytest.mark.concept("CE-008")``) — replaces the old ast.Call/ast.Attribute
     walk in ``_extract_concept_from_decorator`` with a regex over the engine/local
     tier's already-extracted decorator text."""
     if not decorators:
@@ -194,7 +194,7 @@ def _scan_function_docstrings(root: Path) -> list[dict]:
     return missing
 
 
-# A bare concept-ID token (e.g. "KG-2.79", "CE-038") as used in concepts.yaml.
+# A bare concept-ID token (e.g. "CE-008", "CE-038") as used in concepts.yaml.
 _BARE_ID_PATTERN = re.compile(r"\b([A-Z]{2,}-\d+(?:\.\d+)?)\b")
 
 

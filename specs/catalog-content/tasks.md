@@ -17,3 +17,4 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] **US-CONTENT-R002.8:** Update to latest.
 - [ ] **US-CONTENT-R002.9:** Spec-kit skills replace the retired ones.
 - [ ] **US-CONTENT-R002.10:** Hook and installer wiring.
+- [ ] **US-CONTENT-R003:** The code-enhancer skill follows the organization constitution.
