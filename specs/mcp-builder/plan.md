@@ -1,12 +1,60 @@
-# US-MCP-BUILDER — Design and implementation plan
+# US-MCP-BUILDER — Implementation plan
+
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
+
+## Summary
+
+The mcp-builder scaffold writes the connector-owned tree and nothing the SDK or pipelines own. The live caller is `main` (universal_skills/skills/mcp-builder/scripts/scaffold_connector.py:659) started by the skill instructions. The reuse candidates are the SDK `Connector`, `client_factory`, `load_declaration` and conformance plugin, and the shared pipelines workflows.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14 standard, 3.12 floor (requires-python >=3.12)
+- **Primary Dependencies**: Python standard library for the scaffold; scion-sdk (floor 0.5.1) and the shared pipelines gates for generated connectors
+- **Storage**: N/A
+- **Testing**: pytest (`uv run pytest`) with the tests named in the rows
+- **Target Platform**: Linux, macOS and Windows developer machines and CI
+- **Project Type**: skill library
+- **Performance Goals**: N/A (the scaffold writes about 30 files in well under a second)
+- **Constraints**: Deterministic output, no overwrite of an existing file, only connector-specific files, SDK as the only dependency of a generated connector
+- **Scale/Scope**: 14 active rows over one script, scripts/scaffold_connector.py (672 lines)
+
+## Constitution Check
+
+- I One owner per concept: pass. Each row names one owning file.
+- II Extend before you create: pass. Each `Shape:` sentence names the helper to reuse.
+- XXIV Complete rows: pass. Every active row holds a caller chain, a shape and a test reference.
+- XI Code stays small: pass. The Build contract lists the complexity and size limits.
+- XXI Public files stay portable: pass. The spec holds no host data and no local path.
+- R-I A skill is atomic and portable: pass. Each skill does one job with portable frontmatter.
+- R-II Paths are legal on every platform: pass. New paths stay within the length limits.
+
+## Project Structure
+
+Existing paths this spec owns:
+
+```text
+universal_skills/skills/mcp-builder/SKILL.md                      existing  scaffold instructions
+universal_skills/skills/mcp-builder/scripts/scaffold_connector.py existing  generator and templates
+tests/test_mcp_builder_connector_scaffold.py                      existing  scaffold, gate and conformance tests
+```
+
+## Phase 0: Research
+
+No unknowns. The caller chain, shape and test of every row come from the current code, so this spec adds no research.md.
+
+## Phase 1: Design
+
+The scaffold is the only connector generator. The sections below keep the existing design notes.
+
+### US-MCP-BUILDER — Design and implementation plan
 
 Governing spec: [spec.md](spec.md).
 
-## Existing system and reuse
+### Existing system and reuse
 
 The SDK owns `Connector`, `run`, `load_declaration`, `client_factory` and the pytest conformance plugin. Pipelines owns the reference pre-commit config, the shared workflows and the `connector-name`, `connector-standard` and `graph-check` gates. This spec adds one generator and reuses all of them.
 
-## Architecture
+### Architecture
 
 `scripts/scaffold_connector.py` writes the exact 26-file connector-owned tree:
 `pyproject.toml`, `<pkg>/{__init__,__main__,api_client,auth,connector_sources}.py`,
@@ -18,18 +66,48 @@ this scaffold. `tests/test_mcp_builder_connector_scaffold.py` generates a connec
 checks the Pages preflight boundary, installs it into a throwaway environment and
 runs the SDK, the plugin and the pipelines gates against it.
 
-## Interfaces and data model
+### Interfaces and data model
 
 `scaffold_connector.py <fleet-name> --output-dir <dir>` writes `<dir>/<fleet-name>`. It never overwrites an existing file.
 
-## Live integration path
+### Live integration path
 
 The SDK is read at 0.5.1. The core ontology for the graph check is fetched at a revision pinned in the test.
 
-## Quality and release gates
+### Quality and release gates
 
 The repository pre-commit hooks and `tests/test_mcp_builder_sdk_standard.py` must pass. A main push publishes a new skill version.
 
-## Risks, alternatives, and decisions
+### Risks, alternatives, and decisions
 
 Alternative: link the rules from `SKILL.md` only. Rejected: prose does not stop a generated connector from drifting, and the audit shows the drift. The static check runs in every generated project instead.
+
+## Phase 2: Task approach
+
+Order the work producer first: the generator templates, then the generated-tree tests. Rows on different templates run in parallel. Each task line in tasks.md names one row.
+
+## Complexity Tracking
+
+None. The constitution check passed with no violation.
+
+## Build contract
+
+The change must meet these gate thresholds from the organization constitution table.
+
+- Cyclomatic complexity 10 and cognitive complexity 15 per function (`pipelines_hooks/complexity`).
+- Words per sentence 20 (`ste`).
+- Clone similarity 0.85 blocking at 40 tokens (`dupehound`).
+- KISS limits from `.config/kiss.toml`: 35 statements, 15 locals, 20 calls, 3 positional arguments, 4 indentation levels, 300 lines and 10 functions per file.
+- Pre-land fast set: `format`, `hygiene`, `secrets`, `types`, `tests-fast`; post-land set: `spec`, `tests`, `supply-chain`.
+
+Repository commands: `uv run pytest` for the tests named in the rows and `pre-commit run --all-files` for ruff, mypy, vulture, codespell and bandit.
+
+No scanner gaming, no suppression and no duplicate implementation: a row reuses the helper named in its `Shape:` sentence.
+
+## Production caller chain
+
+Entry point: an operator or agent follows universal_skills/skills/mcp-builder/SKILL.md:32 and runs `scaffold_connector.py <fleet>`; `main` (universal_skills/skills/mcp-builder/scripts/scaffold_connector.py:659) calls `scaffold` (:645), which calls `tree` (:605) for the file map and writes each missing file. Obsolete paths to delete: none.
+
+## Cross-repo seams
+
+None. The SDK and pipelines own their contracts (SCION-CONNECTOR-CONTROL-R019.1, SCION-CONNECTOR-CONTROL-R028.4 and SCION-QUALITY-RELEASE-R005.1); the scaffold only emits calls to them.
