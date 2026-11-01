@@ -1,65 +1,58 @@
 name: CI
 
-# The same gates a contributor runs locally: bootstrap, then this repository's
-# own .pre-commit-config.yaml (which includes the full pytest suite). With CI
-# set, a gate that cannot run fails (CANNOT RUN) instead of skipping.
+# The fleet CI standard (pipelines reference/ci-standard.md). A pull request runs
+# the shared `gates` job (this repository's pre-commit gates over the diff) and
+# the repository-specific jobs below; a push to main and the nightly schedule run
+# the shared full gates, the full suite and the Python 3.12 backward leg. The
+# caller aggregate `CI required` is the one required status check. This workflow
+# never publishes: only a v* tag publishes (pipeline.yml, pages.yml).
 
 on:
   pull_request:
+    branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '41 3 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.workflow, github.event.pull_request.number) || format('main-{0}-{1}', github.workflow, github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - name: Restore pre-commit environments
-        id: hook-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-partial-
+  gates:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    uses: Knuckles-Team/pipelines/.github/workflows/gates_pipeline.yml@main
+    with:
+      setup-command: scripts/bootstrap.sh
 
-      - name: Bootstrap
-        run: scripts/bootstrap.sh
-      - name: Install pre-commit environments
-        id: hook-install
-        run: |
-          set -euo pipefail
-          uvx pre-commit install-hooks --config .pre-commit-config.yaml
+  gates-all-files:
+    # Main and nightly keep the whole-tree pre-commit run the repository ran on every pull request.
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+    uses: Knuckles-Team/pipelines/.github/workflows/gates_pipeline.yml@main
+    with:
+      all-files: true
+      setup-command: scripts/bootstrap.sh
+      timeout-minutes: 60
 
-      - name: Save pre-commit environments
-        if: success() && steps.hook-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}
+  full:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+    uses: Knuckles-Team/pipelines/.github/workflows/main_pipeline.yml@main
+    with:
+      backward-python: '3.12'
+      setup-command: scripts/bootstrap.sh
 
-      - name: Save partly installed pre-commit environments
-        if: (failure() || cancelled()) && steps.hook-install.outcome != 'success' && steps.hook-install.outcome != 'skipped'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-partial-${{ github.run_id }}-${{ github.run_attempt }}
-      - name: Pre-commit gates
-        run: uvx pre-commit run --all-files --show-diff-on-failure
-
+  # Repository-specific jobs: kept from the former separate workflows; CI required depends on each.
   backward-python:
     # The one backward-support leg (pipelines reference/gate-standard.md
     # "Python version"): the environment is 3.14, requires-python keeps a 3.12
@@ -152,3 +145,68 @@ jobs:
         run: |
           .ci/scion-sdk/.venv/bin/python -m pytest -q -ra \
             tests/test_mcp_builder_site.py
+
+  openapi-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: Knuckles-Team/scion-sdk
+          ref: 16908f3591e80be84b6bd5df356b4a2e9a666010
+          path: .ci/scion-sdk
+          persist-credentials: false
+      - name: Bootstrap reviewed SDK without native builds
+        working-directory: .ci/scion-sdk
+        run: bash scripts/bootstrap.sh
+      - name: Install required constraint validators as wheels
+        run: |
+          uv pip install --python .ci/scion-sdk/.venv/bin/python --only-binary=:all: regex==2026.9.29 rfc3986-validator==0.1.1 rfc3339-validator==0.1.4
+      - name: Test real governed transport and local-source publication boundaries
+        env:
+          MCP_BUILDER_REQUIRE_SDK: '1'
+        run: .ci/scion-sdk/.venv/bin/python -m pytest -q -ra tests/test_mcp_builder_openapi.py tests/test_mcp_builder_openapi_parity.py tests/test_mcp_builder_source_parity.py tests/test_mcp_builder_openapi_security.py tests/test_mcp_builder_unicode_patterns.py tests/test_mcp_builder_session_auth.py tests/test_mcp_builder_github_publish.py tests/test_mcp_builder_pages_publication.py tests/test_mcp_builder_schema_budget.py tests/test_mcp_builder_provider_overlay.py tests/test_mcp_builder_native_confirmation.py tests/test_mcp_builder_reviewed_redirect.py tests/test_mcp_builder_format_validation.py tests/test_mcp_builder_authorization_runtime.py
+
+  build-and-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.14'
+      - name: Install disposable documentation dependencies
+        run: python -m pip install -r .github/requirements-pages.txt
+      - name: Build and check local links
+        run: python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/pages-site"
+      - name: Canonical sources and status contracts
+        run: python -m pytest tests/pages_contracts.py -q
+
+  ci-required:
+    name: CI required
+    if: always()
+    needs:
+      - gates
+      - gates-all-files
+      - full
+      - backward-python
+      - connector-scaffold
+      - mcp-builder-contracts
+      - openapi-contracts
+      - build-and-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail on any failed or cancelled job (skipped is fine)
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "needed job results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in failure|cancelled) echo "::error::a required job ended $r"; exit 1;; esac
+          done
