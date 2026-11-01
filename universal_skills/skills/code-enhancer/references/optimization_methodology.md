@@ -7,9 +7,9 @@ Industry-proven methodologies for identifying and resolving code quality issues.
 ### Bloaters
 | Smell | Symptom | Threshold | Remediation |
 |-------|---------|-----------|-------------|
-| Long Method | Function too large to understand | >50 lines | Extract Method |
-| Large Class | Class doing too much | >15 methods, >500 lines | Extract Class |
-| Long Parameter List | Too many function args | >5 parameters | Introduce Parameter Object |
+| Long Method | Function too large to understand | over the statement limit | Extract Method |
+| Large Class | Class doing too much | over the method and file line limits | Extract Class |
+| Long Parameter List | Too many function args | over the positional-argument limit | Introduce Parameter Object |
 | Data Clumps | Same group of data appears together | 3+ fields repeated | Extract Class |
 
 ### Object-Orientation Abusers
@@ -35,13 +35,15 @@ Industry-proven methodologies for identifying and resolving code quality issues.
 
 ## Complexity Thresholds
 
+The limits are the ones in the thresholds table of the organization constitution (articles XI and XII): cyclomatic and cognitive complexity per function, statements per function, indentation depth, methods per class and lines per file. A metric above its limit is a finding to fix at its cause, never a tier to accept. The tiers below only rank how far over a limit a metric sits.
+
 | Metric | Low Risk | Moderate | High Risk | Critical |
 |--------|----------|----------|-----------|----------|
-| Cyclomatic Complexity | 1–5 | 6–10 | 11–20 | >20 |
-| Function Length (lines) | 1–20 | 21–50 | 51–100 | >100 |
-| Nesting Depth | 1–2 | 3–4 | 5–6 | >6 |
-| Class Methods | 1–8 | 9–15 | 16–25 | >25 |
-| Module Lines | 1–200 | 201–500 | 501–1000 | >1000 |
+| Cyclomatic Complexity | within limit | at limit | over limit | far over limit |
+| Statements per function | within limit | at limit | over limit | far over limit |
+| Nesting Depth | within limit | at limit | over limit | far over limit |
+| Class Methods | within limit | at limit | over limit | far over limit |
+| Module Lines | within limit | at limit | over limit | far over limit |
 
 ## Incremental Optimization Process
 

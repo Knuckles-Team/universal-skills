@@ -862,3 +862,35 @@ class TestKgNativeInventory:
         assert symbols[0]["name"] == "fallback"
         assert symbols[0]["decorators"] == "marker"
         assert symbols[0]["assert_count"] == "1"
+
+
+@pytest.mark.spec("US-CONTENT-R003")
+def test_code_enhancer_follows_the_organization_constitution():
+    skill = SCRIPTS_DIR.parent
+    limits = _import_script("constitution_limits")
+    assert (limits.MAX_CYCLOMATIC, limits.MAX_COGNITIVE) == (10, 15)
+    assert (limits.MAX_STATEMENTS_PER_FUNCTION, limits.MAX_LINES_PER_FILE) == (35, 300)
+    assert limits.CLONE_SIMILARITY == 0.85
+    assert not (SCRIPTS_DIR / "analyze_baseline.py").exists()
+    banned = (
+        "--baseline",
+        "--write-baseline",
+        "analyze_baseline",
+        ".specify/specs",
+        "agent-utilities-kg",
+        "agent-utilities`",
+        "kg_analogy_search",
+        "Similarity ≥ 0.7",
+        "CONCEPT:MERISTEM",
+        "CONCEPT:AU-",
+    )
+    for path in skill.rglob("*"):
+        if (
+            not path.is_file()
+            or path.suffix not in {".py", ".md"}
+            or path.name == "evolution_log.md"
+        ):
+            continue
+        text = path.read_text(encoding="utf-8")
+        assert not [b for b in banned if b in text], path.name
+    assert "article XXVII" in (skill / "SKILL.md").read_text(encoding="utf-8")

@@ -226,7 +226,7 @@ async def run_multi_project(
             except Exception as e:
                 integration_result = {"error": type(e).__name__}
 
-    # Write per-project reports and SDD handoffs to each project's own .specify/
+    # Write per-project reports and SDD handoffs to each project's own specs/
     if output_dir:
         out_root = Path(output_dir)
         for proj in successful:
@@ -236,7 +236,7 @@ async def run_multi_project(
                 json.dumps(proj, indent=2), encoding="utf-8"
             )
 
-            # Write SDD handoff to each project's own .specify/ folder
+            # Write SDD handoff to each project's own specs/ folder
             proj_path = Path(proj["path"])
             if proj_path.is_dir():
                 try:
@@ -253,7 +253,7 @@ async def run_multi_project(
                         mod.generate_sdd_handoff(
                             proj["domain_results"],
                             project_name=proj["project"],
-                            output_dir=str(proj_path),  # per-project .specify/
+                            output_dir=str(proj_path),  # per-project specs/
                         )
                 except Exception:
                     pass  # SDD handoff is best-effort

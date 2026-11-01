@@ -5,7 +5,7 @@ The genuinely new value a filesystem tool can't give at 60-repo scale: ask the K
 span repos and time. Provides (a) a library of cross-repo Cypher queries to run against arbora via
 the MCP, and (b) an offline ``deltas`` mode that diffs two directories of ``enhance_repo`` reports
 (current vs prior) to surface per-repo / per-domain score regressions — a bi-temporal proxy that
-works before the KG is wired, and mirrors what the KG-2.11 as-of query returns once it is.
+works before the KG is wired, and mirrors what the bi-temporal as-of query returns once it is.
 
 Usage:
     python kg_query_runs.py list                       # print the cross-repo query library

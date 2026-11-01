@@ -13,6 +13,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from constitution_limits import MAX_LINES_PER_FILE  # noqa: E402 - needs the sys.path insert above
+
 
 def _check_solid_principles(root: Path, py_files: list[Path]) -> list[dict]:
     """Evaluate SOLID principle adherence."""
@@ -28,8 +31,8 @@ def _check_solid_principles(root: Path, py_files: list[Path]) -> list[dict]:
             continue
 
         lines = len(source.splitlines())
-        # Single Responsibility: files >500 lines
-        if lines > 500:
+        # Single Responsibility: files over the constitution line limit
+        if lines > MAX_LINES_PER_FILE:
             god_modules.append({"file": str(f), "lines": lines})
 
         for node in ast.walk(tree):

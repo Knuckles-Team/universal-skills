@@ -18,4 +18,4 @@ The search covered `specs/` of this repository. The existing specs own published
 
 ## Scope and interfaces
 
-In scope: the package layout under `universal_skills/skills/`, the entry-point declaration and the SDK dependency. The catalog can also hold skills vendored from pinned upstream repositories (`upstream-sources.toml`, `scripts/sync_upstream_skills.py`, `universal_skills/overlays/`). Out of scope: the content of any single skill.
+In scope: the package layout under `universal_skills/skills/`, the entry-point declaration and the SDK dependency. The catalog can also hold skills vendored from pinned upstream repositories (`upstream-sources.toml`, `scripts/sync_upstream_skills.py`, `universal_skills/overlays/`). Out of scope: the content of any single skill, except the constitution conformance of the `code-enhancer` skill (`US-CONTENT-R003`).

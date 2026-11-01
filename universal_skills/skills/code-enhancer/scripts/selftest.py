@@ -51,7 +51,6 @@ SELFTEST_SCRIPTS = [
     "enhance_repo.py",
     "kg_ingest_run.py",
     "kg_query_runs.py",
-    "analyze_baseline.py",
     "findings_filter.py",
     "apply_dependency_updates.py",
     "analyze_dependency_migration.py",

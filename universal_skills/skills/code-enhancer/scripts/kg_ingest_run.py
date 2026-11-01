@@ -9,7 +9,7 @@ the live run). Talking to the running MCP server keeps the skill decoupled from 
 Graph shape (per run):
     Repo ──OF_REPO── CodeEnhancementRun ──HAS_DOMAIN── DomainScore ──HAS_FINDING── Finding
 
-Runs are time-stamped, so the KG's bi-temporal layer (KG-2.11) lets ``kg_query_runs.py`` compute
+Runs are time-stamped, so the KG's bi-temporal layer lets ``kg_query_runs.py`` compute
 per-repo score deltas vs the prior run. ``build_kg_payload`` is pure and unit-testable; ingest is
 best-effort and skips cleanly when no endpoint is configured.
 
