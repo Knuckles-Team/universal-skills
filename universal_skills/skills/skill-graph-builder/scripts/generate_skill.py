@@ -10,12 +10,12 @@ front-end that:
 
 then delegates *all* standardization — markdown normalization, the standardized
 ``SKILL.md`` + ``sources.json`` provenance/freshness manifest, hybrid-auto KG
-ingestion, large-file splitting and the hierarchical TOC — to the agent-utilities
-core (``agent_utilities.knowledge_graph.distillation.skill_graph_pipeline``).
+ingestion, large-file splitting and the hierarchical TOC — to the local
+core (``universal_skills.skill_graph_pipeline``; ``MEDULLA-TYPED-PACKS-R700.7`` takes over native distillation).
 
 This keeps a single source of truth for the skill-graph format while letting the
 skill own the richer crawler. The builder runs in the agent-packages workspace
-where agent-utilities is importable; if it is not, it tells you how to install it.
+with no agent-runtime package installed.
 """
 
 import argparse
@@ -28,18 +28,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-try:
-    from agent_utilities.knowledge_graph.distillation import (
-        AcquiredDoc,
-        SkillGraphPipeline,
-        SourceSpec,
-    )
-except ImportError:
-    sys.stderr.write(
-        "skill-graph-builder requires agent-utilities to be importable.\n"
-        "Install it in this environment: pip install agent-utilities\n"
-    )
-    sys.exit(1)
+from universal_skills.skill_graph_pipeline import (  # noqa: E402
+    AcquiredDoc,
+    SkillGraphPipeline,
+    SourceSpec,
+)
 
 try:
     from universal_skills.skill_utilities import portable_name as _portable_name
@@ -305,8 +298,6 @@ def generate_skill(
     disable_magic_js: bool = False,
     wait_for: str | None = None,
     no_sitemap: bool = False,
-    append: bool = False,
-    no_kg: bool = False,
     from_kg: str | None = None,
     distill: bool = False,
 ):
@@ -320,12 +311,6 @@ def generate_skill(
         specs.append(SourceSpec("kg_query", from_kg, {"max_depth": max_depth}))
     if not specs:
         raise SystemExit("provide a source (URL/dir/file) or --from-kg <seed-or-query>")
-    if append:
-        print(
-            "⚠️  --append is deprecated; the unified pipeline always does a full, "
-            "provenance-tracked rebuild. Use the `rebuild` action for incremental refresh."
-        )
-
     for s in specs:
         if s.kind == "web":
             s.options["max_pages"] = max_pages
@@ -335,9 +320,7 @@ def generate_skill(
         "no_sitemap": no_sitemap,
         "wait_for": wait_for,
     }
-    pipe = SkillGraphPipeline(
-        crawler_fn=_make_crawler_fn(crawl_opts), kg_enrich=not no_kg
-    )
+    pipe = SkillGraphPipeline(crawler_fn=_make_crawler_fn(crawl_opts))
     out_dir = _resolve_out_dir(target_type, output_dir)
     print(f"🛠️  Building a skill graph from {len(specs)} configured source(s)")
     result = pipe.build(
@@ -348,10 +331,8 @@ def generate_skill(
         max_file_kb=max_file_kb,
     )
     _flatten_reference_tree(Path(result["skill_dir"]))
-    kg = "yes" if result["kg_ingested"] else "no (offline)"
     print(
-        f"✅ Built skill graph: {result['file_count']} files • "
-        f"KG-ingested: {kg} • v{result['version']}"
+        f"✅ Built skill graph: {result['file_count']} files • v{result['version']}"
     )
     if result["validation_errors"]:
         print(
@@ -428,26 +409,6 @@ def main() -> None:
         help="CSS selector / JS expression to wait for in web-crawler.",
     )
     parser.add_argument(
-        "--append",
-        action="store_true",
-        help="Deprecated (no-op): the pipeline always full-rebuilds.",
-    )
-    parser.add_argument(
-        "--no-kg",
-        action="store_true",
-        help="Skip the hybrid-auto Knowledge-Graph ingestion (offline corpus only). "
-        "By default the corpus is ALSO ingested into the KG when the daemon is "
-        "reachable, degrading cleanly to offline-only when it is not.",
-    )
-    parser.add_argument(
-        "--ingest-kg",
-        "--ingest_kg",
-        action="store_true",
-        dest="ingest_kg",
-        help="Deprecated: KG ingestion is now hybrid-auto by default (use --no-kg to "
-        "disable). Accepted for backward compatibility.",
-    )
-    parser.add_argument(
         "--from-kg",
         "--from_kg",
         type=str,
@@ -459,7 +420,7 @@ def main() -> None:
     parser.add_argument(
         "--distill",
         action="store_true",
-        help="After building, LLM-distill an OVERVIEW.md (essence + cheatsheet) so the "
+        help="After building, distill an extractive OVERVIEW.md (essence + cheatsheet) so the "
         "agent reads the distilled knowledge first and drills into reference/ for detail.",
     )
 
@@ -478,8 +439,6 @@ def main() -> None:
         args.disable_magic_js,
         args.wait_for,
         args.no_sitemap,
-        args.append,
-        args.no_kg,
         args.from_kg,
         args.distill,
     )

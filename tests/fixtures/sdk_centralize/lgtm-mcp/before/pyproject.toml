@@ -9,7 +9,7 @@ description = "LGTM Observability and Alertmanager MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0", "requests>=2.34.2",]
+dependencies = [ "scion-sdk[mcp]>=0.3.0,<1.0.0", "requests>=2.34.2",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,28 +18,28 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
-all = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
+mcp = [ "scion-sdk[mcp]>=0.3.0,<1.0.0",]
+all = [ "scion-sdk[mcp]>=0.3.0,<1.0.0",]
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
 lgtm-mcp = "lgtm_mcp.mcp_server:mcp_server"
 
-[project.entry-points."agent_connector_sdk.skill_providers"]
+[project.entry-points."scion_sdk.skill_providers"]
 lgtm-mcp = "lgtm_mcp.skills"
 
-[project.entry-points."agent_connector_sdk.prompt_providers"]
+[project.entry-points."scion_sdk.prompt_providers"]
 lgtm-mcp = "lgtm_mcp.prompts"
 
 # CONCEPT:MERISTEM-KG.ontology.package-federation-migration — federate this package's OWL/RDF ontology modules into the
-# agent-connector-sdk hub (http://knuckles.team/kg/grafana and
+# scion-sdk hub (http://knuckles.team/kg/grafana and
 # http://knuckles.team/kg/observability). The loader globs every *.ttl in the
 # module's ontology/ dir, so one entry-point covers both. Resolved via
 # iter_provider_dirs like the skill/prompt providers.
-[project.entry-points."agent_connector_sdk.ontology_providers"]
+[project.entry-points."scion_sdk.ontology_providers"]
 lgtm-mcp = "lgtm_mcp.ontology"
 
-[project.entry-points."agent_connector_sdk.source_connector_providers"]
+[project.entry-points."scion_sdk.source_connector_providers"]
 lgtm-mcp = "lgtm_mcp.connectors"
 
 [tool.uv.workspace]

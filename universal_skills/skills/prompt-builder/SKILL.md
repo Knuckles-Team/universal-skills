@@ -3,7 +3,7 @@ name: prompt-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Author and validate canonical system-prompt JSON blueprints for agent-utilities
+  Author and validate canonical system-prompt JSON blueprints for the prompt library
   agents and agent-packages. Use when creating or fixing a main_agent.json / a
   prompts directory JSON system prompt, when an agent-package needs its system prompt, or
   when a prompt must conform to the StructuredPrompt canonical schema. Produces
@@ -21,21 +21,20 @@ metadata:
 # Prompt Builder
 
 Authors and validates **canonical system-prompt JSON blueprints** — the
-`StructuredPrompt` format (CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical) that agent-utilities ingests into
-the Knowledge Graph prompt library and that every agent-package ships as its
+`StructuredPrompt` format (CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical) that the Knowledge Graph prompt library ingests and that every agent-package ships as its
 `prompts/main_agent.json`.
 
-The canonical schema is **owned by the Pydantic model**
-`agent_utilities.prompting.structured.StructuredPrompt` — this skill is a thin,
-drift-free front-end over it. The machine-readable JSON Schema is generated at
-`agent_utilities/prompting/prompt.schema.json` (via `scripts/gen_prompt_schema.py`).
+The canonical contract lives in `universal_skills/prompt_blueprint.py`
+(`validate_canonical`). Medulla applies the same contract to packaged prompts at
+import, tracked as `MEDULLA-DECISION-ENGINE-R814.8`; this skill authors and checks
+locally until that row lands.
 
 ## The canonical contract (what a valid prompt MUST have)
 
 - `schema_version` — `"1.0"` (the canonical schema version).
 - `task` — a stable slug/identifier (e.g. `"gitlab-agent"`).
 - `type` — must be `"prompt"`.
-- `source` — provenance / KG namespace (e.g. `"gitlab-api"` or `"agent-utilities:base"`).
+- `source` — provenance / KG namespace (e.g. `"gitlab-api"` or `"meristem:base"`).
 - **Body** in `instructions.core_directive` (the ONE canonical body location).
   Legacy top-level `content`/`input` are migration-only — never author them.
 
@@ -43,7 +42,7 @@ Optional but standardized: `metadata` (description/topic/tone/style/audience),
 `identity` (role/goal/personality), the rest of `instructions`
 (responsibilities/capabilities/workflow/quality_checklist), `engineering_rules`,
 `rules`, `skills` (skill slugs the prompt expects installed), `tools`, and the
-composition fields `extends` (e.g. `"agent-utilities:base"`) + `compose`
+composition fields `extends` (e.g. `"meristem:base"`) + `compose`
 (`append` | `prepend` | `replace`).
 
 ## Build a prompt
@@ -54,7 +53,7 @@ python scripts/build_prompt.py \
   --role "GitLab Platform Engineer" \
   --directive "You are the GitLab agent. Use the gitlab MCP tools to manage projects, MRs, and pipelines. Verify before mutating." \
   --skills gitlab-mr-publisher --tools workspace-manager,agent-workflows \
-  --extends agent-utilities:base \
+  --extends meristem:base \
   -o /path/to/pkg/prompts/main_agent.json
 ```
 
@@ -73,10 +72,9 @@ per-package `test_prompt_parity.py`, so "valid here" means "valid in CI".
 
 ## Notes
 
-- Both scripts guard the `agent_utilities` import and print an install hint if
-  it is missing (`pip install agent-utilities`).
+- Both scripts import only `universal_skills.prompt_blueprint`; no engine package.
 - A package contributes its prompt to the KG library by declaring a
-  `[project.entry-points."agent_connector_sdk.connector"]` entry point and
+  `[project.entry-points."scion_sdk.connector"]` entry point and
   placing it in the package's `prompts/` directory (see [mcp-builder](../mcp-builder/SKILL.md)).
 - For per-agent overrides without editing the package, drop a `*.json` into the
   XDG overlay `~/.config/arbora/prompts/`.

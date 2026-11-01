@@ -23,49 +23,11 @@ SCRIPT = (
 
 @pytest.fixture(scope="module")
 def builder():
-    """Load the script with the pipeline package replaced by a recording stub."""
-    from dataclasses import dataclass, field
-
-    @dataclass
-    class SourceSpec:
-        kind: str
-        uri: str
-        options: dict = field(default_factory=dict)
-
-    @dataclass
-    class AcquiredDoc:
-        rel_path: str
-        text: str
-        source_uri: str
-
-    class SkillGraphPipeline:
-        def __init__(self, crawler_fn=None, kg_enrich=True):
-            self.crawler_fn = crawler_fn
-
-    stub = types.ModuleType("agent_utilities.knowledge_graph.distillation")
-    stub.SourceSpec, stub.AcquiredDoc, stub.SkillGraphPipeline = (
-        SourceSpec,
-        AcquiredDoc,
-        SkillGraphPipeline,
-    )
-    names = (
-        "agent_utilities",
-        "agent_utilities.knowledge_graph",
-        "agent_utilities.knowledge_graph.distillation",
-    )
-    saved = {n: sys.modules.get(n) for n in names}
-    for name in names[:2]:
-        sys.modules[name] = types.ModuleType(name)
-    sys.modules[names[2]] = stub
+    """Load the script with its local pipeline module."""
     spec = importlib.util.spec_from_file_location("generate_skill_under_test", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     yield module
-    for name, old in saved.items():
-        if old is None:
-            sys.modules.pop(name, None)
-        else:
-            sys.modules[name] = old
 
 
 @pytest.mark.spec("US-SKILL-GRAPH-BUILDER-R001.1")
@@ -171,3 +133,26 @@ def test_web_sources_are_fetched_by_the_web_crawler_skill(builder, monkeypatch):
     assert cmd[cmd.index("--max-depth") + 1] == "3" and cmd[cmd.index("--max-pages") + 1] == "9"
     assert "--no-sitemap" in cmd
     assert [(d.rel_path, d.source_uri) for d in docs] == [("page.md", "https://site.test/docs")]
+
+
+@pytest.mark.spec("US-SKILL-GRAPH-BUILDER-R004.1")
+def test_builder_imports_no_retired_package() -> None:
+    root = SCRIPT.parent
+    files = list(root.rglob("*.py")) + list(
+        (Path(__file__).resolve().parents[1] / "universal_skills" / "skill_graph_pipeline").rglob("*.py")
+    )
+    assert files
+    assert not [f for f in files if "agent_utilities" in f.read_text(encoding="utf-8")]
+
+
+@pytest.mark.spec("US-SKILL-GRAPH-BUILDER-R004.2")
+@pytest.mark.parametrize("flag", ["--no-kg", "--ingest-kg", "--append"])
+def test_retired_flags_are_refused(flag: str) -> None:
+    import subprocess
+
+    done = subprocess.run(
+        [sys.executable, str(SCRIPT), "./docs", "x", flag],
+        capture_output=True,
+        text=True,
+    )
+    assert done.returncode == 2

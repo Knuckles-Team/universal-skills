@@ -10,3 +10,4 @@ Governing spec: [spec.md](spec.md).
 | T-004 | `US-WEB-RESEARCH-R001.3` | `tests/test_web_research_skill.py::test_web_fetch_forwards` | A `web-fetch` run sends one `research.web` call with one URL. |
 | T-005 | `US-WEB-RESEARCH-R001.4` | `tests/test_web_research_skill.py::test_refusal_exits_without_fallback` | A refused call exits 2 and makes no other network call. |
 | T-006 | `US-WEB-RESEARCH-R001.5` | `tests/test_web_research_skill_served.py::test_skill_reaches_research_web_only` | The fixture receives one call, and the skill makes no other network request. |
+| T-007 | `US-WEB-RESEARCH-R002` | `tests/test_arbora_client.py::test_graph_query_posts_to_the_query_twin_and_unwraps_rows` | The call posts to the query twin with the bearer header and returns the row dicts. |

@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 classifiers = [ "Development Status :: 5 - Production/Stable", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
-dependencies = ["scion-sdk[mcp]>=0.5.6,<0.6.0"]
+dependencies = [ "medulla>=3.0.0","scion-sdk[mcp]>=0.6.5,<0.7.0"]
 
 [project.optional-dependencies]
 test = [
@@ -138,7 +138,7 @@ install-skills = "universal_skills.core.skill_installer:main"
 
 # Content is found by convention under the package (`universal_skills/skills/<name>/SKILL.md`);
 # the one declaration below is a content-only connector (SCION-CONNECTOR-CONTROL-R071.1).
-[project.entry-points."agent_connector_sdk.connector"]
+[project.entry-points."scion_sdk.connector"]
 universal-skills = "universal_skills"
 
 [[project.authors]]

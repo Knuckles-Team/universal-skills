@@ -7,7 +7,7 @@ before adapting the scaffold.
 
 | Authority | Owns |
 |---|---|
-| [agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk) | Connector server, content, configuration, transport, ingest, source and effect APIs |
+| [scion-sdk](https://github.com/Knuckles-Team/scion-sdk) | Connector server, content, configuration, transport, ingest, source and effect APIs |
 | [pipelines](https://github.com/Knuckles-Team/pipelines) | Shared gates, scanner policy, documentation/spec delivery, release and publication |
 | [repository-manager](https://github.com/Knuckles-Team/repository-manager) | Repository connector integration examples |
 | [servicenow-api](https://github.com/Knuckles-Team/servicenow-api) | Service connector integration examples |
@@ -18,7 +18,7 @@ not permission to copy service-specific state or existing omissions.
 
 ## SDK ownership and registration
 
-Connector code imports agent_connector_sdk only. It is MCP-only: no agent
+Connector code imports scion_sdk only. It is MCP-only: no agent
 server, no LLM client and no dependency on the agent control plane.
 Declare a `Connector` and start it with the SDK `run()` entry, as shown in the
 [Python guide](python_mcp_server.md). The SDK serves the package's skills, prompts,
@@ -42,7 +42,7 @@ claim undeclared graph capabilities.
 
 Source adapters need deterministic pagination, resumable checkpoints, idempotent
 re-runs, malformed-input rejection and complete provenance. Use
-agent_connector_sdk.testing.run_source_adapter_suite with fixture sessions and
+scion_sdk.testing.run_source_adapter_suite with fixture sessions and
 assert_conformant where applicable.
 
 Write-back needs side-effect-free preview, verified authorization, optimistic
@@ -52,7 +52,7 @@ Do not add write-back merely because a provider supports writes.
 
 ## Packaging and shared delivery
 
-Depend directly on agent-connector-sdk at a reviewed compatible version. Preserve
+Depend directly on scion-sdk at a reviewed compatible version. Preserve
 its graph-client boundary; do not require epistemic-graph[full] in connectors.
 Avoid recursive extras and
 import-time live-service initialization.

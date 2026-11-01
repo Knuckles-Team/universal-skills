@@ -387,8 +387,8 @@ def test_parity_rejects_tampered_authorization_metadata(generated, field, value)
 
 def test_plain_sdk_anonymous_http_is_not_a_generated_auth_boundary():
     _require_runtime()
-    from agent_connector_sdk.http.client import create_http_client
-    from agent_connector_sdk.http.options import HttpClientOptions
+    from scion_sdk.http.client import create_http_client
+    from scion_sdk.http.options import HttpClientOptions
 
     requests = []
     transport = httpx.MockTransport(

@@ -2,8 +2,8 @@
 """Author a canonical system-prompt JSON blueprint.
 
 CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical. Thin front-end over
-``agent_utilities.prompting.structured.StructuredPrompt`` — the single source of
-truth for the canonical prompt schema. Writes the body to
+``universal_skills.prompt_blueprint`` — the local source of the canonical prompt
+schema (``MEDULLA-DECISION-ENGINE-R814.8`` validates packaged prompts in medulla). Writes the body to
 ``instructions.core_directive`` and stamps ``schema_version``/``source`` so the
 output passes ``validate_canonical`` (and therefore the ``check_prompt_schema``
 CI gate and per-package ``test_prompt_parity``).
@@ -14,18 +14,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-try:
-    from agent_utilities.prompting.structured import (
-        StructuredPrompt,
-        validate_canonical,
-    )
-except ImportError:  # pragma: no cover - install hint
-    print(
-        "prompt-builder requires agent-utilities. Install it:\n"
-        "  pip install agent-utilities",
-        file=sys.stderr,
-    )
-    raise SystemExit(2)
+from universal_skills.prompt_blueprint import save, validate_canonical
 
 
 def _split(value: str | None) -> list[str] | None:
@@ -71,10 +60,7 @@ def build(args: argparse.Namespace) -> dict:
         blueprint["extends"] = args.extends
         blueprint["compose"] = args.compose
 
-    # Round-trip through the model to normalise + validate field types.
-    return StructuredPrompt.model_validate(blueprint).model_dump(
-        exclude_none=True, exclude_unset=True
-    )
+    return blueprint
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -88,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skills", help="Comma-separated skill slugs")
     parser.add_argument("--tools", help="Comma-separated tool/skill names")
     parser.add_argument(
-        "--extends", help="Base to compose onto, e.g. agent-utilities:base"
+        "--extends", help="Base to compose onto, e.g. meristem:base"
     )
     parser.add_argument(
         "--compose", default="append", choices=["append", "prepend", "replace"]
@@ -108,10 +94,10 @@ def main(argv: list[str] | None = None) -> int:
     if errs and not args.scaffold:
         print("Refusing to write non-canonical prompt:", file=sys.stderr)
         for e in errs:
-            print(f"  - {type(e).__name__}", file=sys.stderr)
+            print(f"  - {e}", file=sys.stderr)
         return 1
 
-    StructuredPrompt.model_validate(blueprint).save(args.output)
+    save(blueprint, args.output)
     print(f"Wrote {args.output}")
     if errs:
         print("NOTE (scaffold): fill in before shipping — " + "; ".join(errs))

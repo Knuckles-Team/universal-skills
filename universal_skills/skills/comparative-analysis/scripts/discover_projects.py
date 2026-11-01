@@ -488,8 +488,8 @@ def main():
 def _resolve_kg_sources(query: str) -> list[dict]:
     """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.7).
 
-    This is optional — if agent_utilities is not installed or no KG
-    engine is available, returns an empty list gracefully.
+    This is optional — if no arbora gateway answers, it returns an empty list
+    gracefully.
 
     Args:
         query: Search query for KG resolution.
@@ -497,36 +497,25 @@ def _resolve_kg_sources(query: str) -> list[dict]:
     Returns:
         List of resolved source dicts with file_path, name, source_type.
     """
-    try:
-        from agent_utilities.knowledge_graph.source_resolver import KGSourceResolver
-        from agent_utilities.knowledge_graph.engine import IntelligenceGraphEngine
+    from universal_skills._arbora import graph_search
 
-        engine = IntelligenceGraphEngine.get_active()
-        if not engine:
-            print(
-                json.dumps(
-                    {"kg_warning": "No active KG engine — skipping KG resolution"}
-                ),
-                file=sys.stderr,
-            )
-            return []
-
-        resolver = KGSourceResolver(engine=engine)
-        resolved = resolver.resolve_any(query=query, top_k=10)
-        return [r.model_dump() for r in resolved]
-    except ImportError:
+    rows = graph_search(query, top_k=10)
+    if rows is None:
         print(
             json.dumps(
-                {
-                    "kg_warning": "agent_utilities not installed — KG resolution unavailable"
-                }
+                {"kg_warning": "No arbora gateway answered — skipping KG resolution"}
             ),
             file=sys.stderr,
         )
         return []
-    except Exception as e:
-        print(json.dumps({"kg_warning": f"KG resolution failed: {type(e).__name__}"}), file=sys.stderr)
-        return []
+    return [
+        {
+            "file_path": r.get("file_path") or r.get("target_path") or "",
+            "name": r.get("name", ""),
+            "source_type": r.get("source_type") or r.get("type", ""),
+        }
+        for r in rows
+    ]
 
 
 if __name__ == "__main__":

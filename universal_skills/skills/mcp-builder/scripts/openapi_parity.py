@@ -209,7 +209,7 @@ def operation_input_schema(contract, action):
 def verify_mcp(contract, tools):
     """Compare native tools/list results: exactly one tool per API operation."""
     try:
-        from agent_connector_sdk.manifest.tool_schema import read_field
+        from scion_sdk.manifest.tool_schema import read_field
     except ImportError as exc:
         raise RuntimeError("MCP parity requires the reviewed SDK environment") from exc
     names = [read_field(tool, "name") for tool in tools]
@@ -233,7 +233,7 @@ def verify_mcp(contract, tools):
 
 
 def _verify_tool_schema(tool, schemas, name):
-    from agent_connector_sdk.manifest.tool_schema import (
+    from scion_sdk.manifest.tool_schema import (
         canonical_input_schema,
         canonical_output_schema,
     )

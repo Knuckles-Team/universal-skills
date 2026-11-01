@@ -21,41 +21,19 @@ metadata:
 A skill-graph is an externally-consumable corpus of knowledge packaged as an agent
 skill: a `SKILL.md` index over a `reference/` markdown tree. This builder is the
 **single, unified way** to create one from any source. It is a thin front-end over
-the agent-utilities core pipeline
-(`agent_utilities.knowledge_graph.distillation.skill_graph_pipeline`), so every
-skill-graph — no matter the source — comes out in the same shape with the same
-provenance + freshness tracking.
+the local `scripts/_pipeline.py`, so every skill-graph — no matter the source —
+comes out in the same shape with the same provenance tracking.
 
-## What makes it unified
+## What it produces
 
-* **Any source kind** → one normalized `reference/` markdown tree:
-  `web`, `pdf`, `office`, `dir`, `url_reader`, `rest`, `database`, `mcp_tool`,
-  `generated` (LLM-authored), `kg_query` (distilled from the Knowledge Graph).
-* **Polished, standardized output** — every graph ships:
-  * a polished `SKILL.md` (badge table, a "🧭 How to use this skill-graph" agent-guidance
-    block, TOC with per-folder counts) over a `reference/` markdown tree;
-  * `sources.json` — provenance/freshness manifest (per source kind/uri/options,
-    content-hash, fetch time + per-file integrity fingerprints);
-  * `index.json` — a machine-readable navigation map (per-file path/title/group/bytes/
-    headings/url) for programmatic jump-to. Reference files are stored FLAT and
-    portable: `reference/<hash>.md` where `hash` is a short SHA-1 of the section's
-    source URL (falling back to its title), not a nested title-derived path — so
-    generated trees stay short and Windows/macOS-safe (no MAX_PATH, illegal-char, or
-    case-collision risk). The human `title`/`group`/`url` live in the matching
-    `index.json` section entry, not the filename.
-  * optionally `OVERVIEW.md` — an **LLM-distilled essence + cheatsheet** (`--distill`),
-    so the agent reads the distilled knowledge first and drills into `reference/` only
-    for detail (three tiers: map → essence → full manual).
-* **Content-optimized**: whitespace-normalized, exact-duplicate pages dropped (crawls
-  emit the same page under many URLs) — denser signal, fewer wasted tokens.
-* **Hybrid-auto KG + ontology synergy**: the offline corpus is always produced;
-  when the graph daemon is reachable the corpus is **also** ingested into the
-  Knowledge Graph (Document/Chunk/Concept nodes + the `SkillGraph` ontology interface),
-  and the SKILL.md then tells the agent to `graph_search` the graph's domain for
-  cross-cutting questions. Degrades cleanly to offline-only when the daemon is down.
-* **Freshness + keep-updated**: `status` reports staleness; `refresh` re-downloads and
-  re-ingests **only changed corpora** (delta); `restyle` re-renders presentation with
-  no re-crawl; `rebuild` re-acquires and bumps the version.
+* **Source kinds**: `web` (the repo's crawl4ai web-crawler), `pdf` and `office`
+  (local path or URL; needs `pymupdf4llm` / `markitdown`), `dir` (markdown and text
+  files) and `kg_query` (read through the served arbora search twin; set `ARBORA_URL`).
+* **Standardized output** for every graph: `SKILL.md` (`skill_type: graph`) with a table
+  of contents, `sources.json` (schema `skill-graph-sources/v1`, per-file sha256),
+  `index.json` (per-section path, title, group, url) and a flat `reference/<hash>.md`
+  tree. Large files split at `--max-file-kb`.
+* **`--distill`** writes an extractive `OVERVIEW.md` (section leads), with no LLM call.
 
 ## Create a skill-graph (CLI)
 
@@ -78,87 +56,28 @@ python scripts/generate_skill.py "" servicenow --from-kg "servicenow incident ma
 # Build AND distill an OVERVIEW.md (essence + cheatsheet) in one shot
 python scripts/generate_skill.py https://example.com/docs my-skill --distill
 
-# Offline only (skip the hybrid-auto KG ingestion)
-python scripts/generate_skill.py https://example.com/docs my-skill --no-kg
 ```
 
 Common flags: `--max-depth`, `--max-pages`, `--max-file-kb` (split threshold),
 `--disable-magic-js`, `--wait-for`, `--target-type {skills,skill-graphs}`,
-`--output-dir`, `--description`, `--no-kg`, `--from-kg`, `--distill`.
+`--output-dir`, `--description`, `--from-kg`, `--distill`.
 
 > Naming: a `-docs` suffix is enforced (e.g. `my-skill` → `my-skill-docs`). The graph
 > is written to the in-workspace `skill-graphs` repo when present, else a local cache,
 > unless `--output-dir` is given.
 
-## The full toolbox (the recipe to create + maintain more)
-
-All verbs are subcommands of the core pipeline module
-(`python -m agent_utilities.knowledge_graph.distillation.skill_graph_pipeline …`); the
-builder CLI above is a thin front-end over `build`:
-
-| Verb | Does |
-|------|------|
-| `build` | acquire any source(s) → standardized graph (+ index.json, hybrid KG) |
-| `distill --dir\|--root` | LLM-distill an `OVERVIEW.md` essence/cheatsheet tier |
-| `restyle --dir\|--root` | re-render SKILL.md + index.json from existing content (no re-crawl) |
-| `status --dir [--quick]` | report whether a graph is stale vs its sources |
-| `refresh --dir\|--root [--force]` | re-download + re-ingest **only changed** corpora (delta); cron-friendly |
-| `rebuild --dir` | re-acquire from recorded sources, bump version |
-| `migrate --dir\|--root [--apply]` | bring a legacy graph onto the contract (reacquire/wrap) |
-| `plan --root` | classify every graph for migration |
-
-```bash
-# keep a whole library updated (delta re-ingest) — schedule via cron
-python -m ...skill_graph_pipeline refresh --root /path/to/skill_graphs
-
-# roll a presentation/renderer upgrade across every graph (cheap, offline)
-python -m ...skill_graph_pipeline restyle --root /path/to/skill_graphs
-```
-
-### Crawl engine (crawl4ai) setup
-
-`web`/`reacquire`/`refresh` re-crawl with the real JS-rendering **crawl4ai** when
-available, else a basic connector. crawl4ai runs in its own interpreter so it can live
-in a dedicated venv:
-
-```bash
-export SKILL_GRAPH_CRAWLER_PYTHON=/path/to/crawler-venv/bin/python  # has crawl4ai
-export SKILL_GRAPH_CRAWLER=<this-repo>/research/web-crawler/scripts/crawl.py
-export SKILL_GRAPH_CRAWL_TIMEOUT=900   # per-site bound; SKILL_GRAPH_MAX_PAGES caps pages
-```
-
-(See `agent-utilities/docs/guides/skill-graph-migration.md` for the full crawl4ai +
-Chrome install + the migration/refresh runbook.)
-
-## Via the Knowledge-Graph MCP surface
-
-If arbora is reachable, drive the same pipeline through `graph_ingest`:
-
-* `action=build_skill_graph` — `corpus_name`=name, `target_path`=output parent dir,
-  `base_path`=JSON list of sources `[{"kind","uri","options"}]` or `kind=uri,...`
-  shorthand, `description`=optional.
-* `action=skill_graph_status` — `target_path`=dir (`corpus_name=quick` to skip network).
-* `action=rebuild_skill_graph` — `target_path`=dir.
-
 ## How it works
 
-1. **Acquire**: each source is routed to the right extractor — this repo's crawl4ai
-   web-crawler for `web`, `markitdown`/`pymupdf4llm` for documents, the agent-utilities
-   source-connector registry for `rest`/`database`/`mcp_tool`/`url_reader`, an LLM for
-   `generated`, and the KG distiller for `kg_query` — all normalized to markdown.
-2. **Standardize**: large files are split (`mdsplit` + line fallback); a hierarchical
-   TOC is built; the standardized `SKILL.md` + `sources.json` are written and validated.
-3. **Enrich (hybrid-auto)**: when reachable, the corpus is ingested into the KG and
-   linked to the `SkillGraph` ontology interface; a `kg_manifest.json` round-trips a
-   `kg_query` graph back into another KG.
+`scripts/generate_skill.py` classifies the sources and calls `scripts/_pipeline.py`,
+which acquires documents, splits them, and writes the layout above. The script then
+flattens `reference/` to hashed names and repoints `index.json`, `sources.json` and the
+`SKILL.md` links. The pipeline imports no engine or agent-runtime package.
 
-## OKF conformance (Open Knowledge Format)
+## Moving to medulla
 
-Every skill-graph this builder produces is a valid **OKF bundle** (Google Cloud Open
-Knowledge Format): each `reference/*.md` carries YAML frontmatter with a required
-`type` (+ title/description/resource/timestamp), each directory gets an `index.md`
-(progressive disclosure), and the root gets a `log.md` (history) — alongside the machine
-`index.json`/`sources.json` twins. This is emitted automatically by
-`skill_graph_pipeline` (`distillation/okf_bundle.py`). The agent-utilities concept
-skill-graph additionally stamps each file with its OKF-CIS `id:`, making it the canonical
-concept bundle. See agent-utilities `docs/okf-cis.md`.
+The `refresh`, `restyle`, `status`, `rebuild` and `migrate` verbs and the KG ingestion
+of the corpus belonged to the retired agent-utilities pipeline. Native distillation
+moves to `MEDULLA-TYPED-PACKS-R700.7` and is served through arbora. Medulla validates
+and imports the finished bundle (`MEDULLA-TYPED-PACKS-R700`). Rebuild a graph by
+running the CLI again. The builder writes the offline corpus only; the flags `--no-kg`,
+`--ingest-kg` and `--append` are removed.

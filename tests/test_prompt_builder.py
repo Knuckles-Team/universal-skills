@@ -18,28 +18,12 @@ from pathlib import Path
 
 import pytest
 
-# The canonical validator lives in agent-utilities; skip cleanly if it (or an
-# older installed copy without the canonical contract) is unavailable.
-validate_canonical = pytest.importorskip(
-    "agent_utilities.prompting.structured"
-).__dict__.get("validate_canonical")
+from universal_skills.prompt_blueprint import validate_canonical
 
 REPO = Path(__file__).resolve().parents[1]
 PROMPT_BUILDER = (
     REPO / "universal_skills" / "skills" / "prompt-builder" / "scripts"
 )
-
-pytestmark = pytest.mark.skipif(
-    validate_canonical is None,
-    reason="installed agent-utilities predates the canonical prompt contract",
-)
-
-
-
-
-
-
-
 
 def test_prompt_builder_build_then_validate():
     with tempfile.TemporaryDirectory() as d:
@@ -55,7 +39,7 @@ def test_prompt_builder_build_then_validate():
                 "--directive",
                 "You are the demo agent. Verify before acting.",
                 "--extends",
-                "agent-utilities:base",
+                "meristem:base",
                 "-o",
                 str(out),
             ],
@@ -65,3 +49,12 @@ def test_prompt_builder_build_then_validate():
         assert rc == 0
         errs = validate_canonical(json.loads(out.read_text()))
         assert errs == []
+
+
+def test_legacy_body_and_bad_compose_are_refused():
+    errs = validate_canonical(
+        {"schema_version": "1.0", "task": "x", "type": "prompt", "source": "s",
+         "instructions": {"core_directive": "d"}, "content": "old", "compose": "merge"}
+    )
+    assert any(e.startswith("content:") for e in errs)
+    assert any(e.startswith("compose:") for e in errs)

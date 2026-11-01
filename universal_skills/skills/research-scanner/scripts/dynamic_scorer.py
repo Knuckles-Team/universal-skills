@@ -38,21 +38,18 @@ def score_paper(title: str, abstract: str, taxonomy: dict) -> float:
 
 def build_taxonomy_from_kg() -> dict:
     """Query the Knowledge Graph to build a dynamic taxonomy."""
-    try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+    from universal_skills._arbora import graph_query
 
-        engine = IntelligenceGraphEngine()
-    except ImportError:
+    print("🔍 Querying Knowledge Graph for active concepts and codebases...")
+    nodes = graph_query(
+        "MATCH (n) WHERE n:ConceptNode OR n:CodeNode OR n:ArchitectureNode RETURN n.name as name, labels(n)[0] as type"
+    )
+    if nodes is None:
         print(
-            "❌ Failed to import IntelligenceGraphEngine. Is agent-utilities installed?",
+            "❌ No arbora gateway answered. Set ARBORA_URL to a reachable gateway.",
             file=sys.stderr,
         )
         sys.exit(1)
-
-    print("🔍 Querying Knowledge Graph for active concepts and codebases...")
-    nodes = engine.query(
-        "MATCH (n) WHERE n:ConceptNode OR n:CodeNode OR n:ArchitectureNode RETURN n.name as name, labels(n)[0] as type"
-    )
 
     if not nodes:
         print(

@@ -36,11 +36,6 @@ import sys
 import time
 from pathlib import Path
 
-try:
-    import networkx as nx
-except ImportError:
-    nx = None  # type: ignore[assignment]
-
 # ---------------------------------------------------------------------------
 # Concept Map Parser
 # ---------------------------------------------------------------------------
@@ -618,15 +613,9 @@ def main():
     elif args.kg:
         # Query concept nodes from KG
         try:
-            from agent_utilities.knowledge_graph.core.engine import (
-                IntelligenceGraphEngine,
-            )
-            from agent_utilities.core.paths import kg_db_path
+            from universal_skills._arbora import graph_query
 
-            engine = IntelligenceGraphEngine(
-                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
-            )
-            results = engine.query_cypher(
+            results = graph_query(
                 "MATCH (n) WHERE n.concept_id IS NOT NULL "
                 "RETURN n.concept_id AS concept_id, n.name AS name "
                 "ORDER BY n.concept_id"
@@ -708,78 +697,63 @@ def main():
     # ── Step 3: Query KG for Article matches per concept ──────────────
     batch_size = args.batch_size if args.batch_size > 0 else len(remaining)
 
-    try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-        from agent_utilities.core.paths import kg_db_path
+    from universal_skills._arbora import graph_search
 
-        engine = IntelligenceGraphEngine(
-            graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
+    start_time = time.time()
+
+    for i, concept in enumerate(remaining):
+        query = f"{concept['name']} {concept['pillar_name']}"
+        print(
+            f"  [{i + 1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
+            file=sys.stderr,
         )
-        start_time = time.time()
 
-        for i, concept in enumerate(remaining):
-            query = f"{concept['name']} {concept['pillar_name']}"
+        try:
+            results = graph_search(query, top_k=args.top_k)
+            if results is None:
+                raise ConnectionError("no arbora gateway answered")
+            # Filter to Article nodes only
+            article_results = [
+                r
+                for r in results
+                if r.get("type", "").lower() in ("article", "document", "")
+            ]
+            result = cross_reference_concept(
+                concept, article_results, args.threshold
+            )
+        except Exception as e:
             print(
-                f"  [{i + 1}/{len(remaining)}] Searching: {concept['concept_id']} — {concept['name']}",
+                f"    ⚠ Search failed for {concept['concept_id']}: {type(e).__name__}",
                 file=sys.stderr,
             )
+            result = {
+                **concept,
+                "match_count": 0,
+                "paper_matches": [],
+                "error": type(e).__name__,
+            }
 
-            try:
-                results = engine.search_hybrid(query, top_k=args.top_k)
-                # Filter to Article nodes only
-                article_results = [
-                    r
-                    for r in results
-                    if r.get("type", "").lower() in ("article", "document", "")
-                ]
-                result = cross_reference_concept(
-                    concept, article_results, args.threshold
-                )
-            except Exception as e:
-                print(
-                    f"    ⚠ Search failed for {concept['concept_id']}: {type(e).__name__}",
-                    file=sys.stderr,
-                )
-                result = {
-                    **concept,
-                    "match_count": 0,
-                    "paper_matches": [],
-                    "error": type(e).__name__,
-                }
+        cross_ref_results.append(result)
 
-            cross_ref_results.append(result)
+        # Write intermediate results after each batch
+        if args.output and batch_size > 0 and (i + 1) % batch_size == 0:
+            elapsed = time.time() - start_time
+            rate = (i + 1) / elapsed if elapsed > 0 else 0
+            eta = (len(remaining) - i - 1) / rate if rate > 0 else 0
+            print(
+                f"    ✔ Batch checkpoint ({i + 1}/{len(remaining)}) — "
+                f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
+                file=sys.stderr,
+            )
+            _write_intermediate(args.output, concepts, cross_ref_results)
 
-            # Write intermediate results after each batch
-            if args.output and batch_size > 0 and (i + 1) % batch_size == 0:
-                elapsed = time.time() - start_time
-                rate = (i + 1) / elapsed if elapsed > 0 else 0
-                eta = (len(remaining) - i - 1) / rate if rate > 0 else 0
-                print(
-                    f"    ✔ Batch checkpoint ({i + 1}/{len(remaining)}) — "
-                    f"{rate:.1f} concepts/sec, ETA: {eta:.0f}s",
-                    file=sys.stderr,
-                )
-                _write_intermediate(args.output, concepts, cross_ref_results)
+    elapsed = time.time() - start_time
+    print(
+        f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
+        f"({len(remaining) / elapsed:.1f} concepts/sec)",
+        file=sys.stderr,
+    )
 
-        elapsed = time.time() - start_time
-        print(
-            f"Completed {len(remaining)} concepts in {elapsed:.1f}s "
-            f"({len(remaining) / elapsed:.1f} concepts/sec)",
-            file=sys.stderr,
-        )
-
-    except ImportError:
-        print(
-            "agent_utilities not available — cannot query KG directly.", file=sys.stderr
-        )
-        print(
-            "Run this script in an environment with agent-utilities installed,",
-            file=sys.stderr,
-        )
-        print(
-            "or use the MCP tools (kg_search) from an agent session.", file=sys.stderr
-        )
-        sys.exit(1)
 
     # ── Step 4: Build Recommendations ─────────────────────────────
     recommendations = build_enhancement_recommendations(cross_ref_results)

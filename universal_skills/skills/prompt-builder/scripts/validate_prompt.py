@@ -2,7 +2,7 @@
 """Validate a system-prompt JSON blueprint against the canonical contract.
 
 CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical. Wraps the single shared validator
-``agent_utilities.prompting.structured.validate_canonical`` so authoring,
+``universal_skills.prompt_blueprint.validate_canonical`` so authoring,
 CI (``check_prompt_schema.py``), and per-package ``test_prompt_parity`` all
 agree. Exit code 0 == conformant, 1 == canonical violations.
 """
@@ -14,15 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-try:
-    from agent_utilities.prompting.structured import validate_canonical
-except ImportError:  # pragma: no cover - install hint
-    print(
-        "prompt-builder requires agent-utilities. Install it:\n"
-        "  pip install agent-utilities",
-        file=sys.stderr,
-    )
-    raise SystemExit(2)
+from universal_skills.prompt_blueprint import validate_canonical
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
         if errs:
             print(f"FAIL {path}:", file=sys.stderr)
             for e in errs:
-                print(f"  - {type(e).__name__}", file=sys.stderr)
+                print(f"  - {e}", file=sys.stderr)
             failed += 1
         else:
             print(f"OK   {path}")

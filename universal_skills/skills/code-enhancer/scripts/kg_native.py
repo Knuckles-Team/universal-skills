@@ -18,7 +18,7 @@ shared, three-tier mechanism, preferred in this order:
      via the Rust engine's out-of-process socket, for a file/repo the KG doesn't
      already hold. Multi-language, version-independent.
   3. **Local stdlib ``ast`` parsing** — the final fallback, used only when neither
-     the KG nor the engine socket is reachable (``epistemic_graph`` not installed,
+     the KG nor the engine socket is reachable (``medulla`` not installed,
      no socket, or the engine erroring) — Python-only and clearly degraded (the
      ``tier`` every helper returns is ``"local"``), so the skill still works
      standalone with zero platform dependencies.
@@ -296,13 +296,13 @@ def _engine_context() -> dict[str, Any]:
     agent_id = "service:universal-skills:code-enhancer"
     return {
         "principal": agent_id,
-        "tenant": os.environ.get("EPISTEMIC_GRAPH_TENANT", "tenant:default"),
-        "audience": os.environ.get("EPISTEMIC_GRAPH_AUDIENCE", "epistemic-graph"),
+        "tenant": os.environ.get("MEDULLA_TENANT", "tenant:default"),
+        "audience": os.environ.get("MEDULLA_AUDIENCE", "epistemic-graph"),
         "agent_id": agent_id,
         "roles": ["graph-client"],
         "scopes": ["compute:parse"],
         "policy_version": os.environ.get(
-            "EPISTEMIC_GRAPH_POLICY_VERSION", "policy:current"
+            "MEDULLA_POLICY_VERSION", "policy:current"
         ),
         "delegation": [],
     }
@@ -310,10 +310,10 @@ def _engine_context() -> dict[str, Any]:
 
 def _native_symbols(file_path: Path, source: bytes) -> list[dict[str, Any]]:
     """Extract symbols through EG 3's sole native-inventory contract."""
-    from epistemic_graph import SyncEpistemicGraphClient  # optional dependency
+    from medulla import SyncMedullaClient  # optional dependency
 
     logical_path = file_path.name
-    with SyncEpistemicGraphClient.connect(
+    with SyncMedullaClient.connect(
         graph_name="__commons__",
         verified_context=_engine_context(),
     ) as client:

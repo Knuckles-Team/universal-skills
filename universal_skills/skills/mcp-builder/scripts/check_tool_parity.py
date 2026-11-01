@@ -94,7 +94,7 @@ def dockerfile_findings(repo: Path) -> list[str]:
 def served_tools(repo: Path, package: str) -> tuple[list[Any], list[dict[str, str]]]:
     """The tools the connector's MCP server serves, and its split report, read in process.
 
-    The report (``agent_connector_sdk.mcp.action_split.action_split_report``,
+    The report (``scion_sdk.mcp.action_split.action_split_report``,
     SDK >= 0.3.5) names the tool that serves each action of a split
     action-routed tool; it is empty on older SDKs.
     """
@@ -105,7 +105,7 @@ def served_tools(repo: Path, package: str) -> tuple[list[Any], list[dict[str, st
     instance = built[0] if isinstance(built, tuple) else built
     tools = asyncio.run(instance.local_provider.list_tools())
     try:
-        from agent_connector_sdk.mcp.action_split import action_split_report
+        from scion_sdk.mcp.action_split import action_split_report
     except ImportError:
         return tools, []
     return tools, action_split_report(instance)

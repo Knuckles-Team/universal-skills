@@ -344,21 +344,18 @@ def main():
 
     if args.kg_enabled:
         try:
-            from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-            from agent_utilities.core.paths import kg_db_path
-            import networkx as nx
-
-            engine = IntelligenceGraphEngine(
-                graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
-            )
+            from universal_skills._arbora import graph_query
 
             # Query all items (Codebases, Articles, Documents) from KG
-            nodes = engine.query_cypher(
+            nodes = graph_query(
                 "MATCH (n) WHERE labels(n)[0] IN ['Codebase', 'Article', 'Document'] "
                 "RETURN labels(n)[0] AS label, n.id AS id, n.name AS name, n.path AS path, "
                 "n.keywords AS keywords, n.patterns AS patterns, n.modules AS modules, n.content AS content"
             )
 
+            if nodes is None:
+                print(json.dumps({"error": "No arbora gateway answered (set ARBORA_URL)."}))
+                sys.exit(1)
             if not nodes:
                 print(json.dumps({"error": "No Codebase or Article items found in Knowledge Graph."}))
                 sys.exit(1)
