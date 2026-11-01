@@ -12,7 +12,7 @@ from typing import List, Optional
 try:
     from agent_utilities.base_utilities import get_logger, retrieve_package_name
 except ImportError:
-    # Fallback if agent_utilities is not available
+    # Fallback if the retired agent_utilities package is not available
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
@@ -84,11 +84,11 @@ def _iter_skill_providers() -> List[tuple]:
     """Resolve every installed connector's ``skills/`` directory.
 
     Returns ``(connector_name, skills_dir)`` tuples from the SDK's
-    ``installed_connectors()`` (the ``agent_connector_sdk.connector`` entry
+    ``installed_connectors()`` (the ``scion_sdk.connector`` entry
     point). Uninstalled or unresolvable connectors are skipped, not fatal.
     """
     try:
-        from agent_connector_sdk.connector import installed_connectors
+        from scion_sdk.connector import installed_connectors
     except ImportError:
         return []
     try:
@@ -285,7 +285,7 @@ def get_source_paths(
         logger.warning("Could not import skill_graph_utilities.")
 
     # Connector-contributed skills: every installed distribution that declares an
-    # ``agent_connector_sdk.connector`` entry point contributes its ``skills/`` dir.
+    # ``scion_sdk.connector`` entry point contributes its ``skills/`` dir.
     wanted = {n.strip() for n in skill_names} if skill_names else None
     for _provider_name, asset_dir in _iter_skill_providers():
         if providers is not None and _provider_name not in providers:

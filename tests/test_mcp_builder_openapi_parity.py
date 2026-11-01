@@ -225,7 +225,7 @@ def operation_tools(contract):
 
 
 def test_mcp_omission_and_schema_drift_rejected(catalog):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     contract = catalog[3]
     tools = operation_tools(contract)
     assert parity.verify_mcp(contract, tools)["exposed_operations"] == 8
@@ -238,7 +238,7 @@ def test_mcp_omission_and_schema_drift_rejected(catalog):
 
 
 def test_native_reference_expansion_preserves_sibling_constraints(catalog):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     from fastmcp.utilities.json_schema import dereference_refs
 
     document, source, package, _ = catalog
@@ -274,7 +274,7 @@ def test_native_reference_expansion_preserves_sibling_constraints(catalog):
 
 
 def test_client_unsupported_unicode_regex_is_explicit(catalog):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     contract = catalog[3]
     tools = operation_tools(contract)
     tools[0]["inputSchema"]["properties"] = {
@@ -301,7 +301,7 @@ def test_omitted_security_is_unknown_not_public(catalog):
 
 
 def test_real_client_and_native_mcp_transport(catalog, monkeypatch):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     pytest.importorskip("regex")
     import httpx
     from fastmcp import Client, FastMCP
@@ -384,7 +384,7 @@ def test_real_client_and_native_mcp_transport(catalog, monkeypatch):
 
 @pytest.mark.parametrize("body", [{}, {"note": "hello"}, {"assetData": "aGk="}])
 def test_optional_files_preserve_multipart_media(catalog, monkeypatch, body):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     pytest.importorskip("regex")
     from email.parser import BytesParser
     from email.policy import default

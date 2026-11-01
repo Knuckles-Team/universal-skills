@@ -16,7 +16,7 @@ discovery = importlib.import_module("openapi_discovery")
 
 
 def test_ready_claim_requires_named_native_budget(catalog, budget, monkeypatch):
-    pytest.importorskip("agent_connector_sdk")
+    pytest.importorskip("scion_sdk")
     document, source, package, _ = catalog
     document["security"] = []
     source.write_text(json.dumps(document))

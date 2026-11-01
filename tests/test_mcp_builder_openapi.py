@@ -29,7 +29,7 @@ def parity_name(action):
 
 
 def _require_runtime():
-    for name in ("agent_connector_sdk.http.client", "regex"):
+    for name in ("scion_sdk.http.client", "regex"):
         if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":
             importlib.import_module(name)
         else:
@@ -357,7 +357,7 @@ def test_credentials_never_follow_redirect(runtime, location):
 
 
 def test_plaintext_opt_in_preserves_https_verification(runtime, monkeypatch):
-    from agent_connector_sdk.http import client as sdk_client
+    from scion_sdk.http import client as sdk_client
 
     captured = {}
 
@@ -446,7 +446,7 @@ def test_unknown_response_encoding_fails_compilation(document):
 
 
 def test_registrar_keeps_sdk_domain_toggle(runtime, monkeypatch):
-    from agent_connector_sdk.mcp import tool_surface
+    from scion_sdk.mcp import tool_surface
     from fastmcp import FastMCP
 
     registrar = importlib.import_module("fixture_connector.mcp")

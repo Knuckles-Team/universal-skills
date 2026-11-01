@@ -68,17 +68,17 @@ pre-commit run --all-files
 
 ## Code Style & Conventions
 **Always:**
-- Use `agent-utilities` for common patterns (e.g., `create_mcp_server`, `create_agent`).
+- Use `scion-sdk` for common patterns (e.g., `create_mcp_server`).
 - Define input/output models using Pydantic.
 - Include descriptive docstrings for all tools (they are used as tool descriptions for LLMs).
 - Check for optional dependencies using `try/except ImportError`.
 
 **Good example:**
 ```python
-from agent_utilities import create_mcp_server
+from scion_sdk.mcp.server import create_mcp_server
 from fastmcp import FastMCP
 
-mcp = create_mcp_server("my-agent")
+_args, mcp, _ = create_mcp_server("my-agent", version="0.1.0")
 
 @mcp.tool()
 async def my_tool(param: str) -> str:

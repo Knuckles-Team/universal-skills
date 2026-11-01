@@ -28,7 +28,7 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
     engine = IntelligenceGraphEngine.get_active() if IntelligenceGraphEngine else None
     if not engine:
         try:
-            from agent_utilities.core.paths import kg_db_path
+            from meristem.core.paths import kg_db_path
             from agent_utilities.knowledge_graph.backends import create_backend
             import networkx as nx
 

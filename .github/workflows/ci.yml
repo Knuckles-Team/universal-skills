@@ -96,7 +96,7 @@ jobs:
           # pipelines-hooks pins pydantic==2.13.5 while scion-sdk needs >=2.14.1.
           echo "pydantic>=2.14.1" > /tmp/scaffold-overrides.txt
           uv pip install --refresh --python /tmp/scaffold-venv/bin/python --override /tmp/scaffold-overrides.txt pytest rdflib pyyaml codespell \
-            "scion-sdk[mcp]>=0.5.6,<0.6" \
+            "scion-sdk[mcp]>=0.6.5,<0.7" \
             "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
           # The SDK pytest plugin resolves this repository's own connector declaration.
           uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
