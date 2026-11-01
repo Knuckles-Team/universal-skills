@@ -14,7 +14,7 @@ _MAX_SYSTEM_PROMPT_BYTES = 16 * 1024
 
 
 def _bounded_private_text(value: str, *, limit: int, label: str) -> str:
-    from agent_utilities.security.persistence_privacy import sanitize_for_persistence
+    from scion_sdk.privacy import sanitize_for_persistence
 
     rendered = str(value or "").strip()
     if not rendered or len(rendered.encode("utf-8")) > limit or "\x00" in rendered:

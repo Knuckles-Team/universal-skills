@@ -107,7 +107,7 @@ def test_bump_skips_already_tagged_versions(tmp_path):
     assert '==1.2.5"' in (repo / "docker/Dockerfile").read_text()
 
 
-@pytest.mark.parametrize("distribution", ["agent-connector-sdk", "scion-sdk"])
+@pytest.mark.parametrize("distribution", ["scion-sdk", "scion-sdk"])
 def test_sdk_alias_migration_preserves_constraints_and_extras(distribution, tmp_path):
     (tmp_path / "pyproject.toml").write_text(
         f'[project]\nname = "connector"\ndependencies = ["{distribution}[mcp]>=0.3.11,<1.0.0"]\n'
@@ -118,7 +118,7 @@ def test_sdk_alias_migration_preserves_constraints_and_extras(distribution, tmp_
 
 def test_sdk_alias_collision_is_refused_without_writes(tmp_path):
     path = tmp_path / "pyproject.toml"
-    source = '[project]\nname = "connector"\ndependencies = ["agent-connector-sdk>=0.3.11", "scion-sdk>=0.3.11"]\n'
+    source = '[project]\nname = "connector"\ndependencies = ["scion-sdk>=0.3.11", "scion-sdk>=0.3.11"]\n'
     path.write_text(source)
     with pytest.raises(sdk_centralize.PatternException, match="ambiguous-sdk-dependencies"):
         sdk_centralize.edit_pyproject(tmp_path, "0.3.12", True, True, sdk_centralize.Result("connector"), True)
@@ -126,9 +126,9 @@ def test_sdk_alias_collision_is_refused_without_writes(tmp_path):
 
 
 @pytest.mark.parametrize("dependencies, valid", [
-    (["agent-connector-sdk[mcp]>=0.5.1,<0.6"], True),
     (["scion-sdk[mcp]>=0.5.1,<0.6"], True),
-    (["agent-connector-sdk>=0.5.1", "scion-sdk>=0.5.1"], False),
+    (["scion-sdk[mcp]>=0.5.1,<0.6"], True),
+    (["scion-sdk>=0.5.1", "scion-sdk>=0.5.1"], False),
     (["scion-sdk>=0.5.1", "meristem>=0.5.1"], False),
     (["scion-sdk>=0.5.1", "medulla[full]>=0.5.1"], False),
 ])

@@ -2,7 +2,7 @@
 """Reject retired connector APIs in a generated SDK-based project.
 
 This static check needs no installed connector dependencies. A connector is
-MCP-only and depends on agent-connector-sdk alone: the retired control-plane
+MCP-only and depends on scion-sdk alone: the retired control-plane
 package may be neither imported nor declared as a dependency.
 """
 
@@ -77,8 +77,8 @@ def check_project(root: Path, package: str) -> list[str]:
         for value in dependencies
     }
     violations = []
-    if sum(re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] in {"agent-connector-sdk", "scion-sdk"} for value in dependencies) != 1:
-        violations.append("pyproject.toml: connector requires exactly one SDK distribution (scion-sdk or legacy agent-connector-sdk)")
+    if sum(re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] in {"scion-sdk", "scion-sdk"} for value in dependencies) != 1:
+        violations.append("pyproject.toml: connector requires exactly one SDK distribution (scion-sdk or legacy scion-sdk)")
     if names & {RETIRED_PACKAGE.replace("_", "-"), "meristem"}:
         violations.append(
             "pyproject.toml: connectors depend on scion-sdk only"
@@ -216,10 +216,10 @@ def _source_violations(root: Path, package_root: Path) -> list[str]:
 
 
 def _identity_violations(root: Path, package_root: Path, project: dict) -> list[str]:
-    group = project.get("entry-points", {}).get("agent_connector_sdk.connector", {})
+    group = project.get("entry-points", {}).get("scion_sdk.connector", {})
     if len(group) != 1:
         return [
-            "pyproject.toml: declare exactly one agent_connector_sdk.connector"
+            "pyproject.toml: declare exactly one scion_sdk.connector"
             f" entry point (found {len(group)}) [US-MCP-BUILDER-R005]"
         ]
     ((fleet, target),) = group.items()

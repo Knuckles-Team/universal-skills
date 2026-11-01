@@ -6,7 +6,7 @@ discovery in ``install.py``/``providers.py`` is enough. This module covers the
 other case named in the task: a checkout being developed against that has
 **not** been pip-installed yet — parse its own ``pyproject.toml`` directly
 (stdlib ``tomllib``, no network/pip involved) to resolve the same
-``agent_connector_sdk.connector`` entry point and its ``*-mcp`` console
+``scion_sdk.connector`` entry point and its ``*-mcp`` console
 scripts, straight from source. Content sits at ``<pkg>/skills``,
 ``<pkg>/prompts`` and ``<pkg>/ontology`` by the SDK convention.
 """
@@ -24,14 +24,14 @@ else:  # pragma: no cover - repo requires-python >=3.11
     tomllib = None
 
 try:
-    from agent_utilities.base_utilities import get_logger
+    from scion_sdk.utilities import get_logger
 except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 else:
     logger = get_logger(__name__)
 
-CONNECTOR_GROUP = "agent_connector_sdk.connector"
+CONNECTOR_GROUP = "scion_sdk.connector"
 
 
 class PackageManifest:
@@ -47,7 +47,7 @@ class PackageManifest:
 
     def _content_dir(self, name: str) -> Optional[Path]:
         """Resolve ``<package>/<name>`` for the package named by the single
-        ``agent_connector_sdk.connector`` entry point (``<pkg>`` or
+        ``scion_sdk.connector`` entry point (``<pkg>`` or
         ``<pkg>:attr``) inside the checkout, trying the flat and ``src/``
         layouts. Only returns a path that exists on disk.
         """

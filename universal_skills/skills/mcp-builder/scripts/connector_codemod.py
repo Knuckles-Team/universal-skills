@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic, idempotent AU -> agent-connector-sdk codemod for one connector repo.
+"""Deterministic, idempotent AU -> scion-sdk codemod for one connector repo.
 
 usage: connector_codemod.py <repo> [--map au-to-sdk-map.tsv] [--sdk-root <checkout>] [--dry-run]
        connector_codemod.py <repo> --sdk-centralize [--apply] [--sdk-version X] [--bump]   (requests -> SDK governed client)
@@ -10,11 +10,11 @@ usage: connector_codemod.py <repo> [--map au-to-sdk-map.tsv] [--sdk-root <checko
 * Deletes agent-mode files (``*/agent_server.py`` and tests whose only AU
   imports are agent-mode REMOVE symbols). Every other REMOVE use is reported.
 * Rewrites ``"agent_utilities.x.y"`` string literals (mock.patch targets).
-* In a file importing agent_connector_sdk.mcp.env_drift, renames the Meristem-named
+* In a file importing scion_sdk.mcp.env_drift, renames the Meristem-named
   checker internals (see ENV_DRIFT_RENAMES).
 * Rewrites the .pre-commit-config.yaml env-drift hook module; other AU hook
   modules are reported.
-* Rewrites pyproject: ``agent-utilities[...]`` -> ``agent-connector-sdk>=0.2.0,<1.0.0``,
+* Rewrites pyproject: ``agent-utilities[...]`` -> ``scion-sdk>=0.2.0,<1.0.0``,
   drops agent-mode console scripts (``*agent_server:*``).
 * Reports every call of a symbol whose semantics changed (SEMANTIC_REWRITES) as
   CALLSITE, even when the map row looks like an exact equivalent.
@@ -49,7 +49,7 @@ SEMANTIC_REWRITES = {
 }
 #: ``python -m`` hook modules with an SDK equivalent.
 HOOK_RENAMES = {
-    "agent_utilities.mcp.check_env_var_drift": "agent_connector_sdk.mcp.env_drift",
+    "agent_utilities.mcp.check_env_var_drift": "scion_sdk.mcp.env_drift",
 }
 
 
@@ -61,7 +61,7 @@ def process_precommit(path: Path, report, dry: bool) -> None:
     for left in sorted(set(re.findall(r"-m (agent_utilities[\w.]*)", text))):
         report.append(f"  REVIEW .pre-commit-config.yaml hook runs {left}")
     if text != src:
-        report.append("  PRECOMMIT env-drift hook -> agent_connector_sdk.mcp.env_drift")
+        report.append("  PRECOMMIT env-drift hook -> scion_sdk.mcp.env_drift")
         if not dry:
             path.write_text(text)
 
@@ -75,9 +75,9 @@ def load_map(path: Path) -> dict[str, tuple[str, str]]:
 
 
 def target(repl: str) -> tuple[str, str] | None:
-    """``agent_connector_sdk.mod.name [note]`` -> (module, name)."""
+    """``scion_sdk.mod.name [note]`` -> (module, name)."""
     head = repl.split(" ", 1)[0]
-    if not head.startswith("agent_connector_sdk") or "(" in head:
+    if not head.startswith("scion_sdk") or "(" in head:
         return None
     mod, _, name = head.rpartition(".")
     return mod, name
@@ -170,7 +170,7 @@ def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
     text = re.sub(r"([\"'])(agent_utilities(?:\.\w+)+)\1", _str, text)
     for leftover in sorted(set(re.findall(r"[\"'](agent_utilities(?:\.\w+)+)[\"']", text))):
         report.append(f"  REVIEW {rel}: string ref {leftover}")
-    if "agent_connector_sdk.mcp import env_drift" in text:
+    if "scion_sdk.mcp import env_drift" in text:
         for au_name, sdk_name in ENV_DRIFT_RENAMES.items():
             text = re.sub(rf"\b{au_name}\b", sdk_name, text)
         if "_agent_utilities_root" in text:
@@ -190,10 +190,10 @@ def process_pyproject(path: Path, report, dry: bool) -> None:
     project = tomllib.loads(src).get("project", {})
     for dependencies in [project.get("dependencies", []), *project.get("optional-dependencies", {}).values()]:
         names = {re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] for value in dependencies}
-        if {"agent-utilities", "meristem"} <= names or {"agent-connector-sdk", "scion-sdk"} <= names:
+        if {"agent-utilities", "meristem"} <= names or {"scion-sdk", "scion-sdk"} <= names:
             raise ValueError("declare exactly one alias for each distribution")
     text = re.sub(r"\"(?:agent-utilities|meristem)(\[[^\]]*\])?[^\"]*\"", f'"{SDK_DEP}"', src)
-    text = re.sub(r'"agent-connector-sdk(?=[\[<>=!~;" ])', '"scion-sdk', text)
+    text = re.sub(r'"scion-sdk(?=[\[<>=!~;" ])', '"scion-sdk', text)
     # de-duplicate identical dependency lines produced by the rewrite
     seen: set[str] = set()
     out = []
@@ -223,7 +223,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("repo", type=Path)
     ap.add_argument("--map", type=Path, default=Path(__file__).with_name("au-to-sdk-map.tsv"))
-    ap.add_argument("--sdk-root", type=Path, help="agent-connector-sdk checkout (default: installed SDK)")
+    ap.add_argument("--sdk-root", type=Path, help="scion-sdk checkout (default: installed SDK)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--sdk-centralize", action="store_true", help="requests.Session -> SDK governed client migration (see sdk_centralize.py)")
     ap.add_argument("--apply", action="store_true", help="with --sdk-centralize: write the changes (default is a dry run)")

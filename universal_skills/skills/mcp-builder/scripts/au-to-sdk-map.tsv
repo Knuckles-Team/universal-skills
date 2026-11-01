@@ -4,38 +4,38 @@ agent_utilities.agent.factory.create_agent_parser	REMOVE agent mode: delete agen
 agent_utilities.agent_utilities	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.agent_utilities.create_agent	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.automation.file_watcher.FileWatcher	REMOVE agent-OS automation (systems-manager agent_os_tools) → arbora loop/automation operations	REMOVE
-agent_utilities.base_utilities	agent_connector_sdk.utilities	EXISTS
-agent_utilities.base_utilities.get_library_file_path	agent_connector_sdk.library_state.get_library_file_path [REWRITE: (connector, filename) not (file)]	EXISTS
-agent_utilities.base_utilities.get_logger	agent_connector_sdk.utilities.get_logger	EXISTS
-agent_utilities.base_utilities.to_boolean	agent_connector_sdk.utilities.to_boolean	EXISTS
+agent_utilities.base_utilities	scion_sdk.utilities	EXISTS
+agent_utilities.base_utilities.get_library_file_path	scion_sdk.library_state.get_library_file_path [REWRITE: (connector, filename) not (file)]	EXISTS
+agent_utilities.base_utilities.get_logger	scion_sdk.utilities.get_logger	EXISTS
+agent_utilities.base_utilities.to_boolean	scion_sdk.utilities.to_boolean	EXISTS
 agent_utilities.build_system_prompt_from_workspace	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.core.chat_persistence.prune_large_messages	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.core.cognitive_scheduler.CognitiveScheduler	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.core.config	agent_connector_sdk.config	EXISTS
-agent_utilities.core.config.config	agent_connector_sdk.config.agent_config() [REWRITE: typed AgentConfig sections; attribute reads → setting(KEY)]	EXISTS
-agent_utilities.core.config.resolve_langfuse_host	agent_connector_sdk.config.setting("LANGFUSE_HOST") [REWRITE: inline in langfuse-agent]	EXISTS
-agent_utilities.core.config.setting	agent_connector_sdk.config.setting	EXISTS
-agent_utilities.core.exceptions.AuthError	agent_connector_sdk.exceptions.AuthError	EXISTS
-agent_utilities.core.exceptions.ParameterError	agent_connector_sdk.exceptions.ParameterError	EXISTS
-agent_utilities.core.http_client.create_async_http_client	agent_connector_sdk.http.client.create_async_http_client [REWRITE: takes HttpClientOptions; pin_egress/allowed_private_hosts/allow_loopback/verify_pinned_peer now fields, R014.16]	EXISTS
-agent_utilities.core.http_client.create_http_client	agent_connector_sdk.http.client.create_http_client [REWRITE: takes HttpClientOptions; pin_egress/allowed_private_hosts/allow_loopback/verify_pinned_peer now fields, R014.16]	EXISTS
-agent_utilities.core.http_client.pinned_egress_transport	agent_connector_sdk.http.egress.DnsPinnedEgressTransport / AsyncDnsPinnedEgressTransport (per-request DNS pin, R014.16); static agent_connector_sdk.http.egress.pinned_egress_transport(host=,port=) is separate	EXISTS
-agent_utilities.core.http_client.PinnedEgressViolation	agent_connector_sdk.http.egress.PinnedEgressViolation	EXISTS
+agent_utilities.core.config	scion_sdk.config	EXISTS
+agent_utilities.core.config.config	scion_sdk.config.agent_config() [REWRITE: typed AgentConfig sections; attribute reads → setting(KEY)]	EXISTS
+agent_utilities.core.config.resolve_langfuse_host	scion_sdk.config.setting("LANGFUSE_HOST") [REWRITE: inline in langfuse-agent]	EXISTS
+agent_utilities.core.config.setting	scion_sdk.config.setting	EXISTS
+agent_utilities.core.exceptions.AuthError	scion_sdk.exceptions.AuthError	EXISTS
+agent_utilities.core.exceptions.ParameterError	scion_sdk.exceptions.ParameterError	EXISTS
+agent_utilities.core.http_client.create_async_http_client	scion_sdk.http.client.create_async_http_client [REWRITE: takes HttpClientOptions; pin_egress/allowed_private_hosts/allow_loopback/verify_pinned_peer now fields, R014.16]	EXISTS
+agent_utilities.core.http_client.create_http_client	scion_sdk.http.client.create_http_client [REWRITE: takes HttpClientOptions; pin_egress/allowed_private_hosts/allow_loopback/verify_pinned_peer now fields, R014.16]	EXISTS
+agent_utilities.core.http_client.pinned_egress_transport	scion_sdk.http.egress.DnsPinnedEgressTransport / AsyncDnsPinnedEgressTransport (per-request DNS pin, R014.16); static scion_sdk.http.egress.pinned_egress_transport(host=,port=) is separate	EXISTS
+agent_utilities.core.http_client.PinnedEgressViolation	scion_sdk.http.egress.PinnedEgressViolation	EXISTS
 agent_utilities.core.model_factory.create_model	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.core.paths	agent_connector_sdk.paths	ADD
-agent_utilities.core.paths.log_dir	agent_connector_sdk.paths.log_dir	ADD
+agent_utilities.core.paths	scion_sdk.paths	ADD
+agent_utilities.core.paths.log_dir	scion_sdk.paths.log_dir	ADD
 agent_utilities.core.provider_runtime.PreparedProviderChildRuntime	REMOVE child-runtime launch (leanix official-MCP child process) → arbora hosts child MCP servers	REMOVE
-agent_utilities.core.provider_runtime.ProviderRuntimeError	agent_connector_sdk.credentials.provider_profile.ProviderProfileError	EXISTS
-agent_utilities.core.provider_runtime.ResolvedProviderRuntime	agent_connector_sdk.credentials.provider_profile.ResolvedProviderProfile [REWRITE: .endpoint/.credentials/.selectors/.tls, close()]	EXISTS
-agent_utilities.core.provider_runtime.get_provider_runtime_profile	agent_connector_sdk.credentials.provider_profile.load_provider_profiles [REWRITE]	EXISTS
+agent_utilities.core.provider_runtime.ProviderRuntimeError	scion_sdk.credentials.provider_profile.ProviderProfileError	EXISTS
+agent_utilities.core.provider_runtime.ResolvedProviderRuntime	scion_sdk.credentials.provider_profile.ResolvedProviderProfile [REWRITE: .endpoint/.credentials/.selectors/.tls, close()]	EXISTS
+agent_utilities.core.provider_runtime.get_provider_runtime_profile	scion_sdk.credentials.provider_profile.load_provider_profiles [REWRITE]	EXISTS
 agent_utilities.core.provider_runtime.prepare_resolved_provider_runtime_child_environment	REMOVE child-runtime launch → arbora hosts child MCP servers	REMOVE
-agent_utilities.core.provider_runtime.resolve_provider_runtime_profile	agent_connector_sdk.credentials.provider_profile.resolve_provider_profile [REWRITE]	EXISTS
-agent_utilities.core.provider_runtime.resolve_selected_provider_runtime_profile	agent_connector_sdk.credentials.provider_profile.resolve_selected_provider_profile [REWRITE: reads PROVIDER_CONFIGS/AGENT_PROVIDER_PROFILE]	EXISTS
+agent_utilities.core.provider_runtime.resolve_provider_runtime_profile	scion_sdk.credentials.provider_profile.resolve_provider_profile [REWRITE]	EXISTS
+agent_utilities.core.provider_runtime.resolve_selected_provider_runtime_profile	scion_sdk.credentials.provider_profile.resolve_selected_provider_profile [REWRITE: reads PROVIDER_CONFIGS/AGENT_PROVIDER_PROFILE]	EXISTS
 agent_utilities.core.registry.package_adapter.AgentRegistry	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.core.registry.package_adapter.ContainerConfig	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.core.transport_security.ResolvedTLSProfile	agent_connector_sdk.tls.profile.ResolvedTLSProfile	EXISTS
-agent_utilities.core.transport_security.resolve_configured_tls_profile	agent_connector_sdk.tls.resolve.resolve_tls_profile [REWRITE: profile_name from setting]	EXISTS
-agent_utilities.core.transport_security.resolve_tls_profile	agent_connector_sdk.tls.resolve.resolve_tls_profile	EXISTS
+agent_utilities.core.transport_security.ResolvedTLSProfile	scion_sdk.tls.profile.ResolvedTLSProfile	EXISTS
+agent_utilities.core.transport_security.resolve_configured_tls_profile	scion_sdk.tls.resolve.resolve_tls_profile [REWRITE: profile_name from setting]	EXISTS
+agent_utilities.core.transport_security.resolve_tls_profile	scion_sdk.tls.resolve.resolve_tls_profile	EXISTS
 agent_utilities.core.workspace	REMOVE agent workspace (agent mode)	REMOVE
 agent_utilities.core.workspace.get_agent_workspace	REMOVE agent workspace → arbora workspace operations	REMOVE
 agent_utilities.core.workspace.get_mcp_config_path	REMOVE agent workspace/mcp_config discovery → arbora workspace operations	REMOVE
@@ -43,16 +43,16 @@ agent_utilities.core.workspace.initialize_workspace	REMOVE agent mode: delete ag
 agent_utilities.create_agent	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.create_agent_parser	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.create_agent_server	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.create_embedding_model	agent_connector_sdk.embeddings.create_embedding_model (R014.17; external store only; EG-ingested content embedded by EG)	EXISTS
+agent_utilities.create_embedding_model	scion_sdk.embeddings.create_embedding_model (R014.17; external store only; EG-ingested content embedded by EG)	EXISTS
 agent_utilities.create_model	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.domains.finance.cross_market_arb.CostAwareThresholdFilter	refused (MethodNotServedError) until EG serves it; handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
-agent_utilities.domains.finance.insider_equilibrium	EG finance.signal_models op=insider_equilibrium via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.insider_equilibrium.InsiderEquilibriumInputs	EG InsiderInputs request dict via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.insider_equilibrium.intensity_schedule	EG finance.signal_models op=insider_equilibrium (schedule) via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.insider_equilibrium.penalty_policy_analysis	EG finance.signal_models op=insider_equilibrium (policy) via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.insider_equilibrium.solve_equilibrium	EG finance.signal_models op=insider_equilibrium via agent_connector_sdk.compute	EG
-agent_utilities.domains.finance.regime_detector.RegimeDetector	EG finance.detect_regimes via agent_connector_sdk.compute; heuristic label handoff MEDULLA-FINANCE	EG
-agent_utilities.domains.finance.signal_fusion.BayesianSignalFusion	EG finance.signal_models op=bayes_fuse via agent_connector_sdk.compute (ontology-selected)	EG
+agent_utilities.domains.finance.insider_equilibrium	EG finance.signal_models op=insider_equilibrium via scion_sdk.compute	EG
+agent_utilities.domains.finance.insider_equilibrium.InsiderEquilibriumInputs	EG InsiderInputs request dict via scion_sdk.compute	EG
+agent_utilities.domains.finance.insider_equilibrium.intensity_schedule	EG finance.signal_models op=insider_equilibrium (schedule) via scion_sdk.compute	EG
+agent_utilities.domains.finance.insider_equilibrium.penalty_policy_analysis	EG finance.signal_models op=insider_equilibrium (policy) via scion_sdk.compute	EG
+agent_utilities.domains.finance.insider_equilibrium.solve_equilibrium	EG finance.signal_models op=insider_equilibrium via scion_sdk.compute	EG
+agent_utilities.domains.finance.regime_detector.RegimeDetector	EG finance.detect_regimes via scion_sdk.compute; heuristic label handoff MEDULLA-FINANCE	EG
+agent_utilities.domains.finance.signal_fusion.BayesianSignalFusion	EG finance.signal_models op=bayes_fuse via scion_sdk.compute (ontology-selected)	EG
 agent_utilities.domains.finance.signal_fusion.LaplaceEnsembleFusion	refused (MethodNotServedError) until EG serves it; handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
 agent_utilities.governance	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.governance.concept_hierarchy.OKF_MARKER_RE	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
@@ -78,20 +78,20 @@ agent_utilities.harness.sai_task.SpecializationTask	REMOVE harness/KG: delete; r
 agent_utilities.harness.sai_task.Verifier	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.harness.sai_task.VerifierResult	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.harness.tracing.trace	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.httpsupport.AuthHeaderInjector	agent_connector_sdk.http.support.AuthHeaderInjector	ADD
-agent_utilities.httpsupport.BaseApiClient	agent_connector_sdk.http.support.BaseApiClient	ADD
-agent_utilities.httpsupport.TokenAuth	agent_connector_sdk.http.support.TokenAuth	ADD
+agent_utilities.httpsupport.AuthHeaderInjector	scion_sdk.http.support.AuthHeaderInjector	ADD
+agent_utilities.httpsupport.BaseApiClient	scion_sdk.http.support.BaseApiClient	ADD
+agent_utilities.httpsupport.TokenAuth	scion_sdk.http.support.TokenAuth	ADD
 agent_utilities.initialize_graph_from_workspace	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.initialize_workspace	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.knowledge_graph.backends.LadybugBackend	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.core.file_lock.lock_exclusive	agent_connector_sdk.file_lock.lock_exclusive	ADD
-agent_utilities.knowledge_graph.core.file_lock.lock_exclusive_nb	agent_connector_sdk.file_lock.lock_exclusive_nb	ADD
-agent_utilities.knowledge_graph.core.file_lock.unlock	agent_connector_sdk.file_lock.unlock	ADD
+agent_utilities.knowledge_graph.core.file_lock.lock_exclusive	scion_sdk.file_lock.lock_exclusive	ADD
+agent_utilities.knowledge_graph.core.file_lock.lock_exclusive_nb	scion_sdk.file_lock.lock_exclusive_nb	ADD
+agent_utilities.knowledge_graph.core.file_lock.unlock	scion_sdk.file_lock.unlock	ADD
 agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.owl_bridge.register_promotable_node_types	EG handoff MEDULLA-ONTOLOGY (folded into ontology import)	HANDOFF
 agent_utilities.knowledge_graph.core.session.GraphSession	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.session.SessionRequiredError	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.core.session.resolve_session	agent_connector_sdk.identity.current_actor (authenticated + tenant) [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.core.session.resolve_session	scion_sdk.identity.current_actor (authenticated + tenant) [REWRITE]	EXISTS
 agent_utilities.knowledge_graph.core.session.suspend_session	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.session.use_session	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.core.work_durability	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
@@ -101,19 +101,19 @@ agent_utilities.knowledge_graph.enrichment.extractors.social.extract_structured_
 agent_utilities.knowledge_graph.enrichment.extractors.social.to_kg_rows	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.extraction.readers.read_any	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.facade.KnowledgeGraph	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.ingestion.change_envelope.ChangeEnvelope	agent_connector_sdk.ingest.ChangeSet/Entity/Relationship (mode, live_ids, cursor) [REWRITE]	EXISTS
-agent_utilities.knowledge_graph.ingestion.envelope_ingest.ingest_envelope	agent_connector_sdk.ingest.KnowledgeIngest.submit_blocking (ChangeSet -> EG SourceIngest) [REWRITE]	EXISTS
-agent_utilities.knowledge_graph.ingestion.envelope_ingest.read_change_cursor	agent_connector_sdk.ingest.KnowledgeIngest.accepted_cursor (EG SourceIngestStatus) [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.ingestion.change_envelope.ChangeEnvelope	scion_sdk.ingest.ChangeSet/Entity/Relationship (mode, live_ids, cursor) [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.ingestion.envelope_ingest.ingest_envelope	scion_sdk.ingest.KnowledgeIngest.submit_blocking (ChangeSet -> EG SourceIngest) [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.ingestion.envelope_ingest.read_change_cursor	scion_sdk.ingest.KnowledgeIngest.accepted_cursor (EG SourceIngestStatus) [REWRITE]	EXISTS
 agent_utilities.knowledge_graph.ingestion.gpu_slot_scheduler	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.ingestion.gpu_slot_scheduler.JobState	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.kb.ingestion.KBIngestionEngine	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.kb.x_ingestion.XIngestionBridge	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.memory.media_store.MediaStore	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.memory.native_ingest	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.memory.native_ingest.ingest_documents	agent_connector_sdk.ingest (SourceIngest via EG sink) [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.memory.native_ingest.ingest_documents	scion_sdk.ingest (SourceIngest via EG sink) [REWRITE]	EXISTS
 agent_utilities.knowledge_graph.memory.native_ingest.media_store	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.knowledge_graph.memory.native_ingest.native_authority	agent_connector_sdk.ingest.current_ingest [REWRITE]	EXISTS
-agent_utilities.knowledge_graph.ontology.connector_manifest_gate.check_manifest_bytes	agent_connector_sdk.manifest.package_validation [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.memory.native_ingest.native_authority	scion_sdk.ingest.current_ingest [REWRITE]	EXISTS
+agent_utilities.knowledge_graph.ontology.connector_manifest_gate.check_manifest_bytes	scion_sdk.manifest.package_validation [REWRITE]	EXISTS
 agent_utilities.knowledge_graph.ontology.connector_manifest_gate.precheck_source	REMOVE: EG validates SourceIngest against the published Connector Manifest	REMOVE
 agent_utilities.knowledge_graph.ontology.leanix_metamodel.compile_leanix_metamodel	CONNECTOR-OWN leanix_agent.ontology_compiler.compile_leanix_metamodel	MOVED
 agent_utilities.knowledge_graph.ontology.leanix_metamodel.export_leanix_ttl	CONNECTOR-OWN leanix_agent.ontology_compiler.export_leanix_ttl	MOVED
@@ -127,22 +127,22 @@ agent_utilities.knowledge_graph.research.sai_factory.FactoryResult	REMOVE harnes
 agent_utilities.knowledge_graph.research.sai_factory.SaiFactoryController	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.knowledge_graph.research.sai_factory.WeightArm	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.load_identity	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.mcp.action_dispatch	agent_connector_sdk.mcp.action_dispatch	EXISTS
+agent_utilities.mcp.action_dispatch	scion_sdk.mcp.action_dispatch	EXISTS
 agent_utilities.mcp.agent_manager.sync_mcp_agents	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.mcp.check_env_var_drift	agent_connector_sdk.mcp.env_drift (module; CLI python -m agent_connector_sdk.mcp.env_drift; _agent_utilities_reads -> framework_reads, _agent_utilities_dynamic_families -> framework_dynamic_families)	ADD
-agent_utilities.mcp.client_credentials.ClientCredentialsTokenProvider	agent_connector_sdk.auth.client_credentials.ClientCredentialsTokenProvider [REWRITE: keyword-only, http_client required]	EXISTS
+agent_utilities.mcp.check_env_var_drift	scion_sdk.mcp.env_drift (module; CLI python -m scion_sdk.mcp.env_drift; _agent_utilities_reads -> framework_reads, _agent_utilities_dynamic_families -> framework_dynamic_families)	ADD
+agent_utilities.mcp.client_credentials.ClientCredentialsTokenProvider	scion_sdk.auth.client_credentials.ClientCredentialsTokenProvider [REWRITE: keyword-only, http_client required]	EXISTS
 agent_utilities.mcp.client_credentials.child_auth_header	REMOVE child MCP auth header for multiplexed children → arbora multiplexer owns child auth	REMOVE
-agent_utilities.mcp.context_helpers.ctx_graphql_get_type_details	agent_connector_sdk.mcp.graphql.ctx_graphql_get_type_details	ADD
-agent_utilities.mcp.context_helpers.ctx_graphql_list_types	agent_connector_sdk.mcp.graphql.ctx_graphql_list_types	ADD
-agent_utilities.mcp.delegated_auth.get_delegated_token	agent_connector_sdk.auth.delegation.get_delegated_token	ADD
-agent_utilities.mcp.delegated_auth.is_delegation_enabled	agent_connector_sdk.auth.delegation.is_delegation_enabled	ADD
+agent_utilities.mcp.context_helpers.ctx_graphql_get_type_details	scion_sdk.mcp.graphql.ctx_graphql_get_type_details	ADD
+agent_utilities.mcp.context_helpers.ctx_graphql_list_types	scion_sdk.mcp.graphql.ctx_graphql_list_types	ADD
+agent_utilities.mcp.delegated_auth.get_delegated_token	scion_sdk.auth.delegation.get_delegated_token	ADD
+agent_utilities.mcp.delegated_auth.is_delegation_enabled	scion_sdk.auth.delegation.is_delegation_enabled	ADD
 agent_utilities.mcp.multiplexer	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.mcp.serve	agent_connector_sdk.mcp.server.create_mcp_server [REWRITE]	EXISTS
-agent_utilities.mcp.server_factory.create_mcp_server	agent_connector_sdk.mcp.server.create_mcp_server [REWRITE: version= keyword required]	EXISTS
+agent_utilities.mcp.serve	scion_sdk.mcp.server.create_mcp_server [REWRITE]	EXISTS
+agent_utilities.mcp.server_factory.create_mcp_server	scion_sdk.mcp.server.create_mcp_server [REWRITE: version= keyword required]	EXISTS
 agent_utilities.mcp.tools.intent_tools._approval_satisfied_by_session_load	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.mcp.verbose_tools._domain_methods	agent_connector_sdk.mcp.method_tools._domain_methods	EXISTS
-agent_utilities.mcp.verbose_tools.register_tool_surface	agent_connector_sdk.mcp.tool_surface.register_tool_surface [REWRITE semantics: SDK >=0.3.0 serves one tool per operation from client_cls; pass client_cls+get_client (and verbose_targets for extra clients), then run check_tool_parity.py against the old census]	EXISTS
-agent_utilities.mcp_utilities.create_mcp_server	agent_connector_sdk.mcp.server.create_mcp_server [AU symbol already gone; REWRITE]	EXISTS
+agent_utilities.mcp.verbose_tools._domain_methods	scion_sdk.mcp.method_tools._domain_methods	EXISTS
+agent_utilities.mcp.verbose_tools.register_tool_surface	scion_sdk.mcp.tool_surface.register_tool_surface [REWRITE semantics: SDK >=0.3.0 serves one tool per operation from client_cls; pass client_cls+get_client (and verbose_targets for extra clients), then run check_tool_parity.py against the old census]	EXISTS
+agent_utilities.mcp_utilities.create_mcp_server	scion_sdk.mcp.server.create_mcp_server [AU symbol already gone; REWRITE]	EXISTS
 agent_utilities.models.AgentDeps	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.models.GraphResponse	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.models.domains.finance.MicrostructureSignalNode	plain EG node record (connector signal_records.py; vocab trading.ttl); typed method handoff MEDULLA-FINANCE	MEDULLA-HANDOFF
@@ -165,45 +165,45 @@ agent_utilities.observability.health_ingest.ingest_health_anomaly	REMOVE harness
 agent_utilities.observability.health_ingest.ingest_health_baseline	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.observability.health_ingest.ingest_health_trend	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.observability.health_ingest.read_health_trends	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.observability.langfuse_trust.resolve_langfuse_requests_transport	agent_connector_sdk.tls.resolve.resolve_tls_profile(service="langfuse") [REWRITE]	EXISTS
+agent_utilities.observability.langfuse_trust.resolve_langfuse_requests_transport	scion_sdk.tls.resolve.resolve_tls_profile(service="langfuse") [REWRITE]	EXISTS
 agent_utilities.orchestration.development_lane	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.orchestration.development_lane.EngineNativeDevelopmentLaneTransport	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.orchestration.repository_work_item	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.orchestration.resilience.ResiliencePolicy	agent_connector_sdk.http.retry (RetryPolicy) [REWRITE]	EXISTS
-agent_utilities.orchestration.resilience.run_with_resilience	agent_connector_sdk.http.retry [REWRITE]	EXISTS
+agent_utilities.orchestration.resilience.ResiliencePolicy	scion_sdk.http.retry (RetryPolicy) [REWRITE]	EXISTS
+agent_utilities.orchestration.resilience.run_with_resilience	scion_sdk.http.retry [REWRITE]	EXISTS
 agent_utilities.prompting.builder.build_system_prompt_from_workspace	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.prompting.builder.load_identity	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.prompting.structured	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.protocols.source_connectors.base.ExternalAccess	agent_connector_sdk.contracts.ExternalAccess	ADD
-agent_utilities.protocols.source_connectors.connectors.mcp_tool.McpToolSourceConnector	agent_connector_sdk.adapters.mcp_tool.McpToolSourceAdapter [REWRITE]	EXISTS
-agent_utilities.protocols.source_connectors.http_safety	agent_connector_sdk.http.safe_post	EXISTS
-agent_utilities.protocols.source_connectors.http_safety.safe_post_json	agent_connector_sdk.http.safe_post.safe_post_json [REWRITE: (client, url, json=)]	EXISTS
+agent_utilities.protocols.source_connectors.base.ExternalAccess	scion_sdk.contracts.ExternalAccess	ADD
+agent_utilities.protocols.source_connectors.connectors.mcp_tool.McpToolSourceConnector	scion_sdk.adapters.mcp_tool.McpToolSourceAdapter [REWRITE]	EXISTS
+agent_utilities.protocols.source_connectors.http_safety	scion_sdk.http.safe_post	EXISTS
+agent_utilities.protocols.source_connectors.http_safety.safe_post_json	scion_sdk.http.safe_post.safe_post_json [REWRITE: (client, url, json=)]	EXISTS
 agent_utilities.run_graph	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.security.actor_identity.ActorType	agent_connector_sdk.identity.ActorType	EXISTS
-agent_utilities.security.brain_context.ActorContext	agent_connector_sdk.identity.ActorContext	EXISTS
-agent_utilities.security.brain_context.IdentityRequiredError	agent_connector_sdk.identity.IdentityRequiredError	EXISTS
-agent_utilities.security.brain_context.use_actor	agent_connector_sdk.identity.use_actor	EXISTS
-agent_utilities.security.browser_auth.BaseBrowserAuthManager	agent_connector_sdk.auth.browser.BaseBrowserAuthManager	ADD
-agent_utilities.security.browser_auth.generate_pkce	agent_connector_sdk.auth.browser.generate_pkce	ADD
-agent_utilities.security.cli_secrets.RuntimeSecretReferenceError	agent_connector_sdk.credentials.runtime_references.RuntimeSecretReferenceError	ADD
-agent_utilities.security.cli_secrets.resolve_runtime_secret_reference	agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference	ADD
-agent_utilities.security.cli_secrets.validate_runtime_secret_reference	agent_connector_sdk.credentials.runtime_references.validate_runtime_secret_reference	ADD
-agent_utilities.security.credential_provider.CredentialProvider	agent_connector_sdk.credentials.provider.CredentialProvider [REWRITE: (resolver, connector)]	EXISTS
-agent_utilities.security.egress.validate_base_url	agent_connector_sdk.http.egress.validate_base_url	ADD
-agent_utilities.security.entitlements	agent_connector_sdk.entitlements	EXISTS
-agent_utilities.security.entitlements.identity_scoped_resources	agent_connector_sdk.entitlements.identity_scoped_resources	EXISTS
-agent_utilities.security.guardrails.PiiSanitizer	agent_connector_sdk.privacy_pii.PiiSanitizer	ADD
+agent_utilities.security.actor_identity.ActorType	scion_sdk.identity.ActorType	EXISTS
+agent_utilities.security.brain_context.ActorContext	scion_sdk.identity.ActorContext	EXISTS
+agent_utilities.security.brain_context.IdentityRequiredError	scion_sdk.identity.IdentityRequiredError	EXISTS
+agent_utilities.security.brain_context.use_actor	scion_sdk.identity.use_actor	EXISTS
+agent_utilities.security.browser_auth.BaseBrowserAuthManager	scion_sdk.auth.browser.BaseBrowserAuthManager	ADD
+agent_utilities.security.browser_auth.generate_pkce	scion_sdk.auth.browser.generate_pkce	ADD
+agent_utilities.security.cli_secrets.RuntimeSecretReferenceError	scion_sdk.credentials.runtime_references.RuntimeSecretReferenceError	ADD
+agent_utilities.security.cli_secrets.resolve_runtime_secret_reference	scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference	ADD
+agent_utilities.security.cli_secrets.validate_runtime_secret_reference	scion_sdk.credentials.runtime_references.validate_runtime_secret_reference	ADD
+agent_utilities.security.credential_provider.CredentialProvider	scion_sdk.credentials.provider.CredentialProvider [REWRITE: (resolver, connector)]	EXISTS
+agent_utilities.security.egress.validate_base_url	scion_sdk.http.egress.validate_base_url	ADD
+agent_utilities.security.entitlements	scion_sdk.entitlements	EXISTS
+agent_utilities.security.entitlements.identity_scoped_resources	scion_sdk.entitlements.identity_scoped_resources	EXISTS
+agent_utilities.security.guardrails.PiiSanitizer	scion_sdk.privacy_pii.PiiSanitizer	ADD
 agent_utilities.security.permissions_kernel.AgentRole	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
 agent_utilities.security.permissions_kernel.PermissionsKernel	REMOVE harness/KG: delete; real connector capability → call arbora served operation	REMOVE
-agent_utilities.security.persistence_privacy.PersistencePrivacyGuard	agent_connector_sdk.privacy.PersistencePrivacyGuard	EXISTS
-agent_utilities.security.persistence_privacy.persistence_reference	agent_connector_sdk.privacy_reference.persistence_reference	EXISTS
-agent_utilities.security.persistence_privacy.sanitize_for_persistence	agent_connector_sdk.privacy.sanitize_for_persistence	EXISTS
-agent_utilities.security.request_identity.apply_served_security_profile	agent_connector_sdk.mcp.served_security.apply_served_security_profile [REWRITE: create_mcp_server applies it by default (R014.18); pass served_security_override=ServedSecurityOverride(reason) only to opt out; delete local gate]	EXISTS
+agent_utilities.security.persistence_privacy.PersistencePrivacyGuard	scion_sdk.privacy.PersistencePrivacyGuard	EXISTS
+agent_utilities.security.persistence_privacy.persistence_reference	scion_sdk.privacy_reference.persistence_reference	EXISTS
+agent_utilities.security.persistence_privacy.sanitize_for_persistence	scion_sdk.privacy.sanitize_for_persistence	EXISTS
+agent_utilities.security.request_identity.apply_served_security_profile	scion_sdk.mcp.served_security.apply_served_security_profile [REWRITE: create_mcp_server applies it by default (R014.18); pass served_security_override=ServedSecurityOverride(reason) only to opt out; delete local gate]	EXISTS
 agent_utilities.security.secrets_client.InEpistemicGraphBackend	REMOVE KG-backed secret store → OpenBao via SDK credentials resolver	REMOVE
-agent_utilities.security.secrets_client.SecretsClient	agent_connector_sdk.credentials.resolution.default_credential_resolver [REWRITE: resolve_secret_reference(ref)]	EXISTS
-agent_utilities.security.source_credentials.NoCredential	agent_connector_sdk.credentials.provider.NoCredential	ADD
+agent_utilities.security.secrets_client.SecretsClient	scion_sdk.credentials.resolution.default_credential_resolver [REWRITE: resolve_secret_reference(ref)]	EXISTS
+agent_utilities.security.source_credentials.NoCredential	scion_sdk.credentials.provider.NoCredential	ADD
 agent_utilities.security.xai_auth.XaiAuthManager	REMOVE LLM-provider (xAI/Grok) auth → arbora served model operation	REMOVE
 agent_utilities.server.build_agent_app	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
 agent_utilities.server.create_agent_server	REMOVE agent mode: delete agent_server.py / agent CLI and its tests	REMOVE
-agent_utilities.to_boolean	agent_connector_sdk.utilities.to_boolean	EXISTS
-agent_utilities.tools.versioning.tool_version	agent_connector_sdk.mcp.versioning.tool_version	ADD
+agent_utilities.to_boolean	scion_sdk.utilities.to_boolean	EXISTS
+agent_utilities.tools.versioning.tool_version	scion_sdk.mcp.versioning.tool_version	ADD

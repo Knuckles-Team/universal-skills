@@ -11,7 +11,7 @@ The catalog is intentionally split by ownership:
   `universal_skills/<domain>-workflows/`.
 - Platform and package operations live with their provider under
   `agent-packages/agents/<package>/<module>/skills/` and are discovered through the
-  `agent_connector_sdk.connector` entry point.
+  `scion_sdk.connector` entry point.
 
 This prevents a universal skill from quietly depending on one deployment, service,
 or private filesystem layout.
