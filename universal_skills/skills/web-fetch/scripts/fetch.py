@@ -35,7 +35,7 @@ async def fetch_page(url: str) -> tuple[str, str]:
     """Fetch one page through web-crawler's shared hardened HTTP path."""
 
     SafeHttpCrawler, extract_markdown, CrawlerSecurityPolicy = _crawler_runtime()
-    policy = CrawlerSecurityPolicy.from_agent_config()
+    policy = CrawlerSecurityPolicy.from_settings()
     normalized = policy.validate_url(url)
     async with SafeHttpCrawler(policy, max_concurrent=1) as crawler:
         result = await crawler.arun(url=normalized, config=None)

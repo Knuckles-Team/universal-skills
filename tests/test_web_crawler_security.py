@@ -13,7 +13,7 @@ SCRIPT_DIR = PROJECT_ROOT / "universal_skills" / "skills" / "web-crawler" / "scr
 
 
 def _runtime():
-    pytest.importorskip("agent_utilities")
+    pytest.importorskip("scion_sdk")
     sys.path.insert(0, str(SCRIPT_DIR))
     return importlib.import_module("security_runtime")
 
@@ -44,7 +44,7 @@ def test_crawler_source_has_no_insecure_transport_or_browser_switches() -> None:
     assert "--host-resolver-rules=" in (SCRIPT_DIR / "security_runtime.py").read_text(
         encoding="utf-8"
     )
-    assert "source_http_allow_browser_fetch" in (
+    assert "SOURCE_HTTP_ALLOW_BROWSER_FETCH" in (
         SCRIPT_DIR / "security_runtime.py"
     ).read_text(encoding="utf-8")
 
@@ -71,8 +71,8 @@ def test_output_is_confined_and_written_with_opaque_filename(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _runtime()
-    http_safety = importlib.import_module(
-        "scion_sdk.source_connectors.http_safety"
+    http_resolve = importlib.import_module(
+        "scion_sdk.source_connectors._http_resolve"
     )
 
     def resolve_public_test_authority(host: str, port: int | None):
@@ -89,7 +89,7 @@ def test_output_is_confined_and_written_with_opaque_filename(
         ]
 
     monkeypatch.setattr(
-        http_safety.socket, "getaddrinfo", resolve_public_test_authority
+        http_resolve.socket, "getaddrinfo", resolve_public_test_authority
     )
     policy = _policy(tmp_path)
     output = policy.resolve_output_dir("crawl-output")

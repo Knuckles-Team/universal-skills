@@ -56,8 +56,7 @@ chain so each stage consumes the prior stage's KG state.
 **Tools**: `graph_search, document_process`
 
 Ingest trading books, papers, PDFs, and notes and ORGANISE them into the trading
-knowledge taxonomy via `agent_utilities.knowledge_graph.distillation.trading_curator`
-(`organize_trading_knowledge`): each extracted concept is classified into a
+knowledge taxonomy through the arbora ingest operations: each extracted concept is classified into a
 Strategy/Risk/Execution concept node with citations and confidence, and order-flow
 chapters seed `MicrostructureSignal` nodes (`DERIVED_FROM`). Knowledge is organised,
 not dumped.
@@ -80,7 +79,7 @@ Expected: `ingested-research-concepts`
 
 Ensure the trading ontology (`ontology_trading.ttl`), the `MicrostructureSignal`
 candidates, and the curated `teamcfg:trading_paper_v1` TeamConfig are registered in
-the KG (`agent_utilities.graph.trading_team_seed.seed_trading_team`). This is the
+the KG through the arbora write operations. This is the
 substrate the rest of the loop reasons over.
 Expected: `registered-signals`, `seeded-team-config`
 

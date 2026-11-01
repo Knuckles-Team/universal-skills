@@ -358,33 +358,25 @@ def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
     Returns:
         List of dicts with 'content', 'target_path', 'score'.
     """
-    try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-        from meristem.core.paths import kg_db_path
+    from universal_skills._arbora import graph_search
 
-        engine = IntelligenceGraphEngine(db_path=str(kg_db_path()))
-        results = engine.search_hybrid(query, top_k=top_k)
-        sources = []
-        for r in results:
-            content = r.get("content", r.get("description", ""))
-            if content:
-                sources.append(
-                    {
-                        "content": content,
-                        "target_path": r.get(
-                            "target_path", r.get("file_path", "kg_source")
-                        ),
-                        "score": r.get("score", 0.0),
-                        "node_id": r.get("id", r.get("node_id", "")),
-                    }
-                )
-        return sources
-    except ImportError:
-        print("agent_utilities not available for KG resolution.", file=sys.stderr)
+    results = graph_search(query, top_k=top_k)
+    if results is None:
+        print("No arbora gateway answered for KG resolution.", file=sys.stderr)
         return []
-    except Exception as e:
-        print(f"KG resolution failed: {type(e).__name__}", file=sys.stderr)
-        return []
+    sources = []
+    for r in results:
+        content = r.get("content", r.get("description", ""))
+        if content:
+            sources.append(
+                {
+                    "content": content,
+                    "target_path": r.get("target_path", r.get("file_path", "kg_source")),
+                    "score": r.get("score", 0.0),
+                    "node_id": r.get("id", r.get("node_id", "")),
+                }
+            )
+    return sources
 
 
 def find_synergies(source_signals: dict, target_path: Path | None) -> list[dict]:

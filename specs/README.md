@@ -12,4 +12,3 @@ This repository owns the specs with the ID prefix `US`.
 - [`US-WEB-RESEARCH`](web-research/spec.md) — Web research skills call the served operation.
 - [`US-MCP-BUILDER`](mcp-builder/spec.md) — The mcp-builder scaffold builds connectors on SDK components.
 - [`US-CONTENT`](catalog-content/spec.md) — The catalog is served by the SDK content convention.
-- [`US-SKILL-GRAPH-BUILDER`](skill-graph-builder/spec.md) — The builder distills any source into a skill graph.

@@ -1030,7 +1030,7 @@ async def main():
     args = parser.parse_args()
 
     try:
-        policy = CrawlerSecurityPolicy.from_agent_config()
+        policy = CrawlerSecurityPolicy.from_settings()
         if not 1 <= len(args.urls) <= MAX_SEED_URLS:
             raise CrawlerSecurityError("crawler_seed_count_invalid")
         if not 1 <= args.max_depth <= 8:

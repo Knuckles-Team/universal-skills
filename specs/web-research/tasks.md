@@ -8,3 +8,4 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] T004 US-WEB-RESEARCH-R001.3 Alias.
 - [ ] T005 US-WEB-RESEARCH-R001.4 Refusal.
 - [ ] T006 US-WEB-RESEARCH-R001.5 Hot-path proof.
+- [ ] T007 US-WEB-RESEARCH-R002 Graph-reading skills call the served arbora graph twins.

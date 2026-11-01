@@ -18,12 +18,15 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urldefrag, urlparse
 
-from agent_utilities.core import config as config_module
-from agent_utilities.core.http_client import create_http_client
-from agent_utilities.core.transport_security import resolve_tls_profile
 from meristem.core.paths import data_dir
+from scion_sdk.auth.static import BearerAuth
+from scion_sdk.config import setting
+from scion_sdk.http.client import create_http_client
+from scion_sdk.http.options import HttpClientOptions
+from scion_sdk.tls.resolve import resolve_tls_profile
 from scion_sdk.source_connectors.http_safety import (
     SourceEgressError,
+    configured_source_http_policy,
     normalize_allowed_hosts,
     require_safe_source_url,
     safe_get_bytes,
@@ -129,25 +132,25 @@ class CrawlerSecurityPolicy:
     )
 
     @classmethod
-    def from_agent_config(
-        cls, config: config_module.AgentConfig | None = None
-    ) -> "CrawlerSecurityPolicy":
-        cfg = config or config_module.AgentConfig()
-        private_hosts = normalize_allowed_hosts(cfg.source_http_allowed_private_hosts)
-        redirect_hosts = normalize_allowed_hosts(cfg.source_http_allowed_redirect_hosts)
+    def from_settings(cls) -> "CrawlerSecurityPolicy":
+        """Build the policy from the SDK source-HTTP settings."""
+        http = configured_source_http_policy()
+        private_hosts = normalize_allowed_hosts(http["allowed_private_hosts"])
+        redirect_hosts = normalize_allowed_hosts(http["allowed_redirect_hosts"])
         if len(private_hosts | redirect_hosts) > 256:
             raise CrawlerSecurityError("crawler_host_allowlist_too_large")
         workspace = None
-        if cfg.workspace_path:
-            workspace = Path(cfg.workspace_path).expanduser().resolve(strict=False)
+        workspace_path = str(setting("WORKSPACE_PATH", "") or "")
+        if workspace_path:
+            workspace = Path(workspace_path).expanduser().resolve(strict=False)
             if not workspace.is_dir():
                 raise CrawlerSecurityError("crawler_workspace_unavailable")
         return cls(
             allowed_private_hosts=private_hosts,
             allowed_redirect_hosts=redirect_hosts,
-            max_response_bytes=int(cfg.source_http_max_response_bytes),
-            max_redirects=int(cfg.source_http_max_redirects),
-            allow_browser_fetch=bool(cfg.source_http_allow_browser_fetch),
+            max_response_bytes=int(http["max_bytes"]),
+            max_redirects=int(http["max_redirects"]),
+            allow_browser_fetch=bool(setting("SOURCE_HTTP_ALLOW_BROWSER_FETCH", False)),
             workspace_root=workspace,
             output_root=(data_dir() / "web-crawler").expanduser().resolve(strict=False),
         )
@@ -424,21 +427,23 @@ class SafeMCPClient:
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
         }
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-        if self.session_id:
-            headers["mcp-session-id"] = self.session_id
+        request_headers = (
+            {"mcp-session-id": self.session_id} if self.session_id else {}
+        )
 
         tls = resolve_tls_profile("arbora")
-        client_kwargs: dict[str, Any] = {
-            "timeout": self.timeout,
-            "follow_redirects": False,
-            "headers": headers,
-        }
-        client_kwargs.update(tls.httpx_kwargs())
+        options = HttpClientOptions(
+            base_url=self.url,
+            timeout=self.timeout,
+            headers=headers,
+            tls=tls,
+            auth=BearerAuth(self.token) if self.token else None,
+        )
         try:
-            with create_http_client(**client_kwargs) as client:
-                with client.stream("POST", self.url, content=body) as response:
+            with create_http_client(options) as client:
+                with client.stream(
+                    "POST", self.url, content=body, headers=request_headers
+                ) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         raise CrawlerSecurityError("crawler_kg_redirect_denied")
                     response.raise_for_status()

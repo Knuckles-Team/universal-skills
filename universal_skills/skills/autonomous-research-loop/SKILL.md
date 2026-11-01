@@ -35,19 +35,15 @@ Drives the KG's self-evolution **golden loop** — one cycle of:
 
 ## Run it
 
-On-demand via the arbora MCP orchestration tool:
+Submit one research-kind Loop through arbora; it repeats the five steps above
+and logs each pass as an `EvolutionCycle` node:
 
 ```text
-graph_orchestrate(action="golden_loop", max_topics=5)
+graph_loops(action="submit", kind="research", max_topics=5)
 ```
 
-…or directly:
-
-```bash
-KG_DAEMON_ROLE=client python -c \
-  "from agent_utilities.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
-   import json; print(json.dumps(run_golden_loop_cycle(max_topics=5), default=str, indent=2))"
-```
+Read the live state with `graph_loops(action="state")` and the open `:Gap`
+backlog with `graph_loops(action="gaps")`. See the `arbora-evolution` skill.
 
 ## Always-on daemon (optional)
 

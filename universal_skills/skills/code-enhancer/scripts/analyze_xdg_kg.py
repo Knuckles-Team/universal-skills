@@ -12,10 +12,8 @@ import json
 import logging
 from typing import Any
 
-try:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-except ImportError:
-    IntelligenceGraphEngine = None
+from universal_skills._arbora import graph_query
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,29 +23,6 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
     If project_dir is provided, filters by that target_path.
     Otherwise, checks the entire graph.
     """
-    engine = IntelligenceGraphEngine.get_active() if IntelligenceGraphEngine else None
-    if not engine:
-        try:
-            from meristem.core.paths import kg_db_path
-            from agent_utilities.knowledge_graph.backends import create_backend
-            import networkx as nx
-
-            backend = create_backend(backend_type="ladybug", db_path=str(kg_db_path()))
-            engine = IntelligenceGraphEngine(graph=nx.MultiDiGraph(), backend=backend)
-        except ImportError as e:
-            logger.warning(f"Skipping XDG KG check due to missing dependency: {type(e).__name__}")
-            return {
-                "domain": "XDG Compliance (KG)",
-                "score": 100,
-                "grade": "N/A",
-                "findings": [
-                    "Check skipped: required agent-utilities/networkx dependencies not found."
-                ],
-                "justifications": [
-                    "Dependencies missing, assuming compliance by default for this check."
-                ],
-            }
-
     # Query for string literals or path operations that resemble ~/.something
     # In the AST, these are often captured as Constant or Call nodes depending on parsing depth.
     # The Knowledge Graph parses file paths and strings into nodes.
@@ -66,7 +41,18 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
     RETURN n.id AS id, n.name AS name, n.value AS value, n.file_path AS file_path, n.target_path AS target_path
     """
 
-    results = engine.query_cypher(cypher)
+    results = graph_query(cypher)
+    if results is None:
+        logger.warning("Skipping XDG KG check: no arbora gateway answered")
+        return {
+            "domain": "XDG Compliance (KG)",
+            "score": 100,
+            "grade": "N/A",
+            "findings": ["Check skipped: no arbora gateway answered (set ARBORA_URL)."],
+            "justifications": [
+                "The graph was not reachable, so this check assumes compliance."
+            ],
+        }
 
     findings = []
     failed = False

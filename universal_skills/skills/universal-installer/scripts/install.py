@@ -9,18 +9,13 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
-try:
-    from agent_utilities.base_utilities import get_logger, retrieve_package_name
-except ImportError:
-    # Fallback if the retired agent_utilities package is not available
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    def retrieve_package_name():
-        return "universal_skills"
 
-else:
-    logger = get_logger(__name__)
+def retrieve_package_name():
+    return "universal_skills"
+
 
 # Try to import utilities from the packages
 try:
