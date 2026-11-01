@@ -820,9 +820,9 @@ class TestKgNativeInventory:
         sync_client = MagicMock()
         sync_client.connect.return_value = client
 
-        fake_eg = types.ModuleType("epistemic_graph")
-        fake_eg.SyncEpistemicGraphClient = sync_client
-        monkeypatch.setitem(sys.modules, "epistemic_graph", fake_eg)
+        fake_eg = types.ModuleType("medulla")
+        fake_eg.SyncMedullaClient = sync_client
+        monkeypatch.setitem(sys.modules, "medulla", fake_eg)
 
         mod = _import_script("kg_native")
         symbols, tier = mod.parse_file_symbols(source_file)
