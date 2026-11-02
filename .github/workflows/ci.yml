@@ -168,6 +168,8 @@ jobs:
       - name: Install required constraint validators as wheels
         run: |
           uv pip install --python .ci/scion-sdk/.venv/bin/python --only-binary=:all: regex==2026.9.29 rfc3986-validator==0.1.1 rfc3339-validator==0.1.4
+      - name: Install this repository so connector conformance reads its metadata
+        run: uv pip install --python .ci/scion-sdk/.venv/bin/python --no-deps -e .
       - name: Test real governed transport and local-source publication boundaries
         env:
           MCP_BUILDER_REQUIRE_SDK: '1'
