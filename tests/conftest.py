@@ -13,8 +13,8 @@ def pytest_configure(config):
     """Register markers and fail closed for the dedicated SDK contract job."""
     if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":
         # The required CI job must never turn missing SDK dependencies into skips.
-        importlib.import_module("agent_connector_sdk.mcp.server")
-        importlib.import_module("agent_connector_sdk.ingest")
+        importlib.import_module("scion_sdk.mcp.server")
+        importlib.import_module("scion_sdk.ingest")
     config.addinivalue_line(
         "markers",
         "concept(id): mark test with a concept ID for traceability",

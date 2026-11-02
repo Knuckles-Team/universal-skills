@@ -9,7 +9,7 @@ import mattermost_mcp.api.api_client_base as base_module
 
 
 def _client(handler):
-    from agent_connector_sdk.http.client import create_http_client as real
+    from scion_sdk.http.client import create_http_client as real
 
     def build(options):
         return real(options, transport=httpx.MockTransport(handler))

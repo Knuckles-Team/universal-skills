@@ -57,7 +57,7 @@ errors. Use `--fail-on warning` when establishing a fully clean catalog.
   atomic skills or one explicit MCP tool per step.
 - Put package- or platform-owned operations in that package's
   `<module>/skills/<name>/` and expose them through
-  the `agent_connector_sdk.connector` entry point. Keep a universal workflow only when it
+  the `scion_sdk.connector` entry point. Keep a universal workflow only when it
   genuinely composes capabilities across packages.
 
 ## Verify changes

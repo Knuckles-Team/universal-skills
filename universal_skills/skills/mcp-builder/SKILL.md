@@ -4,7 +4,7 @@ domain: agent-tools
 skill_type: skill
 description: >-
   Build or update an SDK-only MCP connector package: it depends on
-  agent-connector-sdk alone (never the agent control plane) and follows shared
+  scion-sdk alone (never the agent control plane) and follows shared
   pipelines standards. Use when wrapping REST or GraphQL APIs from schemas or
   documentation, exposing a CLI through MCP, or updating connector registration,
   package content, ingestion contracts, and repository scaffolding.
@@ -18,12 +18,12 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package on the SDK's components. A connector depends on
-`agent-connector-sdk[mcp]>=0.5.1,<0.6` and nothing else from the agent ecosystem: no
+`scion-sdk[mcp]>=0.5.1,<0.6` and nothing else from the agent ecosystem: no
 agent server, no LLM client, no provider entry points. The connector holds only what
 is specific to one external system; the SDK and the shared pipelines own the rest.
 
 Use current main revisions of
-[agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk) and
+[scion-sdk](https://github.com/Knuckles-Team/scion-sdk) and
 [pipelines](https://github.com/Knuckles-Team/pipelines) as the authority. Record the
 revisions you read.
 
@@ -44,7 +44,7 @@ only generator.
       .github/workflows/pages.yml          dashboard Pages caller + workflow_dispatch (theme opt-in after canonical sync)
       pages/index.md                  minimal source for the shared Pages workflow
       example_mcp/__init__.py        connector = Connector(api=Api, get_client=get_client, instructions=...)
-      example_mcp/__main__.py        from agent_connector_sdk import run; run()
+      example_mcp/__main__.py        from scion_sdk import run; run()
       example_mcp/api_client.py      class Api: one public method per API operation
       example_mcp/auth.py            client_factory(url_env=, auth=, tls=, delegation=)
       example_mcp/connector_sources.py     SOURCES = (source_meta(tool=...), ...)
@@ -96,11 +96,11 @@ the connector offers is served over MCP.
    rotation: `client_factory` with one declaration (`Bearer`, `ApiKey`, `Basic`,
    `ClientCredentials`, `RefreshToken`, `SessionLogin`, `NoAuth`). Paging:
    `PaginationIterator`. Limits: `RateLimiter`. GraphQL: `GraphQLClient`
-   (`agent-connector-sdk[graphql]`). Vector search: the SDK `vector` extra. Optional
+   (`scion-sdk[graphql]`). Vector search: the SDK `vector` extra. Optional
    dependencies are SDK extras only. Do not pin `requests`, `httpx` or `gql`.
-6. **Server.** The `agent_connector_sdk.connector` entry point
+6. **Server.** The `scion_sdk.connector` entry point
    (`<fleet> = "<pkg>:connector"`) and the console script
-   `<fleet> = "agent_connector_sdk.cli:serve"` start the server: health route,
+   `<fleet> = "scion_sdk.cli:serve"` start the server: health route,
    middleware, transports, content, metadata version. Write no server bootstrap.
 7. **Tests.** Write tests of your own client logic only. The SDK pytest plugin
    generates the fleet-name, content, ontology, source, startup and version tests in

@@ -1056,24 +1056,6 @@ wheels = [
 ]
 
 [[package]]
-name = "epistemic-graph"
-version = "2.27.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "msgpack" },
-    { name = "pydantic" },
-    { name = "pyoxigraph" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/be/beb16018cb5243f8711a23843ceb55e6a9d59ba04debe92f6cd5ed10d526/epistemic_graph-2.27.7.tar.gz", hash = "sha256:a97b1022a2c1081d45671fd21c21dcf3b1ce3eec81c1b95becd4a0fdbf42d7f0", size = 7617716, upload-time = "2026-10-24T20:31:48.086Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/6b/02d0f7b621212dc2201e7b277de5ea0c50c0147ab6394bad4c4fdc4fde65/epistemic_graph-2.27.7-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:aa9cc21757be066a0bae6802cce19af266f5d4afdad91af9f6fcb66139d73569", size = 7918549, upload-time = "2026-10-24T20:52:35.051Z" },
-    { url = "https://files.pythonhosted.org/packages/8f/62/8f1ef8cd3eeb8ce74bb592683118259602cb67293ca14e7cb4ed87a9c964/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:bb05fe3cdfec27f329bfff528da6e5bbd2c91b09b22cb1239c1a6aeaf6c1cdff", size = 8110727, upload-time = "2026-10-24T20:59:43.431Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/dd/29a8272c86e5b0d704703ba74981ed30e0d0df33577cfb435ebe7709c425/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d3e217c83ab80295f019ab44d861ea19a21de879cc804835f27e86bfa74cb78f", size = 8764065, upload-time = "2026-10-24T20:48:57.753Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/97/c5f8354f4ba35d2f15fbbc4657bf732ede763c013b5a44f52c428b3eaf13/epistemic_graph-2.27.7-cp39-abi3-win_amd64.whl", hash = "sha256:e6c761d69fe17d90c185542880050634f5569358bbec3ca58f3ca788ab641fca", size = 9572735, upload-time = "2026-10-24T21:02:57.596Z" },
-]
-
-[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2168,6 +2150,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "medulla"
+version = "2.27.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "msgpack" },
+    { name = "pydantic" },
+    { name = "pyoxigraph" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/85/c0970a7dbbcf4decbe5f4f5e423e585879d795459b06a72eb44c3c286156/medulla-2.27.10.tar.gz", hash = "sha256:f2aa04d9368c519434a985bb1de7906cc32de2746867db024efdab6b67f4e484", size = 8218986, upload-time = "2026-10-29T14:02:59.299Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/ca/9de892de59063ba17d100a429b7aed900b1a51cb0406df2136fdafb9a557/medulla-2.27.10-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:6a2464440aa022b096f4c5e2cff529f6bca32853d933b87d18e4902b943f88c1", size = 8248210, upload-time = "2026-10-29T14:49:57.797Z" },
+    { url = "https://files.pythonhosted.org/packages/46/22/8791361946604899c2b2af09771ab3912586f7e8f6c352bf3290dae37ad3/medulla-2.27.10-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:4ae475226934aa1f5449c82cf1983d99a9ea7943f8fa2d2e22c6ef364e2e1391", size = 8441428, upload-time = "2026-10-29T14:31:51.914Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/12/38d3ee0babbc94cdd18b90db6a7f6fc0e54b360317fb3bbf14f2bde8b4dd/medulla-2.27.10-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d6b82ad4d94a4813d24c34cb312408a1587d484fafc35e5665f36c26a5d82090", size = 9107200, upload-time = "2026-10-29T14:52:48.323Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/d5/edfa00325c0efaae3d711e42785205fc8a004d1cdcaf1b0d923383a4d7bd/medulla-2.27.10-cp39-abi3-win_amd64.whl", hash = "sha256:01200899b0ab872fb7ccb9b1cab7035de851a5dc961ad17b38842769482a9e43", size = 9945068, upload-time = "2026-10-29T14:30:57.179Z" },
 ]
 
 [[package]]
@@ -4084,21 +4084,22 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.5.8"
+version = "0.6.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "cryptography" },
-    { name = "epistemic-graph" },
+    { name = "defusedxml" },
     { name = "httpx" },
     { name = "httpx2" },
     { name = "mcp-types" },
+    { name = "medulla" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/a5/15948c5e51f6a5d9a8efe8c9112cd140c778032de7bc375ebb453d52b735/scion_sdk-0.5.8.tar.gz", hash = "sha256:c8cf8a8bd36983db68afc78915720a511052cf9be4198ce1eed5f717e8717fd9", size = 807075, upload-time = "2026-10-27T00:33:18.895Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/97/77/7aefc9929adf88e110fa91c99eee41b244af3a0071ea6449d68b2f0b3ba9/scion_sdk-0.6.5.tar.gz", hash = "sha256:318a605054e35f991cb93f902d0ed5ef1867c105bd9582fd88d6f3c02d38e93b", size = 1154777, upload-time = "2026-11-01T08:53:27.499Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/79/8107af19a35b9d95365805cd52f851c82bd4daef6d4e8d893dcc1011fd4a/scion_sdk-0.5.8-py3-none-any.whl", hash = "sha256:a129100a8f609aeeb5c97c934e1f8afd4da93022af507333cabf3733be5c40d1", size = 789504, upload-time = "2026-10-27T00:33:17.355Z" },
+    { url = "https://files.pythonhosted.org/packages/43/e5/2b120ef553739b23f380f8da5936c0ed01214704afc564b6e99382a47acd/scion_sdk-0.6.5-py3-none-any.whl", hash = "sha256:1bce0023a0c56648b32f231f1960e1be2c0581334c12213be446e81b1b73eedd", size = 1101295, upload-time = "2026-11-01T08:53:26.01Z" },
 ]
 
 [package.optional-dependencies]
@@ -4811,7 +4812,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
     { name = "rfc3339-validator", marker = "extra == 'test'", specifier = ">=0.1.4" },
     { name = "rfc3986-validator", marker = "extra == 'test'", specifier = ">=0.1.1" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.5.6,<0.6.0" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.6.5,<0.7.0" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
     { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },
     { name = "toml", marker = "extra == 'developer-utilities'", specifier = ">=0.10.2" },

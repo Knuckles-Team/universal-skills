@@ -7,7 +7,7 @@ try:
     import mammoth
     import markdownify
     import pymupdf4llm
-    from agent_utilities.base_utilities import get_logger
+    from scion_sdk.utilities import get_logger
 except ImportError:
     print("Error: Missing required dependencies for the 'document-converter' skill.")
     print(

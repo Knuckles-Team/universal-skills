@@ -9,7 +9,7 @@ description = "CISO Assistant API + MCP Server — 100% API coverage"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
+dependencies = [ "scion-sdk[mcp]>=0.3.11,<1.0.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
 [[project.authors]]
 name = "Knuckles-Team"
 
@@ -17,28 +17,28 @@ name = "Knuckles-Team"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",]
-all = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0",]
+mcp = [ "scion-sdk[mcp]>=0.3.11,<1.0.0",]
+all = [ "scion-sdk[mcp]>=0.3.11,<1.0.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
 ciso-assistant-mcp = "ciso_assistant_api.mcp_server:mcp_server"
 
-[project.entry-points."agent_connector_sdk.skill_providers"]
+[project.entry-points."scion_sdk.skill_providers"]
 ciso-assistant-api = "ciso_assistant_api.skills"
 
-[project.entry-points."agent_connector_sdk.ontology_providers"]
+[project.entry-points."scion_sdk.ontology_providers"]
 ciso-assistant-api = "ciso_assistant_api.ontology"
 
-[project.entry-points."agent_connector_sdk.source_connector_providers"]
+[project.entry-points."scion_sdk.source_connector_providers"]
 ciso-assistant-api = "ciso_assistant_api.connectors"
 
-[project.entry-points."agent_connector_sdk.prompt_providers"]
+[project.entry-points."scion_sdk.prompt_providers"]
 ciso-assistant-api = "ciso_assistant_api.prompts"
 
 # The one declared connector identity: the fleet name (SCION-CONNECTOR-CONTROL-R071).
-[project.entry-points."agent_connector_sdk.connector"]
+[project.entry-points."scion_sdk.connector"]
 ciso-assistant-mcp = "ciso_assistant_api"
 
 [tool.uv.workspace]

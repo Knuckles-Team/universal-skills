@@ -1,7 +1,7 @@
 from typing import Any
 
 import requests
-from agent_connector_sdk.exceptions import ApiError, AuthError
+from scion_sdk.exceptions import ApiError, AuthError
 
 
 class BaseApiClient:

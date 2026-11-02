@@ -3,12 +3,12 @@
 from contextlib import ExitStack
 
 import httpx
-from agent_connector_sdk.auth.delegation import DelegatedTokenAuth, DelegationSettings
-from agent_connector_sdk.auth.static import api_key_auth, bearer_auth
-from agent_connector_sdk.config import load_config, setting
-from agent_connector_sdk.http.client import create_http_client
-from agent_connector_sdk.http.options import HttpClientOptions
-from agent_connector_sdk.tls.resolve import resolve_tls_profile
+from scion_sdk.auth.delegation import DelegatedTokenAuth, DelegationSettings
+from scion_sdk.auth.static import api_key_auth, bearer_auth
+from scion_sdk.config import load_config, setting
+from scion_sdk.http.client import create_http_client
+from scion_sdk.http.options import HttpClientOptions
+from scion_sdk.tls.resolve import resolve_tls_profile
 
 from .api import ApiClientSystem
 from .openapi_auth_scheme import AuthKind, declared_scheme

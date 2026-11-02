@@ -91,7 +91,7 @@ application of it.
 
 universal-skills is no longer the only home for skills. **Any agent-package can ship
 its own skills, system prompts, and ontology inside its own wheel** by declaring one
-`agent_connector_sdk.connector` entry point in `pyproject.toml` (`<pkg>:connector` for a
+`scion_sdk.connector` entry point in `pyproject.toml` (`<pkg>:connector` for a
 connector, a bare `<pkg>` for a content-only package). The SDK finds content by convention
 under that package: `skills/<name>/SKILL.md` (flat, one level), `prompts/` and `ontology/`.
 The `universal-installer` skill walks `installed_connectors()` (honouring
@@ -227,7 +227,7 @@ the old version under the new tag and PyPI refuses it.
 ```python
 try:
     import requests
-    from agent_utilities.base_utilities import to_boolean
+    from scion_sdk.utilities import to_boolean
 except ImportError:
     print("Error: Missing required dependencies for the 'skill-name' skill.")
     print("Please install them by running: pip install 'universal-skills[skill-name]'")

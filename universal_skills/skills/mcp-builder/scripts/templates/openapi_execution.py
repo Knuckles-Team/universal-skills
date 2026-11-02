@@ -2,7 +2,7 @@
 
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.mcp.context import ctx_confirm_destructive
+from scion_sdk.mcp.context import ctx_confirm_destructive
 from fastmcp.server.dependencies import get_context
 from mcp.types import InputRequiredResult
 

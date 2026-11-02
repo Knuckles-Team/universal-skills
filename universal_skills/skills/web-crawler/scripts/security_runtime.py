@@ -20,18 +20,16 @@ from urllib.parse import urldefrag, urlparse
 
 from agent_utilities.core import config as config_module
 from agent_utilities.core.http_client import create_http_client
-from agent_utilities.core.paths import data_dir
 from agent_utilities.core.transport_security import resolve_tls_profile
-from agent_utilities.protocols.source_connectors.http_safety import (
+from meristem.core.paths import data_dir
+from scion_sdk.source_connectors.http_safety import (
     SourceEgressError,
     normalize_allowed_hosts,
     require_safe_source_url,
     safe_get_bytes,
 )
-from agent_utilities.security.persistence_privacy import (
-    persistence_reference,
-    sanitize_for_persistence,
-)
+from scion_sdk.privacy import sanitize_for_persistence
+from scion_sdk.privacy_reference import persistence_reference
 
 MAX_URL_BYTES = 4_096
 MAX_SEED_URLS = 50

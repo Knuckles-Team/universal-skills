@@ -2,8 +2,8 @@
 
 Use the public SDK helpers; do not copy helper implementations into a connector.
 
-    from agent_connector_sdk.mcp.context import ctx_confirm_destructive, ctx_log
-    from agent_connector_sdk.progress import ctx_progress
+    from scion_sdk.mcp.context import ctx_confirm_destructive, ctx_log
+    from scion_sdk.progress import ctx_progress
 
 ## Destructive operations
 

@@ -6,7 +6,7 @@ See [`requirements.md`](requirements.md) for each row and [`status.json`](status
 
 ## Purpose
 
-caddy-mcp must use the agent-connector-sdk capability for each concern the SDK centralizes. A connector copy of a centralized capability splits policy across the fleet.
+caddy-mcp must use the scion-sdk capability for each concern the SDK centralizes. A connector copy of a centralized capability splits policy across the fleet.
 
 ## Why a new spec
 

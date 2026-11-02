@@ -67,10 +67,10 @@ text = "MIT"
 
 # The SDK serves the declared connector: `{fleet}` starts the server.
 [project.scripts]
-{fleet} = "agent_connector_sdk.cli:serve"
+{fleet} = "scion_sdk.cli:serve"
 
 # The one declared identity: the entry-point name is the fleet name.
-[project.entry-points."agent_connector_sdk.connector"]
+[project.entry-points."scion_sdk.connector"]
 {fleet} = "{pkg}:connector"
 
 [tool.setuptools.packages.find]
@@ -83,7 +83,7 @@ include = ["{pkg}*"]
 
 INIT = """\"\"\"MCP connector for {Display}.\"\"\"
 
-from agent_connector_sdk.connector import Connector
+from scion_sdk.connector import Connector
 
 from .api_client import Api
 from .auth import get_client
@@ -95,7 +95,7 @@ connector = Connector(
 )
 """
 
-MAIN = """from agent_connector_sdk import run
+MAIN = """from scion_sdk import run
 
 if __name__ == "__main__":
     run()
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
 AUTH = """\"\"\"The one place the {Display} client is declared, from SDK components.\"\"\"
 
-from agent_connector_sdk.auth.declare import Bearer, client_factory
+from scion_sdk.auth.declare import Bearer, client_factory
 
 from .api_client import Api
 
@@ -157,7 +157,7 @@ class Api:
 
 SOURCES = """\"\"\"Declared data sources: typed data the SDK reads with `load_declaration`.\"\"\"
 
-from agent_connector_sdk.ingest.live_declaration import source_meta
+from scion_sdk.ingest.live_declaration import source_meta
 
 SCHEMA_VERSION = 1
 
@@ -217,7 +217,7 @@ metadata:
 
 This repository owns the {Display} transport, mappings, MCP tools and package
 content. Shared connector contracts, authentication and transports belong to
-`agent-connector-sdk`; admission, serving and durable graph state belong to
+`scion-sdk`; admission, serving and durable graph state belong to
 their owning repositories. Keep provider credentials, endpoints and raw data
 out of source, logs and skill content.
 
@@ -262,7 +262,7 @@ keep that path and test name in sync when changing the starter operations.
 
 ## Connector-specific checks
 
-- Keep the MCP surface aligned with `agent-connector-sdk`.
+- Keep the MCP surface aligned with `scion-sdk`.
 - Validate environment and TLS settings before provider calls.
 - Mock external provider calls in tests; never use live credentials in a local gate.
 - Keep `{pkg}/skills/` package data intact when adding skills.
@@ -535,7 +535,7 @@ No spec in this repository owns the {Display} operations.
 
 ## Interfaces
 
-Entry point `agent_connector_sdk.connector`: `{fleet} = "{pkg}:connector"`.
+Entry point `scion_sdk.connector`: `{fleet} = "{pkg}:connector"`.
 """,
     "requirements.md": """# {spec_id} — Requirements
 

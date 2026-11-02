@@ -25,21 +25,21 @@ test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytes
 [project.scripts]
 lgtm-mcp = "lgtm_mcp.mcp_server:mcp_server"
 
-[project.entry-points."agent_connector_sdk.skill_providers"]
+[project.entry-points."scion_sdk.skill_providers"]
 lgtm-mcp = "lgtm_mcp.skills"
 
-[project.entry-points."agent_connector_sdk.prompt_providers"]
+[project.entry-points."scion_sdk.prompt_providers"]
 lgtm-mcp = "lgtm_mcp.prompts"
 
 # CONCEPT:MERISTEM-KG.ontology.package-federation-migration — federate this package's OWL/RDF ontology modules into the
-# agent-connector-sdk hub (http://knuckles.team/kg/grafana and
+# scion-sdk hub (http://knuckles.team/kg/grafana and
 # http://knuckles.team/kg/observability). The loader globs every *.ttl in the
 # module's ontology/ dir, so one entry-point covers both. Resolved via
 # iter_provider_dirs like the skill/prompt providers.
-[project.entry-points."agent_connector_sdk.ontology_providers"]
+[project.entry-points."scion_sdk.ontology_providers"]
 lgtm-mcp = "lgtm_mcp.ontology"
 
-[project.entry-points."agent_connector_sdk.source_connector_providers"]
+[project.entry-points."scion_sdk.source_connector_providers"]
 lgtm-mcp = "lgtm_mcp.connectors"
 
 [tool.uv.workspace]

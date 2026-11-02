@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic ``requests.Session`` -> agent-connector-sdk governed client codemod.
+"""Deterministic ``requests.Session`` -> scion-sdk governed client codemod.
 
 Driven from ``connector_codemod.py --sdk-centralize <repo> [--dry-run|--apply]``.
 
@@ -37,7 +37,7 @@ BAD_KWARGS = {"verify", "cert", "proxies", "stream", "auth", "hooks", "cookies"}
 #: requests-only response attributes.
 BAD_RESPONSE_ATTRS = {"ok", "iter_content", "raw", "reason", "apparent_encoding", "links"}
 SAFE_HEADERS = {"accept", "content-type", "user-agent", "accept-language"}
-#: SDK extra -> packages it carries (agent-connector-sdk pyproject).
+#: SDK extra -> packages it carries (scion-sdk pyproject).
 SDK_EXTRAS = {
     "integrity": ["rdflib"],
     "feeds": ["feedparser"],
@@ -407,13 +407,13 @@ class ClientPlan:
         self.edits.append(Edit(last + 1, last, "".join(f"{indent}{ln}\n" for ln in create)))
         new_imps = [
             "import httpx",
-            "from agent_connector_sdk.http.client import create_http_client",
-            "from agent_connector_sdk.http.options import HttpClientOptions",
+            "from scion_sdk.http.client import create_http_client",
+            "from scion_sdk.http.options import HttpClientOptions",
         ]
         text_all = "".join(e.text for e in self.edits)
         for n in ("ApiKeyAuth", "BearerAuth"):
             if n in text_all:
-                new_imps.append(f"from agent_connector_sdk.auth.static import {n}")
+                new_imps.append(f"from scion_sdk.auth.static import {n}")
         self._place_imports(new_imps)
 
     def _place_imports(self, new_imps: list[str]) -> None:
@@ -568,13 +568,13 @@ def edit_pyproject(repo: Path, sdk: str, imports_requests: bool, imports_httpx: 
         dependency_lists.extend(project.get("optional-dependencies", {}).values())
     dependency_lists.extend(rq.read_text().splitlines() for rq in sorted(repo.glob("requirements*.txt")))
     for dependencies in dependency_lists:
-        aliases = [d for d in dependencies if pkg_name(d) in {"agent-connector-sdk", "scion-sdk"}]
+        aliases = [d for d in dependencies if pkg_name(d) in {"scion-sdk", "scion-sdk"}]
         if len(aliases) > 1:
             raise exc("ambiguous-sdk-dependencies", "declare exactly one SDK distribution per dependency list")
     if path.exists():
         src = path.read_text()
         text = re.sub(
-            r"(?:agent-connector-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*",
+            r"(?:scion-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*",
             lambda m: f"scion-sdk{m.group(1) or ''}>={sdk}",
             src,
         )
@@ -593,7 +593,7 @@ def edit_pyproject(repo: Path, sdk: str, imports_requests: bool, imports_httpx: 
                 path.write_text(text)
     for rq in sorted(repo.glob("requirements*.txt")):
         s = rq.read_text()
-        t = re.sub(r"(?m)^(?:agent-connector-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*", lambda m: f"scion-sdk{m.group(1) or ''}>={sdk}", s)
+        t = re.sub(r"(?m)^(?:scion-sdk|scion-sdk)(\[[^\]]*\])?>=[0-9][0-9A-Za-z.]*", lambda m: f"scion-sdk{m.group(1) or ''}>={sdk}", s)
         if not imports_requests:
             t = re.sub(r"(?mi)^requests(?:\[[^\]]*\])?\s*[<>=!~].*\n?", "", t)
         if not imports_httpx:
@@ -701,7 +701,7 @@ def spec_files(name: str, module_path: str, cls_name: str, client: bool = True) 
     spec = (
         f"# {sid} — Shared SDK capabilities in {name}\n\n**Owner:** {name}.\n\n"
         "See [`requirements.md`](requirements.md) for each row and [`status.json`](status.json) for its generated state.\n\n"
-        f"## Purpose\n\n{name} must use the agent-connector-sdk capability for each concern the SDK centralizes. A connector copy of a centralized capability splits policy across the fleet.\n\n"
+        f"## Purpose\n\n{name} must use the scion-sdk capability for each concern the SDK centralizes. A connector copy of a centralized capability splits policy across the fleet.\n\n"
         f"## Why a new spec\n\nSearch: `git grep -n \"SDK\" -- specs` found no row that owns SDK capability use in {name}. The SDK index spec `SCION-CENTRALIZED-CAPABILITIES` owns the capabilities. This spec owns the connector side of each one.\n\n"
         "## Requirements\n\n" + "".join(f"- `{i}`: {t}.\n" for i, t, _, _ in rows)
     )
@@ -768,7 +768,7 @@ import {module} as base_module
 
 
 def _client(handler):
-    from agent_connector_sdk.http.client import create_http_client as real
+    from scion_sdk.http.client import create_http_client as real
 
     def build(options):
         return real(options, transport=httpx.MockTransport(handler))

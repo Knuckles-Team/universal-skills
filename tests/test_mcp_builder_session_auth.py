@@ -69,12 +69,12 @@ def test_bearer_and_public_are_distinct():
 @pytest.fixture
 def provider(tmp_path, monkeypatch):
     if os.environ.get("MCP_BUILDER_REQUIRE_SDK") == "1":
-        importlib.import_module("agent_connector_sdk.http.client")
+        importlib.import_module("scion_sdk.http.client")
         importlib.import_module("regex")
     else:
-        pytest.importorskip("agent_connector_sdk.http.client")
+        pytest.importorskip("scion_sdk.http.client")
         pytest.importorskip("regex")
-    from agent_connector_sdk.http.client import create_http_client
+    from scion_sdk.http.client import create_http_client
 
     package = tmp_path / "session_fixture"
     package.mkdir()

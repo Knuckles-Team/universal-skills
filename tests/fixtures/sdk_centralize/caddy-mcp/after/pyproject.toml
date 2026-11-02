@@ -25,16 +25,16 @@ test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytes
 [project.scripts]
 caddy-mcp = "caddy_mcp.mcp_server:mcp_server"
 
-[project.entry-points."agent_connector_sdk.skill_providers"]
+[project.entry-points."scion_sdk.skill_providers"]
 caddy-mcp = "caddy_mcp.skills"
 
-[project.entry-points."agent_connector_sdk.ontology_providers"]
+[project.entry-points."scion_sdk.ontology_providers"]
 caddy-mcp = "caddy_mcp.ontology"
 
-[project.entry-points."agent_connector_sdk.source_connector_providers"]
+[project.entry-points."scion_sdk.source_connector_providers"]
 caddy-mcp = "caddy_mcp.connectors"
 
-[project.entry-points."agent_connector_sdk.prompt_providers"]
+[project.entry-points."scion_sdk.prompt_providers"]
 caddy-mcp = "caddy_mcp.prompts"
 
 [tool.uv.workspace]

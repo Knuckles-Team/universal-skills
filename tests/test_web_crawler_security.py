@@ -72,7 +72,7 @@ def test_output_is_confined_and_written_with_opaque_filename(
 ) -> None:
     _runtime()
     http_safety = importlib.import_module(
-        "agent_utilities.protocols.source_connectors.http_safety"
+        "scion_sdk.source_connectors.http_safety"
     )
 
     def resolve_public_test_authority(host: str, port: int | None):

@@ -76,7 +76,7 @@ per-package `test_prompt_parity.py`, so "valid here" means "valid in CI".
 - Both scripts guard the `agent_utilities` import and print an install hint if
   it is missing (`pip install agent-utilities`).
 - A package contributes its prompt to the KG library by declaring a
-  `[project.entry-points."agent_connector_sdk.connector"]` entry point and
+  `[project.entry-points."scion_sdk.connector"]` entry point and
   placing it in the package's `prompts/` directory (see [mcp-builder](../mcp-builder/SKILL.md)).
 - For per-agent overrides without editing the package, drop a `*.json` into the
   XDG overlay `~/.config/arbora/prompts/`.

@@ -17,7 +17,7 @@ agent-utilities provider ecosystem.
   skills or exact MCP tools; workflows do not embed business logic.
 - Platform and package operations belong under
   `agent-packages/agents/<package>/<module>/skills/` and are exposed through
-  the package's `agent_connector_sdk.connector` entry point.
+  the package's `scion_sdk.connector` entry point.
 - `assets/` may contain nested templates, but those are package resources rather
   than canonical catalog entries.
 

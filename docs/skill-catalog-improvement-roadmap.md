@@ -13,7 +13,7 @@ The governing decisions are:
    tool per node. Input/output wiring is allowed; business logic is not.
 3. Put provider-, platform-, or package-specific operations in the owning package
    under `agent-packages/agents/<package>/<module>/skills/` and expose them through
-   the `agent_connector_sdk.connector` entry point.
+   the `scion_sdk.connector` entry point.
 4. Let universal workflows depend on package-owned skills by exact name and declare
    the owning distribution in `requires`.
 5. Separate read-only assessment, proposed change, approved mutation, and
@@ -105,7 +105,7 @@ For each relocation:
    `agent-packages/agents/<package>/<module>/skills/<skill-name>/SKILL.md` with its
    scripts, references, and assets.
 2. Expose `<module>/skills/<name>/SKILL.md` through the package's
-   `agent_connector_sdk.connector` entry point and include the resources in its
+   `scion_sdk.connector` entry point and include the resources in its
    wheel.
 3. Add installation/discovery tests against the built wheel.
 4. Change universal workflows to bind the package skill by exact name and list the

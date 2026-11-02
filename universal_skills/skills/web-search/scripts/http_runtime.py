@@ -10,8 +10,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agent_utilities.core import config as config_module
-from agent_utilities.protocols.source_connectors.http_safety import safe_get_bytes
+from scion_sdk.source_connectors.http_safety import (
+    configured_source_http_policy,
+    safe_get_bytes,
+)
 
 _SEARCH_RESPONSE_LIMIT = 4 * 1024 * 1024
 
@@ -24,16 +26,16 @@ def fetch_json(
 ) -> dict[str, Any]:
     """Fetch and decode one bounded JSON object through the shared egress policy."""
 
-    cfg = config_module.AgentConfig()
+    policy = configured_source_http_policy()
     body, encoding = safe_get_bytes(
         url,
         params=params,
         headers=headers,
         timeout=30.0,
-        max_bytes=min(cfg.source_http_max_response_bytes, _SEARCH_RESPONSE_LIMIT),
-        max_redirects=cfg.source_http_max_redirects,
-        allowed_private_hosts=cfg.source_http_allowed_private_hosts,
-        allowed_redirect_hosts=cfg.source_http_allowed_redirect_hosts,
+        max_bytes=min(policy["max_bytes"], _SEARCH_RESPONSE_LIMIT),
+        max_redirects=policy["max_redirects"],
+        allowed_private_hosts=policy["allowed_private_hosts"],
+        allowed_redirect_hosts=policy["allowed_redirect_hosts"],
     )
     decoded = json.loads(body.decode(encoding or "utf-8"))
     if not isinstance(decoded, dict):

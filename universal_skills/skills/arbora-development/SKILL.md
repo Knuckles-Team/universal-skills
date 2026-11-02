@@ -29,7 +29,7 @@ Read that `SKILL.md` and its
 [`bootstrap.md`](https://github.com/Knuckles-Team/arbora/blob/main/arbora/skills/arbora-development/references/bootstrap.md)
 from the current public checkout before changing any ecosystem repository.
 The Arbora package registers the skill through its
-`agent_connector_sdk.connector` entry point; this catalog entry lets a
+`scion_sdk.connector` entry point; this catalog entry lets a
 contributor discover it before installing Arbora.
 
 Use `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `sdd-implementer`, and

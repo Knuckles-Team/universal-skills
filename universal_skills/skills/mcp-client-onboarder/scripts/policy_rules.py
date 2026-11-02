@@ -44,7 +44,7 @@ def server_prefix(server: str) -> str:
     """Tool-name prefix for a server. Uses the multiplexer's authoritative
     derivation when importable; otherwise treats the value as already a prefix."""
     try:
-        from agent_utilities.mcp.multiplexer import get_server_prefix
+        from arbora.fleet.multiplexer import get_server_prefix
 
         return get_server_prefix(server)
     except Exception:

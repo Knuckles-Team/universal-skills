@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ontology + prompt discovery and XDG materialization.
 
-Every installed distribution that declares an ``agent_connector_sdk.connector``
+Every installed distribution that declares an ``scion_sdk.connector``
 entry point contributes its ``prompts/`` and ``ontology/`` directories by
 convention (``ResolvedConnector.dirs``); the SDK's ``installed_connectors()``
 is the only discovery path.
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from agent_utilities.base_utilities import get_logger
+    from scion_sdk.utilities import get_logger
 except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ def iter_provider_dirs(kind: str) -> List[Tuple[str, Path]]:
     connector or a missing directory is skipped, never fatal.
     """
     try:
-        from agent_connector_sdk.connector import installed_connectors
+        from scion_sdk.connector import installed_connectors
 
         found = installed_connectors()
     except Exception as e:  # noqa: BLE001

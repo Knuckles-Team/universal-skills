@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-agent-connector-sdk>=0.5.1, `uv` and the pipelines hooks.
+scion-sdk>=0.5.1, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
@@ -134,10 +134,10 @@ def test_identity_and_version_live_in_pyproject_only(connector):
     project = data["project"]
     assert project["version"] == "0.1.0"
     assert "dynamic" not in project
-    assert project["entry-points"]["agent_connector_sdk.connector"] == {
+    assert project["entry-points"]["scion_sdk.connector"] == {
         FLEET: "demo_mcp:connector"
     }
-    assert project["scripts"] == {FLEET: "agent_connector_sdk.cli:serve"}
+    assert project["scripts"] == {FLEET: "scion_sdk.cli:serve"}
     assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
@@ -246,9 +246,9 @@ def test_generated_pages_caller_has_a_safe_shared_theme_preflight(connector):
 
 PROBE = """
 import json
-from agent_connector_sdk.connector import build_server
-from agent_connector_sdk.ingest.live_declaration import load_declaration
-from agent_connector_sdk.mcp.tool_surface import registered_tools
+from scion_sdk.connector import build_server
+from scion_sdk.ingest.live_declaration import load_declaration
+from scion_sdk.mcp.tool_surface import registered_tools
 import asyncio
 from fastmcp import Client
 
@@ -286,8 +286,8 @@ print(json.dumps({
 @pytest.fixture(scope="module")
 def installed(connector, tmp_path_factory):
     """A throwaway environment that adds this interpreter's packages to its path, with the connector installed."""
-    pytest.importorskip("agent_connector_sdk.testing.plugin")  # 0.5.0
-    pytest.importorskip("agent_connector_sdk.auth.declare")  # 0.5.1
+    pytest.importorskip("scion_sdk.testing.plugin")  # 0.5.0
+    pytest.importorskip("scion_sdk.auth.declare")  # 0.5.1
     uv = shutil.which("uv")
     if uv is None:
         pytest.skip("uv is not installed")
@@ -473,7 +473,7 @@ def test_generated_package_passes_the_sdk_conformance_plugin(installed, connecto
 # spec: US-MCP-BUILDER-R011.12
 def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
     auth = (connector / "demo_mcp/auth.py").read_text()
-    assert "client_factory(" in auth and "from agent_connector_sdk.auth.declare import" in auth
+    assert "client_factory(" in auth and "from scion_sdk.auth.declare import" in auth
     assert "delegation=True" in auth and "tls=" in auth
     for path, text in _files(connector).items():
         if path.endswith(".py") and "__pycache__" not in path:
@@ -487,7 +487,7 @@ def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
     assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
     assert "optional-dependencies" not in project
-    assert set(project["entry-points"]) == {"agent_connector_sdk.connector"}
+    assert set(project["entry-points"]) == {"scion_sdk.connector"}
 
 
 def test_agents_md_documents_bump_first_release(connector):

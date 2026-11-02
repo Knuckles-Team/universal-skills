@@ -46,7 +46,7 @@ agent-packages/agents/<package>/<module>/skills/<operation-skill>/SKILL.md
 ```
 
 The package publishes its skill directory through the
-`agent_connector_sdk.connector` entry point (skills under `<module>/skills/<name>/SKILL.md`). A cross-package universal
+`scion_sdk.connector` entry point (skills under `<module>/skills/<name>/SKILL.md`). A cross-package universal
 workflow may invoke that skill by declaring the package and skill in `requires`.
 This keeps installation, versioning, credentials, and compatibility with the owner.
 

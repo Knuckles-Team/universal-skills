@@ -621,7 +621,7 @@ def main():
             from agent_utilities.knowledge_graph.core.engine import (
                 IntelligenceGraphEngine,
             )
-            from agent_utilities.core.paths import kg_db_path
+            from meristem.core.paths import kg_db_path
 
             engine = IntelligenceGraphEngine(
                 graph=nx.MultiDiGraph(), db_path=str(kg_db_path())
@@ -710,7 +710,7 @@ def main():
 
     try:
         from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
-        from agent_utilities.core.paths import kg_db_path
+        from meristem.core.paths import kg_db_path
 
         engine = IntelligenceGraphEngine(
             graph=nx.MultiDiGraph(), db_path=str(kg_db_path())

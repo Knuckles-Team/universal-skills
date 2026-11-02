@@ -30,7 +30,7 @@ one entry point per artifact type:
 - **Skills, skill-graphs, skill-workflows** — into each target tool's skill directory
   (unchanged behavior from `skill-installer`; every capability below is additive).
 - **Ontologies + system prompts** — the other two legs of the
-  `agent_connector_sdk.connector` convention (`prompts/` and `ontology/` under the package), materialized into the canonical
+  `scion_sdk.connector` convention (`prompts/` and `ontology/` under the package), materialized into the canonical
   Arbora XDG tree (`$XDG_DATA_HOME/arbora/{prompts,ontologies}/<provider>/…`)
   so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
   installation" below.
@@ -108,7 +108,7 @@ pip install skill-graphs
   (`universal-skills` and/or installed connector names). Default: all.
 - `--from-package <path>`: Install directly from an `agents/*` project checkout
   that is **not yet pip-installed** — parses its `pyproject.toml`
-  `agent_connector_sdk.connector` entry point and installs
+  `scion_sdk.connector` entry point and installs
   straight from the checkout's source tree. See "Per-package auto-detection".
 - `--skills`, `--group`, `--force`, `--symlink`/`--link`, `--layer`,
   `--install-skill-graphs`, `--no-prune`, `--no-xdg`, `--validate`: unchanged
@@ -142,13 +142,13 @@ install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}
 ## Ontology & prompt installation (new)
 
 Content is found by convention under each connector package declared through the
-`agent_connector_sdk.connector` entry point (`installed_connectors()`, each
+`scion_sdk.connector` entry point (`installed_connectors()`, each
 `ResolvedConnector.dirs`): `skills/`, `prompts/` and `ontology/`. This skill makes sure
 the prompt and ontology legs are materialized into
 `$XDG_DATA_HOME/arbora/{prompts,ontologies}/<connector>/…` as part of the SAME
 install run a user already runs for skills. `scripts/providers.py` copies each connector's
 `*.json` prompts and `*.ttl` (+ `shapes/*.ttl`) ontology files into that layout. It needs
-`agent-connector-sdk` and no agent-utilities import.
+`scion-sdk` and no agent-utilities import.
 
 Ontologies/prompts always land in the XDG tree (never in a per-tool skill
 directory — Claude Code etc. don't consume `.ttl`/prompt JSON directly); only
@@ -165,7 +165,7 @@ When it is **not yet installed** (a checkout you're developing against, e.g.
 `agent-packages/agents/<pkg>`), pass `--from-package <path>`:
 `scripts/from_package.py` reads that package's `pyproject.toml` directly
 (stdlib `tomllib`, no network/pip needed) for its
-`[project.entry-points."agent_connector_sdk.connector"]` table, resolves the package
+`[project.entry-points."scion_sdk.connector"]` table, resolves the package
 (`<pkg>` or `<pkg>:attr`) to a directory inside the checkout, and installs its
 `skills/`, `prompts/` and `ontology/` through the same install paths as a normal
 connector, named by the package's `[project].name`.
