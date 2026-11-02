@@ -118,7 +118,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/scion-sdk
-          ref: 209ccf447a61cf75ea876c0b9df071eef78cdbe1
+          ref: 0f66c1c682be69e2feb23184cf49a6af3c9acc49
           path: .ci/scion-sdk
           persist-credentials: false
       - name: Check out shared Pages contract
@@ -159,7 +159,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/scion-sdk
-          ref: 209ccf447a61cf75ea876c0b9df071eef78cdbe1
+          ref: 0f66c1c682be69e2feb23184cf49a6af3c9acc49
           path: .ci/scion-sdk
           persist-credentials: false
       - name: Bootstrap reviewed SDK without native builds
