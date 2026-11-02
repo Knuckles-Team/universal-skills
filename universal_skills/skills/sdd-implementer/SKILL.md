@@ -38,3 +38,7 @@ Select a reachable pending task and honor its dependency and file-path constrain
 - **Fail Fast**: If a task fails and cannot be resolved automatically, stop, report the error, and wait for human intervention.
 - **Atomic Commits**: Encourage atomic updates for each task.
 - **KG Sync**: The tracked `specs/<stable-id>/` artifacts are the reviewable source of truth. After changing tasks or code, use an available KG ingestion tool to refresh its derived index and report any sync failure separately. Do not overwrite Git artifacts from a stale graph record.
+
+## Delivery practice
+
+Follow the [delivery practice reference](https://github.com/Knuckles-Team/pipelines/blob/main/reference/delivery-practice.md) for waiting, branches, merge holds, worktree safety and verification. The [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) holds the binding articles: XXVIII (merges and releases), XXIX (checks tell the truth), XVIII (landed means reachable) and XXV (small units).
