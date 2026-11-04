@@ -6,4 +6,4 @@ The script imports `SkillGraphPipeline` from the retired `agent_utilities` packa
 
 ## Why daemon enrichment goes
 
-The pipeline ingested the corpus into the graph when a daemon answered, and wrote `kg_ingested` into the records. The engine now imports a graph as a pack (`MEDULLA-TYPED-PACKS-R700`). A second ingest path from the builder would duplicate it, so `R004.2` deletes it.
+The pipeline ingested the corpus into the graph when a daemon answered, and wrote `kg_ingested` into the records. The engine now imports a graph as a pack (`MEDULLA-TYPED-PACKS-R700.9`). A second ingest path from the builder would duplicate it, so `R004.2` deletes it.

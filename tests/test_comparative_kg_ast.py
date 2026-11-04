@@ -74,8 +74,8 @@ def test_parse_symbols_uses_strict_native_inventory_contract(monkeypatch, tmp_pa
     expected = _native_result()
     captured: dict = {}
     _install_native_client(monkeypatch, expected, captured)
-    monkeypatch.setenv("EPISTEMIC_GRAPH_TENANT", "tenant:test")
-    monkeypatch.setenv("EPISTEMIC_GRAPH_POLICY_VERSION", "policy:test")
+    monkeypatch.setenv("MEDULLA_TENANT", "tenant:test")
+    monkeypatch.setenv("MEDULLA_POLICY_VERSION", "policy:test")
 
     actual = kg_ast.parse_symbols(source)
 
@@ -88,7 +88,7 @@ def test_parse_symbols_uses_strict_native_inventory_contract(monkeypatch, tmp_pa
     assert connect["verified_context"] == {
         "principal": "service:comparative-analysis",
         "tenant": "tenant:test",
-        "audience": "epistemic-graph",
+        "audience": "medulla",
         "agent_id": "service:comparative-analysis",
         "roles": ["graph-client"],
         "scopes": ["compute:parse"],

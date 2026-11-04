@@ -126,12 +126,12 @@ tries three mechanisms **in this order** for every symbol/concept lookup:
    composed `code_context` answer (`ask(action="graph_code.code_context")`, `POST /graph/code` — definition,
    callers, blast-radius, CONCEPT markers, docs).
    Zero re-parsing when the target repo is already ingested (`act(op="ingest.sources.sync")` or `kg_ingest_run.py`).
-2. **The engine AST** (`SyncEpistemicGraphClient.graph.index_repository`) — on-demand
+2. **The engine AST** (`SyncMedullaClient.graph.index_repository`) — on-demand
    `eg-native-inventory/v1` extraction through the Rust engine's out-of-process socket for a
    file/repo the KG doesn't hold yet. Multi-language, version-independent (the fix for the
    `ast.Str`-on-3.12 class of breakage), with exact native source ranges.
 3. **Local stdlib `ast`** — the final fallback, used only when neither the KG nor the engine socket
-   answers (`epistemic_graph` not installed, no `ARBORA_MCP_URL`, or the engine erroring). Keeps
+   answers (`medulla` not installed, no `ARBORA_MCP_URL`, or the engine erroring). Keeps
    every script working completely standalone, with zero platform dependencies.
 
 Every `kg_native` helper is **best-effort and never raises** — an unreachable KG or engine degrades
