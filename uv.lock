@@ -2154,7 +2154,7 @@ wheels = [
 
 [[package]]
 name = "medulla"
-version = "2.27.10"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2162,12 +2162,12 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyoxigraph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/85/c0970a7dbbcf4decbe5f4f5e423e585879d795459b06a72eb44c3c286156/medulla-2.27.10.tar.gz", hash = "sha256:f2aa04d9368c519434a985bb1de7906cc32de2746867db024efdab6b67f4e484", size = 8218986, upload-time = "2026-10-29T14:02:59.299Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/15/828796ca369d0b8f872f3664c504084e360d372357268646cade2adbb333/medulla-3.0.0.tar.gz", hash = "sha256:428179672beb269985431544b8a467020c04fe0ebc532b28caf21481e341c9d7", size = 11468830, upload-time = "2026-11-03T19:22:47.652Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/ca/9de892de59063ba17d100a429b7aed900b1a51cb0406df2136fdafb9a557/medulla-2.27.10-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:6a2464440aa022b096f4c5e2cff529f6bca32853d933b87d18e4902b943f88c1", size = 8248210, upload-time = "2026-10-29T14:49:57.797Z" },
-    { url = "https://files.pythonhosted.org/packages/46/22/8791361946604899c2b2af09771ab3912586f7e8f6c352bf3290dae37ad3/medulla-2.27.10-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:4ae475226934aa1f5449c82cf1983d99a9ea7943f8fa2d2e22c6ef364e2e1391", size = 8441428, upload-time = "2026-10-29T14:31:51.914Z" },
-    { url = "https://files.pythonhosted.org/packages/f1/12/38d3ee0babbc94cdd18b90db6a7f6fc0e54b360317fb3bbf14f2bde8b4dd/medulla-2.27.10-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d6b82ad4d94a4813d24c34cb312408a1587d484fafc35e5665f36c26a5d82090", size = 9107200, upload-time = "2026-10-29T14:52:48.323Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/d5/edfa00325c0efaae3d711e42785205fc8a004d1cdcaf1b0d923383a4d7bd/medulla-2.27.10-cp39-abi3-win_amd64.whl", hash = "sha256:01200899b0ab872fb7ccb9b1cab7035de851a5dc961ad17b38842769482a9e43", size = 9945068, upload-time = "2026-10-29T14:30:57.179Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/19/05f3381add5cf17d9eb0e66235f538dd38af5c74012fc0ab7b65c2bca9e5/medulla-3.0.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:90e90bb572b05aad3fc0ebd94bf09b3e896574f9e75a8a7cbb5fd51acf211f88", size = 7488185, upload-time = "2026-11-03T19:57:54.059Z" },
+    { url = "https://files.pythonhosted.org/packages/03/7e/8e67a077836cced524febe3ee66c3cd9b1e95f5bc7a8e18b6632d28326d5/medulla-3.0.0-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:13d453dc34784495a94fe558d785d703a42b93c98b52dd8a6e0f422a78c6ddba", size = 7695666, upload-time = "2026-11-03T19:57:33.936Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/5f/660df9a52084f9ecd55aacce4d932f4a97bf1b44e2d091880bd680bc9564/medulla-3.0.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c364f21c77878836e245568531da32059a750e9b99febdc5f87e2679020986b9", size = 8354204, upload-time = "2026-11-03T22:38:29.982Z" },
+    { url = "https://files.pythonhosted.org/packages/59/bd/1330d3dee66269d13c7a240087592c828b7a42dafffcf38ebd2794a56baa/medulla-3.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:84a510acc15bd77babd146057a1243a3097cd37b2b46f6562ad1a1b6bbfc95f0", size = 9205619, upload-time = "2026-11-03T19:54:23.768Z" },
 ]
 
 [[package]]
@@ -4084,7 +4084,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.6.5"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -4097,9 +4097,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/97/77/7aefc9929adf88e110fa91c99eee41b244af3a0071ea6449d68b2f0b3ba9/scion_sdk-0.6.5.tar.gz", hash = "sha256:318a605054e35f991cb93f902d0ed5ef1867c105bd9582fd88d6f3c02d38e93b", size = 1154777, upload-time = "2026-11-01T08:53:27.499Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/94/872f94b88bd9a94ecb252becfa4a5ec82cf06940f6dd699800834e93ef09/scion_sdk-0.7.0.tar.gz", hash = "sha256:d634e02158ed854e0724391c14b06b5a0394a1ce212b2106225fcf2b82c86802", size = 1157671, upload-time = "2026-11-03T23:57:47.279Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/e5/2b120ef553739b23f380f8da5936c0ed01214704afc564b6e99382a47acd/scion_sdk-0.6.5-py3-none-any.whl", hash = "sha256:1bce0023a0c56648b32f231f1960e1be2c0581334c12213be446e81b1b73eedd", size = 1101295, upload-time = "2026-11-01T08:53:26.01Z" },
+    { url = "https://files.pythonhosted.org/packages/36/fb/2f3e579efdef6d3d567a77eee2db4f4d23113f1159111a37477e5bd97dd2/scion_sdk-0.7.0-py3-none-any.whl", hash = "sha256:191b834676c975d80934ac7f340764c737001d7b28070539c8575f643a3a19c1", size = 1107757, upload-time = "2026-11-03T23:57:48.87Z" },
 ]
 
 [package.optional-dependencies]
@@ -4571,6 +4571,7 @@ name = "universal-skills"
 version = "1.5.2"
 source = { editable = "." }
 dependencies = [
+    { name = "medulla" },
     { name = "scion-sdk", extra = ["mcp"] },
 ]
 
@@ -4760,6 +4761,7 @@ requires-dist = [
     { name = "lxml", marker = "extra == 'document-tools'", specifier = ">=6.1.1" },
     { name = "mammoth", marker = "extra == 'document-converter'", specifier = ">=1.12.0" },
     { name = "markdownify", marker = "extra == 'document-converter'", specifier = ">=1.2.3" },
+    { name = "medulla", specifier = ">=3.0.0" },
     { name = "mysql-connector-python", marker = "extra == 'database-tools'", specifier = ">=26.7.0" },
     { name = "nbconvert", marker = "extra == 'jupyter-notebook'", specifier = ">=7.17.1" },
     { name = "nbformat", marker = "extra == 'jupyter-notebook'", specifier = ">=5.10.4" },
@@ -4812,7 +4814,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
     { name = "rfc3339-validator", marker = "extra == 'test'", specifier = ">=0.1.4" },
     { name = "rfc3986-validator", marker = "extra == 'test'", specifier = ">=0.1.1" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.6.5,<0.7.0" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.7.0,<0.8.0" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
     { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },
     { name = "toml", marker = "extra == 'developer-utilities'", specifier = ">=0.10.2" },

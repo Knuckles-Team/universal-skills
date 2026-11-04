@@ -1,6 +1,6 @@
 # US-SKILL-GRAPH-BUILDER — The builder distills any source into a skill graph
 
-Owner: universal-skills. Cross-repo IDs: `SG-CONTENT-R002`, `SG-CONTENT-R003`, `US-WEB-RESEARCH-R001`, `ARBORA-OPS-R067.1`, `MEDULLA-TYPED-PACKS-R701`.
+Owner: universal-skills. Cross-repo IDs: `SG-CONTENT-R002`, `SG-CONTENT-R003`, `US-WEB-RESEARCH-R001`, `ARBORA-OPS-R067.1`, `MEDULLA-TYPED-PACKS-R700.9`, `MEDULLA-TYPED-PACKS-R701`.
 
 ## Delivery mapping
 
@@ -65,7 +65,7 @@ A search of `specs/` of this repository found `US-WEB-RESEARCH` for the crawler,
 
 ## Scope and interfaces
 
-In scope: the builder CLI, its pipeline package and its output records. Out of scope: the page fetch (`US-WEB-RESEARCH`), the graph format check (`SG-CONTENT`) and the engine import (`MEDULLA-TYPED-PACKS-R700`). Seams: [graph-output](contracts/graph-output.md) and [crawl-source](contracts/crawl-source.md).
+In scope: the builder CLI, its pipeline package and its output records. Out of scope: the page fetch (`US-WEB-RESEARCH`), the graph format check (`SG-CONTENT`) and the engine import (`MEDULLA-TYPED-PACKS-R700.9`). Seams: [graph-output](contracts/graph-output.md) and [crawl-source](contracts/crawl-source.md).
 
 ## Traceability
 
