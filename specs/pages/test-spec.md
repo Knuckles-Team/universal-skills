@@ -13,3 +13,10 @@ Use one real open spec and a synthetic accepted fixture with exact merged-code a
 | Live deployment | FR5, FR6 | Post-merge or scheduled Pages run reports deployed URL smoke separately. |
 
 Run `pre-commit run --all-files` for configured repository quality. For added code, run focused tests and configured CCCC/`jscpd`/Dupehound checks if present. Record absent commands or thresholds; do not claim a pass. Accepted status requires verified merged implementation and passing acceptance evidence.
+
+## Rows
+
+| Test | Requirement | Level and setup | Expected observation |
+|---|---|---|---|
+| `tests/pages_contracts.py::test_canonical_sources_and_existing_urls` | US-PAGES-R002 | Offline MkDocs build of a disposable checkout | Navigation links resolve and an edited canonical file changes the output. |
+| `tests/pages_contracts.py::test_navigation_matches_shared_template` | US-PAGES-R001 | Planned. Compare the nav tree of mkdocs.yml with the shared template | The hierarchy matches the template used by the other documentation sites. |

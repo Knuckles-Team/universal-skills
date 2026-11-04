@@ -17,6 +17,38 @@ contribution workflow, and relevant specifications while keeping all editable
 sources tracked in Git. `docs/` currently supplies the MkDocs Pages build and
 must remain until a replacement build reads another tracked source.
 
+## User scenarios and testing
+
+### User Story 1 - Read the catalog, guide and specs on one site (Priority: P1)
+
+A contributor or reader opens the Pages site to find the skill catalog, the contribution guide and the specifications, so that one site answers where things are and what state they are in.
+
+**Acceptance scenarios**
+
+1. Given the built site, When a contributor follows the navigation, Then the contribution guide and the four spec-workflow skill sources open and every internal link resolves.
+2. Given a canonical tracked file, When a maintainer edits it and the site rebuilds, Then the published page changes with no second copy to update.
+3. Given an open spec and a synthetic accepted fixture, When a reader opens each, Then the open one shows pending evidence and the accepted one shows exact merged-code and test links.
+
+### User Story 2 - Move between sites without relearning the layout (Priority: P2)
+
+A reader who knows another ecosystem documentation site finds the same navigation and content hierarchy here.
+
+**Acceptance scenarios**
+
+1. Given the shared Pages template, When the cross-site check compares this repository's navigation, Then the hierarchy matches the template.
+
+## Edge Cases
+
+- A missing source file, a broken internal link, an invalid status or an absent redirect fails the build with the affected path.
+- A status file that is absent still builds, and the page shows the evidence as open.
+- An old catalog, architecture or roadmap URL still returns content or a working redirect.
+
+## Assumptions
+
+- The shared pipelines Pages workflow keeps its public contract.
+- Provider deployment documentation stays in the owning provider repository.
+- Live URL smoke checks run after merge or on a schedule and are reported separately.
+
 ## Users and acceptance scenarios
 
 1. A contributor can follow Pages navigation to the contribution guide and the public `speckit-specify`, `speckit-tasks`, `speckit-analyze`, and `sdd-full-lifecycle` skill sources.
@@ -41,7 +73,7 @@ must remain until a replacement build reads another tracked source.
    credentialed and live-environment checks separately after merge or on a
    schedule without weakening required correctness and quality checks.
 
-These are `US-PAGES-001-FR1` through `US-PAGES-001-FR6` in order. Evidence for FR1 is the built nav and link check; FR2 is a source-to-render test; FR3 is open/accepted render fixtures; FR4 and FR6 require a clean-checkout CI run; FR5 requires a deployed URL inventory.
+These are requirements FR1 through FR6 in order. Evidence for FR1 is the built nav and link check; FR2 is a source-to-render test; FR3 is open/accepted render fixtures; FR4 and FR6 require a clean-checkout CI run; FR5 requires a deployed URL inventory.
 
 ## Design and reuse
 

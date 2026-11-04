@@ -99,8 +99,8 @@ nav:
   - Catalog Audit: skill-catalog-audit.md
   - Improvement Roadmap: skill-catalog-improvement-roadmap.md
   - Specifications:
-      - US-PAGES-001: specs/US-PAGES-001/spec.md
-      - Requirements: specs/US-PAGES-001/requirements.md
-      - Design: specs/US-PAGES-001/plan.md
-      - Tests: specs/US-PAGES-001/test-spec.md
-      - Work Items: specs/US-PAGES-001/tasks.md
+      - US-PAGES: specs/pages/spec.md
+      - Requirements: specs/pages/requirements.md
+      - Design: specs/pages/plan.md
+      - Tests: specs/pages/test-spec.md
+      - Work Items: specs/pages/tasks.md
