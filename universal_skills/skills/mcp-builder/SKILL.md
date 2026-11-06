@@ -60,6 +60,7 @@ only generator.
       example_mcp/api_client.py      class Api: one public method per API operation
       example_mcp/auth.py            client_factory(url_env=, auth=, tls=, delegation=)
       example_mcp/connector_sources.py     SOURCES = (source_meta(tool=...), ...)
+      example_mcp/connector_contracts.py   CONTRACTS, LINKS, LOCATIONS (tool-use contracts, links, data locations)
       example_mcp/prompts/*.json     fastmcp prompts (title, tags, meta)
       example_mcp/skills/<name>/SKILL.md       one connector operation skill
       example_mcp/skills/<fleet>-development/SKILL.md  repository development contract
@@ -101,23 +102,32 @@ the connector offers is served over MCP.
    it when a core class fits) and an object property to a core class. Never
    `owl:imports` the core ontology. Shapes and attestations are generated at release.
    Check with `pipelines-hook connector-ontology-map graph-check`.
-4. **Prompts and skills.** Prompts are `prompts/<name>.json`, served as fastmcp prompts
+4. **Tool-use contracts, links and data locations.** `connector_contracts.py` holds
+   `CONTRACTS` (`ToolUseContract(task=..., steps=(ToolStep(tool=..., params=..., result=...,
+   refusals=(Refusal(code=..., when=...),)), ...))`), `LINKS` (`SurfaceLink(task=..., tools=...,
+   prompts=..., skills=...)`) and `LOCATIONS` (`DataLocation(name=..., holds=..., instance=...,
+   read_tool=...)`), all from `scion_sdk.surface_contracts`. Name only served tools, prompts and
+   skills, and only ontology classes the connector declares. Write every argument as a literal,
+   so the pipelines `connector-surface-audit` gate reads it statically. The SDK renders the
+   declarations as the `contracts.ttl` ontology resource and checks them with
+   its `surface_complete` conformance check. A wrapped upstream adds the file once a read is mapped.
+5. **Prompts and skills.** Prompts are `prompts/<name>.json`, served as fastmcp prompts
    with title (`identity.role`), tags and `_meta` (role, topic, version, `serves`).
    Skills are `skills/<name>/SKILL.md` directories served by the SDK skills provider.
-5. **Use SDK components, never your own.** Auth, TLS, delegation and credential
+6. **Use SDK components, never your own.** Auth, TLS, delegation and credential
    rotation: `client_factory` with one declaration (`Bearer`, `ApiKey`, `Basic`,
    `ClientCredentials`, `RefreshToken`, `SessionLogin`, `NoAuth`). Paging:
    `PaginationIterator`. Limits: `RateLimiter`. GraphQL: `GraphQLClient`
    (`scion-sdk[graphql]`). Vector search: the SDK `vector` extra. Optional
    dependencies are SDK extras only. Do not pin `requests`, `httpx` or `gql`.
-6. **Server.** The `scion_sdk.connector` entry point
+7. **Server.** The `scion_sdk.connector` entry point
    (`<fleet> = "<pkg>:connector"`) and the console script
    `<fleet> = "scion_sdk.cli:serve"` start the server: health route,
    middleware, transports, content, metadata version. Write no server bootstrap.
-7. **Tests.** Write tests of your own client logic only. The SDK pytest plugin
+8. **Tests.** Write tests of your own client logic only. The SDK pytest plugin
    generates the fleet-name, content, ontology, source, startup and version tests in
    any environment that installs the SDK. Copy none of them; add no `conftest.py`.
-8. **Version and release.** The version lives in `pyproject.toml` only; read it with
+9. **Version and release.** The version lives in `pyproject.toml` only; read it with
    `importlib.metadata`. Pipelines bumps it, renders the container files, and
    generates the ontology shapes at build time. The shared workflows publish to PyPI
    and Docker Hub.

@@ -1,6 +1,6 @@
 # US-MCP-BUILDER — The mcp-builder scaffold builds connectors on SDK components
 
-Owner: universal-skills. Cross-repo IDs: `SCION-CONNECTOR-CONTROL-R019.1`, `SCION-CONNECTOR-CONTROL-R028.4`, `SCION-QUALITY-RELEASE-R005.1`, `SCION-SOURCE-INGEST-R004.29`.
+Owner: universal-skills. Cross-repo IDs: `SCION-CONNECTOR-CONTROL-R019.1`, `SCION-CONNECTOR-CONTROL-R028.4`, `SCION-QUALITY-RELEASE-R005.1`, `SCION-SOURCE-INGEST-R004.29`, `SCION-CONNECTOR-CONTROL-R916.2`, `SCION-CONNECTOR-CONTROL-R916.5`, `SCION-CONNECTOR-CONTROL-R916.7`, `SCION-CONNECTOR-CONTROL-R916.8`, `PIPE-GATES-R014`.
 
 References: [SCION-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/scion-sdk/blob/main/specs/centralized-capabilities/spec.md)
 
@@ -38,7 +38,20 @@ A client of the generated connector sees one MCP tool per API operation with a r
 
 1. Given the generated `Api` class, When the SDK serves it, Then each public method is one tool and none takes an `action` or `params_json` argument.
 
+### User Story 4 - Complete surface and agent definitions from day one (Priority: P1)
+
+A maintainer generates or completes a connector and gets tool-use contracts, links, data locations and agent-definition prompts, so that arbora can build agents from it and the surface gate passes.
+
+**Acceptance scenarios**
+
+1. **Given** a fleet name, **When** the scaffold runs, **Then** `connector_contracts.py` names only generated tools, prompts, skills and classes.
+2. **Given** an existing connector without prompts, skills or contracts, **When** `complete` runs, **Then** it adds them, and a second run changes nothing.
+3. **Given** a generated prompt, **When** it is read, **Then** it is an operator or business-role agent definition linked to its tools and skills.
+
 ## Edge Cases
+
+- `complete` never overwrites a file; an `owl:imports` of the core ontology yields a printed suggestion only.
+- A wrapped connector writes no contracts file until a read is mapped.
 
 - A fleet name with a trailing `-mcp` or mixed case maps to one package and display name.
 - An existing output directory with some generated files keeps those files and writes only the missing ones.
@@ -46,7 +59,7 @@ A client of the generated connector sees one MCP tool per API operation with a r
 
 ## Assumptions
 
-- The SDK floor is 0.5.1 and the generated dependency stays below 0.6.
+- The SDK floor is 0.9.0 and the generated dependency stays below 0.10.
 - The pipelines gates and the core ontology revision are fetched by the tests and need no local checkout.
 - Existing connectors are migrated by their own repositories, not by this scaffold.
 

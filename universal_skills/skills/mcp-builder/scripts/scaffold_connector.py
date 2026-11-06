@@ -2,6 +2,7 @@
 """Generate the minimal SDK-centralized connector tree (US-MCP-BUILDER-R011).
 
     python3 scaffold_connector.py example-mcp --output-dir /path/to/output
+    python3 scaffold_connector.py complete /path/to/existing-connector   (alias: upgrade)
 
 The output holds only what is specific to one connector: its tools, its
 vendor-client constructor, its prompts, skills and ontology, its specs, its
@@ -12,7 +13,7 @@ only the connector-owned references to them.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires scion-sdk>=0.8.2 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.9.0 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -26,8 +27,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # the scaffold_* helper modules
 
-SDK_FLOOR = "0.8.2"
-SDK_CAP = "0.9"
+SDK_FLOOR = "0.9.0"
+SDK_CAP = "0.10"
 CORE_CLASS = "Concept"  # a class of the parent ontology (core-foundation)
 VERBS = (
     ("get", "GET", "readOnlyHint", "Read one {thing} by id."),
@@ -176,14 +177,179 @@ SOURCES = (
 )
 """
 
+CONTRACTS = """\"\"\"Tool-use contracts, surface links and data locations of the {Display} connector.
+
+The SDK renders these declarations as the connector's `contracts.ttl` ontology
+resource. Every tool, prompt and skill name below is a name the connector serves.
+The repository development skill guides changes to this repository, not a task,
+so it carries no link.
+\"\"\"
+
+from scion_sdk.surface_contracts import (
+    BusinessRole,
+    DataLocation,
+    Refusal,
+    SurfaceLink,
+    ToolStep,
+    ToolUseContract,
+)
+
+# Every argument is a literal, so a static gate reads the declarations without importing them.
+CONTRACTS = (
+    ToolUseContract(
+        task="{short}-item-lifecycle",
+        description="Read an item, create or replace it, then delete it after confirmation.",
+        steps=(
+            ToolStep(
+                tool="{short_snake}_get_item",
+                params=("item_id",),
+                result=("id", "name"),
+                refusals=(Refusal(code="NOT_FOUND", when="no item has the given id"),),
+            ),
+            ToolStep(tool="{short_snake}_create_item", params=("name",), result=("id", "name")),
+            ToolStep(
+                tool="{short_snake}_update_item",
+                params=("item_id", "name"),
+                result=("id", "name"),
+                refusals=(Refusal(code="NOT_FOUND", when="no item has the given id"),),
+            ),
+            ToolStep(
+                tool="{short_snake}_delete_item",
+                params=("item_id",),
+                result=("id",),
+                refusals=(
+                    Refusal(code="NOT_FOUND", when="no item has the given id"),
+                    Refusal(code="CONFIRMATION_DECLINED", when="the caller does not confirm the delete"),
+                ),
+            ),
+        ),
+    ),
+)
+
+LINKS = (
+    SurfaceLink(
+        task="{short}-item-lifecycle",
+        tools=(
+            "{short_snake}_get_item",
+            "{short_snake}_create_item",
+            "{short_snake}_update_item",
+            "{short_snake}_delete_item",
+        ),
+        prompts=("{short}-operator",),
+        skills=("{short}-operations",),
+    ),
+    SurfaceLink(
+        task="{short}-item-lifecycle",
+        tools=("{short_snake}_get_item", "{short_snake}_update_item"),
+        prompts=("{short}-item-steward",),
+        skills=("{short}-operations",),
+    ),
+)
+
+ROLES = (
+    BusinessRole(
+        name="{Display} item steward",
+        tasks=("{short}-item-lifecycle",),
+        description="Keeps the names of {Display} items accurate.",
+    ),
+)
+
+LOCATIONS = (
+    DataLocation(
+        name="{short_snake}_items",
+        holds=("{Class}Item",),
+        instance="{upper}_BASE_URL",
+        read_tool="{short_snake}_get_item",
+        route_param="item_id",
+        federation_key="id",
+    ),
+)
+"""
+
+_TOOLS = ["{short_snake}_get_item", "{short_snake}_create_item", "{short_snake}_update_item", "{short_snake}_delete_item"]
+
+# Each prompt is a complete agent definition: arbora builds an agent from it (US-MCP-BUILDER-R011.18).
 PROMPT = {
-    "description": "Operate the {Display} connector.",
-    "identity": {"role": "{Display} operator", "goal": "Use the {Display} tools safely."},
+    "title": "{Display} operator",
+    "description": "Operator agent for the {Display} connector.",
+    "identity": {"role": "{Display} operator", "goal": "Keep {Display} items correct with the {Display} tools."},
     "metadata": {"topic": "{short}"},
     "prompt_version": "1",
     "serves": "{Class}Item",
     "instructions": {
-        "core_directive": "Read with the get tools first. Ask before any create, update or delete tool."
+        "core_directive": (
+            "You are the {Display} operator. Your goal is to keep {Display} items correct. "
+            "Use the tools {short_snake}_get_item, {short_snake}_create_item, {short_snake}_update_item "
+            "and {short_snake}_delete_item, guided by the skill {short}-operations. "
+            "You read and write the data location {short_snake}_items. "
+            "Read an item with {short_snake}_get_item before you change it. "
+            "Ask for approval before {short_snake}_delete_item. Never delete an item you have not read. "
+            "Never invent an item id. Report each item you read or changed with its id and name, "
+            "and report each refusal code you receive."
+        )
+    },
+    "agent": {
+        "kind": "operator",
+        "tools": _TOOLS,
+        "skills": ["{short}-operations"],
+        "data": {"reads": ["{short_snake}_items"], "writes": ["{short_snake}_items"]},
+        "guardrails": {
+            "approval_required": ["{short_snake}_delete_item"],
+            "never": ["delete an item that was not read first", "invent an item id"],
+        },
+        "outputs": ["the id and name of each item read or changed", "each refusal code received"],
+    },
+}
+
+ROLE_PROMPT = {
+    "title": "{Display} item steward",
+    "description": "Business-role agent that keeps {Display} item names accurate.",
+    "identity": {"role": "{Display} item steward", "goal": "Keep the names of {Display} items accurate."},
+    "metadata": {"topic": "{short}"},
+    "prompt_version": "1",
+    "serves": "{Class}Item",
+    "instructions": {
+        "core_directive": (
+            "You are the {Display} item steward, a business role. Your goal is to keep item names accurate. "
+            "Use the tools {short_snake}_get_item and {short_snake}_update_item, guided by the skill "
+            "{short}-operations. You read and write the data location {short_snake}_items. "
+            "Read each item before you rename it. Never create or delete items. "
+            "Report each renamed item with its id, its old name and its new name."
+        )
+    },
+    "agent": {
+        "kind": "business-role",
+        "business_role": "{Display} item steward",
+        "tools": ["{short_snake}_get_item", "{short_snake}_update_item"],
+        "skills": ["{short}-operations"],
+        "data": {"reads": ["{short_snake}_items"], "writes": ["{short_snake}_items"]},
+        "guardrails": {"approval_required": [], "never": ["create an item", "delete an item"]},
+        "outputs": ["the id, old name and new name of each renamed item"],
+    },
+}
+
+WRAP_PROMPT = {
+    "title": "{Display} operator",
+    "description": "Operator agent for the wrapped {Display} MCP server.",
+    "identity": {"role": "{Display} operator", "goal": "Operate {Display} through its governed provider tools."},
+    "metadata": {"topic": "{short}"},
+    "prompt_version": "1",
+    "serves": "{Class}Operation",
+    "instructions": {
+        "core_directive": (
+            "You are the {Display} operator. Your goal is to operate {Display} through its provider tools, "
+            "served as {short_snake}_<tool> and guided by the skill {short}-operations. "
+            "Read first. Every write asks for approval; a refusal returns a typed code. "
+            "Never retry a refused write without approval. Report each result and each refusal code."
+        )
+    },
+    "agent": {
+        "kind": "operator",
+        "tools": [],
+        "skills": ["{short}-operations"],
+        "data": {"reads": [], "writes": []},
+        "guardrails": {"approval_required": ["every write"], "never": ["retry a refused write without approval"]},
+        "outputs": ["each result and each refusal code"],
     },
 }
 
@@ -683,7 +849,10 @@ def tree(
     def fmt(text: str) -> str:
         return text.format(**n)
 
-    prompt = re.sub(r"\{(\w+)\}", lambda m: n.get(m.group(1), m.group(0)), json.dumps(PROMPT, indent=2))
+    def render(document: dict) -> str:
+        return re.sub(r"\{(\w+)\}", lambda m: n.get(m.group(1), m.group(0)), json.dumps(document, indent=2)) + "\n"
+
+    prompt = render(PROMPT)
     files = {
         "pyproject.toml": PYPROJECT,
         "README.md": README,
@@ -700,6 +869,7 @@ def tree(
         f"{pkg}/api_client.py": API_CLIENT,
         f"{pkg}/auth.py": AUTH,
         f"{pkg}/connector_sources.py": SOURCES,
+        f"{pkg}/connector_contracts.py": CONTRACTS,
         f"{pkg}/skills/{n['short']}-operations/SKILL.md": SKILL,
         f"{pkg}/skills/{fleet}-development/SKILL.md": DEVELOPMENT_SKILL,
         f"{pkg}/ontology/{n['short']}.ttl": ONTOLOGY,
@@ -708,12 +878,14 @@ def tree(
         "specs/README.md": "# Specifications\n\n- [`{spec_id}`]({fleet}/spec.md) — {Display} connector tools.\n",
     }
     out = {path: fmt(text) for path, text in files.items()}
-    out[f"{pkg}/prompts/{n['short']}-operator.json"] = prompt + "\n"
+    out[f"{pkg}/prompts/{n['short']}-operator.json"] = prompt
+    out[f"{pkg}/prompts/{n['short']}-item-steward.json"] = render(ROLE_PROMPT)
     for name, text in SPEC_FILES.items():
         out[f"{spec}/{name}"] = fmt(text)
     out[".gitignore"] = "# Spec status is computed at read time, never committed.\nspecs/*/status.json\n"
     if wrap_mcp:
-        for gone in (f"{pkg}/api_client.py", f"{pkg}/auth.py", "tests/test_api_client.py"):
+        # A wrapped upstream names its tools only at probe time; it declares contracts once a read is mapped.
+        for gone in (f"{pkg}/api_client.py", f"{pkg}/auth.py", f"{pkg}/connector_contracts.py", "tests/test_api_client.py"):
             out.pop(gone)
         out.update(_wrap_files(n, wrap_mcp, scope_args))
         for name, text in _wrap_spec(n).items():
@@ -726,12 +898,9 @@ def tree(
             f"Wraps the provider's MCP server. Settings: `{n['upper']}_UPSTREAM_URL`, `{n['upper']}_TOKEN`, "
             f"`{n['upper']}_ALLOWED_SCOPES`.",
         )
-        out[f"{pkg}/prompts/{n['short']}-operator.json"] = out[f"{pkg}/prompts/{n['short']}-operator.json"].replace(
-            f"{n['Class']}Item", f"{n['Class']}Operation"
-        ).replace(
-            "Read with the get tools first. Ask before any create, update or delete tool.",
-            "Read first. Every write asks for approval; a refusal returns a typed code.",
-        )
+        # A wrapped upstream names its tools at probe time: one operator definition, no tool names yet.
+        out[f"{pkg}/prompts/{n['short']}-operator.json"] = render(WRAP_PROMPT)
+        out.pop(f"{pkg}/prompts/{n['short']}-item-steward.json")
     if openapi:
         out[f"{spec}/plan.md"] += (
             f"\n## Operations source\n\nOpenAPI document: `{openapi}`. Generate one `Api` method per operation "
@@ -776,7 +945,23 @@ def scaffold(
     return written
 
 
+def complete(repo: Path, *, use_sdk: bool = True) -> list[str]:
+    """Add every missing surface file to the existing connector at `repo` (US-MCP-BUILDER-R011.17)."""
+    import scaffold_complete
+
+    return scaffold_complete.complete(repo, {"core": CORE_CLASS, "ontology": ONTOLOGY}, use_sdk=use_sdk)
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] in (["complete"], ["upgrade"]):
+        mode = argparse.ArgumentParser(prog="scaffold_connector.py complete", description="Complete an existing connector.")
+        mode.add_argument("repo", type=Path, help="path of the existing connector repository")
+        mode.add_argument("--static", action="store_true", help="derive contracts from the Api methods only")
+        args = mode.parse_args(argv[1:])
+        report = complete(args.repo, use_sdk=not args.static)
+        print("\n".join(report) if report else "complete: nothing to add")
+        return 0
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("fleet_name", help="fleet name, for example example-mcp")
     parser.add_argument("--output-dir", type=Path, default=Path.cwd())
