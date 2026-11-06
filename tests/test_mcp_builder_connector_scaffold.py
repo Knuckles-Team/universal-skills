@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-scion-sdk>=0.8.2 (0.9.0 for the surface self-check), `uv` and the pipelines hooks.
+scion-sdk>=0.9.0, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
