@@ -212,7 +212,7 @@ class GovernanceMiddleware(Middleware):
             approval = "confirmed"
         try:
             result = await call_next(context)
-        except Exception as error:  # every upstream failure becomes a typed code
+        except Exception as error:  # noqa: BLE001 - every upstream failure becomes a typed code
             return _refusal(_failure_code(error), type(error).__name__)
         if write:
             caller = getattr(context.fastmcp_context, "client_id", None)
