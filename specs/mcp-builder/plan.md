@@ -35,6 +35,7 @@ Existing paths this spec owns:
 ```text
 universal_skills/skills/mcp-builder/SKILL.md                      existing  scaffold instructions
 universal_skills/skills/mcp-builder/scripts/scaffold_connector.py existing  generator and templates
+universal_skills/skills/mcp-builder/scripts/scaffold_complete.py  new       complete mode for an existing connector
 tests/test_mcp_builder_connector_scaffold.py                      existing  scaffold, gate and conformance tests
 ```
 
@@ -56,8 +57,8 @@ The SDK owns `Connector`, `run`, `load_declaration`, `client_factory` and the py
 
 ### Architecture
 
-`scripts/scaffold_connector.py` writes the exact 28-file connector-owned tree:
-`pyproject.toml`, `<pkg>/{__init__,__main__,api_client,auth,connector_sources}.py`,
+`scripts/scaffold_connector.py` writes the exact 30-file connector-owned tree:
+`pyproject.toml`, `<pkg>/{__init__,__main__,api_client,auth,connector_sources,connector_contracts}.py`,
 prompts, operation and repository-development skills, ontology, specs, one test
 file, aggregate hooks, the dashboard config, `pages/index.md`, and release/PR/Pages
 callers. The Pages caller keeps the shared theme off because the canonical theme
@@ -110,7 +111,13 @@ Entry point: an operator or agent follows universal_skills/skills/mcp-builder/SK
 
 ## Cross-repo seams
 
-None. The SDK and pipelines own their contracts (SCION-CONNECTOR-CONTROL-R019.1, SCION-CONNECTOR-CONTROL-R028.4 and SCION-QUALITY-RELEASE-R005.1); the scaffold only emits calls to them.
+- The SDK surface builders and the self-check (`SCION-CONNECTOR-CONTROL-R915.2`, `SCION-CONNECTOR-CONTROL-R915.5`) feed `US-MCP-BUILDER-R011.15`, `R011.16` and `R011.18`. Contract: [contracts/surface-contracts.md](contracts/surface-contracts.md).
+- The pipelines surface gate (`PIPE-GATES-R014`) checks the generated repository (`US-MCP-BUILDER-R011.16`). Contract: [contracts/surface-gate.md](contracts/surface-gate.md).
+- The SDK and pipelines own their other contracts (SCION-CONNECTOR-CONTROL-R019.1, SCION-CONNECTOR-CONTROL-R028.4 and SCION-QUALITY-RELEASE-R005.1); the scaffold only emits calls to them.
+
+## Connector surface contracts (US-MCP-BUILDER-R011.15 to R011.18)
+
+`tree` writes `<pkg>/connector_contracts.py` with literal `CONTRACTS`, `LINKS`, `LOCATIONS` and `ROLES` declarations. Literals let the pipelines gate read them without an import. The prompts are agent definitions: an operator and an item steward, each linked to exactly its tools and skills. `scaffold_complete.py` completes an existing connector. It adds only missing files, derives tool domains from the API client classes, and prints what still needs a human. The development skill has no link, because its name holds the fleet name and R011.3 keeps that name in `pyproject.toml` only.
 
 ## Whole project from one command (US-MCP-BUILDER-R012, R013)
 

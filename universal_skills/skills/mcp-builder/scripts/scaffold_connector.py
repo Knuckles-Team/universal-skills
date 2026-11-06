@@ -2,6 +2,7 @@
 """Generate the minimal SDK-centralized connector tree (US-MCP-BUILDER-R011).
 
     python3 scaffold_connector.py example-mcp --output-dir /path/to/output
+    python3 scaffold_connector.py complete /path/to/existing-connector   (alias: upgrade)
 
 The output holds only what is specific to one connector: its tools, its
 vendor-client constructor, its prompts, skills and ontology, its specs, its
@@ -201,9 +202,6 @@ PROMPT = {
     "metadata": {"topic": "{short}"},
     "prompt_version": "1",
     "serves": "{Class}Item",
-    "instructions": {
-        "core_directive": "Read with the get tools first. Ask before any create, update or delete tool."
-    },
     "agent": _agent("operator", None),
 }
 
@@ -214,9 +212,6 @@ ROLE_PROMPT = {
     "metadata": {"topic": "{short}"},
     "prompt_version": "1",
     "serves": "{Class}Item",
-    "instructions": {
-        "core_directive": "You are the {Display} item steward. Read an item, correct it, and delete it only after confirmation."
-    },
     "agent": _agent("business-role", "steward"),
 }
 
@@ -835,10 +830,14 @@ def tree(
             out[key] = json.dumps(doc, indent=2) + "\n"
         out[f"{pkg}/prompts/{n['short']}-operator.json"] = out[f"{pkg}/prompts/{n['short']}-operator.json"].replace(
             f"{n['Class']}Item", f"{n['Class']}Operation"
-        ).replace(
-            "Read with the get tools first. Ask before any create, update or delete tool.",
-            "Read first. Every write asks for approval; a refusal returns a typed code.",
         )
+    import scaffold_complete
+
+    for key in [k for k in out if k.startswith(f"{pkg}/prompts/")]:
+        doc = json.loads(out[key])
+        agent = doc.pop("agent")
+        directive = scaffold_complete.agent_directive(doc["identity"]["role"], doc["identity"]["goal"], agent)
+        out[key] = json.dumps({**doc, "instructions": {"core_directive": directive}, "agent": agent}, indent=2) + "\n"
     if openapi:
         out[f"{spec}/plan.md"] += (
             f"\n## Operations source\n\nOpenAPI document: `{openapi}`. Generate one `Api` method per operation "
@@ -883,7 +882,23 @@ def scaffold(
     return written
 
 
+def complete(repo: Path, *, use_sdk: bool = True) -> list[str]:
+    """Add every missing surface file to the existing connector at `repo` (US-MCP-BUILDER-R011.17)."""
+    import scaffold_complete
+
+    return scaffold_complete.complete(repo, {"core": CORE_CLASS, "ontology": ONTOLOGY}, use_sdk=use_sdk)
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] in (["complete"], ["upgrade"]):
+        mode = argparse.ArgumentParser(prog="scaffold_connector.py complete", description="Complete an existing connector.")
+        mode.add_argument("repo", type=Path, help="path of the existing connector repository")
+        mode.add_argument("--static", action="store_true", help="derive contracts from the Api methods only")
+        args = mode.parse_args(argv[1:])
+        report = complete(args.repo, use_sdk=not args.static)
+        print("\n".join(report) if report else "complete: nothing to add")
+        return 0
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("fleet_name", help="fleet name, for example example-mcp")
     parser.add_argument("--output-dir", type=Path, default=Path.cwd())
