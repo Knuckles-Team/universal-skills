@@ -621,12 +621,13 @@ def test_complete_never_overwrites_and_suggests_import_removal(tmp_path):
 def test_generated_connector_passes_the_sdk_surface_self_check(installed, connector):
     pytest.importorskip("scion_sdk.surface_contracts")  # 0.9.0
     run = subprocess.run(
-        [str(installed), "-m", "scion_sdk.testing.surface_check", "demo_mcp"],
+        [str(installed), "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "-k", "surface_complete"],
         cwd=connector,
         capture_output=True,
         text=True,
     )
     assert run.returncode == 0, run.stdout + run.stderr
+    assert "PASSED connector_conformance::surface_complete" in run.stdout.replace("pyproject.toml::", ""), run.stdout
 
 
 # spec: US-MCP-BUILDER-R011.16

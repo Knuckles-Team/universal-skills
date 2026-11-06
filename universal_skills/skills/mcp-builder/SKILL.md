@@ -110,7 +110,7 @@ the connector offers is served over MCP.
    skills, and only ontology classes the connector declares. Write every argument as a literal,
    so the pipelines `connector-surface-audit` gate reads it statically. The SDK renders the
    declarations as the `contracts.ttl` ontology resource and checks them with
-   `scion_sdk.testing.surface_check`. A wrapped upstream adds the file once a read is mapped.
+   its `surface_complete` conformance check. A wrapped upstream adds the file once a read is mapped.
 5. **Prompts and skills.** Prompts are `prompts/<name>.json`, served as fastmcp prompts
    with title (`identity.role`), tags and `_meta` (role, topic, version, `serves`).
    Skills are `skills/<name>/SKILL.md` directories served by the SDK skills provider.

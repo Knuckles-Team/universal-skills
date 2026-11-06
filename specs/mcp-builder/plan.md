@@ -111,7 +111,10 @@ Entry point: an operator or agent follows universal_skills/skills/mcp-builder/SK
 
 ## Cross-repo seams
 
-- The SDK surface builders and the self-check (`SCION-CONNECTOR-CONTROL-R915.2`, `SCION-CONNECTOR-CONTROL-R915.5`) feed `US-MCP-BUILDER-R011.15`, `R011.16` and `R011.18`. Contract: [contracts/surface-contracts.md](contracts/surface-contracts.md).
+- The SDK surface builders (`SCION-CONNECTOR-CONTROL-R916.2`) feed `US-MCP-BUILDER-R011.15`. Contract: [contracts/surface-contracts.md](contracts/surface-contracts.md).
+- The SDK `surface_complete` check (`SCION-CONNECTOR-CONTROL-R916.5`) proves `US-MCP-BUILDER-R011.16`. Contract: [contracts/surface-check.md](contracts/surface-check.md).
+- The SDK completer (`SCION-CONNECTOR-CONTROL-R916.7`) feeds `US-MCP-BUILDER-R011.17`. Contract: [contracts/surface-complete.md](contracts/surface-complete.md).
+- The SDK prompt-agent rules (`SCION-CONNECTOR-CONTROL-R916.8`) govern `US-MCP-BUILDER-R011.18`. Contract: [contracts/prompt-agents.md](contracts/prompt-agents.md).
 - The pipelines surface gate (`PIPE-GATES-R014`) checks the generated repository (`US-MCP-BUILDER-R011.16`). Contract: [contracts/surface-gate.md](contracts/surface-gate.md).
 - The SDK and pipelines own their other contracts (SCION-CONNECTOR-CONTROL-R019.1, SCION-CONNECTOR-CONTROL-R028.4 and SCION-QUALITY-RELEASE-R005.1); the scaffold only emits calls to them.
 

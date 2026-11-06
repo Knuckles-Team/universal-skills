@@ -1,6 +1,6 @@
 # Contract — surface-contracts
 
-Provider: scion-sdk SCION-CONNECTOR-CONTROL-R915.2
+Provider: scion-sdk SCION-CONNECTOR-CONTROL-R916.2
 Consumer: universal-skills US-MCP-BUILDER-R011.15
 
 ## Wire shape
