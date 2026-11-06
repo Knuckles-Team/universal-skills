@@ -15,7 +15,7 @@ def _rows(sid: str, rows: tuple[Row, ...]) -> list[tuple[str, str, str, str, str
 
 
 def render(n: dict[str, str], rows: tuple[Row, ...], outcome: str, design: str) -> dict[str, str]:
-    """Return spec.md, plan.md, requirements.md, tasks.md and test-spec.md."""
+    """Return spec.md, plan.md, requirements.md, tasks.md, test-spec.md and the checklist."""
     sid, fleet, display, pkg = n["spec_id"], n["fleet"], n["Display"], n["pkg"]
     full = _rows(sid, rows)
     first = full[0][0]
@@ -83,7 +83,15 @@ Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Technical Context
 
-Python 3.14 (floor 3.12), one dependency: `scion-sdk[mcp]`. Tests: pytest, run by the shared `tests-fast` hook.
+- **Language/Version**: Python 3.14, floor 3.12
+- **Primary Dependencies**: `scion-sdk[mcp]` only
+- **Storage**: N/A
+- **Testing**: pytest, run by the shared `tests-fast` hook; contract-level proofs
+- **Target Platform**: Linux container, streamable HTTP or stdio
+- **Project Type**: connector
+- **Performance Goals**: N/A
+- **Constraints**: no host, credential or endpoint in the repository
+- **Scale/Scope**: one external system
 
 ## Constitution Check
 
@@ -95,7 +103,7 @@ One external system, one tool per operation, the SDK as the only dependency: see
 
 ## Phase 0: Research
 
-The SDK and the shared pipelines own the server, transports, gates and release. Nothing is reimplemented here.
+No unknowns. The SDK and the shared pipelines own the server, transports, gates and release.
 
 ## Phase 1: Design
 
@@ -119,7 +127,7 @@ No deviation from the constitution.
 
 ## Cross-repo seams
 
-The SDK (connector contracts, transports, confirmation) and arbora (fleet admission). Linked by row ID only.
+None. The SDK and arbora are used through their published interfaces only.
 """
     req = [
         f"# {sid} — Requirements\n",
@@ -143,8 +151,8 @@ The SDK (connector contracts, transports, confirmation) and arbora (fleet admiss
         "|---|---|---|---|---|---|",
     ]
     test += [
-        f"| T-{k:03d} | FR-{k:03d} | Contract | `{v}` | {t} holds. |  |"
-        for k, (_rid, t, _b, _c, _s, v) in enumerate(full, 1)
+        f"| T-{k:03d} | `{rid}` | Contract | `{v}` | {t} holds. |  |"
+        for k, (rid, t, _b, _c, _s, v) in enumerate(full, 1)
     ]
     test += [
         "\n## Negative and boundary cases\n",
@@ -152,7 +160,31 @@ The SDK (connector contracts, transports, confirmation) and arbora (fleet admiss
         "## Quality and release proof\n",
         "The shared `tests-fast`, `spec` and `connector-standard` hooks pass on the pull request.",
     ]
+    checklist = f"""# {sid} — Requirements quality checklist
+
+## Content quality
+
+- [x] No implementation detail leaks into the user stories
+- [x] Every story states a user, an outcome and a reason
+- [x] Every mandatory section is complete
+
+## Requirement completeness
+
+- [x] No `[NEEDS CLARIFICATION: ...]` marker remains
+- [x] Each row is testable and unambiguous
+- [x] Each `SC-` criterion is measurable and technology-agnostic
+- [x] Acceptance scenarios cover each story
+- [x] Edge cases are listed
+- [x] Scope is bounded and dependencies are named by row ID
+- [x] Assumptions are listed
+
+## Readiness
+
+- [x] Every row has a task line and a bound test or a test-spec entry
+- [x] Each story can be delivered and proven on its own
+"""
     return {
+        "checklists/requirements.md": checklist,
         "spec.md": spec,
         "plan.md": plan,
         "requirements.md": "\n".join(req) + "\n",

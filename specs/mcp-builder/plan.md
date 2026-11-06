@@ -56,7 +56,7 @@ The SDK owns `Connector`, `run`, `load_declaration`, `client_factory` and the py
 
 ### Architecture
 
-`scripts/scaffold_connector.py` writes the exact 28-file connector-owned tree:
+`scripts/scaffold_connector.py` writes the exact 29-file connector-owned tree:
 `pyproject.toml`, `<pkg>/{__init__,__main__,api_client,auth,connector_sources}.py`,
 prompts, operation and repository-development skills, ontology, specs, one test
 file, aggregate hooks, the dashboard config, `pages/index.md`, and release/PR/Pages

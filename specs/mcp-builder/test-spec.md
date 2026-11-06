@@ -4,7 +4,7 @@ Governing spec: [spec.md](spec.md).
 
 | Test ID | Requirement | Proving test | Expected observation |
 |---|---|---|---|
-| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Exact 28-file connector-owned tree holds on a generated connector. |
+| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Exact 29-file connector-owned tree holds on a generated connector. |
 | T-002 | `US-MCP-BUILDER-R011.2` | `tests/test_mcp_builder_connector_scaffold.py::test_generation_is_deterministic` | Deterministic output holds on a generated connector. |
 | T-003 | `US-MCP-BUILDER-R011.3` | `tests/test_mcp_builder_connector_scaffold.py::test_identity_and_version_live_in_pyproject_only` | Identity and version in pyproject only holds on a generated connector. |
 | T-004 | `US-MCP-BUILDER-R011.4` | `tests/test_mcp_builder_connector_scaffold.py::test_workflows_call_the_shared_pipelines_for_pypi_and_docker` | Shared workflows for release and PR holds on a generated connector. |

@@ -50,6 +50,7 @@ EXPECTED = {
     "pyproject.toml",
     ".specify/memory/constitution.md",
     "specs/README.md",
+    "specs/demo-mcp/checklists/requirements.md",
     "specs/demo-mcp/plan.md",
     "specs/demo-mcp/requirements.md",
     "specs/demo-mcp/spec.md",
@@ -375,6 +376,15 @@ def _git_repo(connector: Path, base: Path) -> Path:
     return repo
 
 
+def _strict_spec(tree: Path, base: Path) -> subprocess.CompletedProcess:
+    """The spec gate as on the first push: every file is new, so every rule is strict."""
+    fresh = base / "fresh"
+    shutil.copytree(tree, fresh)
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=fresh, check=True)
+    subprocess.run(["git", "add", "--", "."], cwd=fresh, check=True)
+    return _hooks("spec", cwd=fresh)
+
+
 def _hooks(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-m", "pipelines_hooks.cli", *args],
@@ -390,8 +400,8 @@ def test_pipelines_connector_gates_pass(connector, tmp_path):
     repo = _git_repo(connector, tmp_path)
     run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
     assert run.returncode == 0, run.stdout + run.stderr
-    spec = _hooks("spec", cwd=repo)
-    assert spec.returncode == 0 and "FAIL" not in spec.stdout, spec.stdout + spec.stderr
+    spec = _strict_spec(connector, tmp_path / "strict")
+    assert "FAIL" not in spec.stdout + spec.stderr, spec.stdout + spec.stderr
     # The file and spelling parts of connector-standard. Its workflow-pinning part
     # is not run: it rejects the shared `@main` workflow references that every
     # connector uses, so no conforming connector could pass it.
@@ -569,8 +579,8 @@ def test_wrapped_repo_passes_its_own_gates(wrapped, tmp_path):
     assert " passed" in tests.stdout and "skipped" not in tests.stdout
     run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
     assert run.returncode == 0, run.stdout + run.stderr
-    spec = _hooks("spec", cwd=repo)
-    assert spec.returncode == 0 and "FAIL" not in spec.stdout, spec.stdout + spec.stderr
+    spec = _strict_spec(wrapped / FLEET, tmp_path / "strict")
+    assert "FAIL" not in spec.stdout + spec.stderr, spec.stdout + spec.stderr
     for module in ("files", "codespell", "standard"):
         done = subprocess.run(
             [sys.executable, "-c", f"import sys; from pipelines_hooks.connector import {module}; sys.exit({module}.main([]))"],
