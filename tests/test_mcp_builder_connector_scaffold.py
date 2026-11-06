@@ -390,6 +390,8 @@ def test_pipelines_connector_gates_pass(connector, tmp_path):
     repo = _git_repo(connector, tmp_path)
     run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
     assert run.returncode == 0, run.stdout + run.stderr
+    spec = _hooks("spec", cwd=repo)
+    assert spec.returncode == 0 and "FAIL" not in spec.stdout, spec.stdout + spec.stderr
     # The file and spelling parts of connector-standard. Its workflow-pinning part
     # is not run: it rejects the shared `@main` workflow references that every
     # connector uses, so no conforming connector could pass it.
@@ -567,6 +569,8 @@ def test_wrapped_repo_passes_its_own_gates(wrapped, tmp_path):
     assert " passed" in tests.stdout and "skipped" not in tests.stdout
     run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
     assert run.returncode == 0, run.stdout + run.stderr
+    spec = _hooks("spec", cwd=repo)
+    assert spec.returncode == 0 and "FAIL" not in spec.stdout, spec.stdout + spec.stderr
     for module in ("files", "codespell", "standard"):
         done = subprocess.run(
             [sys.executable, "-c", f"import sys; from pipelines_hooks.connector import {module}; sys.exit({module}.main([]))"],

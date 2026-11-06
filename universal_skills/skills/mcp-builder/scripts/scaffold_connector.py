@@ -512,53 +512,6 @@ def test_each_operation_calls_its_endpoint():
     http.delete.assert_called_once_with("/items/1")
 """
 
-SPEC_FILES = {
-    "spec.md": """# {spec_id} — {Display} connector
-
-Owner: {fleet}.
-
-## Outcome
-
-The {Display} connector serves one MCP tool per {Display} API operation.
-
-## Scope
-
-In scope: the operations, source mappings, prompts, skills and ontology of {Display}.
-Out of scope: server start, tests of SDK behavior, version files, container files and gates (the SDK and pipelines own them).
-
-## Why a new spec
-
-No spec in this repository owns the {Display} operations.
-""",
-    "plan.md": """# {spec_id} — Plan
-
-## Architecture
-
-`{pkg}/api_client.py` holds one method per operation. `{pkg}/auth.py` builds the client. The SDK `Connector` and `run` entry serve one tool per method.
-
-## Interfaces
-
-Entry point `scion_sdk.connector`: `{fleet} = "{pkg}:connector"`.
-""",
-    "requirements.md": """# {spec_id} — Requirements
-
-| ID | Requirement | Acceptance |
-|---|---|---|
-| `{spec_id}-R001` | **One tool per operation.** The connector must register each {Display} API operation as its own tool. | `tests/test_api_client.py::test_each_operation_calls_its_endpoint` |
-""",
-    "tasks.md": """# {spec_id} — Tasks
-
-- [ ] **{spec_id}-R001:** One tool per operation.
-""",
-    "test-spec.md": """# {spec_id} — Test specification
-
-| Test ID | Requirement | Proving test |
-|---|---|---|
-| T-001 | `{spec_id}-R001` | `tests/test_api_client.py::test_each_operation_calls_its_endpoint` |
-""",
-}
-
-
 CONSTITUTION = """# {Display} connector constitution
 
 This connector inherits the [organization constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) version 1.0.0. Every article of that constitution applies here. This file adds only the rules of this connector.
@@ -644,29 +597,24 @@ def _wrap_files(n: dict[str, str], upstream: str, scope_args: tuple[str, ...]) -
     return out
 
 
-def _wrap_spec(n: dict[str, str]) -> dict[str, str]:
-    import scaffold_wrap as w
+BASE_ROWS = (
+    ("R001", "One tool per operation", "The connector must register each {Display} API operation as its own tool.", "`{fleet}` → `scion_sdk.cli:serve` → `Api` methods", "`{pkg}/api_client.py` `Api`, SDK method tools", "tests/test_api_client.py::test_each_operation_calls_its_endpoint"),
+)
 
-    sid = n["spec_id"]
-    rows = [(f"{sid}-{rid}", title, text.format(**n), test) for rid, title, text, test in w.SPEC_ROWS]
-    req = [f"# {sid} — Requirements\n", "| ID | Requirement | Acceptance |", "|---|---|---|"]
-    req += [f"| `{i}` | **{t}.** {x} | `{v}` |" for i, t, x, v in rows]
-    tasks = [f"# {sid} — Tasks\n"] + [f"- [ ] **{i}:** {t}." for i, t, _, _ in rows]
-    tspec = [f"# {sid} — Test specification\n", "| Test ID | Requirement | Proving test |", "|---|---|---|"]
-    tspec += [f"| T-{k:03d} | `{i}` | `{v}` |" for k, (i, _, _, v) in enumerate(rows, 1)]
-    return {
-        "requirements.md": "\n".join(req) + "\n",
-        "tasks.md": "\n".join(tasks) + "\n",
-        "test-spec.md": "\n".join(tspec) + "\n",
-        "plan.md": (
-            f"# {sid} — Plan\n\n## Architecture\n\n`{n['pkg']}/upstreams.py` declares the provider MCP server. "
-            "The SDK upstream registry mounts it under the connector namespace with the provider's typed schemas. "
-            f"`{n['pkg']}/governance.py` adds approval, scope, refusal codes and audit on every call.\n\n"
-            f"## Interfaces\n\nEntry point `scion_sdk.connector`: `{n['fleet']} = \"{n['pkg']}:connector\"`. "
-            f"Settings: `{n['upper']}_UPSTREAM_URL`, `{n['upper']}_TOKEN`, `{n['upper']}_ALLOWED_SCOPES`, "
-            f"`{n['upper']}_UPSTREAM_FINGERPRINT`.\n"
-        ),
-    }
+
+def _spec_files(n: dict[str, str], wrap: bool) -> dict[str, str]:
+    import scaffold_specs
+    import scaffold_wrap
+
+    source = scaffold_wrap.SPEC_ROWS if wrap else BASE_ROWS
+    rows = tuple(tuple(part.format(**n) for part in row) for row in source)
+    if wrap:
+        outcome = f"The connector serves the provider's MCP server as `{n['short_snake']}_<tool>` behind approval, scope, refusal and audit governance."
+        design = f"`{n['pkg']}/upstreams.py` declares the upstream; the SDK registry mounts it. `{n['pkg']}/governance.py` is a fastmcp middleware on every call."
+    else:
+        outcome = f"The connector serves one MCP tool per {n['Display']} API operation."
+        design = f"`{n['pkg']}/api_client.py` holds one method per operation; `{n['pkg']}/auth.py` builds the client from one SDK declaration."
+    return scaffold_specs.render(n, rows, outcome, design)
 
 
 def tree(
@@ -709,15 +657,13 @@ def tree(
     }
     out = {path: fmt(text) for path, text in files.items()}
     out[f"{pkg}/prompts/{n['short']}-operator.json"] = prompt + "\n"
-    for name, text in SPEC_FILES.items():
-        out[f"{spec}/{name}"] = fmt(text)
+    for name, text in _spec_files(n, bool(wrap_mcp)).items():
+        out[f"{spec}/{name}"] = text
     out[".gitignore"] = "# Spec status is computed at read time, never committed.\nspecs/*/status.json\n"
     if wrap_mcp:
         for gone in (f"{pkg}/api_client.py", f"{pkg}/auth.py", "tests/test_api_client.py"):
             out.pop(gone)
         out.update(_wrap_files(n, wrap_mcp, scope_args))
-        for name, text in _wrap_spec(n).items():
-            out[f"{spec}/{name}"] = text
         out["pyproject.toml"] = out["pyproject.toml"].replace(
             '[project.entry-points', f'{fleet}-probe = "{pkg}.probe:main"\n\n[project.entry-points', 1
         )

@@ -540,10 +540,10 @@ SOURCES = ()
 """
 
 SPEC_ROWS = (
-    ("R001", "Declare the upstream", "The connector must declare one upstream MCP server in `{pkg}/upstreams.py` with a credential reference and a TLS profile setting. The repository must ship no host name.", "tests/test_upstreams.py::test_upstream_declared_without_host"),
-    ("R002", "Serve every upstream tool typed", "The connector must serve every upstream tool as `{short_snake}_<tool>` with a typed input schema.", "tests/test_coverage.py::test_served_tools_cover_upstream_with_typed_schemas"),
-    ("R003", "Write approval", "Every write tool must ask for approval through the SDK confirmation. An unapproved write must send nothing upstream.", "tests/test_governance.py::test_unapproved_write_sends_nothing_upstream"),
-    ("R004", "Typed refusals", "An unset credential, a rate limit and an upstream error must each return a typed code.", "tests/test_governance.py::test_each_failure_has_a_typed_code"),
-    ("R005", "Scope allow list", "A call that names a scope outside the allow list must be refused before any upstream request.", "tests/test_governance.py::test_foreign_scope_refused_before_upstream"),
-    ("R006", "Audit", "Every write must record the tool, the arguments, the caller and the approval. The record must hold no credential.", "tests/test_governance.py::test_audit_record_redacts_secrets"),
+    ("R001", "Declare the upstream", "The connector must declare one upstream MCP server with a credential reference and a TLS profile setting. The repository must ship no host name.", "`connector` → SDK `build_server` → upstream registry", "`{pkg}/upstreams.py`, SDK `UpstreamDecl`", "tests/test_upstreams.py::test_upstream_declared_without_host"),
+    ("R002", "Serve every upstream tool typed", "The connector must serve every upstream tool as `{short_snake}_<tool>` with a typed input schema.", "`tools/list` → SDK upstream gate → upstream", "`{pkg}/upstreams.py`, SDK upstream registry", "tests/test_coverage.py::test_served_tools_cover_upstream_with_typed_schemas"),
+    ("R003", "Write approval", "Every write tool must ask for approval through the SDK confirmation. An unapproved write must send nothing upstream.", "`tools/call` → `GovernanceMiddleware.on_call_tool` → SDK `ctx_confirm_destructive`", "`{pkg}/governance.py`, SDK confirmation", "tests/test_governance.py::test_unapproved_write_sends_nothing_upstream"),
+    ("R004", "Typed refusals", "An unset credential, a rate limit and an upstream error must each return a typed code.", "`tools/call` → `GovernanceMiddleware.on_call_tool`", "`{pkg}/governance.py` `REFUSAL_CODES`", "tests/test_governance.py::test_each_failure_has_a_typed_code"),
+    ("R005", "Scope allow list", "A call that names a scope outside the allow list must be refused before any upstream request.", "`tools/call` → `GovernanceMiddleware.on_call_tool`", "`{pkg}/governance.py` `SCOPE_ARGUMENTS`", "tests/test_governance.py::test_foreign_scope_refused_before_upstream"),
+    ("R006", "Audit", "Every write must record the tool, the arguments, the caller and the approval. The record must hold no credential.", "`tools/call` → `GovernanceMiddleware.on_call_tool` → audit logger", "`{pkg}/governance.py` `_redacted`", "tests/test_governance.py::test_audit_record_redacts_secrets"),
 )
