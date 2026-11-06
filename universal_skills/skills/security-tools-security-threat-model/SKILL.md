@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Agent Utilities Contributors
 ---
 # Threat Model Source Code Repo

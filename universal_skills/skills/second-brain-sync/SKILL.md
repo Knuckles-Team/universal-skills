@@ -17,7 +17,7 @@ domain: research-workflows
 license: MIT
 tags: [research, second-brain, personal-kb, knowledge-graph, provenance, fact-extraction, epistemic]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
   concepts:
     - CONCEPT:MERISTEM-KG.enrichment.atomic-triple-extraction

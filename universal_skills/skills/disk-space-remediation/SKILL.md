@@ -20,7 +20,7 @@ team_config:
 tags: [health, infrastructure, disk]
 concept: CONCEPT:HEALTH-001
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

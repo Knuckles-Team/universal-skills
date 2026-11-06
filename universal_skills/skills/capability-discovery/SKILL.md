@@ -20,7 +20,7 @@ team_config:
 tags: ['discovery', 'capabilities', 'introspection', 'meta']
 concept: CONCEPT:SYS-001
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
 ---
 
 # Capability Discovery Workflow

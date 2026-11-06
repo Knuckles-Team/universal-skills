@@ -23,7 +23,7 @@ team_config:
 tags: [finance, research, alt-data, ingestion]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

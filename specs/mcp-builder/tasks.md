@@ -17,3 +17,11 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] T013 US-MCP-BUILDER-R011.12 Client from one SDK auth declaration.
 - [ ] T014 US-MCP-BUILDER-R011.13 Dependencies through SDK extras.
 - [ ] T015 US-MCP-BUILDER-R011.14 The connector inherits the organization constitution.
+- [ ] T016 US-MCP-BUILDER-R012 Wrap an existing MCP server.
+- [ ] T017 US-MCP-BUILDER-R012.1 Deterministic whole project.
+- [ ] T018 US-MCP-BUILDER-R012.2 Namespaced upstream with governance.
+- [ ] T019 US-MCP-BUILDER-R012.3 The generated repository passes its own gates.
+- [ ] T020 US-MCP-BUILDER-R013 Deployment bundle from the same command.
+- [ ] T021 US-MCP-BUILDER-R013.1 Bundle layout.
+- [ ] T022 US-MCP-BUILDER-R013.2 No secret value and release-only image.
+- [ ] T023 US-MCP-BUILDER-R013.3 Site values from a deploy profile.

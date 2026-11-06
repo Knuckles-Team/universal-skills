@@ -23,7 +23,7 @@ team_config:
 tags: [social, content, campaign, design]
 concept: CONCEPT:SOCIAL-001
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

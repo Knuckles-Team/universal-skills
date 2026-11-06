@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-scion-sdk>=0.5.1, `uv` and the pipelines hooks.
+scion-sdk>=0.8.2, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
@@ -34,6 +34,7 @@ EXPECTED = {
     ".github/workflows/pipeline.yml",
     ".pre-commit-config.yaml",
     "AGENTS.md",
+    "CLAUDE.md",
     "README.md",
     "demo_mcp/__init__.py",
     "demo_mcp/__main__.py",
@@ -138,7 +139,7 @@ def test_identity_and_version_live_in_pyproject_only(connector):
         FLEET: "demo_mcp:connector"
     }
     assert project["scripts"] == {FLEET: "scion_sdk.cli:serve"}
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.8.2,<0.9"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
             assert "__version__" not in text.decode(), path
@@ -485,7 +486,7 @@ def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
 # spec: US-MCP-BUILDER-R011.13
 def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.5.1,<0.6"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.8.2,<0.9"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"scion_sdk.connector"}
 
@@ -504,3 +505,118 @@ def test_connector_inherits_the_organization_constitution(connector):
     assert "**Inherits**: organization constitution v1.0.0" in text
     assert "### R-II. One tool per API operation" in text
     assert "{" not in text
+
+
+# --- The whole project from one command (US-MCP-BUILDER-R012, R013) ---------
+
+WRAP_URL = "https://upstream.invalid/mcp"
+
+
+def _project(out: Path, *extra: str) -> Path:
+    subprocess.run(
+        [sys.executable, str(SCRIPT), FLEET, "--output-dir", str(out), *extra],
+        check=True,
+        capture_output=True,
+    )
+    return out
+
+
+@pytest.fixture(scope="module")
+def wrapped(tmp_path_factory) -> Path:
+    return _project(tmp_path_factory.mktemp("wrapped"), "--wrap-mcp", WRAP_URL, "--scope-arg", "zone_id")
+
+
+# spec: US-MCP-BUILDER-R012.1
+def test_wrap_project_is_deterministic(wrapped, tmp_path):
+    again = _project(tmp_path, "--wrap-mcp", WRAP_URL, "--scope-arg", "zone_id")
+    assert _files(again) == _files(wrapped)
+
+
+# spec: US-MCP-BUILDER-R012.2
+def test_wrap_mounts_the_upstream_with_governance_and_no_rest_client(wrapped):
+    repo = wrapped / FLEET
+    files = set(_files(repo))
+    for name in ("demo_mcp/upstreams.py", "demo_mcp/governance.py", "demo_mcp/probe.py",
+                 "tests/test_coverage.py", "tests/test_governance.py", "CLAUDE.md"):
+        assert name in files, name
+    for name in ("demo_mcp/api_client.py", "demo_mcp/auth.py", "tests/test_api_client.py"):
+        assert name not in files, name
+    upstreams = (repo / "demo_mcp/upstreams.py").read_text()
+    assert 'kind="http"' in upstreams and "upstream.invalid" not in upstreams
+    assert 'CREDENTIAL = "env://DEMO_TOKEN"' in upstreams
+    governance = (repo / "demo_mcp/governance.py").read_text()
+    assert "ctx_confirm_destructive" in governance and "(\"zone_id\",)" in governance
+    assert "action" not in tomllib.loads((repo / "pyproject.toml").read_text())["project"]
+
+
+# spec: US-MCP-BUILDER-R012.3
+def test_wrapped_repo_passes_its_own_gates(wrapped, tmp_path):
+    pytest.importorskip("pipelines_hooks")
+    repo = _git_repo(wrapped / FLEET, tmp_path)
+    venv = tmp_path / "venv"
+    subprocess.run([sys.executable, "-m", "venv", str(venv)], check=True)
+    py = venv / "bin/python"
+    site = Path(subprocess.check_output([str(py), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"], text=True).strip())
+    (site / "shared.pth").write_text(sysconfig.get_path("purelib") + "\n", encoding="utf-8")
+    subprocess.run(["uv", "pip", "install", "-q", "--python", str(py), "--no-deps", "-e", str(repo)], check=True)
+    tests = subprocess.run(
+        [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "-c", os.devnull, "--rootdir", str(repo), str(repo / "tests")],
+        cwd=repo, capture_output=True, text=True, timeout=300,
+    )
+    assert tests.returncode == 0, tests.stdout[-3000:] + tests.stderr[-2000:]
+    assert " passed" in tests.stdout and "skipped" not in tests.stdout
+    run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
+    assert run.returncode == 0, run.stdout + run.stderr
+    for module in ("files", "codespell", "standard"):
+        done = subprocess.run(
+            [sys.executable, "-c", f"import sys; from pipelines_hooks.connector import {module}; sys.exit({module}.main([]))"],
+            cwd=repo, capture_output=True, text=True,
+        )
+        assert done.returncode == 0, module + done.stdout + done.stderr
+
+
+# spec: US-MCP-BUILDER-R013.1
+def test_deploy_bundle_is_emitted_beside_the_repo(wrapped):
+    files = set(_files(wrapped))
+    for name in (
+        "images/demo-mcp/Dockerfile",
+        "images/demo-mcp/.gitlab-ci.yml",
+        "services/demo-mcp/k8s/manifests.yaml",
+        "onboarding/demo-mcp/workspace-entry.yml",
+        "onboarding/demo-mcp/arbora-connector.yml",
+    ):
+        assert name in files, name
+
+
+# spec: US-MCP-BUILDER-R013.2
+def test_deploy_bundle_holds_no_secret_value_and_installs_the_release(wrapped):
+    docs = list(yaml.safe_load_all((wrapped / "services/demo-mcp/k8s/manifests.yaml").read_text()))
+    kinds = [d["kind"] for d in docs]
+    assert kinds == ["Deployment", "Service", "Ingress", "ExternalSecret"]
+    assert not any(d["kind"] == "Secret" for d in docs)
+    spec = docs[0]["spec"]["template"]["spec"]
+    assert "volumes" not in spec  # no source mount
+    env = {e["name"]: e["value"] for e in spec["containers"][0]["env"]}
+    assert env["DEMO_UPSTREAM_URL"] == WRAP_URL and "DEMO_TOKEN" not in env
+    assert docs[3]["spec"]["dataFrom"] == [{"extract": {"key": "demo-mcp"}}]
+    dockerfile = (wrapped / "images/demo-mcp/Dockerfile").read_text()
+    assert 'pip install --no-cache-dir "demo-mcp==${VERSION}"' in dockerfile
+    assert "COPY" not in dockerfile
+    entry = yaml.safe_load((wrapped / "onboarding/demo-mcp/workspace-entry.yml").read_text())
+    assert entry["repository"]["url"].endswith("/demo-mcp.git")
+    arbora = json.loads((wrapped / "onboarding/demo-mcp/arbora-connector.yml").read_text().split("\n", 1)[1])
+    assert arbora["server"] == "demo-mcp" and arbora["namespaces"] == "lazy"
+
+
+# spec: US-MCP-BUILDER-R013.3
+def test_deploy_profile_supplies_site_values(tmp_path):
+    profile = tmp_path / "profile.yml"
+    profile.write_text("registry: reg.test\ndomain: site.test\n")
+    out = _project(tmp_path / "out", "--deploy-profile", str(profile))
+    text = (out / "services/demo-mcp/k8s/manifests.yaml").read_text()
+    assert "image: reg.test/demo-mcp:0.1.0" in text and "demo-mcp.site.test" in text
+    bad = tmp_path / "bad.yml"
+    bad.write_text("password: x\n")
+    run = subprocess.run([sys.executable, str(SCRIPT), FLEET, "--output-dir", str(tmp_path / "b"), "--deploy-profile", str(bad)],
+                         capture_output=True, text=True)
+    assert run.returncode != 0 and "unknown deploy profile keys" in run.stderr

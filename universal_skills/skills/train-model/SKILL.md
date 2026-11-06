@@ -22,7 +22,7 @@ team_config:
 tags: [ml, training, fine-tuning, pretraining, rlhf]
 concept: CONCEPT:ML-007
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
 ---
 
 # Train Model Workflow

@@ -24,7 +24,7 @@ team_config:
 tags: [research, comparative-analysis]
 concept: CONCEPT:RES-001
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
 ---
 
 # Comparative Analysis Workflow

@@ -56,7 +56,7 @@ The SDK owns `Connector`, `run`, `load_declaration`, `client_factory` and the py
 
 ### Architecture
 
-`scripts/scaffold_connector.py` writes the exact 26-file connector-owned tree:
+`scripts/scaffold_connector.py` writes the exact 28-file connector-owned tree:
 `pyproject.toml`, `<pkg>/{__init__,__main__,api_client,auth,connector_sources}.py`,
 prompts, operation and repository-development skills, ontology, specs, one test
 file, aggregate hooks, the dashboard config, `pages/index.md`, and release/PR/Pages
@@ -111,3 +111,13 @@ Entry point: an operator or agent follows universal_skills/skills/mcp-builder/SK
 ## Cross-repo seams
 
 None. The SDK and pipelines own their contracts (SCION-CONNECTOR-CONTROL-R019.1, SCION-CONNECTOR-CONTROL-R028.4 and SCION-QUALITY-RELEASE-R005.1); the scaffold only emits calls to them.
+
+## Whole project from one command (US-MCP-BUILDER-R012, R013)
+
+`scaffold_connector.py <fleet> [--wrap-mcp <url-or-command>] [--openapi <spec>] [--scope-arg <name>] [--deploy-profile <yml>]`
+writes the repository under `<fleet>/` and the deployment bundle beside it. `scaffold_wrap.py` holds the
+wrap templates: `upstreams.py` declares one SDK upstream, `governance.py` is a fastmcp middleware for approval,
+scope, typed refusals and audit, and `probe.py` reports upstream drift. `scaffold_deploy.py` writes
+`images/<fleet>/`, `services/<fleet>/k8s/manifests.yaml` and the `onboarding/<fleet>/` workspace and arbora
+entries from a deploy profile. The container files of the repository stay rendered by the shared pipelines at
+release; the scaffold commits none.
