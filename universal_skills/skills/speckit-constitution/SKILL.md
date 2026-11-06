@@ -6,7 +6,7 @@ description: "Create or update the project constitution from interactive or prov
 license: MIT
 tags: [spec-kit, sdd, upstream]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: GitHub Spec Kit contributors
   upstream: https://github.com/github/spec-kit
 ---

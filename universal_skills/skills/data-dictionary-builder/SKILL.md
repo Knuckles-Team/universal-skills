@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [data, documentation, schema, governance, lineage]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

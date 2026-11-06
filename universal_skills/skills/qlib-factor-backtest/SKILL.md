@@ -20,7 +20,7 @@ team_config:
 tags: [finance, backtesting, factors]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

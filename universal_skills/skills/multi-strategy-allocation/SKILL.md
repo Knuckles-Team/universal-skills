@@ -22,7 +22,7 @@ team_config:
 tags: [finance, allocation, backtesting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 

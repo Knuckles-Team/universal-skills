@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [mcp, development, protocol, tools, api, cli]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 
@@ -30,6 +30,18 @@ revisions you read.
 ## Scaffold a connector
 
     python3 scripts/scaffold_connector.py example-mcp --output-dir /path/to/output
+
+One command writes the whole project: the repository, `images/<fleet>/`,
+`services/<fleet>/k8s/manifests.yaml` and `onboarding/<fleet>/` (workspace and
+arbora entries). Options:
+
+- `--wrap-mcp <url-or-command>`: wrap an existing MCP server. The SDK upstream
+  registry serves its typed tools as `<namespace>_<tool>`; the generated
+  `governance.py` adds write approval, a scope allow list (`--scope-arg`),
+  typed refusals and audit. The upstream URL goes to the service manifest only.
+- `--openapi <spec>`: record the OpenAPI source of the `Api` operations.
+- `--deploy-profile <yml>`: site values (registry, domain, namespace, secret
+  store, CI include). The default profile names no real host.
 
 Output is deterministic (no date, user or host name). `scaffold_connector.py` is the
 only generator.

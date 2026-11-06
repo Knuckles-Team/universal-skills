@@ -20,7 +20,7 @@ description: >-
 license: MIT
 tags: [medulla, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
-  version: '1.5.2'
+  version: '1.6.0'
   author: Genius
 ---
 # Medulla Development

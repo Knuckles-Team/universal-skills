@@ -12,7 +12,7 @@ only the connector-owned references to them.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires scion-sdk>=0.5.1 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.8.2 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -24,7 +24,10 @@ import re
 import sys
 from pathlib import Path
 
-SDK_FLOOR = "0.5.1"
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # the scaffold_* helper modules
+
+SDK_FLOOR = "0.8.2"
+SDK_CAP = "0.9"
 CORE_CLASS = "Concept"  # a class of the parent ontology (core-foundation)
 VERBS = (
     ("get", "GET", "readOnlyHint", "Read one {thing} by id."),
@@ -60,7 +63,7 @@ version = "0.1.0"
 description = "MCP connector for {Display}."
 readme = "README.md"
 requires-python = ">=3.12, <3.15"
-dependencies = ["scion-sdk[mcp]>={sdk},<0.6"]
+dependencies = ["scion-sdk[mcp]>={sdk},<{sdk_cap}"]
 
 [project.license]
 text = "MIT"
@@ -602,10 +605,79 @@ Amend this file in a reviewed change. State the impact in the pull request. When
 """
 
 
-def tree(fleet: str) -> dict[str, str]:
+CLAUDE_MD = """# CLAUDE.md
+
+The canonical agent guidance lives in `AGENTS.md`, imported below. Edit `AGENTS.md`, never this file.
+
+@AGENTS.md
+"""
+
+
+def _wrap_files(n: dict[str, str], upstream: str, scope_args: tuple[str, ...]) -> dict[str, str]:
+    """The files of a connector that wraps an existing MCP server (US-MCP-BUILDER-R012)."""
+    import scaffold_wrap as w
+
+    pkg = n["pkg"]
+    if upstream.startswith(("http://", "https://")):
+        transport, kind = w.HTTP_TRANSPORT, "http"
+    else:
+        transport, kind = w.STDIO_TRANSPORT.format(command=upstream, upper=n["upper"]), "stdio"
+    fields = {**n, "kind": kind, "transport": transport, "scope_args": repr(tuple(scope_args))}
+    files = {
+        f"{pkg}/__init__.py": w.INIT,
+        f"{pkg}/upstreams.py": w.UPSTREAMS,
+        f"{pkg}/governance.py": w.GOVERNANCE,
+        f"{pkg}/probe.py": w.PROBE,
+        f"{pkg}/connector_sources.py": w.SOURCES,
+        f"{pkg}/skills/{n['short']}-operations/SKILL.md": w.SKILL,
+        f"{pkg}/ontology/{n['short']}.ttl": w.ONTOLOGY,
+        "tests/test_governance.py": w.TEST_GOVERNANCE,
+        "tests/test_coverage.py": w.TEST_COVERAGE,
+        "tests/test_upstreams.py": w.TEST_UPSTREAMS,
+    }
+    out = {}
+    for path, text in files.items():
+        # The upstream transport is pre-formatted; format it into the module once.
+        if path.endswith("upstreams.py") and "tests/" not in path:
+            text = text.replace("{transport}", transport)
+        out[path] = text.format(**fields) if "{" in text else text
+    return out
+
+
+def _wrap_spec(n: dict[str, str]) -> dict[str, str]:
+    import scaffold_wrap as w
+
+    sid = n["spec_id"]
+    rows = [(f"{sid}-{rid}", title, text.format(**n), test) for rid, title, text, test in w.SPEC_ROWS]
+    req = [f"# {sid} — Requirements\n", "| ID | Requirement | Acceptance |", "|---|---|---|"]
+    req += [f"| `{i}` | **{t}.** {x} | `{v}` |" for i, t, x, v in rows]
+    tasks = [f"# {sid} — Tasks\n"] + [f"- [ ] **{i}:** {t}." for i, t, _, _ in rows]
+    tspec = [f"# {sid} — Test specification\n", "| Test ID | Requirement | Proving test |", "|---|---|---|"]
+    tspec += [f"| T-{k:03d} | `{i}` | `{v}` |" for k, (i, _, _, v) in enumerate(rows, 1)]
+    return {
+        "requirements.md": "\n".join(req) + "\n",
+        "tasks.md": "\n".join(tasks) + "\n",
+        "test-spec.md": "\n".join(tspec) + "\n",
+        "plan.md": (
+            f"# {sid} — Plan\n\n## Architecture\n\n`{n['pkg']}/upstreams.py` declares the provider MCP server. "
+            "The SDK upstream registry mounts it under the connector namespace with the provider's typed schemas. "
+            f"`{n['pkg']}/governance.py` adds approval, scope, refusal codes and audit on every call.\n\n"
+            f"## Interfaces\n\nEntry point `scion_sdk.connector`: `{n['fleet']} = \"{n['pkg']}:connector\"`. "
+            f"Settings: `{n['upper']}_UPSTREAM_URL`, `{n['upper']}_TOKEN`, `{n['upper']}_ALLOWED_SCOPES`, "
+            f"`{n['upper']}_UPSTREAM_FINGERPRINT`.\n"
+        ),
+    }
+
+
+def tree(
+    fleet: str,
+    wrap_mcp: str | None = None,
+    openapi: str | None = None,
+    scope_args: tuple[str, ...] = (),
+) -> dict[str, str]:
     """Return every generated file as relative path -> text."""
     n = _names(fleet)
-    n.update(sdk=SDK_FLOOR, core=CORE_CLASS, short_snake=n["short"].replace("-", "_"), short_camel=n["Class"][0].lower() + n["Class"][1:])
+    n.update(sdk=SDK_FLOOR, sdk_cap=SDK_CAP, core=CORE_CLASS, short_snake=n["short"].replace("-", "_"), short_camel=n["Class"][0].lower() + n["Class"][1:])
     pkg, spec = n["pkg"], f"specs/{fleet}"
 
     def fmt(text: str) -> str:
@@ -616,6 +688,7 @@ def tree(fleet: str) -> dict[str, str]:
         "pyproject.toml": PYPROJECT,
         "README.md": README,
         "AGENTS.md": AGENTS,
+        "CLAUDE.md": CLAUDE_MD,
         ".pre-commit-config.yaml": PRECOMMIT,
         ".github/spec-dashboard.json": SPEC_DASHBOARD,
         ".github/workflows/pipeline.yml": PIPELINE,
@@ -639,15 +712,62 @@ def tree(fleet: str) -> dict[str, str]:
     for name, text in SPEC_FILES.items():
         out[f"{spec}/{name}"] = fmt(text)
     out[".gitignore"] = "# Spec status is computed at read time, never committed.\nspecs/*/status.json\n"
+    if wrap_mcp:
+        for gone in (f"{pkg}/api_client.py", f"{pkg}/auth.py", "tests/test_api_client.py"):
+            out.pop(gone)
+        out.update(_wrap_files(n, wrap_mcp, scope_args))
+        for name, text in _wrap_spec(n).items():
+            out[f"{spec}/{name}"] = text
+        out["pyproject.toml"] = out["pyproject.toml"].replace(
+            '[project.entry-points', f'{fleet}-probe = "{pkg}.probe:main"\n\n[project.entry-points', 1
+        )
+        out["README.md"] = out["README.md"].replace(
+            f"Settings: `{n['upper']}_BASE_URL`, `{n['upper']}_TOKEN`.",
+            f"Wraps the provider's MCP server. Settings: `{n['upper']}_UPSTREAM_URL`, `{n['upper']}_TOKEN`, "
+            f"`{n['upper']}_ALLOWED_SCOPES`.",
+        )
+        out[f"{pkg}/prompts/{n['short']}-operator.json"] = out[f"{pkg}/prompts/{n['short']}-operator.json"].replace(
+            f"{n['Class']}Item", f"{n['Class']}Operation"
+        ).replace(
+            "Read with the get tools first. Ask before any create, update or delete tool.",
+            "Read first. Every write asks for approval; a refusal returns a typed code.",
+        )
+    if openapi:
+        out[f"{spec}/plan.md"] += (
+            f"\n## Operations source\n\nOpenAPI document: `{openapi}`. Generate one `Api` method per operation "
+            "with the mcp-builder `openapi_converter.py`; the generated methods are reviewed source, not a build artifact.\n"
+        )
     return dict(sorted(out.items()))
 
 
-def scaffold(fleet: str, output_dir: Path) -> list[Path]:
-    """Write the tree under `output_dir/<fleet>`; never overwrite an existing file."""
-    root = output_dir / fleet
+def project(
+    fleet: str,
+    wrap_mcp: str | None = None,
+    openapi: str | None = None,
+    scope_args: tuple[str, ...] = (),
+    profile: Path | None = None,
+) -> dict[str, str]:
+    """The whole project: the repository under `<fleet>/` and the deployment bundle (R013)."""
+    import scaffold_deploy
+
+    out = {f"{fleet}/{rel}": text for rel, text in tree(fleet, wrap_mcp, openapi, scope_args).items()}
+    upstream_url = wrap_mcp if wrap_mcp and wrap_mcp.startswith(("http://", "https://")) else None
+    out.update(scaffold_deploy.bundle(_names(fleet), scaffold_deploy.load_profile(profile), upstream_url))
+    return dict(sorted(out.items()))
+
+
+def scaffold(
+    fleet: str,
+    output_dir: Path,
+    wrap_mcp: str | None = None,
+    openapi: str | None = None,
+    scope_args: tuple[str, ...] = (),
+    profile: Path | None = None,
+) -> list[Path]:
+    """Write the project under `output_dir`; never overwrite an existing file."""
     written: list[Path] = []
-    for rel, text in tree(fleet).items():
-        path = root / rel
+    for rel, text in project(fleet, wrap_mcp, openapi, scope_args, profile).items():
+        path = output_dir / rel
         if path.exists():
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -660,9 +780,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("fleet_name", help="fleet name, for example example-mcp")
     parser.add_argument("--output-dir", type=Path, default=Path.cwd())
+    parser.add_argument("--wrap-mcp", metavar="URL_OR_COMMAND", help="wrap an existing MCP server (http URL or stdio command)")
+    parser.add_argument("--openapi", metavar="SPEC", help="OpenAPI document the operations come from")
+    parser.add_argument("--scope-arg", action="append", default=[], help="argument name checked against the scope allow list")
+    parser.add_argument("--deploy-profile", type=Path, help="YAML site values for the deployment bundle")
     args = parser.parse_args(argv)
-    written = scaffold(args.fleet_name, args.output_dir)
-    print(f"{args.fleet_name}: wrote {len(written)} files under {args.output_dir / args.fleet_name}")
+    if args.wrap_mcp and args.openapi:
+        parser.error("--wrap-mcp and --openapi are exclusive")
+    written = scaffold(
+        args.fleet_name, args.output_dir, args.wrap_mcp, args.openapi, tuple(args.scope_arg), args.deploy_profile
+    )
+    print(f"{args.fleet_name}: wrote {len(written)} files under {args.output_dir}")
+    print(f"  repository: {args.fleet_name}/  images/{args.fleet_name}/  services/{args.fleet_name}/k8s/  onboarding/{args.fleet_name}/")
     print("Before the first push run: pipelines-hook connector-name --strict")
     print("  and: pipelines-hook connector-ontology-map graph-check (see SKILL.md)")
     return 0
