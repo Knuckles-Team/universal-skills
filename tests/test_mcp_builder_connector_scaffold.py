@@ -545,7 +545,7 @@ def test_wrap_mounts_the_upstream_with_governance_and_no_rest_client(wrapped):
     assert 'kind="http"' in upstreams and "upstream.invalid" not in upstreams
     assert 'CREDENTIAL = "env://DEMO_TOKEN"' in upstreams
     governance = (repo / "demo_mcp/governance.py").read_text()
-    assert "ctx_confirm_destructive" in governance and "('zone_id',)" in governance
+    assert "ctx_confirm_destructive" in governance and "(\"zone_id\",)" in governance
     assert "action" not in tomllib.loads((repo / "pyproject.toml").read_text())["project"]
 
 

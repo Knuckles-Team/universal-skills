@@ -622,7 +622,7 @@ def _wrap_files(n: dict[str, str], upstream: str, scope_args: tuple[str, ...]) -
         transport, kind = w.HTTP_TRANSPORT, "http"
     else:
         transport, kind = w.STDIO_TRANSPORT.format(command=upstream, upper=n["upper"]), "stdio"
-    fields = {**n, "kind": kind, "transport": transport, "scope_args": repr(tuple(scope_args))}
+    fields = {**n, "kind": kind, "transport": transport, "scope_args": "(" + ", ".join(f'"{a}"' for a in scope_args) + ("," if len(scope_args) == 1 else "") + ")"}
     files = {
         f"{pkg}/__init__.py": w.INIT,
         f"{pkg}/upstreams.py": w.UPSTREAMS,
