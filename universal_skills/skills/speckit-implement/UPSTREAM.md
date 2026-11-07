@@ -7,9 +7,9 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Path: `templates/commands/implement.md`
 - License: MIT (the upstream license text is in `LICENSE`)
 - Transform: `command-md`
-- Synced: 2026-11-01
+- Synced: 2026-11-07
 - Source digest: sha256:d7b3d618bd588644e6b1fc60808a2cc5bb730163c6050a4fc69629db0cb6e44d
 - Local overlays:
-  - `overlays/speckit-implement/10-workspace.md` (sha256 988723f8aef05af4)
+  - `overlays/speckit-implement/10-workspace.md` (sha256 f272e3e5133e933a)
 
 Refresh with `python scripts/sync_upstream_skills.py --update spec-kit`; verify with `--check`.

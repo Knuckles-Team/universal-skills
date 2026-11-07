@@ -9,7 +9,7 @@ import pytest
 ROOT = Path(__file__).parents[1]
 SKILLS = ("sdd-full-lifecycle", "sdd-implementer", "arbora-development", "medulla-development", "speckit-implement")
 REFERENCE = "pipelines/blob/main/reference/delivery-practice.md"
-ARTICLES = ("XVIII", "XXV", "XXVIII", "XXIX")
+ARTICLES = ("XVIII", "XXV", "XXVIII", "XXIX", "XXXII")
 COPIED_TITLES = ("## Waiting and polling", "## Merge order and the hold", "## Registries keyed on spec directories")
 
 
@@ -20,5 +20,6 @@ def test_delivery_skills_link_the_reference_and_the_articles(name: str) -> None:
     assert REFERENCE in text, name
     for article in ARTICLES:
         assert article in text, f"{name}: {article}"
+    assert "one-line meaning" in text, name
     for title in COPIED_TITLES:
         assert title not in text, f"{name} copies {title}"
