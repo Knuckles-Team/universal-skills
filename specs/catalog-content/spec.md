@@ -45,6 +45,15 @@ The platform delivers a spec row as a change proposal. The assignment run loads 
 1. **Given** the `spec-row-delivery` skill, **When** a delivery assignment run loads it, **Then** it reads the steps in order and the six report states.
 2. **Given** the skill text, **When** the validation test reads it, **Then** it finds the prohibitions on merge, arming, spec edits and skipped gates.
 
+### User Story 5 - Reach a coding harness through the bundle (Priority: P1)
+
+A developer installs the arbora bundle into a coding harness. The catalog skills load there unchanged. The door skill teaches the intent tools.
+
+**Acceptance Scenarios**:
+
+1. **Given** any skill of the catalog, **When** the portability gate reads it as written, **Then** the strictest agent contract accepts it.
+2. **Given** a bundle profile target, **When** the installer runs, **Then** it exits 2, writes no file and names `arbora plugin install`.
+
 ### Edge Cases
 
 - A skill outside the flat `skills/<name>/` layout fails the layout test.
@@ -56,6 +65,7 @@ The platform delivers a spec row as a change proposal. The assignment run loads 
 - **FR-001**: The package must declare one content-only entry point and serve every skill. Rows: `US-CONTENT-R001`.
 - **FR-002**: The catalog must vendor skills from pinned upstream sources with provenance. Rows: `US-CONTENT-R002`.
 - **FR-003**: The `code-enhancer` skill must follow the organization constitution. Rows: `US-CONTENT-R003`.
+- **FR-005**: The catalog must hold the door skill, a workstream handoff procedure and portable frontmatter for the arbora bundle. Rows: `US-CONTENT-R007`, `US-CONTENT-R007.1`, `US-CONTENT-R007.2`, `US-CONTENT-R007.3`, `US-CONTENT-R007.4`.
 - **FR-004**: The catalog must hold the `spec-row-delivery` skill with the delivery procedure and its prohibitions. Rows: `US-CONTENT-R004`, `US-CONTENT-R004.1`, `US-CONTENT-R004.2`, `US-CONTENT-R004.3`.
 
 ## Success Criteria

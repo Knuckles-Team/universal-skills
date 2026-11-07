@@ -25,3 +25,8 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T019 [US4] US-CONTENT-R004.2 Frontmatter and catalog registration.
 - [ ] T020 [US4] US-CONTENT-R004.3 Validation test: procedure, prohibitions and neutral text.
 - [x] T021 [US2] US-CONTENT-R005 Link the delivery practice reference and the constitution articles from the delivery skills.
+- [ ] T022 [US5] US-CONTENT-R007.1 Check frontmatter portability without a transform.
+- [ ] T023 [US5] US-CONTENT-R007.2 Write the door skill.
+- [ ] T024 [US5] US-CONTENT-R007.3 State the workstream path first in the handoff skill.
+- [ ] T025 [US5] US-CONTENT-R007.4 Stop the installer from wiring bundle profiles.
+- [ ] T026 [US5] US-CONTENT-R007 Catalog content reaches coding harnesses through the arbora bundle.

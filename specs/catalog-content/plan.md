@@ -53,6 +53,10 @@ The SDK serves `skills/<name>/SKILL.md` through the skills directory provider. T
 
 `spec-row-delivery` holds the procedure that one delivery assignment run follows. Meristem loads it through arbora. The skill states the steps, the six report states and the review-thread rules. It forbids a merge, an auto-merge arming, a spec edit and a skipped gate. The engine and arbora enforce those rules too; the skill only guides the model.
 
+### Harness bundle content
+
+Arbora builds one plugin per coding harness from its registry (`ARBORA-HARNESS-PLUGINS-R001`). It copies skill folders unchanged. So the catalog must hold frontmatter that every target accepts as written. The `arbora-door` skill teaches the intent tools. The `session-handoff` skill writes and reads the workstream through served operations. The installer stops wiring the bundle profiles, so one door exists per harness.
+
 ### Decisions
 
 Hard cutover: the nested category layout and the `agent_utilities.skill_providers` entry point are gone. A skill's category is its metadata, not a directory.
@@ -76,4 +80,5 @@ Arbora resolves the installed distribution through the `agent_connector_sdk.conn
 ## Cross-repo seams
 
 - `SCION-CONNECTOR-CONTROL-R071.1` (scion-sdk): the content convention that serves the catalog. Contract: `contracts/content-convention.md`.
+- `ARBORA-HARNESS-PLUGINS-R001.2` (arbora): the bundle composer that copies the skill folders. Contract: `contracts/harness-bundle.md`.
 - `MERISTEM-SCM-R011` (meristem): the run that loads the delivery skill. Contract: `contracts/delivery-skill.md`.
