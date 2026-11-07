@@ -366,6 +366,36 @@ def _remove_dest(skill_dst: Path) -> None:
         shutil.rmtree(skill_dst)
 
 
+def load_renamed_skills() -> dict:
+    """Old skill name -> successor name (or None), from the catalog map."""
+    import json
+
+    path = Path(__file__).resolve().parent.parent.parent / "renamed-skills.json"
+    try:
+        return dict(json.loads(path.read_text(encoding="utf-8")).get("renamed", {}))
+    except (OSError, ValueError):
+        return {}
+
+
+def prune_renamed_skills(target_path: Path, current: set, renamed: Optional[dict] = None) -> list:
+    """Remove skills whose names are in the renamed-skill map (hard cutover).
+
+    An old name that is still a current upstream skill is kept. Returns the
+    names removed.
+    """
+    renamed = load_renamed_skills() if renamed is None else renamed
+    removed = []
+    for old in sorted(renamed):
+        if old in current:
+            continue
+        dest = target_path / old
+        if dest.is_symlink() or dest.exists():
+            _remove_dest(dest)
+            removed.append(old)
+            logger.info(f"Removed renamed skill {old} (now: {renamed[old] or 'none'})")
+    return removed
+
+
 def _prune_broken_symlinks(target_path: Path) -> int:
     """Remove dead symlinks (target no longer exists) from an install dir.
 
@@ -612,6 +642,7 @@ def install_skills(
     # --skills/--group run must not touch links outside its scope.
     if prune and not skill_names and not group:
         _prune_broken_symlinks(target_path)
+        prune_renamed_skills(target_path, {p.name for p in sources})
 
     mode = "symlinked" if effective_symlink else "installed"
     logger.info(f"Successfully {mode} {installed_count} items.")

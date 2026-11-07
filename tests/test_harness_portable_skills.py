@@ -107,3 +107,27 @@ def test_installer_refuses_bundle_profiles_and_writes_nothing(tmp_path: Path) ->
     finally:
         sys.path.pop(0)
     assert not set(mcp_setup.MCP_CONFIG_PATHS) & set(module.BUNDLE_PROFILES)
+
+
+@pytest.mark.spec("US-CONTENT-R007.4")
+def test_install_removes_renamed_skills(tmp_path: Path) -> None:
+    import json
+
+    module = _installer()
+    mapping = json.loads((SKILLS / "renamed-skills.json").read_text(encoding="utf-8"))["renamed"]
+    assert mapping and all(old != new for old, new in mapping.items())
+    for successor in filter(None, mapping.values()):
+        assert (SKILLS / successor / "SKILL.md").is_file(), successor
+    assert not set(mapping) & {p.name for p in SKILLS.iterdir()}
+    target = tmp_path / "skills"
+    target.mkdir()
+    (target / "epistemic-graph-development").mkdir()
+    (target / "epistemic-graph-development" / "SKILL.md").write_text("old", encoding="utf-8")
+    (target / "using-graph-os").symlink_to(tmp_path)
+    (target / "kept-skill").mkdir()
+    removed = module.prune_renamed_skills(target, {"medulla-development"})
+    assert removed == ["epistemic-graph-development", "using-graph-os"]
+    assert sorted(p.name for p in target.iterdir()) == ["kept-skill"]
+    (target / "old-a").mkdir()
+    assert module.prune_renamed_skills(target, {"old-a"}, {"old-a": "new-a"}) == []
+    assert (target / "old-a").is_dir()
