@@ -25,3 +25,8 @@ Governing spec: [spec.md](spec.md).
 | T-019 | `US-CONTENT-R004.2` | `tests/test_spec_row_delivery_skill.py::test_frontmatter_is_portable_and_the_catalog_lists_the_skill` | The test finds the frontmatter keys, the package version and the listed skill resource. |
 | T-020 | `US-CONTENT-R004.3` | `tests/test_spec_row_delivery_skill.py::test_skill_text_is_neutral_and_forbids_merge_and_skips` | The test finds the four prohibitions and no host, private domain or local path. |
 | T-021 | `US-CONTENT-R005` | `tests/test_delivery_practice_links.py::test_delivery_skills_link_the_reference_and_the_articles` | The test finds the link and the four article numbers in each skill and no copied section titles. |
+| T-022 | `US-CONTENT-R007` | Every child row. | See each child. |
+| T-023 | `US-CONTENT-R007.1` | `tests/test_harness_portable_skills.py::test_every_skill_frontmatter_is_portable` | Every skill passes the strictest contract as written; the gate has no ceiling flag. (planned) |
+| T-024 | `US-CONTENT-R007.2` | `tests/test_harness_portable_skills.py::test_door_skill_states_the_rules_and_is_neutral` | The test finds the six tools, the four rules in order and no host, private domain or local path. (planned) |
+| T-025 | `US-CONTENT-R007.3` | `tests/test_harness_portable_skills.py::test_handoff_skill_states_the_workstream_path_first` | The workstream calls appear before the local file path. (planned) |
+| T-026 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_installer_refuses_bundle_profiles_and_writes_nothing` | Each bundle target exits 2, prints the install command and writes no file. (planned) |
