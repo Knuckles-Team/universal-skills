@@ -96,14 +96,17 @@ jobs:
           # pipelines-hooks pins pydantic==2.13.5 while scion-sdk needs >=2.14.1.
           echo "pydantic>=2.14.1" > /tmp/scaffold-overrides.txt
           uv pip install --refresh --python /tmp/scaffold-venv/bin/python --override /tmp/scaffold-overrides.txt pytest rdflib pyyaml codespell \
-            "scion-sdk[mcp]>=0.8.2,<0.9" \
+            "scion-sdk[mcp]>=0.9.1,<0.10" \
             "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
           # The SDK pytest plugin resolves this repository's own connector declaration.
           uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
       - name: Scaffold tests
         run: |
           set -o pipefail
-          /tmp/scaffold-venv/bin/python -m pytest tests/test_mcp_builder_connector_scaffold.py -q -rs -p no:cacheprovider | tee /tmp/scaffold.out
+          # The SDK plugin is off for this run: it would also check this repository's own
+          # content-only declaration, which the repository conformance job covers. The generated
+          # packages run the plugin in their own environments.
+          /tmp/scaffold-venv/bin/python -m pytest tests/test_mcp_builder_connector_scaffold.py -q -rs -p no:cacheprovider -p no:scion_sdk | tee /tmp/scaffold.out
           if grep -q skipped /tmp/scaffold.out; then echo "a scaffold test skipped" >&2; exit 1; fi
 
   mcp-builder-contracts:

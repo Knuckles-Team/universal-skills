@@ -12,7 +12,7 @@ only the connector-owned references to them.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires scion-sdk>=0.8.2 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.9.1 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -26,8 +26,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # the scaffold_* helper modules
 
-SDK_FLOOR = "0.8.2"
-SDK_CAP = "0.9"
+SDK_FLOOR = "0.9.1"
+SDK_CAP = "0.10"
 CORE_CLASS = "Concept"  # a class of the parent ontology (core-foundation)
 VERBS = (
     ("get", "GET", "readOnlyHint", "Read one {thing} by id."),
@@ -176,7 +176,26 @@ SOURCES = (
 )
 """
 
+def _agent(kind: str, role: str | None) -> dict:
+    """The agent definition every connector prompt carries (connector-surface)."""
+    agent: dict = {"kind": kind}
+    if role:
+        agent["business_role"] = role
+    agent.update(
+        tools=["{short_snake}_get_item", "{short_snake}_create_item", "{short_snake}_update_item", "{short_snake}_delete_item"],
+        skills=["{short}-operations"],
+        data={"reads": ["{short_snake}_items"], "writes": ["{short_snake}_items"]},
+        guardrails={
+            "approval_required": ["{short_snake}_create_item", "{short_snake}_update_item", "{short_snake}_delete_item"],
+            "never": ["Change or delete an item the user has not confirmed."],
+        },
+        outputs=["The item as read or as changed, with its id."],
+    )
+    return agent
+
+
 PROMPT = {
+    "title": "{Display} operator",
     "description": "Operate the {Display} connector.",
     "identity": {"role": "{Display} operator", "goal": "Use the {Display} tools safely."},
     "metadata": {"topic": "{short}"},
@@ -185,7 +204,76 @@ PROMPT = {
     "instructions": {
         "core_directive": "Read with the get tools first. Ask before any create, update or delete tool."
     },
+    "agent": _agent("operator", None),
 }
+
+ROLE_PROMPT = {
+    "title": "{Display} item steward",
+    "description": "Keep {Display} items correct.",
+    "identity": {"role": "{Display} item steward", "goal": "Keep every {Display} item accurate and current."},
+    "metadata": {"topic": "{short}"},
+    "prompt_version": "1",
+    "serves": "{Class}Item",
+    "instructions": {
+        "core_directive": "You are the {Display} item steward. Read an item, correct it, and delete it only after confirmation."
+    },
+    "agent": _agent("business-role", "steward"),
+}
+
+CONTRACTS = """\"\"\"What the {Display} surface declares: tool use, links, data locations and roles.
+
+The SDK serves these as the `ontology://` contracts resource and answers "how
+do I do task X" from them. Every tool is called by a step and named by a link.
+\"\"\"
+
+from scion_sdk.surface_contracts import BusinessRole, DataLocation, Refusal, SurfaceLink, ToolStep, ToolUseContract
+
+CONTRACTS = (
+    ToolUseContract(
+        "read-item",
+        (ToolStep("{short_snake}_get_item", params=("item_id",), result=("id", "name"), refusals=(Refusal("NOT_FOUND", "no item has the id"),)),),
+    ),
+    ToolUseContract(
+        "change-item",
+        (
+            ToolStep("{short_snake}_get_item", params=("item_id",), result=("id", "name")),
+            ToolStep("{short_snake}_create_item", params=("name",), result=("id", "name")),
+            ToolStep(
+                "{short_snake}_update_item",
+                params=("item_id", "name"),
+                result=("id", "name"),
+                refusals=(Refusal("NOT_FOUND", "no item has the id"),),
+            ),
+        ),
+    ),
+    ToolUseContract(
+        "delete-item",
+        (ToolStep("{short_snake}_delete_item", params=("item_id",), result=("id",), refusals=(Refusal("NOT_FOUND", "no item has the id"),)),),
+    ),
+)
+LINKS = (
+    SurfaceLink(
+        "read-item",
+        tools=("{short_snake}_get_item",),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+    SurfaceLink(
+        "change-item",
+        tools=("{short_snake}_get_item", "{short_snake}_create_item", "{short_snake}_update_item"),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+    SurfaceLink(
+        "delete-item",
+        tools=("{short_snake}_delete_item",),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+)
+LOCATIONS = (DataLocation("{short_snake}_items", ("{Class}Item",), "{upper}_BASE_URL", "{short_snake}_get_item", federation_key="id"),)
+ROLES = (BusinessRole("steward", tasks=("read-item", "change-item", "delete-item")),)
+"""
 
 SKILL = """---
 name: {short}-operations
@@ -683,7 +771,10 @@ def tree(
     def fmt(text: str) -> str:
         return text.format(**n)
 
-    prompt = re.sub(r"\{(\w+)\}", lambda m: n.get(m.group(1), m.group(0)), json.dumps(PROMPT, indent=2))
+    def render_prompt(doc: dict) -> str:
+        return re.sub(r"\{(\w+)\}", lambda m: n.get(m.group(1), m.group(0)), json.dumps(doc, indent=2))
+
+    prompt = render_prompt(PROMPT)
     files = {
         "pyproject.toml": PYPROJECT,
         "README.md": README,
@@ -700,6 +791,7 @@ def tree(
         f"{pkg}/api_client.py": API_CLIENT,
         f"{pkg}/auth.py": AUTH,
         f"{pkg}/connector_sources.py": SOURCES,
+        f"{pkg}/connector_contracts.py": CONTRACTS,
         f"{pkg}/skills/{n['short']}-operations/SKILL.md": SKILL,
         f"{pkg}/skills/{fleet}-development/SKILL.md": DEVELOPMENT_SKILL,
         f"{pkg}/ontology/{n['short']}.ttl": ONTOLOGY,
@@ -709,10 +801,13 @@ def tree(
     }
     out = {path: fmt(text) for path, text in files.items()}
     out[f"{pkg}/prompts/{n['short']}-operator.json"] = prompt + "\n"
+    out[f"{pkg}/prompts/{n['short']}-steward.json"] = render_prompt(ROLE_PROMPT) + "\n"
     for name, text in SPEC_FILES.items():
         out[f"{spec}/{name}"] = fmt(text)
     out[".gitignore"] = "# Spec status is computed at read time, never committed.\nspecs/*/status.json\n"
     if wrap_mcp:
+        import scaffold_wrap as w
+
         for gone in (f"{pkg}/api_client.py", f"{pkg}/auth.py", "tests/test_api_client.py"):
             out.pop(gone)
         out.update(_wrap_files(n, wrap_mcp, scope_args))
@@ -726,6 +821,16 @@ def tree(
             f"Wraps the provider's MCP server. Settings: `{n['upper']}_UPSTREAM_URL`, `{n['upper']}_TOKEN`, "
             f"`{n['upper']}_ALLOWED_SCOPES`.",
         )
+        out[f"{pkg}/connector_contracts.py"] = fmt(w.CONTRACTS)
+        for name in ("operator", "steward"):
+            key = f"{pkg}/prompts/{n['short']}-{name}.json"
+            doc = json.loads(out[key])
+            agent = doc["agent"]
+            agent["tools"] = ["connector_refusal_codes", "registry_list_namespaces", "registry_status", "registry_activate", "registry_deactivate"]
+            agent["data"] = {"reads": [f"{n['short_snake']}_upstream"], "writes": []}
+            agent["guardrails"]["approval_required"] = ["registry_activate", "registry_deactivate"]
+            doc["serves"] = f"{n['Class']}Operation"
+            out[key] = json.dumps(doc, indent=2) + "\n"
         out[f"{pkg}/prompts/{n['short']}-operator.json"] = out[f"{pkg}/prompts/{n['short']}-operator.json"].replace(
             f"{n['Class']}Item", f"{n['Class']}Operation"
         ).replace(
