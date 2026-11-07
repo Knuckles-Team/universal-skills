@@ -101,6 +101,9 @@ jobs:
           # The SDK pytest plugin resolves this repository's own connector declaration.
           uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
       - name: Scaffold tests
+        env:
+          # The connector-standard served-tools probe must import scion_sdk from this venv.
+          PIPELINES_CONNECTOR_PYTHON: /tmp/scaffold-venv/bin/python
         run: |
           set -o pipefail
           # The SDK plugin is off for this run: it would also check this repository's own
