@@ -1,7 +1,5 @@
 ---
 name: session-handoff
-domain: core
-skill_type: skill
 description: >-
   Create and restore comprehensive context handoff documents for agent session
   transfers. Use when context is getting full, a major task milestone is complete,
@@ -11,8 +9,10 @@ description: >-
   complex multi-step work. Do NOT use for project documentation — this is for
   agent-to-agent context preservation.
 license: MIT
-tags: [handoff, context, session, resumption, continuity, memory]
 metadata:
+  domain: core
+  skill_type: skill
+  tags: [handoff, context, session, resumption, continuity, memory]
   version: '1.6.0'
   author: Genius
 ---
@@ -22,9 +22,20 @@ Create comprehensive handoff documents that enable a fresh agent to seamlessly c
 
 ---
 
-# Session Handoff
+## The workstream path first
 
-Create comprehensive handoff documents that enable a fresh agent to seamlessly continue work with zero ambiguity. Solves the long-running agent context exhaustion problem.
+When the arbora door is connected, the handoff lives in the shared workstream of
+this workspace, so any coding harness on the same workspace picks it up:
+
+1. **Hand off:** call `write` with `op="workstream.checkpoint"` and params
+   `harness_session_id` (this session), `summary` (2000 characters or fewer:
+   what was done, what is left, the decisions taken), `run_ids` (open runs) and
+   `trigger="manual"`.
+2. **Resume:** call `ask` with `op="workstream.get"` and `workspace_root` set to
+   the current working directory. Continue from its last checkpoint and note
+   the other attached sessions.
+
+Use the local handoff file below only when the door is unreachable.
 
 ---
 
