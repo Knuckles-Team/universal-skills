@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-scion-sdk>=0.8.2, `uv` and the pipelines hooks.
+scion-sdk>=0.9.1, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
@@ -40,9 +40,11 @@ EXPECTED = {
     "demo_mcp/__main__.py",
     "demo_mcp/api_client.py",
     "demo_mcp/auth.py",
+    "demo_mcp/connector_contracts.py",
     "demo_mcp/connector_sources.py",
     "demo_mcp/ontology/demo.ttl",
     "demo_mcp/prompts/demo-operator.json",
+    "demo_mcp/prompts/demo-steward.json",
     "demo_mcp/skills/demo-mcp-development/SKILL.md",
     "demo_mcp/skills/demo-operations/SKILL.md",
     ".gitignore",
@@ -139,7 +141,7 @@ def test_identity_and_version_live_in_pyproject_only(connector):
         FLEET: "demo_mcp:connector"
     }
     assert project["scripts"] == {FLEET: "scion_sdk.cli:serve"}
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.8.2,<0.9"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.9.1,<0.10"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
             assert "__version__" not in text.decode(), path
@@ -385,7 +387,7 @@ def _hooks(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
 
 
 # spec: US-MCP-BUILDER-R011.9
-def test_pipelines_connector_gates_pass(connector, tmp_path):
+def test_pipelines_connector_gates_pass(connector, installed, tmp_path):
     pytest.importorskip("pipelines_hooks")
     repo = _git_repo(connector, tmp_path)
     run = _hooks("connector-name", "--root", str(repo), "--strict", cwd=repo)
@@ -410,6 +412,8 @@ def test_pipelines_connector_gates_pass(connector, tmp_path):
         cwd=repo,
         capture_output=True,
         text=True,
+        # connector-standard builds the served server in the connector's own interpreter.
+        env={**os.environ, "PIPELINES_CONNECTOR_PYTHON": str(installed)},
     )
     assert standard.returncode == 0, "connector-standard" + standard.stdout + standard.stderr
 
@@ -486,7 +490,7 @@ def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
 # spec: US-MCP-BUILDER-R011.13
 def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.8.2,<0.9"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.9.1,<0.10"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"scion_sdk.connector"}
 
@@ -571,6 +575,8 @@ def test_wrapped_repo_passes_its_own_gates(wrapped, tmp_path):
         done = subprocess.run(
             [sys.executable, "-c", f"import sys; from pipelines_hooks.connector import {module}; sys.exit({module}.main([]))"],
             cwd=repo, capture_output=True, text=True,
+            # connector-standard builds the served server in the connector's own interpreter.
+            env={**os.environ, "PIPELINES_CONNECTOR_PYTHON": str(py)},
         )
         assert done.returncode == 0, module + done.stdout + done.stderr
 

@@ -18,7 +18,7 @@ metadata:
 # MCP Builder
 
 Build one MCP-only connector package on the SDK's components. A connector depends on
-`scion-sdk[mcp]>=0.5.1,<0.6` and nothing else from the agent ecosystem: no
+`scion-sdk[mcp]>=0.9.1,<0.10` and nothing else from the agent ecosystem: no
 agent server, no LLM client, no provider entry points. The connector holds only what
 is specific to one external system; the SDK and the shared pipelines own the rest.
 

@@ -75,6 +75,56 @@ UPSTREAMS: tuple[UpstreamDecl, ...] = build_upstreams()
 HTTP_TRANSPORT = 'url=url,\n            credential=CREDENTIAL,'
 STDIO_TRANSPORT = 'command={command!r},\n            env={{"{upper}_TOKEN": CREDENTIAL}},'
 
+CONTRACTS = """\"\"\"What the {Display} surface declares: tool use, links, data locations and roles.
+
+The provider tools are mounted at run time, so the declaration names the one
+tool the connector always serves. Add a contract per provider task once the
+upstream is mounted.
+\"\"\"
+
+from scion_sdk.surface_contracts import BusinessRole, DataLocation, Refusal, SurfaceLink, ToolStep, ToolUseContract
+
+CONTRACTS = (
+    ToolUseContract(
+        "check-upstream",
+        (
+            ToolStep("registry_list_namespaces", result=("name",)),
+            ToolStep("registry_status", params=("name",), result=("name", "state"), refusals=(Refusal("CREDENTIAL_UNSET", "the upstream credential is not set"),)),
+        ),
+    ),
+    ToolUseContract("read-refusal-codes", (ToolStep("connector_refusal_codes", result=("code",)),)),
+    ToolUseContract(
+        "switch-upstream",
+        (
+            ToolStep("registry_activate", params=("name",), result=("name", "state"), refusals=(Refusal("CREDENTIAL_UNSET", "the upstream credential is not set"),)),
+            ToolStep("registry_deactivate", params=("name",), result=("name", "state")),
+        ),
+    ),
+)
+LINKS = (
+    SurfaceLink(
+        "read-refusal-codes",
+        tools=("connector_refusal_codes",),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+    SurfaceLink(
+        "check-upstream",
+        tools=("registry_list_namespaces", "registry_status"),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+    SurfaceLink(
+        "switch-upstream",
+        tools=("registry_activate", "registry_deactivate"),
+        prompts=("{short}-operator", "{short}-steward"),
+        skills=("{short}-operations",),
+    ),
+)
+LOCATIONS = (DataLocation("{short_snake}_upstream", ("{Class}Operation",), "{upper}_UPSTREAM_URL", "registry_status"),)
+ROLES = (BusinessRole("steward", tasks=("check-upstream", "switch-upstream", "read-refusal-codes")),)
+"""
+
 GOVERNANCE = """\"\"\"Governance on every served {Display} tool: refusals, approval, scope and audit.
 
 Every call passes this middleware before the upstream. A write needs approval
@@ -233,7 +283,18 @@ class GovernanceMiddleware(Middleware):
 
 def register_governance(ctx: Any) -> None:
     \"\"\"Install the governance middleware on the connector's server.\"\"\"
-    ctx.server.add_middleware(GovernanceMiddleware())
+    server = ctx.server
+    server.add_middleware(GovernanceMiddleware())
+
+    @server.tool(name="connector_refusal_codes", annotations={{"readOnlyHint": True}})
+    def refusal_codes() -> list[str]:
+        \"\"\"List the typed refusal codes the {Display} governance returns.\"\"\"
+        return list(REFUSAL_CODES)
+
+    @server.resource("{short_snake}://refusal-codes")
+    def refusal_codes_resource() -> list[str]:
+        \"\"\"The typed refusal codes the {Display} governance returns.\"\"\"
+        return list(REFUSAL_CODES)
 """
 
 PROBE = """\"\"\"Probe the {Display} upstream tool list and report drift (exit 1 on drift).
