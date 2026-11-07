@@ -1,11 +1,12 @@
 ---
-name: arbora-door
+name: canopy
 description: >-
-  Use the arbora door: the six intent tools find, ask, why, write, act and
-  manage that reach every operation, connector tool, skill and agent of the
-  ecosystem from this coding harness. Use when a task needs platform knowledge,
-  a connector, a registered agent or the shared workstream; before concluding
-  that a capability is missing; or when a write needs a preview.
+  Canopy is arbora's front door: the live architecture website and the entry
+  point to the ecosystem through arbora's MCP door. Use it to reach every
+  operation, connector tool, skill and agent from this coding harness with the
+  six intent tools find, ask, why, write, act and manage. Use when a task needs
+  platform knowledge, a connector, a registered agent or the shared workstream;
+  before concluding that a capability is missing; or when a write needs a preview.
 license: MIT
 metadata:
   domain: core
@@ -13,9 +14,12 @@ metadata:
   tags: [arbora, door, mcp, intent-tools, workstream]
   version: '1.6.0'
 ---
-# The arbora door
+# Canopy
 
-The arbora MCP server is the one door to the ecosystem. It exposes six intent
+Canopy is arbora's front door: the live architecture website, which grows
+into a richer front door over time. This skill is the entry point that tells a
+harness how to use the ecosystem through arbora and canopy. The arbora MCP
+server is the one door to the ecosystem. It exposes six intent
 tools. Each takes `op="<operation id>"` with `params={...}`, or a
 natural-language `intent="..."` with `op` empty.
 

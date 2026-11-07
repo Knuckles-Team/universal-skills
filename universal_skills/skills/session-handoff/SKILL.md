@@ -24,7 +24,7 @@ Create comprehensive handoff documents that enable a fresh agent to seamlessly c
 
 ## The workstream path first
 
-When the arbora door is connected, the handoff lives in the shared workstream of
+When arbora is connected (see the `canopy` skill), the handoff lives in the shared workstream of
 this workspace, so any coding harness on the same workspace picks it up:
 
 1. **Hand off:** call `write` with `op="workstream.checkpoint"` and params

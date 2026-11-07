@@ -34,8 +34,8 @@ def _portable(meta: dict, folder: str) -> None:
 
 @pytest.mark.spec("US-CONTENT-R007.2")
 def test_door_skill_states_the_rules_and_is_neutral() -> None:
-    meta, body = _frontmatter(SKILLS / "arbora-door" / "SKILL.md")
-    _portable(meta, "arbora-door")
+    meta, body = _frontmatter(SKILLS / "canopy" / "SKILL.md")
+    _portable(meta, "canopy")
     for tool in ("find", "ask", "why", "write", "act", "manage"):
         assert f"`{tool}`" in body
     rules = [

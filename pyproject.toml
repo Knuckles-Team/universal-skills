@@ -64,7 +64,7 @@ react-development = []
 react-native-skills = []
 security-tools = ["networkx>=3.6.1", "requests>=2.34.2"]
 session-handoff = []
-arbora-door = []
+canopy = []
 skill-builder = ["PyYAML>=6.0.3"]
 skill-catalog-auditor = ["PyYAML>=6.0.3"]
 universal-installer = []
@@ -112,7 +112,7 @@ all = [
     "universal-skills[react-native-skills]>=1.0.0",
     "universal-skills[security-tools]>=1.0.0",
     "universal-skills[session-handoff]>=1.0.0",
-    "universal-skills[arbora-door]>=1.0.0",
+    "universal-skills[canopy]>=1.0.0",
     "universal-skills[skill-builder]>=1.0.0",
     "universal-skills[skill-catalog-auditor]>=1.0.0",
     "universal-skills[skill-graph-builder]>=1.0.0",
