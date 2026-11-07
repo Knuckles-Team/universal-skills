@@ -31,3 +31,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T024 [US5] US-CONTENT-R007.3 State the workstream path first in the handoff skill.
 - [x] T025 [US5] US-CONTENT-R007.4 Stop the installer from wiring bundle profiles.
 - [ ] T026 [US5] US-CONTENT-R007 Catalog content reaches coding harnesses through the arbora bundle.
+- [x] T027 [US2] US-CONTENT-R006 The codebase-untangle skill.
