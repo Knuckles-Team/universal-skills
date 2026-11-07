@@ -63,7 +63,7 @@ The SDK serves `skills/<name>/SKILL.md` through the skills directory provider. T
 
 ### Harness bundle content
 
-Arbora builds one plugin per coding harness from its registry. It copies skill folders unchanged. So the catalog must hold frontmatter that every target accepts as written. The `arbora-door` skill teaches the intent tools. The `session-handoff` skill writes and reads the workstream through served operations. The installer stops wiring the bundle profiles, so one door exists per harness.
+Arbora builds one plugin per coding harness from its registry. It copies skill folders unchanged. So the catalog must hold frontmatter that every target accepts as written. The `canopy` skill teaches the intent tools. The `session-handoff` skill writes and reads the workstream through served operations. The installer stops wiring the bundle profiles, so one door exists per harness.
 
 ### Decisions
 

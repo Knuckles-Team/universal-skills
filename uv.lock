@@ -4822,7 +4822,7 @@ requires-dist = [
     { name = "universal-skills", extras = ["agent-spawner"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["agent-workflows"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["algorithmic-art"], marker = "extra == 'all'", specifier = ">=1.0.0" },
-    { name = "universal-skills", extras = ["arbora-door"], marker = "extra == 'all'", specifier = ">=1.0.0" },
+    { name = "universal-skills", extras = ["canopy"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["brainstorming"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["brand-guidelines"], marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "universal-skills", extras = ["browser-tools"], marker = "extra == 'all'", specifier = ">=1.0.0" },
@@ -4866,7 +4866,7 @@ requires-dist = [
     { name = "validators", marker = "extra == 'document-tools'", specifier = ">=0.35.0" },
     { name = "wheel", marker = "extra == 'test'", specifier = ">=0.47.0" },
 ]
-provides-extras = ["test", "agent-browser", "agent-spawner", "mcp-client", "agent-workflows", "automated-credential-rotation", "algorithmic-art", "brainstorming", "brand-guidelines", "browser-tools", "c4-architecture", "canvas-design", "cloudflare-deploy", "creative-media", "database-tools", "document-converter", "developer-utilities", "document-tools", "github-backlog-planner", "github-ci-failure-sweep", "github-tools", "google-workspace", "internal-comms", "jupyter-notebook", "marp-presentations", "mcp-builder", "mermaid-diagrams", "product-strategy", "pre-mortem", "react-development", "react-native-skills", "security-tools", "session-handoff", "arbora-door", "skill-builder", "skill-catalog-auditor", "universal-installer", "skill-graph-builder", "skill-workflow-builder", "system-tools", "tdd-methodology", "theme-factory", "user-research", "web-artifacts", "web-crawler", "web-design-guidelines", "web-search", "web-fetch", "website-builder", "website-cloner", "code-enhancer", "all"]
+provides-extras = ["test", "agent-browser", "agent-spawner", "mcp-client", "agent-workflows", "automated-credential-rotation", "algorithmic-art", "brainstorming", "brand-guidelines", "browser-tools", "c4-architecture", "canvas-design", "cloudflare-deploy", "creative-media", "database-tools", "document-converter", "developer-utilities", "document-tools", "github-backlog-planner", "github-ci-failure-sweep", "github-tools", "google-workspace", "internal-comms", "jupyter-notebook", "marp-presentations", "mcp-builder", "mermaid-diagrams", "product-strategy", "pre-mortem", "react-development", "react-native-skills", "security-tools", "session-handoff", "canopy", "skill-builder", "skill-catalog-auditor", "universal-installer", "skill-graph-builder", "skill-workflow-builder", "system-tools", "tdd-methodology", "theme-factory", "user-research", "web-artifacts", "web-crawler", "web-design-guidelines", "web-search", "web-fetch", "website-builder", "website-cloner", "code-enhancer", "all"]
 
 [[package]]
 name = "urllib3"
