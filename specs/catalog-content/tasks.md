@@ -25,3 +25,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T019 [US4] US-CONTENT-R004.2 Frontmatter and catalog registration.
 - [ ] T020 [US4] US-CONTENT-R004.3 Validation test: procedure, prohibitions and neutral text.
 - [x] T021 [US2] US-CONTENT-R005 Link the delivery practice reference and the constitution articles from the delivery skills.
+- [x] T022 [US2] US-CONTENT-R006 The codebase-untangle skill.

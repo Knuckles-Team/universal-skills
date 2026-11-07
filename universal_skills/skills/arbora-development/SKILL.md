@@ -91,3 +91,5 @@ Specs are already designed. The work is implementation, delivered in very small,
 ## Delivery practice
 
 Follow the [delivery practice reference](https://github.com/Knuckles-Team/pipelines/blob/main/reference/delivery-practice.md) for waiting, branches, merge holds, worktree safety and verification. The [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) holds the binding articles: XXVIII (merges and releases), XXIX (checks tell the truth), XVIII (landed means reachable) and XXV (small units).
+
+For structural refactors, follow the `codebase-untangle` skill.

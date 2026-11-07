@@ -25,3 +25,4 @@ Governing spec: [spec.md](spec.md).
 | T-019 | `US-CONTENT-R004.2` | `tests/test_spec_row_delivery_skill.py::test_frontmatter_is_portable_and_the_catalog_lists_the_skill` | The test finds the frontmatter keys, the package version and the listed skill resource. |
 | T-020 | `US-CONTENT-R004.3` | `tests/test_spec_row_delivery_skill.py::test_skill_text_is_neutral_and_forbids_merge_and_skips` | The test finds the four prohibitions and no host, private domain or local path. |
 | T-021 | `US-CONTENT-R005` | `tests/test_delivery_practice_links.py::test_delivery_skills_link_the_reference_and_the_articles` | The test finds the link and the four article numbers in each skill and no copied section titles. |
+| T-022 | `US-CONTENT-R006` | `tests/test_codebase_untangle_skill.py::test_skill_states_the_procedure_the_categories_and_the_gates` | The test finds the seven steps in order, the categories and the gate names. |
