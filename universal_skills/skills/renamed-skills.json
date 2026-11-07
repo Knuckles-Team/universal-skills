@@ -1,0 +1,16 @@
+{
+  "renamed": {
+    "epistemic-graph-development": "medulla-development",
+    "agent-utilities-development": "arbora-development",
+    "agent-utilities-self-evolution": null,
+    "agent-utilities-source-integration": null,
+    "graph-os-development": "arbora-development",
+    "graphos-deployment": null,
+    "graphos-genesis": null,
+    "using-graph-os": null,
+    "agent-connector-sdk-development": null,
+    "agent-terminal-ui-development": null,
+    "agent-webui-development": null,
+    "geniusbot-development": null
+  }
+}
