@@ -99,6 +99,35 @@ def _iter_skill_providers() -> List[tuple]:
     return [(c.name, c.dirs.skills) for c in found if c.dirs.skills.is_dir()]
 
 
+#: Harness targets the arbora plugin bundle owns (US-CONTENT-R007.4): the
+#: installer writes no skill link and no MCP config for them; ``arbora plugin
+#: install --harness <profile>`` is the one door for each.
+BUNDLE_PROFILES: dict = {
+    "claude": "claude-code",
+    "opencode": "opencode",
+    "codex": "codex",
+    "grok": "grok",
+    "grok-code": "grok",
+}
+
+
+def refuse_bundle_profiles(targets: dict) -> int:
+    """Exit status 2 and one hint per bundle target, before any write; else 0."""
+    hits = sorted({BUNDLE_PROFILES[k] for k in targets if k in BUNDLE_PROFILES})
+    for profile in hits:
+        print(
+            f"{profile} gets the arbora plugin bundle instead: "
+            f"arbora plugin install --harness {profile}",
+            file=sys.stderr,
+        )
+    return 2 if hits else 0
+
+
+def drop_bundle_profiles(found: dict) -> dict:
+    """Detected or all-known targets, without the bundle profiles."""
+    return {k: v for k, v in found.items() if k not in BUNDLE_PROFILES}
+
+
 def get_tool_paths() -> dict:
     """Return per-tool skill-install directories, OS-aware.
 
@@ -933,7 +962,7 @@ def main():
             sel_providers,
             interactive_arbora_mode,
             interactive_arbora_url,
-        ) = _run_interactive(detect_present_tools())
+        ) = _run_interactive(drop_bundle_profiles(detect_present_tools()))
         if provider_filter is None:
             provider_filter = sel_providers
 
@@ -946,7 +975,9 @@ def main():
     targets: dict = {}
     targets.update(interactive_targets)
     if args.all_detected or args.all_tools:
-        found = detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
+        found = drop_bundle_profiles(
+            detect_present_tools() if args.all_detected else dict(TOOL_PATHS)
+        )
         if not found:
             print(
                 "No agent tools detected on this host. Use --tool/--path to target one "
@@ -972,6 +1003,11 @@ def main():
             root = get_workspace_root()
             target = root / WORKSPACE_PATHS.get(tool_key, WORKSPACE_PATHS["default"])
         targets[tool_key] = target
+
+    interactive_or_flagged = {k: v for k, v in targets.items() if k not in interactive_targets}
+    if refuse_bundle_profiles(interactive_or_flagged):
+        sys.exit(2)
+    targets = drop_bundle_profiles(targets)
 
     # Always keep the canonical Arbora XDG store in sync (global scope only).
     if not args.no_xdg and args.scope == "global":

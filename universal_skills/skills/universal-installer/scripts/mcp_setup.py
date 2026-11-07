@@ -72,7 +72,12 @@ _mcp_installer = _load_mcp_installer() if _MCP_INSTALLER_SCRIPT.is_file() else N
 # the skill-directory leg, not the MCP-config leg. Grounded via the vendored
 # fastmcp docs skill-graph (`~/.cursor/mcp.json`, all platforms).
 if _mcp_installer is not None:
-    MCP_CONFIG_PATHS: Dict[str, Path] = dict(_mcp_installer.TOOL_PATHS)
+    # The arbora plugin bundle owns these harnesses (US-CONTENT-R007.4); no MCP
+    # config patch is written for them.
+    _BUNDLE_PROFILES = {"claude", "opencode", "codex", "grok", "grok-code"}
+    MCP_CONFIG_PATHS: Dict[str, Path] = {
+        k: v for k, v in _mcp_installer.TOOL_PATHS.items() if k not in _BUNDLE_PROFILES
+    }
     MCP_CONFIG_PATHS.setdefault("cursor", Path("~/.cursor/mcp.json").expanduser())
 else:  # pragma: no cover - only when mcp-installer skill is missing entirely
     MCP_CONFIG_PATHS = {}
@@ -80,7 +85,13 @@ else:  # pragma: no cover - only when mcp-installer skill is missing entirely
 
 def detect_present_mcp_tools() -> Dict[str, Path]:
     present = (
-        dict(_mcp_installer.detect_present_tools()) if _mcp_installer is not None else {}
+        {
+            k: v
+            for k, v in _mcp_installer.detect_present_tools().items()
+            if k in MCP_CONFIG_PATHS
+        }
+        if _mcp_installer is not None
+        else {}
     )
     cursor_cfg = MCP_CONFIG_PATHS.get("cursor")
     if cursor_cfg is not None and cursor_cfg.parent.exists():

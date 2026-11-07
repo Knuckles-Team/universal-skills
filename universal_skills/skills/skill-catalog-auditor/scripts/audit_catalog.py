@@ -471,6 +471,19 @@ def atomic_findings(fm_text: str, body: str, atomic_names: set[str], own_name: s
     return findings
 
 
+
+def catalog_keys(fm: dict) -> dict:
+    """Frontmatter with the portable ``metadata`` keys lifted (US-CONTENT-R007.1).
+
+    A portable skill keeps ``domain``, ``skill_type`` and ``tags`` under
+    ``metadata``; a top-level key still wins.
+    """
+    meta = fm.get("metadata") if isinstance(fm, dict) else None
+    if not isinstance(meta, dict):
+        return fm
+    lifted = {k: meta[k] for k in ("domain", "skill_type", "tags") if k in meta}
+    return {**lifted, **fm}
+
 def audit_catalog(root: Path) -> CatalogAudit:
     root = root.resolve()
     parsed: list[tuple[Path, str, str, dict[str, Any], str | None]] = []
@@ -481,6 +494,7 @@ def audit_catalog(root: Path) -> CatalogAudit:
         text = skill_md.read_text(encoding="utf-8", errors="replace")
         fm, error = parse_frontmatter(text)
         _, body = split_frontmatter(text)
+        fm = catalog_keys(fm)
         parsed.append((skill_md, text, body, fm, error))
 
     atomic_names = {
