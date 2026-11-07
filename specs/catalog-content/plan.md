@@ -41,6 +41,14 @@ No unknowns; no research.md.
 
 ## Phase 1: Design
 
+- **Owner:** universal-skills owns the skill text, the vendoring script and the portability gate. The SDK owns the content convention that serves it. Arbora owns the bundle that copies it.
+- **Cohesion:** Each skill is one folder under `universal_skills/skills/`. The vendoring and portability checks live in `scripts/`.
+- **Dependency direction:** The package depends on the SDK content convention only. No skill imports arbora or the engine; skill scripts may use `arbora.client`.
+- **Interface depth:** None. The served surface is `skill://<name>/SKILL.md`; no new abstraction is added.
+- **Special cases:** A vendored skill keeps its upstream license file. The installer refuses the bundle profiles instead of branching per tool.
+- **State:** None. The package holds content only; the pinned upstream commits live in `upstream-sources.toml`.
+- **Environment:** No skill names a host, private domain or local path. The installer reads target paths from its own map.
+
 ### Existing system and reuse
 
 The SDK serves `skills/<name>/SKILL.md` through the skills directory provider. The pytest plugin generates the conformance checks.
@@ -55,7 +63,7 @@ The SDK serves `skills/<name>/SKILL.md` through the skills directory provider. T
 
 ### Harness bundle content
 
-Arbora builds one plugin per coding harness from its registry (`ARBORA-HARNESS-PLUGINS-R001`). It copies skill folders unchanged. So the catalog must hold frontmatter that every target accepts as written. The `arbora-door` skill teaches the intent tools. The `session-handoff` skill writes and reads the workstream through served operations. The installer stops wiring the bundle profiles, so one door exists per harness.
+Arbora builds one plugin per coding harness from its registry. It copies skill folders unchanged. So the catalog must hold frontmatter that every target accepts as written. The `arbora-door` skill teaches the intent tools. The `session-handoff` skill writes and reads the workstream through served operations. The installer stops wiring the bundle profiles, so one door exists per harness.
 
 ### Decisions
 
@@ -80,5 +88,4 @@ Arbora resolves the installed distribution through the `agent_connector_sdk.conn
 ## Cross-repo seams
 
 - `SCION-CONNECTOR-CONTROL-R071.1` (scion-sdk): the content convention that serves the catalog. Contract: `contracts/content-convention.md`.
-- `ARBORA-HARNESS-PLUGINS-R001.2` (arbora): the bundle composer that copies the skill folders. Contract: `contracts/harness-bundle.md`.
 - `MERISTEM-SCM-R011` (meristem): the run that loads the delivery skill. Contract: `contracts/delivery-skill.md`.
