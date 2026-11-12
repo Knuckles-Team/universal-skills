@@ -262,7 +262,7 @@ graph_query(cypher="MATCH (c)-[:PART_OF]->(:PersonalCorpus {name:'home-lab-2026'
 Works identically whichever path (§A or §B) populated the corpus.
 
 ```text
-graph_ask(question="What do I know about bitemporal tracking in the epistemic graph?",
+graph_ask(question="What do I know about bitemporal tracking in the medulla?",
   envelope="bundle")
 ```
 ```jsonc

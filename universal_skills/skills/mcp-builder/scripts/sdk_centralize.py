@@ -396,7 +396,7 @@ class ClientPlan:
         if hoisted:
             opts.append("headers={" + ", ".join(f"{k!r}: {v}" for k, v in hoisted.items()) + "}")
         opts.append('allow_plaintext=self.base_url.startswith("http://")')
-        create = [f"self.{a} = create_http_client(", "    HttpClientOptions("]
+        create = [f"self.{a} = build_http_client(", "    HttpClientOptions("]
         create += [f"        {o}," for o in opts]
         create += ["    )", ")"]
         for s in self.setup:
@@ -407,7 +407,7 @@ class ClientPlan:
         self.edits.append(Edit(last + 1, last, "".join(f"{indent}{ln}\n" for ln in create)))
         new_imps = [
             "import httpx",
-            "from scion_sdk.http.client import create_http_client",
+            "from scion_sdk.http.client import build_http_client",
             "from scion_sdk.http.options import HttpClientOptions",
         ]
         text_all = "".join(e.text for e in self.edits)
@@ -691,7 +691,7 @@ def spec_files(name: str, module_path: str, cls_name: str, client: bool = True) 
          f"The package must require the current scion-sdk floor and must not pin requests or httpx while nothing imports them directly. Optional drivers come from SDK extras. This row follows {_cite('R002')}.",
          "pyproject.toml shows the floor and no unused requests pin"),
         (ids[2], "Production wiring and hot path",
-         f"`{cls_name}.__init__` in `{module_path}` calls `create_http_client`, and every domain client reaches it through `request`. A transient 503 is retried by the SDK policy. This row follows {_cite('R001')}.",
+         f"`{cls_name}.__init__` in `{module_path}` calls `build_http_client`, and every domain client reaches it through `request`. A transient 503 is retried by the SDK policy. This row follows {_cite('R001')}.",
          "A test builds the client with a mock transport, sees a 503 then a 200, and gets one result"),
     ]
     if not client:  # dependency-only repo: the one row is the floor / dependency set
@@ -706,7 +706,7 @@ def spec_files(name: str, module_path: str, cls_name: str, client: bool = True) 
         "## Requirements\n\n" + "".join(f"- `{i}`: {t}.\n" for i, t, _, _ in rows)
     )
     live = (
-        f"`{cls_name}.__init__` in `{module_path}` calls `create_http_client`. Every domain client and MCP tool calls `{cls_name}.request`."
+        f"`{cls_name}.__init__` in `{module_path}` calls `build_http_client`. Every domain client and MCP tool calls `{cls_name}.request`."
         if client
         else f"{name} already builds its HTTP clients through the SDK; this spec owns only the dependency floor and extras."
     )
@@ -768,17 +768,17 @@ import {module} as base_module
 
 
 def _client(handler):
-    from scion_sdk.http.client import create_http_client as real
+    from scion_sdk.http.client import build_http_client as real
 
     def build(options):
         return real(options, transport=httpx.MockTransport(handler))
 
-    original = base_module.create_http_client
-    base_module.create_http_client = build
+    original = base_module.build_http_client
+    base_module.build_http_client = build
     try:
         return base_module.{cls_name}({call_args})
     finally:
-        base_module.create_http_client = original
+        base_module.build_http_client = original
 
 
 # spec: {sid}-R001, {sid}-R003
@@ -894,7 +894,7 @@ def run(repo: Path, apply: bool, sdk_version: str | None, bump: bool = False) ->
     try:
         if plan is not None and base is not None:
             res.applied.append(
-                f"{plan.rel}: requests.Session -> create_http_client/HttpClientOptions (resolve_tls_profile({plan.tls_name!r}))"
+                f"{plan.rel}: requests.Session -> build_http_client/HttpClientOptions (resolve_tls_profile({plan.tls_name!r}))"
             )
             res.applied.append("specs/sdk-centralization/ (6 files) + tests/test_sdk_centralization.py")
             if apply:
