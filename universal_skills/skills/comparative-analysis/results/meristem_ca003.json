@@ -1,7 +1,7 @@
 {
   "domain": "CA-003",
   "domain_name": "Architecture",
-  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "protocols": {
     "mcp_config.json": true,
     "MCP": true,
@@ -20,26 +20,26 @@
     "package_count": 50,
     "max_nesting_depth": 4,
     "packages": [
-      "agent_utilities",
-      "agent_utilities/agent",
-      "agent_utilities/analysis",
-      "agent_utilities/automation",
-      "agent_utilities/capabilities",
-      "agent_utilities/core",
-      "agent_utilities/domains",
-      "agent_utilities/domains/finance",
-      "agent_utilities/domains/government",
-      "agent_utilities/domains/hr",
-      "agent_utilities/domains/law",
-      "agent_utilities/domains/medical",
-      "agent_utilities/graph",
-      "agent_utilities/harness",
-      "agent_utilities/knowledge_graph",
-      "agent_utilities/knowledge_graph/adaptation",
-      "agent_utilities/knowledge_graph/backends",
-      "agent_utilities/knowledge_graph/backends/owl",
-      "agent_utilities/knowledge_graph/core",
-      "agent_utilities/knowledge_graph/id_management"
+      "meristem",
+      "meristem/agent",
+      "meristem/analysis",
+      "meristem/automation",
+      "meristem/capabilities",
+      "meristem/core",
+      "meristem/domains",
+      "meristem/domains/finance",
+      "meristem/domains/government",
+      "meristem/domains/hr",
+      "meristem/domains/law",
+      "meristem/domains/medical",
+      "meristem/graph",
+      "meristem/harness",
+      "meristem/knowledge_graph",
+      "meristem/knowledge_graph/adaptation",
+      "meristem/knowledge_graph/backends",
+      "meristem/knowledge_graph/backends/owl",
+      "meristem/knowledge_graph/core",
+      "meristem/knowledge_graph/id_management"
     ]
   },
   "config_patterns": {
@@ -69,7 +69,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -622,7 +622,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -1175,7 +1175,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -2248,7 +2248,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -2801,7 +2801,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -3354,7 +3354,7 @@
           {
             "kind": "System",
             "id": "au",
-            "name": "agent-utilities"
+            "name": "meristem"
           },
           {
             "kind": "System_Ext",
@@ -4011,8 +4011,8 @@
       },
       {
         "type": "cli_main",
-        "module": "agent_utilities.__main__",
-        "file": "agent_utilities/__main__.py"
+        "module": "meristem.__main__",
+        "file": "meristem/__main__.py"
       },
       {
         "type": "cli_main",
@@ -4036,38 +4036,38 @@
       },
       {
         "type": "a2a_skill",
-        "module": "agent_utilities.protocols.a2a_graph_skill",
-        "file": "agent_utilities/protocols/a2a_graph_skill.py"
+        "module": "meristem.protocols.a2a_graph_skill",
+        "file": "meristem/protocols/a2a_graph_skill.py"
       },
       {
         "type": "cli_main",
-        "module": "agent_utilities.knowledge_graph.__main__",
-        "file": "agent_utilities/knowledge_graph/__main__.py"
+        "module": "meristem.knowledge_graph.__main__",
+        "file": "meristem/knowledge_graph/__main__.py"
       },
       {
         "type": "cli_main",
-        "module": "agent_utilities.security.cli",
-        "file": "agent_utilities/security/cli.py"
+        "module": "meristem.security.cli",
+        "file": "meristem/security/cli.py"
       },
       {
         "type": "fastapi_route",
-        "module": "agent_utilities.server.app",
-        "file": "agent_utilities/server/app.py"
+        "module": "meristem.server.app",
+        "file": "meristem/server/app.py"
       },
       {
         "type": "cli_main",
-        "module": "agent_utilities.mcp.agent_manager",
-        "file": "agent_utilities/mcp/agent_manager.py"
+        "module": "meristem.mcp.agent_manager",
+        "file": "meristem/mcp/agent_manager.py"
       },
       {
         "type": "mcp_tool",
-        "module": "agent_utilities.mcp.kg_server",
-        "file": "agent_utilities/mcp/kg_server.py"
+        "module": "meristem.mcp.kg_server",
+        "file": "meristem/mcp/kg_server.py"
       },
       {
         "type": "cli_main",
-        "module": "agent_utilities.mcp.kg_server",
-        "file": "agent_utilities/mcp/kg_server.py"
+        "module": "meristem.mcp.kg_server",
+        "file": "meristem/mcp/kg_server.py"
       }
     ],
     "entry_point_count": 40,
@@ -4106,23 +4106,23 @@
     },
     "examples": {
       "mixin": [
-        "agent_utilities/base_utilities.py:PatchObject",
-        "agent_utilities/automation/maintenance_cron.py:MaintenanceFrequency",
-        "agent_utilities/graph/kg_graph_factory.py:KGMaterializedStep"
+        "meristem/base_utilities.py:PatchObject",
+        "meristem/automation/maintenance_cron.py:MaintenanceFrequency",
+        "meristem/graph/kg_graph_factory.py:KGMaterializedStep"
       ],
       "dependency_injection": [],
       "lazy_init": [],
       "plugin_registry": [],
       "event_driven": [],
       "protocol_oriented": [
-        "agent_utilities/base_utilities.py:PatchObject",
-        "agent_utilities/protocols/data_connector.py:DataConnectorProtocol",
-        "agent_utilities/capabilities/checkpointing.py:CheckpointStore"
+        "meristem/base_utilities.py:PatchObject",
+        "meristem/protocols/data_connector.py:DataConnectorProtocol",
+        "meristem/capabilities/checkpointing.py:CheckpointStore"
       ],
       "factory": [
         "tests/test_bulk_ingestion.py:create_schema",
-        "agent_utilities/agent/factory.py:create_agent_parser",
-        "agent_utilities/agent/factory.py:create_agent"
+        "meristem/agent/factory.py:create_agent_parser",
+        "meristem/agent/factory.py:create_agent"
       ],
       "strategy": []
     }

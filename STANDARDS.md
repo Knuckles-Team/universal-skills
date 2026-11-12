@@ -134,7 +134,7 @@ adapters.py` adapts a COPY for targets whose frontmatter contract is stricter.
 | Target | Allowed top-level keys | Notes |
 |---|---|---|
 | Codex (`~/.codex/skills`) | `name`, `description`, `license`, `allowed-tools`, `metadata` | Everything else is demoted **into** `metadata` (existing `metadata` sub-keys win on conflict); `description` is sanitized (`<`→`[`, `>`→`]`); discovery is **flat** — nested sub-skills are promoted to the top level and skill-graphs install at the target's top level (not under `skill-graphs/`). (`builtin_skills`/`rename_map` are a general name-collision mechanism, currently empty — no active collision.) |
-| Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor, Grok/Grok Code, OpenCode, Zed, agent-utilities, agent-terminal-ui | unrestricted | Permissive contract — verbatim copy/symlink, unchanged from before this adapter existed. |
+| Claude Code, Windsurf, OpenClaw, Antigravity, Devin, Cursor, Grok/Grok Code, OpenCode, Zed, meristem, agent-terminal-ui | unrestricted | Permissive contract — verbatim copy/symlink, unchanged from before this adapter existed. |
 
 A contract with every flag off (`demote_to_metadata=False`, `sanitize_description=False`,
 `flat_discovery=False`, empty `rename_map`) is a no-op (`requires_transform` is False):

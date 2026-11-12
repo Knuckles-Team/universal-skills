@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from agent_utilities.base_utilities import get_logger, retrieve_package_name
+    from meristem.base_utilities import get_logger, retrieve_package_name
 except ImportError:
-    # Fallback if the retired agent_utilities package is not available
+    # Fallback if the retired meristem package is not available
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
@@ -1079,8 +1079,8 @@ def main():
             _run_validate(target)
 
     # ── Ontology + prompt legs ───────────────────────────────────────────────
-    # Always XDG-scoped (arbora/epistemic-graph consume these directly;
-    # they are not per-tool artifacts like skills). Prefers agent_utilities'
+    # Always XDG-scoped (arbora/medulla consume these directly;
+    # they are not per-tool artifacts like skills). Prefers meristem'
     # own install_unified() when importable, falls back to local resolution.
     manifest_report: dict = {}
     if ontology_prompt_providers is not None:
@@ -1140,7 +1140,7 @@ def main():
     # ── KG auto-extension registration hook ──────────────────────────────────
     # Makes newly-installed provider content DISCOVERABLE for KG ingestion; does
     # NOT ingest it itself (see SKILL.md "Ontology / skill / prompt auto-extension
-    # hook for the KG" — that is arbora/epistemic-graph's job, over source_sync).
+    # hook for the KG" — that is arbora/medulla's job, over source_sync).
     if manifest_report and ontology_prompt_providers is not None:
         changed = any(v for leg in manifest_report.values() for v in leg.values())
         if changed:
@@ -1171,7 +1171,7 @@ def main():
             logger.info(
                 "Provider prompts/ontologies changed — to refresh the KG, run "
                 "`source_sync source=all mode=delta` via the arbora MCP "
-                "connection (or the agent-utilities-source-integration skill)."
+                "connection (or the meristem-source-integration skill)."
             )
 
 

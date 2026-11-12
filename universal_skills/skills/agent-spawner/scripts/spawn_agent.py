@@ -71,9 +71,9 @@ def _resolve_system_prompt(args: argparse.Namespace, config: object) -> object:
 
 
 def _prepare_delegation(args: argparse.Namespace):
-    from agent_utilities.agent.factory import create_agent
-    from agent_utilities.core import config as config_module
-    from agent_utilities.core.chat_persistence import chat
+    from meristem.agent.factory import create_agent
+    from meristem.core import config as config_module
+    from meristem.core.chat_persistence import chat
 
     config = config_module.AgentConfig()
     provider, model_id, default_model = _resolve_agent_identity(args, config)

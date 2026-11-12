@@ -488,7 +488,7 @@ def main():
 def _resolve_kg_sources(query: str) -> list[dict]:
     """Resolve sources from the Knowledge Graph (CONCEPT:KG-2.7).
 
-    This is optional — if agent_utilities is not installed or no KG
+    This is optional — if meristem is not installed or no KG
     engine is available, returns an empty list gracefully.
 
     Args:
@@ -498,8 +498,8 @@ def _resolve_kg_sources(query: str) -> list[dict]:
         List of resolved source dicts with file_path, name, source_type.
     """
     try:
-        from agent_utilities.knowledge_graph.source_resolver import KGSourceResolver
-        from agent_utilities.knowledge_graph.engine import IntelligenceGraphEngine
+        from meristem.knowledge_graph.source_resolver import KGSourceResolver
+        from meristem.knowledge_graph.engine import IntelligenceGraphEngine
 
         engine = IntelligenceGraphEngine.get_active()
         if not engine:
@@ -518,7 +518,7 @@ def _resolve_kg_sources(query: str) -> list[dict]:
         print(
             json.dumps(
                 {
-                    "kg_warning": "agent_utilities not installed — KG resolution unavailable"
+                    "kg_warning": "meristem not installed — KG resolution unavailable"
                 }
             ),
             file=sys.stderr,

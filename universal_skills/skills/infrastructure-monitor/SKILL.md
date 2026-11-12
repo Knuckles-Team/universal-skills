@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:ECO-4.7'
 ---
 # Infrastructure Monitor Workflow (Cron: every 15 minutes)

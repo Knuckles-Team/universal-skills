@@ -1,7 +1,7 @@
 {
   "domain": "CA-003b",
   "domain_name": "Architecture Differential",
-  "source": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "source": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "target": "${WORKSPACE_ROOT}/open-source-libraries/fastmcp",
   "component_topology_diff": {
     "source_only": [
@@ -82,7 +82,7 @@
       "[Extended Concept]",
       "[Feature Name]",
       "agent-terminal-ui",
-      "agent-utilities",
+      "meristem",
       "agent-webui",
       "kg_memory",
       "kg_search discover",
@@ -727,8 +727,8 @@
     },
     {
       "type": "component_gap",
-      "component": "agent-utilities",
-      "action": "Add 'agent-utilities' component to target architecture",
+      "component": "meristem",
+      "action": "Add 'meristem' component to target architecture",
       "priority": "high",
       "wiring_hint": "Wire into existing hot path via the nearest entry point"
     },

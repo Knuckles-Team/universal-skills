@@ -20,7 +20,7 @@ def _discover_projects(pattern: str) -> list[str]:
     """Discover project directories matching a glob pattern.
 
     Supports:
-        - Direct paths: "${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities"
+        - Direct paths: "${MERISTEM_WORKSPACE_ROOT}/agent-packages/meristem"
         - Glob patterns: "agent-packages/agents/*"
         - Comma-separated: "agent-packages/agents/*,agent-packages/skills/*"
     """

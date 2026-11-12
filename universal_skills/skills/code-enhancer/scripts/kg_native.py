@@ -3,7 +3,7 @@
 
 code-enhancer used to hand-roll code analysis with Python's stdlib ``ast`` (fragile
 — e.g. ``ast.Str`` broke on 3.12). The platform already ingests the whole ecosystem
-into the epistemic-graph as a typed code graph (symbols, call graph, CONCEPT
+into the medulla as a typed code graph (symbols, call graph, CONCEPT
 markers, tests), and exposes a version-independent, multi-language tree-sitter
 parser as an engine service. This module gives every code-enhancer script one
 shared, three-tier mechanism, preferred in this order:

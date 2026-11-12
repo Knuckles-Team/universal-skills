@@ -4,7 +4,7 @@ Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
-The CLI and its helpers exist and are tested. The pipeline behind them is the retired `agent_utilities` package, which is the real gap. The plan moves the pipeline into this repository, removes the daemon enrichment, and adds the ontology layer. Page fetch stays in the `web-crawler` skill.
+The CLI and its helpers exist and are tested. The pipeline behind them is the retired `meristem` package, which is the real gap. The plan moves the pipeline into this repository, removes the daemon enrichment, and adds the ontology layer. Page fetch stays in the `web-crawler` skill.
 
 ## Technical Context
 
@@ -58,7 +58,7 @@ Gates: `ruff`, `mypy`, `vulture`, `bandit`, `check-atomicity`, `check-frontmatte
 
 ## Production caller chain
 
-`python scripts/generate_skill.py <source> <name>` → `generate_skill` (`generate_skill.py`) → `_classify_sources` → `SkillGraphPipeline.build` → `_make_crawler_fn` → `skills/web-crawler/scripts/crawl.py` (for `web`) → `_flatten_reference_tree`. Obsolete paths to delete: the `agent_utilities` import, the flags `--no-kg`, `--ingest-kg`, `--append`, and the docs reference to the retired migration guide.
+`python scripts/generate_skill.py <source> <name>` → `generate_skill` (`generate_skill.py`) → `_classify_sources` → `SkillGraphPipeline.build` → `_make_crawler_fn` → `skills/web-crawler/scripts/crawl.py` (for `web`) → `_flatten_reference_tree`. Obsolete paths to delete: the `meristem` import, the flags `--no-kg`, `--ingest-kg`, `--append`, and the docs reference to the retired migration guide.
 
 ## Cross-repo seams
 

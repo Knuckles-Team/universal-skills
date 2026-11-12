@@ -59,7 +59,7 @@ Tool: Route to freqtrade backend for dry-run.
 **Tools**: `graph_write, document_tools`
 
 Publish to community strategy registry.
-Tool: Route to agent-utilities `strategy_sharing.py`.
+Tool: Route to meristem `strategy_sharing.py`.
 
 ### Step 5: KG Persistence [depends_on: share]
 **Agent**: `report-generator`

@@ -1,7 +1,7 @@
 {
   "domain": "CA-001",
   "domain_name": "Governance",
-  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "license": {
     "file": "LICENSE",
     "detected": "MIT",

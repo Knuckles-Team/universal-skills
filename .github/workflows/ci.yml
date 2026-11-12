@@ -139,7 +139,7 @@ jobs:
       - name: Bootstrap SDK and its pinned generated EG client
         working-directory: .ci/scion-sdk
         # Canonical SDK bootstrap uses its frozen lock and pinned EG source
-        # contract, with --no-install-package epistemic-graph (no native build).
+        # contract, with --no-install-package medulla (no native build).
         run: bash scripts/bootstrap.sh
       - name: Install existing pinned Pages test requirements
         run: uv pip install --python .ci/scion-sdk/.venv/bin/python -r .github/requirements-pages.txt

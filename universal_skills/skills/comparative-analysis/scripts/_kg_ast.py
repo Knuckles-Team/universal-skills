@@ -11,7 +11,7 @@ this file have" prefers, in this order:
    wiring, and doc/architecture signals — no re-parsing needed. Best-effort and
    silently skipped when no gateway is configured or the target isn't ingested
    (comparative-analysis routinely targets un-ingested third-party repos).
-2. **epistemic-graph's native repository inventory** — ``parse_symbols()`` calls
+2. **medulla's native repository inventory** — ``parse_symbols()`` calls
    ``SyncMedullaClient.graph.index_repository()`` with logical source
    names and bytes. This is the sole clean-break EG 3.0 AST contract and returns
    the strict ``eg-native-inventory/v1`` result: acknowledged files, qualified
@@ -174,7 +174,7 @@ def kg_write_analysis(
 
 
 # ---------------------------------------------------------------------------
-# Tier 2 — epistemic-graph's strict native repository inventory
+# Tier 2 — medulla's strict native repository inventory
 # Tier 3 — local stdlib `ast` when the native client/engine is unavailable
 # ---------------------------------------------------------------------------
 

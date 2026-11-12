@@ -13,7 +13,7 @@ import logging
 from typing import Any
 
 try:
-    from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+    from meristem.knowledge_graph.core.engine import IntelligenceGraphEngine
 except ImportError:
     IntelligenceGraphEngine = None
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
     if not engine:
         try:
             from meristem.core.paths import kg_db_path
-            from agent_utilities.knowledge_graph.backends import create_backend
+            from meristem.knowledge_graph.backends import create_backend
             import networkx as nx
 
             backend = create_backend(backend_type="ladybug", db_path=str(kg_db_path()))
@@ -41,7 +41,7 @@ def check_xdg_compliance(project_dir: str | None = None) -> dict[str, Any]:
                 "score": 100,
                 "grade": "N/A",
                 "findings": [
-                    "Check skipped: required agent-utilities/networkx dependencies not found."
+                    "Check skipped: required meristem/networkx dependencies not found."
                 ],
                 "justifications": [
                     "Dependencies missing, assuming compliance by default for this check."

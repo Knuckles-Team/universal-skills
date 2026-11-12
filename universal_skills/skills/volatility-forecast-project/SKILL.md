@@ -11,7 +11,7 @@ team_config: trading_department
 tags: [quant, volatility, garch, risk, forecasting, portfolio, workflow]
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
 

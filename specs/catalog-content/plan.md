@@ -9,7 +9,7 @@ The SDK finds content by convention and serves `skills/<name>/SKILL.md`. This pa
 ## Technical Context
 
 - **Language/Version**: Python 3.14 (floor 3.12)
-- **Primary Dependencies**: `agent-connector-sdk[mcp]`
+- **Primary Dependencies**: `scion-sdk[mcp]`
 - **Storage**: N/A
 - **Testing**: pytest unit tests; the SDK pytest plugin conformance checks
 - **Target Platform**: Linux, served by arbora
@@ -67,7 +67,7 @@ Arbora builds one plugin per coding harness from its registry. It copies skill f
 
 ### Decisions
 
-Hard cutover: the nested category layout and the `agent_utilities.skill_providers` entry point are gone. A skill's category is its metadata, not a directory.
+Hard cutover: the nested category layout and the `meristem.skill_providers` entry point are gone. A skill's category is its metadata, not a directory.
 
 ## Phase 2: Task approach
 
@@ -83,7 +83,7 @@ The repository pre-commit hooks must pass, including `check-atomicity`, `check-f
 
 ## Production caller chain
 
-Arbora resolves the installed distribution through the `agent_connector_sdk.connector` entry point. The SDK builds the server and lists each skill resource. A delivery assignment run of meristem reads `skill://spec-row-delivery/SKILL.md` through arbora. No obsolete path exists to delete.
+Arbora resolves the installed distribution through the `scion_sdk.connector` entry point. The SDK builds the server and lists each skill resource. A delivery assignment run of meristem reads `skill://spec-row-delivery/SKILL.md` through arbora. No obsolete path exists to delete.
 
 ## Cross-repo seams
 

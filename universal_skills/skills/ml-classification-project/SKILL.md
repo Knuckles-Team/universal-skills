@@ -11,7 +11,7 @@ team_config: quantitative_trading_team
 tags: [quant, machine-learning, xgboost, classification, portfolio, workflow]
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
 

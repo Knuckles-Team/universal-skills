@@ -148,7 +148,7 @@ def test_scaffold_emits_complete_valid_workflow(tmp_path):
 
 def test_scaffolded_workflow_compiles_with_runtime_compiler(tmp_path):
     compiler = pytest.importorskip(
-        "agent_utilities.workflows.skill_compiler"
+        "meristem.workflows.skill_compiler"
     ).SkillCompiler
     root = _catalog(tmp_path)
     _write_atomic_skill(root, "development", "speckit-specify")

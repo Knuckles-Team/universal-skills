@@ -42,16 +42,16 @@ def builder():
         def __init__(self, crawler_fn=None, kg_enrich=True):
             self.crawler_fn = crawler_fn
 
-    stub = types.ModuleType("agent_utilities.knowledge_graph.distillation")
+    stub = types.ModuleType("meristem.knowledge_graph.distillation")
     stub.SourceSpec, stub.AcquiredDoc, stub.SkillGraphPipeline = (
         SourceSpec,
         AcquiredDoc,
         SkillGraphPipeline,
     )
     names = (
-        "agent_utilities",
-        "agent_utilities.knowledge_graph",
-        "agent_utilities.knowledge_graph.distillation",
+        "meristem",
+        "meristem.knowledge_graph",
+        "meristem.knowledge_graph.distillation",
     )
     saved = {n: sys.modules.get(n) for n in names}
     for name in names[:2]:

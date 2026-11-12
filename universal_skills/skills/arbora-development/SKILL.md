@@ -19,8 +19,8 @@ For a contributor or coding agent starting with no ecosystem context, open
 the public [organization hub](https://github.com/Knuckles-Team/.github), its
 [build-first queue](https://knuckles-team.github.io/.github/build-first.html),
 and [contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md).
-The queue links owner-native specs in epistemic-graph, connector SDK,
-agent-utilities, arbora, WebUI, repository-manager, pipelines,
+The queue links owner-native specs in medulla, connector SDK,
+meristem, arbora, WebUI, repository-manager, pipelines,
 agent-terminal-ui, emerald-exchange, tunnel-manager, and the hub itself.
 
 The canonical, complete instructions are packaged by

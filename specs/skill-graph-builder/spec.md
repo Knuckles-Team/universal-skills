@@ -52,7 +52,7 @@ A maintainer builds a graph and gets its concept layer as an ontology module who
 
 - **SC-001**: The CLI helper tests pass in a clean environment. Rows: `US-SKILL-GRAPH-BUILDER-R001.3`.
 - **SC-002**: A fresh build passes the `skill-graphs` gate. Rows: `US-SKILL-GRAPH-BUILDER-R003.1`.
-- **SC-003**: No file under the skill imports `agent_utilities`. Rows: `US-SKILL-GRAPH-BUILDER-R004.1`.
+- **SC-003**: No file under the skill imports `meristem`. Rows: `US-SKILL-GRAPH-BUILDER-R004.1`.
 
 ## Assumptions
 

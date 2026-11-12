@@ -32,7 +32,7 @@ PreToolUse gate** (OS-5.41) consults governance at decision time.
 Generate the governance-derived Claude Code permission fence + `.claudeignore`:
 
 ```bash
-agent-utilities harness-fence --target ~/.claude            # or <project>/.claude
+meristem harness-fence --target ~/.claude            # or <project>/.claude
 # or via MCP:  graph_configure(action="harness_fence", config_key="~/.claude")
 ```
 
@@ -45,7 +45,7 @@ wall (rm -rf, force-push, hard reset, secret files, raw curl) regenerated from
 **Verify before walking away** (`--dry-run` prints without writing):
 
 ```bash
-agent-utilities harness-fence --target ~/.claude --dry-run
+meristem harness-fence --target ~/.claude --dry-run
 ```
 
 Confirm `defaultMode == "acceptEdits"`, `bypassPermissions` absent, and the deny
@@ -76,7 +76,7 @@ and anything I need to review.
 The whole loop is a single command — the testable core behind this skill:
 
 ```bash
-agent-utilities sleep-run --max-cycles 6 --max-topics 5 --workspace .
+meristem sleep-run --max-cycles 6 --max-topics 5 --workspace .
 ```
 
 It drives `LoopController.run_one_cycle` until the loop **converges** (no new

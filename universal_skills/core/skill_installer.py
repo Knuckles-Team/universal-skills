@@ -2,7 +2,7 @@
 
 Kept as a thin re-export — NOT a second implementation — solely because
 ``universal_skills.core.skill_installer`` is a cross-repo Python import contract:
-``agent-utilities``' CLI (``agent_utilities/cli/__init__.py``) imports
+``meristem``' CLI (``meristem/cli/__init__.py``) imports
 ``from universal_skills.core.skill_installer.scripts import install`` directly, and
 several ``agents/*`` packages depend on the ``universal-skills[skill-installer]``
 pip extra. Renaming this module out from under them is out of scope for this

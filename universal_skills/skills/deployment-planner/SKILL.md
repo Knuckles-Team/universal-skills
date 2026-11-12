@@ -392,7 +392,7 @@ Step 2 catalog with `image`/`ports`/`volumes`/`mode`/`env`):
 
 1. **Native** (above) — deterministic, no external tools; best for
    planner-owned catalog services. Matches the in-repo golden reference
-   `agent-utilities/deploy/k8s/arbora.yaml`.
+   `meristem/deploy/k8s/arbora.yaml`.
 2. **kompose transform** — for the ~60 existing compose stacks, start from
    `kompose convert -f compose.yml -o k8s/`, then apply the deterministic
    post-fixups kompose drops:

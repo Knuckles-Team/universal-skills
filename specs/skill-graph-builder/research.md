@@ -2,7 +2,7 @@
 
 ## Is the pipeline still available
 
-The script imports `SkillGraphPipeline` from the retired `agent_utilities` package. That package is not part of the workspace and not a dependency of this repository. The package index still serves its last release, so a build works only by installing a retired package. The pipeline therefore moves here (`R004.1`), where the skill owns it.
+The script imports `SkillGraphPipeline` from the retired `meristem` package. That package is not part of the workspace and not a dependency of this repository. The package index still serves its last release, so a build works only by installing a retired package. The pipeline therefore moves here (`R004.1`), where the skill owns it.
 
 ## Why daemon enrichment goes
 

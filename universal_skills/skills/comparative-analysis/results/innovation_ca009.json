@@ -2,7 +2,7 @@
   "domain": "CA-010",
   "domain_name": "Innovation Extraction",
   "source_count": 1,
-  "target": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "target": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "results": [
     {
       "source": "${WORKSPACE_ROOT}/agent-packages/skills/universal-skills/universal_skills/research/comparative-analysis/.specify/ca_repos/20afe9f9/agentmemory",

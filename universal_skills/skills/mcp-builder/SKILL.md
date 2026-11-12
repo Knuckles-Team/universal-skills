@@ -97,7 +97,7 @@ the connector offers is served over MCP.
    `load_declaration` and serves it as `connector://resources`. Write no manifest file
    and no `declaration()` function. Set `record_type` to the ontology class name.
 3. **Ontology.** `ontology/<domain>.ttl` in the shared `:` namespace. Every class gets
-   `rdfs:subClassOf` an epistemic-graph core class (the scaffold uses `:Concept`; narrow
+   `rdfs:subClassOf` a medulla core class (the scaffold uses `:Concept`; narrow
    it when a core class fits) and an object property to a core class. Never
    `owl:imports` the core ontology. Shapes and attestations are generated at release.
    Check with `pipelines-hook connector-ontology-map graph-check`.

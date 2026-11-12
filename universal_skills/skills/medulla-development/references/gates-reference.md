@@ -67,9 +67,9 @@ contract-enforcing ones. Every script path below was verified to exist.
 | Hook id | Script | Forbids |
 |---|---|---|
 | `check-root-hygiene` | `scripts/check_root_hygiene.py` | Any tracked root entry not declared. **Allowlist, not denylist**, and explicitly **not a ratchet**: non-dot root entries need a one-line reason in `.repo-layout.toml`; conventional dotfiles go in the script's `ALLOWED_DOTFILES`. A declared entry that stops being tracked is ALSO a failure. |
-| `check-sprawl` | `agent-utilities/scripts/check_sprawl.py` (fleet-shared) | `*_v2.py` / `*_old.py` / `*_new.py` clone filenames, `.orig`/`.rej`/`.bak`, the literal `# --- Merged from` marker, tracked binaries over 1 MB. |
-| `check-stubs` | `agent-utilities/scripts/check_stubs.py` | Active stubs and TODOs. |
-| `lane-guard` | `agent-utilities/scripts/check_lane_guard.py` | Editing the canonical checkout; stray `CARGO_TARGET_DIR`. |
+| `check-sprawl` | `meristem/scripts/check_sprawl.py` (fleet-shared) | `*_v2.py` / `*_old.py` / `*_new.py` clone filenames, `.orig`/`.rej`/`.bak`, the literal `# --- Merged from` marker, tracked binaries over 1 MB. |
+| `check-stubs` | `meristem/scripts/check_stubs.py` | Active stubs and TODOs. |
+| `lane-guard` | `meristem/scripts/check_lane_guard.py` | Editing the canonical checkout; stray `CARGO_TARGET_DIR`. |
 | `jscpd-differential` / `dupehound-changed-functions` | `scripts/check_duplication.py enforce`, `scripts/check_dupehound.py` | New structural clones / clone pairs in changed code. |
 | `complexity-staged` | `scripts/check_complexity_staged.py` | Any NEW function over cyclomatic 10 / cognitive 15, and any regression. |
 | `documentation-contract` | `scripts/check_documentation_contract.py` | Cargo/ledger/MkDocs documentation drift. |
@@ -86,7 +86,7 @@ Python gates below were re-run by this skill on `1d83cf4b`:
 | `lazy-lifecycle-architecture`, `canonical-property-schema`, `universal-read-rls-architecture`, `mint-lease-call-sites`, `guardrail-tracked-privacy`, `p2-analytics-reasoning-architecture`, `epistemic-operations-protocol`, `exact-release-campaigns-architecture`, `check-root-hygiene`, `documentation-contract`, `scale-documentation`, `check-crates-io-only` | **PASS** |
 | `persisted-mutation-contract` | **FAIL** — `mutation-batch module manifest drift: expected ('src/server/mutation_batch/canonical.rs', '…/commit.rs', '…/compile.rs', '…/digest.rs', '…/tests.rs'), observed ()`. The gate expects `src/server/mutation_batch/` to be a module **directory**; the tree has a single `src/server/mutation_batch.rs`. (Its older failure — `missing Rust const inventory: ALL_METHODS` — *is* resolved: the script now imports `method_policy_inventory` and `ALL_METHODS` exists nowhere in `src/` or `crates/`. The gate is red for a **different** reason. Do not mark it fixed.) |
 | `current-only-architecture` | **FAIL** — `missing contract block: Method::CreateNodeIfAbsent { .. } => MethodPolicy {`, asserted by `scripts/check_current_only_architecture.py` and absent from the tree. |
-| `exact-fault-restart-harness-architecture` | **FAIL** — 18 missing literals across the fault seam (`MutationCommitPhase`, `CertificationFaultSpec`, `EPISTEMIC_GRAPH_CERTIFICATION_FAULT`, `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)`, …). |
+| `exact-fault-restart-harness-architecture` | **FAIL** — 18 missing literals across the fault seam (`MutationCommitPhase`, `CertificationFaultSpec`, `MEDULLA_CERTIFICATION_FAULT`, `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)`, …). |
 | `p2-modality-architecture` | **FAIL** — `KnowledgeStream retains a claims-only or conditionally fenced served path`. Real defect; owner is the KnowledgeStream/lease owner. Do not relax the gate. |
 | `rust-arch-lint` | **FAIL** — see below. |
 | `dependency-cruiser-architecture` | **PASSES.** Measured 2026-09-04: `pre-commit run dependency-cruiser-architecture --all-files` -> Passed, with `clients/js/node_modules` ABSENT. This row previously recorded the gate as unable to pass in any clean checkout because `node_modules` is uncommitted and the hook runs no `npm ci`. That reasoning was plausible and wrong -- the gate resolves `4 modules, 3 dependencies` without installed deps. **Re-run a gate before repeating what a document says about it, including this one.** This row was stale within hours of being written. |
@@ -213,7 +213,7 @@ gate reads:
 | The gate reads | The gate demands | Where it actually lives |
 |---|---|---|
 | `crates/medulla-types/src/mutation_batch.rs` | `pub enum MutationCommitPhase`, `BeforeRows`, `AfterRowsBeforeMetadata`, `BeforeCommit`, `AfterCommitBeforeAck` | `crates/medulla-types/src/mutation_batch/model/request.rs:185` |
-| same | `struct CertificationFaultSpec`, `const ENV: &str = "EPISTEMIC_GRAPH_CERTIFICATION_FAULT"`, `std::process::abort()`, `spec.request_id != batch.context.request_id`, `operation.domain == spec.domain`, `std::env::var_os(ENV)`, `#[serde(deny_unknown_fields)]` | `crates/medulla-types/src/mutation_batch/fault.rs:7`, `:22`, `:57`, … |
+| same | `struct CertificationFaultSpec`, `const ENV: &str = "MEDULLA_CERTIFICATION_FAULT"`, `std::process::abort()`, `spec.request_id != batch.context.request_id`, `operation.domain == spec.domain`, `std::env::var_os(ENV)`, `#[serde(deny_unknown_fields)]` | `crates/medulla-types/src/mutation_batch/fault.rs:7`, `:22`, `:57`, … |
 | `crates/medulla-mutation-store/src/lib.rs` | the four `MutationCommitPhase::*` arms | `crates/medulla-mutation-store/src/store/apply.rs:39,103,203,207` |
 | same | `pub fn commit(wtx: WriteTransaction, batch: &MutationBatch)` | `crates/medulla-mutation-store/src/store/apply.rs:201`, as **`pub fn commit(write: MutationWrite, batch: &MutationBatch)`** |
 

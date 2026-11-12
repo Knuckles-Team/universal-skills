@@ -84,7 +84,7 @@ _DEF_KINDS = {"function", "class", "method"}
 def analyze_docstrings(project_path: Path) -> dict:
     """Analyze docstring coverage in Python files.
 
-    Symbol discovery prefers the epistemic-graph AST parser (``_kg_ast.parse_symbols``
+    Symbol discovery prefers the medulla AST parser (``_kg_ast.parse_symbols``
     — strict ``eg-native-inventory/v1``, or the helper's version-independent local
     ``ast`` fallback when the native client/engine is unavailable) over
     hand-walking stdlib ``ast`` here. Docstring presence is then a

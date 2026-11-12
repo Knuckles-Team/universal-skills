@@ -5,7 +5,7 @@ Consumer: universal-skills US-CONTENT-R001
 
 ## Wire shape
 
-- Declaration: the entry point `agent_connector_sdk.connector = "universal_skills"`.
+- Declaration: the entry point `scion_sdk.connector = "universal_skills"`.
 - Served resource: one `skill://<name>/SKILL.md` per folder `universal_skills/skills/<name>/`.
 
 ## Refusal codes

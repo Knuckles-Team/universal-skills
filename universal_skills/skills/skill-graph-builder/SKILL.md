@@ -21,8 +21,8 @@ metadata:
 A skill-graph is an externally-consumable corpus of knowledge packaged as an agent
 skill: a `SKILL.md` index over a `reference/` markdown tree. This builder is the
 **single, unified way** to create one from any source. It is a thin front-end over
-the agent-utilities core pipeline
-(`agent_utilities.knowledge_graph.distillation.skill_graph_pipeline`), so every
+the meristem core pipeline
+(`meristem.knowledge_graph.distillation.skill_graph_pipeline`), so every
 skill-graph — no matter the source — comes out in the same shape with the same
 provenance + freshness tracking.
 
@@ -93,7 +93,7 @@ Common flags: `--max-depth`, `--max-pages`, `--max-file-kb` (split threshold),
 ## The full toolbox (the recipe to create + maintain more)
 
 All verbs are subcommands of the core pipeline module
-(`python -m agent_utilities.knowledge_graph.distillation.skill_graph_pipeline …`); the
+(`python -m meristem.knowledge_graph.distillation.skill_graph_pipeline …`); the
 builder CLI above is a thin front-end over `build`:
 
 | Verb | Does |
@@ -127,7 +127,7 @@ export SKILL_GRAPH_CRAWLER=<this-repo>/research/web-crawler/scripts/crawl.py
 export SKILL_GRAPH_CRAWL_TIMEOUT=900   # per-site bound; SKILL_GRAPH_MAX_PAGES caps pages
 ```
 
-(See `agent-utilities/docs/guides/skill-graph-migration.md` for the full crawl4ai +
+(See `meristem/docs/guides/skill-graph-migration.md` for the full crawl4ai +
 Chrome install + the migration/refresh runbook.)
 
 ## Via the Knowledge-Graph MCP surface
@@ -143,7 +143,7 @@ If arbora is reachable, drive the same pipeline through `graph_ingest`:
 ## How it works
 
 1. **Acquire**: each source is routed to the right extractor — this repo's crawl4ai
-   web-crawler for `web`, `markitdown`/`pymupdf4llm` for documents, the agent-utilities
+   web-crawler for `web`, `markitdown`/`pymupdf4llm` for documents, the meristem
    source-connector registry for `rest`/`database`/`mcp_tool`/`url_reader`, an LLM for
    `generated`, and the KG distiller for `kg_query` — all normalized to markdown.
 2. **Standardize**: large files are split (`mdsplit` + line fallback); a hierarchical
@@ -159,6 +159,6 @@ Knowledge Format): each `reference/*.md` carries YAML frontmatter with a require
 `type` (+ title/description/resource/timestamp), each directory gets an `index.md`
 (progressive disclosure), and the root gets a `log.md` (history) — alongside the machine
 `index.json`/`sources.json` twins. This is emitted automatically by
-`skill_graph_pipeline` (`distillation/okf_bundle.py`). The agent-utilities concept
+`skill_graph_pipeline` (`distillation/okf_bundle.py`). The meristem concept
 skill-graph additionally stamps each file with its OKF-CIS `id:`, making it the canonical
-concept bundle. See agent-utilities `docs/okf-cis.md`.
+concept bundle. See meristem `docs/okf-cis.md`.
