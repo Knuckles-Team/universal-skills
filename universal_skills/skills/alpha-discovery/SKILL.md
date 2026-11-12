@@ -9,7 +9,7 @@ team_config: trading_department
 agent: quant_research_analyst
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
 # Alpha Discovery Workflow

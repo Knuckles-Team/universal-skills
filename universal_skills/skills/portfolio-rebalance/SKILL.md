@@ -17,7 +17,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
 # Portfolio Rebalance Workflow (Cron: Monday 9AM ET)
@@ -34,7 +34,7 @@ Tool: Route to `data-science-mcp` for heavy optimization compute.
 
 ### Step 3: attribution
 Brinson decomposition of recent performance.
-Tool: Route to agent-utilities `profit_attribution.py`.
+Tool: Route to meristem `profit_attribution.py`.
 
 ### Step 4: generate-trades
 Compute rebalancing trade list from target vs current weights.

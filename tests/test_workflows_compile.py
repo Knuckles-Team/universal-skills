@@ -2,18 +2,18 @@ import sys
 from pathlib import Path
 import pytest
 
-# Ensure agent-utilities is in sys.path if not already loaded
+# Ensure meristem is in sys.path if not already loaded
 agent_utils_path = str(
-    Path(__file__).resolve().parent.parent.parent.parent / "agent-utilities"
+    Path(__file__).resolve().parent.parent.parent.parent / "meristem"
 )
 if agent_utils_path not in sys.path:
     sys.path.insert(0, agent_utils_path)
 
-# The compiler lives in the sibling agent-utilities package and pulls in its full
+# The compiler lives in the sibling meristem package and pulls in its full
 # runtime (pydantic_ai, …). Skip cleanly when that stack isn't installed (e.g. the
-# isolated pre-commit uv env); the test runs wherever agent-utilities is available.
+# isolated pre-commit uv env); the test runs wherever meristem is available.
 SkillCompiler = pytest.importorskip(
-    "agent_utilities.workflows.skill_compiler"
+    "meristem.workflows.skill_compiler"
 ).SkillCompiler
 
 # Find all directories under universal_skills/ containing a SKILL.md file

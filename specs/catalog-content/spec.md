@@ -6,7 +6,7 @@ Owner: universal-skills. Cross-repo IDs: `SCION-CONNECTOR-CONTROL-R071.1`, `SCIO
 
 Component: Skill catalog
 Depends-on: SCION-CONNECTOR-CONTROL-R071.1
-References: [SCION-CONNECTOR-CONTROL](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs)
+References: [SCION-CONNECTOR-CONTROL](https://github.com/Knuckles-Team/scion-sdk/tree/main/specs)
 Code: ../../pyproject.toml ../../scripts/sync_upstream_skills.py ../../tests/test_catalog_content.py
 
 ## User Scenarios & Testing

@@ -1,7 +1,7 @@
 {
   "domain": "CA-004",
   "domain_name": "Code Quality",
-  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "quality_metrics": {
     "file_count": 320,
     "total_loc": 88121,
@@ -26,35 +26,35 @@
         "line": 479,
         "complexity": 103,
         "length": 603,
-        "file": "agent_utilities/graph/executor.py"
+        "file": "meristem/graph/executor.py"
       },
       {
         "name": "build_agent_app",
         "line": 61,
         "complexity": 68,
         "length": 539,
-        "file": "agent_utilities/server/app.py"
+        "file": "meristem/server/app.py"
       },
       {
         "name": "app_factory",
         "line": 128,
         "complexity": 64,
         "length": 468,
-        "file": "agent_utilities/server/app.py"
+        "file": "meristem/server/app.py"
       },
       {
         "name": "create_agent",
         "line": 240,
         "complexity": 57,
         "length": 359,
-        "file": "agent_utilities/agent/factory.py"
+        "file": "meristem/agent/factory.py"
       },
       {
         "name": "router_step",
         "line": 56,
         "complexity": 55,
         "length": 497,
-        "file": "agent_utilities/graph/routing.py"
+        "file": "meristem/graph/routing.py"
       }
     ],
     "top_long": [
@@ -63,35 +63,35 @@
         "line": 479,
         "complexity": 103,
         "length": 603,
-        "file": "agent_utilities/graph/executor.py"
+        "file": "meristem/graph/executor.py"
       },
       {
         "name": "build_agent_app",
         "line": 61,
         "complexity": 68,
         "length": 539,
-        "file": "agent_utilities/server/app.py"
+        "file": "meristem/server/app.py"
       },
       {
         "name": "router_step",
         "line": 56,
         "complexity": 55,
         "length": 497,
-        "file": "agent_utilities/graph/routing.py"
+        "file": "meristem/graph/routing.py"
       },
       {
         "name": "__getattr__",
         "line": 64,
         "complexity": 45,
         "length": 482,
-        "file": "agent_utilities/__init__.py"
+        "file": "meristem/__init__.py"
       },
       {
         "name": "app_factory",
         "line": 128,
         "complexity": 64,
         "length": 468,
-        "file": "agent_utilities/server/app.py"
+        "file": "meristem/server/app.py"
       }
     ]
   },

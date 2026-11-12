@@ -53,7 +53,7 @@ Do not add write-back merely because a provider supports writes.
 ## Packaging and shared delivery
 
 Depend directly on scion-sdk at a reviewed compatible version. Preserve
-its graph-client boundary; do not require epistemic-graph[full] in connectors.
+its graph-client boundary; do not require medulla[full] in connectors.
 Avoid recursive extras and
 import-time live-service initialization.
 

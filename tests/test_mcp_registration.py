@@ -1,4 +1,4 @@
-"""Current MCP registration contracts shared with agent-utilities."""
+"""Current MCP registration contracts shared with meristem."""
 
 from __future__ import annotations
 

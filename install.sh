@@ -3,7 +3,7 @@
 #
 # Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and then
 # deploys the skills — including universal-installer and agent-os-genesis (alias
-# agent-utilities-genesis) — into EVERY detected AI tool (Claude Code, Antigravity,
+# meristem-genesis) — into EVERY detected AI tool (Claude Code, Antigravity,
 # Windsurf, OpenCode, Cursor, Zed, Codex, Devin) AND the Arbora XDG space
 # (~/.config/arbora/skills), preferring SYMLINKS to the installed package
 # (Windows falls back to a directory junction, then a copy).
@@ -107,6 +107,6 @@ if [ -n "$MCP_CONFIG" ]; then
   fi
 fi
 
-info "Done. agent-os-genesis (alias agent-utilities-genesis) + universal-installer are deployed."
+info "Done. agent-os-genesis (alias meristem-genesis) + universal-installer are deployed."
 info "Next: open your AI tool and invoke \"agent-os-genesis\" (or \"day0\") to deploy the Agent OS,"
 info "or \"deploy <package> with agent-os-genesis\" to stand up a single connector."

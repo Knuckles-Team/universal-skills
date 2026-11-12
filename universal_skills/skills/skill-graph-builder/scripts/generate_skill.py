@@ -10,12 +10,12 @@ front-end that:
 
 then delegates *all* standardization — markdown normalization, the standardized
 ``SKILL.md`` + ``sources.json`` provenance/freshness manifest, hybrid-auto KG
-ingestion, large-file splitting and the hierarchical TOC — to the agent-utilities
-core (``agent_utilities.knowledge_graph.distillation.skill_graph_pipeline``).
+ingestion, large-file splitting and the hierarchical TOC — to the meristem
+core (``meristem.knowledge_graph.distillation.skill_graph_pipeline``).
 
 This keeps a single source of truth for the skill-graph format while letting the
 skill own the richer crawler. The builder runs in the agent-packages workspace
-where agent-utilities is importable; if it is not, it tells you how to install it.
+where meristem is importable; if it is not, it tells you how to install it.
 """
 
 import argparse
@@ -29,15 +29,15 @@ import tempfile
 from pathlib import Path
 
 try:
-    from agent_utilities.knowledge_graph.distillation import (
+    from meristem.knowledge_graph.distillation import (
         AcquiredDoc,
         SkillGraphPipeline,
         SourceSpec,
     )
 except ImportError:
     sys.stderr.write(
-        "skill-graph-builder requires agent-utilities to be importable.\n"
-        "Install it in this environment: pip install agent-utilities\n"
+        "skill-graph-builder requires meristem to be importable.\n"
+        "Install it in this environment: pip install meristem\n"
     )
     sys.exit(1)
 

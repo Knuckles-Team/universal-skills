@@ -753,7 +753,7 @@ def analyze_liveness(argv: list[str]) -> dict[str, Any]:
             # stable under code landing elsewhere; its raw line number is
             # not. Mirrors the (path, symbol, ordinal) half of the same
             # content-anchoring convention used above and in
-            # agent-utilities' check_wiring.py (D-OP-11).
+            # meristem' check_wiring.py (D-OP-11).
             for ordinal, _line in enumerate(_facade_branches(n)):
                 facade_handlers.append(f"{mod}:{n.name}@{ordinal}")
             # deceptive except-fallbacks: real try, fabricated/fake-success except

@@ -344,7 +344,7 @@ def main():
 
     if args.kg_enabled:
         try:
-            from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+            from meristem.knowledge_graph.core.engine import IntelligenceGraphEngine
             from meristem.core.paths import kg_db_path
             import networkx as nx
 

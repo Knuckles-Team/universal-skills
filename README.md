@@ -8,7 +8,7 @@
 
 Universal Skills is a portable catalog of agent capabilities and dependency-ordered
 skill workflows. It supports Claude-compatible `SKILL.md` discovery and the
-agent-utilities provider ecosystem.
+meristem provider ecosystem.
 
 ## Catalog model
 

@@ -1,7 +1,7 @@
 """Security boundary for the web-crawler skill.
 
 All outbound destinations, TLS material, proxies, response limits, durable
-content, and output locations are resolved through the shared agent-utilities
+content, and output locations are resolved through the shared meristem
 runtime.  This module intentionally contains no deployment-specific endpoint,
 certificate path, or private-network exception.
 """
@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urldefrag, urlparse
 
-from agent_utilities.core import config as config_module
-from agent_utilities.core.http_client import create_http_client
-from agent_utilities.core.transport_security import resolve_tls_profile
+from meristem.core import config as config_module
+from meristem.core.http_client import create_http_client
+from meristem.core.transport_security import resolve_tls_profile
 from meristem.core.paths import data_dir
 from scion_sdk.source_connectors.http_safety import (
     SourceEgressError,

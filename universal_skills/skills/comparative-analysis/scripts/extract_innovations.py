@@ -359,7 +359,7 @@ def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
         List of dicts with 'content', 'target_path', 'score'.
     """
     try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+        from meristem.knowledge_graph.core.engine import IntelligenceGraphEngine
         from meristem.core.paths import kg_db_path
 
         engine = IntelligenceGraphEngine(db_path=str(kg_db_path()))
@@ -380,7 +380,7 @@ def resolve_kg_sources(query: str, top_k: int = 10) -> list[dict]:
                 )
         return sources
     except ImportError:
-        print("agent_utilities not available for KG resolution.", file=sys.stderr)
+        print("meristem not available for KG resolution.", file=sys.stderr)
         return []
     except Exception as e:
         print(f"KG resolution failed: {type(e).__name__}", file=sys.stderr)

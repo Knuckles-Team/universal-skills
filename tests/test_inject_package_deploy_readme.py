@@ -24,7 +24,7 @@ def test_block_uses_only_current_deployment_contract():
         }
     )
 
-    assert "agent-utilities-deployment" in block
+    assert "meristem-deployment" in block
     assert "AgentConfig" in block
     assert "@sha256:<digest>" in block
     assert "agent-os-genesis" not in block

@@ -138,7 +138,7 @@ Every `kg_native` helper is **best-effort and never raises** — an unreachable 
 silently to the next tier, and the tier actually used is reported back (`"kg"` / `"engine"` /
 `"local"`) so a caller can note it was degraded. Set `ARBORA_MCP_URL` (and optionally
 `ARBORA_MCP_TOKEN` for an authenticated deployment) to enable Tier 1; Tier 2 activates
-automatically whenever `epistemic_graph` 3.x is installed, its engine socket is reachable, and
+automatically whenever `medulla` 3.x is installed, its engine socket is reachable, and
 `GRAPH_SERVICE_AUTH_SECRET` is configured. **This degradation is real, not theoretical**: even a live
 arbora deployment may be on a protocol/tool surface that predates the REST contract above (fleet
 version drift) — the tiering means that never breaks the skill, it just quietly falls back.

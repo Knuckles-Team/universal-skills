@@ -1,7 +1,7 @@
 {
   "domain": "CA-008",
   "domain_name": "Performance",
-  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "benchmarks": {
     "benchmark_dir": false,
     "pytest_benchmark": true,

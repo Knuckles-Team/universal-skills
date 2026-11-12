@@ -2,7 +2,7 @@
 """Generate docs/concepts.md for every agent-package project.
 
 Assigns unique CONCEPT prefixes, creates concept registries, and
-links back to agent-utilities via ECO-4.0 bridge.
+links back to meristem via ECO-4.0 bridge.
 """
 
 import re
@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 
 AGENTS_DIR = Path("agent-packages/agents")
-UTILITIES_DIR = Path("agent-packages/agent-utilities")
+UTILITIES_DIR = Path("agent-packages/meristem")
 TUI_DIR = Path("agent-packages/agent-terminal-ui")
 WEBUI_DIR = Path("agent-packages/agent-webui")
 
@@ -54,7 +54,7 @@ PREFIX_MAP = {
     "tunnel-manager": "TUN",
     "vector-mcp": "VEC",
     # Non-agent projects
-    "agent-utilities": "AU",
+    "meristem": "AU",
     "agent-terminal-ui": "TUI",
     "agent-webui": "WEBUI",
 }
@@ -143,7 +143,7 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
         "",
         f"> **Prefix**: `CONCEPT:{prefix}-*`",
         f"> **Version**: {version}",
-        "> **Bridge**: [`CONCEPT:ECO-4.0`](../../agent-utilities/docs/concepts.md) (Unified Toolkit Ingestion)",
+        "> **Bridge**: [`CONCEPT:ECO-4.0`](../../meristem/docs/concepts.md) (Unified Toolkit Ingestion)",
         "",
         "---",
         "",
@@ -180,22 +180,22 @@ def generate_concepts_md(project_name: str, project_dir: Path, prefix: str) -> s
     lines.extend(
         [
             "",
-            "## Cross-Project References (from agent-utilities)",
+            "## Cross-Project References (from meristem)",
             "",
             "| Concept ID | Name | Origin |",
             "|------------|------|--------|",
-            "| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | agent-utilities |",
-            "| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | agent-utilities |",
-            "| `CONCEPT:OS-5.1` | Prompt Injection Defense | agent-utilities |",
-            "| `CONCEPT:OS-5.2` | Cognitive Scheduler | agent-utilities |",
-            "| `CONCEPT:MERISTEM-OS.governance.reactive-multi-axis-budget` | Guardrail Engine | agent-utilities |",
-            "| `CONCEPT:MERISTEM-OS.governance.wasm-micro-agent-sandbox` | Audit Logging | agent-utilities |",
-            "| `CONCEPT:KG-2.0` | Knowledge Graph Core | agent-utilities |",
+            "| `CONCEPT:ECO-4.0` | Unified Toolkit Ingestion | meristem |",
+            "| `CONCEPT:ORCH-1.2` | Confidence-Gated Router | meristem |",
+            "| `CONCEPT:OS-5.1` | Prompt Injection Defense | meristem |",
+            "| `CONCEPT:OS-5.2` | Cognitive Scheduler | meristem |",
+            "| `CONCEPT:MERISTEM-OS.governance.reactive-multi-axis-budget` | Guardrail Engine | meristem |",
+            "| `CONCEPT:MERISTEM-OS.governance.wasm-micro-agent-sandbox` | Audit Logging | meristem |",
+            "| `CONCEPT:KG-2.0` | Knowledge Graph Core | meristem |",
             "",
-            "## Synergy with agent-utilities",
+            "## Synergy with meristem",
             "",
-            f"This project integrates with `agent-utilities` via `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion). "
-            f"The `{pkg_name}` MCP server registers its tools with the agent-utilities FastMCP middleware, "
+            f"This project integrates with `meristem` via `CONCEPT:ECO-4.0` (Unified Toolkit Ingestion). "
+            f"The `{pkg_name}` MCP server registers its tools with the meristem FastMCP middleware, "
             f"enabling automatic discovery, telemetry, and Knowledge Graph ingestion of all {prefix}-* concepts.",
             "",
         ]

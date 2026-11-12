@@ -1015,7 +1015,7 @@ async def main():
         action="store_true",
         help="Disable native Knowledge Graph ingestion (default: ON). Every "
         "successfully crawled, deduped page is ingested into arbora / "
-        "epistemic-graph (Document+Chunk with provenance) as it is crawled; "
+        "medulla (Document+Chunk with provenance) as it is crawled; "
         "pass this to get file-only output. Degrades automatically (with a "
         "warning) if arbora is unreachable.",
     )
@@ -1238,10 +1238,10 @@ async def main():
             return
 
     # Native Knowledge Graph ingestion (CONCEPT:MERISTEM-KG.ingest.chunk-overlap-stage) — default ON. Every
-    # crawled, cleaned, deduped page is ingested into arbora / epistemic-graph
+    # crawled, cleaned, deduped page is ingested into arbora / medulla
     # as it's found (privacy-sanitized content via document_process). Disabled with
     # --no-kg-ingest, and this internal crawl subprocess (invoked by
-    # agent-utilities as ITS OWN crawl4ai fetch backend, e.g.
+    # meristem as ITS OWN crawl4ai fetch backend, e.g.
     # web_fetch._fetch_via_crawl4ai / skill_graph_pipeline) always passes
     # --no-kg-ingest to avoid recursing back into ingestion or double-ingesting
     # a corpus that pipeline already ingests itself.

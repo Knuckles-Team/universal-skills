@@ -140,7 +140,7 @@ def test_connector_contract_distribution_aliases(dependencies, valid, tmp_path):
     assert (not check_connector_contract.check_project(tmp_path, "connector")) is valid
 
 
-@pytest.mark.parametrize("distribution", ["agent-utilities", "meristem"])
+@pytest.mark.parametrize("distribution", ["meristem", "meristem"])
 def test_legacy_connector_codemod_accepts_harness_alias(distribution, tmp_path):
     import connector_codemod
 

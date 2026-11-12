@@ -6,7 +6,7 @@ import importlib
 import pytest
 
 
-os.environ["AGENT_UTILITIES_TESTING"] = "true"
+os.environ["MERISTEM_TESTING"] = "true"
 
 
 def pytest_configure(config):

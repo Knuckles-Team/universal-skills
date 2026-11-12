@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """CA-011: Concept-seeded cross-reference — map research papers to concept IDs.
 
-Queries the Knowledge Graph for each concept ID in the agent-utilities
+Queries the Knowledge Graph for each concept ID in the meristem
 concept registry, finds relevant Article (paper) nodes via semantic search,
 and runs innovation extraction against each match.
 
 Usage:
-    # From KG (requires agent-utilities-kg MCP server running):
+    # From KG (requires meristem-kg MCP server running):
     python concept_cross_reference.py --kg
 
     # From a concept_map.md file:
@@ -618,7 +618,7 @@ def main():
     elif args.kg:
         # Query concept nodes from KG
         try:
-            from agent_utilities.knowledge_graph.core.engine import (
+            from meristem.knowledge_graph.core.engine import (
                 IntelligenceGraphEngine,
             )
             from meristem.core.paths import kg_db_path
@@ -647,7 +647,7 @@ def main():
         # Fallback: find concept_map.md in common locations
         if not concepts:
             workspace_root = Path(
-                os.environ.get("AGENT_UTILITIES_WORKSPACE_ROOT", Path.cwd())
+                os.environ.get("MERISTEM_WORKSPACE_ROOT", Path.cwd())
             ).expanduser()
             package_root = Path(
                 os.environ.get(
@@ -656,7 +656,7 @@ def main():
             ).expanduser()
             for candidate in [
                 Path.cwd() / "docs" / "concept_map.md",
-                package_root / "agent-utilities" / "docs" / "concept_map.md",
+                package_root / "meristem" / "docs" / "concept_map.md",
             ]:
                 if candidate.exists():
                     concepts = parse_concept_map_file(candidate)
@@ -709,7 +709,7 @@ def main():
     batch_size = args.batch_size if args.batch_size > 0 else len(remaining)
 
     try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+        from meristem.knowledge_graph.core.engine import IntelligenceGraphEngine
         from meristem.core.paths import kg_db_path
 
         engine = IntelligenceGraphEngine(
@@ -770,10 +770,10 @@ def main():
 
     except ImportError:
         print(
-            "agent_utilities not available — cannot query KG directly.", file=sys.stderr
+            "meristem not available — cannot query KG directly.", file=sys.stderr
         )
         print(
-            "Run this script in an environment with agent-utilities installed,",
+            "Run this script in an environment with meristem installed,",
             file=sys.stderr,
         )
         print(

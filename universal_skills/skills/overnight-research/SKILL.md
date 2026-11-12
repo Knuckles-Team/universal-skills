@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.0'
-  author: agent-utilities
+  author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
 # Overnight Research Workflow (Cron: 10PM ET daily)

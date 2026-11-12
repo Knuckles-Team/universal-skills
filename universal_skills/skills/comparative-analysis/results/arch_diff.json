@@ -2,7 +2,7 @@
   "domain": "CA-003b",
   "domain_name": "Architecture Differential",
   "source": "${WORKSPACE_ROOT}/open-source-libraries/TradingAgents",
-  "target": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "target": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "component_topology_diff": {
     "source_only": [
       "agents",
@@ -92,7 +92,7 @@
       "[Extended Concept]",
       "[Feature Name]",
       "agent-terminal-ui",
-      "agent-utilities",
+      "meristem",
       "agent-webui",
       "kg_memory",
       "kg_search discover",

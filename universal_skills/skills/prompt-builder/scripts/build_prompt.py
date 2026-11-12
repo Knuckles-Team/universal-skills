@@ -2,7 +2,7 @@
 """Author a canonical system-prompt JSON blueprint.
 
 CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical. Thin front-end over
-``agent_utilities.prompting.structured.StructuredPrompt`` — the single source of
+``meristem.prompting.structured.StructuredPrompt`` — the single source of
 truth for the canonical prompt schema. Writes the body to
 ``instructions.core_directive`` and stamps ``schema_version``/``source`` so the
 output passes ``validate_canonical`` (and therefore the ``check_prompt_schema``
@@ -15,14 +15,14 @@ import argparse
 import sys
 
 try:
-    from agent_utilities.prompting.structured import (
+    from meristem.prompting.structured import (
         StructuredPrompt,
         validate_canonical,
     )
 except ImportError:  # pragma: no cover - install hint
     print(
-        "prompt-builder requires agent-utilities. Install it:\n"
-        "  pip install agent-utilities",
+        "prompt-builder requires meristem. Install it:\n"
+        "  pip install meristem",
         file=sys.stderr,
     )
     raise SystemExit(2)
@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skills", help="Comma-separated skill slugs")
     parser.add_argument("--tools", help="Comma-separated tool/skill names")
     parser.add_argument(
-        "--extends", help="Base to compose onto, e.g. agent-utilities:base"
+        "--extends", help="Base to compose onto, e.g. meristem:base"
     )
     parser.add_argument(
         "--compose", default="append", choices=["append", "prepend", "replace"]

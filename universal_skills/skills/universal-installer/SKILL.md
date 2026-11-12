@@ -32,7 +32,7 @@ one entry point per artifact type:
 - **Ontologies + system prompts** — the other two legs of the
   `scion_sdk.connector` convention (`prompts/` and `ontology/` under the package), materialized into the canonical
   Arbora XDG tree (`$XDG_DATA_HOME/arbora/{prompts,ontologies}/<provider>/…`)
-  so the KG/epistemic-graph side can ingest them — see "Ontology & prompt
+  so the KG/medulla side can ingest them — see "Ontology & prompt
   installation" below.
 - **arbora + fleet MCP wiring** — generates/patches supported JSON clients
   with a portable installed `arbora` stdio entry (or a remote URL), plus one
@@ -45,7 +45,7 @@ one entry point per artifact type:
 > links each skill to the installed package instead of copying, so there are no
 > duplicate files on disk and every skill auto-updates on `pip install -U`.
 > Ontologies and prompts are always **copied** (they are consumed as data by
-> agent-utilities/epistemic-graph, not executed in place).
+> meristem/medulla, not executed in place).
 
 > **Refactor-safe (symlink mode).** A `--symlink` install repoints a moved skill's
 > stale link to its new source and prunes broken links left by a renamed/removed
@@ -132,7 +132,7 @@ install-universal --all-detected --symlink
 install-universal --tool claude --arbora remote --arbora-url https://arbora.example.com/mcp
 
 # Install directly from an unreleased agents/* checkout (skills+prompts+ontology)
-install-universal --tool claude --from-package ${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
+install-universal --tool claude --from-package ${MERISTEM_WORKSPACE_ROOT}/agent-packages/agents/gitlab-api
 ```
 
 > Invoke via the `install-universal` console entry point (installed with the
@@ -148,7 +148,7 @@ the prompt and ontology legs are materialized into
 `$XDG_DATA_HOME/arbora/{prompts,ontologies}/<connector>/…` as part of the SAME
 install run a user already runs for skills. `scripts/providers.py` copies each connector's
 `*.json` prompts and `*.ttl` (+ `shapes/*.ttl`) ontology files into that layout. It needs
-`scion-sdk` and no agent-utilities import.
+`scion-sdk` and no meristem import.
 
 Ontologies/prompts always land in the XDG tree (never in a per-tool skill
 directory — Claude Code etc. don't consume `.ttl`/prompt JSON directly); only
@@ -178,7 +178,7 @@ Reuses the bundled **`mcp-installer`** skill's config-merge machinery
 re-implementing it. `scripts/mcp_setup.py` builds two kinds of entries and
 merges them into a supported JSON client's MCP config file. Codex remains a
 skill-install target, but is intentionally skipped by this JSON leg. Register
-Arbora in Codex through agent-utilities' `setup-config codex` command (or the
+Arbora in Codex through meristem' `setup-config codex` command (or the
 equivalent `codex mcp add arbora -- arbora --transport stdio`) so Codex owns
 its `config.toml` entry and no env, secret, working directory, or machine path
 is copied.
@@ -217,11 +217,11 @@ when. This is the "make the artifacts **discoverable**" half of KG
 auto-extension: any provider whose skills/prompts/ontologies changed is now
 sitting in the canonical XDG tree the KG ingestion pipeline already scans.
 
-**What this skill does NOT do** (by design — this is the arbora/epistemic-graph
+**What this skill does NOT do** (by design — this is the arbora/medulla
 side's job, not the installer's): actually parse the manifest, mint KG nodes, or
 call `source_sync`. The installer prints the exact follow-up
 (`source_sync source=all mode=delta` via the arbora MCP connection, or the
-`agent-utilities-source-integration` skill) rather than invoking it itself —
+`meristem-source-integration` skill) rather than invoking it itself —
 invoking a heavy KG-ingestion tool from inside a lightweight file-copy installer
 would couple the two concerns and require a live arbora connection this skill
 has no business assuming. If an arbora-side counterpart wants to consume
@@ -267,7 +267,7 @@ Overlay files and the manifest format are specified by `US-CONTENT-R002`.
 - `scripts/adapters.py` — per-agent-tool `SKILL.md` frontmatter contracts
   (unchanged).
 - `scripts/providers.py` — ontology/prompt entry-point discovery + XDG
-  materialization (agent-utilities-import fast path + dependency-free fallback).
+  materialization (meristem-import fast path + dependency-free fallback).
 - `scripts/from_package.py` — parse an `agents/*` checkout's `pyproject.toml`
   entry-points and install directly from source.
 - `scripts/mcp_setup.py` — arbora + fleet MCP config generation, merged via

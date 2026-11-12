@@ -18,10 +18,10 @@ from pathlib import Path
 
 import pytest
 
-# The canonical validator lives in agent-utilities; skip cleanly if it (or an
+# The canonical validator lives in meristem; skip cleanly if it (or an
 # older installed copy without the canonical contract) is unavailable.
 validate_canonical = pytest.importorskip(
-    "agent_utilities.prompting.structured"
+    "meristem.prompting.structured"
 ).__dict__.get("validate_canonical")
 
 REPO = Path(__file__).resolve().parents[1]
@@ -31,7 +31,7 @@ PROMPT_BUILDER = (
 
 pytestmark = pytest.mark.skipif(
     validate_canonical is None,
-    reason="installed agent-utilities predates the canonical prompt contract",
+    reason="installed meristem predates the canonical prompt contract",
 )
 
 
@@ -55,7 +55,7 @@ def test_prompt_builder_build_then_validate():
                 "--directive",
                 "You are the demo agent. Verify before acting.",
                 "--extends",
-                "agent-utilities:base",
+                "meristem:base",
                 "-o",
                 str(out),
             ],

@@ -113,8 +113,8 @@ four sources:
 [
   {"path_or_url": "${HOME}/obsidian-vault/projects/", "kind": "dir"},
   {"path_or_url": "${HOME}/Downloads/rl-survey-2026.pdf", "kind": "file"},
-  {"path_or_url": "${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities", "kind": "repo"},
-  {"path_or_url": "https://example.com/articles/epistemic-graphs", "kind": "url"}
+  {"path_or_url": "${MERISTEM_WORKSPACE_ROOT}/agent-packages/meristem", "kind": "repo"},
+  {"path_or_url": "https://example.com/articles/medullas", "kind": "url"}
 ]
 ```
 
@@ -129,19 +129,19 @@ graph_ingest(action="job_status", job_id="job:9f21")
 graph_ingest(action="ingest", target_path="${HOME}/Downloads/rl-survey-2026.pdf")
 # -> "Started ingestion job job:9f22 for rl-survey-2026.pdf"
 
-graph_ingest(action="ingest", target_path="${AGENT_UTILITIES_WORKSPACE_ROOT}/agent-packages/agent-utilities")
+graph_ingest(action="ingest", target_path="${MERISTEM_WORKSPACE_ROOT}/agent-packages/meristem")
 # -> classifies CODEBASE -> async job:9f23 (tree-sitter parse)
 
-graph_ingest(action="ingest_url", target_path="https://example.com/articles/epistemic-graphs")
+graph_ingest(action="ingest_url", target_path="https://example.com/articles/medullas")
 # -> runs inline: fetches via ArchiveBox->crawl4ai->requests, returns the
-#    Document node id directly, e.g. "doc:example.com/articles/epistemic-graphs"
+#    Document node id directly, e.g. "doc:example.com/articles/medullas"
 ```
 
 Poll the three job ids until `status: completed`, then collect the resulting
 node ids (e.g. `job_status` returns `{"status": "completed", "node_ids": [...]}`).
 Say ingestion yields: `doc:note-eg-roadmap`, `doc:note-project-x`,
-`doc:rl-survey-2026`, `code:agent-utilities` (repo root), and
-`doc:example.com-epistemic-graphs`.
+`doc:rl-survey-2026`, `code:meristem` (repo root), and
+`doc:example.com-medullas`.
 
 ### B2. Extract
 
@@ -156,7 +156,7 @@ Response (trimmed):
   "status": "extracted",
   "facts": [
     {
-      "subject": "epistemic-graph engine",
+      "subject": "medulla engine",
       "predicate": "provides",
       "object": "bitemporal valid/tx time",
       "confidence": 88,
@@ -173,7 +173,7 @@ Response (trimmed):
 graph_analyze(action="extract_claims",
   query="<full text of note-eg-roadmap.md>", node_id="doc:note-eg-roadmap")
 ```
-Persists `ClaimNode`/`EntityNode`s directly (entities: "epistemic-graph
+Persists `ClaimNode`/`EntityNode`s directly (entities: "medulla
 engine", "bitemporal model"; claims linked with `BUILDS_ON`/`EXEMPLIFIES`
 edges where the extractor infers them) and returns the extraction result
 summary.
@@ -200,22 +200,22 @@ graph_write(action="add_edge", source_id="doc:note-eg-roadmap",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
 graph_write(action="add_edge", source_id="doc:rl-survey-2026",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
-graph_write(action="add_edge", source_id="code:agent-utilities",
+graph_write(action="add_edge", source_id="code:meristem",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
-graph_write(action="add_edge", source_id="doc:example.com-epistemic-graphs",
+graph_write(action="add_edge", source_id="doc:example.com-medullas",
   target_id="corpus:home-lab-2026", rel_type="PART_OF")
 ```
 
 ### B4. Analyze — friction scan
 
 Run the friction scan for a new claim extracted from the note ("the
-epistemic-graph engine provides bitemporal valid/tx time") against a DIFFERENT
+medulla engine provides bitemporal valid/tx time") against a DIFFERENT
 existing claim that genuinely opposes it (e.g. an earlier note asserting the
 engine has no temporal tracking at all):
 
 ```text
 graph_analyze(action="contradictions",
-  query="the epistemic-graph engine provides bitemporal valid/tx time",
+  query="the medulla engine provides bitemporal valid/tx time",
   node_id="claim:eg-bitemporal-1")
 ```
 ```jsonc

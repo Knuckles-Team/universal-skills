@@ -5,7 +5,7 @@
 .DESCRIPTION
   Installs the universal-skills package (PyPI via uv/pip, or editable for dev) and
   deploys the skills — including universal-installer and agent-os-genesis (alias
-  agent-utilities-genesis) — into every detected AI tool AND the Arbora XDG
+  meristem-genesis) — into every detected AI tool AND the Arbora XDG
   space, preferring symlinks (Windows: a directory JUNCTION when symlinks need admin,
   then a copy). This is the starting point for agent-os-genesis.
 
@@ -78,5 +78,5 @@ if ($Mcp) {
   }
 }
 
-Info "Done. agent-os-genesis (alias agent-utilities-genesis) + universal-installer are deployed."
+Info "Done. agent-os-genesis (alias meristem-genesis) + universal-installer are deployed."
 Info "Next: invoke `"agent-os-genesis`" (or `"day0`") in your AI tool to deploy the Agent OS."

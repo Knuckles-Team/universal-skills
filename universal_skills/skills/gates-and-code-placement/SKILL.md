@@ -135,21 +135,21 @@ permanently suppress a finding.
 ## Code placement
 
 One dependency direction runs through the ecosystem's core repositories:
-**pipelines → epistemic-graph → scion-sdk → agent-utilities →
+**pipelines → medulla → scion-sdk → meristem →
 agent-webui → arbora**. Each repository's own `AGENTS.md` states what it
 owns under a "What this repository owns" heading — that heading, not this
 skill, is the authoritative answer for a specific capability, because it is
-what gets kept current as boundaries shift (for example, agent-utilities is
+what gets kept current as boundaries shift (for example, meristem is
 presently contracting to an orchestration-only control plane, with durable
-graph/semantics code moving to epistemic-graph and connector code to
-scion-sdk rather than staying in agent-utilities).
+graph/semantics code moving to medulla and connector code to
+scion-sdk rather than staying in meristem).
 
 The rule: **new code goes to the repository that owns that capability, never
 to whichever checkout happens to be open.** Durable graph storage, query,
-reasoning and semantics belong in epistemic-graph; connector transport,
+reasoning and semantics belong in medulla; connector transport,
 manifests and certification belong in scion-sdk; the agent
 orchestration plane (planning, delegation, skills/workflow runtime) belongs
-in agent-utilities; the served MCP/REST/control-plane runtime belongs in
+in meristem; the served MCP/REST/control-plane runtime belongs in
 arbora; shared CI/quality/workflow machinery like this package belongs in
 pipelines. When it is not obvious which repository owns a piece of new
 behavior, read that repository's own `AGENTS.md` ownership section before

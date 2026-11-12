@@ -13,7 +13,7 @@ SCRIPT_DIR = PROJECT_ROOT / "universal_skills" / "skills" / "web-crawler" / "scr
 
 
 def _runtime():
-    pytest.importorskip("agent_utilities")
+    pytest.importorskip("meristem")
     sys.path.insert(0, str(SCRIPT_DIR))
     return importlib.import_module("security_runtime")
 

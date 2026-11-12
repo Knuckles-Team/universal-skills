@@ -39,12 +39,12 @@ def score_paper(title: str, abstract: str, taxonomy: dict) -> float:
 def build_taxonomy_from_kg() -> dict:
     """Query the Knowledge Graph to build a dynamic taxonomy."""
     try:
-        from agent_utilities.knowledge_graph.core.engine import IntelligenceGraphEngine
+        from meristem.knowledge_graph.core.engine import IntelligenceGraphEngine
 
         engine = IntelligenceGraphEngine()
     except ImportError:
         print(
-            "❌ Failed to import IntelligenceGraphEngine. Is agent-utilities installed?",
+            "❌ Failed to import IntelligenceGraphEngine. Is meristem installed?",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -100,7 +100,7 @@ def main():
     )
     parser.add_argument(
         "--taxonomy",
-        help="Path to taxonomy.json (if omitted, will auto-detect from agent-utilities KG)",
+        help="Path to taxonomy.json (if omitted, will auto-detect from meristem KG)",
     )
     parser.add_argument(
         "--min-score",

@@ -4,17 +4,17 @@
 usage: connector_codemod.py <repo> [--map au-to-sdk-map.tsv] [--sdk-root <checkout>] [--dry-run]
        connector_codemod.py <repo> --sdk-centralize [--apply] [--sdk-version X] [--bump]   (requests -> SDK governed client)
 
-* Rewrites ``from agent_utilities... import X`` per the map (EXISTS/ADD rows).
+* Rewrites ``from meristem... import X`` per the map (EXISTS/ADD rows).
   Rows tagged ``[REWRITE...]`` are rewritten at the import but reported: the
   call site's signature differs and needs review.
 * Deletes agent-mode files (``*/agent_server.py`` and tests whose only AU
   imports are agent-mode REMOVE symbols). Every other REMOVE use is reported.
-* Rewrites ``"agent_utilities.x.y"`` string literals (mock.patch targets).
+* Rewrites ``"meristem.x.y"`` string literals (mock.patch targets).
 * In a file importing scion_sdk.mcp.env_drift, renames the Meristem-named
   checker internals (see ENV_DRIFT_RENAMES).
 * Rewrites the .pre-commit-config.yaml env-drift hook module; other AU hook
   modules are reported.
-* Rewrites pyproject: ``agent-utilities[...]`` -> ``scion-sdk>=0.2.0,<1.0.0``,
+* Rewrites pyproject: ``meristem[...]`` -> ``scion-sdk>=0.2.0,<1.0.0``,
   drops agent-mode console scripts (``*agent_server:*``).
 * Reports every call of a symbol whose semantics changed (SEMANTIC_REWRITES) as
   CALLSITE, even when the map row looks like an exact equivalent.
@@ -37,19 +37,19 @@ SDK_DEP = "scion-sdk[mcp]>=0.3.11,<1.0.0"
 AGENT_MODE = "REMOVE agent mode"
 #: Meristem-named env-drift internals a connector wrapper calls on the checker module.
 ENV_DRIFT_RENAMES = {
-    "_agent_utilities_reads": "framework_reads",
-    "_agent_utilities_dynamic_families": "framework_dynamic_families",
+    "_meristem_reads": "framework_reads",
+    "_meristem_dynamic_families": "framework_dynamic_families",
 }
 #: Symbols whose SDK target has different semantics; every use is a CALLSITE.
 SEMANTIC_REWRITES = {
-    "agent_utilities.mcp.verbose_tools.register_tool_surface": (
+    "meristem.mcp.verbose_tools.register_tool_surface": (
         "SDK >=0.3.0 serves one tool per operation from client_cls; pass "
         "client_cls+get_client and verify with check_tool_parity.py"
     ),
 }
 #: ``python -m`` hook modules with an SDK equivalent.
 HOOK_RENAMES = {
-    "agent_utilities.mcp.check_env_var_drift": "scion_sdk.mcp.env_drift",
+    "meristem.mcp.check_env_var_drift": "scion_sdk.mcp.env_drift",
 }
 
 
@@ -58,7 +58,7 @@ def process_precommit(path: Path, report, dry: bool) -> None:
     text = src
     for au_mod, sdk_mod in HOOK_RENAMES.items():
         text = text.replace(f"-m {au_mod}", f"-m {sdk_mod}")
-    for left in sorted(set(re.findall(r"-m (agent_utilities[\w.]*)", text))):
+    for left in sorted(set(re.findall(r"-m (meristem[\w.]*)", text))):
         report.append(f"  REVIEW .pre-commit-config.yaml hook runs {left}")
     if text != src:
         report.append("  PRECOMMIT env-drift hook -> scion_sdk.mcp.env_drift")
@@ -123,7 +123,7 @@ def rewrite_import(node: ast.ImportFrom, amap, report, rel) -> str | None:
 
 def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
     src = path.read_text()
-    if "agent_utilities" not in src:
+    if "meristem" not in src:
         return "clean"
     try:
         tree = ast.parse(src)
@@ -133,10 +133,10 @@ def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
     nodes = [
         n
         for n in ast.walk(tree)
-        if isinstance(n, ast.ImportFrom) and n.module and n.module.split(".")[0] == "agent_utilities"
+        if isinstance(n, ast.ImportFrom) and n.module and n.module.split(".")[0] == "meristem"
     ]
     plain = [
-        n for n in ast.walk(tree) if isinstance(n, ast.Import) and any(a.name.split(".")[0] == "agent_utilities" for a in n.names)
+        n for n in ast.walk(tree) if isinstance(n, ast.Import) and any(a.name.split(".")[0] == "meristem" for a in n.names)
     ]
     syms = [f"{n.module}.{a.name}" for n in nodes for a in n.names]
     agent_only = syms and all(amap.get(s, ("", ""))[0].startswith(AGENT_MODE) for s in syms)
@@ -152,7 +152,7 @@ def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
         if new is not None:
             edits.append((n.lineno, n.end_lineno, n.col_offset, new))
     for n in plain:
-        report.append(f"  REVIEW {rel}:{n.lineno} bare 'import agent_utilities...'")
+        report.append(f"  REVIEW {rel}:{n.lineno} bare 'import meristem...'")
     for start, end, col, new in sorted(edits, reverse=True):
         indent = " " * col
         block = "".join(indent + ln + "\n" for ln in new.splitlines())
@@ -167,16 +167,16 @@ def process_py(path: Path, rel: str, amap, report, dry: bool) -> str:
             return m.group(0)
         return f"{m.group(1)}{tgt[0]}.{tgt[1]}{m.group(1)}"
 
-    text = re.sub(r"([\"'])(agent_utilities(?:\.\w+)+)\1", _str, text)
-    for leftover in sorted(set(re.findall(r"[\"'](agent_utilities(?:\.\w+)+)[\"']", text))):
+    text = re.sub(r"([\"'])(meristem(?:\.\w+)+)\1", _str, text)
+    for leftover in sorted(set(re.findall(r"[\"'](meristem(?:\.\w+)+)[\"']", text))):
         report.append(f"  REVIEW {rel}: string ref {leftover}")
     if "scion_sdk.mcp import env_drift" in text:
         for au_name, sdk_name in ENV_DRIFT_RENAMES.items():
             text = re.sub(rf"\b{au_name}\b", sdk_name, text)
-        if "_agent_utilities_root" in text:
+        if "_meristem_root" in text:
             report.append(
-                f"  REVIEW {rel}: still locates an agent-utilities checkout "
-                "(_agent_utilities_root) before loading the env-drift checker"
+                f"  REVIEW {rel}: still locates an meristem checkout "
+                "(_meristem_root) before loading the env-drift checker"
             )
     if text != src:
         if not dry:
@@ -190,9 +190,9 @@ def process_pyproject(path: Path, report, dry: bool) -> None:
     project = tomllib.loads(src).get("project", {})
     for dependencies in [project.get("dependencies", []), *project.get("optional-dependencies", {}).values()]:
         names = {re.split(r"[<>=!~\[; ]", value.lower().replace("_", "-"))[0] for value in dependencies}
-        if {"agent-utilities", "meristem"} <= names or {"scion-sdk", "scion-sdk"} <= names:
+        if {"meristem", "meristem"} <= names or {"scion-sdk", "scion-sdk"} <= names:
             raise ValueError("declare exactly one alias for each distribution")
-    text = re.sub(r"\"(?:agent-utilities|meristem)(\[[^\]]*\])?[^\"]*\"", f'"{SDK_DEP}"', src)
+    text = re.sub(r"\"(?:meristem|meristem)(\[[^\]]*\])?[^\"]*\"", f'"{SDK_DEP}"', src)
     text = re.sub(r'"scion-sdk(?=[\[<>=!~;" ])', '"scion-sdk', text)
     # de-duplicate identical dependency lines produced by the rewrite
     seen: set[str] = set()
@@ -203,7 +203,7 @@ def process_pyproject(path: Path, report, dry: bool) -> None:
             if key in seen:
                 continue
             seen.add(key)
-        if re.match(r"\s*(?:agent-utilities|meristem)\s*=\s*\{", line):
+        if re.match(r"\s*(?:meristem|meristem)\s*=\s*\{", line):
             report.append(f"  DELETE uv source {key}")
             continue
         if re.match(r"\s*[\w-]+\s*=\s*\"[\w.]+agent_server:\w+\"", line):

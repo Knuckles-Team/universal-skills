@@ -18,9 +18,9 @@ Keep entries terse. Newest first.
 
 ---
 
-## 2026-06-14 — Audit of agent-utilities (v0.49.0, ~415K LOC, 692 test files)
+## 2026-06-14 — Audit of meristem (v0.49.0, ~415K LOC, 692 test files)
 
-First full run against agent-utilities. Six changes, all grounded in its output.
+First full run against meristem. Six changes, all grounded in its output.
 
 ### CE-042 (capability) — dependency-update application
 - **Evidence:** `dependencies` domain is report-only; the user needs the skill to
@@ -30,7 +30,7 @@ First full run against agent-utilities. Six changes, all grounded in its output.
   extras/markers/comments/order preserved), `--level {patch,minor,major}`,
   `--apply`/dry-run diff, `--only`/`--skip`, `--self-test`. Reuses
   `audit_dependencies._get_latest_version` (one PyPI path). Excludes the project's
-  own self-referential extras (e.g. `agent-utilities[owl]`).
+  own self-referential extras (e.g. `meristem[owl]`).
 - **Touched:** `scripts/apply_dependency_updates.py` (new), `scripts/selftest.py`,
   `scripts/enhance_repo.py` (opt-in `--apply-deps`).
 
@@ -105,7 +105,7 @@ First full run against agent-utilities. Six changes, all grounded in its output.
   `SKILL.md`.
 
 ### CE-042 (bug) — apply_dependency_updates must skip pre-releases
-- **Evidence:** applying `--level major` to agent-utilities ADDED a floor at
+- **Evidence:** applying `--level major` to meristem ADDED a floor at
   `opentelemetry-instrumentation-asgi>=0.63b1` (PyPI's "latest" for these otel
   packages is a beta), which made the uv workspace unresolvable.
 - **Change:** guard `_new_spec_for` to skip when `Version(latest).is_prerelease` /
@@ -113,9 +113,9 @@ First full run against agent-utilities. Six changes, all grounded in its output.
 - **Touched:** `scripts/apply_dependency_updates.py`.
 
 ### Phase-3 pin-backs (data point for the workspace-resolution lesson)
-Applying ALL bumps incl. major to agent-utilities (a uv *workspace* member) required
+Applying ALL bumps incl. major to meristem (a uv *workspace* member) required
 5 pin-backs to keep the whole workspace `uv lock`-able — each a real transitive cap
-from a SIBLING package, not an agent-utilities bug:
+from a SIBLING package, not an meristem bug:
 1. `pydantic-ai-slim`/`pydantic-graph` 1.107→1.106 — `pydantic-acp==0.9.6` strictly
    pins `pydantic-ai-slim==1.106.0`.
 2. `pandas` 3.0.3→`>=2.0.0,<3` — `llama-index-readers-file` caps `pandas<3`.
@@ -130,13 +130,13 @@ conflict). Logged as a future enhancement.
 
 ## 2026-06-14 (batch 2) — analyzer accuracy fixes (CE-044)
 
-Implementing the open findings against agent-utilities revealed the analyzer
+Implementing the open findings against meristem revealed the analyzer
 *over-counted* by not honoring the repo's lint config / suppression conventions.
 Fixed so future reports reflect the real enforced gate (evidence = this run):
 
 - **run_linters.py** — ruff/mypy/bandit now exclude the conventional gate dirs
   (`tests`/`test`/`scripts`/`script`); bandit uses the fleet-standard skip-set and
-  honors inline `# nosec`. Result on agent-utilities: **1139 → 109** findings (ruff 0,
+  honors inline `# nosec`. Result on meristem: **1139 → 109** findings (ruff 0,
   bandit 418→10, mypy 721→99). The residual mypy is the package's genuine
   non-blocking type backlog, not noise.
 - **analyze_security.py** — respect inline `# nosec`: skip any finding whose AST span
@@ -144,7 +144,7 @@ Fixed so future reports reflect the real enforced gate (evidence = this run):
   highs (the repo documents these trust boundaries).
 - **audit_documentation.py** — broken-reference detection now validates only real
   markdown links `[text](path)`, not backticked code spans / glob patterns / `@imports`
-  in prose. Result on agent-utilities: **23 broken refs → 0** (all were FPs);
+  in prose. Result on meristem: **23 broken refs → 0** (all were FPs);
   documentation 82 → 97.
 - **grade_pytest.py** — assertion detection recognizes unittest `self.assert*`,
   `pytest.warns`, numpy/pandas `testing.assert*`, and documented "must not raise"

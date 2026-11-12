@@ -1,40 +1,40 @@
 {
   "domain": "CA-005",
   "domain_name": "Security",
-  "project": "${WORKSPACE_ROOT}/agent-packages/agent-utilities",
+  "project": "${WORKSPACE_ROOT}/agent-packages/meristem",
   "scan_results": {
     "files_scanned": 320,
     "findings": [
       {
-        "file": "agent_utilities/rlm/repl.py",
+        "file": "meristem/rlm/repl.py",
         "line": 289,
         "name": "exec_usage",
         "severity": "critical",
         "cwe": "CWE-95"
       },
       {
-        "file": "agent_utilities/rlm/repl.py",
+        "file": "meristem/rlm/repl.py",
         "line": 309,
         "name": "exec_usage",
         "severity": "critical",
         "cwe": "CWE-95"
       },
       {
-        "file": "agent_utilities/rlm/config.py",
+        "file": "meristem/rlm/config.py",
         "line": 66,
         "name": "exec_usage",
         "severity": "critical",
         "cwe": "CWE-95"
       },
       {
-        "file": "agent_utilities/patterns/prompt_chain.py",
+        "file": "meristem/patterns/prompt_chain.py",
         "line": 205,
         "name": "eval_usage",
         "severity": "critical",
         "cwe": "CWE-95"
       },
       {
-        "file": "agent_utilities/server/routers/agent_ui.py",
+        "file": "meristem/server/routers/agent_ui.py",
         "line": 132,
         "name": "assert_validation",
         "severity": "low",

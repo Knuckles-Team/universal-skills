@@ -38,8 +38,8 @@ metadata:
 **CONCEPT:EE-040**
 
 Orchestrates the full KG-driven microstructure trading loop built on the
-`feat/trading-agent-microstructure` work across emerald-exchange, agent-utilities,
-epistemic-graph, and data-science-mcp. The loop curates trading knowledge into the
+`feat/trading-agent-microstructure` work across emerald-exchange, meristem,
+medulla, and data-science-mcp. The loop curates trading knowledge into the
 knowledge graph, turns backtested results into measured signal priors that drive
 signal-fusion weights, runs **paper-first** decisions through the curated trading
 team, and only ever *reports* graduation eligibility — promotion to live remains a
@@ -56,7 +56,7 @@ chain so each stage consumes the prior stage's KG state.
 **Tools**: `graph_search, document_process`
 
 Ingest trading books, papers, PDFs, and notes and ORGANISE them into the trading
-knowledge taxonomy via `agent_utilities.knowledge_graph.distillation.trading_curator`
+knowledge taxonomy via `meristem.knowledge_graph.distillation.trading_curator`
 (`organize_trading_knowledge`): each extracted concept is classified into a
 Strategy/Risk/Execution concept node with citations and confidence, and order-flow
 chapters seed `MicrostructureSignal` nodes (`DERIVED_FROM`). Knowledge is organised,
@@ -80,7 +80,7 @@ Expected: `ingested-research-concepts`
 
 Ensure the trading ontology (`ontology_trading.ttl`), the `MicrostructureSignal`
 candidates, and the curated `teamcfg:trading_paper_v1` TeamConfig are registered in
-the KG (`agent_utilities.graph.trading_team_seed.seed_trading_team`). This is the
+the KG (`meristem.graph.trading_team_seed.seed_trading_team`). This is the
 substrate the rest of the loop reasons over.
 Expected: `registered-signals`, `seeded-team-config`
 

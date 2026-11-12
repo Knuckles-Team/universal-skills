@@ -45,7 +45,7 @@ graph_orchestrate(action="golden_loop", max_topics=5)
 
 ```bash
 KG_DAEMON_ROLE=client python -c \
-  "from agent_utilities.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
+  "from meristem.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
    import json; print(json.dumps(run_golden_loop_cycle(max_topics=5), default=str, indent=2))"
 ```
 
