@@ -1,4 +1,4 @@
-# Epistemic-graph failure-pattern reference
+# Medulla failure-pattern reference
 
 Deep reference for `medulla-development`: the seven documented EG
 failure patterns in full — each with the source-tree `file:line` evidence

@@ -19,7 +19,7 @@ from typing import Any
 from urllib.parse import urldefrag, urlparse
 
 from meristem.core import config as config_module
-from meristem.core.http_client import create_http_client
+from meristem.core.http_client import build_http_client
 from meristem.core.transport_security import resolve_tls_profile
 from meristem.core.paths import data_dir
 from scion_sdk.source_connectors.http_safety import (
@@ -437,7 +437,7 @@ class SafeMCPClient:
         }
         client_kwargs.update(tls.httpx_kwargs())
         try:
-            with create_http_client(**client_kwargs) as client:
+            with build_http_client(**client_kwargs) as client:
                 with client.stream("POST", self.url, content=body) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         raise CrawlerSecurityError("crawler_kg_redirect_denied")

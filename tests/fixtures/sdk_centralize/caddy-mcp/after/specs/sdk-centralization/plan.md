@@ -6,7 +6,7 @@ The SDK owns every capability named in the rows (`SCION-CENTRALIZED-CAPABILITIES
 
 ## Live call path
 
-`ApiClientBase.__init__` in `caddy_mcp/api/api_client_base.py` calls `create_http_client`. Every domain client and MCP tool calls `ApiClientBase.request`.
+`ApiClientBase.__init__` in `caddy_mcp/api/api_client_base.py` calls `build_http_client`. Every domain client and MCP tool calls `ApiClientBase.request`.
 
 ## Compatibility
 

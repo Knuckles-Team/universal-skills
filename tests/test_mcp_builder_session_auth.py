@@ -74,7 +74,7 @@ def provider(tmp_path, monkeypatch):
     else:
         pytest.importorskip("scion_sdk.http.client")
         pytest.importorskip("regex")
-    from scion_sdk.http.client import create_http_client
+    from scion_sdk.http.client import build_http_client
 
     package = tmp_path / "session_fixture"
     package.mkdir()
@@ -149,8 +149,8 @@ def provider(tmp_path, monkeypatch):
     def install_handler(callback):
         monkeypatch.setattr(
             runtime,
-            "create_http_client",
-            lambda options, **kwargs: create_http_client(
+            "build_http_client",
+            lambda options, **kwargs: build_http_client(
                 options, transport=httpx.MockTransport(callback)
             ),
         )

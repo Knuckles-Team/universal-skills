@@ -1,4 +1,4 @@
-# Epistemic-graph authorization reference
+# Medulla authorization reference
 
 Raw enumerations behind the authorization model in the parent
 [`SKILL.md`](../SKILL.md) §1: the complete `authz_action` vocabulary the

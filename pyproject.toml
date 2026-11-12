@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 classifiers = [ "Development Status :: 5 - Production/Stable", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14",]
 requires-python = ">=3.12"
-dependencies = [ "medulla>=3.0.0","scion-sdk[mcp]>=0.7.0,<0.8.0"]
+dependencies = [ "medulla>=3.0.0","scion-sdk[mcp]>=0.11.0,<0.12"]
 
 [project.optional-dependencies]
 test = [
@@ -202,5 +202,8 @@ exclude = [
 namespaces = true
 
 [tool.pytest.ini_options]
+# The catalog is content only: it serves skills, not tools, so the connector conformance plugin has nothing to check.
+addopts = "-p no:scion_sdk"
+markers = ["spec(id): requirement the test is bound to"]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
