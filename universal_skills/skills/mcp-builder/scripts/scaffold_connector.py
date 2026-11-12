@@ -12,7 +12,7 @@ only the connector-owned references to them.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires scion-sdk>=0.9.1 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.11.0 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -26,8 +26,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # the scaffold_* helper modules
 
-SDK_FLOOR = "0.9.1"
-SDK_CAP = "0.10"
+SDK_FLOOR = "0.11.0"
+SDK_CAP = "0.12"
 CORE_CLASS = "Concept"  # a class of the parent ontology (core-foundation)
 VERBS = (
     ("get", "GET", "readOnlyHint", "Read one {thing} by id."),
@@ -375,7 +375,8 @@ until a successful exact-source workflow run and the public page are both
 observed.
 """
 
-ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
+ONTOLOGY = """@prefix : <https://knuckles-team.github.io/ontology/connector/{short}#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
@@ -383,7 +384,7 @@ ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
 # through rdfs:subClassOf. The pack never imports the parent ontology.
 
 :{Class}Item a owl:Class ;
-    rdfs:subClassOf :{core} ;
+    rdfs:subClassOf core:{core} ;
     rdfs:label "{Display} Item" ;
     rdfs:comment "An item served by the {Display} API." .
 
@@ -391,7 +392,7 @@ ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
     rdfs:label "{Display} related to" ;
     rdfs:comment "Links a {Display} item to any core concept it describes." ;
     rdfs:domain :{Class}Item ;
-    rdfs:range :{core} .
+    rdfs:range core:{core} .
 """
 
 README = """# {fleet}

@@ -4084,7 +4084,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.10.2"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -4097,9 +4097,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/a5/049d408593ba40ce2a7074ddd4a8e5bb2972656fa1501710ddeffca3ecec/scion_sdk-0.10.2.tar.gz", hash = "sha256:424a8dc0bb5f0a749bbb34113db9688a83b466e350e0869b3725020842f2420a", size = 1264088, upload-time = "2026-11-12T18:47:04.271Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/c6/88486d481d2156db2c05046ec4cc87a39db30ee0b1af6f79d62f426a10d9/scion_sdk-0.11.0.tar.gz", hash = "sha256:3d7b3ed6e54282a10a314af4a86fa02bb88380c1dfdbdfff76ea89a49ff5a1eb", size = 1267020, upload-time = "2026-11-12T19:56:18.498Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/5b/9f74bd390a9dca2cb3720687ed15adecc498adb79cb802384d037fd5f431/scion_sdk-0.10.2-py3-none-any.whl", hash = "sha256:c6a4bb77ca348e08ab642a1ef66fd5134292feb0ae0c4a58a97c97bf3d412a7b", size = 1221399, upload-time = "2026-11-12T18:47:00.635Z" },
+    { url = "https://files.pythonhosted.org/packages/07/f3/f73beb1e841464266dd223349212728ffda04c95076b708890b418c9c45a/scion_sdk-0.11.0-py3-none-any.whl", hash = "sha256:621a50c1aaf0e8b27d103126c38b8026b2bcaa991dbc061e2d12044e3ca27e51", size = 1222814, upload-time = "2026-11-12T19:56:12.72Z" },
 ]
 
 [package.optional-dependencies]
@@ -4814,7 +4814,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
     { name = "rfc3339-validator", marker = "extra == 'test'", specifier = ">=0.1.4" },
     { name = "rfc3986-validator", marker = "extra == 'test'", specifier = ">=0.1.1" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.10.1,<0.11" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.11.0,<0.12" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
     { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },
     { name = "toml", marker = "extra == 'developer-utilities'", specifier = ">=0.10.2" },

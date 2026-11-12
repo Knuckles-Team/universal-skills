@@ -574,7 +574,8 @@ description: Operate {Display} through its provider tools served as {short_snake
 
 PROMPT_SERVES = "{Class}Operation"
 
-ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
+ONTOLOGY = """@prefix : <https://knuckles-team.github.io/ontology/connector/{short}#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
@@ -582,7 +583,7 @@ ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
 # through rdfs:subClassOf. The pack never imports the parent ontology.
 
 :{Class}Operation a owl:Class ;
-    rdfs:subClassOf :{core} ;
+    rdfs:subClassOf core:{core} ;
     rdfs:label "{Display} Operation" ;
     rdfs:comment "One {Display} provider operation served as a typed tool." .
 
@@ -590,7 +591,7 @@ ONTOLOGY = """@prefix : <http://knuckles.team/kg#> .
     rdfs:label "{Display} related to" ;
     rdfs:comment "Links a {Display} operation to any core concept it acts on." ;
     rdfs:domain :{Class}Operation ;
-    rdfs:range :{core} .
+    rdfs:range core:{core} .
 """
 
 SOURCES = """\"\"\"Declared data sources. A wrapped upstream declares none until a read is mapped.\"\"\"

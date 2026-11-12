@@ -32,8 +32,8 @@ lgtm-mcp = "lgtm_mcp.skills"
 lgtm-mcp = "lgtm_mcp.prompts"
 
 # CONCEPT:MERISTEM-KG.ontology.package-federation-migration — federate this package's OWL/RDF ontology modules into the
-# scion-sdk hub (http://knuckles.team/kg/grafana and
-# http://knuckles.team/kg/observability). The loader globs every *.ttl in the
+# scion-sdk hub (https://knuckles-team.github.io/ontology/connector/grafana and
+# https://knuckles-team.github.io/ontology/connector/observability). The loader globs every *.ttl in the
 # module's ontology/ dir, so one entry-point covers both. Resolved via
 # iter_provider_dirs like the skill/prompt providers.
 [project.entry-points."scion_sdk.ontology_providers"]

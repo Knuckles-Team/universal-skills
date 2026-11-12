@@ -9,17 +9,17 @@ import caddy_mcp.api.api_client_base as base_module
 
 
 def _client(handler):
-    from scion_sdk.http.client import create_http_client as real
+    from scion_sdk.http.client import build_http_client as real
 
     def build(options):
         return real(options, transport=httpx.MockTransport(handler))
 
-    original = base_module.create_http_client
-    base_module.create_http_client = build
+    original = base_module.build_http_client
+    base_module.build_http_client = build
     try:
         return base_module.ApiClientBase(base_url="https://service.example.invalid", token="runtime-value")
     finally:
-        base_module.create_http_client = original
+        base_module.build_http_client = original
 
 
 # spec: CONN-CADDY-MCP-SDK-CENTRALIZATION-R001, CONN-CADDY-MCP-SDK-CENTRALIZATION-R003
