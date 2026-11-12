@@ -35,7 +35,7 @@ ECOSYSTEM_MARKERS = {
     "pydantic-graph": "Graph Agent",
     "fastmcp": "MCP Server",
     "fastapi": "Web Agent / API",
-    "meristem": "Agent-Utilities Ecosystem",
+    "meristem": "Meristem Ecosystem",
 }
 
 

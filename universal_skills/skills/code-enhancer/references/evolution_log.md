@@ -115,7 +115,7 @@ First full run against meristem. Six changes, all grounded in its output.
 ### Phase-3 pin-backs (data point for the workspace-resolution lesson)
 Applying ALL bumps incl. major to meristem (a uv *workspace* member) required
 5 pin-backs to keep the whole workspace `uv lock`-able — each a real transitive cap
-from a SIBLING package, not an meristem bug:
+from a SIBLING package, not a meristem bug:
 1. `pydantic-ai-slim`/`pydantic-graph` 1.107→1.106 — `pydantic-acp==0.9.6` strictly
    pins `pydantic-ai-slim==1.106.0`.
 2. `pandas` 3.0.3→`>=2.0.0,<3` — `llama-index-readers-file` caps `pandas<3`.
