@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import subprocess
 import sys
@@ -283,6 +284,13 @@ def test_check_detects_hand_edits_and_overlay_drift(world: dict) -> None:
     snap.write_text(snap.read_text() + "tamper\n")
     assert sus.check_source(src, "1.2.3", verify_pin=True)
     assert sus.main(["--check"]) == 1
+
+
+@pytest.fixture(autouse=True)
+def _isolate_from_ambient_git_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fixture repositories must not inherit the enclosing git hook's variables."""
+    for name in [k for k in os.environ if k.startswith("GIT_")]:
+        monkeypatch.delenv(name)
 
 
 @pytest.mark.spec("US-CONTENT-R002.8")
