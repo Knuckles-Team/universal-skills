@@ -192,7 +192,7 @@ def test_standard_connector_delivery_contract_is_scaffolded(connector):
 
     development = (connector / "demo_mcp/skills/demo-mcp-development/SKILL.md").read_text()
     for heading in (
-        "## Rapid delivery: the 5-minute contract",
+        "## Delivery contract",
         "## Setup and gates",
         "## Connector-specific checks",
         "## Delivery discipline",

@@ -312,10 +312,12 @@ content. Shared connector contracts, authentication and transports belong to
 their owning repositories. Keep provider credentials, endpoints and raw data
 out of source, logs and skill content.
 
-## Rapid delivery: the 5-minute contract
+## Delivery contract
 
-Specs are designed before implementation. Deliver small, reviewable slices and
-cite the owning spec row in the commit trailer.
+Specs are designed before implementation. A row is delivered when its behaviour is
+fully implemented, wired to its production entry point, passes every test level
+its test-spec names, is bound to its tests, and is verified by the gates. There
+is no time limit. Cite the owning spec row in the commit trailer.
 
 - Find the owning row first with `git grep -n "<term>" -- specs` and extend that
   spec before adding new requirement text.
