@@ -19,6 +19,7 @@ Governing spec: [spec.md](spec.md).
 | T-013 | `US-CONTENT-R002.8` | `tests/test_upstream_sources.py::test_update_moves_the_pin_and_resyncs` | The test updates a local source after a new upstream commit and finds the new pin, the kept comment and the new skill text. |
 | T-014 | `US-CONTENT-R002.9` | `tests/test_upstream_sources.py::test_spec_kit_skills_replace_the_retired_skills` | The test finds the eight skills in sync with their pins, the five retired folders absent and no reference left. |
 | T-015 | `US-CONTENT-R002.10` | `tests/test_upstream_sources.py::test_hook_and_installer_are_wired` | The test finds the hook entry and the procedure in the installer skill. |
+| T-015.1 | `US-CONTENT-R002.11` | `tests/test_upstream_sources.py::test_hyperframes_skills_are_vendored_without_telemetry` | The test finds the nine skills in sync with their pin, the Apache-2.0 license in each folder, an overlay per skill and no usage-event command left in any `SKILL.md`. |
 | T-016 | `US-CONTENT-R003` | `tests/test_code_enhancer.py::test_code_enhancer_follows_the_organization_constitution` | The test finds the limits module holding the table values, no baseline script or flag, no `.specify` output path, no retired tool or package name, no legacy concept ID, and the article reference in the skill. |
 | T-017 | `US-CONTENT-R004` | Every child row. | See each child. |
 | T-018 | `US-CONTENT-R004.1` | `tests/test_spec_row_delivery_skill.py::test_skill_states_the_full_delivery_procedure` | The test finds every step in order and the six report states. |

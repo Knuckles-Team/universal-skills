@@ -52,3 +52,50 @@ trigger = "Use when a feature needs a quality checklist that tests the requireme
 name = "speckit-implement"
 path = "templates/commands/implement.md"
 trigger = "Use when tasks.md is ready and the work is to build the feature and its bound tests."
+
+[[source]]
+id = "hyperframes"
+repository = "https://github.com/heygen-com/hyperframes"
+track = "main"
+commit = "9701f4bbf3d1ef41753dcf5613fead937e1edf2c"
+license = "Apache-2.0"
+license_path = "LICENSE"
+transform = "skill-md"
+domain = "creative"
+paths = ["skills/*"]
+
+[[source.skill]]
+name = "hyperframes"
+path = "skills/hyperframes"
+
+[[source.skill]]
+name = "hyperframes-cli"
+path = "skills/hyperframes-cli"
+
+[[source.skill]]
+name = "hyperframes-registry"
+path = "skills/hyperframes-registry"
+
+[[source.skill]]
+name = "media-use"
+path = "skills/media-use"
+
+[[source.skill]]
+name = "figma"
+path = "skills/figma"
+
+[[source.skill]]
+name = "slideshow"
+path = "skills/slideshow"
+
+[[source.skill]]
+name = "style-sampling"
+path = "skills/style-sampling"
+
+[[source.skill]]
+name = "reverse-any-video"
+path = "skills/reverse-any-video"
+
+[[source.skill]]
+name = "remotion-to-hyperframes"
+path = "skills/remotion-to-hyperframes"

@@ -54,7 +54,7 @@ repos:
   hooks:
   - id: codespell
     args: ["-I .codespellignore"]
-    exclude: \.xsd$
+    exclude: \.xsd$|^universal_skills/(upstream/|skills/(hyperframes|hyperframes-cli|hyperframes-registry|media-use|figma|slideshow|style-sampling|reverse-any-video|remotion-to-hyperframes)/)
 - repo: https://github.com/PyCQA/bandit
   rev: 92ae8b82fb422a639f0ed8d99e96cea769594e08 # 1.9.4
   hooks:
