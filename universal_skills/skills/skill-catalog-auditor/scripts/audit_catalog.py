@@ -489,7 +489,7 @@ def audit_catalog(root: Path) -> CatalogAudit:
     parsed: list[tuple[Path, str, str, dict[str, Any], str | None]] = []
     for skill_md in sorted(root.rglob("SKILL.md")):
         rel_parts = skill_md.relative_to(root).parts
-        if "assets" in rel_parts or "skill_graphs" in rel_parts:
+        if "assets" in rel_parts or "skill_graphs" in rel_parts or rel_parts[0] == "upstream":
             continue
         text = skill_md.read_text(encoding="utf-8", errors="replace")
         fm, error = parse_frontmatter(text)

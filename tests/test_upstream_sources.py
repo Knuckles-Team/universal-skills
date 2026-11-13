@@ -350,3 +350,32 @@ def test_hook_and_installer_are_wired() -> None:
     skill = (ROOT / "universal_skills/skills/universal-installer/SKILL.md").read_text()
     for needle in ("--update", "--check --verify-pin", "pull request", "Never push to the default"):
         assert needle in skill, needle
+
+
+HYPERFRAMES = (
+    "hyperframes",
+    "hyperframes-cli",
+    "hyperframes-registry",
+    "media-use",
+    "figma",
+    "slideshow",
+    "style-sampling",
+    "reverse-any-video",
+    "remotion-to-hyperframes",
+)
+
+
+@pytest.mark.spec("US-CONTENT-R002.11")
+def test_hyperframes_skills_are_vendored_without_telemetry() -> None:
+    sources = {s.id: s for s in sus.load_manifest(sus.MANIFEST)}
+    src = sources["hyperframes"]
+    assert src.license == "Apache-2.0"
+    assert {sk.name for sk in src.skills} == set(HYPERFRAMES)
+    assert sus.check_source(src, sus.package_version()) == []
+    for name in HYPERFRAMES:
+        folder = sus.SKILLS_DIR / name
+        assert "Apache License" in (folder / "LICENSE").read_text(encoding="utf-8")
+        assert (folder / "UPSTREAM.md").is_file()
+        assert sus.load_overlays(name), f"{name} carries no telemetry overlay"
+        body = (folder / "SKILL.md").read_text(encoding="utf-8")
+        assert "hyperframes events" not in body.replace("any `hyperframes events` command", "")

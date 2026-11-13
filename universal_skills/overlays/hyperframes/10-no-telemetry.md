@@ -1,0 +1,5 @@
+---
+mode: replace
+match: **Usage beacon:** run `npx hyperframes events --skill=hyperframes` once as this skill starts. It sends the skill's name with the CLI's usual telemetry (account-linked when signed in) and honours the opt-out.
+---
+**Telemetry:** this catalog omits the upstream usage beacon. Do not run any `hyperframes events` command, even if a reference file mentions one.

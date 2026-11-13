@@ -71,6 +71,7 @@ class Source:
     paths: list[str]
     skills: list[SkillDecl] = field(default_factory=list)
     script_prefix: str = ".specify/"
+    domain: str = "development"
 
 
 # ---------------------------------------------------------------- manifest
@@ -120,6 +121,7 @@ def load_manifest(path: Path | None = None) -> list[Source]:
             transform=raw["transform"],
             paths=paths,
             script_prefix=raw.get("script_prefix", ".specify/"),
+            domain=raw.get("domain", "development"),
         )
         for sk in raw.get("skill", []):
             name = str(sk.get("name", ""))
@@ -294,7 +296,7 @@ def render_command(src: Source, sk: SkillDecl, raw: bytes, version: str) -> byte
 def render_skill_md(
     src: Source, sk: SkillDecl, files: dict[str, bytes], version: str
 ) -> dict[str, bytes]:
-    """Copy a SKILL.md directory as-is, setting only metadata.version from our package."""
+    """Copy a SKILL.md directory as-is; set metadata.version and add any missing license, skill_type and domain."""
     prefix = sk.path.rstrip("/") + "/"
     out = {p[len(prefix) :]: b for p, b in files.items() if p.startswith(prefix)}
     if "SKILL.md" not in out:
@@ -302,6 +304,9 @@ def render_skill_md(
     text = out["SKILL.md"].decode("utf-8")
     front, body = _split_frontmatter(text)
     lines = [ln for ln in front.split("\n") if not re.match(r"^\s*version:", ln)]
+    for key, value in (("license", src.license), ("skill_type", "skill"), ("domain", src.domain)):
+        if not any(re.match(rf"^{key}:", ln) for ln in lines):
+            lines.insert(1, f"{key}: {value}")
     meta = next((i for i, ln in enumerate(lines) if re.match(r"^metadata:\s*$", ln)), None)
     if meta is None:
         lines += ["metadata:", f"  version: '{version}'"]
