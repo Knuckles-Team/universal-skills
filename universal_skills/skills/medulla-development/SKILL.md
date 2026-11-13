@@ -50,37 +50,35 @@ Run this before any code. Full table and gates: the Spec-driven development sect
 
 Never write code for a row that is not SPECIFIED. Feature directories use the stable spec ID, never a numbered prefix. The state is computed from rows, `Spec:` trailers and test bindings; never write `status.json` or a `Status:` line.
 
-## Rapid delivery: the 5-minute contract
+## Delivery contract
 
-Specs are already designed. The work is implementation, delivered in very small, continuously landed slices.
+Specs are already designed. The work is implementation.
 
-**Time and size**
-- One agent delivers one PR in 5 minutes or less. No agent or sub-agent runs longer than 5 minutes; an orchestrator dispatches the next slice to a fresh agent.
-- CI turns around in 5 minutes or less. PR CI runs the fast subset: lint, type check, the spec check, and only the tests and crates the diff touches. Pushes to main run the full suite.
-- Never spawn sub-agents from a delivery agent.
+**A row is delivered when**
+- its behaviour is fully implemented, as the row says;
+- it is wired to its production entry point (a production caller exists outside the new code and its tests);
+- every test level its test-spec names passes;
+- the tests are bound to the row;
+- the gates verify it.
 
-**Investigation budget**
-- At most 2 minutes and about 10 tool calls of reading before the first edit, and at most about 25 tool calls per PR.
-- If the change is not clear by then, ship the `.1` slice (typed model plus refusal test) or skip the row with a one-line note. Do not write deferral essays.
-- Trust the orchestrator's evidence and ID list; do not re-verify it.
+There is no time limit, no size limit per agent or per change, and no rule about how many agents deliver a row.
 
-**Sizing (deterministic)**
-- Split a requirement when its size score is above 6, it names more than 2 code roots, or it is cross-repo. Children are `<ID>.<n>`, producer first.
-- Net-new work is sliced, never skipped: `.1` typed model plus validation and refusal tests, `.2` the one entry point that uses it, `.3`+ each further behavior.
-- Cross-repo moves split into one child per repo: the destination copies the behavior first, then the source switches importers and deletes.
+**Recommendations (optional)**
+- Group rows that share an entry point into one bundle and deliver bundles in dependency order, producer first. Split a requirement into `<ID>.<n>` children when it names more than 2 code roots or is cross-repo; the destination repository copies a behaviour first, then the source switches importers and deletes.
+- Net-new work can be sliced: `.1` typed model plus validation and refusal tests, `.2` the one entry point that uses it, `.3`+ each further behaviour.
+- Trust the orchestrator's evidence and ID list rather than re-verifying it.
+- Run the targeted tests for the change; leave the full suite to the main-branch gates.
+- Open PRs can land together as a merge train, built with the orchestrator's merge-train tool.
+- Report the PR URL, requirement IDs, test result, and any `ID:<main sha>` proof for rows already on main.
 
 **Before every push**
 - Work in a real `git worktree add` from `origin/main`. Never edit a shared checkout, never `git stash`, never `git add -A`, never force-push.
 - Run the repo's own pre-commit on the changed files: `uvx --from pre-commit==4.6.0 pre-commit run --files $(git diff --name-only origin/main...HEAD)`. Fix every failure. No `noqa`, `type: ignore`, skip, xfail or whitelist entries to pass a gate.
-- Run the targeted tests only, never a full suite.
 
 **Landing**
-- Every PR lands within minutes of going green; no PR sits idle. Mechanical conflicts (generated files, Markdown) are resolved automatically by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
-- Many open PRs land together as a merge train (one integration branch, one CI run), built with the orchestrator's merge-train tool.
-- Full CI on main catches what the fast subset missed; regressions are fixed forward immediately.
-- Landing in this repo: delivery agents open the PR and do not run per-PR build-host builds or merge. The orchestrator lands EG in batches about every 20 minutes, validated by one warm integration build (`cargo check --workspace --all-features` plus contract regeneration) on the least-loaded build host.
-
-**Report**: at most 8 lines: PR URL, requirement IDs, test result, and any `ID:<main sha>` proof for rows already on main.
+- Mechanical conflicts (generated files, Markdown) are resolved by the merge-train tool. Real conflicts are additive in most cases and are resolved, not deferred.
+- Full CI on main catches what the pull-request subset missed; regressions are fixed forward.
+- Landing in this repo: delivery agents open the PR and do not run per-PR build-host builds or merge. The orchestrator lands medulla in batches, validated by one warm integration build (`cargo check --workspace --all-features` plus contract regeneration) on the least-loaded build host.
 
 ---
 
