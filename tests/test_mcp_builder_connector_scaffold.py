@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-scion-sdk>=0.9.1, `uv` and the pipelines hooks.
+scion-sdk>=0.11.1, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
@@ -141,7 +141,7 @@ def test_identity_and_version_live_in_pyproject_only(connector):
         FLEET: "demo_mcp:connector"
     }
     assert project["scripts"] == {FLEET: "scion_sdk.cli:serve"}
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.9.1,<0.10"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.1,<0.12"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
             assert "__version__" not in text.decode(), path
@@ -357,7 +357,7 @@ def test_ontology_rolls_up_to_a_core_class_and_never_imports_the_parent(connecto
     assert not list(graph.triples((None, OWL.imports, None)))
     classes = set(graph.subjects(RDF.type, OWL.Class))
     assert classes
-    parent = rdflib.URIRef("http://knuckles.team/kg#Concept")
+    parent = rdflib.URIRef("https://knuckles-team.github.io/ontology/core#Concept")
     for cls in classes:
         assert (cls, RDFS.subClassOf, parent) in graph
 
@@ -419,7 +419,7 @@ def test_pipelines_connector_gates_pass(connector, installed, tmp_path):
 
 
 # The medulla revision whose ontology the graph check composes. Move it deliberately.
-EG_REF = "4a1780082fbe6bf7756718316e4997ec23712eb8"
+EG_REF = "5586273bd4e8247928742be4ca2b6baff75436d4"
 EG_URL = os.environ.get("MEDULLA_URL", "https://github.com/Knuckles-Team/medulla")
 
 
@@ -433,7 +433,7 @@ def _core_ontology(base: Path) -> Path:
     steps = (
         ["init", "-q", "-b", "main"],
         ["remote", "add", "origin", EG_URL],
-        ["sparse-checkout", "set", "crates/eg-core/ontology"],
+        ["sparse-checkout", "set", "crates/medulla-core/ontology"],
         ["fetch", "-q", "--depth", "1", "--filter=blob:none", "origin", EG_REF],
         ["checkout", "-q", "-B", "main", "FETCH_HEAD"],
     )
@@ -490,7 +490,7 @@ def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
 # spec: US-MCP-BUILDER-R011.13
 def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.9.1,<0.10"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.1,<0.12"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"scion_sdk.connector"}
 
