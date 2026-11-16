@@ -288,7 +288,12 @@ print(json.dumps({
 
 @pytest.fixture(scope="module")
 def installed(connector, tmp_path_factory):
-    """A throwaway environment that adds this interpreter's packages to its path, with the connector installed."""
+    """A throwaway environment with the connector installed with its own declared dependencies.
+
+    The generated package pins the SDK it targets, so the SDK, its conformance plugin and its
+    checks come from that pin and not from the SDK this repository itself is locked to. This
+    interpreter's packages stay on the path behind the environment's own for the test tools.
+    """
     pytest.importorskip("scion_sdk.testing.plugin")  # 0.5.0
     pytest.importorskip("scion_sdk.auth.declare")  # 0.5.1
     uv = shutil.which("uv")
@@ -300,7 +305,7 @@ def installed(connector, tmp_path_factory):
     site = Path(subprocess.check_output([str(python), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"], text=True).strip())
     (site / "shared.pth").write_text(sysconfig.get_path("purelib") + "\n", encoding="utf-8")
     subprocess.run(
-        [uv, "pip", "install", "--python", str(python), "--no-deps", "-q", "-e", str(connector)],
+        [uv, "pip", "install", "--python", str(python), "-q", "-e", str(connector)],
         check=True,
         capture_output=True,
     )
