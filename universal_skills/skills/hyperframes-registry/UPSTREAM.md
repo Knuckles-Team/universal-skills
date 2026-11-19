@@ -7,7 +7,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Path: `skills/hyperframes-registry`
 - License: Apache-2.0 (the upstream license text is in `LICENSE`)
 - Transform: `skill-md`
-- Synced: 2026-11-12
+- Synced: 2026-11-19
 - Source digest: sha256:8e9f96e9bf68c93d1f0c5e0a7a1cf67a6346bd153d836865e92a07d001d9de2e
 - Local overlays:
   - `overlays/hyperframes-registry/10-no-telemetry.md` (sha256 ffacf0bfbbac75cd)

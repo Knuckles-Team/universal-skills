@@ -7,7 +7,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Path: `skills/style-sampling`
 - License: Apache-2.0 (the upstream license text is in `LICENSE`)
 - Transform: `skill-md`
-- Synced: 2026-11-12
+- Synced: 2026-11-19
 - Source digest: sha256:b5f7eac4a71b9287f5cb45694836f3ca683d7ba2491de063f0b62b4b58350558
 - Local overlays:
   - `overlays/style-sampling/10-no-telemetry.md` (sha256 d551baa3665e4045)
