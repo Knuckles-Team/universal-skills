@@ -9,6 +9,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T003 [US1] US-CONTENT-R001.2 Content sits where the convention expects it.
 - [ ] T004 [US1] US-CONTENT-R001.3 Every skill is served natively.
 - [x] T004a [US1] US-CONTENT-R001.4 Serve an ontology and SHACL shapes that roll up to core so the engine attaches the pack.
+- [x] T004b [US1] US-CONTENT-R001.5 Declare the content-only connector profile and the vendored third-party content.
 - [ ] T005 [US2] US-CONTENT-R002 Upstream skill sources (rollup).
 - [ ] T006 [US2] US-CONTENT-R002.1 Manifest schema.
 - [ ] T007 [US2] US-CONTENT-R002.2 Full-SHA pins.

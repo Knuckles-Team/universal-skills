@@ -286,7 +286,7 @@ def find_opportunities(root: Path) -> dict[str, list[dict[str, Any]]]:
 
 def analyze(root: Path) -> dict[str, Any]:
     intent = infer_intent(root)
-    opps = find_opportunities(root)
+    opportunities = find_opportunities(root)
 
     # Tier 3 — README features vs code (aspirational gaps / undocumented value)
     aspirational: list[dict[str, Any]] = []
@@ -307,17 +307,17 @@ def analyze(root: Path) -> dict[str, Any]:
     justifications: list[str] = []
     if intent["purpose"]:
         justifications.append(f"Inferred intent: {intent['purpose'][:160]}")
-    findings += [o["opportunity"] for o in opps["low_hanging"]]
-    findings += [o["opportunity"] for o in opps["implied_missing"]]
+    findings += [o["opportunity"] for o in opportunities["low_hanging"]]
+    findings += [o["opportunity"] for o in opportunities["implied_missing"]]
     findings += [o["opportunity"] for o in aspirational[:8]]
 
     # Score: intent realization. Start at 100, subtract for gaps, reward exposure.
-    n_opps = len(opps["low_hanging"]) + len(opps["implied_missing"]) + len(aspirational)
+    n_opportunities = len(opportunities["low_hanging"]) + len(opportunities["implied_missing"]) + len(aspirational)
     exposed = (
         bool(intent["entrypoints"]) or "@mcp.tool" in all_code or "fastapi(" in all_code
     )
     score = 100
-    score -= min(40, n_opps * 3)
+    score -= min(40, n_opportunities * 3)
     if not intent["purpose"]:
         score -= 10
         findings.append("No clear stated purpose (README intro) — intent is implicit.")
@@ -347,8 +347,8 @@ def analyze(root: Path) -> dict[str, Any]:
         "justifications": justifications,
         "intent": intent,
         "opportunities": {
-            "low_hanging": opps["low_hanging"],
-            "implied_missing": opps["implied_missing"],
+            "low_hanging": opportunities["low_hanging"],
+            "implied_missing": opportunities["implied_missing"],
             "net_new": aspirational,
         },
     }
