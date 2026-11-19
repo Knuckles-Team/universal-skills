@@ -22,7 +22,7 @@ Worker → Edge (setup) → Pool (near DB) → Origin
 ```bash
 # Create config
 npx wrangler hyperdrive create my-db \
-  --connection-string="postgres://user:pass@db.example.com:5432/db"
+  --connection-string="postgres://user:pass@db.example.com:5432/db"  # sanitizer:ignore - documentation placeholder, not a credential
 
 # wrangler.jsonc
 {

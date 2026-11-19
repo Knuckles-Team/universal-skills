@@ -8,7 +8,7 @@ See [README.md](./README.md) for overview.
 ```bash
 # Basic
 npx wrangler hyperdrive create my-db \
-  --connection-string="postgres://user:pass@db.example.com:5432/db"
+  --connection-string="postgres://user:pass@db.example.com:5432/db"  # sanitizer:ignore - documentation placeholder, not a credential
 
 # Custom cache
 npx wrangler hyperdrive create my-db \
@@ -24,7 +24,7 @@ npx wrangler hyperdrive create my-db \
 **MySQL:**
 ```bash
 npx wrangler hyperdrive create my-db \
-  --connection-string="mysql://user:pass@db.example.com:3306/db"
+  --connection-string="mysql://user:pass@db.example.com:3306/db"  # sanitizer:ignore - documentation placeholder, not a credential
 ```
 
 ## wrangler.jsonc
@@ -145,10 +145,10 @@ npx wrangler dev
 **Remote DB locally:**
 ```bash
 # PostgreSQL
-export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="postgres://user:pass@db.example.com:5432/db?sslmode=require"
+export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="postgres://user:pass@db.example.com:5432/db?sslmode=require"  # sanitizer:ignore - documentation placeholder, not a credential
 
 # MySQL
-export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="mysql://user:pass@db.example.com:3306/db?sslMode=REQUIRED"
+export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="mysql://user:pass@db.example.com:3306/db?sslMode=REQUIRED"  # sanitizer:ignore - documentation placeholder, not a credential
 ```
 
 **Option 2: Remote execution:**
