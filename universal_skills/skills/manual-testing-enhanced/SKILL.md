@@ -6,7 +6,7 @@ description: Enhanced manual testing workflows
 license: MIT
 tags: []
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: Genius
 ---
 

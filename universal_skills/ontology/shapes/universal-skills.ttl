@@ -1,0 +1,47 @@
+# SHACL Core shapes of the universal-skills connector ontology.
+
+@prefix : <https://knuckles-team.github.io/ontology/connector/universal-skills#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:SkillDocumentShape a sh:NodeShape ;
+    sh:targetClass :SkillDocument ;
+    sh:property [
+        sh:path :skillName ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[a-z0-9]+(-[a-z0-9]+)*$" ;
+        sh:maxLength 64 ;
+        sh:message "A skill document carries exactly one name of at most 64 lowercase letters, digits and hyphens."
+    ] ;
+    sh:property [
+        sh:path :skillDomain ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :skillVersion ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :inCatalog ;
+        sh:maxCount 1 ;
+        sh:class :SkillCatalog ;
+        sh:message "A skill document is served by at most one catalog."
+    ] .
+
+:SkillSupportFileShape a sh:NodeShape ;
+    sh:targetClass :SkillSupportFile ;
+    sh:property [
+        sh:path :supportsSkill ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:class :SkillDocument ;
+        sh:message "A support file belongs to exactly one skill document."
+    ] ;
+    sh:property [
+        sh:path :relativePath ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "A support file carries exactly one path relative to its skill folder."
+    ] .

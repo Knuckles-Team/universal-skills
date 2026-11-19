@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Bring Figma into a HyperFrames video - rendered assets, brand tokens, components, storyboard frames as reconstructed motion (frames read as states, not slides), shaders and connector-assisted motion. Use when the person pastes a figma.com link or asks to use a Figma design, frame, logo or brand.
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).

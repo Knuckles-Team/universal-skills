@@ -23,7 +23,7 @@ team_config:
     systems-provisioner: [systems_manager]
 concept: KG-2.12
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # Employee Onboarding Workflow

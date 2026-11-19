@@ -20,7 +20,7 @@ team_config:
 tags: ['portainer', 'stacks', 'docker', 'troubleshooting', 'portainer-agent', 'tunnel-manager']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # Portainer Stack Troubleshooter Workflow

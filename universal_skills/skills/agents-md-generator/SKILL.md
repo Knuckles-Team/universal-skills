@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [agent, agents.md, documentation, ai-optimization, mcp, architecture]
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: Genius
 ---
 

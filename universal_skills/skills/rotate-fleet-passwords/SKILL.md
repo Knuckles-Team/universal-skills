@@ -14,7 +14,7 @@ description: >-
 license: MIT
 tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation, openbao, vault, token]
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: Genius
 ---
 

@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: About 450 ready-made HyperFrames blocks and components installed as editable source - transitions, overlays, titles, kinetic type, captions, charts, map overlays, 3D, camera moves. Use it before hand-building any named visual (CRT scanlines, glitch, film grain, a chart); also for hyperframes add and catalog.
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).

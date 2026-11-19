@@ -30,6 +30,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SKILLS_ROOT = REPO / "universal_skills"
+# Pinned upstream snapshots stay byte-identical to their source (the sync check
+# compares them); the vendored skills rendered from them carry the version.
+UPSTREAM_ROOT = SKILLS_ROOT / "upstream"
 CFG = REPO / ".bumpversion.cfg"
 
 BASE_STANZAS = [
@@ -116,7 +119,9 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="verify only; exit 1 on drift")
     args = ap.parse_args()
     cur = _current_version()
-    skill_mds = sorted(SKILLS_ROOT.rglob("SKILL.md"))
+    skill_mds = sorted(
+        sk for sk in SKILLS_ROOT.rglob("SKILL.md") if not sk.is_relative_to(UPSTREAM_ROOT)
+    )
 
     if args.check:
         missing = [

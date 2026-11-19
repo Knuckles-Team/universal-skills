@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [refactor, architecture, simplification, coupling, gates, spec-kit]
 metadata:
-  version: '1.0.0'
+  version: '1.6.2'
 ---
 
 # Codebase untangle

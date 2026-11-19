@@ -22,7 +22,7 @@ team_config:
 tags: ['github', 'sdd', 'planning', 'speckit-specify', 'github-agent']
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # Github Issue Sdd Planner Workflow

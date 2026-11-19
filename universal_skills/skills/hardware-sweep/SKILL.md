@@ -22,7 +22,7 @@ team_config:
 tags: ['hardware', 'sweep', 'discovery', 'os', 'system-info']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # Hardware Sweep Workflow
