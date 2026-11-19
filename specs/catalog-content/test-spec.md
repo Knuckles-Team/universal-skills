@@ -32,3 +32,4 @@ Governing spec: [spec.md](spec.md).
 | T-025 | `US-CONTENT-R007.3` | `tests/test_harness_portable_skills.py::test_handoff_skill_states_the_workstream_path_first` | The workstream calls appear before the local file path. |
 | T-026 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_installer_refuses_bundle_profiles_and_writes_nothing` | Each bundle target exits 2, prints the install command and writes no file. |
 | T-026.1 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_install_removes_renamed_skills` | A full install into a directory holding old-name skills removes them, keeps current skills and keeps an old name that is a current skill. |
+| T-027 | `US-CONTENT-R006` | `tests/test_codebase_untangle_skill.py::test_skill_states_the_procedure_the_categories_and_the_gates` | The test finds the seven steps in order, the categories and the gate names. |
