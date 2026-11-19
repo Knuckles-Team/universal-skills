@@ -19,7 +19,14 @@ def test_skill_states_the_procedure_the_categories_and_the_gates() -> None:
     ]
     positions = [text.index(step) for step in steps]
     assert positions == sorted(positions)
-    for category in ("Hidden links", "Needless links", "Surplus", "Special cases", "Custom code in environment"):
+    for category in (
+        "Hidden links",
+        "Needless links",
+        "Surplus",
+        "Special cases",
+        "Custom code in environment",
+        "Implicit lifecycles",
+    ):
         assert category in text
     for gate in ("kiss-census", "complexity-census", "dupehound", "coupling", "state-machine-census"):
         assert gate in text
