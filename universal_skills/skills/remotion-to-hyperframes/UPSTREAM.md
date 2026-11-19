@@ -7,7 +7,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Path: `skills/remotion-to-hyperframes`
 - License: Apache-2.0 (the upstream license text is in `LICENSE`)
 - Transform: `skill-md`
-- Synced: 2026-11-12
+- Synced: 2026-11-19
 - Source digest: sha256:73fa4ca26106cd16a26b80950bfd2c79c46dc0c160dc55fc106a35c24a0390c1
 - Local overlays:
   - `overlays/remotion-to-hyperframes/10-no-telemetry.md` (sha256 0c62d68fb8573f92)

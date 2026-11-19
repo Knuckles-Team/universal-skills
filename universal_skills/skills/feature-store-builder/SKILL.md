@@ -22,7 +22,7 @@ team_config:
 tags: [finance, data, feature-store]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: Genius
 ---
 

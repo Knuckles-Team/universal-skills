@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [cloudflare, deployment, edge, infrastructure]
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: Genius
 ---
 # Cloudflare Deploy

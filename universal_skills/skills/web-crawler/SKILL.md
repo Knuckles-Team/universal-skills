@@ -10,7 +10,7 @@ description: >-
 tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledge-graph, arbora, ingest]
 license: MIT
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: Repository Maintainers
 ---
 # Web Crawler Skill

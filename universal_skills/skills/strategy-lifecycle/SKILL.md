@@ -9,7 +9,7 @@ tags: [finance, trading, strategy, lifecycle]
 team_config: trading_department
 agent: chief_trading_officer
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: meristem
   concept: 'CONCEPT:KG-2.6'
 infrastructure:

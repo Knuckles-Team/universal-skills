@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Get or make any media for a HyperFrames video - music, sound effects, images, icons, logos, voiceover, avatar and generated video, transcripts, cutouts, colour grades and looks - with HeyGen or free local tools, and mix placed audio. Also for footage that looks dark, flat or dull, or should be stylized or hidden.
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).
