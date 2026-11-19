@@ -20,7 +20,7 @@ team_config:
 tags: ['telemetry', 'observability', 'langfuse', 'arbora']
 concept: CONCEPT:KG-2.12
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
 ---
 
 # Telemetry Ingestion Workflow

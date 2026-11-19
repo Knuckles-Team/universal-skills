@@ -8,7 +8,7 @@ tags: [finance, alpha, signals, research]
 team_config: trading_department
 agent: quant_research_analyst
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---

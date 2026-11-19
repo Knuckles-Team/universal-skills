@@ -20,7 +20,7 @@ tags: [microstructure, surveillance, adverse-selection, knowledge-graph, defensi
 concept: CONCEPT:EE-042
 requires: ['meristem']
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
 ---
 
 # Market Microstructure Surveillance

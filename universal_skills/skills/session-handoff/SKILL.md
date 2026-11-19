@@ -13,7 +13,7 @@ metadata:
   domain: core
   skill_type: skill
   tags: [handoff, context, session, resumption, continuity, memory]
-  version: '1.6.0'
+  version: '1.6.1'
   author: Genius
 ---
 # Session Handoff

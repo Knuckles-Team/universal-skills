@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: Meristem Contributors
 ---
 # Threat Model Source Code Repo

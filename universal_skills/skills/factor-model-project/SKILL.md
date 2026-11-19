@@ -10,7 +10,7 @@ agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, factor-model, fama-french, regression, portfolio, workflow]
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
   author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---

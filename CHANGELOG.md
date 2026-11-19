@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1]
+
+### Changed
+- Release 1.6.1 on `scion-sdk[mcp]>=0.11.2,<0.12`. The 1.6.0 tag was cut before the SDK range landed on main, so its published metadata still required `scion-sdk>=0.7.0,<0.8.0` and pinned consumers to older releases.
+
 ## [1.5.2]
 
 ### Changed

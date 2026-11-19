@@ -22,7 +22,7 @@ team_config:
 tags: ['docker', 'podman', 'local-deploy', 'troubleshooting', 'container-manager-mcp']
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
 ---
 
 # Local Container Troubleshooter Workflow

@@ -30,7 +30,7 @@ requires:
   - tunnel-manager-mcp
   - arbora
 metadata:
-  version: '1.6.0'
+  version: '1.6.1'
 ---
 
 # Ecosystem Bootstrap Workflow
