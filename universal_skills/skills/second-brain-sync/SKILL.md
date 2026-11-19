@@ -18,7 +18,7 @@ license: MIT
 tags: [research, second-brain, personal-kb, knowledge-graph, provenance, fact-extraction, epistemic]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
   concepts:
     - CONCEPT:MERISTEM-KG.enrichment.atomic-triple-extraction
     - CONCEPT:MERISTEM-KG.enrichment.entity-claim-extraction

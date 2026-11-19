@@ -14,7 +14,7 @@ tags: ['social', 'x', 'ingestion', 'arbora', 'knowledge-graph', 'evolution']
 requires: ['arbora']
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
   concepts:
     - CONCEPT:ECO-4.6
     - CONCEPT:KG-2.7

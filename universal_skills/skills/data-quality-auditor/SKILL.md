@@ -12,7 +12,7 @@ license: MIT
 tags: [data, quality, validation, schema, rules, csv, json]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Data Quality Auditor

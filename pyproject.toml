@@ -233,4 +233,4 @@ exclude = [
     "universal_skills/skills/reverse-any-video",
     "universal_skills/skills/remotion-to-hyperframes",
 ]
-ignore_words = ["afterAll", "beforeAll", "SOM", "TAM", "SAM", "nin", "nam", "tread", "ot", "HSA", "HASS", "callin", "skelton", "intensional", "wile", "LOD", "Braket", "testng"]
+ignore_words = ["afterAll", "SOM", "nin", "HSA", "HASS", "skelton", "intensional", "wile", "LOD", "Braket", "testng"]

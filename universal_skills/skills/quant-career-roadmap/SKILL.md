@@ -13,7 +13,7 @@ team_config: quantitative_trading_team
 tags: [quant, career, roadmap, finance, mentoring, workflow]
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:KG-2.6'
 ---
 

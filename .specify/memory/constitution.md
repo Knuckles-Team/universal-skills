@@ -16,7 +16,7 @@ This repository inherits the [organization constitution](https://github.com/Knuc
 
 Each skill does one job, has valid portable frontmatter and a clear trigger. Skill content is free of private data.
 
-**Enforced by:** Pre-commit hooks `check-atomicity`, `check-frontmatter-portability`, `skill-catalog-structure` and `security-sanitizer`.
+**Enforced by:** Pre-commit hooks `check-atomicity`, `check-frontmatter-portability`, `skill-catalog-structure` and `secrets`.
 
 **Plan check:** Does the skill do one job, with portable frontmatter and no private data?
 

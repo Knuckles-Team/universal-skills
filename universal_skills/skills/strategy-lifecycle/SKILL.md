@@ -10,7 +10,7 @@ team_config: trading_department
 agent: chief_trading_officer
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:KG-2.6'
 infrastructure:
   required:

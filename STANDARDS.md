@@ -93,7 +93,7 @@ license: MIT
 tags: [pdf, excel, word, ocr]
 metadata:
   version: '1.0.0'
-  author: Genius
+  author: Knuckles-Team
 ---
 ```
 

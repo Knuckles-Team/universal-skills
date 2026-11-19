@@ -10,7 +10,7 @@ license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Web Search
 

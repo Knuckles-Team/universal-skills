@@ -21,7 +21,7 @@ tags: [finance, execution, journal]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Trade Journal Analysis Workflow

@@ -12,7 +12,7 @@ license: MIT
 tags: [media, gif, video, image-processing, ffmpeg, pillow, conversion]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Creative Media Tools
 

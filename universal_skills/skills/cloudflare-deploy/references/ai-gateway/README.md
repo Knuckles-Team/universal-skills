@@ -50,7 +50,7 @@ const { text } = await generateText({
 const { text } = await generateText({
   model: gateway([
     openai('gpt-4o'),              // Try first
-    ai_provider('agent-sonnet-4-5'), // Fallback
+    ai_provider('<model-name>'), // Fallback
   ]),
   prompt: 'Hello'
 });
@@ -75,7 +75,7 @@ const client = new AI Provider({
 
 // Switch providers by changing model format: {provider}/{model}
 const response = await client.chat.completions.create({
-  model: 'openai/gpt-4o', // or 'ai_provider/agent-sonnet-4-5'
+  model: 'openai/gpt-4o', // or 'ai_provider/<model-name>'
   messages: [{ role: 'user', content: 'Hello!' }]
 });
 ```

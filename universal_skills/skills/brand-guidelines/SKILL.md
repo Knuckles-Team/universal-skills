@@ -12,7 +12,7 @@ license: MIT
 tags: [branding, identity, design-system, typography, color, voice-tone]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Brand Guidelines Creation
 

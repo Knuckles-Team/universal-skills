@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:EE-011'
 ---
 # Risk Monitoring Workflow (Cron: every 5 minutes)

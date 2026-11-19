@@ -11,7 +11,7 @@ license: MIT
 tags: [pdf, docx, markdown, conversion, document-processing]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Document Converter Skill
 

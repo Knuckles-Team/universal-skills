@@ -15,7 +15,7 @@ license: MIT
 tags: [agentpay sdk]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # AgentPay SDK

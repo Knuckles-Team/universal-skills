@@ -49,7 +49,7 @@ async function readAll(socket: Socket): Promise<Uint8Array> {
 
 ```typescript
 // Stream socket data directly to HTTP response
-const socket = connect({ hostname: "stream.internal", port: 9000 }, { secureTransport: "on" });
+const socket = connect({ hostname: "stream.example.com", port: 9000 }, { secureTransport: "on" });
 const writer = socket.writable.getWriter();
 await writer.write(new TextEncoder().encode("STREAM\n"));
 await writer.close();
@@ -63,7 +63,7 @@ return new Response(socket.readable);
 ```typescript
 // Send: *2\r\n$3\r\nGET\r\n$<keylen>\r\n<key>\r\n
 // Recv: $<len>\r\n<data>\r\n or $-1\r\n for null
-const socket = connect({ hostname: "redis.internal", port: 6379 });
+const socket = connect({ hostname: "redis.example.com", port: 6379 });
 const writer = socket.writable.getWriter();
 await writer.write(new TextEncoder().encode(`*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`));
 ```
@@ -131,7 +131,7 @@ async function connectWithFallback(primary: string, fallback: string, port: numb
 ### Destination Allowlist (Prevent SSRF)
 
 ```typescript
-const ALLOWED_HOSTS = ['db.internal.company.net', 'api.internal.company.net', /^10\.0\.1\.\d+$/];
+const ALLOWED_HOSTS = ['db.internal.company.net', 'api.example.com.company.net', /^10\.0\.1\.\d+$/];
 
 function isAllowed(hostname: string): boolean {
   return ALLOWED_HOSTS.some(p => p instanceof RegExp ? p.test(hostname) : p === hostname);

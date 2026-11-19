@@ -1,7 +1,7 @@
 # rotate-credentials — usage, safety, and recovery
 
 ## What it does
-Sets ONE unified password for an OS account (default `genius`) across many hosts over
+Sets ONE unified password for an OS account (`--user`, required) across many hosts over
 SSH, verifies each with `passwd -S`, and reports a per-host OK/FAILED summary. Optionally
 rotates the in-band iDRAC/BMC user-2 password too (`--idrac`).
 
@@ -13,12 +13,12 @@ rotates the in-band iDRAC/BMC user-2 password too (`--idrac`).
 
 ## Common invocations
 ```bash
-# Generate a fresh unified password for genius across the whole inventory
+# Generate a fresh unified password for the account across the whole inventory
 rotate-credentials.sh --generate --inventory ~/.config/arbora/inventory.yaml \
-    --out ~/Workspace/inventory/.env
+    --user <account> --out ~/Workspace/inventory/.env
 
 # Set a specific password on explicit hosts, also rotate iDRAC user-2
-rotate-credentials.sh --password 'S3cret...' --hosts "10.0.0.10 10.0.0.11 10.0.0.13" --idrac
+rotate-credentials.sh --user <account> --password 'S3cret...' --hosts "192.0.2.10 192.0.2.11 192.0.2.13" --idrac
 
 # Preview only — change nothing
 rotate-credentials.sh --generate --inventory <file> --dry-run

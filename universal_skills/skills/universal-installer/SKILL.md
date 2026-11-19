@@ -18,7 +18,7 @@ license: MIT
 tags: [skills, ontologies, prompts, mcp, installer, deployment, agent-tools]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
   supersedes: skill-installer
 ---
 # Universal Installer Skill

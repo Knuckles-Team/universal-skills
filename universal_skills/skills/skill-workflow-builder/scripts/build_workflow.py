@@ -595,7 +595,7 @@ def scaffold_workflow_files(
         "license": "MIT",
         "tags": list(tags) or ["workflow"],
         "requires": list(requires),
-        "metadata": {"version": "1.2.1", "author": "Genius"},
+        "metadata": {"version": "1.2.1", "author": "Knuckles-Team"},
     }
     frontmatter_text = yaml.safe_dump(
         frontmatter, sort_keys=False, allow_unicode=True

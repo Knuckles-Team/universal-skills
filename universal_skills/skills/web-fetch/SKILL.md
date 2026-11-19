@@ -10,7 +10,7 @@ tags: [web, fetch, compatibility, web-crawler]
 license: MIT
 metadata:
   version: '1.6.2'
-  author: Repository Maintainers
+  author: Knuckles-Team
 ---
 
 # Web Fetch Compatibility Alias

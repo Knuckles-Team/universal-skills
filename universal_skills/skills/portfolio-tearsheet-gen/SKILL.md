@@ -23,7 +23,7 @@ tags: [finance, portfolio, reporting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Portfolio Tearsheet Generator Workflow

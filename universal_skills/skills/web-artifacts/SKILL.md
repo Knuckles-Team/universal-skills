@@ -10,7 +10,7 @@ license: MIT
 tags: [frontend, ui, react, tailwind, figma, brand, design, web-builder]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Web & UI Artifacts
 

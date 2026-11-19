@@ -22,7 +22,7 @@ tags: [finance, pnl, attribution, reporting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # PnL Attribution Workflow

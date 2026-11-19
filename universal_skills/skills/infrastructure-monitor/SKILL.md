@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:ECO-4.7'
 ---
 # Infrastructure Monitor Workflow (Cron: every 15 minutes)

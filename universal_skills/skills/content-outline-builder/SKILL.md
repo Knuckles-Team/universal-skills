@@ -12,7 +12,7 @@ license: MIT
 tags: [content, outline, editorial, structure, evidence]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Content Outline Builder

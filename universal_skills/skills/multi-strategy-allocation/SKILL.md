@@ -23,7 +23,7 @@ tags: [finance, allocation, backtesting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Multi-Strategy Allocation Workflow

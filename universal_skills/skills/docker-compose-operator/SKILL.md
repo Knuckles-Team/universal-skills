@@ -9,7 +9,7 @@ license: MIT
 tags: [docker, compose, swarm, deployment, system]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 requires:
   - container-manager-mcp
 ---

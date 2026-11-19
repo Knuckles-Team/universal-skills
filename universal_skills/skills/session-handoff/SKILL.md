@@ -14,7 +14,7 @@ metadata:
   skill_type: skill
   tags: [handoff, context, session, resumption, continuity, memory]
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Session Handoff
 

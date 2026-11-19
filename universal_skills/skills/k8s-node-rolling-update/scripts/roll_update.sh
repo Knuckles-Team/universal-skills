@@ -3,49 +3,41 @@
 # time: cordon -> drain -> SSH apt upgrade -> conditional reboot -> wait Ready -> uncordon.
 # Aborts the whole run rather than cascading if any node fails a step.
 #
-#   ./roll_update.sh [--dry-run] [--include-gb10] [--yes] [node ...]
+#   ./roll_update.sh [--dry-run] [--include-accelerators] [--yes] [--ssh-user NAME] [node ...]
 #
-# With no node arguments, rolls the default order: workers first, control-plane last,
-# gb10 excluded unless --include-gb10 is given:
-#   r510 r710 rw710 [gb10] r820
+# Nodes, roles and addresses are discovered from the live cluster (never written here):
+# the node's InternalIP is the SSH target and the standard control-plane label sets its role.
+# With no node arguments, rolls every Ready worker first and every control-plane node last.
+# Nodes labelled with the accelerator label (ACCELERATOR_LABEL, default
+# `node.kubernetes.io/accelerator`) are skipped unless --include-accelerators is given.
 #
-# Passing explicit node names overrides the default list (still validated against the
-# known fixed node/IP table below — no arbitrary hostnames are accepted).
+# Passing explicit node names overrides the default list; each name must be a node the
+# cluster reports (no arbitrary hostnames are accepted).
 #
 # Requires: kubectl (pointed at the cluster kubeconfig), ssh access to each node as
-# `genius` with passwordless sudo.
+# --ssh-user (default: the current login user) with passwordless sudo.
 set -euo pipefail
 
-# --- fixed, known-good node -> IP table (no unsanitized input reaches ssh/kubectl) ---
-declare -A NODE_IP=(
-  [r510]="10.0.0.10"
-  [r710]="10.0.0.11"
-  [rw710]="10.0.0.12"
-  [gb10]="10.0.0.18"
-  [r820]="10.0.0.13"
-)
-DEFAULT_WORKERS=(r510 r710 rw710)
-GB10=(gb10)
-CONTROL_PLANE=(r820)
-
-SSH_USER="genius"
+SSH_USER="$(id -un)"
+ACCELERATOR_LABEL="${ACCELERATOR_LABEL:-node.kubernetes.io/accelerator}"
 DRAIN_TIMEOUT="300s"
 READY_TIMEOUT="600s"
 DRY_RUN=0
-INCLUDE_GB10=0
+INCLUDE_ACCELERATORS=0
 ASSUME_YES=0
 EXPLICIT_NODES=()
 
 usage() {
-  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 # --- args ---
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN=1; shift ;;
-    --include-gb10) INCLUDE_GB10=1; shift ;;
+    --include-accelerators) INCLUDE_ACCELERATORS=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
+    --ssh-user) SSH_USER="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     --) shift; break ;;
     -*) echo "unknown flag: $1" >&2; usage; exit 1 ;;
@@ -53,6 +45,19 @@ while [ $# -gt 0 ]; do
   esac
 done
 EXPLICIT_NODES+=("$@")
+
+# --- discover nodes from the cluster: name, InternalIP, role, ready, accelerator ---
+declare -A NODE_IP=()
+WORKERS=()
+ACCELERATORS=()
+CONTROL_PLANE=()
+while IFS='|' read -r name ip cp accel ready; do
+  [ "$ready" = "True" ] || continue
+  NODE_IP[$name]="$ip"
+  if [ -n "$cp" ]; then CONTROL_PLANE+=("$name")
+  elif [ -n "$accel" ]; then ACCELERATORS+=("$name")
+  else WORKERS+=("$name"); fi
+done < <(kubectl get nodes -o go-template='{{range .items}}{{.metadata.name}}|{{range .status.addresses}}{{if eq .type "InternalIP"}}{{.address}}{{end}}{{end}}|{{index .metadata.labels "node-role.kubernetes.io/control-plane"}}|{{index .metadata.labels "'"$ACCELERATOR_LABEL"'"}}|{{range .status.conditions}}{{if eq .type "Ready"}}{{.status}}{{end}}{{end}}{{"\n"}}{{end}}')
 
 log()  { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
 run()  { # run <description> <cmd...>  -- honors --dry-run
@@ -74,15 +79,16 @@ NODES=()
 if [ "${#EXPLICIT_NODES[@]}" -gt 0 ]; then
   for n in "${EXPLICIT_NODES[@]}"; do
     if [ -z "${NODE_IP[$n]+x}" ]; then
-      echo "unknown node: $n (known: ${!NODE_IP[*]})" >&2
+      echo "unknown node: $n (not a Ready node of this cluster)" >&2
       exit 1
     fi
     NODES+=("$n")
   done
 else
-  NODES+=("${DEFAULT_WORKERS[@]}")
-  [ "$INCLUDE_GB10" = 1 ] && NODES+=("${GB10[@]}")
+  NODES+=("${WORKERS[@]}")
+  [ "$INCLUDE_ACCELERATORS" = 1 ] && NODES+=("${ACCELERATORS[@]}")
   NODES+=("${CONTROL_PLANE[@]}")
+  [ "${#NODES[@]}" -gt 0 ] || { echo "no Ready nodes discovered" >&2; exit 1; }
 fi
 
 log "Node order for this run: ${NODES[*]}"
@@ -152,11 +158,6 @@ roll_one_node() {
 }
 
 for node in "${NODES[@]}"; do
-  if [ "$node" = "gb10" ]; then
-    log "NOTE: gb10 has a known intermittent hardware power-fault (power-cycles every"
-    log "      12-35 min on its own). A failure here may be unrelated to this patch —"
-    log "      verify before assuming the roll broke it."
-  fi
   if ! roll_one_node "$node"; then
     log "ABORT: ${node} failed to roll cleanly. Stopping — remaining nodes were NOT touched."
     log "       ${node} is left cordoned; see SKILL.md 'Rollback / abort guidance'."

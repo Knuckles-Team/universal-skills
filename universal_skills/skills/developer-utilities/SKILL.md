@@ -9,7 +9,7 @@ license: MIT
 tags: [development, utilities, parsing, tools, converter, generator, crypto, network]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Developer Utilities
 

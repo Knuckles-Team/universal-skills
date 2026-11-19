@@ -23,7 +23,7 @@ tags: [finance, data, feature-store]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Feature Store Builder Workflow

@@ -14,7 +14,7 @@ license: MIT
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Browser Tools
 

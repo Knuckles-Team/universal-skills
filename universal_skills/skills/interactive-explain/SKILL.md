@@ -7,7 +7,7 @@ license: MIT
 tags: []
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Interactive Explain

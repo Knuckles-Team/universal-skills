@@ -295,7 +295,7 @@ license: MIT
 tags: [{fleet}, development, connector, test, gates]
 tier: repository
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 

@@ -77,7 +77,7 @@ Or via API: set `model`, `input_cost`, `output_cost`.
 | Provider | Unified API | Notes |
 |----------|-------------|-------|
 | AI Provider | `openai/gpt-4o` | Full support |
-| AI Provider | `ai_provider/agent-sonnet-4-5` | Full support |
+| AI Provider | `ai_provider/<model-name>` | Full support |
 | Google AI | `google-ai-studio/gemini-2.0-flash` | Full support |
 | Workers AI | `workersai/@cf/meta/llama-3` | Native |
 | Azure AI Provider | `azure-openai/*` | Deployment names |

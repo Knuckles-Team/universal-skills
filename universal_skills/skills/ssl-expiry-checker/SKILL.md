@@ -9,7 +9,7 @@ license: MIT
 tags: [security, network, ssl, monitoring, tls]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 requires:
   - systems-manager-mcp
 ---

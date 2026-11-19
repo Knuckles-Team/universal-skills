@@ -10,7 +10,7 @@ license: MIT
 tags: [agents, a2a, subagents, multi-agent, parallel, orchestration, manager, protocol, network]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Agent Workflows & Orchestration
 

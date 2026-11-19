@@ -12,7 +12,7 @@ license: MIT
 tags: [data, profiling, schema, statistics, csv, json]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Dataset Profiler

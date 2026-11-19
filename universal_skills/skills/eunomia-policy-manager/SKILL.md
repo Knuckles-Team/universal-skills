@@ -15,7 +15,7 @@ license: MIT
 tags: [eunomia, authorization, policies, mcp, security, governance]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Eunomia Policy Manager Skill

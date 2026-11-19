@@ -25,7 +25,7 @@ tags: [social, content, blog, research, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Blog Post Generator Workflow

@@ -482,7 +482,7 @@ python scripts/evaluation.py \
 ## Command-Line Options
 
 ```
-usage: evaluation.py [-h] [-t {stdio,sse,http}] [-m MODEL] [-c COMMAND]
+usage: evaluation.py [-h] [-t {stdio,sse,http}] -m MODEL [-c COMMAND]
                      [-a ARGS [ARGS ...]] [-e ENV [ENV ...]] [-u URL]
                      [-H HEADERS [HEADERS ...]] [-o OUTPUT]
                      eval_file
@@ -493,7 +493,7 @@ positional arguments:
 optional arguments:
   -h, --help            Show help message
   -t, --transport       Transport type: stdio, sse, or http (default: stdio)
-  -m, --model           Agent model to use (default: agent-3-7-sonnet-20250219)
+  -m, --model           Agent model to use (required; provider:model-name)
   -o, --output          Output file for report (default: print to stdout)
 
 stdio options:
@@ -604,7 +604,7 @@ If many evaluations fail:
 ### Timeout Issues
 
 If tasks are timing out:
-- Use a more capable model (e.g., `agent-3-7-sonnet-20250219`)
+- Use a more capable model (set with `-m provider:model-name`)
 - Check if tools are returning too much data
 - Verify pagination is working correctly
 - Consider simplifying complex questions

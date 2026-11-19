@@ -44,7 +44,7 @@ requires: [other-skill]
 license: MIT
 metadata:
   version: '1.0.0'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Sample Skill
 
@@ -62,7 +62,7 @@ def test_demote_moves_non_allowed_keys_without_clobbering_metadata():
 
     # Demoted keys land under metadata, existing metadata sub-keys untouched.
     assert data["metadata"]["version"] == "1.0.0"
-    assert data["metadata"]["author"] == "Genius"
+    assert data["metadata"]["author"] == "Knuckles-Team"
     assert data["metadata"]["domain"] == "finance"
     assert data["metadata"]["skill_type"] == "skill"
     assert data["metadata"]["tags"] == ["finance", "sample"]
