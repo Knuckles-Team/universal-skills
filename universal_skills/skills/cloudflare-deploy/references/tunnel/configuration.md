@@ -88,7 +88,7 @@ originRequest:
 ```yaml
 originRequest:
   noTLSVerify: true                      # Disable cert verification
-  originServerName: "app.internal"       # Override SNI
+  originServerName: "app.example.com"       # Override SNI
   caPool: /path/to/ca.pem                # Custom CA
 ```
 
@@ -96,7 +96,7 @@ originRequest:
 ```yaml
 originRequest:
   disableChunkedEncoding: true
-  httpHostHeader: "app.internal"
+  httpHostHeader: "app.example.com"
   http2Origin: true
 ```
 

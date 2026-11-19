@@ -23,7 +23,7 @@ tags: [social, content, podcast, editorial]
 concept: CONCEPT:SOCIAL-001
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Podcast Show Notes Workflow

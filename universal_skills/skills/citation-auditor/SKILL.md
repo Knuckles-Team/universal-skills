@@ -12,7 +12,7 @@ license: MIT
 tags: [research, citations, evidence, fact-checking, provenance]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Citation Auditor

@@ -12,7 +12,7 @@ license: MIT
 tags: [skills, scaffolding, validation, atomicity]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Skill Builder

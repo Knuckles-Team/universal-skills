@@ -193,7 +193,7 @@ graph_ingest(action="extract_jsonl", job_id="extract:7a1")
 ```text
 graph_write(action="add_node", node_id="corpus:home-lab-2026",
   node_type="PersonalCorpus",
-  properties='{"name": "home-lab-2026", "owner": "genius"}')
+  properties='{"name": "home-lab-2026", "owner": "example-owner"}')
 # -> "Node corpus:home-lab-2026 added."
 
 graph_write(action="add_edge", source_id="doc:note-eg-roadmap",

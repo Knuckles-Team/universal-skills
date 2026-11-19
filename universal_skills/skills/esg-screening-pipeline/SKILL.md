@@ -23,7 +23,7 @@ tags: [finance, esg, screening, ingestion]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # ESG Screening Pipeline Workflow

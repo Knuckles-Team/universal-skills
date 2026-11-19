@@ -9,7 +9,7 @@ license: MIT
 tags: [metrics, host, monitoring, system, telemetry]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 requires:
   - systems-manager-mcp
   - tunnel-manager-mcp

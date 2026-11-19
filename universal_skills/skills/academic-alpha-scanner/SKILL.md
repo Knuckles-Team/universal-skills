@@ -27,7 +27,7 @@ tags: [finance, research, alpha, evidence, backtesting]
 concept: CONCEPT:EE-011
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Academic Alpha Scanner Workflow

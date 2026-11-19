@@ -21,7 +21,7 @@ tags: [health, infrastructure, hardware, inventory]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Host Hardware Inventory Workflow

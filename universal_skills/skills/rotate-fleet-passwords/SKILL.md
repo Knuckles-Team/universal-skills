@@ -15,12 +15,12 @@ license: MIT
 tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation, openbao, vault, token]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Rotate Credentials
 
-Set a single **unified password** for an OS account (default `genius`) across an entire
+Set a single **unified password** for an OS account (`--user`, required) across an entire
 fleet over SSH, verify each host, and report OK/FAILED per host. Optionally rotate the
 **in-band iDRAC/BMC** user-2 password in the same pass. Built to never abort on a bad
 host — unreachable / sudo-prompting / crashing hosts are reported and skipped.
@@ -32,7 +32,7 @@ host — unreachable / sudo-prompting / crashing hosts are reported and skipped.
   (`secret-vault-manager`); a single host (`passwd` directly).
 
 ## Prerequisites
-- `--ssh-user` (default `genius`) has **passwordless sudo** + SSH-key access on every host.
+- `--ssh-user` (default: the current login user) has **passwordless sudo** + SSH-key access on every host.
 - `--idrac` additionally needs `ipmitool` + `/dev/ipmi0` on the target (in-band, no creds).
 
 ## Bundled resources
@@ -58,7 +58,7 @@ Confirm the host list and intended action — nothing is changed.
 ```bash
 scripts/rotate-credentials.sh --generate \
     --inventory ~/.config/arbora/inventory.yaml \
-    --user genius [--idrac] [--out ~/Workspace/inventory/.env]
+    --user <account> [--idrac] [--out ~/Workspace/inventory/.env]
 ```
 Each host: `chpasswd` the account → verify `passwd -S` shows `P` → (if `--idrac`) set BMC
 user-2 + `ipmitool user test`. Capture the printed password. With `--out`, the credential

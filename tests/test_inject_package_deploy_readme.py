@@ -83,7 +83,7 @@ def test_apply_additional_updates_only_existing_markers():
     )
     stale = (
         f"# Sample\n\n{generator.ADDITIONAL_BEGIN}\n"
-        "remote at http://sample-mcp.arpa/mcp\n"
+        "remote at http://example-mcp.arpa/mcp\n"
         f"{generator.ADDITIONAL_END}\n"
     )
 

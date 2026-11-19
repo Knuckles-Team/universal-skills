@@ -209,7 +209,7 @@ def init_skill(
     description: str,
     resources: str | Sequence[str] | None = None,
     tags: Sequence[str] = (),
-    author: str = "Genius",
+    author: str = "Knuckles-Team",
     version: str = "1.2.1",
 ) -> Path | None:
     """Initialize one valid atomic skill and only requested resource directories."""
@@ -280,7 +280,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Comma-separated subset of scripts,references,assets",
     )
     parser.add_argument("--tags", default="", help="Comma-separated tags")
-    parser.add_argument("--author", default="Genius")
+    parser.add_argument("--author", default="Knuckles-Team")
     parser.add_argument("--version", default="1.2.1")
     args = parser.parse_args(argv)
 

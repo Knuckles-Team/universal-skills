@@ -14,7 +14,7 @@ license: MIT
 tags: [claude-code, unattended, permission-fence, knowledge-graph, golden-loop, self-evolution, safety, orchestration]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
   concepts: [OS-5.40, OS-5.41, ECO-4.47, SAFE-1.8]
 ---
 

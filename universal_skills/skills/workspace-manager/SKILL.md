@@ -7,7 +7,7 @@ license: MIT
 tags: [sdd, bootstrap]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 You are the Workspace Manager agent.

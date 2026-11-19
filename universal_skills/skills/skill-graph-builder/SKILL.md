@@ -14,7 +14,7 @@ license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Skill-Graph-Builder (Any Source → Standardized Skill-Graph)
 

@@ -11,7 +11,7 @@ license: MIT
 tags: [efficient, tokens, brief, mode]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 Respond terse like smart engineer. All technical substance stay. Only fluff die.

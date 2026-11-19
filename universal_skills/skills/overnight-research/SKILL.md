@@ -15,7 +15,7 @@ cron:
   max_concurrent: 1
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:KG-2.6'
 ---
 # Overnight Research Workflow (Cron: 10PM ET daily)

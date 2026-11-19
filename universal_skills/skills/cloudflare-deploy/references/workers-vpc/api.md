@@ -26,7 +26,7 @@ interface SocketAddress {
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `hostname` | `string` | Target hostname or IP | `"db.internal.net"`, `"10.0.1.50"` |
+| `hostname` | `string` | Target hostname or IP | `"db.example.com.net"`, `"10.0.1.50"` |
 | `port` | `number` | TCP port number | `5432`, `443`, `22` |
 
 DNS names are resolved at connection time. IPv4, IPv6, and private IPs (10.x, 172.16.x, 192.168.x) supported.
@@ -126,7 +126,7 @@ Promise that resolves when socket is fully closed (both directions).
 Closes the socket gracefully, waiting for pending writes to complete.
 
 ```typescript
-const socket = connect({ hostname: "api.internal", port: 443 });
+const socket = connect({ hostname: "api.example.com", port: 443 });
 try {
   // Use socket
 } finally {
@@ -140,7 +140,7 @@ Upgrades connection to TLS. Only available when `secureTransport: "starttls"` wa
 
 ```typescript
 const socket = connect(
-  { hostname: "db.internal", port: 5432 },
+  { hostname: "db.example.com", port: 5432 },
   { secureTransport: "starttls" }
 );
 

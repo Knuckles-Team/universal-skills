@@ -15,7 +15,7 @@ tags:
 - backtesting
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Factor Hypothesis Extractor

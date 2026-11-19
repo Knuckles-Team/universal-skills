@@ -12,7 +12,7 @@ license: MIT
 tags: [mcp, development, protocol, tools, api, cli]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # MCP Builder

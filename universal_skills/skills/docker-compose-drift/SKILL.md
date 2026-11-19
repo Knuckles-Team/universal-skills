@@ -22,7 +22,7 @@ tags: [health, infrastructure, docker, drift]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Docker Compose Drift Workflow

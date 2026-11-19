@@ -12,7 +12,7 @@ license: MIT
 tags: [planning, design, ideation, requirements, architecture]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # Brainstorming & Design Workflow
 

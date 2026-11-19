@@ -25,7 +25,7 @@ const { text } = await generateText({
 const { text } = await generateText({
   model: gateway([
     openai('gpt-4o'),
-    ai_provider('agent-sonnet-4-5'),
+    ai_provider('<model-name>'),
     openai('qwen/qwen3.5-9b')
   ]),
   prompt: 'Complex task'
@@ -53,7 +53,7 @@ const client = new AI Provider({
 });
 
 // Unified API - switch providers via model name
-model: 'openai/gpt-4o'  // or 'ai_provider/agent-sonnet-4-5'
+model: 'openai/gpt-4o'  // or 'ai_provider/<model-name>'
 ```
 
 ## AI Provider SDK

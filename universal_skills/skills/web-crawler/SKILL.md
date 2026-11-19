@@ -11,7 +11,7 @@ tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledg
 license: MIT
 metadata:
   version: '1.6.2'
-  author: Repository Maintainers
+  author: Knuckles-Team
 ---
 # Web Crawler Skill
 

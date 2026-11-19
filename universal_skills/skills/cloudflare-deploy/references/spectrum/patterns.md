@@ -47,7 +47,7 @@ const mqttApp = await client.spectrum.apps.create({
   zone_id: 'your-zone-id',
   protocol: 'tcp/8883',  // Use 1883 for plain MQTT
   dns: { type: 'CNAME', name: 'mqtt.example.com' },
-  origin_direct: ['tcp://mqtt-broker.internal:8883'],
+  origin_direct: ['tcp://mqtt-broker.example.com:8883'],
   tls: 'full',  // Use 'off' for plain MQTT
 });
 ```
@@ -69,7 +69,7 @@ resource "cloudflare_spectrum_application" "smtp" {
     name = "smtp.example.com"
   }
 
-  origin_direct = ["tcp://mail-server.internal:587"]
+  origin_direct = ["tcp://mail-server.example.com:587"]
   tls           = "full"  # STARTTLS support
 }
 ```
@@ -139,7 +139,7 @@ resource "cloudflare_spectrum_application" "rdp" {
     name = "rdp.example.com"
   }
 
-  origin_direct = ["tcp://windows-server.internal:3389"]
+  origin_direct = ["tcp://windows-server.example.com:3389"]
   tls           = "off"       # RDP has own encryption
   ip_firewall   = true        # REQUIRED
 }

@@ -11,7 +11,7 @@ license: MIT
 tags: [mcp, installer, deployment, agent-tools, config]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 # MCP Installer Skill
 

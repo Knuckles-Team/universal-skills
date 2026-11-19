@@ -79,7 +79,7 @@ None. The constitution check passed.
 
 ## Build contract
 
-The repository pre-commit hooks must pass, including `check-atomicity`, `check-frontmatter-portability`, `skill-catalog-structure` and `security-sanitizer`. `uv run pytest tests/test_catalog_content.py tests/test_spec_row_delivery_skill.py` must pass.
+The repository pre-commit hooks must pass, including `check-atomicity`, `check-frontmatter-portability`, `skill-catalog-structure` and `secrets`. `uv run pytest tests/test_catalog_content.py tests/test_spec_row_delivery_skill.py` must pass.
 
 ## Production caller chain
 

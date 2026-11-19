@@ -16,7 +16,7 @@ license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
   concepts:
     - CONCEPT:KG-2.7
     - CONCEPT:ECO-4.6

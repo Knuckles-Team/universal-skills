@@ -2,14 +2,14 @@
 # rotate-credentials.sh — set ONE unified password for an OS account across many hosts
 # over SSH, verify each, and report. Optionally rotate the in-band iDRAC/BMC user too.
 #
-#   rotate-credentials.sh --hosts "10.0.0.10 10.0.0.11 ..." [options]
+#   rotate-credentials.sh --hosts "192.0.2.10 192.0.2.11 ..." [options]
 #   rotate-credentials.sh --inventory ~/.config/arbora/inventory.yaml [options]
 #
 # Options:
-#   --user NAME        OS account to set the password for (default: genius)
+#   --user NAME        OS account to set the password for (required)
 #   --password PW      use this password (otherwise --generate)
 #   --generate         generate a strong 20-char alnum password (printed once)
-#   --ssh-user NAME    SSH login user (default: genius); needs passwordless sudo on hosts
+#   --ssh-user NAME    SSH login user (default: the current login user); needs passwordless sudo on hosts
 #   --hosts "a b c"    space-separated host IPs/names
 #   --inventory FILE   pull hosts from an Ansible-style inventory (ansible_host: lines)
 #   --idrac            also set iDRAC/BMC user-2 password in-band (sudo ipmitool)
@@ -21,7 +21,7 @@
 # aborting the run. Verification uses `passwd -S` (status 'P' = usable password set).
 set -uo pipefail
 
-USER_NAME="genius"; PASSWORD=""; GENERATE=0; SSH_USER="genius"
+USER_NAME=""; PASSWORD=""; GENERATE=0; SSH_USER="$(id -un)"
 HOSTS=""; INVENTORY=""; IDRAC=0; OUT=""; DRY=0
 while [ $# -gt 0 ]; do case "$1" in
   --user) USER_NAME="$2"; shift 2;;
@@ -36,6 +36,7 @@ while [ $# -gt 0 ]; do case "$1" in
   *) echo "unknown arg: $1" >&2; exit 1;;
 esac; done
 
+[ -n "$USER_NAME" ] || { echo "--user NAME is required" >&2; exit 1; }
 if [ -n "$INVENTORY" ]; then
   HOSTS="$HOSTS $(grep -oE 'ansible_host:[[:space:]]*[0-9.]+' "$INVENTORY" 2>/dev/null | grep -oE '[0-9.]+')"
 fi

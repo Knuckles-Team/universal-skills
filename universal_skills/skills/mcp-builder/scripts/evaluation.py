@@ -264,7 +264,7 @@ TASK_TEMPLATE = """
 async def run_evaluation(
     eval_path: Path,
     connection: Any,
-    model: str = "agent-3-7-sonnet-20250219",
+    model: str,
 ) -> str:
     """Run evaluation with MCP server tools."""
     print("🚀 Starting Evaluation")
@@ -365,7 +365,7 @@ Examples:
   python evaluation.py -t sse -u https://example.com/mcp -H "Authorization: Bearer token" eval.xml
 
   # Evaluate an HTTP MCP server with custom model
-  python evaluation.py -t http -u https://example.com/mcp -m agent-3-5-sonnet-20241022 eval.xml
+  python evaluation.py -t http -u https://example.com/mcp -m <provider:model-name> eval.xml
         """,
     )
 
@@ -380,8 +380,8 @@ Examples:
     parser.add_argument(
         "-m",
         "--model",
-        default="agent-3-7-sonnet-20250219",
-        help="Agent model to use (default: agent-3-7-sonnet-20250219)",
+        required=True,
+        help="Agent model to use, as a model identifier pydantic-ai resolves (provider:model-name)",
     )
 
     stdio_group = parser.add_argument_group("stdio options")

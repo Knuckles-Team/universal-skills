@@ -13,7 +13,7 @@ license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
   version: '1.6.2'
-  author: Meristem Contributors
+  author: Knuckles-Team
 ---
 # Threat Model Source Code Repo
 

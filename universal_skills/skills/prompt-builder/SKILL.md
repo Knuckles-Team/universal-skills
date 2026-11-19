@@ -15,7 +15,7 @@ license: MIT
 tags: [prompts, system-prompt, agent, builder, structured-prompt, json]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Prompt Builder

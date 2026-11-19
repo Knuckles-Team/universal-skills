@@ -110,7 +110,7 @@ await Promise.race([socket.opened, timeout]);
 **Solution:** Always use try/finally:
 
 ```typescript
-const socket = connect({ hostname: "api.internal", port: 443 });
+const socket = connect({ hostname: "api.example.com", port: 443 });
 try {
   // Use socket
 } finally {

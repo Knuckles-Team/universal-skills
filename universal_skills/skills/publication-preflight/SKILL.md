@@ -12,7 +12,7 @@ license: MIT
 tags: [content, publishing, quality-gate, accessibility, rights]
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Publication Preflight

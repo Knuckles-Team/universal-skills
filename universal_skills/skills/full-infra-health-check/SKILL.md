@@ -25,7 +25,7 @@ tags: [health, infrastructure, monitoring]
 concept: CONCEPT:HEALTH-001
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # Full Infrastructure Health Check Workflow

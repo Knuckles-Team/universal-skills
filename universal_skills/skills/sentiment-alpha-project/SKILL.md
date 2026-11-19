@@ -11,7 +11,7 @@ team_config: quantitative_trading_team
 tags: [quant, sentiment, finbert, nlp, alpha, portfolio, workflow]
 metadata:
   version: '1.6.2'
-  author: meristem
+  author: Knuckles-Team
   concept: 'CONCEPT:KG-2.6'
 ---
 

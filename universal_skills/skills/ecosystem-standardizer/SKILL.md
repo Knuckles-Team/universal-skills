@@ -14,7 +14,7 @@ tags: ['standardization', 'drift', 'audit', 'ecosystem', 'onboarding', 'dev-work
 requires: ['repository-manager-mcp']
 metadata:
   version: '1.6.2'
-  author: Genius
+  author: Knuckles-Team
 ---
 
 # ecosystem-standardizer Workflow
