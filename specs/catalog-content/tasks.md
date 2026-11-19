@@ -19,6 +19,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T013 [US2] US-CONTENT-R002.8 Update to latest.
 - [ ] T014 [US2] US-CONTENT-R002.9 Spec-kit skills replace the retired ones.
 - [ ] T015 [US2] US-CONTENT-R002.10 Hook and installer wiring.
+- [x] T015a [US2] US-CONTENT-R002.11 Vendor the hyperframes skills without telemetry.
 - [ ] T016 [US3] US-CONTENT-R003 The code-enhancer skill follows the organization constitution.
 - [ ] T017 [US4] US-CONTENT-R004 The spec-row-delivery skill guides one delivery assignment run (rollup).
 - [ ] T018 [US4] US-CONTENT-R004.1 Content: the delivery procedure.
@@ -30,3 +31,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T024 [US5] US-CONTENT-R007.3 State the workstream path first in the handoff skill.
 - [x] T025 [US5] US-CONTENT-R007.4 Stop the installer from wiring bundle profiles.
 - [ ] T026 [US5] US-CONTENT-R007 Catalog content reaches coding harnesses through the arbora bundle.
+- [x] T027 [US2] US-CONTENT-R006 The codebase-untangle skill.

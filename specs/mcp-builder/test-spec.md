@@ -4,7 +4,7 @@ Governing spec: [spec.md](spec.md).
 
 | Test ID | Requirement | Proving test | Expected observation |
 |---|---|---|---|
-| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Exact 28-file connector-owned tree holds on a generated connector. |
+| T-001 | `US-MCP-BUILDER-R011.1` | `tests/test_mcp_builder_connector_scaffold.py::test_scaffold_emits_exactly_the_minimal_tree` | Exact 30-file connector-owned tree holds on a generated connector. |
 | T-002 | `US-MCP-BUILDER-R011.2` | `tests/test_mcp_builder_connector_scaffold.py::test_generation_is_deterministic` | Deterministic output holds on a generated connector. |
 | T-003 | `US-MCP-BUILDER-R011.3` | `tests/test_mcp_builder_connector_scaffold.py::test_identity_and_version_live_in_pyproject_only` | Identity and version in pyproject only holds on a generated connector. |
 | T-004 | `US-MCP-BUILDER-R011.4` | `tests/test_mcp_builder_connector_scaffold.py::test_workflows_call_the_shared_pipelines_for_pypi_and_docker` | Shared workflows for release and PR holds on a generated connector. |
@@ -25,3 +25,9 @@ Governing spec: [spec.md](spec.md).
 | T-019 | `US-MCP-BUILDER-R013.1` | `tests/test_mcp_builder_connector_scaffold.py::test_deploy_bundle_is_emitted_beside_the_repo` | Bundle layout. |
 | T-020 | `US-MCP-BUILDER-R013.2` | `tests/test_mcp_builder_connector_scaffold.py::test_deploy_bundle_holds_no_secret_value_and_installs_the_release` | No secret value and release-only image. |
 | T-021 | `US-MCP-BUILDER-R013.3` | `tests/test_mcp_builder_connector_scaffold.py::test_deploy_profile_supplies_site_values` | Site values from a deploy profile. |
+| T-022 | `US-MCP-BUILDER-R011.15` | `tests/test_mcp_builder_connector_scaffold.py::test_contracts_links_and_locations_name_generated_surface` | Every contract step, link and location names a generated tool, prompt, skill or class; refusals and result fields are present. |
+| T-023 | `US-MCP-BUILDER-R011.16` | `tests/test_mcp_builder_connector_scaffold.py::test_generated_connector_passes_the_pipelines_surface_gate` | The strict surface gate returns 0 with a complete record. |
+| T-024 | `US-MCP-BUILDER-R011.16` | `tests/test_mcp_builder_connector_scaffold.py::test_generated_connector_passes_the_sdk_surface_self_check` | The SDK surface self-check exits 0 on the installed package. |
+| T-025 | `US-MCP-BUILDER-R011.17` | `tests/test_mcp_builder_connector_scaffold.py::test_complete_restores_missing_surface_and_is_idempotent` | Missing prompts, skills and contracts are restored; a second run changes nothing. |
+| T-026 | `US-MCP-BUILDER-R011.17` | `tests/test_mcp_builder_connector_scaffold.py::test_complete_never_overwrites_and_suggests_import_removal` | Existing files keep their bytes; an import of the core ontology yields a suggestion. |
+| T-027 | `US-MCP-BUILDER-R011.18` | `tests/test_mcp_builder_connector_scaffold.py::test_generated_prompts_are_complete_agent_definitions` | Operator and business-role prompts hold the agent definition and match the contracts, links and roles. |

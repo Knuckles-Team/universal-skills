@@ -15,6 +15,6 @@ connector-specific files. Project-owned files stay unchanged on rerun.
 | `.pre-commit-config.yaml` | Pipelines hook reference, including the aggregate connector gate, copied from the shared connector template. Hook implementations and policy remain in pipelines. |
 | `.github/spec-dashboard.json`, `.github/workflows/pages.yml`, `pages/index.md` | Connector-owned dashboard source, Pages caller and minimal source page. The reusable Pages workflow and dashboard renderer remain in pipelines; `workflow_dispatch` is retained for an explicit source-bound publish. The caller leaves `shared_theme_enabled` off until the canonical pipelines theme generator has produced and reviewed the required content-tree assets. |
 | `.github/workflows/pipeline.yml`, `.github/workflows/connector-pr.yml` | Pipelines release and PR callers. `connector: true` and `render_connector: true` select the shared connector generation paths; the jobs themselves remain in pipelines. |
-| `<pkg>/skills/<fleet>-development/SKILL.md` | Connector-owned repository development contract: rapid delivery, setup/gates, connector checks and delivery discipline. |
+| `<pkg>/skills/<fleet>-development/SKILL.md` | Connector-owned repository development contract: delivery contract, setup/gates, connector checks and delivery discipline. |
 | Server, health route, transports, version lookup, conformance tests | SDK. |
 | Version bump, `docker/*`, shapes, attestation, sanitizer, codespell list | Pipelines, rendered or generated at build or release. |

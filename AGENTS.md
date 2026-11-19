@@ -296,6 +296,7 @@ judgment; the bias here is correctness over speed.
   reformat, or "improve" working code adjacent to your change; match the existing style
   even where you'd do it differently. Remove only the imports/symbols your own change
   orphaned; if you spot unrelated dead code, mention it rather than deleting it inline.
+  Structural refactors follow the `codebase-untangle` skill.
   *Exception — the Quality Bar below:* lint/format/type errors the pre-commit gate flags
   get fixed regardless of who introduced them. In short: **surgical on behavior, clean on
   lint.**

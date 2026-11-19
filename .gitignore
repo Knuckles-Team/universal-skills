@@ -228,3 +228,8 @@ trace.txt
 
 # Spec status is computed at read time (pipelines-hook spec-status --write), never committed.
 specs/*/status.json
+
+# Vendored upstream skills and their snapshots keep their lib/ folders.
+!universal_skills/upstream/**/lib/
+!universal_skills/skills/*/scripts/lib/
+!universal_skills/skills/*/audio/scripts/lib/

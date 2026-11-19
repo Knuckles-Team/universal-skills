@@ -25,3 +25,7 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] T021 US-MCP-BUILDER-R013.1 Bundle layout.
 - [ ] T022 US-MCP-BUILDER-R013.2 No secret value and release-only image.
 - [ ] T023 US-MCP-BUILDER-R013.3 Site values from a deploy profile.
+- [ ] T024 US-MCP-BUILDER-R011.15 The scaffold declares tool-use contracts, surface links and data locations.
+- [ ] T025 US-MCP-BUILDER-R011.16 The generated connector passes the surface gate and the SDK surface self-check.
+- [ ] T026 US-MCP-BUILDER-R011.17 Complete an existing connector.
+- [ ] T027 US-MCP-BUILDER-R011.18 Generated prompts are complete agent definitions.

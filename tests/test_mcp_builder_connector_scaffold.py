@@ -3,7 +3,7 @@
 The generated package is installed (editable, no dependencies) into a throwaway
 virtual environment that shares this interpreter's packages, so the SDK builds,
 serves and tests it exactly as it would a released connector. Requires
-scion-sdk>=0.11.0, `uv` and the pipelines hooks.
+scion-sdk>=0.11.2, `uv` and the pipelines hooks.
 """
 
 from __future__ import annotations
@@ -141,7 +141,7 @@ def test_identity_and_version_live_in_pyproject_only(connector):
         FLEET: "demo_mcp:connector"
     }
     assert project["scripts"] == {FLEET: "scion_sdk.cli:serve"}
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.0,<0.12"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.2,<0.12"]
     for path, text in _files(connector).items():
         if path != "pyproject.toml" and path.endswith(".py"):
             assert "__version__" not in text.decode(), path
@@ -192,7 +192,7 @@ def test_standard_connector_delivery_contract_is_scaffolded(connector):
 
     development = (connector / "demo_mcp/skills/demo-mcp-development/SKILL.md").read_text()
     for heading in (
-        "## Rapid delivery: the 5-minute contract",
+        "## Delivery contract",
         "## Setup and gates",
         "## Connector-specific checks",
         "## Delivery discipline",
@@ -288,7 +288,12 @@ print(json.dumps({
 
 @pytest.fixture(scope="module")
 def installed(connector, tmp_path_factory):
-    """A throwaway environment that adds this interpreter's packages to its path, with the connector installed."""
+    """A throwaway environment with the connector installed with its own declared dependencies.
+
+    The generated package pins the SDK it targets, so the SDK, its conformance plugin and its
+    checks come from that pin and not from the SDK this repository itself is locked to. This
+    interpreter's packages stay on the path behind the environment's own for the test tools.
+    """
     pytest.importorskip("scion_sdk.testing.plugin")  # 0.5.0
     pytest.importorskip("scion_sdk.auth.declare")  # 0.5.1
     uv = shutil.which("uv")
@@ -300,7 +305,7 @@ def installed(connector, tmp_path_factory):
     site = Path(subprocess.check_output([str(python), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"], text=True).strip())
     (site / "shared.pth").write_text(sysconfig.get_path("purelib") + "\n", encoding="utf-8")
     subprocess.run(
-        [uv, "pip", "install", "--python", str(python), "--no-deps", "-q", "-e", str(connector)],
+        [uv, "pip", "install", "--python", str(python), "-q", "-e", str(connector)],
         check=True,
         capture_output=True,
     )
@@ -419,7 +424,7 @@ def test_pipelines_connector_gates_pass(connector, installed, tmp_path):
 
 
 # The medulla revision whose ontology the graph check composes. Move it deliberately.
-EG_REF = "4a1780082fbe6bf7756718316e4997ec23712eb8"
+EG_REF = "5586273bd4e8247928742be4ca2b6baff75436d4"
 EG_URL = os.environ.get("MEDULLA_URL", "https://github.com/Knuckles-Team/medulla")
 
 
@@ -433,7 +438,7 @@ def _core_ontology(base: Path) -> Path:
     steps = (
         ["init", "-q", "-b", "main"],
         ["remote", "add", "origin", EG_URL],
-        ["sparse-checkout", "set", "crates/eg-core/ontology"],
+        ["sparse-checkout", "set", "crates/medulla-core/ontology"],
         ["fetch", "-q", "--depth", "1", "--filter=blob:none", "origin", EG_REF],
         ["checkout", "-q", "-B", "main", "FETCH_HEAD"],
     )
@@ -475,6 +480,177 @@ def test_generated_package_passes_the_sdk_conformance_plugin(installed, connecto
     assert not list(connector.rglob("conftest.py"))
 
 
+def _call_args(call: ast.Call, fields: tuple[str, ...]) -> dict[str, ast.AST]:
+    """The arguments of one declaration call by field name, positional or keyword."""
+    args = dict(zip(fields, call.args, strict=False))
+    args.update({k.arg: k.value for k in call.keywords if k.arg})
+    return args
+
+
+def _strings(node: ast.AST | None) -> tuple[str, ...]:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return (node.value,)
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return tuple(v for e in node.elts for v in _strings(e))
+    return ()
+
+
+def _declarations(connector: Path, rel: str = "demo_mcp/connector_contracts.py") -> dict[str, list[dict[str, ast.AST]]]:
+    fields = {
+        "ToolUseContract": ("task", "steps", "description"),
+        "ToolStep": ("tool", "params", "result", "refusals"),
+        "Refusal": ("code", "when"),
+        "SurfaceLink": ("task", "tools", "prompts", "skills"),
+        "DataLocation": ("name", "holds", "instance", "read_tool", "store", "route_param", "federation_key"),
+        "BusinessRole": ("name", "tasks", "description"),
+    }
+    tree = ast.parse((connector / rel).read_text(encoding="utf-8"))
+    found: dict[str, list[dict[str, ast.AST]]] = {name: [] for name in fields}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(node.func, "id", None) in fields:
+            found[node.func.id].append(_call_args(node, fields[node.func.id]))
+    return found
+
+
+# spec: US-MCP-BUILDER-R011.15
+def test_contracts_links_and_locations_name_generated_surface(connector):
+    api = ast.parse((connector / "demo_mcp/api_client.py").read_text(encoding="utf-8"))
+    methods = {
+        f.name for c in api.body if isinstance(c, ast.ClassDef) and c.name == "Api"
+        for f in c.body if isinstance(f, ast.FunctionDef) and not f.name.startswith("_")
+    }
+    tools = {f"demo_{m}" for m in methods}
+    prompts = {p.stem for p in (connector / "demo_mcp/prompts").glob("*.json")}
+    skills = {
+        p.parent.name for p in (connector / "demo_mcp/skills").glob("*/SKILL.md")
+        if not p.parent.name.endswith("-development")
+    }
+    ontology = (connector / "demo_mcp/ontology/demo.ttl").read_text(encoding="utf-8")
+    found = _declarations(connector)
+    assert found["ToolUseContract"] and found["Refusal"]
+    steps = [_strings(s["tool"])[0] for s in found["ToolStep"]]
+    assert list(dict.fromkeys(steps)) == ["demo_get_item", "demo_create_item", "demo_update_item", "demo_delete_item"]
+    assert set(steps) == tools
+    assert all(_strings(s.get("result")) for s in found["ToolStep"])
+    assert all(_strings(r["code"]) for r in found["Refusal"])
+    links = found["SurfaceLink"]
+    assert set().union(*(set(_strings(link["tools"])) for link in links)) == tools
+    assert {p for link in links for p in _strings(link["prompts"])} == prompts
+    assert {k for link in links for k in _strings(link["skills"])} == skills
+    assert {_strings(link["task"]) for link in links} == {_strings(c["task"]) for c in found["ToolUseContract"]}
+    (location,) = found["DataLocation"]
+    assert _strings(location["read_tool"])[0] in tools
+    assert _strings(location["instance"]) == ("DEMO_BASE_URL",)
+    for held in _strings(location["holds"]):
+        assert f":{held} a owl:Class" in ontology
+
+
+def _assert_prompts_are_agent_definitions(root: Path, rel: str = "demo_mcp/connector_contracts.py") -> None:
+    found = _declarations(root, rel)
+    step_tools = {_strings(s["tool"])[0] for s in found["ToolStep"]}
+    skills = {p.parent.name for p in (root / "demo_mcp/skills").glob("*/SKILL.md")}
+    locations = {_strings(loc["name"])[0] for loc in found["DataLocation"]}
+    roles = {_strings(r["name"])[0] for r in found["BusinessRole"]}
+    links: dict[str, tuple[set[str], set[str]]] = {}
+    for link in found["SurfaceLink"]:
+        for p in _strings(link["prompts"]):
+            tools, skills_of = links.setdefault(p, (set(), set()))
+            tools.update(_strings(link["tools"]))
+            skills_of.update(_strings(link["skills"]))
+    kinds = set()
+    for path in sorted((root / "demo_mcp/prompts").glob("*.json")):
+        document = json.loads(path.read_text(encoding="utf-8"))
+        agent = document["agent"]
+        kinds.add(agent["kind"])
+        assert document["title"] and document["identity"]["role"] and document["identity"]["goal"]
+        directive = document["instructions"]["core_directive"]
+        for name in agent["tools"] + agent["skills"]:
+            assert name in directive, (path.name, name)
+        assert set(agent["tools"]) <= step_tools, path.name
+        assert set(agent["skills"]) <= skills, path.name
+        assert set(agent["data"]["reads"]) | set(agent["data"]["writes"]) <= locations, path.name
+        assert agent["guardrails"]["never"], path.name
+        assert {t for t in agent["tools"] if "_delete" in t} <= set(agent["guardrails"]["approval_required"])
+        assert agent["outputs"], path.name
+        assert links[path.stem] == (set(agent["tools"]), set(agent["skills"])), path.name
+        if agent["kind"] == "business-role":
+            assert agent["business_role"] in roles, path.name
+    assert kinds == {"operator", "business-role"}
+
+
+# spec: US-MCP-BUILDER-R011.18
+def test_generated_prompts_are_complete_agent_definitions(connector):
+    _assert_prompts_are_agent_definitions(connector)
+
+
+def _complete(repo: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "complete", str(repo), "--static"], capture_output=True, text=True, check=True
+    )
+
+
+# spec: US-MCP-BUILDER-R011.17
+def test_complete_restores_missing_surface_and_is_idempotent(tmp_path):
+    repo = _generate(tmp_path)
+    for gone in ("demo_mcp/prompts", "demo_mcp/skills"):
+        shutil.rmtree(repo / gone)
+    (repo / "demo_mcp/connector_contracts.py").unlink()
+    kept = (repo / "demo_mcp/ontology/demo.ttl").read_bytes()
+    first = _complete(repo).stdout.splitlines()
+    assert first == sorted(line for line in first if line.startswith("added: ")) + [
+        line for line in first if not line.startswith("added: ")
+    ]
+    assert "added: demo_mcp/connector_contracts.py" in first
+    assert "added: demo_mcp/skills/demo-operations/SKILL.md" in first
+    assert "added: demo_mcp/prompts/demo-operator.json" in first
+    assert any(line.startswith("needs a human: ") for line in first)
+    assert (repo / "demo_mcp/ontology/demo.ttl").read_bytes() == kept
+    before = _files(repo)
+    assert _complete(repo).stdout.strip() == "complete: nothing to add"
+    assert _files(repo) == before
+    _assert_prompts_are_agent_definitions(repo)
+
+
+# spec: US-MCP-BUILDER-R011.17
+def test_complete_never_overwrites_and_suggests_import_removal(tmp_path):
+    repo = _generate(tmp_path)
+    ontology = repo / "demo_mcp/ontology/demo.ttl"
+    ontology.write_text(ontology.read_text() + "\n<urn:x> owl:imports <https://knuckles-team.github.io/ontology/core> .\n")
+    (repo / "demo_mcp/connector_contracts.py").unlink()
+    before = {k: v for k, v in _files(repo).items()}
+    report = _complete(repo).stdout.splitlines()
+    assert report[0] == "added: demo_mcp/connector_contracts.py"
+    assert any(line.startswith("suggest: remove owl:imports of the core ontology at demo_mcp/ontology/demo.ttl:") for line in report)
+    after = _files(repo)
+    for path, body in before.items():
+        assert after[path] == body, path
+
+
+# spec: US-MCP-BUILDER-R011.16
+def test_generated_connector_passes_the_sdk_surface_self_check(installed, connector):
+    run = subprocess.run(
+        [str(installed), "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "-k", "surface_complete"],
+        cwd=connector,
+        capture_output=True,
+        text=True,
+    )
+    assert run.returncode == 0, run.stdout + run.stderr
+    assert re.search(r"^PASSED \S*connector_conformance::surface_complete$", run.stdout, re.M), run.stdout
+
+
+# spec: US-MCP-BUILDER-R011.16
+def test_generated_connector_passes_the_pipelines_surface_gate(connector):
+    pytest.importorskip("pipelines_hooks")
+    run = subprocess.run(
+        [sys.executable, "-m", "pipelines_hooks.cli", "connector-surface-audit", "--root", str(connector), "--strict"],
+        capture_output=True,
+        text=True,
+    )
+    assert run.returncode == 0, run.stdout + run.stderr
+    (record,) = json.loads(run.stdout)["connectors"]
+    assert record["complete"], record["gaps"]
+
+
 # spec: US-MCP-BUILDER-R011.12
 def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
     auth = (connector / "demo_mcp/auth.py").read_text()
@@ -490,7 +666,7 @@ def test_client_is_one_sdk_auth_declaration_with_no_own_transport(connector):
 # spec: US-MCP-BUILDER-R011.13
 def test_optional_dependencies_are_sdk_extras_only(connector):
     project = tomllib.loads((connector / "pyproject.toml").read_text())["project"]
-    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.0,<0.12"]
+    assert project["dependencies"] == ["scion-sdk[mcp]>=0.11.2,<0.12"]
     assert "optional-dependencies" not in project
     assert set(project["entry-points"]) == {"scion_sdk.connector"}
 
