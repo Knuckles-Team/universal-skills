@@ -1,4 +1,4 @@
-# Epistemic-graph architecture reference
+# Medulla architecture reference
 
 Deep reference for `medulla-development`: the 48-crate component
 inventory grouped by layer with what each crate OWNS, the specialty sub-DAGs,

@@ -81,7 +81,7 @@ def test_generated_client_has_governed_shape(tmp_path):
     _materialize(FIXTURES / "lgtm-mcp" / "before", work)
     sdk_centralize.run(work, apply=True, sdk_version="0.3.12")
     text = (work / "lgtm_mcp/api/api_client_base.py").read_text()
-    assert "requests" not in text and "create_http_client" in text and "BearerAuth(token)" in text
+    assert "requests" not in text and "build_http_client" in text and "BearerAuth(token)" in text
     spec = (work / "specs/sdk-centralization/requirements.md").read_text()
     assert "CONN-LGTM-MCP-SDK-CENTRALIZATION-R001" in spec and "SCION-CENTRALIZED-CAPABILITIES-R001" in spec
     assert not filecmp.cmp(work / "pyproject.toml", FIXTURES / "lgtm-mcp/before/pyproject.toml", shallow=False)

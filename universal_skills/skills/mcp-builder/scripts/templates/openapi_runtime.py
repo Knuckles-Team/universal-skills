@@ -9,7 +9,7 @@ from typing import Any
 
 import regex
 from scion_sdk.config import setting
-from scion_sdk.http.client import create_http_client
+from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.http.retry import RetryPolicy
 from scion_sdk.mcp.concurrency import run_blocking
@@ -82,7 +82,7 @@ class OpenApiClientBase:
             credential_scheme=credential_scheme,
             allow_plaintext=allow_plaintext,
         )
-        self.session = create_http_client(
+        self.session = build_http_client(
             HttpClientOptions(
                 base_url=base_url,
                 auth=auth,

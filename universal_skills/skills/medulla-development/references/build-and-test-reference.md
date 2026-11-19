@@ -1,4 +1,4 @@
-# Epistemic-graph build and test reference
+# Medulla build and test reference
 
 Deep reference for `medulla-development`: the disk budget a build in
 this workspace actually needs and why worktree *placement* is the lever, the

@@ -360,11 +360,11 @@ def _hook_violations(root: Path) -> list[str]:
     return out
 
 
-PARENT_ONTOLOGY = "http://knuckles.team/kg"
+PARENT_ONTOLOGY = "https://knuckles-team.github.io/ontology/core"
 
 
 def _ontology_violations(package_root: Path) -> list[str]:
-    """US-MCP-BUILDER-R010: the domain ontology links to the parent and has no TODO."""
+    """US-MCP-BUILDER-R010: the domain ontology rolls up to the parent without importing it and has no TODO."""
     out = []
     for path in sorted((package_root / "ontology").glob("*.ttl")):
         text = path.read_text(encoding="utf-8")
@@ -372,9 +372,9 @@ def _ontology_violations(package_root: Path) -> list[str]:
             continue
         name = f"{package_root.name}/ontology/{path.name}"
         code = re.sub(r"(?m)^\s*#.*$", "", text)
-        if not re.search(rf"owl:imports\s+<{re.escape(PARENT_ONTOLOGY)}>", code):
+        if re.search(rf"owl:imports\s+<{re.escape(PARENT_ONTOLOGY)}[#>]", code):
             out.append(
-                f"{name}: must declare owl:imports <{PARENT_ONTOLOGY}> [US-MCP-BUILDER-R010]"
+                f"{name}: must not owl:import <{PARENT_ONTOLOGY}>; extend its classes with rdfs:subClassOf [US-MCP-BUILDER-R010]"
             )
         if "TODO" in text:
             out.append(f"{name}: contains a TODO [US-MCP-BUILDER-R010]")

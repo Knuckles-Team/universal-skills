@@ -96,7 +96,7 @@ jobs:
           # pipelines-hooks pins pydantic==2.13.5 while scion-sdk needs >=2.14.1.
           echo "pydantic>=2.14.1" > /tmp/scaffold-overrides.txt
           uv pip install --refresh --python /tmp/scaffold-venv/bin/python --override /tmp/scaffold-overrides.txt pytest rdflib pyyaml codespell \
-            "scion-sdk[mcp]>=0.11.1,<0.12" \
+            "scion-sdk[mcp]>=0.11.2,<0.12" \
             "pipelines-hooks @ git+https://github.com/Knuckles-Team/pipelines@main"
           # The SDK pytest plugin resolves this repository's own connector declaration.
           uv pip install --python /tmp/scaffold-venv/bin/python --no-deps -e .
@@ -124,7 +124,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/scion-sdk
-          ref: 51685cb22a97974bda63ab525d0340f376927163
+          ref: e135978815f9c92e25accbc3ea62030d8e24e459
           path: .ci/scion-sdk
           persist-credentials: false
       - name: Check out shared Pages contract
@@ -165,7 +165,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: Knuckles-Team/scion-sdk
-          ref: 51685cb22a97974bda63ab525d0340f376927163
+          ref: e135978815f9c92e25accbc3ea62030d8e24e459
           path: .ci/scion-sdk
           persist-credentials: false
       - name: Bootstrap reviewed SDK without native builds

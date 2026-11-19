@@ -36,7 +36,7 @@ receipt-checked progress. Do not call retired native_ingest or import an embedde
 graph engine.
 
 The manifest declares emitted entity types and relationships. SDK manifest models
-and Epistemic Graph generated schemas are authoritative: use their current
+and Medulla generated schemas are authoritative: use their current
 generation/validation tools and check freshness. Do not copy request models or
 claim undeclared graph capabilities.
 

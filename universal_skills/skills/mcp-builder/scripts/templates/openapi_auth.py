@@ -6,7 +6,7 @@ import httpx
 from scion_sdk.auth.delegation import DelegatedTokenAuth, DelegationSettings
 from scion_sdk.auth.static import api_key_auth, bearer_auth
 from scion_sdk.config import load_config, setting
-from scion_sdk.http.client import create_http_client
+from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
 
@@ -25,7 +25,7 @@ def _bearer_scheme(definition):
 def _delegated_auth(delegation, resources):
     token_tls = resolve_tls_profile("oidc")
     resources.callback(token_tls.cleanup)
-    token_client = create_http_client(
+    token_client = build_http_client(
         HttpClientOptions(base_url=delegation.token_endpoint, tls=token_tls)
     )
     resources.callback(token_client.close)

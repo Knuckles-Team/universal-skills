@@ -53,7 +53,7 @@ Install an `mcp_config.json` file into a target tool's configuration directory. 
 # Install into Windsurf
 python scripts/install.py --config ./my_mcp_config.json --tool windsurf
 
-# Install into Antigravity (Agent Utilities XDG dir)
+# Install into Antigravity (Meristem XDG dir)
 python scripts/install.py --config ./mcp_config.json --tool antigravity
 
 # Install into Claude Code

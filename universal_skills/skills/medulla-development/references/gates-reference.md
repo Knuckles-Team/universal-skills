@@ -1,4 +1,4 @@
-# Epistemic-graph gate reference
+# Medulla gate reference
 
 Deep reference for `medulla-development`: every architecture-,
 contract- and hygiene-enforcing hook `.pre-commit-config.yaml` declares, the

@@ -9,7 +9,7 @@ license: MIT
 tags: [workflows, agents, orchestration, docs]
 metadata:
   version: '1.6.0'
-  author: Agent Utilities Contributors
+  author: Meristem Contributors
 ---
 # Subagent-Driven Development
 
