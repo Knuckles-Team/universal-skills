@@ -635,7 +635,7 @@ def test_generated_connector_passes_the_sdk_surface_self_check(installed, connec
         text=True,
     )
     assert run.returncode == 0, run.stdout + run.stderr
-    assert "PASSED connector_conformance::surface_complete" in run.stdout.replace("pyproject.toml::", ""), run.stdout
+    assert re.search(r"^PASSED \S*connector_conformance::surface_complete$", run.stdout, re.M), run.stdout
 
 
 # spec: US-MCP-BUILDER-R011.16

@@ -11,13 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
-@pytest.fixture(autouse=True)
-def _no_ambient_git_env(monkeypatch):
-    """Run git in each fixture repository, not in the repository a git hook points at."""
-    for name in [k for k in os.environ if k.startswith("GIT_")]:
-        monkeypatch.delenv(name)
-
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_file_location(
     "sync_upstream_skills", ROOT / "scripts" / "sync_upstream_skills.py"

@@ -60,7 +60,7 @@ only generator.
       example_mcp/api_client.py      class Api: one public method per API operation
       example_mcp/auth.py            client_factory(url_env=, auth=, tls=, delegation=)
       example_mcp/connector_sources.py     SOURCES = (source_meta(tool=...), ...)
-      example_mcp/connector_contracts.py   CONTRACTS, LINKS, LOCATIONS (tool-use contracts, links, data locations)
+      example_mcp/connector_contracts.py   CONTRACTS, LINKS, LOCATIONS, ROLES (tool-use contracts, links, data locations, roles)
       example_mcp/prompts/*.json     fastmcp prompts (title, tags, meta)
       example_mcp/skills/<name>/SKILL.md       one connector operation skill
       example_mcp/skills/<fleet>-development/SKILL.md  repository development contract

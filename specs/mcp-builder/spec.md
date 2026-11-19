@@ -51,7 +51,7 @@ A maintainer generates or completes a connector and gets tool-use contracts, lin
 ## Edge Cases
 
 - `complete` never overwrites a file; an `owl:imports` of the core ontology yields a printed suggestion only.
-- A wrapped connector writes no contracts file until a read is mapped.
+- A wrapped connector declares its contracts over the registry tools it always serves.
 
 - A fleet name with a trailing `-mcp` or mixed case maps to one package and display name.
 - An existing output directory with some generated files keeps those files and writes only the missing ones.
@@ -59,7 +59,7 @@ A maintainer generates or completes a connector and gets tool-use contracts, lin
 
 ## Assumptions
 
-- The SDK floor is 0.9.0 and the generated dependency stays below 0.10.
+- The SDK floor is 0.11.1 and the generated dependency stays below 0.12.
 - The pipelines gates and the core ontology revision are fetched by the tests and need no local checkout.
 - Existing connectors are migrated by their own repositories, not by this scaffold.
 

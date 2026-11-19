@@ -120,7 +120,7 @@ Entry point: an operator or agent follows universal_skills/skills/mcp-builder/SK
 
 ## Connector surface contracts (US-MCP-BUILDER-R011.15 to R011.18)
 
-`tree` writes `<pkg>/connector_contracts.py` with literal `CONTRACTS`, `LINKS`, `LOCATIONS` and `ROLES` declarations. Literals let the pipelines gate read them without an import. The prompts are agent definitions: an operator and an item steward, each linked to exactly its tools and skills. `scaffold_complete.py` completes an existing connector. It adds only missing files, derives tool domains from the API client classes, and prints what still needs a human. The development skill has no link, because its name holds the fleet name and R011.3 keeps that name in `pyproject.toml` only.
+`tree` writes `<pkg>/connector_contracts.py` with literal `CONTRACTS`, `LINKS`, `LOCATIONS` and `ROLES` declarations. Literals let the pipelines gate read them without an import. The prompts are agent definitions: an operator and a steward; the links that name a prompt together name exactly its tools and skills, and each directive is derived from its agent definition. `scaffold_complete.py` completes an existing connector. It adds only missing files, derives tool domains from the API client classes, and prints what still needs a human. The development skill has no link, because its name holds the fleet name and R011.3 keeps that name in `pyproject.toml` only.
 
 ## Whole project from one command (US-MCP-BUILDER-R012, R013)
 
