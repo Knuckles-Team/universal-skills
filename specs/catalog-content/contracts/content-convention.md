@@ -7,6 +7,7 @@ Consumer: universal-skills US-CONTENT-R001
 
 - Declaration: the entry point `scion_sdk.connector = "universal_skills"`.
 - Served resource: one `skill://<name>/SKILL.md` per folder `universal_skills/skills/<name>/`.
+- Served schema: `ontology://universal-skills/universal-skills.ttl` and `shapes://universal-skills/universal-skills.ttl` from `universal_skills/ontology/` (US-CONTENT-R001.4).
 
 ## Refusal codes
 
@@ -21,3 +22,4 @@ Consumer: universal-skills US-CONTENT-R001
 ## Test vectors
 
 - `tests/test_catalog_content.py`.
+- `tests/test_connector_pack_attach.py`.

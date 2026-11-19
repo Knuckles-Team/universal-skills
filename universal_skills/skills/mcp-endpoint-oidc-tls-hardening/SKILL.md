@@ -35,7 +35,7 @@ requires:
   - tunnel-manager-mcp
   - container-manager-mcp
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # MCP endpoint OIDC and TLS hardening

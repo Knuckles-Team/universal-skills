@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Rebuild any video file as an editable HyperFrames project - motion graphics, talking heads, live action or AI-generated footage - checked against the original frame by frame. Use to reverse, recreate, remake, replicate or copy a video, or 「复刻这个视频」「照着这个视频做一个」.
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).

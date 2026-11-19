@@ -15,7 +15,7 @@ requires:
 - mcp_risk
 - mcp_orders
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 
 # polymarket-liquidity-mm Workflow

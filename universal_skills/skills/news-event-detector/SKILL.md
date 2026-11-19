@@ -21,7 +21,7 @@ team_config:
 tags: [finance, news, research]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: Genius
 ---
 

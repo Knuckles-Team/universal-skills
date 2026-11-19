@@ -6,7 +6,7 @@ description: "Perform a non-destructive cross-artifact consistency and quality a
 license: MIT
 tags: [spec-kit, sdd, upstream]
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: GitHub Spec Kit contributors
   upstream: https://github.com/github/spec-kit
 ---

@@ -62,7 +62,7 @@ A developer installs the arbora bundle into a coding harness. The catalog skills
 
 ## Requirements
 
-- **FR-001**: The package must declare one content-only entry point and serve every skill. Rows: `US-CONTENT-R001`.
+- **FR-001**: The package must declare one content-only entry point, serve every skill, and serve an ontology and SHACL shapes the engine attaches. Rows: `US-CONTENT-R001`, `US-CONTENT-R001.4`.
 - **FR-002**: The catalog must vendor skills from pinned upstream sources with provenance. Rows: `US-CONTENT-R002`.
 - **FR-003**: The `code-enhancer` skill must follow the organization constitution. Rows: `US-CONTENT-R003`.
 - **FR-005**: The catalog must hold the door skill, a workstream handoff procedure and portable frontmatter for the arbora bundle. Rows: `US-CONTENT-R007`, `US-CONTENT-R007.1`, `US-CONTENT-R007.2`, `US-CONTENT-R007.3`, `US-CONTENT-R007.4`.

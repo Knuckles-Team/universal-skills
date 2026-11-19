@@ -10,7 +10,7 @@ agent: quant_researcher
 team_config: quantitative_trading_team
 tags: [quant, sentiment, finbert, nlp, alpha, portfolio, workflow]
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2]
+
+### Fixed
+- The connector pack now carries an ontology and SHACL shapes. Since 1.6.0 the package registers as a content-only connector, and the pack it produced held skills only, so an engine refused to attach it (`ATTACH_PACK_SCHEMA_UNAVAILABLE`) and a deployment that requires every provisioned pack to carry shapes could not become ready. `universal_skills/ontology/` now declares the skill catalog, skill documents and skill support files under `https://knuckles-team.github.io/ontology/connector/universal-skills#`, each rolling up to a core class, with SHACL Core shapes (US-CONTENT-R001.4).
+- `scripts/gen_bumpversion.py --check` passes again: pinned upstream snapshots under `universal_skills/upstream/` are left byte-identical to their source, and every served skill, including the vendored ones and `codebase-untangle`, is covered by `.bumpversion.cfg`.
+
+### Changed
+- Lock `medulla` 3.3.4 and `scion-sdk` 0.11.3.
+
 ## [1.6.1]
 
 ### Changed

@@ -1,0 +1,79 @@
+@prefix : <https://knuckles-team.github.io/ontology/connector/universal-skills#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# The universal-skills connector serves content only: a catalog of skill
+# documents (skill://<name>/SKILL.md) and the files each skill folder carries.
+# A skill document is not the skill itself; it is a document about a core:Skill.
+# Every class subclasses a medulla core class (`core:`); no core class is redeclared.
+
+<https://knuckles-team.github.io/ontology/connector/universal-skills> a owl:Ontology ;
+    rdfs:label "Universal skills connector ontology" ;
+    rdfs:comment "The skill catalog the universal-skills connector serves: the catalog, its skill documents and the supporting files of each skill folder. Rolls up to medulla core by subclassing." .
+
+# --- classes ---
+
+:SkillCatalog a owl:Class ;
+    rdfs:label "Skill Catalog" ;
+    rdfs:comment "The catalog of skill documents one universal-skills release serves." ;
+    rdfs:subClassOf core:Collection .
+
+:SkillDocument a owl:Class ;
+    rdfs:label "Skill Document" ;
+    rdfs:comment "One served SKILL.md (skill://<name>/SKILL.md): the frontmatter and procedure of one skill. It is about a core:Skill; it is not the skill." ;
+    rdfs:subClassOf core:Document .
+
+:SkillSupportFile a owl:Class ;
+    rdfs:label "Skill Support File" ;
+    rdfs:comment "A reference, script, template or asset served inside one skill folder next to its SKILL.md." ;
+    rdfs:subClassOf core:Document .
+
+# --- links (owl:ObjectProperty) ---
+
+:inCatalog a owl:ObjectProperty ;
+    rdfs:label "in catalog" ;
+    rdfs:comment "Links a skill document to the catalog that serves it." ;
+    rdfs:subPropertyOf core:partOf ;
+    rdfs:domain :SkillDocument ;
+    rdfs:range :SkillCatalog .
+
+:supportsSkill a owl:ObjectProperty ;
+    rdfs:label "supports skill" ;
+    rdfs:comment "Links a support file to the skill document of the folder that holds it." ;
+    rdfs:subPropertyOf core:partOf ;
+    rdfs:domain :SkillSupportFile ;
+    rdfs:range :SkillDocument .
+
+:describesSkill a owl:ObjectProperty ;
+    rdfs:label "describes skill" ;
+    rdfs:comment "Links a skill document to the capacity it describes." ;
+    rdfs:domain :SkillDocument ;
+    rdfs:range core:Skill .
+
+# --- fields (owl:DatatypeProperty) ---
+
+:skillName a owl:DatatypeProperty ;
+    rdfs:label "skill name" ;
+    rdfs:comment "The frontmatter name of a skill document; equal to its folder name." ;
+    rdfs:domain :SkillDocument ;
+    rdfs:range xsd:string .
+
+:skillDomain a owl:DatatypeProperty ;
+    rdfs:label "skill domain" ;
+    rdfs:comment "The frontmatter domain a skill document is filed under." ;
+    rdfs:domain :SkillDocument ;
+    rdfs:range xsd:string .
+
+:skillVersion a owl:DatatypeProperty ;
+    rdfs:label "skill version" ;
+    rdfs:comment "The package version stamped in a skill document's frontmatter metadata." ;
+    rdfs:domain :SkillDocument ;
+    rdfs:range xsd:string .
+
+:relativePath a owl:DatatypeProperty ;
+    rdfs:label "relative path" ;
+    rdfs:comment "The path of a support file relative to its skill folder." ;
+    rdfs:domain :SkillSupportFile ;
+    rdfs:range xsd:string .

@@ -12,7 +12,7 @@ metadata:
   domain: core
   skill_type: skill
   tags: [arbora, door, mcp, intent-tools, workstream]
-  version: '1.6.1'
+  version: '1.6.2'
 ---
 # Canopy
 

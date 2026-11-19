@@ -16,7 +16,7 @@ cron:
   timezone: "America/New_York"
   max_concurrent: 1
 metadata:
-  version: '1.6.1'
+  version: '1.6.2'
   author: meristem
   concept: 'CONCEPT:KG-2.6'
 ---
