@@ -29,6 +29,10 @@ def test_shared_hooks_replace_the_local_sanitizer_and_codespell() -> None:
     tracked = set(_tracked())
     assert not {"scripts/security_sanitizer.py", ".codespellignore"} & tracked
     assert not [name for name in tracked if name.endswith(".skill")]
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    for job in ("gates", "gates-all-files"):
+        setup = workflow["jobs"][job]["with"]["setup-command"]
+        assert "PROHIBITED_IDENTITY_CATALOG" in setup and "prohibited-identities.json" in setup, job
 
 
 @pytest.mark.spec("US-CONTENT-R001.8")

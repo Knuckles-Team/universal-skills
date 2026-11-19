@@ -31,7 +31,15 @@ jobs:
     uses: Knuckles-Team/pipelines/.github/workflows/gates_pipeline.yml@main
     with:
       config: .pre-commit-config.yaml
-      setup-command: scripts/bootstrap.sh
+      skip-hooks: ${{ github.event.pull_request.head.repo.fork && 'tracked-privacy' || '' }}
+      # The prohibited-identity catalog is operator-owned and never committed: it comes from the
+      # PROHIBITED_IDENTITY_CATALOG Actions variable. A fork pull request cannot read it.
+      setup-command: |
+        if [ -n "${PROHIBITED_IDENTITY_CATALOG:-}" ]; then
+          mkdir -p "$HOME/.config/arbora/governance"
+          printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/arbora/governance/prohibited-identities.json"
+        fi
+        scripts/bootstrap.sh
 
   gates-all-files:
     # Main and nightly keep the whole-tree pre-commit run the repository ran on every pull request.
@@ -42,7 +50,14 @@ jobs:
     with:
       config: .pre-commit-config.yaml
       all-files: true
-      setup-command: scripts/bootstrap.sh
+      # The prohibited-identity catalog is operator-owned and never committed: it comes from the
+      # PROHIBITED_IDENTITY_CATALOG Actions variable. A fork pull request cannot read it.
+      setup-command: |
+        if [ -n "${PROHIBITED_IDENTITY_CATALOG:-}" ]; then
+          mkdir -p "$HOME/.config/arbora/governance"
+          printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/arbora/governance/prohibited-identities.json"
+        fi
+        scripts/bootstrap.sh
       timeout-minutes: 60
 
   full:
