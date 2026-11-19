@@ -207,3 +207,30 @@ addopts = "-p no:scion_sdk"
 markers = ["spec(id): requirement the test is bound to"]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
+
+# The connector standard (pipelines connector-standard): this connector serves skills and skill files only.
+# `vendored` holds third-party content kept byte-identical to its source: the pinned upstream skill snapshots and
+# the ISO/IEC 29500 schemas the document skills validate against.
+[tool.pipelines.connector]
+profile = "content-only"
+vendored = [
+    "universal_skills/upstream",
+    "universal_skills/skills/document-tools/scripts/docx_scripts/office/schemas",
+    "universal_skills/skills/document-tools/scripts/pptx_scripts/office/schemas",
+    "universal_skills/skills/document-tools/scripts/xlsx_scripts/office/schemas",
+]
+
+# The skills rendered from a pinned upstream source keep its wording.
+[tool.pipelines.codespell]
+exclude = [
+    "universal_skills/skills/hyperframes",
+    "universal_skills/skills/hyperframes-cli",
+    "universal_skills/skills/hyperframes-registry",
+    "universal_skills/skills/media-use",
+    "universal_skills/skills/figma",
+    "universal_skills/skills/slideshow",
+    "universal_skills/skills/style-sampling",
+    "universal_skills/skills/reverse-any-video",
+    "universal_skills/skills/remotion-to-hyperframes",
+]
+ignore_words = ["afterAll", "beforeAll", "SOM", "TAM", "SAM", "nin", "nam", "tread", "ot", "HSA", "HASS", "callin", "skelton", "intensional", "wile", "LOD", "Braket", "testng"]

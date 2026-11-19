@@ -121,7 +121,7 @@ def _new_spec_for(spec: str, latest: str, level: str) -> tuple[str | None, str |
     op, cur = clauses[lower_idx]
     change = _change_level(cur, latest)
     if change is None:
-        return None, None  # already current or unparseable
+        return None, None  # already current or unparsable
     if _LEVEL_ORDER[change] > allow:
         return None, f"skipped ({change} > --level {level})"
 
