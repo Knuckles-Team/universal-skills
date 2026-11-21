@@ -83,7 +83,7 @@ The repository pre-commit hooks must pass, including `check-atomicity`, `check-f
 
 ## Production caller chain
 
-Arbora resolves the installed distribution through the `scion_sdk.connector` entry point. The SDK builds the server and lists each skill resource. A delivery assignment run of meristem reads `skill://spec-row-delivery/SKILL.md` through arbora. No obsolete path exists to delete.
+Arbora resolves the installed distribution through the `scion_sdk.connector` entry point. The SDK builds the server and lists each skill resource. A delivery assignment run of meristem reads `skill://spec-row-delivery/SKILL.md` through arbora. The `verify-claim` skill (`US-CONTENT-R008`) is read the same way and calls `lean_check` of `lean-mcp` through `fleet.call`. No obsolete path exists to delete.
 
 ## Cross-repo seams
 

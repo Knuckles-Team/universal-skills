@@ -39,3 +39,4 @@ Governing spec: [spec.md](spec.md).
 | T-026 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_installer_refuses_bundle_profiles_and_writes_nothing` | Each bundle target exits 2, prints the install command and writes no file. |
 | T-026.1 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_install_removes_renamed_skills` | A full install into a directory holding old-name skills removes them, keeps current skills and keeps an old name that is a current skill. |
 | T-027 | `US-CONTENT-R006` | `tests/test_codebase_untangle_skill.py::test_skill_states_the_procedure_the_categories_and_the_gates` | The test finds the seven steps in order, the categories and the gate names. |
+| T-028 | `US-CONTENT-R008` | `tests/test_verify_claim_skill.py::test_skill_states_the_loop_in_order_and_is_neutral` | The test finds the six steps in order, the sorry rule and no host, domain or path. |
