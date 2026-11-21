@@ -13,3 +13,4 @@ This repository owns the specs with the ID prefix `US`.
 - [`US-MCP-BUILDER`](mcp-builder/spec.md) — The mcp-builder scaffold builds connectors on SDK components.
 - [`US-CONTENT`](catalog-content/spec.md) — The catalog is served by the SDK content convention.
 - [`US-SKILL-GRAPH-BUILDER`](skill-graph-builder/spec.md) — The builder distills any source into a skill graph.
+- [`US-BUSINESS-ROLES`](business-roles/spec.md) — Business-agnostic workflow skills read the tenant profile and stop at human gates.
