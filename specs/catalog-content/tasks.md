@@ -38,3 +38,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T032 [US5] US-CONTENT-R007.4 Stop the installer from wiring bundle profiles.
 - [ ] T033 [US5] US-CONTENT-R007 Catalog content reaches coding harnesses through the arbora bundle.
 - [x] T034 [US2] US-CONTENT-R006 The codebase-untangle skill.
+- [ ] T035 [US5] US-CONTENT-R008 The verify-claim skill.
