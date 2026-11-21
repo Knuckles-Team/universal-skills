@@ -29,3 +29,8 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requireme
 - [ ] T025 US-MCP-BUILDER-R011.16 The generated connector passes the surface gate and the SDK surface self-check.
 - [ ] T026 US-MCP-BUILDER-R011.17 Complete an existing connector.
 - [ ] T027 US-MCP-BUILDER-R011.18 Generated prompts are complete agent definitions.
+- [ ] T028 US-MCP-BUILDER-R014 Planned connectors are generated from a recorded operation surface (rollup).
+- [ ] T029 US-MCP-BUILDER-R014.1 Payments connector for Stripe.
+- [ ] T030 US-MCP-BUILDER-R014.2 VPS provider connector for DigitalOcean.
+- [ ] T031 US-MCP-BUILDER-R014.3 Shipping-label connector for a multi-carrier label API.
+- [ ] T032 US-MCP-BUILDER-R014.4 Proposal rows drive a generator proof.
