@@ -1,0 +1,29 @@
+goal: Build an eval suite for a skill with the right case mix, a calibrated judge and an ablation check.
+outputs:
+  - A suite with golden cases, real-prompt cases and author-judged cases.
+  - The pass-rate band of the first run.
+required_tool_actions: [skills.eval.case.add, skills.eval.calibrate, skills.eval.run]
+forbidden_tool_actions: [skills.tier.promote]
+target_agents: [arbora, claude, codex]
+target_models: [standard-model, compact-model]
+steps:
+  - objective: Add one golden case with tool mocks.
+    command: skills.eval.case.add
+    verify: The answer accepts the case and shows its expected digest.
+    on_failure: Read the refusal code in the table below and apply its recovery.
+  - objective: Add real prompts from traces with the expected trajectory.
+    command: skills.eval.case.add
+    verify: Each case holds the ordered list of skills and tools that a good run uses.
+    on_failure: Read the trace again and write the trajectory from the calls that it holds.
+  - objective: Add author-judged cases last.
+    command: skills.eval.case.add
+    verify: The answer accepts each case and the suite lists the cases in this order.
+    on_failure: Calibrate the judge first when the answer is JUDGE_NOT_CALIBRATED.
+  - objective: Calibrate the judge against an annotated set.
+    command: skills.eval.calibrate
+    verify: The answer shows an agreement score above the engine minimum.
+    on_failure: Add more annotated cases and calibrate again with the larger set.
+  - objective: Run the suite and read the band.
+    command: skills.eval.run
+    verify: The report names the band and scores outcome and trajectory apart.
+    on_failure: Read the refusal code in the table below and apply its recovery.

@@ -1,0 +1,28 @@
+goal: Find the skills that fit a task and rank them by quality and by peer use.
+outputs:
+  - At most five skills with name, tier, quality score and install command.
+required_tool_actions: [skills.find, skills.peers.recommend]
+forbidden_tool_actions: [skills.tier.promote]
+target_agents: [arbora, claude, codex]
+target_models: [standard-model, compact-model]
+steps:
+  - objective: Describe the task in one sentence.
+    command: write one sentence that names the work and the system
+    verify: The sentence names one task and holds no list of tasks.
+    on_failure: Split the task and run this skill once for each part.
+  - objective: Search for skills that fit the sentence.
+    command: skills.find
+    verify: The answer lists skills with a quality score and an eval count.
+    on_failure: Use a shorter sentence with the main noun and search again with that input.
+  - objective: Read the quality score and the eval count of each result.
+    command: compare the score and the eval count of each result
+    verify: Each result in your list shows both numbers.
+    on_failure: Mark a result with no eval runs as unproven and rank it last.
+  - objective: Ask for the skills that peers use.
+    command: skills.peers.recommend
+    verify: The answer lists peer skills, or it returns PEER_COHORT_TOO_SMALL.
+    on_failure: Report that no peer list exists when the answer is PEER_COHORT_TOO_SMALL.
+  - objective: Report at most five skills.
+    command: write the table of skill, tier, quality score and install command
+    verify: The table has five rows or fewer and each row has all four fields.
+    on_failure: Cut the list to the five best and add the missing field from the search answer.

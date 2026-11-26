@@ -128,6 +128,24 @@ repos:
     language: system
     pass_filenames: false
     always_run: true
+  - id: check-skill-steps
+    name: skill steps, verification and error recovery
+    entry: python scripts/check_skill_steps.py
+    language: system
+    files: ^universal_skills/skills/[^/]+/SKILL\.md$
+    pass_filenames: true
+  - id: check-skill-budgets
+    name: skill stage budgets and frontmatter keys
+    entry: python scripts/check_skill_budgets.py
+    language: system
+    files: ^universal_skills/skills/[^/]+/
+    pass_filenames: true
+  - id: compile-skill-spec
+    name: compiled skills match their specs
+    entry: python scripts/compile_skill_spec.py --check
+    language: system
+    pass_filenames: false
+    always_run: true
 - repo: local
   hooks:
   - id: skill-catalog-structure

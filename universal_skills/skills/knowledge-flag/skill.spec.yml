@@ -1,0 +1,29 @@
+goal: Flag a missing or wrong fact about a skill, a business term or a data source, then continue the task.
+outputs:
+  - One flag id for each fact you flagged.
+  - The flag id in the final answer.
+required_tool_actions: [knowledge.flag.list, knowledge.flag.raise]
+forbidden_tool_actions: [knowledge.flag.resolve]
+target_agents: [arbora, claude, codex]
+target_models: [standard-model, compact-model]
+steps:
+  - objective: Notice a missing or wrong fact about a skill, a business term or a data source.
+    command: compare the task source with the knowledge you were given
+    verify: You can name the target and say whether the fact is missing or wrong.
+    on_failure: Stop and report the state "no flag needed" if you cannot name the target.
+  - objective: Check that no open flag names the same target.
+    command: knowledge.flag.list
+    verify: The answer holds no open flag for the same target.
+    on_failure: Skip the raise step and report the existing flag id when an open flag exists.
+  - objective: Raise the flag with the target, the kind, what you observed and the corrected text if you know it.
+    command: knowledge.flag.raise
+    verify: The answer returns a flag id.
+    on_failure: Read the refusal code in the table below and apply its recovery. Report the code if no recovery fits.
+  - objective: Continue the task with the best available knowledge.
+    command: continue the task and mark the uncertain fact as unconfirmed
+    verify: The task output names each unconfirmed fact.
+    on_failure: Report the unconfirmed fact and stop if the task cannot go on without it.
+  - objective: Report the flag id in the final answer.
+    command: write the flag id in the final answer
+    verify: The final answer holds every flag id you raised.
+    on_failure: Add the missing flag id to the final answer before you finish.

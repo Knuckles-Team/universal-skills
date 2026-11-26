@@ -1,0 +1,19 @@
+# Known compile targets for skill.spec.yml (US-CONTENT-R009.3).
+# A model ref that leaves this list makes every skill that targets it stale.
+agents:
+  - agent-terminal-ui
+  - antigravity
+  - arbora
+  - claude
+  - codex
+  - cursor
+  - devin
+  - grok
+  - grok-code
+  - openclaw
+  - opencode
+  - windsurf
+  - zed
+models:
+  - compact-model
+  - standard-model

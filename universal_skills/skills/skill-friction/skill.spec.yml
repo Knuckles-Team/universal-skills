@@ -1,0 +1,25 @@
+goal: File one friction report when a skill misled you or cost you effort, then continue the task.
+outputs:
+  - One friction report for each friction you met.
+  - The report id in the final answer.
+required_tool_actions: [skills.friction.report]
+forbidden_tool_actions: [skills.friction.transition]
+target_agents: [arbora, claude, codex]
+target_models: [standard-model, compact-model]
+steps:
+  - objective: Record what you tried, what you expected and what happened.
+    command: write the three facts in one short note
+    verify: The note names the skill step, the expected result and the actual result.
+    on_failure: Stop and report the state "no friction" if you cannot name the skill step.
+  - objective: Add the fix when you know it.
+    command: write the change that would have helped in one sentence
+    verify: The fix names one change, or the note says that you do not know a fix.
+    on_failure: Leave the fix empty and say that you do not know one.
+  - objective: Call the report operation with the skill ref and version.
+    command: skills.friction.report
+    verify: The answer returns a report id.
+    on_failure: Read the refusal code in the table below and apply its recovery. Report the code if no recovery fits.
+  - objective: Continue the task.
+    command: continue the task with the skill as it is
+    verify: The task output does not wait for the report.
+    on_failure: Report the blocked step in the final answer and stop.
