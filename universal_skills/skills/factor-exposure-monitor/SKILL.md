@@ -34,6 +34,9 @@ Provide the factor set definition, portfolio/holdings, and date range.
 
 ## Steps
 
+1. Ingest current market data by invoking `$quant-data-ingest` for the portfolio universe. Verify that `normalized_market_dataset` covers the requested date range.
+2. Measure exposure by invoking `$qlib-backtester` with `normalized_market_dataset` and the factor set. Verify that `factor_exposure_report` contains a loading for each supplied factor.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest current
@@ -47,6 +50,14 @@ Invoke `$qlib-backtester` with `normalized_market_dataset` and the
 supplied factor set to measure exposure.
 
 Expected: `factor_exposure_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Dataset has gaps | Ticker missing from the source | Re-invoke `$quant-data-ingest` with the corrected universe list. |
+| A factor is missing from the report | Factor definition not supplied | Add the factor to the factor set input and rerun `$qlib-backtester`. |
+| Request to find new factors | Out of scope | Decline, as this workflow only measures supplied factors. |
 
 ## Output
 

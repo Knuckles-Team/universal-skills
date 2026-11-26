@@ -29,6 +29,10 @@ Detects new local voice notes or audio files, triggers Whisper transcriptions, a
 
 ## Steps
 
+1. Transcribe the audio with `transcribe_audio`. Verify that `raw_transcript` is non-empty.
+2. Show the transcript to the user and ask about translate, format or route. Verify that `target_agent` or the chosen action is recorded.
+3. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Audio Transcriber Mcp
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -49,6 +53,14 @@ Expected: `structured_transcript, target_agent`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `transcribe_audio` fails to open the file | Wrong path or unsupported format | Check the path with `ls` and convert with `ffmpeg -i <file> out.wav`, and call again. |
+| Transcript is empty | Silent audio or wrong language | Confirm the audio plays and set the language option, and call again. |
+| Routing target missing | User did not choose | Ask the user again for the target agent. |
 
 ## Output
 - Voice Message Transcriber results persisted in KG

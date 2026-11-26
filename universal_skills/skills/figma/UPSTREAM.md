@@ -12,5 +12,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Local overlays:
   - `overlays/figma/10-no-telemetry-1.md` (sha256 b4a8eb66f4fb2fdd)
   - `overlays/figma/10-no-telemetry.md` (sha256 ec0861ea4f4c962d)
+  - `overlays/figma/20-steps.md` (sha256 c81bd23dc2f09720)
+  - `overlays/figma/21-plugin-link.md` (sha256 8e2cadf0a65379c6)
 
 Refresh with `python scripts/sync_upstream_skills.py --update hyperframes`; verify with `--check`.

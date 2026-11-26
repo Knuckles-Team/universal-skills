@@ -25,6 +25,14 @@ Coca-Cola / Pepsi): when the spread diverges, bet on convergence. See
 
 ## Steps
 
+1. Fetch two correlated stocks via yfinance with `data-science-mcp`. Verify that `aligned-price-series` shares one index with no forward fill.
+2. Run an Engle-Granger test. Verify that `cointegration-pvalue` is below 0.05 before continuing.
+3. Compute the rolling z-score and thresholds. Verify that `entry-exit-signals` uses |z|>2 entry and near-0 exit.
+4. Backtest in Backtrader or Zipline with fees and slippage. Verify that `backtest-equity-curve` is produced and a lookahead audit is noted.
+5. Compute Sharpe, max drawdown and CAGR. Verify that `performance-metrics` identifies failing regimes.
+6. Publish with `gh repo create`. Verify that `github-repo-url` loads with the README sections.
+7. Persist with `graph_write`. Verify that a `graph_query` returns the project node.
+
 ### Step 1: fetch-pair-data
 **Agent**: `quant_developer`
 **Tools**: `data-science-mcp`
@@ -74,6 +82,14 @@ Expected: `github-repo-url`
 
 Persist the project, its metrics, and the repo URL as typed nodes linked to the
 quant portfolio in the Knowledge Graph.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| p-value above 0.05 | Pair not cointegrated | Select another candidate pair and restart from the data fetch |
+| Sharpe collapses with costs | Overfit | Record the failure in the README's what-didn't-work section and stop rather than tuning on the test set |
+| Data misaligned | Different calendars | Reindex both series to the common trading calendar before the cointegration test |
 
 ## Output
 - A backtested, cointegration-based pairs-trading strategy

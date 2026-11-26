@@ -33,6 +33,12 @@ Spawns 25 parallel parameter sweep configurations, extracts performance curves, 
 
 ## Steps
 
+1. Spawn 25 configurations with `graph_query` and `sx_search`. Verify that `multi-parameter-backtest-records` has 25 entries.
+2. Extract metrics with `graph_analyze`. Verify that `extracted-response-metrics` covers each node.
+3. Plot the response surface with `graph_analyze`. Verify that `volatility-response-surface-plot` shows stable basins.
+4. Select parameters with `graph_write`. Verify that `finalized-parameter-configs` is registered.
+5. Persist with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: Grid Search Sweeper
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `finalized-parameter-configs`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Missing runs | Worker crashed | Identify missing configuration ids and re-run only those sweeps |
+| Surface noisy | Overfit | Choose parameters from the centre of a smooth basin on the plotted surface rather than the peak |
+| Registration fails | Schema | Add the missing required fields to the `graph_write` payload and repeat the write |
 
 ## Output
 - Parameter Sweep Optimizer results persisted in KG

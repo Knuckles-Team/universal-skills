@@ -33,6 +33,13 @@ Formulates new trading strategies, runs a swarm debate to vet them, backtests th
 
 ## Steps
 
+1. Generate hypotheses with `graph_query` and `sx_search` over regimes and anomalies. Verify that `strategy-blueprint` is returned.
+2. Vet the logic through the swarm debate with `graph_analyze`. Verify that `debate-transcript-and-feedback` records a verdict.
+3. Backtest over the historical window with `graph_query` and `graph_analyze`. Verify that `backtest-performance-metrics` includes return and drawdown.
+4. Run the paper-trade period using `graph_write` and `document_tools`. Verify that `paper-trade-forward-tearsheet` covers the full period.
+5. Deploy with restricted capital limits only after the paper results pass. Verify that `live-deployment-receipt` shows the capital cap applied.
+6. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 1: Hypothesis Generator
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -74,6 +81,14 @@ Expected: `live-deployment-receipt`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Debate rejects the strategy | Logic flaws found by the swarm | Revise the blueprint using the feedback and repeat the debate step. |
+| Backtest metrics are poor | Overfitting or bad data window | Check the data window and parameters, and re-run the backtest before advancing. |
+| Paper trade underperforms backtest | Slippage or regime shift | Do not advance to live. Analyze the tearsheet and return to the hypothesis step. |
 
 ## Output
 - Strategy Hypothesis To Live results persisted in KG

@@ -54,3 +54,18 @@ Example -- destructive op:
 > ```
 >
 > Efficient mode resume. Verify backup exist first.
+
+## Steps
+
+1. Confirm the trigger by matching the user message against the phrases in the description with `grep -n "efficient mode" SKILL.md`. Verify that the request names "efficient mode", "compressed mode", "less tokens", "be brief" or `/efficient` before activating.
+2. Rewrite the next response under the Rules section: drop articles, filler, pleasantries and hedging, keep technical terms and code blocks exact. Verify that the draft contains none of the words just, really, basically, actually, simply or sure, for example with `grep -Eiw "just|really|basically|actually|simply|sure" draft.txt` returning nothing.
+3. Check for an Auto-Clarity trigger such as a destructive command or a security warning, and write that part in full sentences. Verify that any `DROP`, `rm -rf` or similar command is preceded by an explicit warning line.
+4. Keep the mode active on every later reply until the user says "stop efficient" or "normal mode". Verify that each new reply still follows the `[thing] [action] [reason]. [next step].` pattern.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Replies drift back to full prose after a few turns | Persistence rule forgotten | Re-read the Persistence section and rewrite the reply in fragment style before sending. |
+| A compressed answer was misread | Multi-step sequence lost its ordering | Use the Auto-Clarity Exception, restate the steps as a numbered list in full sentences, then resume compressed style. |
+| Error text or code was altered | Compression was applied inside quoted output | Restore the exact error string and code block unchanged, and compress only the surrounding prose. |

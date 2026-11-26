@@ -31,6 +31,11 @@ Combined workspace + system health validation. Checks repository state alongside
 
 ## Steps
 
+1. List workspace actions and configuration with the `rep_rm_workspace` tools. Verify that the action list is returned.
+2. Read memory and CPU with the `systems-manager` tools. Verify that both values are present.
+3. Check disk usage of the workspace partition with `df -h <workspace-path>`. Verify that a usage percentage is reported.
+4. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Repository Manager Mcp
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
@@ -58,6 +63,14 @@ Expected: `disk, usage`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Workspace tools return empty | Workspace config missing | Run the workspace setup action from `rep_rm_workspace` and list again. |
+| Disk is almost full | Build artifacts accumulate | Remove caches and old venvs, and re-check with `df -h`. |
+| System stats fail | Host not reachable | Check connectivity and re-run the systems-manager call. |
 
 ## Output
 - Workspace Health Check results persisted in KG

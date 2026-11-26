@@ -34,6 +34,9 @@ Provide the strategy definition, asset universe, and execution window.
 
 ## Steps
 
+1. Paper-trade the strategy by invoking `$freqtrade-executor` with the workflow inputs. Verify that `trade_execution_log` contains executed trades.
+2. Profile the log by invoking `$dataset-profiler` with `trade_execution_log`. Verify that `trade_journal_profile` has structure and statistics.
+
 ### Step 0: freqtrade-executor [skill: freqtrade-executor]
 
 Invoke `$freqtrade-executor` with the workflow inputs to paper-trade
@@ -47,6 +50,14 @@ Invoke `$dataset-profiler` with `trade_execution_log` to produce a
 structural and statistical profile.
 
 Expected: `trade_journal_profile`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `trade_execution_log` is empty | No signals in the window | Widen the window or check the strategy entry rules and re-invoke `$freqtrade-executor`. |
+| Profiler rejects the log | Unexpected schema | Export the log in the format `$dataset-profiler` documents and re-invoke it. |
+| A live order appears | `dry_run` is disabled | Stop and set `dry_run` to true in the freqtrade config. |
 
 ## Output
 

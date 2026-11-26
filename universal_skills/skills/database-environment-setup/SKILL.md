@@ -1,17 +1,8 @@
 ---
 name: database-environment-setup
 skill_type: skill
-description: >
-  Provision the meristem database environment end-to-end from credentials:
-  push the ontology to Stardog (prod) or a local SPARQL endpoint (dev), stand up a
-  Postgres carrying Apache AGE + pgvector + ParadeDB pg_search, wire the durable
-  backend, and backfill graph relationships into AGE. Resolves secrets from
-  OpenBao/Vault (with .env fallback). Prompts for environment (prod/dev) and
-  Postgres mode (combined image vs existing/managed). Use when the user wants to
-  "set up Stardog", "host my ontology over SPARQL", "install pg-age/pgvector/
-  paradedb", "backfill into AGE", "connect my postgres", or "set up my database
-  environment". Do NOT use for OpenBao unseal/seed alone — use secret-vault-manager;
-  or generic container deploys — use docker-compose-operator.
+description: >-
+  Provision the database environment from credentials: push the ontology to Stardog or a local SPARQL endpoint, stand up Postgres with AGE, pgvector and pg_search, wire the durable backend, backfill AGE. Use to set up Stardog, host an ontology over SPARQL, or connect Postgres. Do NOT use for OpenBao unseal alone (secret-vault-manager) or generic container deploys (docker-compose-operator).
 domain: infrastructure
 tags:
   - stardog
@@ -29,6 +20,8 @@ metadata:
 ---
 
 # Database Environment Setup (Stardog + pg-age)
+
+Scope: Provision the meristem database environment end-to-end from credentials: push the ontology to Stardog (prod) or a local SPARQL endpoint (dev), stand up a Postgres carrying Apache AGE + pgvector + ParadeDB pg_search, wire the durable backend, and backfill graph relationships into AGE. Resolves secrets from OpenBao/Vault (with .env fallback). Prompts for environment (prod/dev) and Postgres mode (combined image vs existing/managed). Use when the user wants to "set up Stardog", "host my ontology over SPARQL", "install pg-age/pgvector/ paradedb", "backfill into AGE", "connect my postgres", or "set up my database environment". Do NOT use for OpenBao unseal/seed alone — use secret-vault-manager; or generic container deploys — use docker-compose-operator.
 
 Stand up the two database environments meristem is built around — **prod**
 (Stardog) and **dev** (local SPARQL) — and durably backfill the graph into Apache
@@ -48,6 +41,13 @@ is needed.
 - **container-manager-mcp** *(optional)* — to build/deploy the combined Postgres image.
 
 ## Steps
+
+1. Resolve the credentials from OpenBao or `.env` (Step 1). Verify that `grep -c '^STARDOG_ENDPOINT=' .env` is non-zero for prod or that the `vault://` path resolves with `secret-vault-manager`.
+2. Choose the environment, prod or dev (Step 2), and the Postgres mode, `managed_image` or `existing` (Step 3). Verify that both answers are recorded before provisioning starts.
+3. Verify the Postgres extensions with `graph_configure(action="verify_databases", config_value='{"dsn":"<DSN>"}')` (Step 4). Verify that `age`, `vector` and `pg_search` are reported present, or that missing ones are listed.
+4. Run the end-to-end setup with `graph_configure(action="setup_databases", config_key="<prod|dev>", ...)` (Step 5). Verify that the step report runs through `verify_postgres`, `configure_backend`, `publish_ontology`, `backfill_to_age` and `verify_sparql` without a failed step.
+5. Confirm consumption by querying the SPARQL URL and checking `reconcile.nodes_missing == 0` (Step 6). Verify that a trivial `SELECT` against the endpoint returns rows.
+6. Optionally push instance data with `graph_configure(action="push_to_stardog")` (Step 7). Verify that `action="stardog_sparql"` returns rows from the `urn:source:<system>` graph.
 
 ### Step 1 — Resolve credentials (OpenBao/Vault, `.env` fallback)
 Prefer OpenBao/Vault. If `SECRETS_BACKEND=vault` is set, reuse **secret-vault-manager**
@@ -117,6 +117,16 @@ you can push, query, or re-ingest on its own. Two modes (use both):
     named graph back into the KG.
 
 Reuses the same `STARDOG_*` credentials from Step 1; no new env flags.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `age` or `pg_search` missing on an existing Postgres | Extension needs superuser and `shared_preload_libraries` | Use `managed_image` mode with `docker/pg-age-full.compose.yml`, or point AGE and full-text at a second instance with its own DSN |
+| Vault paths cannot be resolved | Vault is sealed or the path is wrong | Unseal with `secret-vault-manager`, correct the `vault://` path, or fall back to `.env` |
+| `reconcile.nodes_missing` is above zero | The AGE backfill was partial | Run `graph_configure(action="reconcile")` and check the count again |
+| SPARQL smoke test fails on prod | Wrong `STARDOG_ENDPOINT` or `STARDOG_DATABASE` | Correct both values in the credentials, then rerun `setup_databases` |
+
 
 ## Notes
 - No new environment flags are introduced — every key (`GRAPH_DB_URI`, `GRAPH_PG_AGE`,

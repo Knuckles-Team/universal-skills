@@ -22,6 +22,22 @@ repository in the fleet consumes (`.pre-commit-hooks.yaml`; run one gate with
 What follows is read from the gate source and `.config/kiss.toml`, not
 restated from policy prose, so it stays correct when a cap changes.
 
+## Steps
+
+1. Identify which gate failed from its id in the hook output and run it alone with `pipelines-hook <id>` (for example `pipelines-hook complexity-staged`). Verify that the exit code from `echo $?` is 0, 1 or 2 and map it to clean, findings or cannot-run.
+2. Read the section above that matches the gate and its source, for example `grep -n "CYCLOMATIC\|COGNITIVE" pipelines_hooks/complexity/__init__.py` in the pipelines repository. Verify that the cap you are over matches the numbers in this skill.
+3. Fix the code by splitting functions or removing the duplicate instead of raising a threshold or adding a suppression. Verify that rerunning `pipelines-hook <id>` returns exit code 0.
+4. Decide where new code lives by reading the owner repository's `AGENTS.md` with `grep -n -A5 "What this repository owns" AGENTS.md`. Verify that the capability you are adding is listed under that repository before writing it.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Gate exits 2 for `tracked-privacy` | The external identity catalog is missing | Provide the catalog path the hook names and rerun `pipelines-hook tracked-privacy`. |
+| `kiss check` writes a `.kissconfig` file | The binary was run directly without `--config` | Delete the generated `.kissconfig` and run `pipelines-hook kiss-staged` instead. |
+| Clone gate still fails after renaming a function | Identity is a hash of the duplicated text, not a name | Remove or share the duplicated body so the pair no longer exists after the change. |
+| `secret-history` fails after deleting a credential | The scan covers every commit patch in the unpublished range | Rewrite the unpublished commits to drop the secret, rotate it, and rerun the hook. |
+
 ## Complexity (cccc)
 
 Caps, per function, including nested children: **cyclomatic 10, cognitive

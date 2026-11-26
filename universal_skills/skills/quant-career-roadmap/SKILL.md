@@ -27,6 +27,13 @@ route hands-on work to the role specialists (`quant_developer`, `quant_researche
 
 ## Steps
 
+1. Build math foundations and the Python stack in parallel by consulting the `quant-career-docs` skill-graph. Verify that `math-readiness` and `python-fluency` are met, for example by pulling 5y of AAPL and plotting a 30-day rolling mean in a notebook.
+2. Learn the finance fundamentals covering markets, options, bonds and the three canonical edges. Verify that `finance-vocabulary` is demonstrated by explaining each edge in the learner's own words.
+3. Build a leak-free first backtest in Backtrader or Zipline and audit for lookahead bias. Verify that the Sharpe, max drawdown and failure regimes are reported for `first-backtested-strategy`.
+4. Build the portfolio projects after adding ML for finance (HMM regimes, gradient boosting, FinBERT). Verify that `github-portfolio` has at least 3 projects with README, metrics and a "what didn't work" section.
+5. Pursue optional certifications alongside the portfolio and run the job search on the stated channels. Verify that `offers-and-interview-readiness` lists target roles and interview prep per role.
+6. Persist the progress, projects and metrics as typed nodes using `graph_write`. Verify that a `graph_query` returns the learner's projects linked to the quant role.
+
 ### Step 1: math-foundations
 **Agent**: `quant_career_mentor`
 
@@ -98,6 +105,15 @@ Expected: `offers-and-interview-readiness`
 
 Persist the learner's progress, completed projects, and metrics as typed nodes in
 the Knowledge Graph, linked to the quant role and project entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Backtest Sharpe looks too good | Lookahead bias or survivorship in the data | Audit the timestamps for lookahead, add realistic fees and slippage, and recompute Sharpe. |
+| Learner stalls on the math step | The material is too abstract without practice | Switch to the Python stack and revisit math through exercises in the `quant-career-docs` skill-graph. |
+| Portfolio projects lack credibility | README misses honest metrics | Add Sharpe, max drawdown and CAGR versus benchmark, plus a "what didn't work" section to each repo. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - A phased, dependency-aware learning plan tracked in the KG

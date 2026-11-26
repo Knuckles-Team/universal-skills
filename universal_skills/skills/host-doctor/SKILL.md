@@ -2,18 +2,7 @@
 name: host-doctor
 skill_type: workflow
 description: >-
-  Onboard-diagnose a host (or a whole fleet) and remediate under gate. Validates the
-  OS/kernel/arch, samples CPU/mem/disk/load utilization, inspects processes for
-  zombies, runaway/orphaned hogs, and swap exhaustion, and checks PHYSICAL storage +
-  BMC health (SMART incl. RAID megaraid passthrough, drive-slot/IPMI faults, predicted
-  failures) that the filesystem checks miss — then, only after presenting the findings
-  and getting explicit per-host confirmation, remediates by delegating to the
-  systems-issue-troubleshooter workflow (kill rogue PIDs, reclaim swap/temp), and
-  re-verifies. Use when a machine is hot, sluggish, throwing a drive fault, or newly
-  onboarded and you want a single "how is this host doing, and make it run cool" pass.
-  Composes hardware-profile-sweep, host-resource-sampler, and host-process-inspector
-  over tunnel-manager SSH, plus sm_storage_health (systems-manager) and the fan-manager
-  IPMI/BMC tools. Diagnosis is read-only; every change is gated on user approval.
+  Onboard-diagnose a host (or a whole fleet) and remediate under gate. Use when a machine is hot, sluggish, throwing a drive fault, or newly onboarded and you want a single "how is this host doing, and make it run cool" pass. Diagnosis is read-only; every change is gated on user approval.
 domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
@@ -36,6 +25,8 @@ metadata:
 
 # Host Doctor Workflow
 
+Scope: Onboard-diagnose a host (or a whole fleet) and remediate under gate. Validates the OS/kernel/arch, samples CPU/mem/disk/load utilization, inspects processes for zombies, runaway/orphaned hogs, and swap exhaustion, and checks PHYSICAL storage + BMC health (SMART incl. RAID megaraid passthrough, drive-slot/IPMI faults, predicted failures) that the filesystem checks miss — then, only after presenting the findings and getting explicit per-host confirmation, remediates by delegating to the systems-issue-troubleshooter workflow (kill rogue PIDs, reclaim swap/temp), and re-verifies. Use when a machine is hot, sluggish, throwing a drive fault, or newly onboarded and you want a single "how is this host doing, and make it run cool" pass. Composes hardware-profile-sweep, host-resource-sampler, and host-process-inspector over tunnel-manager SSH, plus sm_storage_health (systems-manager) and the fan-manager IPMI/BMC tools. Diagnosis is read-only; every change is gated on user approval.
+
 **CONCEPT:INFRA-001**
 
 Onboard-diagnose a host (or fleet) — OS validation + resource utilization + process /
@@ -46,6 +37,14 @@ user decision (drive faults are surfaced as hardware replace candidates, never
 auto-remediated).
 
 ## Steps
+
+1. Profile hardware by running the `hardware-profile-sweep` skill on each target. Verify that OS, core count and accelerator data are returned for each host.
+2. Sample utilization by running the `host-resource-sampler` skill. Verify that CPU, load, memory and disk values are listed and over-threshold nodes are flagged.
+3. Inspect processes by running the `host-process-inspector` skill with `sm_process_operations`. Verify that the output lists runaways, zombies, swap holders and a prioritized candidate list.
+4. Check physical disks with `sm_storage_health` using action `report`. Verify that every drive reports SMART status and that BMC drive faults are listed as replace candidates.
+5. Present the dashboard through `tun_tm_remote` and ask which candidates to act on for each host. Verify that a per-host approval is recorded before any change.
+6. Remediate approved items through the `systems-issue-troubleshooter` workflow. Verify that each PID cmdline was re-read before `kill_process` and that only approved actions ran.
+7. Re-run `host-resource-sampler` and persist the run with `graph_write`. Verify that load or swap has recovered and that `graph_query` returns the stored run.
 
 ### Step 0: hardware_profile_sweep
 **Agent**: `discovery-agent`
@@ -118,6 +117,15 @@ without naming the session and getting per-session confirmation.
 Re-run `host-resource-sampler` to confirm the load/swap recovered (load decays over
 ~1–15 min — re-sample, don't expect an instant drop). Persist the run (findings, actions
 taken, before/after metrics) to the Knowledge Graph via `graph_write`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Load looks high but cores are many | Load not read relative to core count | Compare load with the core count from the sweep before flagging the host. |
+| Kill target PID changed | PID recycled since inspection | Re-read the process cmdline and abort the kill if it does not match. |
+| Drive flagged by BMC but SMART is clean | Link or aging fault | Report as a reseat or replace candidate and do not auto-remediate. |
+| Load still high after remediation | Load average decays slowly | Re-sample after 1 to 15 minutes before judging. |
 
 ## Output
 - Host Doctor results persisted in KG (`:HardwareNode` health + remediation audit)

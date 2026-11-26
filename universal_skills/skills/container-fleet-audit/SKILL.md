@@ -34,6 +34,10 @@ Provide the fleet's stack selection and the git configuration reference.
 
 ## Steps
 
+1. Collect the stack selection and the git configuration reference from the caller. Verify that `ls` on the git configuration path shows a compose file for every selected stack.
+2. Compare each stack's running state against git with `docker-compose-drift-detector` (Step 0). Verify that `drift_report` has one entry per selected stack, each marked in-sync or drifted.
+3. Render the report with `document-converter` from `drift_report` (Step 1). Verify that `audit_document` opens as Markdown or PDF and lists the same stacks as `drift_report`.
+
 ### Step 0: docker-compose-drift-detector [skill: docker-compose-drift-detector]
 
 Invoke `$docker-compose-drift-detector` with the workflow inputs to
@@ -47,6 +51,15 @@ Invoke `$document-converter` with `drift_report` to render it as a
 formatted Markdown/PDF fleet audit report.
 
 Expected: `audit_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `drift_report` omits a stack | The stack name does not match the compose project name | Run `docker compose ls` to list the real project names and pass them to Step 0 |
+| Every stack shows as drifted | The git reference points at the wrong branch or path | Check the git reference with `git -C <path> branch --show-current` and point Step 0 at the intended branch |
+| `audit_document` is empty | `document-converter` received an empty `drift_report` | Rerun Step 0 first, confirm `drift_report` is non-empty, and pass it to Step 1 again |
+
 
 ## Output
 

@@ -22,6 +22,13 @@ Project 4 of the quant portfolio. Turn news sentiment into a tradable signal. Se
 
 ## Steps
 
+1. Pull headlines for the target tickers from the NewsAPI free tier using the `data-science-mcp` tools. Verify that `timestamped-headlines` carries a publication timestamp on every item to avoid lookahead.
+2. Run FinBERT over the headlines to get per-headline sentiment. Verify that `sentiment-scores` has a positive, negative or neutral label for every headline.
+3. Aggregate the scores into a daily per-ticker signal and define the long, flat or short mapping. Verify that `sentiment-signal` has one value per ticker per day.
+4. Backtest the signal with fees and slippage and audit for lookahead bias. Verify that `backtest-metrics` reports Sharpe, max drawdown and CAGR versus benchmark.
+5. Publish the GitHub repo with README, metrics, clean code and a "what didn't work" section. Verify that `github-repo-url` resolves and the README contains the metrics.
+6. Persist the project and metrics as typed nodes using `graph_write`. Verify that a `graph_query` returns the project linked to the portfolio.
+
 ### Step 1: scrape-news
 **Agent**: `quant_developer`
 **Tools**: `data-science-mcp`
@@ -63,6 +70,15 @@ Expected: `github-repo-url`
 **Tools**: `graph_write`
 
 Persist the project and metrics as typed nodes linked to the portfolio.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| NewsAPI returns too few headlines | The free tier limits date range and volume | Narrow the tickers or date range and collect over several days. |
+| Backtest looks implausibly strong | Lookahead bias from untimestamped headlines | Re-align signals to headline timestamps, shift by one bar, and re-run. |
+| Published repo lacks credibility | The README omits honest limitations | Add the "what didn't work" section and the full metrics before publishing. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - A FinBERT-driven sentiment-alpha signal, backtested honestly

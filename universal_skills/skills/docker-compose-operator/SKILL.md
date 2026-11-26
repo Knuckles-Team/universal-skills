@@ -24,6 +24,10 @@ Stateless atomic operation to compile template compose definitions, resolve acti
 
 ## Steps
 
+1. Compile the manifest by locating the compose file and its `.env` and substituting variables. Verify that `manifest_valid` is true and `resolved_manifest_path` exists via `ls`.
+2. Deploy the stack with `cm_compose_operations` via `container-manager-mcp` using the compiled file. Verify that `deployment_exit_code` is 0.
+3. Check operational health with the `get_container_logs` action and container statuses. Verify that `active_containers` shows `running` or `healthy` and that `health_log_summary` lists no startup exceptions.
+
 ### Step 1: compile_compose_manifest
 Assemble the targeted deployment specifications and validate syntax and overrides:
 - Locate the reference compose YAML file (e.g. `docker-compose.yml` or `stack.yml`) and its corresponding `.env` or configuration parameters.
@@ -58,3 +62,11 @@ Perform granular verification of the active containers to ensure readiness and s
   - `status`: "SUCCESS" or "FAILED"
   - `active_containers`: List of running service instances with their states.
   - `health_log_summary`: Summary of any anomalies or startup errors discovered.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `manifest_valid` is false | Invalid YAML, unqualified image reference or missing host mount | Fix the YAML and create the missing host path named in the validation error, and recompile. |
+| `deployment_exit_code` is non-zero | Backing database or network was not ready, or the image pull failed | Read `deployment_raw_output`, bring up the prerequisite service first and redeploy. |
+| Containers keep restarting | Startup exception such as `ConnectionRefusedError` | Read the stack trace from `get_container_logs`, correct the environment variable or dependency named, and redeploy. |

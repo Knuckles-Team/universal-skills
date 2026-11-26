@@ -33,6 +33,12 @@ Audits current portfolio position ledger weights, calculates MVO targets, sizers
 
 ## Steps
 
+1. Fetch current holdings and currency weights with `graph_query` and `sx_search`. Verify that `current-portfolio-holdings` weights sum to roughly 100 percent.
+2. Run the mean-variance and Black-Litterman allocation with `graph_analyze`. Verify that `target-portfolio-allocations` sums to 100 percent and respects stated constraints.
+3. Convert target weights to buy and sell lots with `graph_query` and `graph_analyze`. Verify that `sized-rebalancing-orders` net to the difference between current and target weights.
+4. Dispatch the orders and check settlement feeds using `graph_write`. Verify that each `execution-rebalancing-receipts` entry matches a sized order.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Position Auditor
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `execution-rebalancing-receipts`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Weights do not sum to 100 percent | Cash or a position was missing from the audit | Re-run the audit with `graph_query` including cash balances before optimizing. |
+| Optimizer returns infeasible allocations | Constraints conflict with the return estimates | Relax the conflicting constraint in the `graph_analyze` inputs and record the change in the report. |
+| A rebalance order fails to settle | The settlement feed rejected the lot size | Re-size that order from the latest holdings and dispatch only the failed order. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Portfolio Rebalance Cycle results persisted in KG

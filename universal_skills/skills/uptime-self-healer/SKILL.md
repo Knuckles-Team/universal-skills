@@ -22,6 +22,13 @@ Query Uptime Kuma monitor lists for inactive/down status metrics, auto-resolve t
 
 ## Steps
 
+1. Read all monitors with `uptime_kuma_get_monitors`. Verify that the response lists each monitor and its status.
+2. Isolate down monitors and ask the user (skill `user-interaction`) to confirm healing. Verify that the user's explicit confirmation is recorded.
+3. Inspect the container and its event log with `container_manager_mcp`, and the stack with `portainer-agent`. Verify that the failure cause is identified.
+4. Restart with `docker_restart_container` or redeploy via `portainer-agent`. Verify that the container reports running.
+5. Poll `uptime_kuma_get_heartbeats` for the monitor. Verify that the latest heartbeat status is up.
+6. Deliver the recovery report with `user-interaction`. Verify that it includes the timeline from detection to recovery.
+
 ### Step 0: read-monitor-states [skill: uptime-kuma-agent]
 Retrieve current states for all configured system monitors using `uptime_kuma_get_monitors`.
 
@@ -48,6 +55,14 @@ Depends On: Step 4
 ### Step 6: report-recovery [skill: user-interaction]
 Deliver the final uptime status validation report showing the successful self-healing and recovery timeline.
 Depends On: Step 5
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Monitor stays down after restart | Root cause is in the app or config | Read the container logs, fix the configuration, and redeploy the stack. |
+| Container not found | Wrong host or context | List containers on the correct host with `container_manager_mcp` and choose the right name. |
+| Heartbeats show no change | Monitor interval has not elapsed | Wait for the monitor interval and call `uptime_kuma_get_heartbeats` again. |
 
 ## Execution
 

@@ -34,6 +34,10 @@ Provide the strategy definition, asset universe, and execution window.
 
 ## Steps
 
+1. Ingest reference prices by invoking `$quant-data-ingest` with the strategy universe and window. Verify that `normalized_market_dataset` is returned and non-empty.
+2. Paper-trade the strategy by invoking `$freqtrade-executor` with `normalized_market_dataset`. Verify that `execution_report` contains fills with price and slippage fields.
+3. Return both artifacts and confirm no live orders were placed. Verify that the freqtrade run was in dry-run mode (`dry_run` true in its config).
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest
@@ -47,6 +51,14 @@ Invoke `$freqtrade-executor` with `normalized_market_dataset` and the
 strategy definition to paper-trade and capture the fill/slippage report.
 
 Expected: `execution_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `quant-data-ingest` returns an empty dataset | Universe symbols or window do not match the data source | Check the symbol list and dates in the inputs, fix them, and re-invoke `$quant-data-ingest` with the corrected values. |
+| `freqtrade-executor` produces no fills | Strategy never signals inside the window | Widen the execution window or inspect the strategy entry conditions, and re-invoke `$freqtrade-executor`. |
+| Run attempts live trading | `dry_run` is false in the freqtrade config | Stop the run, set `dry_run` to true in the config, and restart the paper trade. |
 
 ## Output
 

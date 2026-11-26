@@ -33,6 +33,12 @@ Fetches multi-expiry options chain price metrics, fits implied volatility surfac
 
 ## Steps
 
+1. Collect chains with `graph_query` and `sx_search`. Verify that `raw-options-chain-feeds` covers multiple expiries.
+2. Fit the surface with `graph_analyze`. Verify that `implied-volatility-surface` has a smile per expiry.
+3. Detect anomalies with `graph_query` and `graph_analyze`. Verify that `volatility-skew-anomalies` lists the flagged contracts.
+4. Propose trades with `graph_write` and `document_tools`. Verify that `options-arbitrage-orders` are proposals only.
+5. Persist results with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: Options Feed Collector
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `options-arbitrage-orders`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Fit fails to converge | Sparse strikes | Filter illiquid strikes and refit |
+| Everything flagged anomalous | Bad quotes | Drop stale quotes and recompute |
+| Orders unwanted | Proposals only | Review manually |
 
 ## Output
 - Options Volatility Surface results persisted in KG

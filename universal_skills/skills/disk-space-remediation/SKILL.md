@@ -34,6 +34,9 @@ Provide the target host(s) and the reclamation risk tolerance.
 
 ## Steps
 
+1. Sample the target host with `$host-resource-sampler` using the workflow inputs. Verify that the `resource_sample` output lists CPU, memory, disk and load values for every target host.
+2. Reclaim space with `$host-disk-reclaimer` by passing `resource_sample` into it. Verify that the returned `reclamation_report` names each path it reclaimed and that every action stayed inside the reclaimer's own safety checks.
+
 ### Step 0: host-resource-sampler [skill: host-resource-sampler]
 
 Invoke `$host-resource-sampler` with the workflow inputs to sample
@@ -47,6 +50,14 @@ Invoke `$host-disk-reclaimer` with `resource_sample` to discover disk
 consumers and safely reclaim space.
 
 Expected: `reclamation_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `resource_sample` is empty for a host | Host unreachable or sampler lacks access | Confirm connectivity with `ssh <host> true` and re-invoke `$host-resource-sampler` against the reachable hosts only. |
+| `reclamation_report` shows nothing reclaimed | No filesystem crossed the pressure threshold or the risk tolerance was too strict | Inspect the disk figures in `resource_sample` and raise the stated risk tolerance input before re-invoking `$host-disk-reclaimer`. |
+| A deletion was proposed outside the reclaimer's safety checks | Step logic was extended in this workflow | Remove the extra deletion logic and let `$host-disk-reclaimer` own all deletes. |
 
 ## Output
 

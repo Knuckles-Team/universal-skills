@@ -33,6 +33,12 @@ Scans feeds across spot and derivative exchanges concurrently, computes fee-adju
 
 ## Steps
 
+1. Pull feeds with `graph_query` and `sx_search` concurrently. Verify that `real-time-ticker-feeds` includes every target exchange.
+2. Compute fee-adjusted spreads with `graph_analyze`. Verify that `arbitrage-spread-metrics` lists net spread after fees per pair.
+3. Route both legs with `graph_query` and `graph_analyze` as `risk-assessor`. Verify that `order-execution-status` shows both legs filled or both cancelled.
+4. Settle PnL with `graph_write` and `document_tools`. Verify that `settlement-ledger-entries` reconcile to the fills.
+5. Persist results with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: Ticker Scanner
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `settlement-ledger-entries`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| One leg fills only | Exchange rejected the second order | Flatten the filled leg and record the failure in the ledger |
+| Spread negative after fees | Fee model missing | Update fee schedule and recompute with `graph_analyze` |
+| Stale feed | Exchange endpoint lagging | Drop that exchange and rescan |
 
 ## Output
 - Multi Exchange Arbitrage results persisted in KG

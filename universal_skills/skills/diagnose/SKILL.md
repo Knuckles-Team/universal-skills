@@ -133,3 +133,29 @@ Required before declaring done:
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
 
 **Then ask: what would have prevented this bug?** If the answer involves architectural change (no good test seam, tangled callers, hidden coupling) hand off to the `/improve-codebase-architecture` skill with the specifics. Make the recommendation **after** the fix is in, not before — you have more information now than when you started.
+
+## Steps
+
+1. Build a fast, deterministic pass/fail feedback loop for the bug.
+   Example: `pytest -x tests/path::test_name`. Verify that it fails the same way on repeated runs.
+2. Reproduce the user's exact symptom.
+   Run the loop three times, for example `for i in 1 2 3; do pytest -x tests/path::test_name; done`, and record the error message. Verify that the symptom matches the user's report.
+3. Gather KG context and blast radius.
+   Call the `kg_blast_radius` and `kg_memory_recall` MCP tools. Verify that downstream dependents and prior incidents are listed.
+4. List 3 to 5 ranked, falsifiable hypotheses and show them to the user.
+   Write them to `hypotheses.md` and run `grep -c "If " hypotheses.md`. Verify that each one states a prediction of the form "if X then changing Y".
+5. Instrument with tagged probes, one variable at a time.
+   Use a prefix like `[DEBUG-a4f2]` and locate with `grep -rn "DEBUG-a4f2" .`. Verify that each probe maps to a hypothesis.
+6. Write the regression test, apply the fix, and rerun the loop.
+   Run the test command from step 1, for example `pytest -x tests/path::test_name`. Verify that the test fails before the fix and passes after, and that the original scenario no longer reproduces.
+7. Clean up and write the post-mortem.
+   Run `grep -rn "DEBUG-" .`. Verify that it returns nothing and the commit message names the correct hypothesis.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No feedback loop can be built | Environment or data not accessible | Stop, list what was tried, and ask the user for access, a captured artifact, or permission for temporary instrumentation |
+| Bug fails only intermittently | Non-deterministic trigger | Loop the trigger 100 times or add stress until the failure rate is debuggable |
+| Regression test passes before the fix | Test sits at the wrong seam | Move to a seam that reproduces the real call pattern, or record the missing seam as a finding |
+| Debug logs remain after the fix | Cleanup skipped | Run `grep -rn "DEBUG-" .` and delete each hit |

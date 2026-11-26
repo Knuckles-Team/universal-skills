@@ -3,12 +3,7 @@ name: comparative-analysis
 domain: research
 skill_type: skill
 description: >-
-  Comprehensive multi-modal comparative analysis engine for codebases, research papers,
-  and cross-domain innovation extraction. Evaluates governance, architecture, quality,
-  security, testing, docs, and performance. Supports concept-ID-seeded cross-referencing
-  against project concept registries for targeted enhancement discovery. Includes
-  architecture-aware gap analysis with C4 diagram discovery/auto-generation, hot path
-  identification, design pattern differential, and wiring opportunity synthesis.
+  Comprehensive multi-modal comparative analysis engine for codebases, research papers, and cross-domain innovation extraction. Evaluates governance, architecture, quality, security, testing, docs, and performance. Supports concept-ID-seeded cross-referencing against project concept registries for targeted enhancement discovery.
 license: MIT
 tags: [analysis, comparison, evaluation, benchmark, architecture, security, governance, research, innovation, biomimicry, analogical-reasoning, TRIZ, maturity, license, compliance, enterprise, grading, radar-chart, concept-id, cross-reference, c4, hot-path, wiring-audit]
 metadata:
@@ -17,6 +12,8 @@ metadata:
 ---
 
 # Comparative Analysis
+
+Scope: Comprehensive multi-modal comparative analysis engine for codebases, research papers, and cross-domain innovation extraction. Evaluates governance, architecture, quality, security, testing, docs, and performance. Supports concept-ID-seeded cross-referencing against project concept registries for targeted enhancement discovery. Includes architecture-aware gap analysis with C4 diagram discovery/auto-generation, hot path identification, design pattern differential, and wiring opportunity synthesis.
 
 Multi-modal comparative analysis engine that evaluates and compares any combination of
 codebases and research papers across 56+ industry-standard metrics organized into 8
@@ -238,15 +235,23 @@ embedded metadata for downstream analysis scripts.
 
 ## Steps
 
+1. Resolve the pre-flight checklist: primary project, mode, KG availability, concept registry, architecture docs and output location (Step 1). Verify that every checklist answer is recorded and that `ls <path>` shows the primary project directory.
+2. Discover and rank the comparison inputs with `python scripts/discover_projects.py <paths>` and `python scripts/rank_relevance.py <target> <items>` (Step 2). Verify that each input has a codebase or research label and a 0-100 relevance score.
+3. Run the per-domain audits with `python scripts/analyze_governance.py`, `python scripts/analyze_architecture.py`, `python scripts/analyze_security.py` and `python scripts/analyze_documentation.py` (Steps 3-6). Verify that each writes a JSON file under `results/`.
+4. Extract innovations and cross-reference concept IDs with `python scripts/extract_innovations.py` and `python scripts/concept_cross_reference.py` (Steps 7-8). Verify that the outputs list findings mapped to concept IDs.
+5. Compute the architecture gap with `python scripts/analyze_architecture_diff.py <source> <target>` (Step 9). Verify that `results/arch_diff.json` exists and lists the gaps.
+6. Build the report with `python scripts/generate_comparison_report.py results/*.json --output report.md` (Step 10). Verify that `report.md` exists and has a section per analyzed domain.
+7. Run the wiring audit, ingest leftovers with `kg_ingest`, and remove the clones (Step 11). Verify that `ls ${MERISTEM_WORKSPACE_ROOT}/.specify/ca_repos/` no longer lists the session directory.
+
 ### Step 1: pre_flight_config
 **(ENFORCED — G9)** Before any analysis, resolve this checklist. Use `AskUserQuestion` for anything not stated; do not
 proceed past this step with an unanswered item (record each answer so the run is auditable):
-1. **Primary Project**: Which codebase is the primary target for enhancement?
-2. **Mode**: Lightweight (default, code-vs-code) or Deep (KG)? — see Mode Selection above.
-3. **Knowledge Graph Available?**: Is the `meristem-kg` MCP server running? (If No → Lightweight.)
-4. **Concept Registry?**: Path to `docs/concept_map.md` / `docs/concepts.yaml` for offline Extend-Before-Invent (`parse_concept_registry.py`). Prefer `concept_map.md` (clean names).
-5. **Architecture Docs?**: Does the project have C4 architecture diagrams?
-6. **Analysis Depth & Output**: Full vs focused; where does the Innovation Ledger + SDD land?
+- **Primary Project**: Which codebase is the primary target for enhancement?
+- **Mode**: Lightweight (default, code-vs-code) or Deep (KG)? — see Mode Selection above.
+- **Knowledge Graph Available?**: Is the `meristem-kg` MCP server running? (If No → Lightweight.)
+- **Concept Registry?**: Path to `docs/concept_map.md` / `docs/concepts.yaml` for offline Extend-Before-Invent (`parse_concept_registry.py`). Prefer `concept_map.md` (clean names).
+- **Architecture Docs?**: Does the project have C4 architecture diagrams?
+- **Analysis Depth & Output**: Full vs focused; where does the Innovation Ledger + SDD land?
 
 The mandatory artifact of this skill is the **Innovation Ledger** (`references/innovation_ledger_schema.md`).
 Every recommendation MUST become a verified, scored ledger row before it is scaffolded into SDD.
@@ -338,6 +343,15 @@ Step 10 already wrote each result as a `ComparativeAnalysisRun` node — this st
 
 rm -rf ${MERISTEM_WORKSPACE_ROOT}/.specify/ca_repos/<session_id>
 ```
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `scripts/discover_projects.py` finds no projects | Path is wrong or a Git URL was not cloned | Run `ls <path>` to confirm the directory exists, then re-run with the absolute path of the clone. |
+| KG actions return empty results | `meristem-kg` MCP server is not running | Switch to Lightweight mode (code-vs-code) and use the filesystem scripts in `scripts/`. |
+| A ledger row fails verification | Recommendation is not backed by a located code or doc citation | Run `python scripts/verify_claims.py` on the report, then drop or re-source the unsupported row before scaffolding SDD. |
+
 
 ## Output Location Rules
 

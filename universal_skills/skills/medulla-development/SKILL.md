@@ -3,20 +3,7 @@ name: medulla-development
 domain: development
 skill_type: skill
 description: >-
-  Develop inside the medulla Rust engine without creating sprawl.
-  Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or
-  second route to an existing capability in the medulla repository.
-  Supplies twelve guardrails with what enforces each; the authorization model
-  end to end (claims to VerifiedRequestContext to allows_method to the dispatch
-  chokepoint, the RBAC/RLS axis, and the measured kg:read
-  / RunUdf / policy:export findings); the 48-crate layer model, the
-  dependency-direction rule and how to find a symbol's CONSUMERS; the
-  pre-commit gates and what each forbids; the rules for authoring a gate that
-  cannot report coverage it does not have; the MutationBatch v1
-  scope-vs-domain contract; an anti-sprawl checklist; seven failure patterns;
-  and the build/test operating rules. References/ holds the deep material. Use
-  when the agent must write, refactor, review, or plan work in the EG Rust
-  workspace. Not for the Python meristem side or deploying the engine.
+  Develop inside the medulla Rust engine without creating sprawl. Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or second route to an existing capability in the medulla repository. References/ holds the deep material. Use when the agent must write, refactor, review, or plan work in the EG Rust workspace. Not for the Python meristem side or deploying the engine.
 license: MIT
 tags: [medulla, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
@@ -24,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Medulla Development
+
+Scope: Develop inside the medulla Rust engine without creating sprawl. Load BEFORE adding a crate, constant, predicate, table list, helper, gate, or second route to an existing capability in the medulla repository. Supplies twelve guardrails with what enforces each; the authorization model end to end (claims to VerifiedRequestContext to allows_method to the dispatch chokepoint, the RBAC/RLS axis, and the measured kg:read / RunUdf / policy:export findings); the 48-crate layer model, the dependency-direction rule and how to find a symbol's CONSUMERS; the pre-commit gates and what each forbids; the rules for authoring a gate that cannot report coverage it does not have; the MutationBatch v1 scope-vs-domain contract; an anti-sprawl checklist; seven failure patterns; and the build/test operating rules. References/ holds the deep material. Use when the agent must write, refactor, review, or plan work in the EG Rust workspace. Not for the Python meristem side or deploying the engine.
 
 The medulla repository is a Cargo workspace: **48 member crates under
 `crates/` plus the root facade package `medulla-engine` (`src/`)**, root version
@@ -81,6 +70,25 @@ There is no time limit, no size limit per agent or per change, and no rule about
 - Landing in this repo: delivery agents open the PR and do not run per-PR build-host builds or merge. The orchestrator lands medulla in batches, validated by one warm integration build (`cargo check --workspace --all-features` plus contract regeneration) on the least-loaded build host.
 
 ---
+
+## Steps
+
+1. Run the anti-sprawl pre-flight (section 6) by finding the symbol's consumers with `grep -rn "<symbol>" crates src tests`.
+   Verify that every hit, including tests and benches, is listed before you change it.
+2. Build the narrowest crate first with `CARGO_INCREMENTAL=0 cargo check -p <crate>`.
+   Verify that it exits 0 and name the feature set in your report (G3).
+3. Run the gates on changed files with `uvx --from pre-commit==4.6.0 pre-commit run --files $(git diff --name-only origin/main...HEAD)`.
+   Verify that every hook passes, with no `noqa`, skip or baseline entry added to make it pass.
+4. Before citing gate coverage, run `arch-lint list-rules` and report each count with the command that produced it (G1, G2).
+   Verify that the command is quoted beside every number.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `cargo check` is green but a feature path is unbuilt | The code sits behind a non-default feature | Re-run with `cargo check -p <crate> --features <feature>` for that feature |
+| A gate fails on a moved path or literal | The contract moved and the gate script is stale | Update the gate's path or literal (section 4), never relax the rule |
+| Push is refused by the lane guard | Commit made in the canonical checkout or with `CARGO_TARGET_DIR` exported | Redo the work in a `git worktree add` from `origin/main` with `CARGO_TARGET_DIR` unset |
 
 ## 0. Mandatory guardrails — read these before §1
 
@@ -224,165 +232,9 @@ Both verified 2026-09-03; neither is gated, so neither will stop you.
 
 ## 1. The authorization model — who may call what
 
-Four of the five findings a security review produced against this tree are
-authorization defects, and not one is a coding error: each reads correctly line
-by line and is wrong at the level of the *model*. So this section comes before
-the architecture. Read it before you add a `Method`, a `MethodPolicy` row, a
-carrier, or a second scope check. Every `file:line` was opened on `2.27.0` for
-this section; re-open them (**G6**).
+Four of five security-review findings were authorization defects at the level of the *model*, not coding errors. Before you add a `Method`, a `MethodPolicy` row, a carrier, or a second scope check, read [the full section](references/authorization-model-section.md) (claims to `VerifiedRequestContext` to `allows_method` to the dispatch chokepoint, the RBAC/RLS axis, measured `kg:read` / `RunUdf` / `policy:export` findings). Re-open every `file:line` on the current version (**G6**).
 
-### The request → decision chain
 
-| # | Stage | Where | Establishes |
-|---|---|---|---|
-| 1 | **Claims arrive as an untrusted wire DTO** | `RequestContextClaims`, `crates/medulla-types/src/acl.rs:17` — `principal`, `tenant`, `audience`, `agent_id`, `roles`, `scopes`, `policy_version`, `delegation`, `node`, `priority` | Nothing. Its own doc: *"Callers must not treat a deserialized value as trusted until the server has verified the envelope MAC, deployment audience/tenant/policy version, request binding, and delegation chain."* |
-| 2 | **Envelope verification** | `verify_request_with_security_dir` (`src/server/auth.rs:1773`) → `verify_envelope_v2_with` (`:1681`) | `eg2.` prefix → HMAC over the request → clock-skew window → `validate_context_claims` (`:1110`) → `bind_verified_identity` (`:1550`) → non-empty idempotency key → **durable replay-nonce consumption** (`:1709`). Order matters: the nonce is spent last, so a claims-invalid request costs no ledger write. |
-| 3 | **Claims → identity binding** | `validate_context_claims` (`:1110`) | Required claims non-empty; no duplicate role/scope/delegation entries; `req.agent_id` matches; **the delegation chain must run principal → agent_id** (empty iff `principal == agent_id`); audience/tenant/policy-version equal the deployment's; a present `node` claim exact-matches this node. |
-| 4 | **IdP binding** | `bind_verified_identity` (`:1550` under `oidc`; `:1658` without it) | Every claimed role must appear in the verified token's roles, and **every claimed scope must appear in its scopes or roles** — `"request context asserts unverified scope '{scope}'"`. `require_oidc()` (`:1482`) **defaults to true**, so a build with no configured issuer fails closed rather than accepting HMAC-only identity. **A caller cannot self-assert `kg:read`;** the IdP grants it. |
-| 5 | **The trusted wrapper** | `VerifiedRequestContext` (`:60`), built only by `from_verified_claims` (`:68`) | Private fields, so *"downstream code cannot construct a trusted context from caller-supplied JSON."* Two indexes are derived once here (`:69-74`): `scope_index` (scopes verbatim) and `scope_wildcard_domains` (each scope's `":*"` suffix stripped). |
-| 6 | **The decision** | **`VerifiedRequestContext::allows_method(action, mutates)`, `src/server/auth.rs:177`** | The one function answering *"may this principal call this method."* Name it exactly; there is no second one. |
-
-`action` and `mutates` are never chosen at the call site — they come from the
-capability ledger: `eg_capabilities::policy(&req.method)` yields
-`MethodPolicy { authz_action, mutates, durability_domain, audited, emits_cdc, … }`
-(`crates/medulla-capabilities/src/lib.rs`; rows in `src/domains/*.rs`).
-`allows_method` then decides in five ordered steps: (1) `allows_action(action)`
-(`:148`) — the **exact** scope, a **domain wildcard** (`graph:*`), or global `*`
-→ allow; (2) `kg:admin` → allow, unconditionally; (3)
-`coarse_kg_admin_only(action)` (`:632`) — a **string test**,
-`starts_with("admin:") || starts_with("security:") || ends_with(":admin") || ends_with(":control")`
-→ deny; (4) `mutates` → requires `kg:write`; (5) otherwise →
-`kg:read || kg:write`. Step 5 is the fall-through that produces finding 1.
-
-### The scope vocabulary that actually exists
-
-Verified, because the shape is not what its name suggests. **Scopes a caller
-holds** are `kg:read` / `kg:write` / `kg:admin` (the coarse aggregates, which
-appear only in `allows_method`, `allows_analytics_worker` and the carrier
-minters), `*`, `<domain>:*`, and any exact action string. **Actions a method
-declares** are the **103 distinct `authz_action` strings** the ledger carries
-over its **412 rows** — `node:read`, `compute:finance`, `udf:exec`,
-`admin:cluster`, … **none of them `kg:`-prefixed.** The two vocabularies are
-disjoint; do not assume an action is spelled `kg:read`. Two dedicated
-authorities no coarse grant implies: `analytics:worker` (`:159`) and
-`security:bootstrap` (`:163`, which also demands `principal == agent_id`, an
-empty delegation chain, and **exactly one** scope). `replicated_mutation`
-(`:89`, `raft`) mints `scopes: ["*"]` for the Raft apply task — the one
-legitimate `*` holder, reachable only from the state machine after the leader
-already dispatched through the full external gate.
-
-### The chokepoint, and what runs beside it
-
-**`check_scope_and_admin_authority` (`src/server/dispatch.rs:5349`) is the
-chokepoint.** It has exactly one caller — `dispatch_preamble_checks` (`:5586`) —
-and every request reaching `dispatch_inner` (`:5647`) passes through it,
-*including* one arriving with an already-verified context, because
-`dispatch_with_context(state, req, Some(ctx))` (`:2966`) still runs the preamble.
-(`git grep -n check_scope_and_admin_authority` returns the definition and one
-call.) In order it applies: **(1)** `check_resource_and_capacity_scope`;
-**(2)** `check_cross_tenant_scope` — *"The tenant in a resource body is a
-correlation, not an authority claim"*, so only a privileged aggregate reader or
-`kg:admin` crosses tenants; **(3)** `allows_method(action, mutates)` (`:5377`);
-**(4)** when `is_admin_authz_action(action)` (`src/server/access.rs:1126` —
-`action == "security:admin" || action.starts_with("admin:")`), additionally
-`require_admin_capability` (`access.rs:1137`) → `IsolationLayer::has_admin_capability`
-(`crates/medulla-core/src/isolation.rs:1894`): an agent **registered in `rbac.redb`**
-with `AgentRole::System` or an explicit RBAC `Admin` grant. No provisioned policy
-at all is a **deny**, not a default-open (`access.rs:1152`).
-
-⚠ **Those are two different definitions of "admin" and they disagree.**
-`coarse_kg_admin_only` matches **22** action strings; `is_admin_authz_action`
-matches **5**. The **17 in the gap — 50 of the 412 methods** — need the
-`kg:admin` *claim* but no durable admin grant. `security:audit` is the clean
-example: it starts with `security:` so a `kg:write` bearer is refused, but it is
-not *equal to* `security:admin`, so `rbac.redb` is never consulted.
-`src/server/policy_export/mod.rs:100-105` is the in-tree record of this
-asymmetry, written by the lane that hit it.
-
-**A second axis runs after the method gate: per-graph ACL and row-level
-security.** Clearing `allows_method` says the *method* is permitted; it says
-nothing about *which rows*. That is `check_graph_access` (`access.rs:852`) →
-`IsolationLayer::check_access` (`isolation.rs:1508`, default-deny — an actor
-with no provisioned identity returns `false` before any graph-type rule runs),
-plus `GraphReadAuthority::from_verified` (`access.rs:188`) and
-`IsolationLayer::filter_view` (`isolation.rs:1732`). Never treat a scope check
-as an isolation check — §7.3's RLS-view-cache finding is what happens when the
-two are conflated.
-
-### Call sites outside the chokepoint
-
-`allows_method` has four production call sites that are **not**
-`check_scope_and_admin_authority` (`git grep -n allows_method -- src/ crates/`,
-excluding tests and comments). `src/server/wire/mod.rs:1245` (SQL-carrier
-handshake) and `src/server/bolt_wire/mod.rs:239` / `:409` are **additional
-earlier** gates — those requests still reach `dispatch_inner`, so they are not
-bypasses. **`src/server/graphql_sub.rs:204` is a genuine parallel path:** it
-verifies, calls `allows_method(policy.authz_action, false)`, then goes straight
-to `authorized_snapshot` → `check_graph_access` + `GraphReadAuthority::from_verified`
-and serves from the graph notifier. It never reaches `require_admin_capability`
-or the cross-tenant check — benign today only because `GraphQl`'s action is not
-admin-tier, which is a property of one ledger row, not of this code.
-
-> **Rule:** a fifth `allows_method` call site is a fifth place that must
-> independently get the surrounding checks right. Add one only with a written
-> reason, and say which of the four preamble stages it is choosing to skip.
-
-### Three measured findings
-
-**1 — a bare read scope reaches 221 of 412 methods.** Re-derived for this skill
-by parsing `crates/medulla-capabilities/src/domains/*.rs` and reimplementing
-`coarse_kg_admin_only`'s four string tests (script in the reference below):
-**412 rows · 234 non-mutating · 221 reachable by a caller holding only
-`kg:read` · 45 distinct actions.** Recheck these historical counts against the
-current tree with `scripts/method_policy_inventory.py` and the independent
-method in [`references/authorization-reference.md`](references/authorization-reference.md).
-The mechanism is step 5: *any* non-mutating
-action whose **name** does not match one of four string shapes is granted to any
-read-tier caller. **110 of the 221 are `compute:*`** — finance, graph-algo,
-datascience, semantic, parse, vision. `mutates` is a **durability** property
-being used as an **authorization** property; those are different axes, the same
-category error as §5's scope/domain conflation. The narrow fix (one more string
-in `coarse_kg_admin_only`) leaves 220 methods unchanged while looking closed;
-the general fix is a **declared** coarse posture on the `MethodPolicy` row with
-no `Default` impl, so a new method fails to compile until it states its answer.
-
-**2 — `RunUdf` executes caller-supplied code, unaudited, in a default build.**
-`crates/medulla-capabilities/src/domains/compute.rs:113` declares it
-`mutates: false`, `authz_action: "udf:exec"`, `audited: false` — so it clears
-`kg:read` and leaves no audit-chain record — and its ledger row carries **no
-`#[cfg]`**, unlike `Quantum`, `Asr`, `TtsSynthesize` and `PolicyExport`.
-⚠ **Correction to how this is usually stated:** the `Method` variant *is*
-feature-gated (`crates/medulla-types/src/protocol.rs:2866`, `#[cfg(feature = "wasm-udf")]`;
-dispatch arm `src/server/dispatch.rs:11949`) — but `wasm-udf` is inside `full`,
-which is inside `default` (verified with the G3 closure script), **so it is
-compiled and routed in a default build anyway.** The conclusion holds; the
-reason "there is no cfg gate" does not. The sandbox is real (`crates/medulla-wasm`:
-wasmtime, fuel + memory limits, no host capabilities) — the finding is about who
-may invoke it, and that nothing records that they did.
-
-**3 — whether a read scope should clear `policy:export` is an OPEN DESIGN
-QUESTION, not a bug.** `Method::PolicyExport` declares `"policy:export"`,
-`mutates = false` (`crates/medulla-capabilities/src/domains/security.rs:15`), so it
-falls through to `kg:read || kg:write`. **`src/server/policy_export/mod.rs:100-105`
-records that the non-admin tier was chosen deliberately:** naming it
-`"security:admin"` — the obvious first choice, matching
-`GetIdentity`/`RegisterIdentity` — would have routed it through
-`is_admin_authz_action` and therefore through `rbac.redb` (M7) instead of the
-effective request-time role set, *"silently reproducing the exact mistake
-DEC-CA-04 A2 corrected."* `src/server/access.rs:2293` carries the same
-rationale. So the *admin*-tier decision is settled and documented; what nobody
-has decided is whether the **read** tier should clear it. **Do not "fix" this.**
-Raise it as a decision, name DEC-CA-04 A2, and let the owner rule. It is also
-outside the default build (`policy_export` ∉ the `default` closure), so any
-change needs a declared feature set to be tested at all (**G3**).
-
-**Enumerations** — all 103 action prefixes with method counts, the 45 actions a
-read scope clears, the two admin definitions and the 17 strings between them,
-the six cfg-gated reachable rows with their default-closure status, and the
-script that re-derives `412 / 234 / 221 / 45 / 22 / 5 / 50` — are in
-[`references/authorization-reference.md`](references/authorization-reference.md).
-
----
 
 ## 2. Where code goes — the layer model
 
@@ -501,86 +353,9 @@ there before citing what a gate enforces (G2).** Headlines before you plan work:
 
 ## 4. Authoring a gate — how not to ship coverage you do not have
 
-The most repeated failure in this program is not a gate that fails; it is a gate
-that **reports coverage it does not have**. One passed on an empty universe; one
-measured two of the five properties it claimed; one crashed and still looked
-green. A gate is a claim about the world, and an unfalsified claim is worth
-nothing. Four rules. The evidence for each — the full worked instances, with the
-`file:line` you can open — is in
-[`references/gates-reference.md`](references/gates-reference.md) →
-*"Evidence behind the gate-authoring rules"*.
+A gate must never report coverage it does not have: no pass on an empty universe, no claiming five properties while measuring two, no green after a crash. Before writing or changing a gate, read [the full section](references/gate-authoring-section.md).
 
-### 4.1 Prove it FAILS on a known-bad input before you trust a pass
 
-A gate you have only ever seen pass has demonstrated nothing (**G4**; §7.5 is
-the same rule for fixes). Construct the violation the gate exists to catch, run
-it, watch it exit non-zero, then remove the violation. If you cannot construct
-the bad input, you do not yet know what the gate enforces.
-
-**A gate whose universe is empty must FAIL (G9). Copy this shape** —
-`scripts/check_mint_lease_call_sites.py:88-95` refuses its own empty universe
-with *"found ZERO calls … either the scan paths drifted or the feature was
-deleted … don't let it go quietly blind."* ⚠ It is nearly alone: measured
-2026-09-04 across the 27 `scripts/check_*.py` gates, **24 have no emptiness test
-at all** and only this one turns a test into a refusal (command in the
-reference; it is a heuristic, so audit the gate you copy from).
-
-### 4.2 State the universe and the denominator, in the gate's own output
-
-**G1 applies to gates, not only to reports.** A gate must print what it
-*scanned*, not only what it found: "0 violations in 0 files" and "0 violations
-in 1,077 files" are different verdicts and most output cannot tell them apart.
-Two live instances, both in the reference: a universe that silently **grew**
-(`arch-lint.toml` excludes `**/target/**`, but the committed target dir is
-`target-isolated`, so 1,144 of 4,642 findings are vendored codegen), and one
-that silently **emptied** (a real `git commit` exports `GIT_DIR`/`GIT_INDEX_FILE`
-into every hook and `git -C <root> ls-files` does **not** override them; a
-liveness gate reported `orphan_modules: 4 → 196` with zero source changes).
-
-Two independent fixes for that second one already exist here —
-`scripts/_git_subprocess_env.py` and `scanner_contract.run_git`/`sanitized_env` —
-while two gates still call `git ls-files` with no `env=`. Adopt one of the two;
-write neither a third nor a bare call. **Test a suspect gate both ways:** plain,
-then with `GIT_DIR` and `GIT_INDEX_FILE` set to the worktree's real gitdir and
-index. Different answers mean the universe is ambient, not declared.
-
-### 4.3 Never key a gate on a byte offset, a line number, or a symbol name
-
-All three have broken here. A gate keyed on the **text** of the code cannot
-distinguish a contract that was **lost** from one that **moved** — and
-refactoring moves things, which is the whole point of the work these gates
-supervise. The false positive is the expensive direction: it reds the tree,
-sends someone to fix correct code, and trains everyone to override the gate.
-
-`scripts/check_exact_fault_restart_harness.py` fails today with **18 missing
-literals, every one of which is present in the tree** — a file became a module
-directory, a function moved into a submodule, and a parameter type was
-*tightened* from a raw `WriteTransaction` to the validated `MutationWrite`. Its
-sibling `persisted-mutation-contract` fails the mirror-image way (it expects a
-module **directory** where the tree has a file). Full table in the reference.
-
-**Key on behaviour instead**, in this order: **(1)** compile or run it — a
-`#[test]` or a trait bound that fails to build is immune to renaming, because
-the compiler follows the rename; **(2)** ask the language, not the bytes — parse
-(`ast`, `syn`, `tree-sitter`) and assert on the resolved item; **(3)** search the
-whole universe, not one path — assert on the *count and location set*, as
-`check_mint_lease_call_sites.py` does, so a move re-reports a new location
-instead of claiming a deletion; **(4)** if you truly must pin text, pin it
-against the HEAD blob's content — never a symbol, a signature, a line number or
-a byte offset — say which file it is expected in and *why that file*, and make
-the failure message say "moved or missing", not "missing".
-
-### 4.4 A gate is a ledger, not a ratchet
-
-**G8.** No baseline that updates itself; no `--update-baseline` flag (none
-exists in this repo — keep it that way). The permitted shape is a reviewed human
-ledger, `scripts/check_integration_baseline.py`'s: every entry carries
-`# owner=@handle review-by=YYYY-MM-DD`, it fails when something NEW joins **and**
-when something on it starts **passing**, and it grows only by a deliberate edit.
-Copy that or add nothing. And when you retire a gate, read its tests first — one
-of them is probably pinning the bug.
-
----
 
 ## 5. The MutationBatch v1 contract — the two-axis rule
 
@@ -688,65 +463,9 @@ things that are still open today.** The rules themselves:
 
 ## 8. Build and test operating rules
 
-### Running the suite
-
-```bash
-export CARGO_INCREMENTAL=0
-cargo check -p medulla-types                          # fastest inner loop
-cargo check -p medulla-engine                   # full closure
-cargo test -p medulla-engine --lib -j 8 -- --test-threads=4
-```
-
-- **Do NOT export `CARGO_TARGET_DIR`.** The committed `.cargo/config.toml` already sets
-  `[build] target-dir = "target-isolated"`. That path is *relative*, so it resolves
-  against each worktree root — every worktree gets its own isolated target dir with no
-  env var and no action after checkout. An exported `CARGO_TARGET_DIR` overrides it
-  (cargo's own precedence) and **`lane-guard` refuses the commit** unless the export
-  points at exactly this lane's partitioned dir
-  (`meristem/scripts/check_lane_guard.py`, `_check_cargo_target_override`).
-- **NEVER omit `--test-threads=4`. The suite deadlocks at the 24-thread default.**
-- **`-j` bounds the COMPILER, not the harness.** `-j 8` limits `rustc` jobs;
-  `--test-threads` after `--` limits the test harness. They are different knobs
-  and you need both.
-- Cargo ignores `CPUQuota`; `-j` is the only lever. 3-4 concurrent cargo lanes on
-  this workspace is the practical ceiling.
-- Full gate before claiming done: `pre-commit run --all-files`, no `--no-verify`
-  — but **not bare in a shared checkout**, because it stashes and can drop your
-  unstaged work (**G11**); run it from a throwaway detached worktree with a
-  lane-private `PRE_COMMIT_HOME` and `TMPDIR`, as *Git, in a shared
-  multi-worktree repo* below already requires.
-  Plus `bash scripts/constrained_parallelism_gate.sh` (GOC-70), which re-runs the
-  lib suite and the concurrency-sensitive integration binaries under `taskset -c 0,1`.
-
-### Git, in a shared multi-worktree repo
-
-- **NEVER `git stash`.** `refs/stash` lives in `$GIT_COMMON_DIR` and is repo-wide
-  across 50+ worktrees; a `pop` in one lane silently takes another lane's WIP. To
-  compare against clean main use `git diff main -- <path>`, `git show main:<path>`,
-  or `git worktree add --detach <tmp> main`.
-- **NEVER `git add -A` or `git add .`.** Stage an explicit reviewed allowlist:
-  `git add -- path/to/file ...`. Re-read `git diff --cached` before committing.
-  Handoff notes, baselines, logs, caches and scratch files are never product artifacts.
-- **NEVER use the harness's worktree-isolation tool** on this repo — it writes
-  `core.bare = true` into the shared config and breaks every linked worktree. Use
-  a real `git worktree add "$WORKTREE_ROOT/<repo>/<branch>" -b <branch>` (or
-  `rm_worktree add`). Each session takes a distinct branch.
-- Do not edit the repository-manager-owned canonical checkout; its background sync
-  resets the working tree.
-- Run gates in a throwaway detached worktree when a formatting hook could rewrite
-  a shared checkout, with a lane-private `PRE_COMMIT_HOME` and `TMPDIR`.
+Set `CARGO_INCREMENTAL=0`, start with `cargo check -p medulla-types` for the fastest inner loop, and count cargo lanes before launching builds. Read [the full rules](references/build-and-test-rules-section.md) before running the suite.
 
 
-**Disk budgeting, the Rust idioms this workspace has already paid for
-(bind-before-yield / E0597, crates.io-only, `bump-my-version` and never a
-hand-edited version string, loud feature-gating), and the reporting rules that
-govern how a number leaves your hands (no ratchets, the permitted reviewed-ledger
-shape, report the real number with its command and its composition) are in
-[`references/build-and-test-reference.md`](references/build-and-test-reference.md).
-Read the disk section before starting a long build and the reporting section
-before publishing a count.**
-
----
 
 ## Resources
 

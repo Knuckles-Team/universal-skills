@@ -43,6 +43,22 @@ Expected: selected_arbitrage_target
 Route execution orders to capture the pricing discrepancy
 Expected: arbitrage_execution_result
 
+## Steps
+
+1. Fetch current contract odds via `mcp_market_data`. Verify that `contract_odds` has a price for every outcome of the target market.
+2. Gather news and social sentiment with `web-search`. Verify that `sentiment_score` cites at least one source.
+3. Retrieve external prediction-market and sportsbook prices via `mcp_signals`. Verify that `external_market_odds` matches the same event as Step 1.
+4. Compare platforms with `mcp_strategy`. Verify that `selected_arbitrage_target` shows a positive expected value after fees.
+5. Route the orders with `mcp_orders`. Verify that `arbitrage_execution_result` shows all legs filled or cancelled together.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Events do not match across venues | Different resolution wording or dates | Normalize the event definition manually and skip the target if the resolution criteria differ |
+| Edge disappears before execution | Odds moved during analysis | Refresh `contract_odds` and rerun Step 4, and submit only if +EV remains |
+| One leg fills, the other fails | Liquidity or price moved between legs | Unwind the filled leg with a market order via `mcp_orders` and record the loss |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

@@ -2,13 +2,7 @@
 name: x-posts-to-kg-ingestion
 skill_type: workflow
 description: >-
-  Search X (formerly Twitter) posts and ingest content into the Knowledge Graph
-  with automatic classification, tiered memory, and self-evolution awareness.
-  Uses the xAI Responses API (grok-4.3) for search, the UniversalKnowledgeClassifier
-  for scoring, and XIngestionBridge for structured KG persistence. Supports
-  tweets, threads, and X Articles (long-form content).
-  Triggers on "search X", "ingest X posts", "browse X", "x to kg",
-  "x research", "social media ingestion".
+  Search X posts, threads and articles via the xAI Responses API and ingest them into the Knowledge Graph with classification, tiered memory and provenance. Use when asked to search X, ingest X posts, or run an X research pipeline. Do NOT use for other social sources (pulselink-social-research).
 domain: social-workflows
 tags: ['social', 'x', 'ingestion', 'arbora', 'knowledge-graph', 'evolution']
 requires: ['arbora']
@@ -21,6 +15,8 @@ metadata:
 ---
 
 # X Posts to KG Ingestion Workflow
+
+Scope: Search X (formerly Twitter) posts and ingest content into the Knowledge Graph with automatic classification, tiered memory, and self-evolution awareness. Uses the xAI Responses API (grok-4.3) for search, the UniversalKnowledgeClassifier for scoring, and XIngestionBridge for structured KG persistence. Supports tweets, threads, and X Articles (long-form content). Triggers on "search X", "ingest X posts", "browse X", "x to kg", "x research", "social media ingestion".
 
 Searches X posts for a given query and ingests the content, author metadata,
 engagement statistics, and extracted concepts directly into the Knowledge Graph.
@@ -41,6 +37,23 @@ graph LR
     F --> I["EvolutionCandidateNode"]
     I --> J["→ knowledge-assimilation"]
 ```
+
+## Steps
+
+1. Search X for the topic with `x_search`, or open a single post with `browse_x_post` and `auto_ingest=true`. Verify that the result lists posts with content, engagement metrics and classification results.
+2. For results that were not auto-ingested, create each node with `mcp_arbora_graph_write` using `action: "add_node"` and `node_type: "SocialPost"`. Verify that the response returns the node id `social:x:<post_id>`.
+3. Create the author with `mcp_arbora_graph_write` (`node_type: "Person"`) and link it with `action: "add_edge"` and `rel_type: "CREATED_BY_PERSON"`. Verify that the edge is returned for each post.
+4. For X Articles (content over 3000 characters or an `x.com/*/articles/*` URL), fetch with `read_url_content` and ingest with `mcp_arbora_graph_ingest`. Verify that an `Article` node exists and a `PROMOTES_RESEARCH` edge points to it from the SocialPost.
+5. Check the classification tier of what was stored against the Classification Tiers table. Verify that critical and high posts are permanent and that candidates with evolution potential of 0.6 or more have an `EvolutionCandidateNode`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `x_search` returns nothing | The xAI credentials are missing or the query is too narrow | Check the xAI API key configured for the agent and broaden the query terms, then search again. |
+| Duplicate SocialPost nodes | A post was ingested by `auto_ingest` and again by hand | Use the stable id `social:x:<post_id>` so a rewrite updates the same node, and skip posts that were auto-ingested. |
+| Article content truncated | The post was ingested as a tweet instead of an article | Fetch the article URL with `read_url_content` and ingest it with `mcp_arbora_graph_ingest` `action: "ingest"`. |
+| `graph_write` calls fail | The arbora connection is down | Check the arbora MCP connection, reconnect, and rerun the failing write. |
 
 ## Execution Steps
 
@@ -140,7 +153,7 @@ ingested through the full KBIngestionEngine pipeline, producing:
 
 ## References
 
-- [knowledge-assimilation](../knowledge-assimilation/SKILL.md) — Full evolution pipeline
+- `knowledge-assimilation` — Full evolution pipeline
 - The package-specific X architecture guide is owned by `meristem` at
   `docs/guides/x-assistant.md`; it is not bundled with this workflow.
 

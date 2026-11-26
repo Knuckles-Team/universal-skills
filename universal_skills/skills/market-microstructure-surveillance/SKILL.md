@@ -2,12 +2,7 @@
 name: market-microstructure-surveillance
 skill_type: workflow
 description: >-
-  Defensive market-surveillance pipeline: pull a trailing order-flow/book window
-  for a symbol, compute Kyle insider/stealth-trading scores (informed-flow share,
-  detection hazard, legal-risk) via the engine surveillance_risk kernel, register
-  and backtest the signal so it self-weights, evaluate the adverse-selection
-  quoting posture, and persist a SurveillanceSignal report into the knowledge
-  graph. Detection + maker protection only — never trade concealment.
+  Defensive market-surveillance pipeline: pull a trailing order-flow/book window for a symbol, compute Kyle insider/stealth-trading scores (informed-flow share, detection hazard, legal-risk) via the engine surveillance_risk kernel, register and backtest the signal so it self-weights, evaluate the adverse-selection quoting posture, and persist a SurveillanceSignal report into the knowledge graph.
 domain: finance-workflows
 agent: quant_analyst
 team_config:
@@ -24,6 +19,8 @@ metadata:
 ---
 
 # Market Microstructure Surveillance
+
+Scope: Defensive market-surveillance pipeline: pull a trailing order-flow/book window for a symbol, compute Kyle insider/stealth-trading scores (informed-flow share, detection hazard, legal-risk) via the engine surveillance_risk kernel, register and backtest the signal so it self-weights, evaluate the adverse-selection quoting posture, and persist a SurveillanceSignal report into the knowledge graph. Detection + maker protection only — never trade concealment.
 
 **CONCEPT:EE-042 / EE-043** — distils Qiao & Xia (2026), *"Insider and stealth
 trading with dynamic legal risk"* (arXiv:2605.27684), a continuous-time Kyle-type
@@ -45,6 +42,12 @@ The steps form a linear chain: each consumes the prior stage's output, so the
 detector is registered before it is backtested and weighted before it gates.
 
 ## Steps
+
+1. Pull the trailing window with `emerald_exchange_get_historical`. Verify that `surveillance-window` has `buy_vol`, `sell_vol`, `p_mean`, `signed_flow`, `price_changes` and `baseline_sigma`.
+2. Score the window with `emerald_signals_surveillance`. Verify that the response includes `legal_risk_score` in [0,1] and a `registered-signal-id`.
+3. Backtest the signal with `emerald_strategy_*` action `backtest`. Verify that `pbo` is reported and signals with `pbo > 0.5` are discarded.
+4. Evaluate the quoting posture with `MarketMakingController.decide` and `RiskGuard.evaluate_graduation`. Verify that the report names a posture (quote, widen or withdraw) and graduation eligibility without changing the stage.
+5. Persist the report with `graph_write`. Verify that a `SurveillanceSignal` node exists with a `grounded_in` edge to the source paper.
 
 ### Step 0: pull-order-flow
 **Agent**: `quant_analyst`
@@ -104,6 +107,14 @@ report flagging toxic/stealth windows. The OWL bridge reasons over the new node
 transitively (grounded_in / supports) so the finding participates in cross-domain
 inference. Reuse the `kg-report-persister` atomic skill for the write.
 Expected: `surveillance-signal-node`, `surveillance-report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Kernel rejects the window | Missing fields or empty `price_changes` | Rebuild the window with all six fields and pass `baseline_sigma` of 0 to use the sample std |
+| Backtest shows `pbo > 0.5` | Detector is overfit | Discard the signal and do not write priors |
+| Graduation blocked | `max_legal_risk` exceeded | Report the block only and leave the stage unchanged for a human decision |
 
 ## Execution
 

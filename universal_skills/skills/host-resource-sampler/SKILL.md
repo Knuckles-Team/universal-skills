@@ -26,6 +26,10 @@ Stateless atomic operation to establish SSH connections or invoke system utility
 
 ## Steps
 
+1. Run the sampling commands such as `cat /proc/loadavg`, `free -m` and `df -h` on each host via `tunnel-manager-mcp` `run_command`. Verify that `sampling_results` has non-empty output for every host alias.
+2. Parse the raw output into CPU, load, memory and disk ratios. Verify that `host_metrics` has `cpu_pct`, `load_avg`, `mem_pct` and `disk_pct` for each host.
+3. Compile the telemetry report and flag hosts over CPU 90%, memory 92% or disk 88%. Verify that `status` is SUCCESS and `summary_markdown` marks alerting hosts.
+
 ### Step 1: execute_resource_queries
 Coordinate concurrent telemetry sweeps across target hosts using secure command pipelines:
 - Construct diagnostic sampling commands:
@@ -63,3 +67,11 @@ Synthesize the metrics scorecard and execute warning rules for system limits:
   - `status`: "SUCCESS" or "FAILED"
   - `payload`: Standardized JSON representation of the host utilization.
   - `summary_markdown`: Markdown visualization of the server metrics dashboard.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Command times out on a host | SSH or tunnel not available | Check the host with `tunnel-manager-mcp` and rerun the sweep for the failed alias. |
+| `top` output not parsed | Locale or format differs | Use `cat /proc/loadavg` and `free -m` as fallback sources. |
+| Wrong disk reported | Primary volume not mapped | Map mount points from `df -h` and include the data volume. |

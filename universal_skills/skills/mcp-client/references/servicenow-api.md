@@ -47,54 +47,46 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "servicenow-api": {
-      "command": "servicenow-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "SERVICENOW_INSTANCE": "${SERVICENOW_INSTANCE}",
-        "SERVICENOW_USERNAME": "${SERVICENOW_USERNAME}",
-        "SERVICENOW_PASSWORD": "${SERVICENOW_PASSWORD}",
-        "AUTHTOOL": "${ AUTHTOOL:-True }",
-        "EMAILTOOL": "${ EMAILTOOL:-True }",
-        "TABLE_APITOOL": "${ TABLE_APITOOL:-True }",
-        "HRTOOL": "${ HRTOOL:-True }",
-        "APPLICATIONTOOL": "${ APPLICATIONTOOL:-True }",
-        "CICDTOOL": "${ CICDTOOL:-True }",
-        "UPDATE_SETSTOOL": "${ UPDATE_SETSTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "DATA_CLASSIFICATIONTOOL": "${ DATA_CLASSIFICATIONTOOL:-True }",
-        "KNOWLEDGE_MANAGEMENTTOOL": "${ KNOWLEDGE_MANAGEMENTTOOL:-True }",
-        "CMDBTOOL": "${ CMDBTOOL:-True }",
-        "CILIFECYCLETOOL": "${ CILIFECYCLETOOL:-True }",
-        "FLOWSTOOL": "${ FLOWSTOOL:-True }",
-        "TESTINGTOOL": "${ TESTINGTOOL:-True }",
-        "PLUGINSTOOL": "${ PLUGINSTOOL:-True }",
-        "PPMTOOL": "${ PPMTOOL:-True }",
-        "CUSTOM_APITOOL": "${ CUSTOM_APITOOL:-True }",
-        "IMPORT_SETSTOOL": "${ IMPORT_SETSTOOL:-True }",
-        "METRICBASETOOL": "${ METRICBASETOOL:-True }",
-        "CHANGE_MANAGEMENTTOOL": "${ CHANGE_MANAGEMENTTOOL:-True }",
-        "ACTIVITY_SUBSCRIPTIONSTOOL": "${ ACTIVITY_SUBSCRIPTIONSTOOL:-True }",
-        "AGGREGATETOOL": "${ AGGREGATETOOL:-True }",
-        "DEVOPSTOOL": "${ DEVOPSTOOL:-True }",
-        "INCIDENTSTOOL": "${ INCIDENTSTOOL:-True }",
-        "SERVICE_QUALIFICATIONTOOL": "${ SERVICE_QUALIFICATIONTOOL:-True }",
-        "ATTACHMENTTOOL": "${ ATTACHMENTTOOL:-True }",
-        "PRODUCT_INVENTORYTOOL": "${ PRODUCT_INVENTORYTOOL:-True }",
-        "ACCOUNTTOOL": "${ ACCOUNTTOOL:-True }",
-        "SOURCE_CONTROLTOOL": "${ SOURCE_CONTROLTOOL:-True }",
-        "BATCHTOOL": "${ BATCHTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: servicenow-api
+command: servicenow-mcp --transport stdio
+env:
+  SERVICENOW_INSTANCE: ${SERVICENOW_INSTANCE}
+  SERVICENOW_USERNAME: ${SERVICENOW_USERNAME}
+  SERVICENOW_PASSWORD: ${SERVICENOW_PASSWORD}
+  AUTHTOOL: ${ AUTHTOOL:-True }
+  EMAILTOOL: ${ EMAILTOOL:-True }
+  TABLE_APITOOL: ${ TABLE_APITOOL:-True }
+  HRTOOL: ${ HRTOOL:-True }
+  APPLICATIONTOOL: ${ APPLICATIONTOOL:-True }
+  CICDTOOL: ${ CICDTOOL:-True }
+  UPDATE_SETSTOOL: ${ UPDATE_SETSTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  DATA_CLASSIFICATIONTOOL: ${ DATA_CLASSIFICATIONTOOL:-True }
+  KNOWLEDGE_MANAGEMENTTOOL: ${ KNOWLEDGE_MANAGEMENTTOOL:-True }
+  CMDBTOOL: ${ CMDBTOOL:-True }
+  CILIFECYCLETOOL: ${ CILIFECYCLETOOL:-True }
+  FLOWSTOOL: ${ FLOWSTOOL:-True }
+  TESTINGTOOL: ${ TESTINGTOOL:-True }
+  PLUGINSTOOL: ${ PLUGINSTOOL:-True }
+  PPMTOOL: ${ PPMTOOL:-True }
+  CUSTOM_APITOOL: ${ CUSTOM_APITOOL:-True }
+  IMPORT_SETSTOOL: ${ IMPORT_SETSTOOL:-True }
+  METRICBASETOOL: ${ METRICBASETOOL:-True }
+  CHANGE_MANAGEMENTTOOL: ${ CHANGE_MANAGEMENTTOOL:-True }
+  ACTIVITY_SUBSCRIPTIONSTOOL: ${ ACTIVITY_SUBSCRIPTIONSTOOL:-True }
+  AGGREGATETOOL: ${ AGGREGATETOOL:-True }
+  DEVOPSTOOL: ${ DEVOPSTOOL:-True }
+  INCIDENTSTOOL: ${ INCIDENTSTOOL:-True }
+  SERVICE_QUALIFICATIONTOOL: ${ SERVICE_QUALIFICATIONTOOL:-True }
+  ATTACHMENTTOOL: ${ ATTACHMENTTOOL:-True }
+  PRODUCT_INVENTORYTOOL: ${ PRODUCT_INVENTORYTOOL:-True }
+  ACCOUNTTOOL: ${ ACCOUNTTOOL:-True }
+  SOURCE_CONTROLTOOL: ${ SOURCE_CONTROLTOOL:-True }
+  BATCHTOOL: ${ BATCHTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -106,54 +98,46 @@ servicenow-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only ACCOUNTTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "servicenow-api": {
-      "command": "servicenow-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "SERVICENOW_INSTANCE": "${SERVICENOW_INSTANCE}",
-        "SERVICENOW_USERNAME": "${SERVICENOW_USERNAME}",
-        "SERVICENOW_PASSWORD": "${SERVICENOW_PASSWORD}",
-        "AUTHTOOL": "False",
-        "EMAILTOOL": "False",
-        "TABLE_APITOOL": "False",
-        "HRTOOL": "False",
-        "APPLICATIONTOOL": "False",
-        "CICDTOOL": "False",
-        "UPDATE_SETSTOOL": "False",
-        "MISCTOOL": "False",
-        "DATA_CLASSIFICATIONTOOL": "False",
-        "KNOWLEDGE_MANAGEMENTTOOL": "False",
-        "CMDBTOOL": "False",
-        "CILIFECYCLETOOL": "False",
-        "FLOWSTOOL": "False",
-        "TESTINGTOOL": "False",
-        "PLUGINSTOOL": "False",
-        "PPMTOOL": "False",
-        "CUSTOM_APITOOL": "False",
-        "IMPORT_SETSTOOL": "False",
-        "METRICBASETOOL": "False",
-        "CHANGE_MANAGEMENTTOOL": "False",
-        "ACTIVITY_SUBSCRIPTIONSTOOL": "False",
-        "AGGREGATETOOL": "False",
-        "DEVOPSTOOL": "False",
-        "INCIDENTSTOOL": "False",
-        "SERVICE_QUALIFICATIONTOOL": "False",
-        "ATTACHMENTTOOL": "False",
-        "PRODUCT_INVENTORYTOOL": "False",
-        "ACCOUNTTOOL": "True",
-        "SOURCE_CONTROLTOOL": "False",
-        "BATCHTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: servicenow-api
+command: servicenow-mcp --transport stdio
+env:
+  SERVICENOW_INSTANCE: ${SERVICENOW_INSTANCE}
+  SERVICENOW_USERNAME: ${SERVICENOW_USERNAME}
+  SERVICENOW_PASSWORD: ${SERVICENOW_PASSWORD}
+  AUTHTOOL: False
+  EMAILTOOL: False
+  TABLE_APITOOL: False
+  HRTOOL: False
+  APPLICATIONTOOL: False
+  CICDTOOL: False
+  UPDATE_SETSTOOL: False
+  MISCTOOL: False
+  DATA_CLASSIFICATIONTOOL: False
+  KNOWLEDGE_MANAGEMENTTOOL: False
+  CMDBTOOL: False
+  CILIFECYCLETOOL: False
+  FLOWSTOOL: False
+  TESTINGTOOL: False
+  PLUGINSTOOL: False
+  PPMTOOL: False
+  CUSTOM_APITOOL: False
+  IMPORT_SETSTOOL: False
+  METRICBASETOOL: False
+  CHANGE_MANAGEMENTTOOL: False
+  ACTIVITY_SUBSCRIPTIONSTOOL: False
+  AGGREGATETOOL: False
+  DEVOPSTOOL: False
+  INCIDENTSTOOL: False
+  SERVICE_QUALIFICATIONTOOL: False
+  ATTACHMENTTOOL: False
+  PRODUCT_INVENTORYTOOL: False
+  ACCOUNTTOOL: True
+  SOURCE_CONTROLTOOL: False
+  BATCHTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -18,25 +18,17 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "audio-transcriber-mcp": {
-      "command": "audio-transcriber-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TRANSCRIBE_DIRECTORY": "${TRANSCRIBE_DIRECTORY}",
-        "WHISPER_MODEL": "${WHISPER_MODEL:-base}",
-        "AUDIO_PROCESSINGTOOL": "${ AUDIO_PROCESSINGTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: audio-transcriber-mcp
+command: audio-transcriber-mcp --transport stdio
+env:
+  TRANSCRIBE_DIRECTORY: ${TRANSCRIBE_DIRECTORY}
+  WHISPER_MODEL: ${WHISPER_MODEL:-base}
+  AUDIO_PROCESSINGTOOL: ${ AUDIO_PROCESSINGTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -48,25 +40,17 @@ audio-transcriber-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only AUDIO_PROCESSINGTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "audio-transcriber-mcp": {
-      "command": "audio-transcriber-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TRANSCRIBE_DIRECTORY": "${TRANSCRIBE_DIRECTORY}",
-        "WHISPER_MODEL": "${WHISPER_MODEL:-base}",
-        "AUDIO_PROCESSINGTOOL": "True",
-        "MISCTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: audio-transcriber-mcp
+command: audio-transcriber-mcp --transport stdio
+env:
+  TRANSCRIBE_DIRECTORY: ${TRANSCRIBE_DIRECTORY}
+  WHISPER_MODEL: ${WHISPER_MODEL:-base}
+  AUDIO_PROCESSINGTOOL: True
+  MISCTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -207,6 +207,23 @@ All non-streaming responses follow this JSON-RPC 2.0 envelope:
 ```
 Only one of `result` or `error` will be present. Always check for `"error"` before reading `"result"`.
 
+## Steps
+
+1. Inspect the running agents with `python scripts/main.py list`. Verify that the target agent name appears in the output.
+2. Check runtime health with `python scripts/main.py status`. Verify that the target agent is reported as running.
+3. Discover the agent's capabilities with `python scripts/a2a_client.py --agent-name <name> --action get-card`. Verify that the printed card lists the skills you need.
+4. Send the task with `python scripts/a2a_client.py --agent-name <name> --action chat --query "<task>"`. Verify that the response contains a `result` and no `error` object.
+5. For long tasks, monitor with `python scripts/a2a_client.py --agent-name <name> --action list-tasks`. Verify that the task reaches a completed state before you use its output.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Agent name not found | Name is not in `AGENTS.md` or the agent is not running | Run `python scripts/main.py list`, then pass the explicit `--url` of the agent instead of `--agent-name`. |
+| JSON-RPC error -32001 "Task not found" | Task id is wrong or expired | Re-run `--action list-tasks` to get the current task ids and poll with the correct one. |
+| TLS or connection error on a private endpoint | CA bundle or URL not resolved through AgentConfig | Resolve the URL and verified CA profile from AgentConfig and retry, never disable certificate verification. |
+| Heartbeat will not start | Agent runtime stopped | Run `python scripts/main.py status`, start the agent, then `python scripts/main.py heartbeat start <agent_name>`. |
+
 ## Workflows
 
 ### 3. A2A & Subagent Methodologies (`docs/`)
@@ -217,4 +234,4 @@ Follow the patterns outlined in the `docs/` folder when designing workflows that
 
 ## Related skill
 
-- [agent-workflows-subagent-driven-development](../agent-workflows-subagent-driven-development/SKILL.md) — the subagent-driven-development sub-skill, served as its own skill.
+- `agent-workflows-subagent-driven-development` — the subagent-driven-development sub-skill, served as its own skill.

@@ -27,32 +27,24 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "container-manager-mcp": {
-      "command": "container-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
-        "LOGTOOL": "${ LOGTOOL:-True }",
-        "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
-        "INFOTOOL": "${ INFOTOOL:-True }",
-        "IMAGETOOL": "${ IMAGETOOL:-True }",
-        "NETWORKTOOL": "${ NETWORKTOOL:-True }",
-        "SWARMTOOL": "${ SWARMTOOL:-True }",
-        "CONTAINERTOOL": "${ CONTAINERTOOL:-True }",
-        "COMPOSETOOL": "${ COMPOSETOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "VOLUMETOOL": "${ VOLUMETOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: container-manager-mcp
+command: container-manager-mcp --transport stdio
+env:
+  DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+  LOGTOOL: ${ LOGTOOL:-True }
+  SYSTEMTOOL: ${ SYSTEMTOOL:-True }
+  INFOTOOL: ${ INFOTOOL:-True }
+  IMAGETOOL: ${ IMAGETOOL:-True }
+  NETWORKTOOL: ${ NETWORKTOOL:-True }
+  SWARMTOOL: ${ SWARMTOOL:-True }
+  CONTAINERTOOL: ${ CONTAINERTOOL:-True }
+  COMPOSETOOL: ${ COMPOSETOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  VOLUMETOOL: ${ VOLUMETOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -64,32 +56,24 @@ container-manager-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only COMPOSETOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "container-manager-mcp": {
-      "command": "container-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
-        "LOGTOOL": "False",
-        "SYSTEMTOOL": "False",
-        "INFOTOOL": "False",
-        "IMAGETOOL": "False",
-        "NETWORKTOOL": "False",
-        "SWARMTOOL": "False",
-        "CONTAINERTOOL": "False",
-        "COMPOSETOOL": "True",
-        "MISCTOOL": "False",
-        "VOLUMETOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: container-manager-mcp
+command: container-manager-mcp --transport stdio
+env:
+  DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+  LOGTOOL: False
+  SYSTEMTOOL: False
+  INFOTOOL: False
+  IMAGETOOL: False
+  NETWORKTOOL: False
+  SWARMTOOL: False
+  CONTAINERTOOL: False
+  COMPOSETOOL: True
+  MISCTOOL: False
+  VOLUMETOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

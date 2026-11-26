@@ -34,6 +34,9 @@ Provide the target host/endpoint list.
 
 ## Steps
 
+1. Check the targets by invoking `$ssl-expiry-checker` with the host list. Verify that `expiry_report` has one entry per target with `days_remaining` and `status`.
+2. Render the report by invoking `$document-converter` with `expiry_report`. Verify that `sweep_document` exists and lists every target.
+
 ### Step 0: ssl-expiry-checker [skill: ssl-expiry-checker]
 
 Invoke `$ssl-expiry-checker` with the workflow inputs to connect to
@@ -47,6 +50,14 @@ Invoke `$document-converter` with `expiry_report` to render it as a
 formatted Markdown/PDF sweep report.
 
 Expected: `sweep_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Target shows an ERROR status | Host does not resolve or port is closed | Verify the name with `dig +short <host>`, correct the target list, and re-invoke `$ssl-expiry-checker`. |
+| `sweep_document` is empty | `expiry_report` was empty | Re-run `$ssl-expiry-checker` until `expiry_report` is populated, and pass it to `$document-converter`. |
+| Handshake fails on a private service | Untrusted CA or self-signed certificate | Record the target as ERROR in the report and add the CA to the trust store before re-checking. |
 
 ## Output
 

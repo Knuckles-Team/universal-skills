@@ -37,6 +37,26 @@ portable launcher without env, secrets, or machine paths:
 codex mcp add arbora -- arbora --transport stdio
 ```
 
+## Steps
+
+1. Confirm the target client is a JSON target in the Supported Tools list (use `codex mcp add` for Codex) and that the source file exists with `ls ./mcp_config.json`.
+   Verify that the file parses with `python3 -c "import json; json.load(open('mcp_config.json'))"`.
+2. Back up the target config with `cp <target-path> <target-path>.bak` when it already exists.
+   Verify that `ls <target-path>.bak` lists the backup.
+3. Install with `python scripts/install.py --config ./mcp_config.json --tool <tool>` (add `--path` for a custom file, `--force` only to overwrite).
+   Verify that the command exits 0 and prints the target path it wrote.
+4. Check the merged result with `python3 -c "import json; print(json.load(open('<target-path>')))"`.
+   Verify that both your existing servers and the newly installed ones are present.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Existing servers disappeared | `--force` replaced the whole file | Restore with `cp <target-path>.bak <target-path>` and re-run without `--force` |
+| JSON decode error on the source | `mcp_config.json` is malformed | Fix the JSON syntax at the reported line, then re-run `scripts/install.py` |
+| Client does not show the servers | The client was not restarted or the wrong path was used | Restart the client and pass the real config location with `--path` |
+| Codex target rejected | Codex is not a JSON target | Register with `codex mcp add arbora -- arbora --transport stdio` instead |
+
 ## Tools
 
 ### install_mcp_config

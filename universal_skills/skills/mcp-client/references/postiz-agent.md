@@ -21,28 +21,20 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "postiz-agent": {
-      "command": "postiz-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "POSTIZ_URL": "${POSTIZ_URL}",
-        "POSTIZ_TOKEN": "${POSTIZ_TOKEN}",
-        "INTEGRATIONSTOOL": "${ INTEGRATIONSTOOL:-True }",
-        "POSTSTOOL": "${ POSTSTOOL:-True }",
-        "UPLOADSTOOL": "${ UPLOADSTOOL:-True }",
-        "ANALYTICSTOOL": "${ ANALYTICSTOOL:-True }",
-        "NOTIFICATIONSTOOL": "${ NOTIFICATIONSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: postiz-agent
+command: postiz-agent --transport stdio
+env:
+  POSTIZ_URL: ${POSTIZ_URL}
+  POSTIZ_TOKEN: ${POSTIZ_TOKEN}
+  INTEGRATIONSTOOL: ${ INTEGRATIONSTOOL:-True }
+  POSTSTOOL: ${ POSTSTOOL:-True }
+  UPLOADSTOOL: ${ UPLOADSTOOL:-True }
+  ANALYTICSTOOL: ${ ANALYTICSTOOL:-True }
+  NOTIFICATIONSTOOL: ${ NOTIFICATIONSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -54,28 +46,20 @@ postiz-agent --transport sse --host 0.0.0.0 --port 8000
 
 Only POSTSTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "postiz-agent": {
-      "command": "postiz-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "POSTIZ_URL": "${POSTIZ_URL}",
-        "POSTIZ_TOKEN": "${POSTIZ_TOKEN}",
-        "INTEGRATIONSTOOL": "False",
-        "POSTSTOOL": "True",
-        "UPLOADSTOOL": "False",
-        "ANALYTICSTOOL": "False",
-        "NOTIFICATIONSTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: postiz-agent
+command: postiz-agent --transport stdio
+env:
+  POSTIZ_URL: ${POSTIZ_URL}
+  POSTIZ_TOKEN: ${POSTIZ_TOKEN}
+  INTEGRATIONSTOOL: False
+  POSTSTOOL: True
+  UPLOADSTOOL: False
+  ANALYTICSTOOL: False
+  NOTIFICATIONSTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

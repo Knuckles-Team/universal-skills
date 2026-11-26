@@ -10,18 +10,14 @@ The reference uses the following environment variables:
 
 ## MCP Configuration
 
-```json
-{
-  "mcpServers": {
-    "github": {
-      "serverUrl": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer YOUR_GITHUB_PAT"
-      }
-    }
-  }
-}
+```text
+server: github
+url: https://api.githubcopilot.com/mcp/
+headers:
+  Authorization: Bearer YOUR_GITHUB_PAT
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## Usage
 

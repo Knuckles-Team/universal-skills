@@ -33,6 +33,12 @@ Interactive SSH key bootstrap for new infrastructure hosts. Checks existing conn
 
 ## Steps
 
+1. List hosts and test connectivity with `tun_tm_hosts` and `tun_tm_system`. Verify that each host reports a reachable or failed status.
+2. Check for a key with `ls ~/.ssh/id_rsa` and, if absent, generate one with `ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa`. Verify that `ls ~/.ssh/id_rsa.pub` lists the public key.
+3. Distribute the key to each failed host using the `tunnel-manager-mcp` passwordless SSH setup tool. Verify that the tool reports success for every host.
+4. Re-test connectivity with `tun_tm_hosts`. Verify that all hosts now report a connected status.
+5. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: inspect-ssh-connectivity [skill: tunnel-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -67,6 +73,14 @@ Expected: `verify, connectivity`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Key distribution fails with permission denied | Initial password or user is wrong | Confirm the username and password for the host, and re-run the distribution for that host. |
+| Host stays unreachable | Host is down or port 22 is blocked | Check with `ssh -v <host>` and open the firewall or fix the inventory address. |
+| `ssh-keygen` prompts for overwrite | Key already exists | Keep the existing key and skip generation, or use a new path with `-f`. |
 
 ## Output
 - Ssh Bootstrap results persisted in KG

@@ -55,6 +55,24 @@ Tool: `emerald_strategy_promote(strategy_id=...)`
 REQUIRED: Human approval gate for live trading activation.
 Tool: `graph_orchestrate(action="request_approval", task="live_trading_activation")`
 
+## Steps
+
+1. Generate the hypothesis with `emerald_signals_alpha(ticker=...)`. Verify that the result names a ticker, a signal and supporting data before moving on.
+2. Debate it with `graph_orchestrate(action="start_debate", task=hypothesis)`. Verify that the response contains Bull and Bear rounds and a consensus outcome.
+3. Size the position with `emerald_risk_kelly(win_rate=..., win_loss_ratio=...)`. Verify that the returned fraction is positive and within the risk officer's limit.
+4. Backtest with `graph_analyze(action="evaluate_alpha", query=hypothesis)`. Verify that the result reports return and drawdown metrics for the tested period.
+5. Promote the strategy with `emerald_strategy_promote(strategy_id=...)`. Verify that the returned status advanced exactly one stage (Draft, Backtesting, Paper or Live).
+6. Request live approval with `graph_orchestrate(action="request_approval", task="live_trading_activation")`. Verify that a human approval is recorded before any live activation.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Debate ends without consensus | Risk veto or conflicting Bull/Bear outcome | Stop the pipeline, revise the hypothesis, and rerun the debate step with the revised task text |
+| Kelly fraction is zero or negative | Win rate and win/loss ratio imply no edge | Do not promote; return to hypothesis generation with new inputs |
+| `emerald_strategy_promote` rejects the stage | Required prior stage evidence is missing (for example no backtest) | Complete the backtest step and resubmit the promotion for the same `strategy_id` |
+| Approval request is not granted | No human decision recorded | Leave the strategy in Paper and ask the owner to decide through the approval request; never activate live without it |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

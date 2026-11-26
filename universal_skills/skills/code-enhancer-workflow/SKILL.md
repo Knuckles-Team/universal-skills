@@ -35,6 +35,12 @@ Parallel execution workflow for code enhancement and multi-domain deep-dive audi
 
 ## Steps
 
+1. Detect the languages, build systems, linters and test frameworks of the target project (Step 1). Verify that the `detect_language_artifacts` output names at least one primary language.
+2. Run project analysis, linters and tests in parallel (Steps 2-4), with linters via pre-commit hooks and `ruff`, `mypy`, `bandit`. Verify that `project_analysis_artifacts`, `run_linters_artifacts` and `run_tests_artifacts` each exist and record an exit status.
+3. Run the five deep audits on the analysis output: code analysis, security, documentation, concept traceability and UI (Steps 5-9). Verify that each of the five `*_artifacts` outputs is present and non-empty.
+4. Consolidate the audit outputs into the graded 0-100 report under `specs/<feature>/` (Step 10). Verify that `ls specs/<feature>/` lists the report and that it contains a prioritized TODO list.
+5. Persist the report and grading metrics with `graph_write` (Step 11). Verify that a `graph_query` for the report node returns the stored grade.
+
 ### Step 1: Detect Language
 **Agent**: `analysis-agent`
 **Tools**: `rep_rm_workspace, rep_rm_projects`
@@ -111,6 +117,16 @@ Expected: `generate_report_artifacts`
 
 Persist the generated report, grading metrics, and identified conceptual/code linkages in Arbora Knowledge Graph.
 Expected: `kg_persistence_artifacts`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Linter step reports "command not found" | The language toolchain (`ruff`, `eslint`, `go vet`) is not installed in the target environment | Install the missing tool or skip that language via the Step 1 detection output, and note the skipped linter in the report |
+| Test run hangs or times out | The suite needs services or a long fixture setup | Rerun with the project's per-test timeout flag and a narrowed path, then record the unrun tests as a TODO in the report |
+| Report step starts with a missing artifact | A parallel audit step failed silently | Inspect each `*_artifacts` output, rerun only the audit that is missing, and then regenerate the report |
+| `graph_write` fails | arbora is unreachable | Check connectivity with `graph_query`, restore access, and resubmit Step 11 |
+
 
 ## Output
 - Unified multi-domain codebase enhancement audit report in `specs/<feature>/`

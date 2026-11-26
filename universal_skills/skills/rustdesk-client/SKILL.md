@@ -2,19 +2,15 @@
 name: rustdesk-client
 domain: infrastructure
 skill_type: skill
-description: >
-  Installs and configures the self-hosted RustDesk client on Debian/Ubuntu hosts.
-  Downloads the correct architecture-specific .deb package (supporting x86_64 and aarch64),
-  resolves all required system dependencies, dynamically configures multi-profile settings
-  pointing to the self-hosted rendezvous server, locks down configuration permissions,
-  starts and registers the rustdesk service, and returns the machine's unique RustDesk ID.
-  Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk",
-  "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
+description: >-
+  Installs and configures the self-hosted RustDesk client on Debian/Ubuntu hosts. Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk", "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
 metadata:
   version: '1.6.2'
 ---
 
 # RustDesk Client Installation Skill
+
+Scope: Installs and configures the self-hosted RustDesk client on Debian/Ubuntu hosts. Downloads the correct architecture-specific .deb package (supporting x86_64 and aarch64), resolves all required system dependencies, dynamically configures multi-profile settings pointing to the self-hosted rendezvous server, locks down configuration permissions, starts and registers the rustdesk service, and returns the machine's unique RustDesk ID. Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk", "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
 
 Automated deployment, configuration, and provisioning of the self-hosted RustDesk remote access client on Debian and Ubuntu hosts.
 
@@ -34,6 +30,24 @@ The installation accepts custom rendezvous settings via parameters or environmen
 - **Rendezvous Server**: Passed as the first argument or via `$RENDEZVOUS_SERVER`
 - **Relay Server**: Passed as the third argument or via `$RELAY_SERVER` (defaults to Rendezvous Server)
 - **Public Encryption Key**: Passed as the second argument or via `$PUBLIC_KEY`
+
+## Steps
+
+1. Confirm the host is Debian or Ubuntu with `grep -E '^ID(_LIKE)?=' /etc/os-release` and read the architecture with `uname -m`. Verify that the output names debian or ubuntu and that the architecture is `x86_64` or `aarch64`.
+2. Collect the rendezvous server, public key and optional relay server (arguments or `$RENDEZVOUS_SERVER`, `$PUBLIC_KEY`, `$RELAY_SERVER`). Verify that `test -n "$RENDEZVOUS_SERVER" -a -n "$PUBLIC_KEY"` exits 0, since the installer aborts without both.
+3. Copy the inline installer to `/tmp/install_rustdesk_client.sh` and run it as root with `sudo bash /tmp/install_rustdesk_client.sh <rendezvous_server> <public_key> [relay_server]`. Verify that `dpkg -s rustdesk` reports `Status: install ok installed`.
+4. Check the generated profiles with `sudo ls -l /root/.config/rustdesk/RustDesk2.toml /home/*/.config/rustdesk/RustDesk2.toml`. Verify that each file is mode `-rw-------` and contains the rendezvous server.
+5. Check the service with `systemctl is-active rustdesk` and fetch the ID with `rustdesk --get-id`. Verify that the service prints `active` and that the ID is not `unknown`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Installer prints `Unsupported architecture` | `uname -m` returned something other than `x86_64` or `aarch64` | Stop, because only those two `.deb` builds exist, and use a supported host |
+| Installer prints that `RENDEZVOUS_SERVER and PUBLIC_KEY must be provided` | Arguments and environment variables were both empty | Export `RENDEZVOUS_SERVER` and `PUBLIC_KEY` or pass them as arguments, then rerun the script |
+| Client cannot connect to the rendezvous server | Split-brain DNS resolves the hostname to a public address on the LAN | Follow the Split-Brain DNS remediation in Troubleshooting, correcting the authoritative DNS profile first |
+| Remote screen hangs on "Please select the screen to be shared" | The desktop or GDM greeter runs Wayland | Disable Wayland in `/etc/gdm3/custom.conf` (GDM below 50) or migrate to LightDM with `ubuntu-xorg`, as in Troubleshooting |
+| `rustdesk --get-id` prints `unknown` | The service had not finished initializing | Wait a few seconds after `systemctl start rustdesk` and read the ID from `/root/.config/rustdesk/RustDesk.toml` |
 
 ## Workflow
 

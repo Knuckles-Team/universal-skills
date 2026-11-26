@@ -68,6 +68,13 @@ workflow starts.
 
 ## Steps
 
+1. Validate every profile with `graph_configure` `action=config_doctor`. Verify that each referenced profile reports affirmative status and `validated_profile_digests` is recorded.
+2. Check the identity provider with `tun_tm_remote` using `verification_profile_ref`. Verify that discovery or JWKS retrieval succeeds with an exact issuer match and `identity_provider_verified` is set.
+3. Apply the resource-server settings with `cnt_cm_k8s_config` for `endpoint_deployment_ref`. Verify that the rolled workload converges healthy and `bearer_validation_applied` is set.
+4. Materialize certificate and ingress changes with `cnt_cm_k8s_config` per `certificate_profile_ref`. Verify that `certificate_ready` and `tls_route_ready` are true and `trust_profile_digest` is recorded.
+5. Run the end-to-end verifier with `tun_tm_remote`. Verify that a valid token succeeds, no token and a wrong-audience token are rejected, and the TLS chain validates.
+6. Persist the evidence with `graph_write`. Verify that `hardening_evidence_ref` resolves and holds digests only, with no hostnames or credentials.
+
 ### Step 0: validate_profiles [mcp_tool: graph_configure]
 
 Run `action=config_doctor` and require affirmative status for every referenced
@@ -125,6 +132,14 @@ checks, and timestamps. Never persist environment values, identities, credential
 hostnames, addresses, namespaces, local paths, or certificate material.
 
 Expected: `hardening_evidence_ref`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| config_doctor reports a missing profile | A referenced profile is unresolved | Create or correct the named profile in AgentConfig, and repeat `config_doctor` before touching the workload |
+| Wrong-audience token is accepted | Audience policy not applied | Roll back the deployment change, fix `oidc_resource_server_profile_ref` audience, and redeploy via `cnt_cm_k8s_config` |
+| TLS chain fails validation | Incomplete CA bundle in the trust profile | Add the missing CA to `client_trust_profile_ref` and re-apply the TLS step, never disabling verification |
 
 ## Safety invariants
 

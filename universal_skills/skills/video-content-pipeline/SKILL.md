@@ -36,6 +36,11 @@ Provide the topic, audience, length constraints, and voice guide.
 
 ## Steps
 
+1. Build the outline by invoking `$content-outline-builder`. Verify that `approved_outline` is returned.
+2. Write the script by invoking `$content-draft-writer` with `approved_outline`. Verify that `video_script` is returned.
+3. Produce the video by invoking `$creative-media` with `video_script`. Verify that `video_asset` is a playable file.
+4. Run `$publication-preflight` on the asset. Verify that `readiness_decision` is returned and nothing was uploaded.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs.
@@ -62,6 +67,14 @@ Invoke `$publication-preflight` with `video_asset` and the
 publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `video_script` is too long | Length constraint not passed | Re-invoke `$content-draft-writer` with the length limit stated. |
+| `video_asset` fails to render | Unsupported media or missing codec | Check the tool error, adjust the script media, and re-invoke `$creative-media`. |
+| Preflight fails | Asset violates publication requirements | Fix the cited issues in the script or asset and re-run `$publication-preflight`. |
 
 ## Output
 

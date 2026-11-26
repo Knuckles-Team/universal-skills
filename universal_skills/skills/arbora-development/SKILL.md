@@ -56,6 +56,24 @@ Never write code for a row that is not SPECIFIED. Feature directories use the st
 
 ---
 
+## Steps
+
+1. Read the owning repository's constitution with `cat .specify/memory/constitution.md`. Verify that the file exists, otherwise create it with `speckit-constitution`.
+2. Locate the feature's spec with `ls specs/`. Verify that a `specs/<stable-id>/spec.md` and `requirements.md` exist for the row, otherwise run the flow below starting at `speckit-specify`.
+3. Create an isolated worktree with `git worktree add <path> -b <branch> origin/main`. Verify that `git -C <path> branch --show-current` prints the new branch.
+4. Run the repo pre-commit on your implementation of the row with `uvx --from pre-commit==4.6.0 pre-commit run --files $(git diff --name-only origin/main...HEAD)`. Verify that every hook passes.
+5. Commit with a `Spec:` trailer and open the PR with `gh pr create`. Verify that `gh pr view --json url,state` shows the PR open.
+6. Enable landing with `gh pr merge --auto --merge`. Verify that `gh pr checks` shows the fast PR subset passing.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No spec directory for the feature | Work started before specification | Stop coding and run `speckit-specify` then `speckit-plan` and `speckit-tasks` so the row exists in `specs/`. |
+| Pre-commit fails on changed files | Style, type or gate violation | Fix the code itself without `noqa` or `type: ignore`, then re-run pre-commit on the same file list. |
+| PR goes DIRTY | `origin/main` moved | Run `git merge origin/main` in the worktree, resolve conflicts additively and push. |
+| Row still not delivered after merge | No production caller or test binding | Wire the row to its production entry point and bind the test to the row ID, then push a follow-up commit. |
+
 ## Delivery contract
 
 Specs are already designed. The work is implementation.

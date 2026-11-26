@@ -19,26 +19,18 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "langfuse-agent": {
-      "command": "langfuse-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "LANGFUSE_HOST": "${LANGFUSE_HOST}",
-        "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
-        "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
-        "TELEMETRYTOOL": "${ TELEMETRYTOOL:-True }",
-        "ANNOTATIONTOOL": "${ ANNOTATIONTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: langfuse-agent
+command: langfuse-agent --transport stdio
+env:
+  LANGFUSE_HOST: ${LANGFUSE_HOST}
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+  TELEMETRYTOOL: ${ TELEMETRYTOOL:-True }
+  ANNOTATIONTOOL: ${ ANNOTATIONTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 

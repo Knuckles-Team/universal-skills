@@ -120,6 +120,26 @@ python -m universal_skills.skills.mcp-client.scripts.mcp_client --config mcp_con
 python -m universal_skills.skills.mcp-client.scripts.mcp_client --config mcp_config.json --action list-mcp-prompts
 ```
 
+## Steps
+
+1. List the server's tools with `python -m universal_skills.skills.mcp-client.scripts.mcp_client --url http://github-mcp:8787/mcp --action list-mcp-tools` (or `--command <server>` for stdio).
+   Verify that stdout is a JSON listing that includes the tool you plan to call.
+2. Write the tool arguments as JSON, inline or in a file with `echo '{"sysparm_limit": "5"}' > args.json`.
+   Verify with `python3 -c "import json; json.load(open('args.json'))"` that the file parses.
+3. Call the tool with `--action call-mcp-tool --tool-name <tool> --tool-args args.json` and the same connection flags.
+   Verify that stdout is a JSON result and that `stderr` shows no error.
+4. For repeated use, generate a focused config with `--action generate-mcp-config --mcp-command <server> --enable-tag <TAG> --all-tags "<TAG1,TAG2>" -o mcp_config.json`.
+   Verify that `python3 -c "import json; print(json.load(open('mcp_config.json')))"` prints a config naming the server.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| "Operation timed out" | The server is slow to start or the call is heavy | Re-run with `--timeout 120` (or higher) and `--debug` to see where it stalls |
+| Connection refused | The MCP server is not running or `--url`/`--command` is wrong | Start the server, confirm the URL or command against the matching file in `references/`, then repeat step 1 |
+| Nothing on stdout | The script failed before printing a result | Read `stderr` and re-run with `--debug` to see the import or protocol error; check that `fastmcp` is installed with `pip show fastmcp` |
+| Tool returns "not found" | The tool tag is disabled by an environment variable | Pass the enabling variable, for example `--env INCIDENTSTOOL=True`, and list the tools again |
+
 ## Programmatic Usage
 
 The script exposes two key functions for import:
@@ -181,40 +201,40 @@ asyncio.run(main())
 
 ## References
 
-The `references/` directory contains ready-to-use documentation and `mcp_config.json` files for each MCP server. Each `.md` has stdio (default) + HTTP connection examples, available tool tags, and single-tag config examples.
+The `references/` directory contains ready-to-use documentation for each MCP server. Each `.md` has the stdio (default) command and environment, HTTP connection examples, available tool tags, and single-tag examples. The client config file is yours to write: the skill ships no server config.
 
-| MCP Server | Reference | Config | Tool Tags |
-|-----------|-----------|--------|-----------|
-| ServiceNow | [servicenow-api.md](references/servicenow-api.md) | [servicenow-api.json](references/servicenow-api.json) | 30 |
-| Arr Stack | [arr-mcp.md](references/arr-mcp.md) | [arr-mcp.json](references/arr-mcp.json) | 7 |
-| GitHub | [github-mcp.md](references/github-mcp.md) | [github-mcp.json](references/github-mcp.json) | 19 |
-| GitLab | [gitlab-api.md](references/gitlab-api.md) | [gitlab-api.json](references/gitlab-api.json) | 19 |
-| Home Assistant | [home-assistant-agent.md](references/home-assistant-agent.md) | [home-assistant-agent.json](references/home-assistant-agent.json) | 7 |
-| Microsoft 365 | [microsoft-agent.md](references/microsoft-agent.md) | [microsoft-agent.json](references/microsoft-agent.json) | 37 |
-| Container Manager | [container-manager-mcp.md](references/container-manager-mcp.md) | [container-manager-mcp.json](references/container-manager-mcp.json) | 10 |
-| Nextcloud | [nextcloud-agent.md](references/nextcloud-agent.md) | [nextcloud-agent.json](references/nextcloud-agent.json) | 6 |
-| Plane | [plane-mcp.md](references/plane-mcp.md) | [plane-mcp.json](references/plane-mcp.json) | 10 |
-| Systems Manager | [systems-manager.md](references/systems-manager.md) | [systems-manager.json](references/systems-manager.json) | 17 |
-| Wger Fitness | [wger-agent.md](references/wger-agent.md) | [wger-agent.json](references/wger-agent.json) | 7 |
-| Mealie | [mealie-mcp.md](references/mealie-mcp.md) | [mealie-mcp.json](references/mealie-mcp.json) | 11 |
-| Repository Manager | [repository-manager.md](references/repository-manager.md) | [repository-manager.json](references/repository-manager.json) | 4 |
-| Ansible Tower | [ansible-tower-mcp.md](references/ansible-tower-mcp.md) | [ansible-tower-mcp.json](references/ansible-tower-mcp.json) | 0 |
-| Jellyfin | [jellyfin-mcp.md](references/jellyfin-mcp.md) | [jellyfin-mcp.json](references/jellyfin-mcp.json) | 62 |
-| qBittorrent Manager | [qbittorrent-agent.md](references/qbittorrent-agent.md) | [qbittorrent-agent.json](references/qbittorrent-agent.json) | 6 |
-| Portainer | [portainer-agent.md](references/portainer-agent.md) | [portainer-agent.json](references/portainer-agent.json) | 10 |
-| Postiz Agent | [postiz-agent.md](references/postiz-agent.md) | [postiz-agent.json](references/postiz-agent.json) | 5 |
-| Uptime Kuma | [uptime-kuma-agent.md](references/uptime-kuma-agent.md) | [uptime-kuma-agent.json](references/uptime-kuma-agent.json) | 2 |
-| Owncast Agent | [owncast-agent.md](references/owncast-agent.md) | [owncast-agent.json](references/owncast-agent.json) | 2 |
-| Langfuse Agent | [langfuse-agent.md](references/langfuse-agent.md) | [langfuse-agent.json](references/langfuse-agent.json) | 2 |
-| Stirling PDF Agent | [stirlingpdf-agent.md](references/stirlingpdf-agent.md) | [stirlingpdf-agent.json](references/stirlingpdf-agent.json) | 1 |
-| LeanIX Agent | [leanix-agent.md](references/leanix-agent.md) | [leanix-agent.json](references/leanix-agent.json) | 2 |
-| ArchiveBox API | [archivebox-api.md](references/archivebox-api.md) | [archivebox-api.json](references/archivebox-api.json) | 3 |
-| Audio Transcriber | [audio-transcriber-mcp.md](references/audio-transcriber-mcp.md) | [audio-transcriber-mcp.json](references/audio-transcriber-mcp.json) | 1 |
-| DocumentDB MCP | [documentdb-mcp.md](references/documentdb-mcp.md) | [documentdb-mcp.json](references/documentdb-mcp.json) | 1 |
-| Media Downloader | [media-downloader-mcp.md](references/media-downloader-mcp.md) | [media-downloader-mcp.json](references/media-downloader-mcp.json) | 1 |
-| SearXNG MCP | [searxng-mcp.md](references/searxng-mcp.md) | [searxng-mcp.json](references/searxng-mcp.json) | 1 |
-| Tunnel Manager | [tunnel-manager-mcp.md](references/tunnel-manager-mcp.md) | [tunnel-manager-mcp.json](references/tunnel-manager-mcp.json) | 1 |
-| Vector MCP | [vector-mcp.md](references/vector-mcp.md) | [vector-mcp.json](references/vector-mcp.json) | 1 |
+| MCP Server | Reference | Tool Tags |
+|-----------|-----------|-----------|
+| ServiceNow | [servicenow-api.md](references/servicenow-api.md) | 30 |
+| Arr Stack | [arr-mcp.md](references/arr-mcp.md) | 7 |
+| GitHub | [github-mcp.md](references/github-mcp.md) | 19 |
+| GitLab | [gitlab-api.md](references/gitlab-api.md) | 19 |
+| Home Assistant | [home-assistant-agent.md](references/home-assistant-agent.md) | 7 |
+| Microsoft 365 | [microsoft-agent.md](references/microsoft-agent.md) | 37 |
+| Container Manager | [container-manager-mcp.md](references/container-manager-mcp.md) | 10 |
+| Nextcloud | [nextcloud-agent.md](references/nextcloud-agent.md) | 6 |
+| Plane | [plane-mcp.md](references/plane-mcp.md) | 10 |
+| Systems Manager | [systems-manager.md](references/systems-manager.md) | 17 |
+| Wger Fitness | [wger-agent.md](references/wger-agent.md) | 7 |
+| Mealie | [mealie-mcp.md](references/mealie-mcp.md) | 11 |
+| Repository Manager | [repository-manager.md](references/repository-manager.md) | 4 |
+| Ansible Tower | [ansible-tower-mcp.md](references/ansible-tower-mcp.md) | 0 |
+| Jellyfin | [jellyfin-mcp.md](references/jellyfin-mcp.md) | 62 |
+| qBittorrent Manager | [qbittorrent-agent.md](references/qbittorrent-agent.md) | 6 |
+| Portainer | [portainer-agent.md](references/portainer-agent.md) | 10 |
+| Postiz Agent | [postiz-agent.md](references/postiz-agent.md) | 5 |
+| Uptime Kuma | [uptime-kuma-agent.md](references/uptime-kuma-agent.md) | 2 |
+| Owncast Agent | [owncast-agent.md](references/owncast-agent.md) | 2 |
+| Langfuse Agent | [langfuse-agent.md](references/langfuse-agent.md) | 2 |
+| Stirling PDF Agent | [stirlingpdf-agent.md](references/stirlingpdf-agent.md) | 1 |
+| LeanIX Agent | [leanix-agent.md](references/leanix-agent.md) | 2 |
+| ArchiveBox API | [archivebox-api.md](references/archivebox-api.md) | 3 |
+| Audio Transcriber | [audio-transcriber-mcp.md](references/audio-transcriber-mcp.md) | 1 |
+| DocumentDB MCP | [documentdb-mcp.md](references/documentdb-mcp.md) | 1 |
+| Media Downloader | [media-downloader-mcp.md](references/media-downloader-mcp.md) | 1 |
+| SearXNG MCP | [searxng-mcp.md](references/searxng-mcp.md) | 1 |
+| Tunnel Manager | [tunnel-manager-mcp.md](references/tunnel-manager-mcp.md) | 1 |
+| Vector MCP | [vector-mcp.md](references/vector-mcp.md) | 1 |
 
 
 ## Dependencies

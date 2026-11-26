@@ -24,6 +24,10 @@ Stateless atomic operation to query target domain endpoints, establish TLS hands
 
 ## Steps
 
+1. Parse the `domains`, `port` and `timeout_seconds` inputs and resolve each name with `dig +short <domain>`. Verify that every domain either resolves or is logged as a DNS error.
+2. Fetch each certificate with `openssl s_client -connect <domain>:<port> -servername <domain>`. Verify that the output contains a `notAfter` date for each reachable target.
+3. Compute `days_remaining` and assign EXPIRED, CRITICAL, WARNING or OK as defined above. Verify that the JSON report holds `domain`, `status`, `days_remaining` and `valid_to` for every target.
+
 ### Step 1: resolve_target_endpoints
 Parse and prepare the target network addresses for connection:
 - Parse the input parameters which must contain:
@@ -62,3 +66,11 @@ Analyze certificate validity windows and assess alert levels based on remaining 
   - `signature_algorithm`: String (e.g. sha256WithRSAEncryption)
   - `error_message`: String (null or connection/TLS handshake failure details)
 - Print an actionable warning if any domain falls under WARNING, CRITICAL, or EXPIRED.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| DNS lookup returns nothing | Name is wrong or private resolver is unreachable | Fix the name or query the correct resolver with `dig @<resolver> <domain>`, and record the error in diagnostics. |
+| Connection times out | Firewall blocks the port or timeout is too low | Raise `timeout_seconds` or test the port with `nc -vz <domain> <port>`. |
+| Handshake fails with verify error | Self-signed or untrusted CA | Mark the target ERROR with the message in `error_message`, and add the CA to the trust store to get a grade. |

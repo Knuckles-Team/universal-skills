@@ -33,6 +33,12 @@ Fetch active ServiceNow Change Requests sorted chronologically
 
 ## Steps
 
+1. Fetch active change requests with `servicenow_get_change_requests` using `sysparm_query="active=true^ORDERBYdescsys_created_on"`. Verify that the returned list is ordered newest first.
+2. Show the change log and maintenance windows from `servicenow_get_change_requests` and ask which change to inspect. Verify that the user named a specific change ticket or declined to inspect.
+3. Retrieve details with `servicenow_get_change_request` and `servicenow_check_change_request_conflict` using `change_request_sys_id="<sys_id>"`. Verify that both calls succeeded and the conflict report is present.
+4. Present the `servicenow_get_change_request` payload, risk factors, conflict scan and approval paths to the user. Verify that the user confirmed the summary before any follow-up action.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: ServiceNow Change-Request Query [skill: servicenow-api]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -63,6 +69,14 @@ Present the detailed change payload, risk factors, conflict scan report, and app
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Call fails with `MissingParameterError` | `sys_id` was passed instead of `change_request_sys_id` | Call again passing `change_request_sys_id="<sys_id>"`. |
+| List is empty | The query filter excludes all records | Loosen `sysparm_query` and check access rights of the ServiceNow account. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Servicenow Change Tracker results persisted in KG

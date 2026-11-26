@@ -30,6 +30,11 @@ Stateless atomic operation to register and wire newly deployed services into the
 
 ## Steps
 
+1. Add a Promtail scrape job for the service logs and reload the collector. Verify that `/var/lib/docker/containers/` contains the service's log path and that Promtail restarted without errors.
+2. Register a Prometheus scrape job for `<container-name>:<internal-metrics-port>` and hot-reload with POST `/sys/reload`. Verify that the target appears in the Prometheus target list.
+3. Surface the service in Grafana through the configured dashboard provider. Verify that the service appears in the `$stack` picker of MCP Per-Service or that its bespoke dashboard loads.
+4. Confirm telemetry flows end to end. Verify that logs are queryable in Loki, the Prometheus target shows `UP` and Grafana panels render live data.
+
 ### Step 1: Link Promtail Logging Path
 Configure log capture for the target application:
 - Verify container-label structure or direct host mapping for container logs (typically `/var/lib/docker/containers/<id>/*.log`).
@@ -80,3 +85,12 @@ Confirm log shipping and metric collection:
 - Confirm metrics show as `UP` in Prometheus target status.
 - Confirm the service's panels render in Grafana (its `$stack` row in MCP Per-Service, or its
   bespoke dashboard) with live data.
+
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Promtail ships no logs | The `__path__` glob does not match the container id | Correct the `__path__` in the scrape block and restart the Promtail container. |
+| Prometheus target is `DOWN` | Wrong metrics port or the container is not on the network | Fix `<internal-metrics-port>` in the scrape job and confirm the container shares the Prometheus network. |
+| Service missing from the `$stack` picker | The service is not scraped under the `mcp-fleet` job | Add it to the `mcp-fleet` scrape job and reload Prometheus. |

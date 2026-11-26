@@ -39,6 +39,14 @@ citation style, publication requirements, and any approved sources or exclusions
 
 ## Steps
 
+1. Gather sources by invoking `$web-search` with the workflow inputs. Verify that `source_packet` lists sources that respect the approved sources and exclusions.
+2. Build the outline by invoking `$content-outline-builder` with `source_packet`. Verify that `approved_outline` fits the audience and length constraints.
+3. Write the draft by invoking `$content-draft-writer` with the outline and sources. Verify that `sourced_draft` cites sources from `source_packet`.
+4. Audit citations by invoking `$citation-auditor` with `sourced_draft`. Verify that `citation_audit` flags any unsupported claim.
+5. Edit the draft by invoking `$copy-editor` with the draft and audit. Verify that `edited_draft` follows the voice guide.
+6. Check readiness by invoking `$publication-preflight` with `edited_draft`. Verify that `readiness_decision` is recorded and the post was not published.
+
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs.
@@ -76,6 +84,15 @@ Invoke `$publication-preflight` with `edited_draft`, `citation_audit`, and the
 publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Source packet is thin | Topic too narrow or exclusions too strict | Broaden the query terms or relax an exclusion and re-invoke `$web-search` |
+| Citation audit flags claims | Draft states facts absent from the sources | Return the flagged claims to `$content-draft-writer` to cite or remove them |
+| Edited draft breaks length limit | Copy edit expanded the text | Re-invoke `$copy-editor` with the explicit length constraint from the inputs |
+| Preflight reports a missing requirement | Publication requirement not met | Add the missing item such as a disclosure and re-run `$publication-preflight` |
 
 ## Output
 

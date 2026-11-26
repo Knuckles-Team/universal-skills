@@ -39,6 +39,12 @@ reference.
 
 ## Steps
 
+1. Collect hardware details by invoking `$hardware-profile-sweep`. Verify that `hardware_profile` has an entry for each host.
+2. Sample utilization by invoking `$host-resource-sampler`. Verify that `resource_sample` includes CPU, memory and disk values.
+3. Detect drift by invoking `$docker-compose-drift-detector`. Verify that `drift_report` includes `drift_detected`.
+4. Check certificates by invoking `$ssl-expiry-checker`. Verify that `expiry_report` lists the expiry date of each endpoint.
+5. Render the report by invoking `$document-converter` with all four outputs. Verify that `health_check_document` opens and contains all four sections.
+
 ### Step 0: hardware-profile-sweep [skill: hardware-profile-sweep]
 
 Invoke `$hardware-profile-sweep` with the workflow inputs to collect
@@ -74,6 +80,14 @@ Invoke `$document-converter` with `hardware_profile`,
 Markdown/PDF health-check report.
 
 Expected: `health_check_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| A host missing from the profile | Host unreachable | Check connectivity with `ssh <host> true` and rerun that sweep. |
+| `expiry_report` empty | Endpoint list not supplied | Add endpoints to the inputs and re-invoke `$ssl-expiry-checker`. |
+| Report lacks a section | One upstream output was empty | Rerun the missing step and regenerate with `$document-converter`. |
 
 ## Output
 

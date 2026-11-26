@@ -36,6 +36,11 @@ Provide the topic, audience, objective, length constraints, and voice guide.
 
 ## Steps
 
+1. Build the outline with `$content-outline-builder` from the topic, audience, objective, length and voice guide. Verify that `approved_outline` is produced and covers every stated objective.
+2. Draft the talk track with `$content-draft-writer` using the inputs and `approved_outline`. Verify that `talk_track_draft` follows the outline order and the voice guide.
+3. Render the slides with `$marp-presentations` from `talk_track_draft` and `approved_outline`. Verify that `slide_deck` has a slide for each outline section.
+4. Run the readiness check with `$publication-preflight` on `slide_deck`. Verify that `readiness_decision` is returned and that nothing was published.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs.
@@ -62,6 +67,14 @@ Invoke `$publication-preflight` with `slide_deck` and the publication
 requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Outline is rejected | The inputs lack a clear objective or length | Collect the missing topic, audience or length inputs and re-run `$content-outline-builder`. |
+| Slides overflow or lose structure | The draft sections are too long for one slide | Split the long sections in `talk_track_draft` and re-run `$marp-presentations`. |
+| Preflight blocks the deck | A publication requirement is not met | Fix the cited item in `slide_deck` and re-run `$publication-preflight`; do not publish. |
 
 ## Output
 

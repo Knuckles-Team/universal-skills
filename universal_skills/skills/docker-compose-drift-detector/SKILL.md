@@ -24,6 +24,10 @@ Stateless atomic operation to query Docker containers/Swarm services, retrieve a
 
 ## Steps
 
+1. Retrieve the running topology using `container-manager-mcp` with the `list_containers` action. Verify that `active_containers` contains an entry for each targeted container or service with image, env, mounts and replicas.
+2. Diff against the reference templates by scanning for `docker-compose.yml` or stack files and comparing resolved values. Verify that `drift_matrix` maps every mismatched attribute to its `template` and `running` values.
+3. Classify and report the drift as `IMAGE_DRIFT`, `ENV_DRIFT` or `SCALE_DRIFT`. Verify that the report carries a `severity` of NONE, LOW, MEDIUM or HIGH and a `drift_summary`.
+
 ### Step 1: retrieve_active_topology
 Fetch real-time execution telemetry and configuration parameters from running containers:
 - Query active container landscape:
@@ -64,3 +68,11 @@ Categorize drift severity and format telemetry reports:
   - `status`: "SUCCESS" or "FAILED"
   - `drift_summary`: Markdown summary of detected variations.
   - `severity`: String indicating action priority ("NONE", "LOW", "MEDIUM", "HIGH").
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `active_containers` is empty | Wrong namespace or stack filter, or the daemon is unreachable | Check the filter value and run `docker ps` on the host, then re-run the retrieval with the correct stack name. |
+| Template values do not resolve | Missing `.env` file or unset variables | Locate the `.env` beside the compose file and supply it before re-running the diff. |
+| Every attribute reports drift | Compared against the wrong template path | Confirm the compose file path with `ls` in the repository and re-run the diff against the right file. |

@@ -24,6 +24,23 @@ Use the verified `spec.md`, `plan.md`, applicable design artifacts, and `tasks.m
 
 Select a reachable pending task and honor its dependency and file-path constraints. Use `SDDManager.get_parallel_opportunities()` only when it is available; never run tasks concurrently when they edit the same files. Implement the stated acceptance behavior through existing entry points and contracts, run the mapped tests and quality checks, then mark the task `[X]` only after its evidence passes. Record a failed task and its evidence without claiming it complete.
 
+## Steps
+
+1. List pending work with `grep -n '^- \[ \]' specs/<stable-id>/tasks.md`. Verify that the chosen task has all its dependencies marked `[X]` and does not share files with another task you run concurrently.
+2. Read the constitution with `kg_get_constitution` and search for existing analogues with `kg_analogy_search`. Verify that the planned change complies with the returned policies and extends an existing concept where one matches.
+3. Implement the task through existing entry points, tagging code and tests with `CONCEPT:[ID]` found by `kg_concept_search`. Verify that `grep -rn "CONCEPT:" <changed files>` shows the tag on every changed module.
+4. Run the task's mapped tests and quality checks, for example `pytest <mapped test path>`. Verify that they pass and that the new code is reachable from an entry point within three hops.
+5. Mark the task `[X]` in `specs/<stable-id>/tasks.md` with its evidence and commit reference. Verify that `grep -n '\[X\]' specs/<stable-id>/tasks.md` shows the line and that the docs (`CHANGELOG.md`, `AGENTS.md`, `README.md`) were updated.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Mapped tests fail | The implementation does not meet the acceptance behaviour | Leave the task unchecked, record the failing test output in `tasks.md`, fix the code, and mark `[X]` only after a passing run |
+| `kg_analogy_search` returns a similar concept (similarity of 0.7 or more) | The feature duplicates existing code | Extend the existing implementation instead of adding a parallel one, or discard the new code |
+| New code is not reachable from an entry point | It was left as an isolated stub | Wire it into the hot path or delete it, because dead code is prohibited |
+| KG record disagrees with `tasks.md` | The graph index is stale | Treat the tracked file as authoritative, re-ingest it, and report the sync failure separately |
+
 ## Checkpoints
 - **UX/QA Gates**: If `specs/<stable-id>/checklists/` exists, ensure relevant specification-quality gates are satisfied before finalizing a task.
 - **Git Integration**: If in a git repository, associate task completion with specific commit hashes in the `Task` metadata.

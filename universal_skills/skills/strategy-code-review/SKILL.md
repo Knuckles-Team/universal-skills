@@ -33,6 +33,12 @@ Loads strategy script files, audits logic for lookahead bias, checks index varia
 
 ## Steps
 
+1. Parse the strategy files with `graph_query` and `sx_search`. Verify that `strategy-abstract-syntax-tree` lists the methods and properties.
+2. Audit the logic with `graph_analyze` for lookahead bias and divide-by-zero. Verify that `logic-anomaly-records` is returned, even if empty.
+3. Test for information leakage and bad indexing with `graph_query` and `graph_analyze`. Verify that `information-leakage-verdicts` has a verdict per finding.
+4. Compile the review with `graph_write` and `document_tools`. Verify that `strategy-review-dashboard` is produced.
+5. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 1: Strategy Parser
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `strategy-review-dashboard`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No strategy files are found | Wrong path or strategy not ingested | Search again with `sx_search` using the exact file name, or ingest the repository first. |
+| Anomaly list is empty for buggy code | Parser output was truncated | Re-run the parse step and confirm the abstract syntax tree covers every file before auditing. |
+| Report generation fails | `document_tools` lacks write access | Choose a writable output path and re-run the compile step. |
 
 ## Output
 - Strategy Code Review results persisted in KG

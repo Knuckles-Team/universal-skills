@@ -36,6 +36,10 @@ Provide the company universe and the ESG disclosure categories of interest.
 
 ## Steps
 
+1. Locate ESG disclosures by invoking `$web-search` with the company universe and categories. Verify that `esg_source_packet` has a source link for each company covered.
+2. Normalize the data by invoking `$quant-data-ingest` with `esg_source_packet`. Verify that `normalized_esg_dataset` is stored in Timeseries Memory.
+3. Audit quality by invoking `$data-quality-auditor` with `normalized_esg_dataset` and the rule set. Verify that `quality_report` lists pass or fail for each rule.
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs to locate publicly
@@ -56,6 +60,14 @@ Invoke `$data-quality-auditor` with `normalized_esg_dataset` and the
 declared rule set.
 
 Expected: `quality_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| A company has no disclosure | No public ESG report exists | Record the gap in `quality_report` and do not infer values. |
+| `quality_report` shows many rule failures | Source packets used mismatched units or formats | Fix the normalization in `$quant-data-ingest` and rerun the audit. |
+| Request to compute an ESG score | Out of scope | Decline, since the workflow outputs only the dataset and report. |
 
 ## Output
 

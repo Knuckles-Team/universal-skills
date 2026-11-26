@@ -2,7 +2,8 @@
 name: host-disk-reclaimer
 domain: system
 skill_type: skill
-description: 'Discover what is consuming disk on a host and safely reclaim space. Use when a filesystem is full or nearly full ("no space left on device", df shows 90%+), when /home or / is ballooning, or when the user asks to free up space, clean caches, prune stale git worktrees, garbage-collect a Docker registry, or consolidate per-repo virtualenvs. Runs read-only discovery (df + du breakdown) first, then gated reclamation in safety order: regenerable caches, merged+clean git worktrees, Docker registry GC, docker system prune, and redundant venv consolidation — always preserving in-flight work, live service data, and application databases. Works on the local host or, for a remote host, via tunnel-manager (SSH) and container-manager-mcp (Docker over SSH). Do NOT use to delete application data, dump databases, or migrate/rotate live services to other hosts (that is a deployment-planner + tunnel-manager job).'
+description: >-
+  Find what consumes disk on a host and safely reclaim space: read-only df/du discovery, then gated cleanup of caches, merged git worktrees, registry GC, docker prune, and duplicate venvs. Use when a filesystem is full or the user asks to free space. Do NOT use to delete application data, dump databases, or migrate live services.
 license: MIT
 tags: [system, disk, cleanup, docker, registry, git-worktree, cache, venv, ops]
 metadata:
@@ -11,6 +12,8 @@ metadata:
 ---
 
 # Host Disk Reclaimer
+
+Scope: Discover what is consuming disk on a host and safely reclaim space. Use when a filesystem is full or nearly full ("no space left on device", df shows 90%+), when /home or / is ballooning, or when the user asks to free up space, clean caches, prune stale git worktrees, garbage-collect a Docker registry, or consolidate per-repo virtualenvs. Runs read-only discovery (df + du breakdown) first, then gated reclamation in safety order: regenerable caches, merged+clean git worktrees, Docker registry GC, docker system prune, and redundant venv consolidation — always preserving in-flight work, live service data, and application databases. Works on the local host or, for a remote host, via tunnel-manager (SSH) and container-manager-mcp (Docker over SSH). Do NOT use to delete application data, dump databases, or migrate/rotate live services to other hosts (that is a deployment-planner + tunnel-manager job).
 
 Free space on a host by **discovering** the biggest consumers, then **reclaiming**
 only what is safe — never touching in-flight work, live service data, or databases.
@@ -65,6 +68,23 @@ Prometheus TSDB) that cannot be deleted, do NOT move it here — recommend rotat
 the service to a host with capacity using the `deployment-planner` skill (pick the
 target by free capacity) and `tunnel-manager` (rsync the bind-mount + redeploy the
 stack). Surface it as a proposal for the user to approve.
+
+## Steps
+
+1. Discover consumers read-only with `scripts/discover_disk.sh [TARGET_DIR]` and record `df -h <fs>`. Verify that the output names the fullest filesystem and the dominant category.
+2. Reclaim regenerable caches with `scripts/clear_caches.sh [REPO_ROOT]` in dry-run first and `scripts/clear_caches.sh [REPO_ROOT] --apply` after review. Verify that `df -h <fs>` shows more free space than before.
+3. Prune merged and clean worktrees with `scripts/prune_worktrees.py <worktrees-root>`, review the KEEP list, and rerun with `--apply`. Verify that `git worktree list` no longer shows removed entries and dirty ones remain.
+4. Run `scripts/registry_gc.sh`, `docker buildx prune -f` and `scripts/consolidate_venvs.sh <SHARED_VENV> <PACKAGES_ROOT>` as needed, dry-run first. Verify that `df -h <fs>` improves and the shared venv reports 0 missing packages.
+5. Report the total reclaimed from the `df` deltas. Verify that the report lists before and after sizes per step and any proposed host rotation.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `df` is unchanged after `docker system prune` | Docker data-root is on `/` and not on the full `/home` partition | Check `docker info | grep "Docker Root Dir"` and target the filesystem that is actually full. |
+| Worktree stays in the KEEP list | It is dirty or its branch is unmerged | Commit or merge the work, or leave it, since only clean and merged worktrees are removed. |
+| Registry GC finds no blobs to delete | `delete.enabled` is not true | Set `delete.enabled: true` in the registry config (`/etc/distribution/config.yml` for registry:3), restart the registry and rerun `scripts/registry_gc.sh`. |
+| Slow first commit after cache clear | The `pre-commit` cache was removed | Wait for hook environments to reinstall once, no action needed. |
 
 ## Remote hosts
 This skill is host-agnostic. To reclaim space on a REMOTE machine:

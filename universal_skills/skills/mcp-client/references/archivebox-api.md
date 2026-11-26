@@ -24,31 +24,23 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "archivebox-mcp": {
-      "command": "archivebox-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "ARCHIVEBOX_URL": "${ARCHIVEBOX_URL}",
-        "ARCHIVEBOX_TOKEN": "${ARCHIVEBOX_TOKEN}",
-        "ARCHIVEBOX_USERNAME": "${ARCHIVEBOX_USERNAME}",
-        "ARCHIVEBOX_PASSWORD": "${ARCHIVEBOX_PASSWORD}",
-        "ARCHIVEBOX_API_KEY": "${ARCHIVEBOX_API_KEY}",
-        "ARCHIVEBOX_VERIFY": "${ARCHIVEBOX_VERIFY:-True}",
-        "AUTHENTICATIONTOOL": "${ AUTHENTICATIONTOOL:-True }",
-        "CLITOOL": "${ CLITOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "CORETOOL": "${ CORETOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: archivebox-mcp
+command: archivebox-mcp --transport stdio
+env:
+  ARCHIVEBOX_URL: ${ARCHIVEBOX_URL}
+  ARCHIVEBOX_TOKEN: ${ARCHIVEBOX_TOKEN}
+  ARCHIVEBOX_USERNAME: ${ARCHIVEBOX_USERNAME}
+  ARCHIVEBOX_PASSWORD: ${ARCHIVEBOX_PASSWORD}
+  ARCHIVEBOX_API_KEY: ${ARCHIVEBOX_API_KEY}
+  ARCHIVEBOX_VERIFY: ${ARCHIVEBOX_VERIFY:-True}
+  AUTHENTICATIONTOOL: ${ AUTHENTICATIONTOOL:-True }
+  CLITOOL: ${ CLITOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  CORETOOL: ${ CORETOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -60,31 +52,23 @@ archivebox-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only AUTHENTICATIONTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "archivebox-mcp": {
-      "command": "archivebox-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "ARCHIVEBOX_URL": "${ARCHIVEBOX_URL}",
-        "ARCHIVEBOX_TOKEN": "${ARCHIVEBOX_TOKEN}",
-        "ARCHIVEBOX_USERNAME": "${ARCHIVEBOX_USERNAME}",
-        "ARCHIVEBOX_PASSWORD": "${ARCHIVEBOX_PASSWORD}",
-        "ARCHIVEBOX_API_KEY": "${ARCHIVEBOX_API_KEY}",
-        "ARCHIVEBOX_VERIFY": "${ARCHIVEBOX_VERIFY:-True}",
-        "AUTHENTICATIONTOOL": "True",
-        "CLITOOL": "False",
-        "MISCTOOL": "False",
-        "CORETOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: archivebox-mcp
+command: archivebox-mcp --transport stdio
+env:
+  ARCHIVEBOX_URL: ${ARCHIVEBOX_URL}
+  ARCHIVEBOX_TOKEN: ${ARCHIVEBOX_TOKEN}
+  ARCHIVEBOX_USERNAME: ${ARCHIVEBOX_USERNAME}
+  ARCHIVEBOX_PASSWORD: ${ARCHIVEBOX_PASSWORD}
+  ARCHIVEBOX_API_KEY: ${ARCHIVEBOX_API_KEY}
+  ARCHIVEBOX_VERIFY: ${ARCHIVEBOX_VERIFY:-True}
+  AUTHENTICATIONTOOL: True
+  CLITOOL: False
+  MISCTOOL: False
+  CORETOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

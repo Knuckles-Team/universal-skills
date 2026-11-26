@@ -151,6 +151,22 @@ Build a **single self-contained HTML file** with everything inline. No external 
 
 ---
 
+## Steps
+
+1. Write the philosophy file with `cat > philosophy.md` (or your editor) following Step 1. Verify that `grep -c "" philosophy.md` shows a name line plus 4-6 paragraphs.
+2. Implement the sketch in p5.js with seeded `randomSeed` and `noiseSeed` as in Step 2. Verify that `grep -n "randomSeed\|noiseSeed" <sketch>` finds both calls.
+3. Assemble the single HTML file from the Step 3 structure with `<name>.html`. Verify that `grep -c "p5.min.js" <name>.html` returns 1 and no other external files are referenced.
+4. Check the required controls with `grep -n "prevSeed\|nextSeed\|randomSeed\|downloadPNG\|regenerate\|resetParams" <name>.html`. Verify that each control function is both defined and wired to a button.
+5. Open the HTML in a browser, for example with `agent-browser open file://$PWD/<name>.html`. Verify that the canvas renders and changing the seed produces a different output.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Blank canvas | p5.js CDN blocked or a script error | Open the console, fix the error, or confirm network access to the cdnjs p5.js URL. |
+| Output differs on each reload with the same seed | `randomSeed` or `noiseSeed` not set before drawing | Call both with the seed at the start of `setup()` and regenerate. |
+| Sketch is slow or freezes | Parameter ranges allow too many particles | Lower the slider maximums and add `noLoop()` for static pieces. |
+
 ## Output
 
 Deliver:

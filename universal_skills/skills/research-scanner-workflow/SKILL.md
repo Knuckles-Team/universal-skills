@@ -33,6 +33,13 @@ Discover research papers using ScholarX and bulk ingest them into the Arbora Kno
 
 ## Steps
 
+1. Ask the user for the research focus (`query`), lookback days, target sources and maximum results. Verify that each of those four parameters is stated before searching.
+2. Search papers with `scholarx_search` using `action='search'`. Verify that the results list matches the requested sources and lookback window.
+3. Submit the discovered paper IDs with `scholarx_download_papers` and poll `action='status'`. Verify that the queue status shows every ID as downloaded.
+4. Ingest the PDFs into the Knowledge Graph with `mcp_arbora_graph_ingest` using `action='ingest'`. Verify that the ingest result reports the number of documents added.
+5. Show the research summary and ingested paper details to the user as the `present-research-summary` output. Verify that each ingested paper appears in the summary.
+6. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: collect-research-request [skill: user-interaction]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
@@ -69,6 +76,15 @@ Display the completed research summary and details of the ingested papers to the
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Search returns no papers | The query or lookback window is too narrow | Widen the query or increase the lookback days and call `scholarx_search` again. |
+| Downloads stay queued | The download queue is stalled | Check `action='status'`, remove failed IDs, and resubmit them with `scholarx_download_papers`. |
+| Ingest reports zero documents | The PDFs were not downloaded or are unreadable | Confirm the downloads finished with `action='status'` before calling `mcp_arbora_graph_ingest` again. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Research Scanner results persisted in KG

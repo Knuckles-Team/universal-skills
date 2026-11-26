@@ -30,6 +30,24 @@ You act as a foreman walking the job site. As you inspect each section of the pa
 - **In scope:** Visual layout, component structure, interactions, responsive design, and mock data.
 - **Out of scope:** Real backend/DB, authentication, or live real-time features.
 
+## Steps
+
+1. Prepare the browser and scaffold per Workflow Step 1 by running `python scripts/init_scaffold.py` in an empty project directory. Verify that `npm run build` exits 0 and `ls src/app/layout.tsx` lists the file.
+2. Audit the target URL per Workflow Steps 2-3 and record the sections in `docs/research/PAGE_TOPOLOGY.md`. Verify that `grep -c "^#" docs/research/PAGE_TOPOLOGY.md` is at least the number of visual sections found.
+3. Extract fonts, colors, assets and icons per Workflow Steps 4-6 into `src/app/globals.css`, `public/` and `src/components/icons.tsx`. Verify that `ls public src/components/icons.tsx` lists the downloaded assets and the icon file.
+4. Write one spec per section per Workflow Step 7 using `references/component_spec_template.md`. Verify that `ls docs/research/components/*.spec.md` lists a spec for every section in the topology.
+5. Build each section per Workflow Step 8 and type-check with `npx tsc --noEmit`. Verify that the command exits 0 after every section.
+6. Compare the clone against the target with side-by-side screenshots per Workflow Step 9, served by `npm run dev`. Verify that spacing, hover transitions and font weights match for each section, and note any difference in the spec file.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `init_scaffold.py` prompts about a non-empty directory | The current directory already has files | Run it in a new empty directory, or answer `y` only when overwriting is intended. |
+| `npm run build` fails on the fresh scaffold | Node version or dependencies are out of date | Run `npm install` with a current Node LTS and rerun `npm run build` before any customization. |
+| Clone spacing or fonts are slightly off | Values were guessed instead of extracted | Re-extract with `getComputedStyle()` using the snippets in `references/extraction_scripts.md` and update the spec file. |
+| Scroll-driven section behaves as tabs | The interaction model was not identified first | Re-run the interaction sweep, note scroll-driven or click-driven in the spec, and rebuild the component. |
+
 ## Workflow
 
 ### Step 1: browser-setup

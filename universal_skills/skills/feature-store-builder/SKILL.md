@@ -36,6 +36,11 @@ Provide the asset universe, date range, and desired feature fields.
 
 ## Steps
 
+1. Ingest raw market data by invoking `$quant-data-ingest` with the universe and date range. Verify that `normalized_market_dataset` is returned with the desired feature fields.
+2. Audit quality by invoking `$data-quality-auditor` with the rule set. Verify that `quality_report` lists each rule result.
+3. Document fields by invoking `$data-dictionary-builder`. Verify that `feature_data_dictionary` has an entry for every field.
+4. Profile the dataset by invoking `$dataset-profiler`. Verify that `feature_profile` includes row counts and summary statistics.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest raw
@@ -63,6 +68,14 @@ Invoke `$dataset-profiler` with `normalized_market_dataset` to produce
 a structural and statistical profile.
 
 Expected: `feature_profile`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Quality audit fails | Nulls or duplicate rows in the ingested data | Fix them at ingest via `$quant-data-ingest` and rerun the audit. |
+| Dictionary misses fields | Feature fields not listed in inputs | Add the fields to the inputs and re-invoke `$data-dictionary-builder`. |
+| Request to train a model | Out of scope | Decline, since the workflow only assembles the feature store. |
 
 ## Output
 

@@ -3,13 +3,7 @@ name: browser-tools
 domain: web-development
 skill_type: skill
 description: >-
-  Use when interacting with web pages, automating browser actions, performing E2E
-  web application testing, navigating visually, scraping dynamic content, or
-  starting a local dev server to test against. Triggers include requests to open a
-  website, fill a form, click a button, take a screenshot, scrape dynamic content,
-  test a web app, login to a site, or automate any browser-based task. Do NOT use
-  for fetching static API JSON or simple HTTP requests — use web-search or web-
-  crawler for those.
+  Use when interacting with web pages: automate browser actions, run E2E web tests, fill forms, click, take screenshots, scrape dynamic content, log in to a site, or start a local dev server to test against. Do NOT use for static API JSON or simple HTTP requests; use web-search or web-crawler for those.
 license: MIT
 tags: [browser, playwright, testing, web, automation, e2e, agent-browser]
 metadata:
@@ -17,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Browser Tools
+
+Scope: Use when interacting with web pages, automating browser actions, performing E2E web application testing, navigating visually, scraping dynamic content, or starting a local dev server to test against. Triggers include requests to open a website, fill a form, click a button, take a screenshot, scrape dynamic content, test a web app, login to a site, or automate any browser-based task. Do NOT use for fetching static API JSON or simple HTTP requests — use web-search or web- crawler for those.
 
 ## Overview
 
@@ -134,6 +130,22 @@ agent-browser find placeholder "Search" type "query"
 ```
 
 ---
+
+## Steps
+
+1. Choose the approach with the Decision Tree below, inspecting a static page with `grep -n "<input\|<button" <file>.html`. Verify that you can state whether the target is static, dynamic or a running server.
+2. For interactive work run `agent-browser open <url>` and `agent-browser snapshot -i`. Verify that the snapshot lists `@e` refs for the elements you need.
+3. For local servers run `python scripts/with_server.py --help` first. Verify that the `--server`, `--port` and `--cwd` options are shown.
+4. Run the automation with `python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_automation.py`. Verify that the script exits 0 and any screenshot file exists.
+5. Close the session with `agent-browser close`. Verify that the command reports the browser closed.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Selector not found on a dynamic app | DOM inspected before JS finished | Add `page.wait_for_load_state('networkidle')` and `page.wait_for_selector()` before interacting. |
+| `with_server.py` times out | Server not listening on the given `--port` | Check the server command and port, and pass the correct workspace-relative `--cwd`. |
+| agent-browser ref no longer works | Page changed after the snapshot | Re-run `agent-browser snapshot -i` and use the new refs. |
 
 ## Approach 2: Playwright Scripts (E2E Testing Against Local Servers)
 

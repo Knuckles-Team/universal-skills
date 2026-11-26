@@ -36,6 +36,10 @@ Provide the candidate strategy definitions, asset universe, and date range.
 
 ## Steps
 
+1. Invoke `$quant-data-ingest` with the universe and date range. Verify that the result contains a non-empty `normalized_market_dataset`.
+2. Invoke `$qlib-backtester` with `normalized_market_dataset` and each candidate strategy definition. Verify that the result contains a non-empty `strategy_backtest_reports`.
+3. Invoke `$trading-debate` with `strategy_backtest_reports`. Verify that the result contains a non-empty `allocation_evidence_verdict`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -56,6 +60,14 @@ Invoke `$trading-debate` with `strategy_backtest_reports` to vet the
 relative evidence via the TradingAgents swarm debate.
 
 Expected: `allocation_evidence_verdict`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Ingest step returns nothing | The universe, date range or data backend is missing or misspelled | Re-check the workflow inputs against the supplied universe and date range, correct the symbol list, and re-invoke `$quant-data-ingest` with the fixed inputs |
+| Only some strategies produce reports | One definition is malformed | Identify the missing strategy in `strategy_backtest_reports`, fix its definition, and re-invoke `$qlib-backtester` for that strategy |
+| Verdict ignores a strategy | Reports were truncated before the debate | Pass the complete `strategy_backtest_reports` set to `$trading-debate` |
 
 ## Output
 

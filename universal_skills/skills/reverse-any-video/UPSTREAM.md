@@ -11,5 +11,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Source digest: sha256:4899b0c98ac3727204608c9738fcfbebbb1f608274b30eeef15307248327a7c7
 - Local overlays:
   - `overlays/reverse-any-video/10-no-telemetry.md` (sha256 c4b63c0040ea5b17)
+  - `overlays/reverse-any-video/20-steps.md` (sha256 62a75792d0bf9388)
+  - `overlays/reverse-any-video/21-plugin-link.md` (sha256 8e2cadf0a65379c6)
 
 Refresh with `python scripts/sync_upstream_skills.py --update hyperframes`; verify with `--check`.

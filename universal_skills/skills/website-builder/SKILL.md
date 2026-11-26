@@ -172,6 +172,23 @@ After receiving answers to the 4 questions:
 
 ---
 
+## Steps
+
+1. Ask the four Agent Flow questions in one `AskUserQuestion` call (brand, preset, three value propositions, primary CTA). Verify that all four answers are recorded before any file is written.
+2. Scaffold the project with `npm create vite@latest site -- --template react` and install the stack with `cd site && npm install gsap lucide-react tailwindcss@3.4.17 postcss autoprefixer`. Verify that `grep -E '"(gsap|lucide-react|tailwindcss)"' package.json` lists all three.
+3. Map the preset to tokens and write `src/App.jsx`, `src/index.css` and the Google Fonts `<link>` tags in `index.html`, following the Build Sequence and `references/gsap_patterns.md`. Verify that `grep -c "gsap.context" src/App.jsx` is at least 1 and `grep -n "fonts.googleapis" index.html` shows the preset fonts.
+4. Check for placeholders and missing images with `grep -n -i -E "lorem|placeholder|TODO" src/App.jsx`. Verify that the command prints nothing and every image URL is a real Unsplash URL.
+5. Build the site with `npm run build`. Verify that the command exits 0 and `ls dist/index.html` lists the output.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Tailwind classes have no effect | Tailwind v4 was installed instead of the required v3.4.17, or the content paths are wrong | Run `npm install tailwindcss@3.4.17` and set `content: ["./index.html", "./src/**/*.{js,jsx}"]` in `tailwind.config.js`. |
+| Animations stack or leak when the page rerenders | GSAP calls are outside `gsap.context()` | Wrap them in `gsap.context()` inside `useEffect` and return `ctx.revert()` from the cleanup. |
+| Pinned Protocol cards jump or never unpin | ScrollTrigger was not registered or the trigger was not refreshed | Call `gsap.registerPlugin(ScrollTrigger)` once and consult `references/gsap_patterns.md` for the sticky stacking setup. |
+| Hero image is blank | Unsplash URL is broken or a placeholder was used | Replace it with a working Unsplash URL matching the preset's image mood and reload to confirm it loads. |
+
 ## Design Strategy
 
 ### Component-Oriented Brand Strategy

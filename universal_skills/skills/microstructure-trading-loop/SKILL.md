@@ -51,6 +51,14 @@ chain so each stage consumes the prior stage's KG state.
 
 ## Steps
 
+1. Ingest knowledge and research with `organize_trading_knowledge` and the research golden-loop. Verify that `trading-knowledge-nodes` and `ingested-research-concepts` are non-empty.
+2. Register the substrate with `seed_trading_team`. Verify that `teamcfg:trading_paper_v1` and the `MicrostructureSignal` candidates exist via `graph_query`.
+3. Backtest each signal with `emerald_strategy_*` `backtest` and write priors with `record_backtest_outcome`. Verify that `signal-priors-written` excludes signals with `pbo > 0.5`.
+4. Seed fusion with `seed_from_kg` and fuse via `emerald_signals_*` `fuse`. Verify that the convergence gate result is passing before any decision is emitted.
+5. Run paper-first decisions with `emerald_orders_submit` and `emerald_market_making_*`. Verify that every order routes to the PAPER backend per `execution_policy.json`.
+6. Journal each decision with `graph_write` as a `TradeJournalNode`. Verify that `graph_query` returns one node per decision.
+7. Report graduation with `RiskGuard.evaluate_graduation`. Verify that the report states eligibility and the stage is unchanged.
+
 ### Step 0: ingest-knowledge
 **Agent**: `market-analyst`
 **Tools**: `graph_search, document_process`
@@ -136,6 +144,14 @@ This is eligibility-only: the workflow NEVER changes the stage. Promotion requir
 human running `approve_stage` with the `EMERALD_STAGE_APPROVAL_TOKEN`; the agent can
 never self-escalate.
 Expected: `graduation-eligibility-report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Convergence gate fails | Priors too weak or contradictory | Stop before decisions and re-run the backtest with more data |
+| Live order refused | Stage not promoted by a human | Keep paper routing and leave promotion to `approve_stage` |
+| No signals survive backtest | All candidates have `pbo > 0.5` | Ingest more research via the golden-loop and repeat registration |
 
 ## Execution
 

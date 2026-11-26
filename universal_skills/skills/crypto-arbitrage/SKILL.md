@@ -33,6 +33,13 @@ metadata:
 
 ## Steps
 
+1. Scan exchanges for cointegrated pairs with the meristem `cross_market_arb.py` CointegrationAnalyzer (Step 1). Verify that the output lists at least one pair with a cointegration statistic.
+2. Estimate Ornstein-Uhlenbeck mean-reversion parameters for each pair with `graph_analyze` (Step 2). Verify that each pair has a finite reversion speed and half-life.
+3. Check whale alerts, funding rates and DEX volumes with the meristem `crypto_connector.py` OnChainAnalytics (Step 3). Verify that the output carries a value for each of the three signals.
+4. Validate pre-trade risk with `emerald_risk_drawdown_check()` (Step 4). Verify that the result is an explicit pass before any order is placed.
+5. Submit both legs with `emerald_orders_submit(...)` only after the risk check passed (Step 5). Verify that both legs return an order ID and a status.
+6. Persist the run with `graph_write` (Step 6). Verify that `graph_query` returns the stored arbitrage node.
+
 ### Step 1: Pair Scan
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -73,6 +80,16 @@ Tool: `emerald_orders_submit(...)` for both legs.
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Risk check fails | Drawdown or exposure limit is breached | Do not submit orders, reduce position size, and rerun `emerald_risk_drawdown_check()` |
+| Only one leg fills | Liquidity or latency differs between exchanges | Close or hedge the filled leg with `emerald_orders_submit(...)` and record the unfilled leg in the report |
+| No pairs found | The cointegration window is too short or exchanges have no overlap | Extend the lookback window in Step 1 or add exchanges to the scan |
+| Order submission is rejected | Credentials or balance are insufficient | Check the exchange credentials and balances, then resubmit with a corrected size |
+
 
 ## Output
 - Crypto Arbitrage results persisted in KG

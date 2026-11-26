@@ -35,6 +35,21 @@ Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
 - Cohesive with a clear aesthetic point-of-view
 - Meticulously refined in every detail
 
+## Steps
+
+1. Write the aesthetic brief (purpose, tone, constraints, differentiation) to `DESIGN-BRIEF.md`. Verify that `grep -c -E "Purpose|Tone|Constraints|Differentiation" DESIGN-BRIEF.md` prints 4.
+2. Choose fonts, a palette and a motion approach that match the tone, declaring them as CSS variables in `styles.css`. Verify that `grep -n -E "^\s*--(font|color)" styles.css` lists the chosen tokens and none is a default such as Inter, Roboto or Arial.
+3. Implement the working page or component in the requested framework. Verify that `grep -n -i -E "font-family" styles.css` shows the distinctive fonts being applied.
+4. Run the project build or open the file in a browser. Verify that `npm run build` (or loading `index.html`) completes with no console errors.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Output looks generic | Default fonts or a purple-gradient-on-white palette crept in | Re-read the brief in `DESIGN-BRIEF.md`, replace the font and color variables in `styles.css` with choices from the chosen tone, and rebuild. |
+| Design feels busy but unfocused | Several aesthetic directions were mixed | Pick one tone from the brief, delete the effects that do not serve it, and keep one orchestrated page-load animation. |
+| Build fails after adding fonts or libraries | A CDN link or import path is wrong | Fix the failing import reported by `npm run build` and rebuild until it exits 0. |
+
 ## Frontend Aesthetics Guidelines
 
 Focus on:

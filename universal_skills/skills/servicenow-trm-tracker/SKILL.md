@@ -33,6 +33,12 @@ Fetch active ServiceNow TRM (Technology Reference Model) Requests
 
 ## Steps
 
+1. Query the TRM requests table with `servicenow_get_table` using `sysparm_query="active=true^ORDERBYdescsys_created_on"` and `sysparm_limit=20`. Verify that the records are newest first and at most 20.
+2. Present the TRM compliance queue from `servicenow_get_table` and ask which request to analyze. Verify that the user selected a request or declined.
+3. Fetch full fields for the selected record with `servicenow_get_table_record`. Verify that the response includes the developer requirements fields.
+4. Display the `servicenow_get_table_record` evaluation logs, software category status and next assessment steps to the user. Verify that the user confirmed the summary before any follow-up action.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: ServiceNow TRM-Queue Query [skill: servicenow-api]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -63,6 +69,14 @@ Display the architecture evaluation logs, software categories status, and next a
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Table query returns nothing | The TRM table name differs from `u_trm_request` | Query the alternative `dmn_demand` table with `servicenow_get_table`. |
+| Record fetch fails | The `sys_id` is wrong or inaccessible | Re-select the record from the queue and check access rights. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Servicenow Trm Tracker results persisted in KG

@@ -2,13 +2,7 @@
 name: k8s-node-rolling-update
 skill_type: workflow
 description: >-
-  Roll operating-system updates across a Kubernetes cluster one node at a time:
-  discover healthy targets, process workers before control-plane nodes, cordon,
-  drain, patch through an AgentConfig-resolved remote connection, reboot only when
-  required, verify readiness, and uncordon. Use for governed node OS or kernel
-  maintenance where workload availability must be preserved. Do not use for
-  application rollouts, initial cluster bootstrap, or uncoordinated fleet-wide
-  patching.
+  Roll operating-system updates across a Kubernetes cluster one node at a time: discover healthy targets, process workers before control-plane nodes, cordon, drain, patch through an AgentConfig-resolved remote connection, reboot only when required, verify readiness, and uncordon. Use for governed node OS or kernel maintenance where workload availability must be preserved.
 domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
@@ -28,6 +22,8 @@ metadata:
 ---
 
 # Kubernetes node rolling update
+
+Scope: Roll operating-system updates across a Kubernetes cluster one node at a time: discover healthy targets, process workers before control-plane nodes, cordon, drain, patch through an AgentConfig-resolved remote connection, reboot only when required, verify readiness, and uncordon. Use for governed node OS or kernel maintenance where workload availability must be preserved. Do not use for application rollouts, initial cluster bootstrap, or uncoordinated fleet-wide patching.
 
 **CONCEPT:INFRA-001**
 
@@ -55,6 +51,16 @@ worker and control-plane ordering from standard Kubernetes node labels, with all
 control-plane nodes last. Apply deployment-owned exclusions before starting.
 
 ## Steps
+
+1. Discover targets with `cnt_cm_k8s_cluster.list_nodes`. Verify that `ordered_targets` lists workers first and control-plane nodes last, and that each is `Ready`.
+2. Cordon the current node with `cnt_cm_k8s_cluster.cordon_node` after explicit approval. Verify that `cordoned` is returned and the node shows unschedulable.
+3. Drain the node with `cnt_cm_k8s_cluster.drain_node`. Verify that `drained` is returned and that no non-DaemonSet pods remain on it.
+4. Patch the node with `tun_tm_remote.execute` using the approved patch profile. Verify that `patch_status` reports success and `patch_profile_digest` is returned.
+5. Check reboot need with `tun_tm_remote.execute`, and reboot only if `reboot_required` is true. Verify that `rebooted_or_skipped` records the decision.
+6. Wait for readiness with `cnt_cm_k8s_cluster.get_node_conditions`. Verify that `ready` is true before moving on.
+7. Run the node service health profile with `tun_tm_remote.execute`. Verify that `service_healthy` is true and `health_profile_digest` is returned.
+8. Return the node to service with `cnt_cm_k8s_cluster.uncordon_node`. Verify that `uncordoned` is returned and the node stays `Ready`.
+9. Persist aggregate outcomes once with `graph_write` after every node completes. Verify that `run_outcome_reference` is returned.
 
 ### Step 0: list_nodes [mcp_tool: cnt_cm_k8s_cluster.list_nodes]
 
@@ -134,6 +140,15 @@ profile digests, and timestamps. Do not retain connection values, endpoints,
 credentials, local paths, command output, or operator identity.
 
 Expected: `run_outcome_reference`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Drain fails on eviction | PodDisruptionBudget blocks or a pod will not terminate | Stop the run, leave the node cordoned and resolve the blocking pod before resuming. |
+| Node not `Ready` after reboot | Reboot or kubelet failed to start | Inspect conditions via `cnt_cm_k8s_cluster.get_node_conditions`, fix the service and keep the node cordoned until `Ready`. |
+| Reference unresolved | AgentConfig reference missing | Supply the missing Kubernetes or remote-execution reference and restart from Step 0. |
+| Patch returns non-zero | Package manager error | Leave the node cordoned, correct the patch profile and rerun that node only. |
 
 ## Safety invariants
 

@@ -33,6 +33,13 @@ Automatically discovers and queries configured trackers (Jira/atlassian-agent, P
 
 ## Steps
 
+1. Query Jira with `atlassian_jira_issue` for `assignee = currentUser()` that are active or stale. Verify that `jira_issues` is returned.
+2. Query Plane with `plane_list_work_items`. Verify that `plane_work_items` is returned.
+3. Present a combined dashboard and collect the user's updates. Verify that `progress_updates` is recorded.
+4. Push Jira changes with `atlassian_jira_comment` and `atlassian_jira_issue`. Verify that `jira_update_results` reports success.
+5. Push Plane changes with `plane_create_work_item_comment`. Verify that `plane_update_results` reports success.
+6. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Atlassian Issue Discovery [skill: atlassian-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -74,6 +81,14 @@ Expected: `plane_update_results`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Jira query returns 401 | Token expired or wrong URL | Refresh the API token and Jira URL in the agent environment and call `atlassian_jira_issue` again. |
+| Plane returns no items | Workspace or project not configured | Set the workspace slug and project id, and call `plane_list_work_items` again. |
+| Update fails on a closed issue | Workflow transition not allowed | Look up the allowed transitions and choose a valid status. |
 
 ## Output
 - Unified Task Tracker results persisted in KG

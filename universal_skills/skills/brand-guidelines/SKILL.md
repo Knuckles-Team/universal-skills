@@ -136,6 +136,22 @@ Document logo usage rules:
 
 ---
 
+## Steps
+
+1. Gather the brand inputs by listing existing assets with `ls <brand-dir>`. Verify that mission, audience and any existing logo or palette are noted before designing.
+2. Define the color palette with hex codes for each role. Verify that `grep -c "#[0-9A-Fa-f]\{6\}" brand-guidelines.md` is at least the number of palette entries.
+3. Define the typography scale and the voice and tone guide and check with `grep -n "Do\|Don't" brand-guidelines.md`. Verify that each heading level has a size and weight and the voice section has Do/Don't tables.
+4. Define the logo system rules covering clear space, minimum size and misuse and check with `grep -n -i "clear space\|minimum size\|misuse" brand-guidelines.md`. Verify that each rule is stated concretely.
+5. Check the final document structure with `grep -n "^## " brand-guidelines.md`. Verify that sections exist for color, typography, voice and tone, and logo usage.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Palette fails accessibility | Text and background pairs lack contrast | Adjust the shades until text pairs reach WCAG AA 4.5:1 and record the ratios. |
+| Guidelines read as generic | Brand discovery was skipped | Return to Step 1 and capture values, audience and positioning, then rewrite the voice section. |
+| Missing sections in the output | Format checklist not applied | Add the missing sections from the Output Format list and re-run the `grep -n "^## "` check. |
+
 ## Output Format
 
 Deliver brand guidelines as a structured markdown document with:

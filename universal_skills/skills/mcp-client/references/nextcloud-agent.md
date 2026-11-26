@@ -23,30 +23,22 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "nextcloud-agent": {
-      "command": "nextcloud-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "NEXTCLOUD_URL": "${NEXTCLOUD_URL}",
-        "NEXTCLOUD_USERNAME": "${NEXTCLOUD_USERNAME}",
-        "NEXTCLOUD_PASSWORD": "${NEXTCLOUD_PASSWORD}",
-        "USERTOOL": "${ USERTOOL:-True }",
-        "FILESTOOL": "${ FILESTOOL:-True }",
-        "SHARINGTOOL": "${ SHARINGTOOL:-True }",
-        "CALENDARTOOL": "${ CALENDARTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "CONTACTSTOOL": "${ CONTACTSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: nextcloud-agent
+command: nextcloud-mcp --transport stdio
+env:
+  NEXTCLOUD_URL: ${NEXTCLOUD_URL}
+  NEXTCLOUD_USERNAME: ${NEXTCLOUD_USERNAME}
+  NEXTCLOUD_PASSWORD: ${NEXTCLOUD_PASSWORD}
+  USERTOOL: ${ USERTOOL:-True }
+  FILESTOOL: ${ FILESTOOL:-True }
+  SHARINGTOOL: ${ SHARINGTOOL:-True }
+  CALENDARTOOL: ${ CALENDARTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  CONTACTSTOOL: ${ CONTACTSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -58,30 +50,22 @@ nextcloud-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only CALENDARTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "nextcloud-agent": {
-      "command": "nextcloud-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "NEXTCLOUD_URL": "${NEXTCLOUD_URL}",
-        "NEXTCLOUD_USERNAME": "${NEXTCLOUD_USERNAME}",
-        "NEXTCLOUD_PASSWORD": "${NEXTCLOUD_PASSWORD}",
-        "USERTOOL": "False",
-        "FILESTOOL": "False",
-        "SHARINGTOOL": "False",
-        "CALENDARTOOL": "True",
-        "MISCTOOL": "False",
-        "CONTACTSTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: nextcloud-agent
+command: nextcloud-mcp --transport stdio
+env:
+  NEXTCLOUD_URL: ${NEXTCLOUD_URL}
+  NEXTCLOUD_USERNAME: ${NEXTCLOUD_USERNAME}
+  NEXTCLOUD_PASSWORD: ${NEXTCLOUD_PASSWORD}
+  USERTOOL: False
+  FILESTOOL: False
+  SHARINGTOOL: False
+  CALENDARTOOL: True
+  MISCTOOL: False
+  CONTACTSTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -3,19 +3,7 @@ name: code-enhancer
 domain: core
 skill_type: skill
 description: >-
-  Comprehensive code analysis and enhancement skill that performs 31-domain deep-
-  dive reviews of any codebase. Covers project analysis, dependency audit,
-  changelog audit, codebase optimization, security analysis, test coverage, pytest
-  quality grading, test execution, pre-commit compliance, documentation
-  governance, directory organization, language detection, UI/UX heuristics,
-  architecture review, concept traceability, linting, vulnerability scanning,
-  environment variable scanning, runtime and scale profiling (memory, startup,
-  instances-per-GB), brainstorming, multi-project orchestration,
-  cross-project integration, and actionable reporting with standardized 0-100
-  grading and SDD handoff integration. Language-agnostic: supports Python, Go,
-  Node, Rust, Java. Use when tasked with "auditing", "optimizing", "updating",
-  "improving", "reviewing", "grading", or "enhancing" an agent, repository, or
-  codebase. Replaces self-improver.
+  Comprehensive code analysis and enhancement skill that performs 31-domain deep- dive reviews of any codebase. Language-agnostic: supports Python, Go, Node, Rust, Java. Use when tasked with "auditing", "optimizing", "updating", "improving", "reviewing", "grading", or "enhancing" an agent, repository, or codebase. Replaces self-improver.
 license: MIT
 tags: [analysis, optimization, security, audit, grading, architecture, testing, documentation, traceability, linting, dependencies, sdd, pre-commit, ui-ux, multi-project, integration, changelog, pytest, env-vars, profiling]
 metadata:
@@ -24,6 +12,8 @@ metadata:
 ---
 
 # Code Enhancer
+
+Scope: Comprehensive code analysis and enhancement skill that performs 31-domain deep- dive reviews of any codebase. Covers project analysis, dependency audit, changelog audit, codebase optimization, security analysis, test coverage, pytest quality grading, test execution, pre-commit compliance, documentation governance, directory organization, language detection, UI/UX heuristics, architecture review, concept traceability, linting, vulnerability scanning, environment variable scanning, runtime and scale profiling (memory, startup, instances-per-GB), brainstorming, multi-project orchestration, cross-project integration, and actionable reporting with standardized 0-100 grading and SDD handoff integration. Language-agnostic: supports Python, Go, Node, Rust, Java. Use when tasked with "auditing", "optimizing", "updating", "improving", "reviewing", "grading", or "enhancing" an agent, repository, or codebase. Replaces self-improver.
 
 This skill enables the agent to perform a comprehensive, multi-domain "Code Enhancement Review"
 of any codebase. It produces a prettified, graded report with standardized 0–100 scoring across
@@ -161,6 +151,13 @@ to do — see `kg_native.py`'s module docstring for the full rationale.
 
 ## Steps
 
+1. Validate the analyzer toolchain before a batch with `python scripts/selftest.py`. Verify that it exits with status 0.
+2. Detect the language ecosystem and analyze the project structure with `python scripts/detect_language.py` and `python scripts/analyze_project.py` (Steps 1-2). Verify that the output names the primary language and the project type.
+3. Run linters and tests with `python scripts/run_linters.py` and `python scripts/run_tests.py` (Steps 3-4). Verify that each JSON output includes findings or a pass/fail ratio.
+4. Run the deep audits: `python scripts/analyze_codebase.py`, `python scripts/analyze_security.py`, `python scripts/audit_documentation.py`, `python scripts/trace_concepts.py` and `python scripts/analyze_ui.py` (Steps 5-9). Verify that each script writes a non-empty JSON result.
+5. Generate the graded report and SDD handoff with `python scripts/generate_report.py` (Step 10). Verify that the report contains 0-100 scores and a TODO list.
+6. Ingest the run into the KG with `python scripts/kg_ingest_run.py reports/repo.enhance.json` (Step 11). Verify that `python scripts/kg_query_runs.py list` runs and the new run is reported without an ingest error.
+
 ### Step 1: detect_language
 Language ecosystem detection. Auto-detect primary/secondary languages, build system, available linters, and test frameworks to adapt downstream analysis:
 - Requires: primary script `scripts/detect_language.py`
@@ -204,6 +201,16 @@ Consolidated graded report generation and SDD handoff. Compile findings, calcula
 ### Step 11: kg_persistence [depends_on: generate_report]
 Knowledge Graph double-write seeding and multi-project analysis. Ingest the report and spec files back into Arbora, and execute multi-project parallel cross-repository integration checks:
 - Requires: primary script `scripts/run_multi_project.py` and `scripts/analyze_integration.py`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `scripts/selftest.py` exits non-zero | An analyzer script is broken or a linter is missing | Read the failing script name in the output, install the missing tool, and rerun `python scripts/selftest.py` |
+| A domain is skipped for the repo | The domain does not apply to the detected language | Confirm the language with `python scripts/detect_language.py` and treat the skip as expected, or analyze the correct subdirectory |
+| `kg_ingest_run.py` skips ingest | `ARBORA_MCP_URL` is not set or arbora is unreachable | Export `ARBORA_MCP_URL` with the arbora address and run `python scripts/kg_ingest_run.py` again on the saved JSON |
+| Test run is killed at the timeout | The suite exceeds the 300s limit | Run the project's tests on a narrowed path and record the remaining tests as a TODO in the report |
+
 
 ## Best Practices
 - **Read-Only First**: Always provide the report and wait for user approval before applying destructive changes or major refactors.

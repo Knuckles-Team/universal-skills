@@ -41,6 +41,14 @@ voice guide, citation style, and publication requirements.
 
 ## Steps
 
+1. Gather sources for each topic by invoking `$web-search` with the workflow inputs. Verify that `source_packet` has at least one source per topic.
+2. Build outlines by invoking `$content-outline-builder` with `source_packet`. Verify that `approved_outline` matches the audience and length constraints.
+3. Write drafts by invoking `$content-draft-writer` with the outline and sources. Verify that `sourced_draft` cites sources from `source_packet`.
+4. Audit citations by invoking `$citation-auditor` with `sourced_draft`. Verify that `citation_audit` flags any unsupported claim.
+5. Edit each draft by invoking `$copy-editor` with the draft and audit. Verify that `edited_draft` follows the voice guide and resolves the flagged claims.
+6. Check readiness by invoking `$publication-preflight` with `edited_draft`. Verify that `readiness_decision` is recorded for every topic and nothing was published.
+
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs for each topic.
@@ -80,6 +88,15 @@ Invoke `$publication-preflight` with `edited_draft`,
 `citation_audit`, and the publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| A topic has no sources | Query too narrow | Rewrite that topic's query more broadly and re-invoke `$web-search` for it only |
+| Citation audit flags claims | Draft states facts absent from the sources | Send the flagged claims back to `$content-draft-writer` to cite or remove them |
+| Preflight blocks a piece | Missing publication requirement such as a disclosure | Add the missing item to the draft and re-run `$publication-preflight` |
+| Batch stalls on one topic | An upstream step failed for that topic | Mark that topic as failed in the output and continue the remaining topics |
 
 ## Output
 

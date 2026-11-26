@@ -27,6 +27,12 @@ This cognitive shift bypasses groupthink, unlocks creative skepticism, and expos
 
 ## Steps
 
+1. Gather the plan context from the conversation and workspace with `ls` and `grep -n "goal" <plan-file>`. Verify that scope, audience, stack and success criteria are all identified, or ask the user focused questions one at a time.
+2. Generate 4 to 9 distinct failure modes written in the past tense in the `failure_generation` output. Verify that each failure mode is specific to the plan and names a different root cause.
+3. Spawn one investigator per failure mode in `parallel_investigators` to write the case study, hidden assumption and early warning signs. Verify that every failure mode has all three outputs.
+4. Synthesize in the `synthesis` output the most likely failure, most dangerous failure, root assumption, revised plan and pre-launch checklist. Verify that the revised plan differs concretely from the original and the checklist has 3 to 5 testable items.
+5. Write the HTML report and the markdown transcript, for example to `pre-mortem-report.html`. Verify that `ls pre-mortem-report.html` lists the file and that it contains the risk matrix and checklist.
+
 ### Step 1: gather_context
 The agent scans the active conversation and the local workspace (including design documents, plans, and configuration files) to build a comprehensive understanding of the proposed plan:
 - Determine the scope, target audience, execution steps, technology stack, and success criteria.
@@ -41,9 +47,9 @@ The agent shifts the cognitive frame: **"It is 6 months in the future. The plan 
 For each generated failure mode, the agent spawns (or simulates the parallel execution of) independent specialized sub-agent investigators:
 - Each investigator goes deep into its assigned failure mode.
 - Each investigator produces:
-  1. **A detailed case study** of how this specific failure played out step-by-step.
-  2. **The single biggest hidden assumption** that enabled this failure.
-  3. **Early warning signs** (telemetry, metrics, behavioral indicators) that would be visible weeks before the crash.
+  - **A detailed case study** of how this specific failure played out step-by-step.
+  - **The single biggest hidden assumption** that enabled this failure.
+  - **Early warning signs** (telemetry, metrics, behavioral indicators) that would be visible weeks before the crash.
 
 ### Step 4: synthesis [depends_on: parallel_investigators]
 The agent compiles and synthesizes the findings of the parallel investigators into a structured strategic output:
@@ -59,6 +65,17 @@ The agent outputs the final pre-mortem results in two high-fidelity formats:
 - **Markdown Transcript**: A clean, comprehensive markdown transcript detailing the full step-by-step reasoning of each parallel investigator.
 
 ---
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Failure modes read as generic | Plan context was too thin | Re-run Step 1 with `ls` and `grep -n "TODO" <plan-file>` over the plan docs, then ask the user focused questions one at a time. |
+| Investigators duplicate each other | Failure modes overlap | Merge overlapping modes so each names a distinct root cause before spawning investigators. |
+| Revised plan equals original | Synthesis only restated risks | Add at least one concrete change per failure mode and diff it against the original plan. |
+
+---
+
 
 ## Visual Report Aesthetics
 

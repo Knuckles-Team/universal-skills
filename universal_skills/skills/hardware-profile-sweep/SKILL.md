@@ -28,6 +28,10 @@ Stateless atomic operation to query system resources, operating systems, and acc
 
 ## Steps
 
+1. Query core system resources on each host with `systems_manager`. Verify that every host returns OS, CPU, memory and disk data, and that `sm_storage_health` with action `report` lists drive health.
+2. Detect accelerators by running `nvidia-smi` or `lspci | grep -i vga` on each host. Verify that each GPU reports a model, VRAM and driver version, or that no accelerator is recorded.
+3. Format the profile data against `ontology_infrastructure.ttl` classes `HardwareNode` and `GPUAccelerator`. Verify that every host object has CPU cores, RAM size and OS fields populated.
+
 ### Step 1: Query System Info
 Query core system resources on each host via `systems_manager`:
 - OS details (kernel version, distribution, architecture)
@@ -50,3 +54,11 @@ Identify and probe any connected GPU or AI accelerator devices (e.g., using `nvi
 Export the structured metadata representing compute hardware. Data fields strictly align with `ontology_infrastructure.ttl` classes:
 - `HardwareNode` properties (CPU cores, RAM size, OS info)
 - `GPUAccelerator` properties (VRAM size, bus ID, model name)
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| A host returns no data | Host unreachable via `tunnel-manager-mcp` | Check inventory connectivity and re-query that host once it is reachable. |
+| `nvidia-smi` not found | No NVIDIA driver on the host | Fall back to `lspci | grep -i vga` and record the device as having no managed accelerator. |
+| Profile fields missing | Command output not parsed | Inspect the raw output and fix the field mapping before exporting. |

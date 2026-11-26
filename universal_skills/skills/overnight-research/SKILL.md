@@ -41,6 +41,23 @@ Tool: `graph_write(action="add_node", node_type="BacktestResult", ...)`
 ### Step 5: report
 Generate research report with rankings and recommendations.
 
+## Steps
+
+1. Generate the hypotheses from KG signals by calling `emerald_signals_alpha()` plus a KG research query. Verify that the result holds at least one hypothesis with a name and signal definition before continuing.
+2. Backtest every hypothesis by routing the batch to `data-science-mcp`. Verify that each hypothesis has a returned metrics record (Sharpe, return) and none are left queued.
+3. Debate the top performers with `graph_orchestrate(action="start_debate", task=top_hypothesis)`. Verify that the debate output names a keep or reject verdict per hypothesis.
+4. Persist the validated strategies with `graph_write(action="add_node", node_type="BacktestResult", ...)`. Verify that a `graph_query` for `BacktestResult` nodes returns the new entries.
+5. Write the ranked research report with recommendations. Verify that every persisted `BacktestResult` appears in the report's ranking table.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Backtest queue never returns | GPU node or `data-science-mcp` is unreachable | Check the MCP server health, restart the backtest batch on the CPU fallback node, and rerun Step 2 only for hypotheses without results |
+| Debate returns no verdict | `graph_orchestrate` start_debate lacked the top hypothesis payload | Resubmit with `task` set to the ranked top hypothesis text from Step 2 output |
+| `BacktestResult` write rejected | Node properties missing required fields or arbora unreachable | Inspect the error, add the missing properties, and rewrite the node; fall back to native step execution if arbora is down |
+| Cron run overlaps previous night | `max_concurrent` is 1 and the prior run is still active | Inspect the running workflow and cancel or wait for it, then let the next scheduled run proceed |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

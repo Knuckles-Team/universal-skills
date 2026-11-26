@@ -102,6 +102,21 @@ Reference these guidelines when:
 - `imports-design-system-folder` - Organize design system imports
 - `js-hoist-intl` - Hoist Intl object creation
 
+## Steps
+
+1. Find the rule matching the task. Verify with `ls rules/ | grep -i <keyword>` that a relevant rule file appears, for example `list-` or `animation-`.
+2. Read the rule, for example `cat rules/list-performance-virtualize.md`. Verify that you can state its incorrect and correct examples.
+3. Apply the correct pattern in the component code. Verify with `npx tsc --noEmit` that the project still type-checks.
+4. Run the app tests with `npm test`. Verify that the suite exits with status 0 and test the changed screen in Expo.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No rule file matches the keyword | Searching a name not used in `rules/` | Search the rule bodies with `grep -ril <keyword> rules/` and read the best hit |
+| List still janks after the fix | Virtualization or memoization incomplete | Check the CRITICAL list rules and ensure stable item keys and memoized row components |
+| Animation drops frames | Animating non-GPU properties | Follow `rules/animation-gpu-properties.md` and animate transform or opacity only |
+
 ## How to Use
 
 Read individual rule files for detailed explanations and code examples:

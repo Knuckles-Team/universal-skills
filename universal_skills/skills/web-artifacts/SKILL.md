@@ -45,6 +45,23 @@ bash scripts/init-artifact.sh my-new-component
 bash scripts/bundle-artifact.sh my-new-component
 ```
 
+## Steps
+
+1. Record the design discovery answers (narrative, interactive depth, preset) in `DESIGN.md` at the project root. Verify that `grep -c -E "Core Narrative|Interactive Depth|Visual Aesthetic" DESIGN.md` prints 3.
+2. Scaffold the project with `bash scripts/init-artifact.sh my-new-component`. Verify that `ls my-new-component/package.json my-new-component/index.html` lists both files.
+3. Build the component from the design principles, keeping dependencies CDN-friendly. Verify that `cd my-new-component && pnpm exec tsc --noEmit` exits 0.
+4. Bundle the project from its root with `cd my-new-component && bash ../scripts/bundle-artifact.sh`. Verify that `ls -l bundle.html` shows a non-empty single HTML file.
+5. Open the bundle and check contrast and keyboard navigation. Verify that `grep -c "<script src=\"\\./" bundle.html` prints 0, so no external local assets remain.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `Node.js 18 or higher is required` | `init-artifact.sh` found an old Node | Install Node 18 or newer (for example with `nvm install 20`) and rerun `bash scripts/init-artifact.sh my-new-component`. |
+| `No package.json found` | `bundle-artifact.sh` was run outside the project root | `cd my-new-component` and run `bash ../scripts/bundle-artifact.sh` from there. |
+| `No index.html found` | The entry point was deleted or moved | Restore `index.html` in the project root with a `<div id="root">` and the module script, then rebundle. |
+| Bundle renders blank | A dependency was imported but not installed | Run `pnpm install` in the project, read the browser console error, and rebuild. |
+
 ## Design Guidelines & Workflows
 The `docs/` folder contains reference materials and standard operating procedures for achieving high-quality design outcomes:
 
@@ -55,4 +72,4 @@ The `docs/` folder contains reference materials and standard operating procedure
 
 ## Related skill
 
-- [web-artifacts-frontend-design](../web-artifacts-frontend-design/SKILL.md) — the frontend-design sub-skill, served as its own skill.
+- `web-artifacts-frontend-design` — the frontend-design sub-skill, served as its own skill.

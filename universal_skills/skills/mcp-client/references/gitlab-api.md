@@ -35,42 +35,34 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "gitlab-api": {
-      "command": "gitlab-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "GITLAB_URL": "${GITLAB_URL}",
-        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
-        "GROUPSTOOL": "${ GROUPSTOOL:-True }",
-        "PROTECTED_BRANCHESTOOL": "${ PROTECTED_BRANCHESTOOL:-True }",
-        "PIPELINESTOOL": "${ PIPELINESTOOL:-True }",
-        "MERGE_REQUESTSTOOL": "${ MERGE_REQUESTSTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "PACKAGESTOOL": "${ PACKAGESTOOL:-True }",
-        "DEPLOY_TOKENSTOOL": "${ DEPLOY_TOKENSTOOL:-True }",
-        "CUSTOM_APITOOL": "${ CUSTOM_APITOOL:-True }",
-        "PIPELINE_SCHEDULESTOOL": "${ PIPELINE_SCHEDULESTOOL:-True }",
-        "MERGE_RULESTOOL": "${ MERGE_RULESTOOL:-True }",
-        "COMMITSTOOL": "${ COMMITSTOOL:-True }",
-        "BRANCHESTOOL": "${ BRANCHESTOOL:-True }",
-        "JOBSTOOL": "${ JOBSTOOL:-True }",
-        "TAGSTOOL": "${ TAGSTOOL:-True }",
-        "MEMBERSTOOL": "${ MEMBERSTOOL:-True }",
-        "ENVIRONMENTSTOOL": "${ ENVIRONMENTSTOOL:-True }",
-        "PROJECTSTOOL": "${ PROJECTSTOOL:-True }",
-        "RELEASESTOOL": "${ RELEASESTOOL:-True }",
-        "RUNNERSTOOL": "${ RUNNERSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: gitlab-api
+command: gitlab-mcp --transport stdio
+env:
+  GITLAB_URL: ${GITLAB_URL}
+  GITLAB_TOKEN: ${GITLAB_TOKEN}
+  GROUPSTOOL: ${ GROUPSTOOL:-True }
+  PROTECTED_BRANCHESTOOL: ${ PROTECTED_BRANCHESTOOL:-True }
+  PIPELINESTOOL: ${ PIPELINESTOOL:-True }
+  MERGE_REQUESTSTOOL: ${ MERGE_REQUESTSTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  PACKAGESTOOL: ${ PACKAGESTOOL:-True }
+  DEPLOY_TOKENSTOOL: ${ DEPLOY_TOKENSTOOL:-True }
+  CUSTOM_APITOOL: ${ CUSTOM_APITOOL:-True }
+  PIPELINE_SCHEDULESTOOL: ${ PIPELINE_SCHEDULESTOOL:-True }
+  MERGE_RULESTOOL: ${ MERGE_RULESTOOL:-True }
+  COMMITSTOOL: ${ COMMITSTOOL:-True }
+  BRANCHESTOOL: ${ BRANCHESTOOL:-True }
+  JOBSTOOL: ${ JOBSTOOL:-True }
+  TAGSTOOL: ${ TAGSTOOL:-True }
+  MEMBERSTOOL: ${ MEMBERSTOOL:-True }
+  ENVIRONMENTSTOOL: ${ ENVIRONMENTSTOOL:-True }
+  PROJECTSTOOL: ${ PROJECTSTOOL:-True }
+  RELEASESTOOL: ${ RELEASESTOOL:-True }
+  RUNNERSTOOL: ${ RUNNERSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -82,42 +74,34 @@ gitlab-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only BRANCHESTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "gitlab-api": {
-      "command": "gitlab-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "GITLAB_URL": "${GITLAB_URL}",
-        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
-        "GROUPSTOOL": "False",
-        "PROTECTED_BRANCHESTOOL": "False",
-        "PIPELINESTOOL": "False",
-        "MERGE_REQUESTSTOOL": "False",
-        "MISCTOOL": "False",
-        "PACKAGESTOOL": "False",
-        "DEPLOY_TOKENSTOOL": "False",
-        "CUSTOM_APITOOL": "False",
-        "PIPELINE_SCHEDULESTOOL": "False",
-        "MERGE_RULESTOOL": "False",
-        "COMMITSTOOL": "False",
-        "BRANCHESTOOL": "True",
-        "JOBSTOOL": "False",
-        "TAGSTOOL": "False",
-        "MEMBERSTOOL": "False",
-        "ENVIRONMENTSTOOL": "False",
-        "PROJECTSTOOL": "False",
-        "RELEASESTOOL": "False",
-        "RUNNERSTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: gitlab-api
+command: gitlab-mcp --transport stdio
+env:
+  GITLAB_URL: ${GITLAB_URL}
+  GITLAB_TOKEN: ${GITLAB_TOKEN}
+  GROUPSTOOL: False
+  PROTECTED_BRANCHESTOOL: False
+  PIPELINESTOOL: False
+  MERGE_REQUESTSTOOL: False
+  MISCTOOL: False
+  PACKAGESTOOL: False
+  DEPLOY_TOKENSTOOL: False
+  CUSTOM_APITOOL: False
+  PIPELINE_SCHEDULESTOOL: False
+  MERGE_RULESTOOL: False
+  COMMITSTOOL: False
+  BRANCHESTOOL: True
+  JOBSTOOL: False
+  TAGSTOOL: False
+  MEMBERSTOOL: False
+  ENVIRONMENTSTOOL: False
+  PROJECTSTOOL: False
+  RELEASESTOOL: False
+  RUNNERSTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -1,12 +1,7 @@
 ---
 name: canopy
 description: >-
-  Canopy is arbora's front door: the live architecture website and the entry
-  point to the ecosystem through arbora's MCP door. Use it to reach every
-  operation, connector tool, skill and agent from this coding harness with the
-  six intent tools find, ask, why, write, act and manage. Use when a task needs
-  platform knowledge, a connector, a registered agent or the shared workstream;
-  before concluding that a capability is missing; or when a write needs a preview.
+  Canopy is arbora's front door: the live architecture website and the entry point to the ecosystem through arbora's MCP door. Use it to reach every operation, connector tool, skill and agent from this coding harness with the six intent tools find, ask, why, write, act and manage.
 license: MIT
 metadata:
   domain: core
@@ -15,6 +10,8 @@ metadata:
   version: '1.6.2'
 ---
 # Canopy
+
+Scope: Canopy is arbora's front door: the live architecture website and the entry point to the ecosystem through arbora's MCP door. Use it to reach every operation, connector tool, skill and agent from this coding harness with the six intent tools find, ask, why, write, act and manage. Use when a task needs platform knowledge, a connector, a registered agent or the shared workstream; before concluding that a capability is missing; or when a write needs a preview.
 
 Canopy is arbora's front door: the live architecture website, which grows
 into a richer front door over time. This skill is the entry point that tells a
@@ -46,6 +43,23 @@ natural-language `intent="..."` with `op` empty.
    the server and tool names.
 4. **Run a registered agent through `act` with `agents.run`.** Pass the agent
    profile and the task as `input`; report the run result as it is.
+
+## Steps
+
+1. Discover the capability with `find(intent="<what you need>")`. Verify that the result lists at least one matching operation with its params schema.
+2. Read the single operation with `find(op="<operation id>")`. Verify that the params you plan to send match the returned schema.
+3. Send the call through the right tool, for example `act(op="fleet.call", params={"server": ..., "tool": ..., "arguments": {...}})`. Verify that a write, act or manage call returns a preview with a `plan_ref`.
+4. Resubmit the same call with `execute=true` and the returned `plan_ref`. Verify that the response reports the run result rather than another preview.
+5. To hand off, record a checkpoint with `write(op="workstream.checkpoint", ...)`. Verify that `ask(op="workstream.get", params={"workspace_root": "<cwd>"})` returns the checkpoint.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Hook prints `AUTH_REQUIRED` | Harness not signed in to the door | Run `arbora plugin login --harness <profile>` once and complete the browser flow. |
+| Capability seems absent | `find` was not called or the intent was too narrow | Re-run `find(intent="...")` with different wording before concluding it is missing. |
+| Write returns only a preview | `plan_ref` and `execute=true` not sent | Resubmit the identical call with the returned `plan_ref` and `execute=true`. |
+| Status line shows no workstream | Status line command not selected in harness settings | Set `arbora plugin statusline --harness <profile>` as the harness status line command. |
 
 ## The shared workstream
 

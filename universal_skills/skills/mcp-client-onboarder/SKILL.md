@@ -3,15 +3,7 @@ name: mcp-client-onboarder
 domain: infrastructure
 skill_type: skill
 description: >-
-  Onboard, scope, and revoke clients for the central MCP multiplexer. Creates a
-  Keycloak client_credentials identity, generates an Eunomia authorization policy
-  from a profile template (full-access / read-only / server-scoped / role-based),
-  merges it into the multiplexer's zero-trust policy, and supports ephemeral
-  (TTL) clients with an automatic reaper. Use when the user says "onboard an MCP
-  client", "give an agent access to the multiplexer", "scope a client to servers
-  X,Y", "create a read-only MCP client", "revoke/expire an MCP client", or
-  "mcp access control". Do NOT use for remote per-service Eunomia policies
-  (use eunomia-policy-manager) or general Keycloak SSO (use the Keycloak skill).
+  Onboard, scope, and revoke clients of the MCP multiplexer: create a Keycloak client_credentials identity, generate an Eunomia policy from a profile, merge it into the zero-trust policy, support TTL clients with a reaper. Use to onboard an MCP client or scope or revoke access. Do NOT use for per-service Eunomia policies (eunomia-policy-manager) or general SSO.
 license: MIT
 tags: [mcp, multiplexer, authorization, eunomia, keycloak, zero-trust, onboarding, security]
 metadata:
@@ -20,6 +12,8 @@ metadata:
 ---
 
 # MCP Client Onboarder
+
+Scope: Onboard, scope, and revoke clients for the central MCP multiplexer. Creates a Keycloak client_credentials identity, generates an Eunomia authorization policy from a profile template (full-access / read-only / server-scoped / role-based), merges it into the multiplexer's zero-trust policy, and supports ephemeral (TTL) clients with an automatic reaper. Use when the user says "onboard an MCP client", "give an agent access to the multiplexer", "scope a client to servers X,Y", "create a read-only MCP client", "revoke/expire an MCP client", or "mcp access control". Do NOT use for remote per-service Eunomia policies (use eunomia-policy-manager) or general Keycloak SSO (use the Keycloak skill).
 
 One-shot onboarding for the configured **central MCP multiplexer**.
 The multiplexer is zero-trust: every request carries a verified Keycloak JWT, and
@@ -102,6 +96,29 @@ python -c "from scripts.policy_rules import remove_client_rules; \
 KEYCLOAK_ADMIN_PASSWORD=… python -c "import scripts.keycloak_client as k; k.delete_client('ci-bot', k.get_admin_token())"
 ```
 
+## Steps
+
+1. Choose the profile (`full-access`, `read-only`, `server-scoped` or `role-based`) from the Profiles table and export `KEYCLOAK_ADMIN_PASSWORD`.
+   Verify with `test -n "$KEYCLOAK_ADMIN_PASSWORD" && echo set` that the variable is set, and that `KEYCLOAK_URL` is an HTTPS URL.
+2. Onboard the client with `python scripts/onboard.py <client-id> --profile <profile>` (add `--servers`, `--role` or `--ttl` as needed).
+   Verify that the command exits 0 and `grep -n "<client-id>" "$MCP_POLICY_FILE"` shows the new rules.
+3. Restart the configured multiplexer so the embedded policy decision point reloads the policy.
+   Verify that a token for the new client can call `find_tools` and, for scoped profiles, is denied a tool outside its servers.
+4. For ephemeral clients, check expiry with `python scripts/reap.py --dry-run`.
+   Verify that the dry run lists the client only after its TTL has passed.
+5. Revoke a client with `python scripts/reap.py` (expired) or the explicit revoke commands above.
+   Restart the multiplexer afterwards.
+   Verify that `grep -c "<client-id>" "$MCP_POLICY_FILE"` prints 0.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Keycloak client creation fails with 401 or 403 | `KEYCLOAK_ADMIN_PASSWORD` is missing or the admin realm is wrong | Export the correct password and set `KEYCLOAK_ADMIN_REALM`, then re-run `onboard.py`, which is idempotent |
+| TLS verification error | The runtime trust chain is incomplete | Set `SSL_CERT_FILE`, `SSL_CERT_DIR` or `REQUESTS_CA_BUNDLE` to the CA bundle; never disable verification |
+| New client gets denied everything except meta-tools | The multiplexer still serves the old policy | Restart the multiplexer so the policy file is reloaded, then re-test |
+| Expired client still works | The reaper is not scheduled or the service was not restarted | Schedule `python scripts/reap.py` hourly and restart the multiplexer after each revocation |
+
 ## Configuration
 
 | Variable | Default | Description |
@@ -128,4 +145,4 @@ contents are read only at runtime and are never copied into reports or traces.
 ## References
 - `agent-os-deployment` — package-owned day-0 multiplexer setup; use it only when
   its owning agent package is installed.
-- [eunomia-policy-manager](../eunomia-policy-manager/SKILL.md) — remote per-service policies (different target).
+- `eunomia-policy-manager` — remote per-service policies (different target).

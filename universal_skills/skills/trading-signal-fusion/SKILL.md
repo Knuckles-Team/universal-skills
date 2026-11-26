@@ -35,6 +35,10 @@ Provide the candidate signal definitions, asset universe, and date range.
 
 ## Steps
 
+1. Ingest data by invoking `$quant-data-ingest` with the universe and date range. Verify that `normalized_market_dataset` is returned.
+2. Fuse signals by invoking `$trading-debate` with the dataset and signal definitions. Verify that `fused_signal_verdict` is returned.
+3. Backtest by invoking `$qlib-backtester` with the dataset and verdict. Verify that `backtest_report` contains return and risk metrics.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -56,6 +60,14 @@ Invoke `$qlib-backtester` with `normalized_market_dataset` and
 `fused_signal_verdict` to backtest the fused signal.
 
 Expected: `backtest_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Dataset is empty | Symbols or dates mismatch the source | Correct the universe and range and re-invoke `$quant-data-ingest`. |
+| Debate gives no verdict | Candidate signals are undefined | Provide full signal definitions and re-invoke `$trading-debate`. |
+| Backtest errors out | Dataset lacks required fields | Check `normalized_market_dataset` for the fields `$qlib-backtester` needs and re-ingest. |
 
 ## Output
 

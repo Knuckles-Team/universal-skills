@@ -2,17 +2,7 @@
 name: second-brain-sync
 skill_type: workflow
 description: >-
-  Turns a personal or team document corpus — notes, PDFs, git repos, and web
-  pages/bookmarks — into a queryable epistemic second brain: ingests every
-  source into the Knowledge Graph with full provenance, extracts atomic
-  (subject)-[predicate]->(object) facts and typed entities/claims carrying
-  evidence spans + confidence, runs contradiction/gap/synergy analysis against
-  what is already known, then lets you query the result back through the
-  epistemic surfaces (calibrated confidence, citations, justification tree,
-  belief status). Use when the user says "build my second brain", "sync my
-  notes/Obsidian vault into the KG", "ingest my personal knowledge base with
-  provenance", "assimilate these PDFs/repos into the graph", or asks "what do
-  I know about X and why do I believe it".
+  Turn a notes, PDF, git and web corpus into a queryable second brain: ingest sources into the Knowledge Graph with provenance, extract facts and claims with evidence and confidence, run contradiction and gap analysis, then query with citations. Use to sync an Obsidian vault or PDFs into the KG or ask what you know and why. Do NOT use for push-based research content (knowledge-assimilation).
 domain: research-workflows
 license: MIT
 tags: [research, second-brain, personal-kb, knowledge-graph, provenance, fact-extraction, epistemic]
@@ -30,6 +20,8 @@ requires: ['arbora', 'meristem']
 ---
 
 # Second Brain Sync Workflow
+
+Scope: Turns a personal or team document corpus — notes, PDFs, git repos, and web pages/bookmarks — into a queryable epistemic second brain: ingests every source into the Knowledge Graph with full provenance, extracts atomic (subject)-[predicate]->(object) facts and typed entities/claims carrying evidence spans + confidence, runs contradiction/gap/synergy analysis against what is already known, then lets you query the result back through the epistemic surfaces (calibrated confidence, citations, justification tree, belief status). Use when the user says "build my second brain", "sync my notes/Obsidian vault into the KG", "ingest my personal knowledge base with provenance", "assimilate these PDFs/repos into the graph", or asks "what do I know about X and why do I believe it".
 
 Points a folder of notes, PDFs, git repositories, or web pages at the epistemic
 Knowledge Graph and turns it into claims + evidence with provenance — not just
@@ -62,6 +54,23 @@ graph TD
     G --> J["graph_query / engine_query\nreview the proposal"]
     H --> K["graph_ask + engine_query\nexplain_provenance_by_ids /\nexplain_belief / epistemic_status"]
 ```
+
+## Steps
+
+1. Build the source list with `ls <notes dir>` (or the repo and URL list) and tag each item `file`, `dir`, `repo` or `url`. Verify that the list is non-empty and that Nextcloud or Paperless sources have been materialised into a local directory first.
+2. Sync a notes corpus with `graph_ingest action="sync_second_brain" target_path="<notes dir>" corpus_name="<corpus name>"`. Verify that the response shows `notes_synced` above zero and an empty `errors` list.
+3. Review pending claims with `graph_claims action="list" state="proposed"` and contradictions with `graph_query` on `:BeliefRevisionProposal`. Verify that every listed claim is decided explicitly (validate and accept, or retract) and that nothing was auto-resolved.
+4. Ingest PDFs, repos or URLs with `graph_ingest action="ingest"` or `action="ingest_url"` and link each into the corpus with `rel_type="PART_OF"`. Verify with `graph_ingest action="job_status" job_id="<id>"` that the job completed.
+5. Answer a question with `graph_ask question="<question>" envelope="bundle"` and explain it with `engine_query action="explain_belief"`. Verify that the answer carries citations and a justification tree.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `sync_second_brain` returns `notes_synced: 0` | The `target_path` is wrong or the notes are unchanged since the `base_path` cursor | Check the path with `ls`, and drop `base_path` to force a full pass (re-syncs are idempotent) |
+| `errors` lists unreadable notes | Files are not markdown or text, or are permission-denied | Fix permissions or route the files through `graph_ingest action="ingest"` |
+| `epistemic_status` returns `{"error": ...}` | The connected engine lacks the opt-in `epistemic-tms` feature | Use `explain_belief` and `explain_provenance_by_ids` instead, and report the missing feature |
+| A large PDF ingest never finishes | It runs as a background job | Poll `graph_ingest action="job_status"` with the job id, or use `action="extract_submit"` for large documents |
 
 ## Execution Steps
 
@@ -243,7 +252,7 @@ research paper and a personal note on the same topic land as separate
 documents that `graph_ask`/`graph_query` can cross-reference.
 
 ## References
-- [knowledge-assimilation](../knowledge-assimilation/SKILL.md) — sibling push-based pipeline for research/code content
+- `knowledge-assimilation` — sibling push-based pipeline for research/code content
 - `references/walkthrough.md` — end-to-end "build my epistemic second brain" walkthrough with sample tool calls and outputs
 - `meristem/knowledge_graph/extraction/second_brain_sync.py` — the one-call composition (`sync_second_brain`, `graph_ingest action=sync_second_brain`)
 - `meristem/knowledge_graph/extraction/fact_extractor.py` — atomic-triple extraction core

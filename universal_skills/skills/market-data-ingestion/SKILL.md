@@ -35,6 +35,10 @@ Provide the asset universe, date range, and data-quality rule set.
 
 ## Steps
 
+1. Invoke `$quant-data-ingest` with the asset universe, date range and rule set. Verify that the result contains a non-empty `normalized_market_dataset`.
+2. Invoke `$data-quality-auditor` with `normalized_market_dataset` and the declared rule set. Verify that the result contains a non-empty `quality_report`.
+3. Invoke `$dataset-profiler` with `normalized_market_dataset`. Verify that the result contains a non-empty `dataset_profile`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -55,6 +59,14 @@ Invoke `$dataset-profiler` with `normalized_market_dataset` to produce
 a structural and statistical profile.
 
 Expected: `dataset_profile`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Ingest step returns nothing | The universe, date range or data backend is missing or misspelled | Re-check the workflow inputs against the supplied universe and date range, correct the symbol list, and re-invoke `$quant-data-ingest` with the fixed inputs |
+| Quality report flags rule violations | Source data has gaps or out-of-range values | Inspect the failing rows in `quality_report`, narrow the date range or drop the offending symbols, and re-ingest before profiling |
+| Profile is empty | The dataset passed in was not the normalized one | Pass `normalized_market_dataset` from Step 0 rather than the raw feed to `$dataset-profiler` |
 
 ## Output
 
