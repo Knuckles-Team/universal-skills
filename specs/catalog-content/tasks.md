@@ -39,3 +39,35 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T033 [US5] US-CONTENT-R007 Catalog content reaches coding harnesses through the arbora bundle.
 - [x] T034 [US2] US-CONTENT-R006 The codebase-untangle skill.
 - [ ] T035 [US5] US-CONTENT-R008 The verify-claim skill.
+- [ ] T036 [US5] US-CONTENT-R009 A skill spec compiles into SKILL.md and test prompts (rollup)
+- [ ] T037 [US5] US-CONTENT-R009.1 Model: the skill spec
+- [ ] T038 [US5] US-CONTENT-R009.2 Behavior: deterministic compile
+- [ ] T039 [US5] US-CONTENT-R009.3 Wiring: per-model recompile
+- [ ] T040 [US5] US-CONTENT-R009.4 Refusal
+- [ ] T041 [US5] US-CONTENT-R009.5 Evidence
+- [ ] T042 [US5] US-CONTENT-R009.6 Hot-path proof
+- [ ] T043 [US5] US-CONTENT-R010 A skill linter checks steps, verification and error recovery (rollup)
+- [ ] T044 [US5] US-CONTENT-R010.1 Behavior: steps
+- [ ] T045 [US5] US-CONTENT-R010.2 Behavior: error-recovery table
+- [ ] T046 [US5] US-CONTENT-R010.3 Wiring
+- [ ] T047 [US5] US-CONTENT-R010.4 Refusal and exit codes
+- [ ] T048 [US5] US-CONTENT-R010.5 Hot-path proof
+- [ ] T049 [US5] US-CONTENT-R011 Skills load in stages and stay within size budgets (rollup)
+- [ ] T050 [US5] US-CONTENT-R011.1 Behavior: budgets
+- [ ] T051 [US5] US-CONTENT-R011.2 Behavior: frontmatter keys
+- [ ] T052 [US5] US-CONTENT-R011.3 Refusal: connector files
+- [ ] T053 [US5] US-CONTENT-R011.4 Hot-path proof
+- [ ] T054 [US5] US-CONTENT-R012 Two always-on skills let any agent flag knowledge and file friction (rollup)
+- [ ] T055 [US5] US-CONTENT-R012.1 Content: knowledge-flag
+- [ ] T056 [US5] US-CONTENT-R012.2 Content: skill-friction
+- [ ] T057 [US5] US-CONTENT-R012.3 Registration and neutrality
+- [ ] T058 [US5] US-CONTENT-R013 A find-skills skill finds skills by quality and by peer use (rollup)
+- [ ] T059 [US5] US-CONTENT-R013.1 Content
+- [ ] T060 [US5] US-CONTENT-R013.2 Registration
+- [ ] T061 [US5] US-CONTENT-R014 A curator skill defines the background curator agent (rollup)
+- [ ] T062 [US5] US-CONTENT-R014.1 Content: procedure
+- [ ] T063 [US5] US-CONTENT-R014.2 Content: data-access guidance entries
+- [ ] T064 [US5] US-CONTENT-R014.3 Registration
+- [ ] T065 [US5] US-CONTENT-R015 An eval-authoring skill teaches case mix, calibration and ablation (rollup)
+- [ ] T066 [US5] US-CONTENT-R015.1 Content
+- [ ] T067 [US5] US-CONTENT-R015.2 Registration

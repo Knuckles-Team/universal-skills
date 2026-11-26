@@ -89,3 +89,7 @@ Arbora resolves the installed distribution through the `scion_sdk.connector` ent
 
 - `SCION-CONNECTOR-CONTROL-R071.1` (scion-sdk): the content convention that serves the catalog. Contract: `contracts/content-convention.md`.
 - `MERISTEM-SCM-R011` (meristem): the run that loads the delivery skill. Contract: `contracts/delivery-skill.md`.
+
+### Knowledge factory skill content
+
+The compiler of R009 writes skill bodies from `skill.spec.yml`. The linters of R010 and R011 gate the result. The always-on skills (R012), the find skill (R013), the curator skill (R014) and the eval skill (R015) use them. Skills reach tools only through the door, so no skill folder holds a connector file.
