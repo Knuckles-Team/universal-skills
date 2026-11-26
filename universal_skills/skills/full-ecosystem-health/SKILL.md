@@ -33,6 +33,12 @@ End-to-end ecosystem health check across containers, system resources, workspace
 
 ## Steps
 
+1. Collect system stats with the `intake-agent` using `graph_query` and `nc_files`. Verify that `memory` and `cpu` values are returned.
+2. List containers with the `processor-agent` using `graph_analyze`. Verify that each running container reports a health status.
+3. Check Langfuse with the `validator-agent` using `graph_query`. Verify that a `health` value and recent traces are returned.
+4. Review the workspace with the `report-agent` using `document_tools`. Verify that the workspace list and configuration are returned.
+5. Persist results with `graph_write`. Verify that `graph_query` returns the new health nodes.
+
 ### Step 0: Systems Manager
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -67,6 +73,14 @@ Expected: `workspace, list`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Container list empty | `container-manager-mcp` unreachable | Check the connection and rerun the container step. |
+| Langfuse health fails | Service down or credentials invalid | Inspect the Langfuse endpoint, restore it and rerun the check. |
+| Results not persisted | `graph_write` error | Read the error, correct the node properties and rewrite. |
 
 ## Output
 - Full Ecosystem Health results persisted in KG

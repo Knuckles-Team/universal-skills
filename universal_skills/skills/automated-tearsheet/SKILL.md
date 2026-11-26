@@ -35,6 +35,11 @@ Provide the strategy definition, asset universe, date range, and benchmark.
 
 ## Steps
 
+1. Ingest market data by invoking `$quant-data-ingest` with the universe and date range. Verify that `normalized_market_dataset` covers every instrument and the benchmark.
+2. Backtest the strategy by invoking `$qlib-backtester` with `normalized_market_dataset` and the strategy definition. Verify that `backtest_report` includes return, drawdown and benchmark-relative metrics.
+3. Render the tearsheet by invoking `$document-converter` with `backtest_report`. Verify that `tearsheet_document` exists as Markdown or PDF and shows the same metrics as the report.
+
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -55,6 +60,14 @@ Invoke `$document-converter` with `backtest_report` to render it as a
 formatted Markdown/PDF tearsheet.
 
 Expected: `tearsheet_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Dataset misses instruments | Tickers unresolved by the ingest skill | Correct the ticker list in the inputs and re-run Step 0 for the missing names |
+| Backtest errors on the strategy | Strategy definition references fields absent from the dataset | Add the required fields to the ingest request or fix the definition, then re-run Step 1 |
+| Tearsheet metrics differ from report | Conversion truncated the tables | Re-run `$document-converter` with Markdown output and compare against `backtest_report` |
 
 ## Output
 

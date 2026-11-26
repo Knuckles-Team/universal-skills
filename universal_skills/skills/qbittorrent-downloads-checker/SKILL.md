@@ -31,6 +31,11 @@ Connects to your qBittorrent server, lists active and completed torrents, and di
 
 ## Steps
 
+1. List active and completed torrents with `qbittorrent_torrents` using the `get_torrent_list` action. Verify that `active_torrent_list` includes state and progress for every torrent.
+2. Query host disk capacity metrics through the systems manager tools. Verify that `disk_space_metrics` reports free space for the download volume.
+3. Present the progress and disk headroom dashboard as `view_confirmation` to the user. Verify that completed items and any low-headroom warning are highlighted.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: Qbittorrent Agent
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,15 @@ Expected: `view_confirmation`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Torrent list fails to load | The qBittorrent endpoint is unreachable | Check connectivity and credentials with `qbittorrent_torrents`, then list again. |
+| Disk metrics are missing | The systems manager has no entry for the download host | Select the correct host in the systems manager and request the disk metrics again. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Qbittorrent Downloads Checker results persisted in KG

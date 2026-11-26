@@ -33,6 +33,12 @@ Scaffolds standard-compliant Python strategy files for Freqtrade, runs parallel 
 
 ## Steps
 
+1. Code the strategy with the `data-fetcher` agent using `graph_query` and `sx_search`. Verify that `freqtrade-strategy-file` passes `python3 -m py_compile` on the strategy file.
+2. Tune parameters with the `compute-engine` agent running `freqtrade hyperopt`. Verify that `optimized-hyperparameters` lists the best epoch results.
+3. Dry-run with the `risk-assessor` agent using `graph_analyze`. Verify that `dry-run-stability-metrics` shows a connected exchange and no errors.
+4. Enable live trading with the `report-generator` agent using `graph_write`. Verify that `live-deployment-logs` shows the Telegram webhook registered.
+5. Persist results with `graph_write`. Verify that `graph_query` returns the new strategy node.
+
 ### Step 1: Strategy Coder
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `live-deployment-logs`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Strategy fails to import | Syntax error or missing base class | Run `python3 -m py_compile` on the file, fix the error and regenerate. |
+| Hyperopt finds no result | Too few epochs or no data | Download data with `freqtrade download-data` and increase epochs before rerunning. |
+| Dry run disconnects | Bad exchange keys or network | Re-check the exchange configuration and do not elevate to live until the dry run is stable. |
 
 ## Output
 - Freqtrade Strategy Deploy results persisted in KG

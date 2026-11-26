@@ -35,38 +35,30 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "systems-manager": {
-      "command": "systems-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TEXT_EDITORTOOL": "${ TEXT_EDITORTOOL:-True }",
-        "FILESYSTEMTOOL": "${ FILESYSTEMTOOL:-True }",
-        "PROCESSTOOL": "${ PROCESSTOOL:-True }",
-        "LOGTOOL": "${ LOGTOOL:-True }",
-        "USERTOOL": "${ USERTOOL:-True }",
-        "SSH_MANAGEMENTTOOL": "${ SSH_MANAGEMENTTOOL:-True }",
-        "SHELLTOOL": "${ SHELLTOOL:-True }",
-        "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
-        "CRONTOOL": "${ CRONTOOL:-True }",
-        "NETWORKTOOL": "${ NETWORKTOOL:-True }",
-        "NODEJSTOOL": "${ NODEJSTOOL:-True }",
-        "SERVICETOOL": "${ SERVICETOOL:-True }",
-        "SYSTEM_MANAGEMENTTOOL": "${ SYSTEM_MANAGEMENTTOOL:-True }",
-        "FIREWALL_MANAGEMENTTOOL": "${ FIREWALL_MANAGEMENTTOOL:-True }",
-        "PYTHONTOOL": "${ PYTHONTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "DISKTOOL": "${ DISKTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: systems-manager
+command: systems-manager-mcp --transport stdio
+env:
+  TEXT_EDITORTOOL: ${ TEXT_EDITORTOOL:-True }
+  FILESYSTEMTOOL: ${ FILESYSTEMTOOL:-True }
+  PROCESSTOOL: ${ PROCESSTOOL:-True }
+  LOGTOOL: ${ LOGTOOL:-True }
+  USERTOOL: ${ USERTOOL:-True }
+  SSH_MANAGEMENTTOOL: ${ SSH_MANAGEMENTTOOL:-True }
+  SHELLTOOL: ${ SHELLTOOL:-True }
+  SYSTEMTOOL: ${ SYSTEMTOOL:-True }
+  CRONTOOL: ${ CRONTOOL:-True }
+  NETWORKTOOL: ${ NETWORKTOOL:-True }
+  NODEJSTOOL: ${ NODEJSTOOL:-True }
+  SERVICETOOL: ${ SERVICETOOL:-True }
+  SYSTEM_MANAGEMENTTOOL: ${ SYSTEM_MANAGEMENTTOOL:-True }
+  FIREWALL_MANAGEMENTTOOL: ${ FIREWALL_MANAGEMENTTOOL:-True }
+  PYTHONTOOL: ${ PYTHONTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  DISKTOOL: ${ DISKTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -78,38 +70,30 @@ systems-manager-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only CRONTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "systems-manager": {
-      "command": "systems-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TEXT_EDITORTOOL": "False",
-        "FILESYSTEMTOOL": "False",
-        "PROCESSTOOL": "False",
-        "LOGTOOL": "False",
-        "USERTOOL": "False",
-        "SSH_MANAGEMENTTOOL": "False",
-        "SHELLTOOL": "False",
-        "SYSTEMTOOL": "False",
-        "CRONTOOL": "True",
-        "NETWORKTOOL": "False",
-        "NODEJSTOOL": "False",
-        "SERVICETOOL": "False",
-        "SYSTEM_MANAGEMENTTOOL": "False",
-        "FIREWALL_MANAGEMENTTOOL": "False",
-        "PYTHONTOOL": "False",
-        "MISCTOOL": "False",
-        "DISKTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: systems-manager
+command: systems-manager-mcp --transport stdio
+env:
+  TEXT_EDITORTOOL: False
+  FILESYSTEMTOOL: False
+  PROCESSTOOL: False
+  LOGTOOL: False
+  USERTOOL: False
+  SSH_MANAGEMENTTOOL: False
+  SHELLTOOL: False
+  SYSTEMTOOL: False
+  CRONTOOL: True
+  NETWORKTOOL: False
+  NODEJSTOOL: False
+  SERVICETOOL: False
+  SYSTEM_MANAGEMENTTOOL: False
+  FIREWALL_MANAGEMENTTOOL: False
+  PYTHONTOOL: False
+  MISCTOOL: False
+  DISKTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

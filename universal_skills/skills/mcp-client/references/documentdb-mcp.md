@@ -23,30 +23,22 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "documentdb-mcp": {
-      "command": "documentdb-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MONGODB_URI": "${MONGODB_URI}",
-        "MONGODB_HOST": "${MONGODB_HOST:-localhost}",
-        "MONGODB_PORT": "${MONGODB_PORT:-10260}",
-        "ANALYSISTOOL": "${ ANALYSISTOOL:-True }",
-        "USERSTOOL": "${ USERSTOOL:-True }",
-        "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
-        "COLLECTIONSTOOL": "${ COLLECTIONSTOOL:-True }",
-        "CRUDTOOL": "${ CRUDTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: documentdb-mcp
+command: documentdb-mcp --transport stdio
+env:
+  MONGODB_URI: ${MONGODB_URI}
+  MONGODB_HOST: ${MONGODB_HOST:-localhost}
+  MONGODB_PORT: ${MONGODB_PORT:-10260}
+  ANALYSISTOOL: ${ ANALYSISTOOL:-True }
+  USERSTOOL: ${ USERSTOOL:-True }
+  SYSTEMTOOL: ${ SYSTEMTOOL:-True }
+  COLLECTIONSTOOL: ${ COLLECTIONSTOOL:-True }
+  CRUDTOOL: ${ CRUDTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -58,30 +50,22 @@ documentdb-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only ANALYSISTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "documentdb-mcp": {
-      "command": "documentdb-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MONGODB_URI": "${MONGODB_URI}",
-        "MONGODB_HOST": "${MONGODB_HOST:-localhost}",
-        "MONGODB_PORT": "${MONGODB_PORT:-10260}",
-        "ANALYSISTOOL": "True",
-        "USERSTOOL": "False",
-        "SYSTEMTOOL": "False",
-        "COLLECTIONSTOOL": "False",
-        "CRUDTOOL": "False",
-        "MISCTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: documentdb-mcp
+command: documentdb-mcp --transport stdio
+env:
+  MONGODB_URI: ${MONGODB_URI}
+  MONGODB_HOST: ${MONGODB_HOST:-localhost}
+  MONGODB_PORT: ${MONGODB_PORT:-10260}
+  ANALYSISTOOL: True
+  USERSTOOL: False
+  SYSTEMTOOL: False
+  COLLECTIONSTOOL: False
+  CRUDTOOL: False
+  MISCTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

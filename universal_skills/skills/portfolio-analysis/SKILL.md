@@ -31,6 +31,11 @@ metadata:
 
 ## Steps
 
+1. Extract the latest holdings and benchmark data with `graph_query` and `sx_search`. Verify that the holdings list is non-empty and carries a retrieval date.
+2. Compute risk metrics, exposures and VaR with `graph_analyze`. Verify that each metric is calculated from the extracted holdings and reports its window.
+3. Synthesize the metrics and holdings into a markdown report with `graph_query` and `graph_analyze`. Verify that the report lists every holding and each risk metric.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Data Extractor
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -55,6 +60,15 @@ Synthesize the risk metrics and holding data into a formatted markdown report.
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Holdings list is empty | The portfolio system returned no positions | Re-query with `graph_query` using the correct portfolio identifier and check the source system for access errors. |
+| VaR cannot be computed | Price history is too short for the window | Extend the history with `sx_search` or shorten the VaR window and state the change in the report. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Portfolio Analysis results persisted in KG

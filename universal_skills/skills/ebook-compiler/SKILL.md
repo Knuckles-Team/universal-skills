@@ -39,6 +39,12 @@ requirements.
 
 ## Steps
 
+1. Build the outline with `$content-outline-builder` for each chapter. Verify that `approved_outline` lists every requested chapter.
+2. Draft the chapters with `$content-draft-writer` using `approved_outline`. Verify that `chapter_drafts` has one draft per outline entry.
+3. Edit the drafts with `$copy-editor`. Verify that `edited_chapters` keeps the same chapter count as `chapter_drafts`.
+4. Merge the chapters with `$document-tools` into one document. Verify that `compiled_manuscript` contains all chapters in outline order.
+5. Run `$publication-preflight` on `compiled_manuscript` with the publication requirements. Verify that `readiness_decision` is recorded and that nothing was published or uploaded.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs for each
@@ -72,6 +78,14 @@ Invoke `$publication-preflight` with `compiled_manuscript` and the
 publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Outline missing chapters | Chapter list input was incomplete | Re-invoke `$content-outline-builder` with the full approved chapter list. |
+| Merged manuscript is out of order | Chapters passed to `$document-tools` unsorted | Reorder `edited_chapters` to match `approved_outline` and re-run the merge. |
+| `readiness_decision` is not ready | Preflight found unmet publication requirements | Read the findings, return to `$copy-editor` for the flagged chapters and rerun the merge and preflight. |
 
 ## Output
 

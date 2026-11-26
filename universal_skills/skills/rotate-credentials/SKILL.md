@@ -54,6 +54,23 @@ provider check, and retain the previous secret version until verification succee
 Stop on an indeterminate result. Do not improvise shell commands or fall back to a
 bundled fleet script when the configured provider lacks the required capability.
 
+## Steps
+
+1. Confirm the request carries a `rotation_profile_ref` that resolves to inventory, provider, account, secret and policy references (a `rotation_profile_ref` of this shape is required). Verify that every reference resolves and that none exposes a secret value, otherwise reject the request.
+2. Ask the configured provider for a value-free dry-run (target count, credential classes, policy digests, rollback readiness) using only the `rotation_profile_ref` as input. Verify that the response contains no credential values or hostnames and that it reports rollback as ready.
+3. Obtain explicit approval for the exact `dry-run digest`. Verify that the approval reference names that digest before any rotation call.
+4. Invoke the provider's credential-rotation capability with only the `rotation_profile_ref` and the approval reference. Verify that each target was rotated one at a time and confirmed by the provider's separate check, with the previous secret version kept until that check passes.
+5. Return the retained output listed under `## Retained output`. Verify that it holds only counts, opaque target references, secret-version references, digests, timestamps and an audit reference.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| The `rotation_profile_ref` does not resolve | The AgentConfig profile is missing or misnamed | Stop, ask the operator to fix the profile, and do not accept raw credentials or hostnames as a substitute |
+| Provider lacks the credential-rotation capability | The configured provider profile does not support the account or BMC class | Stop and report the missing capability, and do not improvise shell commands or use `scripts/rotate-credentials.sh` |
+| A target verification is indeterminate | The separate provider check timed out or returned an unclear state | Stop the campaign, keep the previous secret version, and report the opaque target reference as failed so the provider can roll back |
+| Dry-run digest differs at approval time | The inventory or policy changed after the dry-run | Discard the approval, request a new dry-run, and approve the new digest |
+
 ## Retained output
 
 Return aggregate success/partial/failure counts, opaque target references for any

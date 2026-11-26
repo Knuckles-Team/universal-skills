@@ -83,6 +83,27 @@ When creating an animated GIF for internal comms or slack:
 
 ---
 
+## Steps
+
+1. Identify the source files and the target format.
+   Run `ffprobe -hide_banner input.mp4` or `file *.png`. Verify that the codec, dimensions, and duration are known.
+2. Check that the tools are available.
+   Run `ffmpeg -version | head -1` and `python -c "import PIL; print(PIL.__version__)"`. Verify that both print a version.
+3. Run the matching command from the Tool Usage Guide, such as the `palettegen` GIF recipe, the `-ss`/`-t` clip, or the Pillow WebP conversion.
+   Verify that `ls -l output.*` shows a nonempty file.
+4. Inspect the result.
+   Run `ffprobe -hide_banner output.gif` or `python -c "from PIL import Image; print(Image.open('output.webp').size)"`. Verify that the dimensions keep the source aspect ratio and the width is at most 480 for Slack GIFs.
+5. Deliver the file with its path and size.
+   Run `du -h output.*`. Verify that the size is reasonable for the target channel.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| GIF has banding or wrong colors | Palette was not generated | Rerun the `palettegen`/`paletteuse` filter chain from the guide |
+| Clipped video is not cut at the requested time | `-c copy` snaps to keyframes | Rerun without `-c copy` to re-encode for frame-accurate cuts |
+| `ffmpeg: command not found` | FFmpeg not installed | Install it with the system package manager, e.g. `apt-get install ffmpeg`, then repeat the command |
+
 ## Best Practices
 
 - **WebP First**: Use WebP for static web images to save ~30% in file size with better quality than JPEG.

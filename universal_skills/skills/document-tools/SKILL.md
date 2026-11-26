@@ -3,12 +3,7 @@ name: document-tools
 domain: docs
 skill_type: skill
 description: >-
-  Use this skill whenever the user wants to read, edit, analyze, or create
-  document files. This includes PDFs (reading, merging, splitting, OCR, forms,
-  watermarks), Spreadsheets (.xlsx, .csv, DataFrames, formulas with zero errors),
-  Word Documents (.docx), PowerPoint Presentations (.pptx), and Markdown to EPUB
-  conversion. Treat this as the primary tool for any standard office file or
-  document formatting/extraction task.
+  Use this skill whenever the user wants to read, edit, analyze, or create document files. This includes PDFs (reading, merging, splitting, OCR, forms, watermarks), Spreadsheets (.xlsx, .csv, DataFrames, formulas with zero errors), Word Documents (.docx), PowerPoint Presentations (.pptx), and Markdown to EPUB conversion.
 license: MIT
 tags: [documents, pdf, excel, word, powerpoint, csv, epub, ocr, formatting, automation]
 metadata:
@@ -16,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Document Tools
+
+Scope: Use this skill whenever the user wants to read, edit, analyze, or create document files. This includes PDFs (reading, merging, splitting, OCR, forms, watermarks), Spreadsheets (.xlsx, .csv, DataFrames, formulas with zero errors), Word Documents (.docx), PowerPoint Presentations (.pptx), and Markdown to EPUB conversion. Treat this as the primary tool for any standard office file or document formatting/extraction task.
 
 ## Overview
 
@@ -55,3 +52,19 @@ This skill consolidates capabilities for working with various document and offic
 2. Select the appropriate Python library or CLI tool from the associated `scripts/` subdirectory.
 3. Write Python scripts or execute shell commands using the appropriate tool.
 4. For complex documents (like Excel with formulas or Word with templates), always respect existing templates and follow strict formatting guidelines.
+
+## Steps
+
+1. Identify the format of the target with `file <path>` and pick the matching `scripts/` subfolder from the sections above. Verify that the `file` output names PDF, Excel, Word, PowerPoint or Markdown content and that `ls scripts/<format>_scripts` lists the helper scripts.
+2. Probe the input before changing it, for example `pdftotext <file>.pdf - | head -40` for PDFs or `python -c "import openpyxl; print(openpyxl.load_workbook('<file>.xlsx').sheetnames)"` for spreadsheets. Verify that the output is readable text or a sheet list, and treat empty PDF output as a scanned document that needs OCR.
+3. Perform the edit or creation with the library named for that format (`pypdf`, `openpyxl`, `python-docx`, `python-pptx`, `pypandoc`), keeping existing templates. Verify that the output file exists with `ls -l <output>` and reopens without error in the same library.
+4. For spreadsheets, recalculate with `python scripts/xlsx_scripts/recalc.py <file>.xlsx`. Verify that the script reports zero formula errors (`#REF!`, `#DIV/0!`).
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `pdftotext` returns empty or garbled text | The PDF is a scan with no text layer | Rasterize pages with `pdfimages -png <file>.pdf out` and run `pytesseract` on them, then re-extract. |
+| Recalc reports `#REF!` or `#DIV/0!` | A formula points at a deleted cell or an empty denominator | Open the named cell, fix the reference or guard the divisor with `IF`, and rerun `scripts/xlsx_scripts/recalc.py`. |
+| `recalc.py` cannot start | LibreOffice is not installed or not on `PATH` | Check `which soffice`, install LibreOffice, and rerun the recalc command. |
+| `ImportError` for `docx` or `pptx` | `python-docx` or `python-pptx` missing | Run `pip install python-docx python-pptx` and rerun the script. |

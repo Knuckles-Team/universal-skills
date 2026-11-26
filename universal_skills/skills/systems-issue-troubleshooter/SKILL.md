@@ -33,6 +33,14 @@ Inspect logs, find zombie/hung processes, disk space shortages, or corruptions, 
 
 ## Steps
 
+1. Capture system health with `sm_system_operations` using `action='system_health_check'` and `action='get_os_statistics'`. Verify that both calls return data.
+2. Inspect processes with `sm_process_operations` and `action='list_processes'`. Verify that zombie or hung PIDs are listed or confirmed absent.
+3. Read disk and logs with `sm_disk_operations` (`action='get_disk_space_report'`) and `sm_file_operations` (`action='get_system_logs'`, `lines=150`). Verify that the disk report and log lines are returned.
+4. Present findings and ask the user (skill `user-interaction`) to approve a fix. Verify that the user's explicit choice is recorded before any change.
+5. Apply the approved fix with `sm_process_operations` (`action='kill_process'`) or `sm_system_operations` (`action='clean_temp_files'`). Verify that the call reports success.
+6. Re-run `sm_system_operations` with `action='system_health_check'`. Verify that the metrics improved compared with step 1.
+7. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: collect-system-health [skill: systems-manager]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -75,6 +83,14 @@ Present the revised health diagnostic metrics to verify successful remediation a
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `kill_process` fails | PID is gone or access denied | Re-list with `list_processes` for the current PID and run with a privileged user. |
+| Logs call returns nothing | Journal access is restricted | Run `sm_file_operations` as a user in the journal group, or increase `lines`. |
+| Disk usage does not drop | Space is held by open files or other partitions | Use `get_disk_space_report` to find the largest consumers and target them. |
 
 ## Output
 - Systems Issue Troubleshooter results persisted in KG

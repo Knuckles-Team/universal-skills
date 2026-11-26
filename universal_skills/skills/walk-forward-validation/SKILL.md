@@ -33,6 +33,12 @@ Divides historical feeds into overlapping walk-forward segments, runs parallel w
 
 ## Steps
 
+1. Generate 5 overlapping train and test windows with `graph_query` and `sx_search`. Verify that `segmented-walk-forward-windows` has 5 windows with non-overlapping test periods.
+2. Train a model per window with `graph_analyze`. Verify that `window-fit-parameters` has one entry per window.
+3. Backtest each fit on its test segment with `graph_query` and `graph_analyze`. Verify that `out-of-sample-performances` has a result per window.
+4. Aggregate out-of-sample returns with `graph_write` and `document_tools`. Verify that `final-walk-forward-report` shows stability across windows.
+5. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 1: Window Generator
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `final-walk-forward-report`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Windows leak future data | Test period overlaps training | Regenerate windows so each test starts after its training end. |
+| A window fit fails | Too little data in that window | Lengthen the training window or reduce the window count, and rerun that fit. |
+| Performance varies widely | Strategy is unstable | Report the instability and do not promote the strategy. |
 
 ## Output
 - Walk Forward Validation results persisted in KG

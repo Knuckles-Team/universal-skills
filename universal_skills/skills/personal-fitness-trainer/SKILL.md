@@ -29,6 +29,10 @@ Assesses user fitness goals, queries appropriate strength training exercises, co
 
 ## Steps
 
+1. Assess goals and query exercises with the `wger_exercise` tool. Verify that `exercises` match the muscle group.
+2. Create the routine with `wger_routine` and configure it with `wger_routineconfig`. Verify that the routine lists its days and exercises.
+3. Persist with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 0: Fitness Trainer
 **Agent**: `data-collector`
 **Tools**: `graph_query`
@@ -49,6 +53,14 @@ Expected: `routine, configuration`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No exercises | Query too narrow | Broaden the search query or drop the muscle group filter in `wger_exercise` |
+| Routine creation fails | Auth | Check the wger-agent API credentials and call `wger_routine` again |
+| Config rejected | Wrong id | Call `wger_routineconfig` with the routine id returned by `wger_routine` |
 
 ## Output
 - Personal Fitness Trainer results persisted in KG

@@ -31,6 +31,11 @@ Audit active SSH tunnels and network connectivity alongside system network inter
 
 ## Steps
 
+1. List active tunnels with `tun_tm_hosts` and `tun_tm_system`. Verify that the tunnel list is returned.
+2. Collect interface stats and connections using the `systems-manager` network tools. Verify that interfaces and connection counts are present.
+3. Get the firewall rule summary using the `systems-manager` firewall tool. Verify that the rule list is returned.
+4. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Tunnel Manager
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,14 @@ Expected: `firewall, rule`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No tunnels listed | Inventory file is empty or missing | Check the inventory path and add the hosts, and list again. |
+| Firewall call is denied | Needs elevated privileges | Run with a user allowed to read firewall rules (sudo) and call it again. |
+| Host unreachable | SSH down or wrong address | Test with `ssh -v <host>` and correct the inventory entry. |
 
 ## Output
 - Tunnel And Network Audit results persisted in KG

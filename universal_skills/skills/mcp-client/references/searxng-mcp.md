@@ -20,27 +20,19 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "searxng-mcp": {
-      "command": "searxng-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "SEARXNG_INSTANCE_URL": "${SEARXNG_INSTANCE_URL}",
-        "SEARXNG_USERNAME": "${SEARXNG_USERNAME}",
-        "SEARXNG_PASSWORD": "${SEARXNG_PASSWORD}",
-        "USE_RANDOM_INSTANCE": "${USE_RANDOM_INSTANCE:-false}",
-        "SEARCHTOOL": "${ SEARCHTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: searxng-mcp
+command: searxng-mcp --transport stdio
+env:
+  SEARXNG_INSTANCE_URL: ${SEARXNG_INSTANCE_URL}
+  SEARXNG_USERNAME: ${SEARXNG_USERNAME}
+  SEARXNG_PASSWORD: ${SEARXNG_PASSWORD}
+  USE_RANDOM_INSTANCE: ${USE_RANDOM_INSTANCE:-false}
+  SEARCHTOOL: ${ SEARCHTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -52,27 +44,19 @@ searxng-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only MISCTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "searxng-mcp": {
-      "command": "searxng-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "SEARXNG_INSTANCE_URL": "${SEARXNG_INSTANCE_URL}",
-        "SEARXNG_USERNAME": "${SEARXNG_USERNAME}",
-        "SEARXNG_PASSWORD": "${SEARXNG_PASSWORD}",
-        "USE_RANDOM_INSTANCE": "${USE_RANDOM_INSTANCE:-false}",
-        "SEARCHTOOL": "False",
-        "MISCTOOL": "True"
-      }
-    }
-  }
-}
+```text
+server: searxng-mcp
+command: searxng-mcp --transport stdio
+env:
+  SEARXNG_INSTANCE_URL: ${SEARXNG_INSTANCE_URL}
+  SEARXNG_USERNAME: ${SEARXNG_USERNAME}
+  SEARXNG_PASSWORD: ${SEARXNG_PASSWORD}
+  USE_RANDOM_INSTANCE: ${USE_RANDOM_INSTANCE:-false}
+  SEARCHTOOL: False
+  MISCTOOL: True
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

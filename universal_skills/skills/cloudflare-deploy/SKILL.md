@@ -34,6 +34,27 @@ Not authenticated? → `references/wrangler/auth.md`
 - Interactive/local: `wrangler login` (one-time OAuth)
 - CI/CD: Set `CLOUDFLARE_API_TOKEN` env var
 
+## Steps
+
+1. Confirm Cloudflare authentication before any deploy.
+   Run `npx wrangler whoami`. Verify that the output names the expected account, otherwise follow `references/wrangler/auth.md`.
+2. Pick the product using the decision trees below and open its reference folder.
+   Run `ls references/<product>/` (for example `references/workers/`). Verify that the folder exists and read its `README.md` and `configuration.md` first.
+3. Validate the project configuration against the product reference.
+   Run `npx wrangler deploy --dry-run` for Workers. Verify that the dry run exits 0 and lists the expected bindings.
+4. Deploy with the matching command.
+   Use `npx wrangler deploy` for Workers or `npx wrangler pages deploy <dir>` for Pages, with a generous timeout. Verify that the output prints a deployment URL.
+5. Smoke-test the live deployment.
+   Run `curl -sI <deployment-url>`. Verify that the response status is 200 or the route's expected status.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `wrangler whoami` reports not authenticated | No OAuth login or API token present | Run `npx wrangler login` interactively, or export `CLOUDFLARE_API_TOKEN` for CI, then repeat `npx wrangler whoami` |
+| Deploy times out or fails with DNS or connection reset | Sandbox blocks outbound network | Rerun the deploy with `sandbox_permissions=require_escalated` after asking the user |
+| Deploy rejects a binding or compatibility date | `wrangler.toml` does not match the product reference | Compare the file to `references/<product>/configuration.md` and correct the binding name or `compatibility_date` |
+
 ## Quick Decision Trees
 
 ### "I need to run code"

@@ -33,6 +33,12 @@ Parses lot ledger dates, computes unrealized holding gains, harvests short/long 
 
 ## Steps
 
+1. Parse the lot ledger with `graph_query` and `sx_search`. Verify that `tax-lot-inventories` lists acquisition dates and cost basis for every lot.
+2. Compute unrealized gains with `graph_analyze`. Verify that `unrealized-capital-gains` separates short-term and long-term totals.
+3. Select harvest candidates under MinTax or FIFO with `graph_query` and `graph_analyze`. Verify that `harvest-lot-candidates` names the policy used.
+4. Synthesize order proposals with `graph_write` and `document_tools`. Verify that `tax-optimized-order-proposals` references only lots from the inventory.
+5. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 1: Lot Ledger Parser
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `tax-optimized-order-proposals`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Lots lack acquisition dates | Ledger export is incomplete | Re-export the ledger with dates and cost basis and re-run the parse step. |
+| Gains do not reconcile | Price data is stale | Refresh prices and recompute with `graph_analyze`. |
+| No candidates found | No lots with losses | Report that no harvest is available and skip order synthesis. |
 
 ## Output
 - Tax Lot Optimization results persisted in KG

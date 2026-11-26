@@ -54,61 +54,53 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "microsoft-agent": {
-      "command": "microsoft-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MICROSOFT_CLIENT_ID": "${MICROSOFT_CLIENT_ID}",
-        "MICROSOFT_CLIENT_SECRET": "${MICROSOFT_CLIENT_SECRET}",
-        "MICROSOFT_TENANT_ID": "${MICROSOFT_TENANT_ID}",
-        "AUTHTOOL": "${ AUTHTOOL:-True }",
-        "GROUPSTOOL": "${ GROUPSTOOL:-True }",
-        "AGREEMENTSTOOL": "${ AGREEMENTSTOOL:-True }",
-        "FILESTOOL": "${ FILESTOOL:-True }",
-        "NOTESTOOL": "${ NOTESTOOL:-True }",
-        "ORGANIZATIONTOOL": "${ ORGANIZATIONTOOL:-True }",
-        "AUDITTOOL": "${ AUDITTOOL:-True }",
-        "PLACESTOOL": "${ PLACESTOOL:-True }",
-        "PRINTTOOL": "${ PRINTTOOL:-True }",
-        "TASKSTOOL": "${ TASKSTOOL:-True }",
-        "SEARCHTOOL": "${ SEARCHTOOL:-True }",
-        "EMPLOYEE_EXPERIENCETOOL": "${ EMPLOYEE_EXPERIENCETOOL:-True }",
-        "METATOOL": "${ METATOOL:-True }",
-        "CHATTOOL": "${ CHATTOOL:-True }",
-        "SITESTOOL": "${ SITESTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "DIRECTORYTOOL": "${ DIRECTORYTOOL:-True }",
-        "POLICIESTOOL": "${ POLICIESTOOL:-True }",
-        "ADMINTOOL": "${ ADMINTOOL:-True }",
-        "TEAMSTOOL": "${ TEAMSTOOL:-True }",
-        "APPLICATIONSTOOL": "${ APPLICATIONSTOOL:-True }",
-        "CALENDARTOOL": "${ CALENDARTOOL:-True }",
-        "REPORTSTOOL": "${ REPORTSTOOL:-True }",
-        "PRIVACYTOOL": "${ PRIVACYTOOL:-True }",
-        "SOLUTIONSTOOL": "${ SOLUTIONSTOOL:-True }",
-        "SUBSCRIPTIONSTOOL": "${ SUBSCRIPTIONSTOOL:-True }",
-        "DOMAINSTOOL": "${ DOMAINSTOOL:-True }",
-        "USERTOOL": "${ USERTOOL:-True }",
-        "CONNECTIONSTOOL": "${ CONNECTIONSTOOL:-True }",
-        "STORAGETOOL": "${ STORAGETOOL:-True }",
-        "SECURITYTOOL": "${ SECURITYTOOL:-True }",
-        "DEVICESTOOL": "${ DEVICESTOOL:-True }",
-        "CONTACTSTOOL": "${ CONTACTSTOOL:-True }",
-        "EDUCATIONTOOL": "${ EDUCATIONTOOL:-True }",
-        "IDENTITYTOOL": "${ IDENTITYTOOL:-True }",
-        "COMMUNICATIONSTOOL": "${ COMMUNICATIONSTOOL:-True }",
-        "MAILTOOL": "${ MAILTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: microsoft-agent
+command: microsoft-mcp --transport stdio
+env:
+  MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+  MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+  MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID}
+  AUTHTOOL: ${ AUTHTOOL:-True }
+  GROUPSTOOL: ${ GROUPSTOOL:-True }
+  AGREEMENTSTOOL: ${ AGREEMENTSTOOL:-True }
+  FILESTOOL: ${ FILESTOOL:-True }
+  NOTESTOOL: ${ NOTESTOOL:-True }
+  ORGANIZATIONTOOL: ${ ORGANIZATIONTOOL:-True }
+  AUDITTOOL: ${ AUDITTOOL:-True }
+  PLACESTOOL: ${ PLACESTOOL:-True }
+  PRINTTOOL: ${ PRINTTOOL:-True }
+  TASKSTOOL: ${ TASKSTOOL:-True }
+  SEARCHTOOL: ${ SEARCHTOOL:-True }
+  EMPLOYEE_EXPERIENCETOOL: ${ EMPLOYEE_EXPERIENCETOOL:-True }
+  METATOOL: ${ METATOOL:-True }
+  CHATTOOL: ${ CHATTOOL:-True }
+  SITESTOOL: ${ SITESTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  DIRECTORYTOOL: ${ DIRECTORYTOOL:-True }
+  POLICIESTOOL: ${ POLICIESTOOL:-True }
+  ADMINTOOL: ${ ADMINTOOL:-True }
+  TEAMSTOOL: ${ TEAMSTOOL:-True }
+  APPLICATIONSTOOL: ${ APPLICATIONSTOOL:-True }
+  CALENDARTOOL: ${ CALENDARTOOL:-True }
+  REPORTSTOOL: ${ REPORTSTOOL:-True }
+  PRIVACYTOOL: ${ PRIVACYTOOL:-True }
+  SOLUTIONSTOOL: ${ SOLUTIONSTOOL:-True }
+  SUBSCRIPTIONSTOOL: ${ SUBSCRIPTIONSTOOL:-True }
+  DOMAINSTOOL: ${ DOMAINSTOOL:-True }
+  USERTOOL: ${ USERTOOL:-True }
+  CONNECTIONSTOOL: ${ CONNECTIONSTOOL:-True }
+  STORAGETOOL: ${ STORAGETOOL:-True }
+  SECURITYTOOL: ${ SECURITYTOOL:-True }
+  DEVICESTOOL: ${ DEVICESTOOL:-True }
+  CONTACTSTOOL: ${ CONTACTSTOOL:-True }
+  EDUCATIONTOOL: ${ EDUCATIONTOOL:-True }
+  IDENTITYTOOL: ${ IDENTITYTOOL:-True }
+  COMMUNICATIONSTOOL: ${ COMMUNICATIONSTOOL:-True }
+  MAILTOOL: ${ MAILTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -120,61 +112,53 @@ microsoft-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only ADMINTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "microsoft-agent": {
-      "command": "microsoft-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MICROSOFT_CLIENT_ID": "${MICROSOFT_CLIENT_ID}",
-        "MICROSOFT_CLIENT_SECRET": "${MICROSOFT_CLIENT_SECRET}",
-        "MICROSOFT_TENANT_ID": "${MICROSOFT_TENANT_ID}",
-        "AUTHTOOL": "False",
-        "GROUPSTOOL": "False",
-        "AGREEMENTSTOOL": "False",
-        "FILESTOOL": "False",
-        "NOTESTOOL": "False",
-        "ORGANIZATIONTOOL": "False",
-        "AUDITTOOL": "False",
-        "PLACESTOOL": "False",
-        "PRINTTOOL": "False",
-        "TASKSTOOL": "False",
-        "SEARCHTOOL": "False",
-        "EMPLOYEE_EXPERIENCETOOL": "False",
-        "METATOOL": "False",
-        "CHATTOOL": "False",
-        "SITESTOOL": "False",
-        "MISCTOOL": "False",
-        "DIRECTORYTOOL": "False",
-        "POLICIESTOOL": "False",
-        "ADMINTOOL": "True",
-        "TEAMSTOOL": "False",
-        "APPLICATIONSTOOL": "False",
-        "CALENDARTOOL": "False",
-        "REPORTSTOOL": "False",
-        "PRIVACYTOOL": "False",
-        "SOLUTIONSTOOL": "False",
-        "SUBSCRIPTIONSTOOL": "False",
-        "DOMAINSTOOL": "False",
-        "USERTOOL": "False",
-        "CONNECTIONSTOOL": "False",
-        "STORAGETOOL": "False",
-        "SECURITYTOOL": "False",
-        "DEVICESTOOL": "False",
-        "CONTACTSTOOL": "False",
-        "EDUCATIONTOOL": "False",
-        "IDENTITYTOOL": "False",
-        "COMMUNICATIONSTOOL": "False",
-        "MAILTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: microsoft-agent
+command: microsoft-mcp --transport stdio
+env:
+  MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+  MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+  MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID}
+  AUTHTOOL: False
+  GROUPSTOOL: False
+  AGREEMENTSTOOL: False
+  FILESTOOL: False
+  NOTESTOOL: False
+  ORGANIZATIONTOOL: False
+  AUDITTOOL: False
+  PLACESTOOL: False
+  PRINTTOOL: False
+  TASKSTOOL: False
+  SEARCHTOOL: False
+  EMPLOYEE_EXPERIENCETOOL: False
+  METATOOL: False
+  CHATTOOL: False
+  SITESTOOL: False
+  MISCTOOL: False
+  DIRECTORYTOOL: False
+  POLICIESTOOL: False
+  ADMINTOOL: True
+  TEAMSTOOL: False
+  APPLICATIONSTOOL: False
+  CALENDARTOOL: False
+  REPORTSTOOL: False
+  PRIVACYTOOL: False
+  SOLUTIONSTOOL: False
+  SUBSCRIPTIONSTOOL: False
+  DOMAINSTOOL: False
+  USERTOOL: False
+  CONNECTIONSTOOL: False
+  STORAGETOOL: False
+  SECURITYTOOL: False
+  DEVICESTOOL: False
+  CONTACTSTOOL: False
+  EDUCATIONTOOL: False
+  IDENTITYTOOL: False
+  COMMUNICATIONSTOOL: False
+  MAILTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

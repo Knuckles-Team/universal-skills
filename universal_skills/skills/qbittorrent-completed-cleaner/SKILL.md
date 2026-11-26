@@ -31,6 +31,11 @@ Discovers completed downloads, prompts the user to select torrents to remove, an
 
 ## Steps
 
+1. List completed torrents with `qbittorrent_torrents` using the `get_torrent_list` action. Verify that `completed_torrent_list` contains only finished or seeding items.
+2. Show the completed torrents and ask the user which to delete and whether to erase data files. Verify that `selected_hashes` and `delete_files_flag` are explicitly confirmed by the user.
+3. Remove the selected torrents with `qbittorrent_torrents` using the `delete_torrents` action. Verify that `pruning_results` lists each hash as removed and that a second `get_torrent_list` no longer shows them.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: list-completed-torrents [skill: qbittorrent-agent]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,15 @@ Expected: `pruning_results`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Torrent list is empty | The qBittorrent connection or credentials failed | Check the connection with `qbittorrent_torrents` and fix the endpoint or login before listing again. |
+| Delete removes the wrong item | A hash was copied from a stale list | Stop, re-list with `get_torrent_list`, and confirm the hashes with the user before deleting. |
+| Data files remain after deletion | `delete_files_flag` was false | Confirm the intent with the user and delete again with the flag set to erase files. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Qbittorrent Completed Cleaner results persisted in KG

@@ -23,6 +23,13 @@ benchmark honestly against a coin flip. See
 
 ## Steps
 
+1. Engineer features with `data-science-mcp` from yfinance S&P 500 history. Verify that `feature-matrix` has no rows using future data, for example by checking the shifted target column.
+2. Train the classifier with `xgboost.XGBClassifier` or LightGBM on a time-ordered split. Verify that the split dates show train strictly before test.
+3. Benchmark out-of-sample accuracy and AUC against a coin flip and a majority baseline. Verify that `benchmark-comparison` lists all three numbers.
+4. Evaluate Sharpe, max drawdown and CAGR vs benchmark. Verify that `evaluation-metrics` states whether the edge survives costs.
+5. Publish the repo with `gh repo create`. Verify that `github-repo-url` loads and its README has a what-didn't-work section.
+6. Persist the project with `graph_write`. Verify that a `graph_query` returns the project node linked to the portfolio.
+
 ### Step 1: engineer-features
 **Agent**: `quant_researcher`
 **Tools**: `data-science-mcp`
@@ -65,6 +72,14 @@ Expected: `github-repo-url`
 **Tools**: `graph_write`
 
 Persist the project and metrics as typed nodes linked to the portfolio.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| AUC near 0.5 | No real edge | Report it honestly in the README and avoid tuning on the test set |
+| Suspiciously high accuracy | Lookahead leakage in features | Shift features by one day and retrain |
+| yfinance returns empty | Ticker or network issue | Use a different ticker set or cached CSV |
 
 ## Output
 - An XGBoost direction classifier benchmarked against a coin flip

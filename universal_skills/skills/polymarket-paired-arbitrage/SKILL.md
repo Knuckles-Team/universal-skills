@@ -33,6 +33,12 @@ Scans contract books across Polymarket and other event platforms to identify cor
 
 ## Steps
 
+1. Scan Polymarket and other event platforms for correlated price anomalies with `graph_query` and `sx_search`. Verify that the output names at least one `arbitrage-opportunities` entry or states that none exist.
+2. Simulate liquidity, spreads and execution impact with `graph_analyze`. Verify that `simulated-execution-impacts` covers every scanned opportunity.
+3. Audit margin, collateral and drawdown limits with `graph_query` and `graph_analyze`. Verify that `margin-safety-bounds` is produced for each opportunity before any order is sent.
+4. Execute the vetted orders and record receipts using `graph_write`. Verify that every `arbitrage-execution-receipts` entry maps to an opportunity that passed both the simulation and the margin audit.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Paired Market Scanner
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `arbitrage-execution-receipts`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| No opportunities found | Scanner sources returned empty books | Re-run the scan with `sx_search` against a wider set of platforms and compare the quoted contracts. |
+| Order is blocked at execution | `margin-safety-bounds` was breached | Reduce the order size to the bound reported by the risk step and re-submit only that order. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Polymarket Paired Arbitrage results persisted in KG

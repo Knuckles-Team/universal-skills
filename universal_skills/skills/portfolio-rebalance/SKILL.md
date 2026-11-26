@@ -47,6 +47,23 @@ Tool: `emerald_risk_drawdown_check()`
 Submit rebalancing orders (paper mode default).
 Tool: `emerald_orders_submit(...)` for each trade.
 
+## Steps
+
+1. Pull the live state with `emerald_exchange_get_positions()` and `emerald_exchange_get_account()`. Verify that positions and account equity are non-empty.
+2. Optimize target weights (MVO, Risk Parity or Black-Litterman) through `data-science-mcp`. Verify that the target weights sum to 1.0.
+3. Run Brinson attribution through `profit_attribution.py`. Verify that the allocation and selection effects sum to the excess return.
+4. Compute the trade list from target versus current weights into `trades.json`. Verify that the post-trade weights match the targets within tolerance.
+5. Validate the trades with `emerald_risk_drawdown_check()`. Verify that every trade passes the drawdown limit.
+6. Submit orders using `emerald_orders_submit(...)` in paper mode. Verify that each order returns an id and status.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Optimizer fails to converge | Singular covariance matrix or too little history | Lengthen the return window or switch to Risk Parity in the `data-science-mcp` request |
+| Drawdown check blocks trades | Projected drawdown exceeds the limit | Reduce trade sizes or drop the offending trades, then rerun the check |
+| Order submission errors | Exchange credentials or market closed | Confirm account access with `emerald_exchange_get_account()` and resubmit when the market is open |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

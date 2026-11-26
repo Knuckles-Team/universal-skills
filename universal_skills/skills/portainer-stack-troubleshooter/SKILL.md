@@ -31,6 +31,11 @@ Identifies stopped or unhealthy containers inside Portainer stacks, aggregates l
 
 ## Steps
 
+1. Retrieve the stack list and all containers with `portainer_get_stacks` and `portainer_list_containers`. Verify that `containers_status` includes both running and stopped containers.
+2. Isolate unhealthy, degraded or stopped containers from `containers_status` and render the triage dashboard. Verify that every failed stack in `portainer_stacks` appears in `stack_triage_dashboard`.
+3. Fetch logs for each failed container with `portainer_get_container_logs` and propose stack-level updates or restarts. Verify that `resolution_plan` cites a log line for every failed container.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: inspect-portainer-stacks [skill: portainer-agent]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,15 @@ Expected: `container_diagnostics, resolution_plan`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Container list is empty | The Portainer endpoint is wrong or the token expired | Check the endpoint with `portainer_get_stacks` and refresh the Portainer credentials before retrying the listing. |
+| Logs are missing for a failed container | The container was already removed or the log driver is not readable | Inspect the container state with `portainer_list_containers` and fall back to the stack events for the diagnosis. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Portainer Stack Troubleshooter results persisted in KG

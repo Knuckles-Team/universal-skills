@@ -68,6 +68,22 @@ transport-security profile. An insecure TLS profile still requires the central
 two-part explicit acknowledgement; the crawler does not create a bypass of its
 own.
 
+## Steps
+
+1. Pick the strategy from the list above and a confined output directory. Verify that `python scripts/crawl.py --help` lists the `--strategy`, `--urls` and `--output-dir` options you plan to use.
+2. Run the crawl with `python scripts/crawl.py --urls https://docs.example.org/guide/ --strategy recursive --max-depth 2 --max-pages 50 --output-dir crawler-output`. Verify that the command exits 0 and prints only counts and stable error categories.
+3. Inspect the written files with `ls crawler-output`. Verify that the directory contains opaque, content-neutral file names and that `head -c 300` on one file shows sanitized markdown.
+4. Optionally ingest into Arbora by setting `ARBORA_URL` (or passing `--kg-endpoint`) before the crawl, or disable it with `--no-kg-ingest`. Verify that the run summary reports submitted documents, or that local output still exists when ingestion is disabled.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| URL denied before any fetch | Private or reserved destination, embedded credentials, or a cross-host redirect | Use a public HTTP(S) URL without credentials, or add the exact hostname to `SOURCE_HTTP_ALLOWED_PRIVATE_HOSTS` or `SOURCE_HTTP_ALLOWED_REDIRECT_HOSTS` through `AgentConfig`; wildcards are not accepted. |
+| Output directory rejected | Path is outside `WORKSPACE_PATH` or has a symlink component | Pass a relative `--output-dir` such as `crawler-output` that resolves beneath `WORKSPACE_PATH`, and remove symlinks from the path. |
+| Empty content from a JavaScript-only site | Default HTTP path does not render scripts | Set `SOURCE_HTTP_ALLOW_BROWSER_FETCH=true` through `AgentConfig` and pass a CSS selector with `--wait-for`; this needs verified system trust and no proxy. |
+| Arbora ingestion stops after the first error | The first MCP failure disables further submissions for the run | Check `ARBORA_URL` and `ARBORA_TOKEN` reachability, then rerun the crawl; local sanitized output is still usable. |
+
 ## Output and privacy
 
 `--output-dir` is resolved under `WORKSPACE_PATH` when that AgentConfig field is

@@ -90,6 +90,21 @@ Then, before every commit, re-read what is actually about to be committed —
 `git diff --cached --name-status` for the file list, `git diff --cached` for
 the content — rather than trusting what you intended to stage.
 
+## Steps
+
+1. Inspect the checkout before acting with `git worktree list`. Verify that you know every linked worktree and treat each one other than yours as possibly in use.
+2. Create isolation with `git worktree add <path> -b <branch> <base>` instead of a harness worktree tool. Verify that `git -C <path> rev-parse --is-bare-repository` prints `false` and `git config core.bare` prints `false`.
+3. Compare or park work with `git diff <base> -- <path>` or `git show <base>:<path>`, never `git stash`. Verify that `git stash list` shows no new entry.
+4. Stage with `git add -- path/to/file` and review with `git diff --cached --name-status` and `git diff --cached`. Verify that only the files you intended appear before you commit.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `fatal: this operation must be run in a work tree` | `core.bare = true` was written to the shared config | Run `git config core.bare false` and confirm with `git status`. |
+| A `git stash pop` produced someone else's diff | `refs/stash` is shared across worktrees | Stop, run `git fsck --unreachable` to find the stash commit, and reapply by SHA to the owner's worktree. |
+| Unrelated files appear in `git diff --cached` | A blanket `git add -A` or `git add .` was used | Run `git restore --staged .` then stage again with explicit paths. |
+
 ## The common thread
 
 All three failures are the same shape: a git feature whose state lives in

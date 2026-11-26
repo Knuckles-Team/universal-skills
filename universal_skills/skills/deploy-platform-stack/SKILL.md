@@ -29,6 +29,10 @@ End-to-end deployment of an infrastructure platform using docker-compose files a
 
 ## Steps
 
+1. Resolve the target endpoint ID with `portainer_get_endpoints` (Step 0). Verify that the response contains an endpoint with a numeric `id` and the expected name.
+2. Create the standalone stack from the docker-compose file with `portainer_stack` (Step 1). Verify that the stack appears in `portainer_stack` list output with status active and that its services are running.
+3. Persist the deployment record with `graph_write` (Step 2). Verify that `graph_query` returns the stored stack node linked to the endpoint.
+
 ### Step 0: resolve-portainer-endpoint [skill: portainer-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -49,6 +53,15 @@ Expected: `stack, create`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `portainer_get_endpoints` returns an empty list | The Portainer API token lacks access or the URL is wrong | Check the Portainer URL and token configuration and call the tool again with a valid token |
+| Stack creation fails with a validation error | The compose file has invalid YAML or a missing variable | Run `docker compose -f <file> config` to find the error, fix it, and recreate the stack |
+| Stack name already exists | A previous deployment is still present | Update the existing stack through `portainer_stack` instead, or choose a new stack name |
+
 
 ## Output
 - Deploy Platform Stack results persisted in KG

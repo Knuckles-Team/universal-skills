@@ -2,7 +2,8 @@
 name: host-process-inspector
 domain: system
 skill_type: skill
-description: Read-only host process inspector for a hot, slow, or swap-thrashing machine. Over SSH via tunnel-manager (or systems-manager) it ranks the worst CPU/RAM offenders, finds zombie/defunct processes and names their non-reaping parent, flags orphaned-to-PID1 runaways (a search or job whose launching session exited and got reparented to init), detects swap exhaustion and which processes hold the most swap, lists uninterruptible D-state processes, and — best effort — maps a culprit PID back to its owning tmux session. Produces a ranked hog report with kill/reap candidates and a load-vs-cores verdict. Use when a host's load is high, a box feels sluggish, or leaked/zombie processes are suspected. Read-only — it NEVER kills, reaps, or tunes anything; pair it with the systems-issue-troubleshooter workflow or host-doctor for gated remediation. Not for disk cleanup (use host-disk-reclaimer) or plain resource sampling (use host-resource-sampler).
+description: >-
+  Read-only host process inspector for a hot, slow, or swap-thrashing machine. Produces a ranked hog report with kill/reap candidates and a load-vs-cores verdict. Use when a host's load is high, a box feels sluggish, or leaked/zombie processes are suspected. Not for disk cleanup (use host-disk-reclaimer) or plain resource sampling (use host-resource-sampler).
 license: MIT
 tags: [system, host, process, zombie, runaway, swap, cpu, diagnostics, ops, ssh]
 metadata:
@@ -14,6 +15,8 @@ requires:
 ---
 
 # Host Process Inspector
+
+Scope: Read-only host process inspector for a hot, slow, or swap-thrashing machine. Over SSH via tunnel-manager (or systems-manager) it ranks the worst CPU/RAM offenders, finds zombie/defunct processes and names their non-reaping parent, flags orphaned-to-PID1 runaways (a search or job whose launching session exited and got reparented to init), detects swap exhaustion and which processes hold the most swap, lists uninterruptible D-state processes, and — best effort — maps a culprit PID back to its owning tmux session. Produces a ranked hog report with kill/reap candidates and a load-vs-cores verdict. Use when a host's load is high, a box feels sluggish, or leaked/zombie processes are suspected. Read-only — it NEVER kills, reaps, or tunes anything; pair it with the systems-issue-troubleshooter workflow or host-doctor for gated remediation. Not for disk cleanup (use host-disk-reclaimer) or plain resource sampling (use host-resource-sampler).
 
 Find **what is actually eating a host** — runaway processes, leaked/zombie children,
 and swap exhaustion — and rank them. This skill **only inspects**; it never kills,
@@ -94,6 +97,23 @@ pstree -s -p <pid>
 ```
 If `pstree -s -p <pid>` reaches a `bash` whose pid equals a `pane_pid`, the hog belongs to
 that session. An orphan (ppid 1) belongs to **no** pane — say so explicitly.
+
+## Steps
+
+1. Compare load to cores with `cat /proc/loadavg; nproc`. Verify that you computed `load_1m / nproc` and recorded whether it exceeds 1.0.
+2. Rank hogs with `ps -eo pid,ppid,user,pcpu,pmem,etime,args -ww --sort=-pcpu | head -15` and read full cmdlines with `tr "\0" " " < /proc/<pid>/cmdline`. Verify that every flagged row with `ppid` 1, high `pcpu` and long `etime` has its real command identified.
+3. Check zombies, swap and D-state with `ps -eo stat=,ppid,pid,user,args | grep -E "^Z"`, `free -m` and `ps -eo stat=,pid,args | grep -E "^D"`. Verify that each zombie is paired with its parent and swap usage is expressed as a percentage.
+4. Attribute hogs to sessions with `tmux list-panes -a -F "S=#{session_name} pane_pid=#{pane_pid}"` and `pstree -s -p <pid>`. Verify that each hog is mapped to a pane or labelled unattributed.
+5. Write the ranked report with a candidate list and take no action, re-reading each candidate with `tr "\0" " " < /proc/<pid>/cmdline`. Verify that the report re-reads each candidate's cmdline just before listing it.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Remote probe aborts with "unexpected EOF" | Nested single quotes broke the `bash -c` wrapper | Rewrite the probe with double quotes and headerless `ps -eo field=` forms, or use `grep -E "^Z"`. |
+| Process name does not match its behavior | `comm` shows a launcher name | Read `/proc/<pid>/cmdline` and report the real command. |
+| Load still high after removing a hog | The load average decays slowly | Resample `ps --sort=-pcpu` and `cat /proc/loadavg` after a few minutes before judging. |
+| A hog has no tmux pane | tmux is per-user or the process is orphaned | Report it as unattributed instead of guessing the session. |
 
 ## Default thresholds (tune per host)
 | Signal | Flag when |

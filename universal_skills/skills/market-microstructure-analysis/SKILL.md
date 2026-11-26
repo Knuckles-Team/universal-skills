@@ -33,6 +33,12 @@ Audits millisecond order book snapshot logs, computes VPIN metrics, decomposes s
 
 ## Steps
 
+1. Collect order book snapshots with `graph_query` and `sx_search` as `data-fetcher`. Verify that `order-book-snapshots` is non-empty and spans millisecond timestamps.
+2. Compute VPIN and order flow imbalance with `graph_analyze`. Verify that `volume-toxicity-signals` holds one VPIN value per volume bucket.
+3. Decompose the bid-ask spread with `graph_query` and `graph_analyze`. Verify that `decomposed-spread-metrics` splits inventory and adverse-selection components.
+4. Compile the report with `graph_write` and `document_tools`. Verify that `microstructure-impact-tearsheet` contains execution-cost recommendation cards.
+5. Persist the results as typed nodes with `graph_write`. Verify that a `graph_query` for the new nodes returns them linked to existing entities.
+
 ### Step 1: Book Snapshot Crawlers
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `microstructure-impact-tearsheet`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Snapshot set is empty | The symbol or time window matched no logs | Re-run `sx_search` with a wider window and confirm the symbol, then repeat the crawl |
+| VPIN values are all identical | Volume buckets too coarse | Reduce the bucket size in the `graph_analyze` call and recompute |
+| KG write returns no nodes | Typed node schema missing metadata | Add the required metadata fields and repeat `graph_write` |
 
 ## Output
 - Market Microstructure Analysis results persisted in KG

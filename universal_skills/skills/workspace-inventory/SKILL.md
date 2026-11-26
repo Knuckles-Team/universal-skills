@@ -29,6 +29,10 @@ Full workspace discovery — list available workspace actions, repositories, and
 
 ## Steps
 
+1. List workspace actions with the `rm_workspace_*` tools. Verify that the action list is returned.
+2. List managed repositories using the `rep_rm_projects` tools. Verify that each repository is listed with a status.
+3. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: list-workspace-actions [skill: repository-manager-mcp]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
@@ -49,6 +53,14 @@ Expected: `repository`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Repository list is empty | Workspace not set up | Run the workspace setup action via `rm_workspace_*` and list again. |
+| A repository shows missing | Checkout absent | Clone it with the repository-manager clone action and list again. |
+| Tools unavailable | `repository-manager-mcp` not connected | Start the MCP server and reconnect, and call the tool again. |
 
 ## Output
 - Workspace Inventory results persisted in KG

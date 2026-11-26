@@ -24,6 +24,10 @@ Stateless atomic operation to securely query multiple project management and ent
 
 ## Steps
 
+1. Resolve credentials and poll Jira, Plane and ServiceNow for assigned tickets. Verify that `raw_payloads` has an entry per configured provider.
+2. Aggregate the payloads and drop completed items. Verify that `aggregated_list` is non-empty and `failed_providers` names any failures.
+3. Normalize to the unified schema and sort by priority. Verify that `status` is SUCCESS and `task_count` equals the length of `normalized_tasks`.
+
 ### Step 1: poll_assigned_tickets
 Identify and query active ticketing endpoints for the current user session:
 - Locate active credentials and connection properties for:
@@ -66,3 +70,11 @@ Transform heterogeneous ticket schemas into a single, standardized, unified task
   - `status`: "SUCCESS" or "FAILED"
   - `normalized_tasks`: List of standard task objects containing all normalized keys.
   - `task_count`: Total number of active tickets retrieved.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| A provider is in `failed_providers` | Timeout or bad credentials | Fix that provider's credentials with the environment variables it uses and poll it again. |
+| `task_count` is zero | Filter removed everything or no assignments | Check the provider query filters, for example `assignee = currentUser()`. |
+| Duplicate ids appear | Same ticket returned twice | Dedupe on `id` and `source` before sorting. |

@@ -27,34 +27,26 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "mealie-mcp": {
-      "command": "mealie-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MEALIE_URL": "${MEALIE_URL}",
-        "MEALIE_API_KEY": "${MEALIE_API_KEY}",
-        "GROUPSTOOL": "${ GROUPSTOOL:-True }",
-        "ADMINTOOL": "${ ADMINTOOL:-True }",
-        "USERSTOOL": "${ USERSTOOL:-True }",
-        "ORGANIZERTOOL": "${ ORGANIZERTOOL:-True }",
-        "HOUSEHOLDSTOOL": "${ HOUSEHOLDSTOOL:-True }",
-        "EXPLORETOOL": "${ EXPLORETOOL:-True }",
-        "RECIPESTOOL": "${ RECIPESTOOL:-True }",
-        "UTILSTOOL": "${ UTILSTOOL:-True }",
-        "SHAREDTOOL": "${ SHAREDTOOL:-True }",
-        "APPTOOL": "${ APPTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: mealie-mcp
+command: mealie-mcp --transport stdio
+env:
+  MEALIE_URL: ${MEALIE_URL}
+  MEALIE_API_KEY: ${MEALIE_API_KEY}
+  GROUPSTOOL: ${ GROUPSTOOL:-True }
+  ADMINTOOL: ${ ADMINTOOL:-True }
+  USERSTOOL: ${ USERSTOOL:-True }
+  ORGANIZERTOOL: ${ ORGANIZERTOOL:-True }
+  HOUSEHOLDSTOOL: ${ HOUSEHOLDSTOOL:-True }
+  EXPLORETOOL: ${ EXPLORETOOL:-True }
+  RECIPESTOOL: ${ RECIPESTOOL:-True }
+  UTILSTOOL: ${ UTILSTOOL:-True }
+  SHAREDTOOL: ${ SHAREDTOOL:-True }
+  APPTOOL: ${ APPTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -66,34 +58,26 @@ mealie-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only ADMINTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "mealie-mcp": {
-      "command": "mealie-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "MEALIE_URL": "${MEALIE_URL}",
-        "MEALIE_API_KEY": "${MEALIE_API_KEY}",
-        "GROUPSTOOL": "False",
-        "ADMINTOOL": "True",
-        "USERSTOOL": "False",
-        "ORGANIZERTOOL": "False",
-        "HOUSEHOLDSTOOL": "False",
-        "EXPLORETOOL": "False",
-        "RECIPESTOOL": "False",
-        "UTILSTOOL": "False",
-        "SHAREDTOOL": "False",
-        "APPTOOL": "False",
-        "MISCTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: mealie-mcp
+command: mealie-mcp --transport stdio
+env:
+  MEALIE_URL: ${MEALIE_URL}
+  MEALIE_API_KEY: ${MEALIE_API_KEY}
+  GROUPSTOOL: False
+  ADMINTOOL: True
+  USERSTOOL: False
+  ORGANIZERTOOL: False
+  HOUSEHOLDSTOOL: False
+  EXPLORETOOL: False
+  RECIPESTOOL: False
+  UTILSTOOL: False
+  SHAREDTOOL: False
+  APPTOOL: False
+  MISCTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

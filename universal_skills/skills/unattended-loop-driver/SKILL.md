@@ -3,13 +3,7 @@ name: unattended-loop-driver
 domain: agent-tools
 skill_type: skill
 description: >-
-  Run Claude Code unattended ("while you sleep") to drive the arbora Loop engine — feature
-  extraction + innovation distillation — behind a governance-derived permission fence. Use when the
-  user wants to "run the loop overnight", "let Claude work unattended", "run while I sleep", "set up an
-  autonomous build session", or "drive the evolution loop without babysitting". Verifies the fence is
-  active (settings.json allow/ask/deny + .claudeignore, no bypassPermissions), then loops
-  graph_loops(action="run") committing per productive cycle, halts on any ask/deny verdict instead of
-  auto-approving, and writes a morning summary to MEMORY.md for review.
+  Run Claude Code unattended ("while you sleep") to drive the arbora Loop engine — feature extraction + innovation distillation — behind a governance-derived permission fence. Use when the user wants to "run the loop overnight", "let Claude work unattended", "run while I sleep", "set up an autonomous build session", or "drive the evolution loop without babysitting".
 license: MIT
 tags: [claude-code, unattended, permission-fence, knowledge-graph, golden-loop, self-evolution, safety, orchestration]
 metadata:
@@ -19,6 +13,8 @@ metadata:
 ---
 
 # Unattended Loop Driver
+
+Scope: Run Claude Code unattended ("while you sleep") to drive the arbora Loop engine — feature extraction + innovation distillation — behind a governance-derived permission fence. Use when the user wants to "run the loop overnight", "let Claude work unattended", "run while I sleep", "set up an autonomous build session", or "drive the evolution loop without babysitting". Verifies the fence is active (settings.json allow/ask/deny + .claudeignore, no bypassPermissions), then loops graph_loops(action="run") committing per productive cycle, halts on any ask/deny verdict instead of auto-approving, and writes a morning summary to MEMORY.md for review.
 
 Let Claude Code run **unattended** and drive the existing arbora **Loop engine**
 (`LoopController`, KG-2.78) — the same feature-extraction + innovation-distillation
@@ -50,6 +46,23 @@ meristem harness-fence --target ~/.claude --dry-run
 
 Confirm `defaultMode == "acceptEdits"`, `bypassPermissions` absent, and the deny
 list contains the irreversible + secret rules.
+
+## Steps
+
+1. Preview the fence with `meristem harness-fence --target ~/.claude --dry-run`. Verify that the output shows `defaultMode` as `acceptEdits`, no `bypassPermissions`, and a deny list that includes force-push, hard reset and secret files.
+2. Write the fence with `meristem harness-fence --target ~/.claude`. Verify with `grep -c bypassPermissions ~/.claude/settings.json` that the count is 0 and that `.claudeignore` exists next to it.
+3. Start the run with `meristem sleep-run --max-cycles 6 --max-topics 5 --workspace .`, or hand Claude the goal prompt from section 2. Verify that it prints a JSON report containing `cycles_run` and `stop_reason`.
+4. Review the morning summary with `git log --oneline -n 10` and `grep -n "" MEMORY.md | tail -40`. Verify that `commits` in the report matches the new commits and that `summary_path` points to the written `MEMORY.md`.
+5. Approve or reject the `ask`-list actions that the gate halted. Verify that each halted action is recorded in the summary before you approve it.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `settings.json` lacks the deny rules | Fence was generated without the governance policy or arbora was down | Rerun `meristem harness-fence --target ~/.claude` once arbora responds, and recheck with `--dry-run` before leaving |
+| Run stops with `max_cycles` and unfinished work | Cap reached before convergence | Review the summary and start another run with a larger `--max-cycles` |
+| An action was halted by the gate | It sits on the `ask` list, so unattended runs cannot approve it | Review it in the morning and run the action yourself, or move it to `allow` through governance policy |
+| Same failure repeated three times | The agent could not fix a blocker | Read the note it wrote to `MEMORY.md`, fix the blocker manually, and rerun |
 
 ## 2. Hand off the run
 

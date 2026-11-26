@@ -174,6 +174,25 @@ Full notes: [link if applicable]
 
 ---
 
+## Steps
+
+1. Pick the communication type (announcement, all-hands agenda, status update, decision memo or follow-up) from the Communication Types below.
+   Verify with `grep -n "^### [1-5]\." internal-comms/SKILL.md` that you are using that type's structure block.
+2. Draft the message into `draft.md` using the matching structure block.
+   Verify that `grep -c "\[" draft.md` returns 0, which means no template placeholders remain.
+3. Apply the General Writing Principles at the end of this skill and trim the draft.
+   Verify that `wc -w draft.md` is within the length the type allows (one page for executive memos).
+4. Confirm the draft ends with a clear next step, owner or date.
+   Verify with `tail -n 5 draft.md` that the last lines state what the reader should do.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Draft still contains `[...]` placeholders | A structure field was copied but not filled | Fill each field from the source facts, or delete the field if it does not apply |
+| Message buries the news | Preamble before the key fact | Move the key fact into the subject line and first sentence, and cut the preamble |
+| Request is external-facing | Audience is customers or press, not employees | Stop and hand the task to a marketing or customer-communications workflow instead |
+
 ## General Writing Principles
 
 - **One idea per sentence** — if the sentence has "and," consider splitting it

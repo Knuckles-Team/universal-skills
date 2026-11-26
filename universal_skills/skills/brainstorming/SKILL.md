@@ -110,6 +110,23 @@ After design approval:
 
 ---
 
+## Steps
+
+1. Explore the context with `git log --oneline -n 20` and `ls docs/`. Verify that you can name the relevant modules, docs and recent commits.
+2. Scan the KG for analogies with `kg_analogy_search`. Verify that the results are summarized, or that an empty result is noted explicitly.
+3. Ask clarifying questions one at a time and record the answers with `grep -n "" docs/plans/<topic>-notes.md` style notes. Verify that purpose, constraints and success criteria are each confirmed by the user.
+4. Present 2-3 approaches with trade-offs and a recommendation, and get the design approved section by section via `git status` showing no code changes yet. Verify that the user explicitly approved the design before any code is written.
+5. Write the design with `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit it. Verify that `git log -1 --stat` lists the design file.
+6. Save the decisions with `kg_memory_store` as semantic memory. Verify that the tool returns a stored memory id.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Implementation started before approval | Design step was skipped as "too simple" | Stop, present a short design, and get explicit approval before continuing. |
+| `kg_analogy_search` unavailable | meristem-kg MCP server not connected | Note the gap, proceed from repository evidence, and retry the scan later. |
+| Design doc commit rejected | Pre-commit hook or wrong path | Fix the reported issue and use the exact `docs/plans/YYYY-MM-DD-<topic>-design.md` path. |
+
 ## Key Principles
 
 - **One question at a time** — don't overwhelm with multiple questions in a single message

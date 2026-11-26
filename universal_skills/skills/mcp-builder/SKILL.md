@@ -134,6 +134,28 @@ the connector offers is served over MCP.
    Check a new connector with `connector-name --strict`, the `connector-standard` file
    check and `connector-ontology-map graph-check` before the first push.
 
+## Steps
+
+1. Scaffold the project with `python3 scripts/scaffold_connector.py example-mcp --output-dir /path/to/output`.
+   Verify that `ls /path/to/output/example-mcp` lists `pyproject.toml`, `example_mcp/` and `specs/`.
+2. Write one public `Api` method per API operation in `example_mcp/api_client.py` and declare data sources in `example_mcp/connector_sources.py`.
+   Verify that `python3 scripts/check_tool_parity.py /path/to/output/example-mcp --package example_mcp` reports the served tool count equal to the API operation count.
+3. Add the ontology, contracts, prompts and skills (parts 3 to 5 below).
+   Verify that `pipelines-hook connector-ontology-map graph-check` passes for the new `ontology/<domain>.ttl`.
+4. Run the contract check with `python3 scripts/check_connector_contract.py /path/to/output/example-mcp --package example_mcp`.
+   Verify that it exits 0 with no import of, or dependency on, the retired control-plane package.
+5. Run the repository gates with `pre-commit run --all-files` and `connector-name --strict`.
+   Verify that every hook passes before the first push, and report any unavailable check accurately.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `check_tool_parity.py` reports a tool count mismatch | An operation is missing from `Api` or tools were condensed into dispatch tools | Add one public `Api` method per missing endpoint and remove any `action` or `params_json` dispatch tool, then re-run the parity script |
+| `check_connector_contract.py` rejects an import | The control-plane package is imported or declared in `pyproject.toml` | Remove the import and dependency and use the `scion_sdk` equivalent, leaving `scion-sdk[mcp]` as the one SDK dependency |
+| `graph-check` fails on the ontology | A class lacks `rdfs:subClassOf` a core class or `owl:imports` the core ontology | Add `rdfs:subClassOf :Concept` (or a narrower core class) to each class and remove the `owl:imports` line |
+| Scaffold writes unwanted boilerplate | Files like `mcp_server.py` or `conftest.py` were added by hand | Delete them: the SDK and pipelines own those files and serve everything over MCP |
+
 ## Contracts
 
 - Preserve 100% of the supported source operation catalog across API and MCP surfaces.
@@ -152,21 +174,21 @@ the connector offers is served over MCP.
 
 ## Load the relevant reference
 
-- [Backend contracts](reference/backend_contracts.md): API schemas, authentication,
+- Backend contracts (`reference/backend_contracts.md`): API schemas, authentication,
   pagination and errors; CLI argument vectors, execution bounds and proof cases.
-- [Connector contracts](reference/connector_contracts.md): SDK ownership, manifests,
+- Connector contracts (`reference/connector_contracts.md`): SDK ownership, manifests,
   ingestion/effects, packaging, quality gates and source authorities.
-- [Python server](reference/python_mcp_server.md): factory, tools and explicit content.
-- [Context helpers](reference/ctx_helpers.md): confirmation, progress and safe logging.
-- [File parity](PARITY_MANIFEST.md): the generated tree and who owns every other file.
-- [Documentation readiness](DOCUMENTATION_STANDARD_VNEXT.md): bounded source-only
+- Python server (`reference/python_mcp_server.md`): factory, tools and explicit content.
+- Context helpers (`reference/ctx_helpers.md`): confirmation, progress and safe logging.
+- File parity (`PARITY_MANIFEST.md`): the generated tree and who owns every other file.
+- Documentation readiness (`DOCUMENTATION_STANDARD_VNEXT.md`): bounded source-only
   discovery, ownership manifests, public docs and served-surface checks.
-- [MCP design](reference/mcp_best_practices.md): tool boundaries and transport choices.
-- [OpenAPI and publication](reference/openapi_bootstrap.md): provider conversion and
+- MCP design (`reference/mcp_best_practices.md`): tool boundaries and transport choices.
+- OpenAPI and publication (`reference/openapi_bootstrap.md`): provider conversion and
   publishing a validated local tree to a new normal GitHub repository.
-- [OpenAPI readiness](reference/openapi_readiness.md): named discovery budgets and
+- OpenAPI readiness (`reference/openapi_readiness.md`): named discovery budgets and
   hash-bound provider evidence; separate from transport and live acceptance.
-- [Evaluation](reference/evaluation.md): optional read-only task evaluation with the
+- Evaluation (`reference/evaluation.md`): optional read-only task evaluation with the
   existing model harness; it does not replace static and contract checks.
 
 ## Completion evidence

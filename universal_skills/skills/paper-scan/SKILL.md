@@ -33,6 +33,12 @@ metadata:
 
 ## Steps
 
+1. Extract topics with `sx_search` and `graph_query`. Verify that a relevance taxonomy is returned.
+2. Fetch daily papers with the `scholarx-paper-search` skill and scholarx MCP using the taxonomy. Verify that the paper list is non-empty.
+3. Score papers with `graph_analyze`. Verify that each paper has a relevance score.
+4. Download top papers with `kg_graph_ingest`. Verify that the downloads appear in `graph_query`.
+5. Persist with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: Topic Extractor
 **Agent**: `search-agent`
 **Tools**: `sx_search, graph_query`
@@ -63,6 +69,14 @@ Bulk download the most valuable papers for ingestion.
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Empty taxonomy | KG has no focus topics | Pass a hand-written list of focus topics as the taxonomy and re-run Step 2 |
+| No papers | Scholarx outage | Check the scholarx MCP health via its status tool and re-run the fetch once it answers |
+| Download fails | Paywall | Skip the paper, log its URL in the report, and continue with the remaining downloads via `kg_graph_ingest` |
 
 ## Output
 - Paper Scan results persisted in KG

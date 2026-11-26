@@ -11,5 +11,7 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Source digest: sha256:22e37bc2a8ec308ab0e3bd45d9f5659cb52dc1c9c623dddd7eb133929a9fc8d0
 - Local overlays:
   - `overlays/media-use/10-no-telemetry.md` (sha256 ccc673d6edaddaa0)
+  - `overlays/media-use/20-steps.md` (sha256 982fd485d9931896)
+  - `overlays/media-use/21-plugin-link.md` (sha256 8e2cadf0a65379c6)
 
 Refresh with `python scripts/sync_upstream_skills.py --update hyperframes`; verify with `--check`.

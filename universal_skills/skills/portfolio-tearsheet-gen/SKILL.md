@@ -37,6 +37,10 @@ benchmark.
 
 ## Steps
 
+1. Ingest market data for the holdings and date range with `$quant-data-ingest`. Verify that `normalized_market_dataset` covers every holding for the full range.
+2. Backtest the portfolio with `$qlib-backtester` using `normalized_market_dataset`. Verify that `backtest_report` includes performance metrics and the benchmark comparison.
+3. Render the report with `$document-converter` into a Markdown or PDF tearsheet. Verify that `tearsheet_document` opens and contains the metrics from `backtest_report`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -57,6 +61,14 @@ Invoke `$document-converter` with `backtest_report` to render it as a
 formatted Markdown/PDF tearsheet.
 
 Expected: `tearsheet_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Dataset has gaps for a holding | A ticker is unsupported or delisted | Correct the symbol in the workflow inputs and re-run `$quant-data-ingest` for that holding. |
+| Backtest fails to start | The dataset format does not match what `$qlib-backtester` expects | Re-ingest through `$quant-data-ingest` so `normalized_market_dataset` is regenerated, then pass it unchanged. |
+| Tearsheet is missing metrics | The converter received an incomplete `backtest_report` | Re-run `$document-converter` with the full `backtest_report` file rather than a summary. |
 
 ## Output
 

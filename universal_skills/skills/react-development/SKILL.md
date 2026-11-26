@@ -3,13 +3,7 @@ name: react-development
 domain: web-development
 skill_type: skill
 description: >-
-  Type-safe React development with TypeScript covering components, hooks, events,
-  Server Components, routing, performance optimization, and architectural best
-  practices. Use when building React applications, optimizing rendering/bundle
-  size, refactoring component APIs, or working with React 18/19 features. Triggers
-  include "React component", "React performance", "Next.js optimization",
-  "composition patterns", "Server Components", "React 19". Do NOT use for non-
-  React TypeScript or vanilla JavaScript projects.
+  Type-safe React development with TypeScript covering components, hooks, events, Server Components, routing, performance optimization, and architectural best practices. Use when building React applications, optimizing rendering/bundle size, refactoring component APIs, or working with React 18/19 features. Do NOT use for non-React TypeScript or vanilla JavaScript projects.
 license: MIT
 tags: [react, typescript, hooks, components, server-components, frontend, react-19, performance, architecture, nextjs]
 metadata:
@@ -18,17 +12,35 @@ metadata:
 ---
 # React Development (TypeScript)
 
+Scope: Type-safe React development with TypeScript covering components, hooks, events, Server Components, routing, performance optimization, and architectural best practices. Use when building React applications, optimizing rendering/bundle size, refactoring component APIs, or working with React 18/19 features. Triggers include "React component", "React performance", "Next.js optimization", "composition patterns", "Server Components", "React 19". Do NOT use for non-React TypeScript or vanilla JavaScript projects.
+
 Type-safe React patterns for React 18 and 19. Compile-time guarantees enable confident refactoring.
 
 ---
+
+## Steps
+
+1. Locate the relevant guidance. Verify with `ls references/ rules/ | head` that the topic file exists (hooks, events, React 19, or a rule prefix such as `async-` or `rerender-`).
+2. Read the matching rule or reference file, for example `sed -n 1,60p rules/async-parallel.md`. Verify that you can state its incorrect and correct code patterns.
+3. Implement the change in typed TypeScript following the rule. Verify with `npx tsc --noEmit` that there are no type errors.
+4. Run the project tests and linter with `npm test` and `npm run lint`. Verify that both exit with status 0.
+5. Check performance-sensitive changes against the CRITICAL rules with `grep -n "CRITICAL" SKILL.md`. Verify that no CRITICAL rule from the Quick Reference is violated.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `tsc` reports implicit any in handlers | Event types not specified | Apply the typings from `references/event-handlers.md` and rerun `npx tsc --noEmit` |
+| Hydration mismatch warnings | Server and client render different output | Apply `rules/rendering-hydration-no-flicker.md` or the suppress-warning rule and rebuild |
+| `forwardRef` errors on React 19 | Using the removed pattern | Follow `rules/react19-no-forwardref.md` and pass `ref` as a prop |
 
 ## Key Patterns & Documentation
 
 - [references/react-19-patterns.md](references/react-19-patterns.md) — React 19 forwardRef removal, useActionState, use()
 - [references/hooks.md](references/hooks.md) — Type-safe useState, useRef, useReducer, useContext
 - [references/event-handlers.md](references/event-handlers.md) — Typed event handlers (Mouse, Form, Keyboard)
-- [examples/generic-components.md](examples/generic-components.md) — Generic Table and Component Patterns
-- [examples/server-components.md](examples/server-components.md) — Server Components, Actions, and async patterns
+- `examples/generic-components.md` — Generic Table and Component Patterns
+- `examples/server-components.md` — Server Components, Actions, and async patterns
 ---
 
 ## Vercel React Best Practices

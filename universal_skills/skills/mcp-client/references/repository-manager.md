@@ -20,24 +20,16 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "repository-manager": {
-      "command": "repository-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "FILE_OPERATIONSTOOL": "${ FILE_OPERATIONSTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "GIT_OPERATIONSTOOL": "${ GIT_OPERATIONSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: repository-manager
+command: repository-manager-mcp --transport stdio
+env:
+  FILE_OPERATIONSTOOL: ${ FILE_OPERATIONSTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  GIT_OPERATIONSTOOL: ${ GIT_OPERATIONSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -49,24 +41,16 @@ repository-manager-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only FILE_OPERATIONSTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "repository-manager": {
-      "command": "repository-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "FILE_OPERATIONSTOOL": "True",
-        "MISCTOOL": "False",
-        "GIT_OPERATIONSTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: repository-manager
+command: repository-manager-mcp --transport stdio
+env:
+  FILE_OPERATIONSTOOL: True
+  MISCTOOL: False
+  GIT_OPERATIONSTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -47,6 +47,30 @@ Proactively identify new metrics or alerts from infrastructure.
 Analyze container logs and system metrics for anomalies.
 Recommend new monitoring rules to add.
 
+## Steps
+
+1. List the trading containers with `portainer_list_containers()`.
+   Verify that every trading service appears and none is unhealthy or restarting.
+2. Pull recent error traces with `langfuse_trace_list(tags=["finance"])`.
+   Verify that the result is returned and any error traces are noted for the snapshot.
+3. Check disk, memory and CPU on the trading nodes with the `systems_manager` resource checks.
+   Verify that each node returned a reading for all three resources.
+4. Check DNS with `technitium_dns_get_records()`.
+   Verify that every trading service name resolves to a record.
+5. Persist the results with `graph_write(action="add_node", node_type="HealthSnapshot", ...)`.
+   Verify that the call returns a node id for the new HealthSnapshot.
+6. Scan container logs for anomalies with `docker logs --tail 200 <container> 2>&1 | grep -iE "error|warn|timeout"` and recommend new monitoring rules.
+   Verify that the output lists each recommended rule, or states that none were found.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `portainer_list_containers()` errors or times out | Portainer MCP server unreachable or credentials expired | Confirm the portainer MCP server is reachable, then record the check as failed in the HealthSnapshot and alert instead of skipping it |
+| `langfuse_trace_list` returns nothing for every run | The `finance` tag is missing from traces or Langfuse is down | Query without the tag filter to confirm Langfuse answers, and flag the missing tag as a finding |
+| `graph_write` is rejected | arbora is unreachable or the node type is not in the ontology | Run the steps natively without delegation and store the snapshot once `graph_write` succeeds; report the rejection text |
+| A cron run overlaps the previous one | `max_concurrent: 1` is set but a run exceeded 15 minutes | Check the previous run's slow step and raise its timeout or reduce the scope of that check |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

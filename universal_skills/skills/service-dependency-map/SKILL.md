@@ -31,6 +31,11 @@ Maps the full service dependency chain from MCP server to agent package to conta
 
 ## Steps
 
+1. List all stacks and their containers with service labels and network attachments using the Portainer tools. Verify that the `stack`, `container` and `label` outputs are non-empty.
+2. Inspect each container for Traefik labels, health checks and dependencies using the container manager tools. Verify that every container from the first step has a `traefik`, `label` or `health` result.
+3. Build the dependency graph from MCPServer to Container to ContainerStack to HardwareNode, plus ProxyRoute to PlatformService, through the Arbora graph tools. Verify that each relationship is typed with `DEPLOYED_ON`, `BELONGS_TO_STACK`, `RUNS_ON` or `ROUTES_TO`.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: Portainer Mcp
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,15 @@ Expected: `dependency, graph, relationship`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Containers lack service labels | The stack was deployed without labels | Report those containers as unmapped and add the labels to the stack definition. |
+| Inspection times out for a container | The host is unreachable | Verify the host with the container manager tools and re-inspect once reachable. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Service Dependency Map results persisted in KG

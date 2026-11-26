@@ -26,33 +26,25 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "portainer-agent": {
-      "command": "portainer-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "PORTAINER_URL": "${PORTAINER_URL}",
-        "PORTAINER_TOKEN": "${PORTAINER_TOKEN}",
-        "AUTHTOOL": "${ AUTHTOOL:-True }",
-        "USERTOOL": "${ USERTOOL:-True }",
-        "DOCKERTOOL": "${ DOCKERTOOL:-True }",
-        "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
-        "REGISTRYTOOL": "${ REGISTRYTOOL:-True }",
-        "ENVIRONMENTTOOL": "${ ENVIRONMENTTOOL:-True }",
-        "KUBERNETESTOOL": "${ KUBERNETESTOOL:-True }",
-        "TEMPLATETOOL": "${ TEMPLATETOOL:-True }",
-        "STACKTOOL": "${ STACKTOOL:-True }",
-        "EDGETOOL": "${ EDGETOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: portainer-agent
+command: portainer-mcp --transport stdio
+env:
+  PORTAINER_URL: ${PORTAINER_URL}
+  PORTAINER_TOKEN: ${PORTAINER_TOKEN}
+  AUTHTOOL: ${ AUTHTOOL:-True }
+  USERTOOL: ${ USERTOOL:-True }
+  DOCKERTOOL: ${ DOCKERTOOL:-True }
+  SYSTEMTOOL: ${ SYSTEMTOOL:-True }
+  REGISTRYTOOL: ${ REGISTRYTOOL:-True }
+  ENVIRONMENTTOOL: ${ ENVIRONMENTTOOL:-True }
+  KUBERNETESTOOL: ${ KUBERNETESTOOL:-True }
+  TEMPLATETOOL: ${ TEMPLATETOOL:-True }
+  STACKTOOL: ${ STACKTOOL:-True }
+  EDGETOOL: ${ EDGETOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -64,33 +56,25 @@ portainer-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only AUTHTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "portainer-agent": {
-      "command": "portainer-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "PORTAINER_URL": "${PORTAINER_URL}",
-        "PORTAINER_TOKEN": "${PORTAINER_TOKEN}",
-        "AUTHTOOL": "True",
-        "USERTOOL": "False",
-        "DOCKERTOOL": "False",
-        "SYSTEMTOOL": "False",
-        "REGISTRYTOOL": "False",
-        "ENVIRONMENTTOOL": "False",
-        "KUBERNETESTOOL": "False",
-        "TEMPLATETOOL": "False",
-        "STACKTOOL": "False",
-        "EDGETOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: portainer-agent
+command: portainer-mcp --transport stdio
+env:
+  PORTAINER_URL: ${PORTAINER_URL}
+  PORTAINER_TOKEN: ${PORTAINER_TOKEN}
+  AUTHTOOL: True
+  USERTOOL: False
+  DOCKERTOOL: False
+  SYSTEMTOOL: False
+  REGISTRYTOOL: False
+  ENVIRONMENTTOOL: False
+  KUBERNETESTOOL: False
+  TEMPLATETOOL: False
+  STACKTOOL: False
+  EDGETOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

@@ -35,6 +35,10 @@ Provide the multi-factor strategy definition, asset universe, and date range.
 
 ## Steps
 
+1. Invoke `$quant-data-ingest` with the universe and date range. Verify that the result contains a non-empty `normalized_market_dataset`.
+2. Invoke `$qlib-backtester` with `normalized_market_dataset` and the multi-factor strategy definition. Verify that the result contains a non-empty `backtest_report`.
+3. Invoke `$document-converter` with `backtest_report`. Verify that the result contains a non-empty `attribution_document`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -55,6 +59,14 @@ Invoke `$document-converter` with `backtest_report` to render the
 per-factor breakdown as a formatted attribution document.
 
 Expected: `attribution_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Ingest step returns nothing | The universe, date range or data backend is missing or misspelled | Re-check the workflow inputs against the supplied universe and date range, correct the symbol list, and re-invoke `$quant-data-ingest` with the fixed inputs |
+| Per-factor performance missing | Strategy definition declares a single factor | Declare each factor separately in the strategy definition and re-invoke `$qlib-backtester` |
+| Attribution document is empty | Converter received an empty `backtest_report` | Confirm Step 1 output is non-empty, and re-invoke `$document-converter` with it |
 
 ## Output
 

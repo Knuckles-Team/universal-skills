@@ -36,6 +36,10 @@ Provide the topic/reference, voice guide, and publication requirements.
 
 ## Steps
 
+1. Invoke `$content-draft-writer` with the topic, reference and voice guide. Verify that the result contains a non-empty `caption_draft`.
+2. Invoke `$canvas-design` with `caption_draft`. Verify that the result contains a non-empty `meme_image`.
+3. Invoke `$publication-preflight` with `meme_image` and the publication requirements. Verify that the result contains a non-empty `readiness_decision`.
+
 ### Step 0: content-draft-writer [skill: content-draft-writer]
 
 Invoke `$content-draft-writer` with the workflow inputs to draft the
@@ -56,6 +60,14 @@ Invoke `$publication-preflight` with `meme_image` and the publication
 requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Caption off-voice | Voice guide was not supplied | Provide the voice guide and re-invoke `$content-draft-writer` |
+| Image text overflows | Caption too long for the canvas | Shorten `caption_draft` and re-invoke `$canvas-design` |
+| Preflight rejects the image | Publication requirements not met | Read the objections in `readiness_decision`, fix the named items, and re-run `$publication-preflight` |
 
 ## Output
 

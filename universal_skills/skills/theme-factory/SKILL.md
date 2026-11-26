@@ -71,6 +71,23 @@ Define how elements "lift" off the background.
 
 ---
 
+## Steps
+
+1. Identify the base brand color and vibe from the request and the existing project. Verify with `grep -rn "\-\-accent\|--primary" --include=*.css .` whether tokens already exist, and extend them rather than replace.
+2. Define the primitive tokens (color scales 50 to 900, spacing, type scale) in a `:root` block. Verify with `grep -c -- "--" theme.css` that the file lists the expected scale steps.
+3. Map semantic tokens for `[data-theme="light"]` and `[data-theme="dark"]`. Verify with `grep -n "data-theme" theme.css` that both variants exist.
+4. Check contrast for each text-on-background pair, aiming for at least 4.5:1 for body text. Verify the ratios with a contrast calculator or `python3 -c` using the WCAG luminance formula, and record any failures.
+5. Provide the implementation (CSS, `tailwind.config.js` or theme object) with a usage snippet. Verify that the snippet references only semantic tokens such as `var(--accent)`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Dark mode text fails contrast | Dark tokens reuse light-mode values | Pick a lighter step (for example `--gray-50`) for `--text-main` and recompute the ratio |
+| Components ignore the theme | They use hardcoded values instead of tokens | Replace literals with semantic `var(--...)` references |
+| Token sprawl | A token was created for every property | Remove tokens that do not cover a recurring role and keep the core set |
+| Tailwind classes do not pick up tokens | Config does not extend the theme | Add the variables to `theme.extend.colors` in `tailwind.config.js` |
+
 ## Design Systems Supported
 
 - **Vanilla CSS**: CSS Custom Properties (`--variable`).

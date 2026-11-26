@@ -68,6 +68,22 @@ certificate material. File and attachment uploads are limited to 32 MiB.
 - **Usage**: `python scripts/slides/slides.py [command]`
 - **Commands**: `read`, `create`, `add-slide`, `add-text`
 
+## Steps
+
+1. Check authentication for the service you need with `python scripts/<service>/auth.py status` (for example `python scripts/gmail/auth.py status`). Verify that it reports a stored token, and run `python scripts/<service>/auth.py login` if it does not.
+2. When the target is a Doc, Sheet or Slide, find its ID first with `python scripts/drive/drive.py search "<name>"`. Verify that the output lists the file and its `ID`.
+3. Run the service command, for example `python scripts/sheets/sheets.py read <ID>` or `python scripts/gmail/gmail.py search "<query>"`. Verify that the output returns the expected content and not an HTTP error.
+4. For writes (`send`, `write`, `append`, `upload`), re-read the result with the matching read command. Verify that the change appears, for example `python scripts/docs/docs.py read <ID>` shows the appended text.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `auth.py status` reports no token | Login never completed or keyring entry missing | Run `python scripts/<service>/auth.py login` and finish the browser flow without pasting URLs into chat. |
+| Login fails on broker configuration | `GOOGLE_WORKSPACE_OAUTH_BROKER_URL` missing or not HTTPS | Set `GOOGLE_WORKSPACE_OAUTH_CLIENT_ID` and an HTTPS broker URL without credentials, query or fragment through AgentConfig. |
+| TLS verification error | A managed trust chain is not configured | Set `SSL_CERT_FILE` or `REQUESTS_CA_BUNDLE` to the CA bundle for this run and retry the command. |
+| Upload rejected | File larger than the 32 MiB limit | Split or compress the file below 32 MiB and rerun the upload command. |
+
 ## Usage Notes
 - When working with files (Docs, Sheets, Slides), it's often best to use the **Drive** tool to search for the file and get its `ID` first, then pass that `ID` to the respective tool.
 - Resolve scripts relative to this skill root; do not persist machine-specific absolute paths.

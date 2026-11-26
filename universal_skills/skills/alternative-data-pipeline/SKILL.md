@@ -38,6 +38,12 @@ web-published datasets), lookback window, and any excluded sources.
 
 ## Steps
 
+1. Locate candidate sources by invoking `$web-search` with the workflow inputs. Verify that `alt_data_source_packet` lists source URLs within the lookback window and none from the excluded sources.
+2. Fetch the full content by invoking `$web-crawler` with `alt_data_source_packet`. Verify that `raw_alt_data_documents` has a non-empty body for each fetched URL.
+3. Normalize records by invoking `$quant-data-ingest` with `raw_alt_data_documents`. Verify that `normalized_alt_dataset` carries timestamps and instrument identifiers for the target universe.
+4. Check data quality by invoking `$data-quality-auditor` with `normalized_alt_dataset` and the declared rule set. Verify that `quality_report` lists a pass or fail result for every rule.
+
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs to locate candidate
@@ -65,6 +71,15 @@ Invoke `$data-quality-auditor` with `normalized_alt_dataset` and the
 declared rule set.
 
 Expected: `quality_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Source packet is empty | Source categories too narrow | Broaden the source categories or lookback window and re-invoke `$web-search` |
+| Crawl returns blank pages | Site blocks automated fetches or needs rendering | Drop that URL from the packet and substitute another source from the search results |
+| Ingest rejects records | Timestamps or identifiers cannot be parsed | Fix the field mapping given to `$quant-data-ingest` for that source and re-ingest it |
+| Quality report fails rules | Duplicates or gaps in the normalized data | Remove duplicates or re-crawl the gap period, then re-run `$data-quality-auditor` |
 
 ## Output
 

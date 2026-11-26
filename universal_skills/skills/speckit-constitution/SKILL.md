@@ -192,3 +192,18 @@ Create `.specify/memory/constitution.md` from `.specify/templates/constitution-t
 - Keep every requirement row ID (`<PREFIX>-<AREA>-R012.4`), every `Spec:` commit trailer and every test binding intact. The delivery state (`SPECIFIED`, `LANDED`, `VERIFIED`, `RETIRED`) is computed by `pipelines-hook spec-status`; never write a `Status:` line or `status.json`.
 - Specs and prompts name no private repository, internal host, homelab inventory or local workspace path. A contributor with only public GitHub access must be able to complete the work.
 - When `.specify/scripts/` is absent, derive the feature directory from the repository root and the stable ID instead of running a script.
+
+## Steps
+
+1. Resolve the active template with `.specify/scripts/bash/resolve-template.sh constitution-template --json` from the repository root. Verify that the JSON carries a non-empty `TEMPLATE_CONTENT`.
+2. Draft the constitution from that template: one page that links the organization standards by public URL and adds only repository-specific principles. Verify that no bracketed placeholder token remains by running `grep -n '\[[A-Z_]*\]' .specify/memory/constitution.md`, which should print nothing.
+3. Write the result to `.specify/memory/constitution.md` with a Sync Impact Report HTML comment at the top. Verify that `head -n 5 .specify/memory/constitution.md` shows the comment.
+4. Run `pipelines-hook spec-standard` against the repository. Verify that its constitution check passes and report any other finding to the user.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `resolve-template.sh` is missing or exits non-zero | `.specify/scripts/` is absent or the template name is wrong | Read `.specify/templates/constitution-template.md` directly and confirm the file exists with `ls .specify/templates/` |
+| Placeholders remain after drafting | A value was not derived from the repository or the user input | Re-run `grep -n '\[[A-Z_]*\]' .specify/memory/constitution.md`, fill each hit from repo facts, and mark genuinely unknown values `TODO(<FIELD>)` with a reason |
+| `pipelines-hook spec-standard` fails the constitution check | The file is not at `.specify/memory/constitution.md` | Move the file to that exact path and confirm with `ls .specify/memory/constitution.md` |

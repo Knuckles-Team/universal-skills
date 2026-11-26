@@ -34,16 +34,27 @@ Choose the appropriate theme based on content type:
 
 ---
 
-## Workflow
+## Steps
 
-1. **Understand requirements** — content, audience, formality level
-2. **Select theme** — see table above, or ask if unsure
-3. **Structure content** — title slide, body slides, conclusion
-4. **Apply best practices** — concise titles, 3-5 bullets, adequate whitespace
-5. **Add images** — using Marp image syntax
-6. **Deliver** — save as `.md` file
+1. Understand the requirements (content, audience, formality) and select a theme from the table above, such as `theme: tech` for developer content.
+   Verify that the chosen theme appears in the table for the content type.
+2. Write the deck to `presentation.md` using the Slide Structure and Standard Slide Template below.
+   Verify with `head -n 5 presentation.md` that the front matter contains `marp: true`.
+3. Apply best practices: concise titles, 3-5 bullets per slide, whitespace, and Marp image syntax.
+   Verify with `grep -c '^---$' presentation.md` that slide separators exist, and review each slide against the Quality Checklist.
+4. Render the deck with `marp presentation.md` (HTML) or `marp --pdf presentation.md`.
+   Verify that `ls -l presentation.html presentation.pdf` shows a non-empty output file.
+5. Deliver the saved `.md` file together with the rendered output.
+   Verify that `ls presentation.md` lists the file at the path you report.
 
----
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `marp: command not found` | Marp CLI is not installed | Run `npm install -g @marp-team/marp-cli`, then re-run the `marp` render command |
+| Deck renders as one long page | Missing `marp: true` front matter | Add `marp: true` to the YAML front matter at the top of `presentation.md` and re-render |
+| Image does not appear | Wrong relative path or image syntax | Fix the path relative to `presentation.md` and use the Marp bg image directive with a relative path |
+| PDF export fails | No Chrome or Chromium available to Marp | Install Chromium or set `CHROME_PATH`, or export HTML instead with `marp presentation.md` |
 
 ## Slide Structure
 

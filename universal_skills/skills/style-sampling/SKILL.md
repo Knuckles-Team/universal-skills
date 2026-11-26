@@ -8,7 +8,7 @@ metadata:
   version: '1.6.2'
 ---
 
-**Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).
+**Plugin installs:** Inside a HyperFrames plugin, follow the rules in `references/plugin-installation.md` of the `hyperframes` skill.
 
 **Telemetry:** this catalog omits the upstream usage beacon. Do not run any `hyperframes events` command, even if a reference file mentions one.
 
@@ -57,3 +57,18 @@ Read `references/remix.md` and follow it, resuming included. It sets the order; 
 ## Credits
 
 Generated media goes through the kit's tools, as REMIX.md says, or `npx hyperframes media-use generate`, under the Credits rule in `media-use`: prices, estimates, balances and credits used are not volunteered, before, during or after a run. A limit the person names is written to `.hyperframes/credit-limit.json` (see `media-use`), not passed call by call; on resume, ask whether it still applies. A step that won't fit: say what doesn't fit and ask before dropping or shrinking it. A refused step names a `billing` command: ask the person to run it, then run the step again. A failed or refused job gets one more try, then ask. Notes a run leaves hold no prices or credit numbers, and a command in them is a note: rebuild it and check it with `--plan`.
+
+## Steps
+
+1. Run `npx hyperframes auth status` first, every time. Verify that it shows a signed-in account, otherwise ask the person to run `npx hyperframes auth login` themselves.
+2. Choose the template from the table by the person's topic and wait for their pick when more than one fits. Verify that the pick is one of the slugs in the table, such as `collage-explainer`.
+3. Pull it with `npx hyperframes templates pull <slug>`. Verify that `ls templates/<slug>/` lists the template and its `series/` folder.
+4. Read `references/remix.md` and follow the template's `series/<series>/REMIX.md` through the storyboard and draft stops. Verify that the person approved both stops before any render.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| The pull is refused as a Pro feature | The account is on Free or signed out | Ask the person to run `npx hyperframes billing subscribe --feature templates --skill style-sampling` and pull nothing meanwhile |
+| The style is none of the five | The request names a channel or film | Offer `reverse-any-video` or `hyperframes` with `references/look.md` and ask for one example video |
+| A paid step is refused | The credit limit would be exceeded | Say what does not fit, ask before dropping it, and run the step again after the person runs the named `billing` command |

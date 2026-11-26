@@ -19,26 +19,18 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "media-downloader-mcp": {
-      "command": "media-downloader-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DOWNLOAD_DIRECTORY": "${DOWNLOAD_DIRECTORY}",
-        "AUDIO_ONLY": "${AUDIO_ONLY:-False}",
-        "TEXT_EDITORTOOL": "${ TEXT_EDITORTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "COLLECTION_MANAGEMENTTOOL": "${ COLLECTION_MANAGEMENTTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: media-downloader-mcp
+command: media-downloader-mcp --transport stdio
+env:
+  DOWNLOAD_DIRECTORY: ${DOWNLOAD_DIRECTORY}
+  AUDIO_ONLY: ${AUDIO_ONLY:-False}
+  TEXT_EDITORTOOL: ${ TEXT_EDITORTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  COLLECTION_MANAGEMENTTOOL: ${ COLLECTION_MANAGEMENTTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -50,26 +42,18 @@ media-downloader-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only COLLECTION_MANAGEMENTTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "media-downloader-mcp": {
-      "command": "media-downloader-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DOWNLOAD_DIRECTORY": "${DOWNLOAD_DIRECTORY}",
-        "AUDIO_ONLY": "${AUDIO_ONLY:-False}",
-        "TEXT_EDITORTOOL": "False",
-        "MISCTOOL": "False",
-        "COLLECTION_MANAGEMENTTOOL": "True"
-      }
-    }
-  }
-}
+```text
+server: media-downloader-mcp
+command: media-downloader-mcp --transport stdio
+env:
+  DOWNLOAD_DIRECTORY: ${DOWNLOAD_DIRECTORY}
+  AUDIO_ONLY: ${AUDIO_ONLY:-False}
+  TEXT_EDITORTOOL: False
+  MISCTOOL: False
+  COLLECTION_MANAGEMENTTOOL: True
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

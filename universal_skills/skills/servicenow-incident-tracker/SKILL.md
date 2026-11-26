@@ -33,6 +33,12 @@ Fetch active ServiceNow incidents ordered with higher priority showing first
 
 ## Steps
 
+1. Fetch active incidents with `servicenow_get_incidents` using `sysparm_query="active=true^ORDERBYpriority"`. Verify that critical priority incidents appear first.
+2. Present the prioritized incidents from `servicenow_get_incidents` and ask which to inspect. Verify that the user selected an incident or declined to inspect.
+3. Fetch full details with `servicenow_get_incident` using `incident_id="<sys_id>"`. Verify that the response contains history, comments and SLA fields.
+4. Display the `servicenow_get_incident` history, comments, SLA status and remediation plan to the user. Verify that the user confirmed the summary before any follow-up action.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: ServiceNow Incident Query [skill: servicenow-api]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -63,6 +69,14 @@ Display the comprehensive incident history, comments, SLA status, and proposed r
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Call fails with `MissingParameterError` | `sys_id` was passed instead of `incident_id` | Call again passing `incident_id="<sys_id>"`. |
+| List is empty | The query filter excludes all records | Loosen `sysparm_query` and check access rights of the ServiceNow account. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Servicenow Incident Tracker results persisted in KG

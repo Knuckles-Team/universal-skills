@@ -29,6 +29,11 @@ Stateless atomic operation to discover network segments, interfaces, routing tab
 
 ## Steps
 
+1. Read the host inventory with `tunnel-manager-mcp` from `inventory.yaml`. Verify that the host list is non-empty.
+2. Probe reachability with BatchMode SSH, for example `ssh -o BatchMode=yes <host> true`. Verify that each host is marked reachable or unreachable.
+3. Scan interfaces with `ip addr show` and `ip route` on each reachable host. Verify that each host has at least one interface with an address.
+4. Export the topology as JSON with `NetworkSubnet`, `NetworkInterface` and `VPNTunnel` entries. Verify that `python3 -m json.tool` parses the file.
+
 ### Step 1: Query Host Inventory
 Retrieve the full list of target hosts and IP addresses from the inventory.yaml configuration using `tunnel-manager-mcp`.
 
@@ -47,3 +52,12 @@ Compile and format the parsed network profile into structured JSON for Arbora/to
 - `NetworkSubnet` properties (CIDR, boundary IPs)
 - `NetworkInterface` properties (macAddress, mtu, speed, ipAddress)
 - `VPNTunnel` configurations
+
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Host unreachable | SSH key or network issue | Check the key in `inventory.yaml` and test with `ssh -v` |
+| ifconfig not found | Not installed | Use `ip addr show` instead |
+| JSON invalid | Unescaped output | Re-parse with `python3 -m json.tool` and fix the offending host |

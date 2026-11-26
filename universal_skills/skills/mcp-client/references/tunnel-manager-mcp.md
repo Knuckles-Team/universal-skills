@@ -20,25 +20,17 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "tunnel-manager-mcp": {
-      "command": "tunnel-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TUNNEL_IDENTITY_FILE": "${TUNNEL_IDENTITY_FILE}",
-        "HOST_MANAGEMENTTOOL": "${ HOST_MANAGEMENTTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "REMOTE_ACCESSTOOL": "${ REMOTE_ACCESSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: tunnel-manager-mcp
+command: tunnel-manager-mcp --transport stdio
+env:
+  TUNNEL_IDENTITY_FILE: ${TUNNEL_IDENTITY_FILE}
+  HOST_MANAGEMENTTOOL: ${ HOST_MANAGEMENTTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  REMOTE_ACCESSTOOL: ${ REMOTE_ACCESSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -50,25 +42,17 @@ tunnel-manager-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only HOST_MANAGEMENTTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "tunnel-manager-mcp": {
-      "command": "tunnel-manager-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "TUNNEL_IDENTITY_FILE": "${TUNNEL_IDENTITY_FILE}",
-        "HOST_MANAGEMENTTOOL": "True",
-        "MISCTOOL": "False",
-        "REMOTE_ACCESSTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: tunnel-manager-mcp
+command: tunnel-manager-mcp --transport stdio
+env:
+  TUNNEL_IDENTITY_FILE: ${TUNNEL_IDENTITY_FILE}
+  HOST_MANAGEMENTTOOL: True
+  MISCTOOL: False
+  REMOTE_ACCESSTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

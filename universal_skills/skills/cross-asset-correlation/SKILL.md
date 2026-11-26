@@ -33,6 +33,12 @@ Collects multi-ticker price data, constructs rolling correlation matrices, flags
 
 ## Steps
 
+1. Collect price feeds for equities, commodities and currencies with `graph_query` and `sx_search` (Step 1). Verify that `multi-asset-historical-prices` covers every requested ticker over the same date range.
+2. Fit the rolling correlation matrices and eigenvalues with `graph_analyze` (Step 2). Verify that `rolling-correlation-matrices` is square and symmetric for each window.
+3. Detect eigenvalue breakdowns in sector correlations (Step 3). Verify that `eigenvalue-breakdown-signals` lists each flagged sector or states that none breached the threshold.
+4. Update portfolio limit scales from the signals with `graph_write` (Step 4). Verify that `adjusted-portfolio-limits` shows a changed limit for every flagged sector.
+5. Persist the results with `graph_write` (Step 5). Verify that `graph_query` returns the stored correlation node.
+
 ### Step 1: Multi Ticker Collector
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `adjusted-portfolio-limits`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Correlation matrix has NaN entries | A ticker has missing history or misaligned dates | Drop or forward-fill the short series in Step 1 and refit the matrices |
+| No anomalies flagged in a known stress period | The rolling window is too long to react | Shorten the window in Step 2 and compare the eigenvalue series against the stress dates |
+| Limits not updated | `graph_write` failed or no signal crossed the threshold | Check the Step 3 signals, confirm access with `graph_query`, and rerun Step 4 on the saved signals |
+
 
 ## Output
 - Cross Asset Correlation results persisted in KG

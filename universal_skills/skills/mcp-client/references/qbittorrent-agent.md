@@ -24,27 +24,22 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "qbittorrent-agent": {
-      "command": "python",
-      "args": ["-m", "qbittorrent_agent.mcp", "--transport", "stdio"],
-      "env": {
-        "QBITTORRENT_URL": "${QBITTORRENT_URL}",
-        "QBITTORRENT_USERNAME": "${QBITTORRENT_USERNAME}",
-        "QBITTORRENT_PASSWORD": "${QBITTORRENT_PASSWORD}",
-        "APPTOOL": "True",
-        "TORRENTSTOOL": "True",
-        "TRANSFERTOOL": "True",
-        "RSSTOOL": "True",
-        "SEARCHTOOL": "True",
-        "LOGTOOL": "True"
-      }
-    }
-  }
-}
+```text
+server: qbittorrent-agent
+command: python -m qbittorrent_agent.mcp --transport stdio
+env:
+  QBITTORRENT_URL: ${QBITTORRENT_URL}
+  QBITTORRENT_USERNAME: ${QBITTORRENT_USERNAME}
+  QBITTORRENT_PASSWORD: ${QBITTORRENT_PASSWORD}
+  APPTOOL: True
+  TORRENTSTOOL: True
+  TRANSFERTOOL: True
+  RSSTOOL: True
+  SEARCHTOOL: True
+  LOGTOOL: True
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

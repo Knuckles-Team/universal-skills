@@ -42,6 +42,22 @@ Expected: execution_result
 Query active position ledger to verify fill status and update balances
 Expected: filled_position_data
 
+## Steps
+
+1. Initialize the CLOB client with `emerald-exchange` using the EIP-712 wallet signature. Verify that `clob_client_creds` contains an API key and secret.
+2. Fetch order book depth and spreads via `mcp_market_data`. Verify that `market_quote` shows non-empty bids and asks.
+3. Build and sign the order with `mcp_orders`. Verify that `signed_order_payload` includes a signature and the intended price and size.
+4. Submit the payload through `submit-clob-order` in `emerald-exchange`. Verify that `execution_result` returns an order id.
+5. Query the ledger via `mcp_portfolio`. Verify that `filled_position_data` shows the expected fill status and updated balance.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Credential derivation fails | Wrong chain id or wallet key unavailable | Reload the signer key from the secret store, confirm the chain id, and rerun Step 1 |
+| Submit returns invalid signature | Order fields changed after signing | Regenerate the payload with `mcp_orders` without modifying fields, then submit again |
+| Order rests unfilled | Limit price away from the touch | Cancel the order and rebuild it at a price from a fresh `market_quote` |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

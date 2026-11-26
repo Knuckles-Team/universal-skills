@@ -32,6 +32,12 @@ tracking, and compliance validation against the KG ontology_legal.ttl.
 
 ## Steps
 
+1. Research law with the `legal-research-agent` using `graph_search`, `graph_query` and `sx_search`. Verify that relevant statutes and precedents are returned with citations.
+2. Analyze contracts with the `contract-analyzer` using `document_tools` and `graph_analyze`. Verify that extracted clauses and risk factors are listed.
+3. Validate compliance with the `compliance-checker` using `graph_query` against `FederalStatute`, `StateStatute` and `MunicipalCode`. Verify that non-compliance flags are listed.
+4. Persist findings with `graph_write` as `LegalMatter`, `CaseLaw` and `RegulatoryFiling` nodes linked by `governedByStatute`. Verify that `graph_query` returns the `LegalMatter` node.
+5. Escalate binding determinations on the `LegalMatter` to a human with a summary report. Verify that the report states recommendations and that no final decision was made automatically.
+
 ### Step 0: Legal Research
 **Agent**: `legal-research-agent`
 **Tools**: `graph_search`, `graph_query`, `sx_search`
@@ -62,6 +68,14 @@ Create edges linking to applicable statutes via governedByStatute.
 ### Step 4: Human Escalation
 Route all binding legal determinations to human oversight. Generate
 a summary report with recommendations for human review.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No statutes found | Search too narrow | Broaden the `sx_search` and `graph_search` terms and the jurisdiction. |
+| Clause not mapped | Not in `ontology_legal.ttl` | Record it as unmapped and flag it for human review. |
+| Final decision requested automatically | Misuse of the workflow | Refuse and route to the human escalation step. |
 
 ## Output
 - LegalMatter node in KG with status + findings

@@ -35,6 +35,27 @@ the draft.
 - Detect citation laundering, circular sourcing, quote distortion, broken anchors,
   and one citation being stretched across unrelated claims.
 
+## Steps
+
+1. Enumerate every factual claim with its attached citation into a working list.
+   Run `grep -nE '\[[0-9]+\]|https?://' draft.md` to locate citation markers. Verify that each claim has an ID and at least one citation, or is marked uncited.
+2. Retrieve each cited source and mark it reachable or unverified.
+   Fetch it with `curl -sIL -o /dev/null -w '%{http_code}' <url>` or the `WebFetch` tool. Verify that every URL has a recorded status and that inaccessible sources are labeled unverified, never guessed from a title.
+3. Compare each full claim with what the source says: scope, date, quantity, causality, qualifiers.
+   Use `grep -n -i '<key phrase>'` on the fetched text to find the supporting passage. Verify that each claim has one status: direct support, inference, partial, contradiction, or no support.
+4. Check source quality and freshness: author or institution, date, version, corrections, and whether a more primary source is required.
+   Run `grep -c '|' audit.md` on the draft table. Verify that each row carries a source-quality note and a freshness value.
+5. Emit the audit table with counts by status and the blocker list, as in the Output section.
+   Run `grep -c 'no support' audit.md` to confirm the counts. Verify that the counts sum to the number of claims and that replacement suggestions are labeled unreviewed.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Source returns 403, 404, or a paywall | Link rot or access control blocks retrieval | Mark the citation unverified, try the archived copy via `curl -sL https://archive.org/wait/<url>`, and list it as a blocker if still unreachable |
+| Claim is supported only by an abstract or snippet | Full text unavailable | Record support as partial, quote the visible text only, and ask the author for the full source |
+| Several claims share one citation | Citation stretched across unrelated claims | Split the claims, audit each against the specific passage, and flag laundering where the passage is absent |
+
 ## Output
 
 Return a table with claim ID, claim text, citation, accessibility, support status,

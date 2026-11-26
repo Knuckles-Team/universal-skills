@@ -18,6 +18,23 @@ metadata:
 
 This skill consolidates tools and workflows for analyzing the security posture, operational errors, and ownership metrics of an application.
 
+## Steps
+
+1. Pick the analysis from the request (Sentry errors, ownership and bus factor, threat model, or false-positive filtering) with `ls scripts/`. Verify that the request names a project, repository or register to analyse, and ask for it if not.
+2. For Sentry, export `SENTRY_AUTH_TOKEN` and run `python scripts/sentry_api.py --project <project> list-issues`. Verify that the output lists issues, or drill in with the `issue-detail` subcommand on one issue id.
+3. For ownership, build the map with `python scripts/run_ownership_map.py --repo <repo> --out ownership-map-out`. Verify that `ls ownership-map-out` shows `people.csv`, `files.csv` and `edges.csv`.
+4. Query the map with `python scripts/query_ownership.py --data-dir ownership-map-out files --bus-factor-max 1`. Verify that the JSON lists the sensitive files held by a single maintainer.
+5. For a security register, run `filter_findings(register)` from `code-enhancer/scripts/findings_filter.py`. Verify that the returned `stats` accounts for each excluded finding.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `sentry_api.py` rejects the base URL | `SENTRY_BASE_URL` is not HTTPS and not loopback | Set an `https://` URL, and add a CA bundle via `SSL_CERT_FILE` if the certificate is private |
+| `sentry_api.py` returns an authorisation error | `SENTRY_AUTH_TOKEN` is missing, expired or lacks project scope | Export a fresh token with read scope for the project and retry the same command |
+| `query_ownership.py` finds no CSV files | `--data-dir` does not match the `--out` directory of the build | Point `--data-dir` at the build output or rebuild with `run_ownership_map.py` |
+| Ownership map is empty or very slow | The repo is a shallow clone, or has a long history | Fetch full history with `git fetch --unshallow`, or limit the build with `--since <date>` |
+
 ## Capabilities/Tools
 Interact with the Sentry API to inspect application errors and tracebacks.
 ```bash
@@ -70,4 +87,4 @@ Borrowed from Anthropic's `claude-code-security-review` (MIT).
 
 ## Related skill
 
-- [security-tools-security-threat-model](../security-tools-security-threat-model/SKILL.md) — the security-threat-model sub-skill, served as its own skill.
+- `security-tools-security-threat-model` — the security-threat-model sub-skill, served as its own skill.

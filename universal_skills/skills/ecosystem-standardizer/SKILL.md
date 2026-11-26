@@ -2,13 +2,7 @@
 name: ecosystem-standardizer
 skill_type: workflow
 description: >-
-  Unified ecosystem standardization workflow for the agent-packages repository.
-  Audits all projects for structural drift, generates missing standardized files,
-  migrates environment variables, extracts MCP subdirectories, and creates standard
-  test suites. Produces a comprehensive drift report with per-project scorecards.
-  Use when onboarding a new agent, auditing ecosystem compliance, running
-  "standardize the ecosystem", "check for drift", "onboard new agent", or
-  "ecosystem audit".
+  Unified ecosystem standardization workflow for the agent-packages repository. Produces a comprehensive drift report with per-project scorecards. Use when onboarding a new agent, auditing ecosystem compliance, running "standardize the ecosystem", "check for drift", "onboard new agent", or "ecosystem audit".
 domain: development-workflows
 tags: ['standardization', 'drift', 'audit', 'ecosystem', 'onboarding', 'dev-workflows']
 requires: ['repository-manager-mcp']
@@ -18,6 +12,8 @@ metadata:
 ---
 
 # ecosystem-standardizer Workflow
+
+Scope: Unified ecosystem standardization workflow for the agent-packages repository. Audits all projects for structural drift, generates missing standardized files, migrates environment variables, extracts MCP subdirectories, and creates standard test suites. Produces a comprehensive drift report with per-project scorecards. Use when onboarding a new agent, auditing ecosystem compliance, running "standardize the ecosystem", "check for drift", "onboard new agent", or "ecosystem audit".
 
 Autonomous workflow for auditing and enforcing structural standards across all
 agent-packages projects. Detects drift from the ecosystem conventions, generates
@@ -250,6 +246,23 @@ Expected: validation_results
 Depends On: Step 9
 
 ---
+
+## Steps
+
+1. Choose mode and scope (`audit`, `fix`, `onboard` or `report-only`) as in Step 0 below and run the audit with `python scripts/audit_ecosystem.py --agents-dir ${MERISTEM_WORKSPACE_ROOT}/agent-packages/agents --output ${MERISTEM_WORKSPACE_ROOT}/reports/ecosystem-drift-report.md`. Verify that `head -30 ${MERISTEM_WORKSPACE_ROOT}/reports/ecosystem-drift-report.md` shows an overall score and per-project scorecards.
+2. Review the report with the user and stop here for `audit` or `report-only`. Verify that the lowest-scoring projects and most common drift categories were presented with `grep -n "^#" ${MERISTEM_WORKSPACE_ROOT}/reports/ecosystem-drift-report.md`.
+3. For `fix` or `onboard`, run the generators in order: `python scripts/generate_concepts.py`, `python scripts/migrate_env_vars.py`, `python scripts/create_mcp_subdirs.py`, `python scripts/generate_standard_tests.py`, `python scripts/generate_changelogs.py` and `python scripts/cleanup_deprecated.py`. Verify that each script prints a created or applied count and that `git status --short` in the target project lists only the expected new files.
+4. Re-audit with `python scripts/audit_ecosystem.py --agents-dir ${MERISTEM_WORKSPACE_ROOT}/agent-packages/agents --output ${MERISTEM_WORKSPACE_ROOT}/reports/ecosystem-drift-report-post-fix.md`. Verify that the post-fix score is higher than the pre-fix score and report the delta.
+5. If the user asked for validation, call the `rm_projects_validate` MCP tool with `type="all"`. Verify that every project reports passing lint, tests and pre-commit.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `audit_ecosystem.py` finds no projects | `MERISTEM_WORKSPACE_ROOT` unset or wrong | Run `echo $MERISTEM_WORKSPACE_ROOT`, export the workspace root, and verify `ls $MERISTEM_WORKSPACE_ROOT/agent-packages/agents` lists agents. |
+| Score does not improve after the fixes | A generator skipped a project that has a nonstandard layout | Read the per-project missing items in the post-fix report and create that file by hand or fix the layout, then re-audit. |
+| `create_mcp_subdirs.py` leaves `mcp_server.py` unchanged | The file has no `register_*_tools` functions to extract | Skip that project and record it as non-applicable in the report. |
+| CONCEPT ID collision reported | Two projects share a prefix | Change the prefix in the later project's `docs/concepts.md` to a unique value and re-audit. |
 
 ## Scripts
 

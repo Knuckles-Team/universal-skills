@@ -34,6 +34,9 @@ Provide the target hardware node selection.
 
 ## Steps
 
+1. Collect hardware details by invoking `$hardware-profile-sweep` for the target nodes. Verify that `hardware_profile` lists CPU, memory, disk, OS and GPU for each node.
+2. Sample utilization by invoking `$host-resource-sampler` for the same nodes. Verify that `resource_sample` covers every node in `hardware_profile`.
+
 ### Step 0: hardware-profile-sweep [skill: hardware-profile-sweep]
 
 Invoke `$hardware-profile-sweep` with the workflow inputs to collect
@@ -47,6 +50,14 @@ Invoke `$host-resource-sampler` with `hardware_profile`'s node
 selection to sample current utilization for the same nodes.
 
 Expected: `resource_sample`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Node absent from `hardware_profile` | Node unreachable | Check connectivity to the node and rerun `$hardware-profile-sweep` for it. |
+| `resource_sample` covers different nodes | Node selection not passed through | Pass the node list from `hardware_profile` into `$host-resource-sampler` and rerun. |
+| Inventory lacks utilization | Sampler skipped | Invoke `$host-resource-sampler` and attach its output. |
 
 ## Output
 

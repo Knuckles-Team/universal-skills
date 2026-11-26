@@ -33,6 +33,12 @@ Runs overnight crawling of news/publications to generate factor hypotheses, runs
 
 ## Steps
 
+1. Scan sources with `graph_query` and `sx_search`. Verify that `factor-hypothesis-list` is non-empty.
+2. Run backtests with `graph_analyze` across 50 configurations. Verify that `multi-config-backtest-results` has 50 entries.
+3. Debate with `graph_query` and `graph_analyze`. Verify that `approved-factor-signals` includes drawdown and cost impact.
+4. Compile with `graph_write` and `document_tools`. Verify that `morning-research-tearsheet` opens.
+5. Persist with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: Hypothesis Crawlers
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,14 @@ Expected: `morning-research-tearsheet`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No hypotheses | Sources unreachable | Test `sx_search` with a simple query and repair the connector before re-scanning |
+| Backtests incomplete | Worker timeout | Lower the parallel worker count and re-run only the failed configurations |
+| Report empty | Debate produced none | Re-run Step 3 and inspect the debate output via `graph_query` to see why no factor was approved |
 
 ## Output
 - Overnight Research Loop results persisted in KG

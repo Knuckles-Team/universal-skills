@@ -102,6 +102,23 @@ Every feature increment must complete all three phases before moving to the next
 
 ---
 
+## Steps
+
+1. Break the task into the smallest testable behaviors and pick the simplest one. Verify with `git status --short` that the working tree is clean enough to see only this increment's changes.
+2. Red: write one failing test for that behavior and run it with the repository's runner, for example `pytest -x tests/<file>::<test_name>`. Verify that it fails and that the failure message names the missing behavior.
+3. Green: write the minimum code to pass and run `pytest -x tests/<file>::<test_name>` plus the full suite with `pytest`. Verify that the new test and the whole suite pass.
+4. Refactor: remove duplication and improve names in small steps, running `pytest` after each change. Verify that the suite stays green after every step.
+5. Commit the increment with `git add -- <exact files>` and `git commit`, and repeat from step 2 for the next behavior. Verify with `git show --stat HEAD` that the commit holds one tested behavior.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| New test passes immediately | It tests existing behavior or asserts nothing meaningful | Strengthen the assertion until it fails for the right reason, or delete it as redundant |
+| Test fails for the wrong reason | Import error or typo, not missing behavior | Fix the setup until the failure message describes the missing behavior |
+| Suite breaks during Refactor | Change altered behavior | Revert the last small change with `git checkout -- <file>` for files you own and redo it in a smaller step |
+| Many tests written before any code | Horizontal slicing | Keep one test, delete or park the rest, and loop one test at a time |
+
 ## Anti-Pattern: Horizontal Slices
 
 **DO NOT write all tests first, then all implementation.** This is "horizontal slicing" - treating RED as "write all tests" and GREEN as "write all code."

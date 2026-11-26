@@ -35,6 +35,10 @@ Provide the ticker/universe and the lookback window.
 
 ## Steps
 
+1. Invoke `$web-search` with the ticker or universe and lookback window. Verify that the result contains a non-empty `news_source_packet`.
+2. Invoke `$web-crawler` with `news_source_packet`. Verify that the result contains a non-empty `raw_news_documents`.
+3. Invoke `$citation-auditor` with `raw_news_documents`. Verify that the result contains a non-empty `citation_audit`.
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs to locate candidate
@@ -55,6 +59,14 @@ Invoke `$citation-auditor` with `raw_news_documents` to audit
 reachability and sourcing.
 
 Expected: `citation_audit`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Search returns no events | Lookback window too narrow or ticker misspelled | Widen the lookback window, verify the ticker spelling, and re-invoke `$web-search` |
+| Crawler returns empty pages | Source blocks fetching or URL is dead | Drop the unreachable URLs from `news_source_packet` and crawl the remaining sources with `$web-crawler` |
+| Citation audit marks sources unreachable | Articles moved or paywalled | Replace the flagged sources with alternatives from the search packet and re-run `$citation-auditor` |
 
 ## Output
 

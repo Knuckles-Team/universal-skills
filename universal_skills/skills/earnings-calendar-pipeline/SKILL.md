@@ -34,6 +34,9 @@ Provide the ticker universe and the lookahead window.
 
 ## Steps
 
+1. Locate earnings dates by invoking `$web-search` with the ticker universe and lookahead window. Verify that `earnings_date_source_packet` has a source URL and a date for each ticker found.
+2. Normalize the dates by invoking `$quant-data-ingest` with `earnings_date_source_packet`. Verify that `normalized_earnings_calendar` is stored in Timeseries Memory with one row per ticker and date.
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs to locate publicly
@@ -47,6 +50,14 @@ Invoke `$quant-data-ingest` with `earnings_date_source_packet` to
 normalize the dates into the Timeseries Memory backend.
 
 Expected: `normalized_earnings_calendar`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| A ticker has no date in the packet | No public announcement found inside the lookahead window | Widen the lookahead input or search the company investor-relations page via `$web-search`, and otherwise leave the ticker out. |
+| Ingest rejects rows | Dates in mixed formats | Normalize the dates to ISO 8601 in `earnings_date_source_packet` and re-invoke `$quant-data-ingest`. |
+| Pipeline asked to forecast surprises | Scope creep beyond this workflow | Decline the extra scope, because this workflow only ingests reported dates. |
 
 ## Output
 

@@ -23,6 +23,13 @@ the Risk Analyst persona.
 
 ## Steps
 
+1. Pull prices with yfinance and compute daily returns with `data-science-mcp`. Verify that `daily-returns` has no missing values.
+2. Fit GARCH(1,1) with the `arch` library. Verify that the fit summary shows converged estimates.
+3. Produce out-of-sample forecasts and align them to realized volatility. Verify that `forecast-realized-pairs` has matching dates.
+4. Evaluate with `RMSE` and `QLIKE`. Verify that both metrics are reported along with where the model under- or over-predicts.
+5. Publish the repo with README, plots and metrics via `gh repo create`. Verify that `github-repo-url` opens the repo.
+6. Persist the project using `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 1: fetch-price-data
 **Agent**: `quant_developer`
 **Tools**: `data-science-mcp`
@@ -63,6 +70,14 @@ Expected: `github-repo-url`
 **Tools**: `graph_write`
 
 Persist the project and evaluation metrics as typed nodes linked to the portfolio.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| GARCH fit does not converge | Returns not scaled | Multiply returns by 100 or change the model variant and refit. |
+| yfinance returns no data | Bad ticker or rate limit | Check the ticker symbol and retry with a different date range. |
+| Forecast and realized misalign | Different date index | Reindex both series to the same dates before evaluating. |
 
 ## Output
 - A GARCH volatility forecaster graded against realized vol

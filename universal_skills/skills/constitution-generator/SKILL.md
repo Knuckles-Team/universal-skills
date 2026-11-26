@@ -49,3 +49,24 @@ Your output must be the content for a `constitution.md` file (or a diff if updat
 2. **Draft/Refine**: If it doesn't exist, draft a comprehensive version based on the project type. If it exists, apply requested updates while maintaining internal consistency.
 3. **Structured Persistence**: In addition to the markdown file, always save the structured state as a `ProjectConstitution` JSON in `agent_data/constitution.json` using the `SDDManager` from `meristem`.
 4. **Validate**: Ensure all normative statements are actionable and clear.
+
+## Steps
+
+1. Check whether a constitution already exists.
+   Run `ls agent_data/constitution.md constitution.md 2>&1`. Verify that you know whether you are creating or updating.
+2. Collect user intent and existing context such as stack and code patterns.
+   Run `ls` and `grep -rn "MUST\|SHOULD" docs/ 2>/dev/null` for prior rules. Verify that every user-stated constraint is listed before drafting.
+3. Draft or update `constitution.md` using the six-part structure from Output Format.
+   Verify that `grep -n "^## " agent_data/constitution.md` shows Vision, Core Principles, Governance, Quality Gates, and Tech Stack sections.
+4. Persist the structured state to `agent_data/constitution.json` through `SDDManager` from `meristem`.
+   Run `python -c "import json; json.load(open('agent_data/constitution.json'))"`. Verify that the command exits 0.
+5. Validate that every normative statement is actionable.
+   Run `grep -nE "MUST|SHOULD|MAY" agent_data/constitution.md`. Verify that each hit states a testable rule and that the document defines its own amendment process.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `SDDManager` import fails | `meristem` not installed in the active environment | Install it with `pip install meristem` or activate the project venv, then repeat the persistence step |
+| Update contradicts an existing principle | Edit applied without reading current rules | Reread the file, reconcile the conflict explicitly, and bump the constitution version in Governance |
+| JSON and markdown disagree | Only one file was updated | Regenerate the JSON from the final markdown and compare the principle counts |

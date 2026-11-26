@@ -33,6 +33,12 @@ Retrieves reported issues for a repository from GitHub, validates their correctn
 
 ## Steps
 
+1. Retrieve open issues with the `scanner-agent` using `rep_rm_workspace` and `rep_rm_git`. Verify that `issues` lists the repository's open issues.
+2. Validate issues with the `builder-agent` using `rep_rm_projects`. Verify that `root_cause_analysis` exists for each valid issue.
+3. Generate specs with the `validator-agent`. Verify that `ls .specify/` shows a `spec.md` per validated issue.
+4. Create the plan with the `publisher-agent`. Verify that `tasks_md` is present with dependencies and test tasks.
+5. Persist to the Knowledge Graph with `graph_write`. Verify that `graph_query` returns the new nodes.
+
 ### Step 0: Github Agent
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
@@ -67,6 +73,14 @@ Expected: `implementation_plan, tasks_md`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No issues returned | Wrong repository or filter | Check the target `{{task}}` value and rerun the retrieval. |
+| `.specify/` missing | Repository not initialised | Create the directory with `mkdir -p .specify` and rerun spec generation. |
+| Issue judged invalid | Cannot be reproduced | Record the reason and skip spec generation for it. |
 
 ## Output
 - Github Issue Sdd Planner results persisted in KG

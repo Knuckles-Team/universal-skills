@@ -31,6 +31,11 @@ Extracts anomalous execution traces and success rates from Langfuse, then ingest
 
 ## Steps
 
+1. Fetch recent traces with the langfuse-mcp trace tools and filter long-running or failed runs. Verify that the filtered `trace` list is returned.
+2. Aggregate success rates and token averages with the `langfuse-mcp` metrics tools. Verify that success and token values are present.
+3. Ingest ExecutionSummary and PerformanceAnomaly nodes using Cypher via `kg_write`. Verify that a `graph_query` returns the new nodes with their Workflow, Agent and Tool links.
+4. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Langfuse Trace Retrieval [skill: langfuse-mcp]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -58,6 +63,14 @@ Expected: `cypher, ingest`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Langfuse returns no traces | Wrong project or time range | Set the correct project and window, and fetch again. |
+| Cypher write fails | Referenced Workflow or Agent node is missing | Create or ingest the missing node first and repeat the `kg_write` call. |
+| Duplicates appear after ingest | Same run ingested twice | Use a stable id per run in the Cypher `MERGE` and remove the duplicates. |
 
 ## Output
 - Telemetry Ingestion results persisted in KG

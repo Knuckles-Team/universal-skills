@@ -3,13 +3,7 @@ name: skill-graph-builder
 domain: agent-tools
 skill_type: skill
 description: >-
-  Transform any documentation source — a website, a PDF/Office file, a local
-  directory, a single URL, a REST/DB/MCP connector, freshly generated text, or a
-  Knowledge-Graph subgraph — into a polished, standardized agent skill-graph
-  (SKILL.md + reference/ manual + machine-readable index.json + optional LLM-distilled
-  OVERVIEW.md) with a sources.json provenance/freshness manifest, hybrid Knowledge-Graph
-  + ontology enrichment, and keep-updated refresh/restyle/rebuild loops. The recipe to
-  capture an entire reference manual as a reusable skill and create more.
+  Turn a documentation source (site, PDF, directory, URL, REST/DB/MCP connector, generated text, or KG subgraph) into a standardized skill-graph: SKILL.md, references, index.json, optional OVERVIEW.md, sources.json, with refresh, restyle and rebuild loops. Use to capture a reference manual as a reusable skill. Do NOT use to hand-write a single skill (skill-builder).
 license: MIT
 tags: [skill-graph, builder, automation, docs, skill, generator, transformation]
 metadata:
@@ -17,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Skill-Graph-Builder (Any Source → Standardized Skill-Graph)
+
+Scope: Transform any documentation source — a website, a PDF/Office file, a local directory, a single URL, a REST/DB/MCP connector, freshly generated text, or a Knowledge-Graph subgraph — into a polished, standardized agent skill-graph (SKILL.md + reference/ manual + machine-readable index.json + optional LLM-distilled OVERVIEW.md) with a sources.json provenance/freshness manifest, hybrid Knowledge-Graph + ontology enrichment, and keep-updated refresh/restyle/rebuild loops. The recipe to capture an entire reference manual as a reusable skill and create more.
 
 A skill-graph is an externally-consumable corpus of knowledge packaged as an agent
 skill: a `SKILL.md` index over a `reference/` markdown tree. This builder is the
@@ -129,6 +125,23 @@ export SKILL_GRAPH_CRAWL_TIMEOUT=900   # per-site bound; SKILL_GRAPH_MAX_PAGES c
 
 (See `meristem/docs/guides/skill-graph-migration.md` for the full crawl4ai +
 Chrome install + the migration/refresh runbook.)
+
+## Steps
+
+1. Pick the source kind and output name, and confirm the builder CLI exists with `python scripts/generate_skill.py --help`. Verify that the help text lists `--max-depth`, `--distill`, `--from-kg` and `--no-kg`.
+2. Build the graph with `python scripts/generate_skill.py https://example.com/docs my-skill --max-depth 2 --distill`, substituting the real source. Verify that the command prints the output directory and that it contains `SKILL.md`, `index.json` and `sources.json`.
+3. Check the corpus layout with `ls <output-dir>/reference | head`. Verify that files are flat `<hash>.md` names and that `OVERVIEW.md` exists when `--distill` was passed.
+4. Report staleness with `python -m meristem.knowledge_graph.distillation.skill_graph_pipeline status --dir <output-dir> --quick`. Verify that the report names the graph and marks each source fresh or stale.
+5. Keep it current with `python -m meristem.knowledge_graph.distillation.skill_graph_pipeline refresh --dir <output-dir>`. Verify that only changed corpora are re-ingested and that `sources.json` shows a new fetch time for them.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Crawl returns zero pages | crawl4ai interpreter not configured, so the basic connector ran | Set `SKILL_GRAPH_CRAWLER_PYTHON` to a venv that has crawl4ai, export `SKILL_GRAPH_CRAWLER`, and rebuild with `--max-depth 2` |
+| Output directory name differs from the one requested | The `-docs` suffix is enforced | Use the suffixed name (`my-skill-docs`) in later `status`/`refresh` calls, or pass `--output-dir` |
+| Build finishes but no KG nodes appear | arbora daemon unreachable, so the build degraded to offline | Start arbora and run `refresh --dir <output-dir> --force`, or accept offline-only and pass `--no-kg` to silence it |
+| `refresh` reports nothing changed after a restyle need | Presentation changes do not alter source hashes | Run `restyle --dir <output-dir>` instead of `refresh` |
 
 ## Via the Knowledge-Graph MCP surface
 

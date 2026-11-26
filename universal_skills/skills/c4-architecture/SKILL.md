@@ -3,16 +3,7 @@ name: c4-architecture
 domain: development
 skill_type: skill
 description: >-
-  Model AND decide software architecture. (1) Generate C4 documentation with
-  Mermaid (Context/Container/Component/Deployment) — triggers "architecture
-  diagram", "C4 diagram", "system context", "container/component/deployment
-  diagram", "document architecture". (2) Reason about architecture DECISIONS
-  grounded in canonical references (Hohpe, Richards/Ford, Hard Parts, Tar Pit,
-  Kleppmann DDIA, DDD, Team Topologies) — triggers "should we split/merge/extract
-  this service", "monolith vs microservices", "service/bounded-context
-  boundaries", "saga / distributed transaction / consistency model", "draft an
-  ADR", "fitness functions". Do NOT use for general flowcharts or ERD (use
-  mermaid-diagrams), code-level refactoring, or framework picks (React vs Vue).
+  Model AND decide software architecture. (1) Generate C4 documentation with Mermaid (Context/Container/Component/Deployment) — triggers "architecture diagram", "C4 diagram", "system context", "container/component/deployment diagram", "document architecture". Do NOT use for general flowcharts or ERD (use mermaid-diagrams), code-level refactoring, or framework picks (React vs Vue).
 license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
 metadata:
@@ -20,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # C4 Architecture Documentation
+
+Scope: Model AND decide software architecture. (1) Generate C4 documentation with Mermaid (Context/Container/Component/Deployment) — triggers "architecture diagram", "C4 diagram", "system context", "container/component/deployment diagram", "document architecture". (2) Reason about architecture DECISIONS grounded in canonical references (Hohpe, Richards/Ford, Hard Parts, Tar Pit, Kleppmann DDIA, DDD, Team Topologies) — triggers "should we split/merge/extract this service", "monolith vs microservices", "service/bounded-context boundaries", "saga / distributed transaction / consistency model", "draft an ADR", "fitness functions". Do NOT use for general flowcharts or ERD (use mermaid-diagrams), code-level refactoring, or framework picks (React vs Vue).
 
 This skill covers two complementary jobs. Pick by what the user is asking:
 
@@ -42,6 +35,24 @@ To ensure 100% accuracy, you MUST build your C4 diagrams using real data from th
 2. **Translate to Mermaid**: Map the returned graph topology directly into the C4 Mermaid syntax. This guarantees the diagram perfectly reflects the real, running system architecture.
 
 ---
+
+## Steps
+
+1. Query the graph for real components with `kg_query` or `kg_pillar_view` from the `meristem-kg` MCP server. Verify that the result lists the containers and components you will draw.
+2. Create the output directory with `mkdir -p docs/architecture`. Verify that `ls docs/architecture` succeeds.
+3. Write the Level 1 and Level 2 diagrams to `docs/architecture/c4-context.md` and `docs/architecture/c4-containers.md` using the Quick Start syntax. Verify that `grep -l "C4Context\|C4Container" docs/architecture/*.md` lists both files.
+4. Add Component, Deployment or Dynamic diagrams only where they add value, named `c4-components-{feature}.md`, `c4-deployment.md` or `c4-dynamic-{flow}.md`. Verify that `ls docs/architecture` shows the naming convention.
+5. Check each diagram against Best Practices with `grep -c "Rel(" docs/architecture/c4-containers.md`. Verify that every diagram has a title, labeled arrows and under 20 elements.
+6. For a forward-looking decision question, follow the Decision workflow in Architecture Decisions and save the ADR with `ls docs/adr` to confirm its location. Verify that the ADR names the trade-offs and the evidence that would flip the decision.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Mermaid diagram does not render | Invalid C4 syntax or unescaped characters | Compare with the Quick Start examples, fix the `Rel(...)` and boundary syntax, and preview again. |
+| Diagram disagrees with the real system | Built from memory instead of the graph | Re-run `kg_query` or `kg_pillar_view` and regenerate the diagram from the returned nodes. |
+| Diagram is unreadable with too many elements | More than 20 elements in one view | Split it into Context, Container and per-feature Component diagrams. |
+| Architecture-decision answer is a plain recommendation | Four lenses and trade-offs skipped | Redo the Decision workflow and load the matching file from `references/architecture-decisions/`. |
 
 ## C4 Diagram Levels
 

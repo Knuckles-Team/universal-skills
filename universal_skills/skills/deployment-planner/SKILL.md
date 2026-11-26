@@ -1,17 +1,8 @@
 ---
 name: deployment-planner
 skill_type: skill
-description: >
-  Intelligent service placement and deployment strategy engine for Docker Swarm,
-  Kubernetes, or standalone container clusters. Performs hardware discovery,
-  service tier classification, compute-weighted placement scoring, and generates
-  deterministic deployment blueprints. Produces migration plans with data-aware
-  volume handling. Use when deploying services to a new cluster, rebalancing
-  existing workloads, capacity planning, or creating golden deployment recipes.
-  Triggers on "deployment plan", "rebalance services", "placement strategy",
-  "capacity plan", "golden deployment", "where should I put this service",
-  "optimize my cluster". Do NOT use for individual container debugging — use
-  container-health-check for that.
+description: >-
+  Plan service placement and deployment for Docker Swarm, Kubernetes, or standalone clusters: hardware discovery, tier classification, placement scoring, deployment blueprints, data-aware migration plans. Use when deploying to a new cluster, rebalancing, capacity planning, or asking where a service should run. Do NOT use for single-container debugging (container-health-check).
 domain: infrastructure
 tags:
   - deployment
@@ -31,6 +22,8 @@ metadata:
 ---
 
 # Deployment Planner Skill
+
+Scope: Intelligent service placement and deployment strategy engine for Docker Swarm, Kubernetes, or standalone container clusters. Performs hardware discovery, service tier classification, compute-weighted placement scoring, and generates deterministic deployment blueprints. Produces migration plans with data-aware volume handling. Use when deploying services to a new cluster, rebalancing existing workloads, capacity planning, or creating golden deployment recipes. Triggers on "deployment plan", "rebalance services", "placement strategy", "capacity plan", "golden deployment", "where should I put this service", "optimize my cluster". Do NOT use for individual container debugging — use container-health-check for that.
 
 Deterministic, compute-aware service placement engine for multi-node container clusters.
 
@@ -65,6 +58,14 @@ This skill automates the process of determining **which services should run on w
 ---
 
 ## Steps
+
+1. Collect hardware from every node with `lscpu`, `nproc`, `free -h`, `df -h /`, `nvidia-smi` and `docker node ls` (Step 1). Verify that the resulting JSON has one entry per inventory host with CPU cores, RAM and disk fields.
+2. Enumerate the running and configured services with `docker service ls` and `docker service inspect` (Step 2). Verify that each service has an image, current node, volumes and node constraint recorded.
+3. Classify every service into tiers T0-T6 (Step 3) and assign node roles such as gateway, NAS and AI (Step 4), reading labels with `docker node inspect <node> --format labels`. Verify that each service has exactly one tier and each role has a node.
+4. Score candidate nodes and select a placement for each service (Step 5), using the `free -h` figures from Step 1. Verify that every service has a target node with a recorded reason and no node exceeds 80% RAM.
+5. Generate migration commands for services that move, using `docker service update --constraint-add` and `rsync` (Step 6). Verify that `docker service ps SERVICE_NAME --format '{{.Node}} {{.CurrentState}}'` shows the service running on the target node.
+6. Write the golden deployment blueprint `golden-deployment.yaml` (Step 7). Verify that `ls golden-deployment.yaml` succeeds and that every service from Step 5 has a placement entry.
+7. For Kubernetes targets, emit manifests with `python scripts/emit_manifests.py --blueprint golden-deployment.yaml --target kubernetes --out k8s/` (Step 7b). Verify that `ls k8s/` lists manifests and that `kubectl apply --dry-run=client -f k8s/` reports no errors.
 
 ### Step 1: Hardware Discovery
 
@@ -414,6 +415,16 @@ The emitted `k8s/` dir is what the GitLab `k8s-deploy` CI job applies
 GitOps Kubernetes stack.
 
 ---
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| A node is missing from the hardware JSON | The host is unreachable over SSH | Check the entry in `~/.config/arbora/inventory.yaml`, test with `ssh <host> nproc`, and rerun Step 1 for that host |
+| A service has no tier | Its name matches no tier rule | Assign the tier by hand from the tier table and note it in the plan |
+| Migration leaves the service at 0/1 replicas | The volume data was not copied before the constraint changed | Scale the service to 0 with `docker service scale SERVICE_NAME=0`, rerun the `rsync` step, and scale it back to 1 |
+| `emit_manifests.py` fails | The blueprint lacks the `target:` or `k8s:` block | Add `target: kubernetes` and the `k8s:` block to `golden-deployment.yaml` and rerun the script |
+
 
 ## Cross-Node Backup Pattern
 

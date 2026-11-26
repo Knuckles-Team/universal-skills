@@ -36,6 +36,9 @@ also uses), so the two surfaces never drift.
 
 ## Steps
 
+1. Call `research_artifact` with `action=inquire` and `topic=<topic>`. Verify that `inquiry_briefing` contains perspectives, agreements, divergences, `blind_spot` and `peer_review`.
+2. Read back with `graph_query` over the `research_inquiry`, `perspective`, `agreement`, `contradiction`, `blind_spot` and `peer_review` nodes. Verify that the frontier question appears as the queued next loop.
+
 ### Step 1: Inquire
 **Agent**: `inquiry-agent`
 **Tools**: `research_artifact`
@@ -54,6 +57,14 @@ Query the materialized inquiry subgraph (`research_inquiry` / `perspective` / `a
 `contradiction` / `blind_spot` / `peer_review` nodes) to present the briefing and surface
 the frontier question that was queued as the next research loop. Expected:
 `perspectival_briefing`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Inquire returns no perspectives | Topic too vague | Rephrase `topic` more specifically and call `research_artifact` again |
+| Readback finds no nodes | Materialization disabled | Re-run `inquire` with default materialization and query again |
+| REST call refused | Auth missing | Use the MCP `research_artifact` call instead |
 
 ## Execution
 

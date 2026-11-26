@@ -3,17 +3,7 @@ name: universal-installer
 domain: core
 skill_type: skill
 description: >-
-  Install and wire the whole fleet contribution surface into an agent tool in one
-  step: skills, skill-graphs, skill-workflows, ontologies, and system prompts —
-  plus generating/patching supported JSON-client MCP configuration to wire
-  arbora (portable local stdio, or a remote instance) and auto-detected agents MCP
-  server. Supports installing from pip-installed providers or directly from an
-  agents project checkout. Use when the user wants to install skills or
-  ontologies or prompts into Windsurf, Claude Code, OpenCode, Antigravity,
-  Codex, Devin, Cursor, or a custom agent path, or wants an agent tool wired up
-  end-to-end (skills + MCP servers) in one command. Do NOT use for creating or
-  editing skill/ontology/prompt content — use skill-builder /
-  skill-workflow-builder / skill-graph-builder for that.
+  Install and wire the fleet contribution surface into an agent tool in one step: skills, skill-graphs, workflows, ontologies, prompts, plus MCP config for arbora. Use when you need to install skills or ontologies into Claude Code, Windsurf, OpenCode, Codex, Cursor, or a custom path. Do NOT use to create skill content (skill-builder, skill-workflow-builder, skill-graph-builder).
 license: MIT
 tags: [skills, ontologies, prompts, mcp, installer, deployment, agent-tools]
 metadata:
@@ -22,6 +12,8 @@ metadata:
   supersedes: skill-installer
 ---
 # Universal Installer Skill
+
+Scope: Install and wire the whole fleet contribution surface into an agent tool in one step: skills, skill-graphs, skill-workflows, ontologies, and system prompts — plus generating/patching supported JSON-client MCP configuration to wire arbora (portable local stdio, or a remote instance) and auto-detected agents MCP server. Supports installing from pip-installed providers or directly from an agents project checkout. Use when the user wants to install skills or ontologies or prompts into Windsurf, Claude Code, OpenCode, Antigravity, Codex, Devin, Cursor, or a custom agent path, or wants an agent tool wired up end-to-end (skills + MCP servers) in one command. Do NOT use for creating or editing skill/ontology/prompt content — use skill-builder / skill-workflow-builder / skill-graph-builder for that.
 
 The successor to `skill-installer`. Installs the **whole fleet contribution surface**
 into agent-tool directories by **copy** (default) or **symlink** (`--symlink`), in
@@ -50,6 +42,24 @@ one entry point per artifact type:
 > **Refactor-safe (symlink mode).** A `--symlink` install repoints a moved skill's
 > stale link to its new source and prunes broken links left by a renamed/removed
 > skill on a full install (`--no-prune` to disable) — unchanged from `skill-installer`.
+
+## Steps
+
+1. Install the providers with `pip install universal-skills skill-graphs`. Verify that `pip show universal-skills` prints a version and `install-universal --help` lists `--tool`, `--symlink` and `--arbora`.
+2. Install skills, ontologies and prompts into the target tool with `install-universal --tool claude --symlink --layer atomic --arbora stdio`. Verify that `ls -l ~/.claude/skills | head` shows symlinks into the installed package.
+3. Confirm the ontology and prompt legs landed with `ls "${XDG_DATA_HOME:-$HOME/.local/share}/arbora/ontologies" "${XDG_DATA_HOME:-$HOME/.local/share}/arbora/prompts"`. Verify that each lists one folder per provider.
+4. Check the MCP wiring with `grep -n '"arbora"' ~/.claude.json`. Verify that the entry shows `"command": "arbora"` with `--transport stdio`, or the remote `"url"` you passed with `--arbora-url`.
+5. Check the manifest with `python3 -m json.tool "${XDG_DATA_HOME:-$HOME/.local/share}/arbora/install-manifest.json"`. Verify that each provider lists the artifact types and counts installed this run, and follow the printed `source_sync` hint.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `install-universal: command not found` | The package is not installed in the active environment | Run `pip install universal-skills`, or call `python scripts/install.py` from a checkout. |
+| No ontologies or prompts installed for a connector | The connector is not pip-installed, so entry-point discovery misses it | Install from the checkout with `install-universal --tool claude --from-package <path-to-agents-package>`. |
+| `--arbora remote` is rejected | `--arbora-url` was not supplied | Rerun with `--arbora remote --arbora-url https://arbora.example.com/mcp`. |
+| An existing MCP entry was not changed | Merges never overwrite without `--force` | Review the entry in the client config and rerun with `--force` only if replacing it is intended; the target file is backed up first. |
+| `--check --verify-pin` fails on upstream skills | A vendored file was edited by hand | Move the change into `universal_skills/overlays/<skill>/` and run `python scripts/sync_upstream_skills.py --update <source-id>` again. |
 
 ## Supported Tools
 

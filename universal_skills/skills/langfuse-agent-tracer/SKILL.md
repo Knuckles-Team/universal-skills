@@ -31,6 +31,11 @@ Automatically queries Langfuse sessions and traces to isolate meristem execution
 
 ## Steps
 
+1. List traces with `langfuse-mcp` using `trace_list` or `sessions_list` filtered by agent tags. Verify that `trace_list_data` is non-empty.
+2. Present the dashboard of executions highlighting warnings, high latencies and errors, and ask for a trace choice. Verify that `selected_trace_id` is recorded.
+3. Fetch details with the `trace_get` action for `selected_trace_id`. Verify that `trace_span_details` has the span tree with inputs and outputs.
+4. Persist findings with `graph_write`. Verify that `graph_query` returns the new nodes.
+
 ### Step 0: list-agent-traces [skill: langfuse-mcp]
 **Agent**: `scanner-agent`
 **Tools**: `rep_rm_workspace, rep_rm_git`
@@ -58,6 +63,14 @@ Expected: `trace_span_details`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No traces returned | Tag filter too narrow or wrong project | Broaden the filter and check the Langfuse project connection, then re-run `trace_list`. |
+| `trace_get` fails | Trace id invalid or purged | Pick another id from `trace_list_data`. |
+| Dashboard has no errors | Window too short | Extend the time window and list again. |
 
 ## Output
 - Langfuse Agent Tracer results persisted in KG

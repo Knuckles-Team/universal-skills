@@ -27,34 +27,26 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "vector-mcp": {
-      "command": "vector-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DATABASE_TYPE": "${DATABASE_TYPE:-chromadb}",
-        "DATABASE_PATH": "${DATABASE_PATH}",
-        "COLLECTION_NAME": "${COLLECTION_NAME:-memory}",
-        "API_TOKEN": "${API_TOKEN}",
-        "DBNAME": "${DBNAME:-memory}",
-        "USERNAME": "${USERNAME}",
-        "PASSWORD": "${PASSWORD}",
-        "DB_HOST": "${DB_HOST}",
-        "DB_PORT": "${DB_PORT}",
-        "DOCUMENT_DIRECTORY": "${DOCUMENT_DIRECTORY:-/documents}",
-        "SEARCHTOOL": "${ SEARCHTOOL:-True }",
-        "MISCTOOL": "${ MISCTOOL:-True }",
-        "COLLECTION_MANAGEMENTTOOL": "${ COLLECTION_MANAGEMENTTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: vector-mcp
+command: vector-mcp --transport stdio
+env:
+  DATABASE_TYPE: ${DATABASE_TYPE:-chromadb}
+  DATABASE_PATH: ${DATABASE_PATH}
+  COLLECTION_NAME: ${COLLECTION_NAME:-memory}
+  API_TOKEN: ${API_TOKEN}
+  DBNAME: ${DBNAME:-memory}
+  USERNAME: ${USERNAME}
+  PASSWORD: ${PASSWORD}
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT}
+  DOCUMENT_DIRECTORY: ${DOCUMENT_DIRECTORY:-/documents}
+  SEARCHTOOL: ${ SEARCHTOOL:-True }
+  MISCTOOL: ${ MISCTOOL:-True }
+  COLLECTION_MANAGEMENTTOOL: ${ COLLECTION_MANAGEMENTTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -66,34 +58,26 @@ vector-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only COLLECTION_MANAGEMENTTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "vector-mcp": {
-      "command": "vector-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "DATABASE_TYPE": "${DATABASE_TYPE:-chromadb}",
-        "DATABASE_PATH": "${DATABASE_PATH}",
-        "COLLECTION_NAME": "${COLLECTION_NAME:-memory}",
-        "API_TOKEN": "${API_TOKEN}",
-        "DBNAME": "${DBNAME:-memory}",
-        "USERNAME": "${USERNAME}",
-        "PASSWORD": "${PASSWORD}",
-        "DB_HOST": "${DB_HOST}",
-        "DB_PORT": "${DB_PORT}",
-        "DOCUMENT_DIRECTORY": "${DOCUMENT_DIRECTORY:-/documents}",
-        "SEARCHTOOL": "False",
-        "MISCTOOL": "False",
-        "COLLECTION_MANAGEMENTTOOL": "True"
-      }
-    }
-  }
-}
+```text
+server: vector-mcp
+command: vector-mcp --transport stdio
+env:
+  DATABASE_TYPE: ${DATABASE_TYPE:-chromadb}
+  DATABASE_PATH: ${DATABASE_PATH}
+  COLLECTION_NAME: ${COLLECTION_NAME:-memory}
+  API_TOKEN: ${API_TOKEN}
+  DBNAME: ${DBNAME:-memory}
+  USERNAME: ${USERNAME}
+  PASSWORD: ${PASSWORD}
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT}
+  DOCUMENT_DIRECTORY: ${DOCUMENT_DIRECTORY:-/documents}
+  SEARCHTOOL: False
+  MISCTOOL: False
+  COLLECTION_MANAGEMENTTOOL: True
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

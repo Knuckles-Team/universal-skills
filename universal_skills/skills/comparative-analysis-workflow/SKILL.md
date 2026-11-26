@@ -35,6 +35,13 @@ Parallel execution workflow for comparative analysis and innovation extraction u
 
 ## Steps
 
+1. Gather target codebases, papers, concept registries and C4 files from the user (Step 1). Verify that `pre_flight_config_artifacts` lists every target path and that each path exists with `ls`.
+2. Classify the inputs and rank their relevance (Step 2). Verify that `discovery_classification_artifacts` labels each input as codebase or research with a language ecosystem.
+3. Run the six parallel analyses: codebase audit, architecture discovery, security check, documentation review, innovation extraction and concept cross reference (Steps 3-8). Verify that each of the six `*_artifacts` outputs exists and is non-empty.
+4. Compute the architecture gap analysis between the targets (Step 9). Verify that `architecture_gap_analysis_artifacts` lists at least one wiring opportunity or states that none was found.
+5. Compile the unified comparison report with 0-100 scorecards under `.specify/` (Step 10). Verify that `ls .specify/` shows the report file.
+6. Ingest the report and edges with `graph_write` and purge temporary paths (Step 11). Verify that a `graph_query` returns the report node and that the temporary paths no longer exist.
+
 ### Step 1: Pre Flight Config
 **Agent**: `classification-agent`
 **Tools**: `rep_rm_workspace, rep_rm_projects`
@@ -111,6 +118,16 @@ Expected: `generate_comparison_report_artifacts`
 
 Ingest final reports, wiring audits, and relationship edges into Arbora Knowledge Graph, and purge temporary file paths.
 Expected: `kg_persistence_cleanup_artifacts`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Classification mislabels a repo as research | The input path holds only docs or a PDF folder | Point Step 1 at the repository root, correct the path in `pre_flight_config_artifacts`, and rerun Step 2 |
+| C4 model auto-generation produces an empty diagram | The AST scan found no importable modules for the language | Supply an existing C4 file in Step 1 or restrict the scan to the source directory |
+| Report is missing a domain section | One of the parallel analysis steps failed | Open the missing `*_artifacts` output, rerun only that step, and regenerate the report in Step 10 |
+| Temporary paths remain after Step 11 | The cleanup ran before the ingest finished | Confirm the ingest finished by querying the node with `graph_query`, and remove the leftover paths manually |
+
 
 ## Output
 - Graded comparative analysis report persisted in `.specify/`

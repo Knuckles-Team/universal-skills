@@ -3,7 +3,7 @@ name: workspace-validator
 domain: development
 skill_type: skill
 description: >-
-  Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Also audits worktree and git state — classifying which worktrees are merged (safe to prune), in-flight (do not disturb), or dangling, and which projects have unmerged/unpushed changes. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, ensure all projects are valid, or check which worktrees/projects are dangling, in flight, or safe to prune.
+  Validate the workspace with repository-manager MCP tools, fix issues concurrently across projects until zero errors remain, optionally bump versions and push, and audit worktree state (merged, in flight, dangling). Use to validate projects, fix all project errors, or check which worktrees are safe to prune. Do NOT use for single-repository changes.
 license: MIT
 tags: [validation, workspace, repository-manager, bugfix, workflow, worktree, git-state]
 metadata:
@@ -11,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Workspace Validator
+
+Scope: Agent workflow for validating the workspace using repository-manager MCP tools, fixing issues concurrently across all projects until 0 errors remain, and optionally bumping versions and pushing. Also audits worktree and git state — classifying which worktrees are merged (safe to prune), in-flight (do not disturb), or dangling, and which projects have unmerged/unpushed changes. Use when the user asks to validate projects, run repository-manager validation, fix all project errors, ensure all projects are valid, or check which worktrees/projects are dangling, in flight, or safe to prune.
 
 This skill defines the autonomous workflow for systematically validating all projects in the workspace, reviewing and fixing the identified issues concurrently, and optionally publishing updates. Validation runs as a **background job** per repository using `rm_projects`. The tool returns a job dictionary immediately, and you poll for results using `action="validate_status"`.
 
@@ -52,6 +54,24 @@ error: Workspace member `/path/to/broken-project` is missing a `pyproject.toml`
    - Must have a `[project]` section with `name` and `version`.
 3. Fix or create the `pyproject.toml`, then re-run validation.
 4. **Do NOT waste time fixing individual project pytest errors when the root cause is a poison pill.** Fix the pill first; the cascading errors will disappear.
+
+## Steps
+
+1. Confirm scope with the user by asking whether to run `rm_projects_validate` for validation and fixes only, or also bump and push. Verify that the answer is recorded, defaulting to validate and fix only.
+2. Submit validation by calling `rm_projects_validate` with no `repositories` argument on the first run. Verify that the response returns `queued_count` and `queued_projects`.
+3. Poll with `rm_projects_validate_status` until `summary.running` is 0. Verify that `failed_projects_csv` and `failed_details` identify the failing repos, checking for a poison pill when one workspace member error repeats everywhere.
+4. Fix each failure at its root cause per the Error Resolution Policy and rerun with `rm_projects_validate(failed_only=true)`. Verify that `summary.failed` decreases until it reaches 0.
+5. Run the final gate with `rm_projects_validate` on all repositories with `force_revalidate=true`. Verify that `summary.failed` is 0 for the whole workspace.
+6. When bump and push were approved, call `rm_workspace_list_branches` first and add `auto_bump=true` and `auto_push=true` to the final run. Verify that every project reports branch `main` and that the results contain the `bump` and `push` entries.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| The same workspace member error appears in many projects | A poison pill: one project has a missing or malformed `pyproject.toml` | Fix that project's `pyproject.toml` (`[build-system]` with `setuptools.build_meta` and a `[project]` with `name` and `version`) and rerun validation. |
+| Status response spills to a file | `summary=false` was used at scale | Poll with the default compact `summary=true` and read `failed_details` only for failed repos. |
+| Bump and push aborted | The final sweep found new regressions, or a project was not on `main` | Fix the regressions with `failed_only=true` reruns, or switch the project to `main` after asking the user, then rerun the final gate. |
+| Lint failure fixed by prefixing a variable with `_` | Violates the Error Resolution Policy | Revert the rename, find the intended use of the variable, and complete the code or delete it. |
 
 ## Workflow Instructions
 

@@ -18,24 +18,16 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "plane-agent": {
-      "command": "uvx",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "PLANE_API_KEY": "${PLANE_API_KEY}",
-        "PLANE_WORKSPACE_SLUG": "${PLANE_WORKSPACE_SLUG}",
-        "PLANE_BASE_URL": "${PLANE_BASE_URL}"
-      }
-    }
-  }
-}
+```text
+server: plane-agent
+command: uvx --transport stdio
+env:
+  PLANE_API_KEY: ${PLANE_API_KEY}
+  PLANE_WORKSPACE_SLUG: ${PLANE_WORKSPACE_SLUG}
+  PLANE_BASE_URL: ${PLANE_BASE_URL}
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
