@@ -96,3 +96,29 @@ def test_both_scaffold_ontologies_name_the_parent_of_either_engine(module):
     template = importlib.import_module(module).ONTOLOGY
     assert "rdfs:subClassOf core:{core}, kg:{core} ;" in template
     assert "@prefix kg: <http://knuckles.team/kg#> ." in template
+
+
+@pytest.mark.spec("US-MCP-BUILDER-R011.19")
+def test_a_description_over_the_budget_is_refused_and_the_codemod_fixes_it():
+    import skill_budget_codemod as codemod
+
+    long = "Run the thing. " + "Detail sentence goes here. " * 30 + "Use when the agent must run the thing. Do NOT use for x."
+    text = f"---\nname: x-ops\nskill_type: skill\ndescription: >-\n  {long}\n---\n# X\n\nBody.\n"
+    assert "DESCRIPTION_TOO_LONG" in contract.skill_front_matter_problem(text, "x-ops")
+    fixed = codemod.rewrite(text)
+    assert contract.skill_front_matter_problem(fixed, "x-ops") is None
+    assert "Use when the agent must run the thing." in fixed.split("\n---\n")[0]
+    assert "Detail sentence goes here." in fixed.split("\n---\n")[1]
+    assert codemod.rewrite(fixed) == fixed
+
+
+@pytest.mark.spec("US-MCP-BUILDER-R011.19")
+def test_the_scaffold_skills_are_inside_the_budget():
+    import scaffold_connector as scaffold
+
+    import collections
+
+    rendered = scaffold.DEVELOPMENT_SKILL.format_map(
+        collections.defaultdict(lambda: "x", fleet="x-mcp", Display="X")
+    )
+    assert contract.skill_front_matter_problem(rendered, "x-mcp-development") is None

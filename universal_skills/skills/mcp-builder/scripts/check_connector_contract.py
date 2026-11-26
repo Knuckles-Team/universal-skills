@@ -364,6 +364,8 @@ PARENT_ONTOLOGY = "https://knuckles-team.github.io/ontology/core"
 CORE_NAMESPACE = f"{PARENT_ONTOLOGY}#"
 #: Characters the engine refuses anywhere in a skill's front matter.
 UNSAFE_FRONT_MATTER = "&*!{}"
+#: The longest skill description the connector-standard budget check accepts.
+MAX_SKILL_DESCRIPTION = 400
 _STRING = re.compile(r'"""(?:.|\n)*?"""|"(?:[^"\\\n]|\\.)*"')
 
 
@@ -429,8 +431,9 @@ def skill_front_matter_problem(body: str, expected_name: str) -> str | None:
     """Why the engine would refuse this SKILL.md front matter, or None.
 
     Mirrors the engine's ``valid_skill_frontmatter``: the front matter is
-    fenced, names the entry, carries a description and holds none of
-    ``& * ! { }`` on any line (so ``rm_*`` in a description is refused).
+    fenced, names the entry, carries a description of at most 400 characters
+    (the connector-standard budget) and holds none of ``& * ! { }`` on any
+    line (so ``rm_*`` in a description is refused).
     """
     for fence in ("---\n", "---\r\n"):
         if body.startswith(fence):
@@ -442,7 +445,8 @@ def skill_front_matter_problem(body: str, expected_name: str) -> str | None:
     if not ends or ends[0] > 16 * 1024:
         return "no closing fence within 16 KiB"
     name = description = None
-    for line in rest[: ends[0]].splitlines():
+    lines = rest[: ends[0]].splitlines()
+    for number, line in enumerate(lines):
         if any(c in line for c in UNSAFE_FRONT_MATTER) or line.strip() in ("---", "..."):
             return f"unsafe character in front matter line: {line.strip()[:60]!r}"
         if line[:1].isspace() or line.lstrip().startswith("-"):
@@ -453,7 +457,14 @@ def skill_front_matter_problem(body: str, expected_name: str) -> str | None:
         if key.strip() == "name":
             name = value.strip().strip("'\"")
         elif key.strip() == "description":
-            description = value.strip()
+            tail = []
+            for follow in lines[number + 1 :]:
+                if not follow[:1].isspace():
+                    break
+                tail.append(follow.strip())
+            description = " ".join([value.strip().lstrip(">|-+ ").strip(), *tail]).strip()
+    if description and len(description) > MAX_SKILL_DESCRIPTION:
+        return f"DESCRIPTION_TOO_LONG: {len(description)} characters, the budget is {MAX_SKILL_DESCRIPTION}"
     if name != expected_name:
         return f"name {name!r} does not match the entry {expected_name!r}"
     return None if description else "description is empty"
