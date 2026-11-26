@@ -361,15 +361,135 @@ def _hook_violations(root: Path) -> list[str]:
 
 
 PARENT_ONTOLOGY = "https://knuckles-team.github.io/ontology/core"
+CORE_NAMESPACE = f"{PARENT_ONTOLOGY}#"
+#: Characters the engine refuses anywhere in a skill's front matter.
+UNSAFE_FRONT_MATTER = "&*!{}"
+#: The longest skill description the connector-standard budget check accepts.
+MAX_SKILL_DESCRIPTION = 400
+_STRING = re.compile(r'"""(?:.|\n)*?"""|"(?:[^"\\\n]|\\.)*"')
+
+
+def _turtle_statements(text: str) -> list[str]:
+    """Statements of a Turtle document, comments and string literals removed."""
+    code = re.sub(r"(?m)(?<![<\w])#.*$", "", _STRING.sub('""', text))
+    return [part.strip() for part in re.split(r"\s\.(?=\s|$)", code) if part.strip()]
+
+
+def _expand(term: str, prefixes: dict[str, str]) -> str:
+    if term.startswith("<") and term.endswith(">"):
+        return term[1:-1]
+    prefix, _, local = term.partition(":")
+    return prefixes.get(prefix, f"{prefix}:") + local
+
+
+def ontology_orphans(texts: list[str]) -> set[str]:
+    """Classes of these Turtle documents with no rdfs:subClassOf path to core.
+
+    Mirrors the engine's ``ONTOLOGY_ORPHAN`` rule: every declared class must
+    reach a class of the core namespace through declared classes. Paths run
+    across all documents of one pack.
+    """
+    declared: set[str] = set()
+    supers: dict[str, set[str]] = {}
+    for text in texts:
+        prefixes = {
+            m.group(1): m.group(2)
+            for m in re.finditer(r"(?im)^\s*@prefix\s+(\w*):\s*<([^>]*)>", text)
+        }
+        for statement in _turtle_statements(text):
+            if statement.lower().lstrip().startswith("@prefix"):
+                continue
+            head, _, rest = statement.partition(" ")
+            subject = _expand(head, prefixes)
+            if re.search(r"(?:\ba|rdf:type)\s+owl:Class\b", rest):
+                declared.add(subject)
+            for match in re.finditer(r"rdfs:subClassOf\s+([^;]+)", rest):
+                for term in match.group(1).split(","):
+                    if term.strip():
+                        supers.setdefault(subject, set()).add(
+                            _expand(term.split()[0], prefixes)
+                        )
+
+    def linked(cls: str) -> bool:
+        seen: set[str] = set()
+        frontier = [cls]
+        while frontier:
+            node = frontier.pop()
+            if node != cls and node.startswith(CORE_NAMESPACE):
+                return True
+            if node not in seen:
+                seen.add(node)
+                frontier.extend(supers.get(node, ()))
+        return False
+
+    return {
+        cls for cls in declared if not cls.startswith(CORE_NAMESPACE) and not linked(cls)
+    }
+
+
+def skill_front_matter_problem(body: str, expected_name: str) -> str | None:
+    """Why the engine would refuse this SKILL.md front matter, or None.
+
+    Mirrors the engine's ``valid_skill_frontmatter``: the front matter is
+    fenced, names the entry, carries a description of at most 400 characters
+    (the connector-standard budget) and holds none of ``& * ! { }`` on any
+    line (so ``rm_*`` in a description is refused).
+    """
+    for fence in ("---\n", "---\r\n"):
+        if body.startswith(fence):
+            rest = body[len(fence) :]
+            break
+    else:
+        return "no opening fence"
+    ends = [i for i in (rest.find("\n---\n"), rest.find("\r\n---\r\n")) if i >= 0]
+    if not ends or ends[0] > 16 * 1024:
+        return "no closing fence within 16 KiB"
+    name = description = None
+    lines = rest[: ends[0]].splitlines()
+    for number, line in enumerate(lines):
+        if any(c in line for c in UNSAFE_FRONT_MATTER) or line.strip() in ("---", "..."):
+            return f"unsafe character in front matter line: {line.strip()[:60]!r}"
+        if line[:1].isspace() or line.lstrip().startswith("-"):
+            continue
+        key, colon, value = line.partition(":")
+        if not colon:
+            return f"front matter line without a colon: {line[:60]!r}"
+        if key.strip() == "name":
+            name = value.strip().strip("'\"")
+        elif key.strip() == "description":
+            tail = []
+            for follow in lines[number + 1 :]:
+                if not follow[:1].isspace():
+                    break
+                tail.append(follow.strip())
+            description = " ".join([value.strip().lstrip(">|-+ ").strip(), *tail]).strip()
+    if description and len(description) > MAX_SKILL_DESCRIPTION:
+        return f"DESCRIPTION_TOO_LONG: {len(description)} characters, the budget is {MAX_SKILL_DESCRIPTION}"
+    if name != expected_name:
+        return f"name {name!r} does not match the entry {expected_name!r}"
+    return None if description else "description is empty"
+
+
+def _skill_violations(package_root: Path) -> list[str]:
+    """US-MCP-BUILDER-R011.19: every served skill passes the engine's front-matter rule."""
+    out = []
+    for path in sorted((package_root / "skills").glob("*/SKILL.md")):
+        problem = skill_front_matter_problem(
+            path.read_text(encoding="utf-8"), path.parent.name
+        )
+        if problem:
+            out.append(
+                f"{package_root.name}/skills/{path.parent.name}/SKILL.md: {problem} [US-MCP-BUILDER-R010]"
+            )
+    return out
 
 
 def _ontology_violations(package_root: Path) -> list[str]:
-    """US-MCP-BUILDER-R010: the domain ontology rolls up to the parent without importing it and has no TODO."""
+    """US-MCP-BUILDER-R011.19: every class rolls up to the parent catalog; nothing imports it."""
     out = []
-    for path in sorted((package_root / "ontology").glob("*.ttl")):
-        text = path.read_text(encoding="utf-8")
-        if "owl:Ontology" not in text:
-            continue
+    paths = sorted((package_root / "ontology").glob("*.ttl"))
+    texts = [path.read_text(encoding="utf-8") for path in paths]
+    for path, text in zip(paths, texts, strict=True):
         name = f"{package_root.name}/ontology/{path.name}"
         code = re.sub(r"(?m)^\s*#.*$", "", text)
         if re.search(rf"owl:imports\s+<{re.escape(PARENT_ONTOLOGY)}[#>]", code):
@@ -378,11 +498,10 @@ def _ontology_violations(package_root: Path) -> list[str]:
             )
         if "TODO" in text:
             out.append(f"{name}: contains a TODO [US-MCP-BUILDER-R010]")
-        out.extend(
-            f"{name}: class without rdfs:subClassOf a parent class [US-MCP-BUILDER-R010]"
-            for block in code.split("\n\n")
-            if re.search(r"\ba owl:Class\b", block) and "rdfs:subClassOf" not in block
-        )
+    out.extend(
+        f"{package_root.name}/ontology: class {cls} has no rdfs:subClassOf path to a core class [US-MCP-BUILDER-R010]"
+        for cls in sorted(ontology_orphans(texts))
+    )
     return out
 
 
@@ -400,6 +519,7 @@ def check_sdk_rules(root: Path, package: str) -> list[str]:
         *_bumpversion_violations(root, project, package_root),
         *_hook_violations(root),
         *_ontology_violations(package_root),
+        *_skill_violations(package_root),
     ]
 
 
