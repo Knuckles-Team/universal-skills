@@ -17,21 +17,16 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "stirlingpdf-agent": {
-      "command": "stirlingpdf-agent-mcp",
-      "args": [],
-      "env": {
-        "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
-        "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
-        "PDFTOOL": "${ PDFTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: stirlingpdf-agent
+command: stirlingpdf-agent-mcp
+env:
+  STIRLINGPDF_URL: ${STIRLINGPDF_URL:-http://localhost:8080}
+  STIRLINGPDF_API_KEY: ${STIRLINGPDF_API_KEY}
+  PDFTOOL: ${ PDFTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -43,21 +38,16 @@ stirlingpdf-agent-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only PDFTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "stirlingpdf-agent": {
-      "command": "stirlingpdf-agent-mcp",
-      "args": [],
-      "env": {
-        "STIRLINGPDF_URL": "${STIRLINGPDF_URL:-http://localhost:8080}",
-        "STIRLINGPDF_API_KEY": "${STIRLINGPDF_API_KEY}",
-        "PDFTOOL": "True"
-      }
-    }
-  }
-}
+```text
+server: stirlingpdf-agent
+command: stirlingpdf-agent-mcp
+env:
+  STIRLINGPDF_URL: ${STIRLINGPDF_URL:-http://localhost:8080}
+  STIRLINGPDF_API_KEY: ${STIRLINGPDF_API_KEY}
+  PDFTOOL: True
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

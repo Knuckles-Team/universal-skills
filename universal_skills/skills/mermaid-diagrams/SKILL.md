@@ -3,14 +3,7 @@ name: mermaid-diagrams
 domain: docs
 skill_type: skill
 description: >-
-  Comprehensive guide for creating software diagrams using Mermaid syntax. Use
-  when users need to create, visualize, or document software through diagrams
-  including class diagrams, sequence diagrams, flowcharts, entity relationship
-  diagrams (ERD), C4 architecture diagrams, state diagrams, git graphs, gantt
-  charts, or pie charts. Triggers include requests to "diagram", "visualize",
-  "model", "map out", "show the flow", or when explaining system architecture,
-  database design, code structure, or user/application flows. Do NOT use for
-  general image creation or UI mockups.
+  Comprehensive guide for creating software diagrams using Mermaid syntax. Use when users need to create, visualize, or document software through diagrams including class diagrams, sequence diagrams, flowcharts, entity relationship diagrams (ERD), C4 architecture diagrams, state diagrams, git graphs, gantt charts, or pie charts. Do NOT use for general image creation or UI mockups.
 license: MIT
 tags: [mermaid, diagrams, architecture, flowcharts, erd, sequence-diagrams, documentation]
 metadata:
@@ -18,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Mermaid Diagramming
+
+Scope: Comprehensive guide for creating software diagrams using Mermaid syntax. Use when users need to create, visualize, or document software through diagrams including class diagrams, sequence diagrams, flowcharts, entity relationship diagrams (ERD), C4 architecture diagrams, state diagrams, git graphs, gantt charts, or pie charts. Triggers include requests to "diagram", "visualize", "model", "map out", "show the flow", or when explaining system architecture, database design, code structure, or user/application flows. Do NOT use for general image creation or UI mockups.
 
 Create professional software diagrams using Mermaid's text-based syntax. Mermaid renders diagrams from simple text definitions, making them version-controllable, easy to update, and maintainable alongside code.
 
@@ -57,6 +52,26 @@ diagramType
 - Unknown words or misspellings break diagrams silently — validate in [Mermaid Live Editor](https://mermaid.live)
 
 ---
+
+## Steps
+
+1. Choose the diagram type from the Diagram Type Selection Guide above.
+   Verify that the type matches the question being answered (for example `sequenceDiagram` for an API flow).
+2. Write the definition to `diagram.mmd`, starting with the type declaration and a `title:` line.
+   Verify with `head -n 3 diagram.mmd` that the first lines declare the diagram type.
+3. Render it with `npx -y @mermaid-js/mermaid-cli -i diagram.mmd -o diagram.svg` (or `mmdc -i diagram.mmd -o diagram.svg`).
+   Verify that the command exits 0 and `ls -l diagram.svg` shows a non-empty file.
+4. Embed the same definition in the Markdown document inside a `mermaid` fenced block.
+   Verify with `grep -c '```mermaid' <doc>.md` that the block is present.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `mmdc` reports a parse error | A misspelled keyword, or `{}` in a comment or label | Fix the line named in the error, escape or remove the special characters, and re-render |
+| Diagram type is not drawn | The target renderer lacks C4 or newer config features | Redraw the same relationships as a `flowchart` and keep the architecture labels |
+| `mmdc` cannot launch a browser | Headless Chromium is missing in the environment | Use the Docker image `minlag/mermaid-cli` shown under Exporting and Rendering |
+| Diagram is unreadable | Too many nodes in one view | Split it into several focused diagrams, one per concept |
 
 ## Quick Start Examples
 

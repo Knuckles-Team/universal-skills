@@ -1,14 +1,8 @@
 ---
 name: ca-trust-provisioner
 skill_type: skill
-description: >
-  CA Trust Provisioner atomic skill. Bakes an enterprise / self-signed root-CA
-  bundle into every touched system so deployments stop hitting self-signed-cert
-  errors — installs the bundle into each host's trust store and emits the standard
-  CA env contract (REQUESTS_CA_BUNDLE / SSL_CERT_FILE / NODE_EXTRA_CA_CERTS /
-  GIT_SSL_CAINFO) for injection into every deployed service and the private
-  registry. Triggers on "enterprise CA", "root CA bundle", "self-signed cert
-  errors", "trust internal CA", "corporate proxy cert".
+description: >-
+  Bake an enterprise or self-signed root-CA bundle into every touched host trust store and emit the CA env contract (REQUESTS_CA_BUNDLE, SSL_CERT_FILE, NODE_EXTRA_CA_CERTS, GIT_SSL_CAINFO) for deployed services. Use when you see self-signed cert errors, need to trust an internal CA, or a corporate proxy cert breaks TLS. Do NOT use to issue certificates.
 domain: infrastructure
 tags:
   - tls
@@ -23,6 +17,8 @@ metadata:
 ---
 
 # CA Trust Provisioner Skill
+
+Scope: CA Trust Provisioner atomic skill. Bakes an enterprise / self-signed root-CA bundle into every touched system so deployments stop hitting self-signed-cert errors — installs the bundle into each host's trust store and emits the standard CA env contract (REQUESTS_CA_BUNDLE / SSL_CERT_FILE / NODE_EXTRA_CA_CERTS / GIT_SSL_CAINFO) for injection into every deployed service and the private registry. Triggers on "enterprise CA", "root CA bundle", "self-signed cert errors", "trust internal CA", "corporate proxy cert".
 
 Stateless atomic operation that takes an enterprise / internal **root-CA bundle**
 (PEM) and makes every system we touch trust it — so HTTPS calls to internal
@@ -39,6 +35,12 @@ rule remains **never disable TLS verification** — install trust instead.
   pointing at it (no host changes).
 
 ## Steps
+
+1. Acquire the root-CA bundle PEM and validate it parses as X.509 (Step 1). Verify that `openssl x509 -in <bundle.pem> -noout -fingerprint -sha256` prints a SHA-256 fingerprint for the certificate.
+2. Install the bundle into each inventory host's trust store through `tunnel-manager-mcp` with `update-ca-certificates` or `update-ca-trust extract` (Step 2). Verify that `openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt <bundle.pem>` succeeds on every host.
+3. Emit the CA env contract `REQUESTS_CA_BUNDLE`, `SSL_CERT_FILE`, `NODE_EXTRA_CA_CERTS` and `GIT_SSL_CAINFO` for every deployed service (Step 3). Verify that all four variables point at an existing bundle path with `ls -l`.
+4. Place the CA at `/etc/docker/certs.d/<registry>/ca.crt` (or the Podman equivalent) on each node (Step 4). Verify that the file exists on each node with `ls`.
+5. Test an HTTPS call to an internal endpoint with verification on, using `curl https://<internal-endpoint>` (Step 5). Verify that the call returns without a certificate error and that the runtime can pull from the private registry.
 
 ### Step 1: Acquire & validate the bundle
 Take the operator-provided PEM path/content (or auto-detect the system bundle).
@@ -76,6 +78,16 @@ From a host, confirm an HTTPS call to an internal endpoint succeeds **with**
 verification on (e.g. `curl https://<internal-endpoint>` returns without a cert
 error, `python -c "import requests; requests.get('https://…')"` succeeds), and that
 the runtime can pull from the private registry.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `openssl x509` reports "unable to load certificate" | The file is not PEM or holds a chain with extra text | Convert the file with `openssl x509 -inform DER -in <file> -out bundle.pem` or strip non-certificate text, then validate again |
+| `curl` still reports an unknown authority | The trust store was not refreshed or the tool uses its own bundle | Rerun `update-ca-certificates` (or `update-ca-trust extract`) on the host and set `SSL_CERT_FILE` to the system bundle path |
+| Registry pull fails with x509 error | The CA is not in `certs.d/<registry>/` for the runtime | Copy the CA to `/etc/docker/certs.d/<registry>/ca.crt` on that node and restart the container runtime |
+| A containerized service still fails TLS | The image lacks the host bundle | Mount the bundle read-only at the same path in the container and set the env contract in the stack |
+
 
 ## Execution
 

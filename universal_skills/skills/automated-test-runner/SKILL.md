@@ -24,6 +24,11 @@ Stateless atomic operation to discover the build environment of a target project
 
 ## Steps
 
+1. Detect the project ecosystem by running `ls` on the project root for `pyproject.toml`, `package.json`, `Cargo.toml` or `go.mod`. Verify that exactly one runner (`pytest`, `npm test`, `cargo test` or `go test ./...`) is selected from the manifest found.
+2. Execute the suite by running the selected command under a 300 second timeout, such as `timeout 300 pytest --verbose`. Verify that the exit code and the captured stdout and stderr are recorded.
+3. Compile the results by parsing the captured output into the JSON object with `status`, `metrics` and `failures`. Verify that `metrics.total` equals passed plus failed plus skipped.
+
+
 ### Step 1: discover_build_environment
 Analyze the project workspace directory to detect the engineering ecosystem and select the matching testing runner:
 - Inspect files in the target project root folder to identify standard build manifests:
@@ -53,3 +58,12 @@ Parse execution outputs to extract structured metrics and present a comprehensiv
   - `metrics`: `{ total: Int, passed: Int, failed: Int, skipped: Int, duration_seconds: Float }`
   - `failures`: List of `{ test_name: String, file: String, line: Int, error_summary: String }`
 - Output a clear, markdown-formatted summary report for inclusion in developer feedback loops or CI pipeline statuses.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No manifest found | Target path is not a project root | Re-run `ls` on the correct root directory and pass that path to the runner |
+| Status is ERROR with exit 124 | Suite exceeded the 300 second timeout | Re-run a narrower subset such as `pytest path/to/tests` and report the hanging test |
+| Runner command not found | Dependencies or virtual environment not initialized | Install dependencies from the manifest (for example `pip install -e .` or `npm install`) and re-run |
+| Totals do not add up | Output format differs from the regex patterns | Run the runner with its verbose or JSON reporter and parse that output |

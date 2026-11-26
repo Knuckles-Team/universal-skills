@@ -18,25 +18,17 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "owncast-agent": {
-      "command": "owncast-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "OWNCAST_URL": "${OWNCAST_URL}",
-        "OWNCAST_TOKEN": "${OWNCAST_TOKEN}",
-        "STATUSTOOL": "${ STATUSTOOL:-True }",
-        "CHATTOOL": "${ CHATTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: owncast-agent
+command: owncast-agent --transport stdio
+env:
+  OWNCAST_URL: ${OWNCAST_URL}
+  OWNCAST_TOKEN: ${OWNCAST_TOKEN}
+  STATUSTOOL: ${ STATUSTOOL:-True }
+  CHATTOOL: ${ CHATTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 

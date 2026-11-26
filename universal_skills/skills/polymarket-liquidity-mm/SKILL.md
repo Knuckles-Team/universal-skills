@@ -42,6 +42,22 @@ Expected: dual_limit_orders
 Cancel stale or out-of-range quotes and dynamically adjust offsets based on volatility
 Expected: updated_market_making_state
 
+## Steps
+
+1. Read orderbook depth and spreads for the target market via `mcp_market_data`. Verify that `bid_ask_depth` has a best bid below the best ask.
+2. Measure inventory balance via `mcp_portfolio`. Verify that `inventory_weight` sums with the cash balance to the account total.
+3. Compute skew offsets via `mcp_risk`. Verify that `quoting_price_offsets` lower the ask when long and raise the bid when short.
+4. Place the dual-sided limit orders with `place-market-making-orders` (`mcp_orders`). Verify that `dual_limit_orders` lists one bid and one ask order id.
+5. Refresh quotes with `refresh-market-making-orders` (`mcp_orders`). Verify that stale orders are cancelled and `updated_market_making_state` lists only live quotes.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Crossed quotes rejected | Offsets pushed the bid above the ask | Clamp offsets to the spread from Step 1 and replace the orders |
+| Inventory drifts one-sided | Fills on one side outpace the skew | Widen the skew in `mcp_risk` and merge opposing positions to recycle capital |
+| Stale orders remain after refresh | Cancel call failed or id mismatch | List open orders with `mcp_orders`, cancel by id explicitly, then repeat Step 5 |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

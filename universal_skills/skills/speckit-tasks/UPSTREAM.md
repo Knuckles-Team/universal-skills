@@ -11,5 +11,6 @@ This skill is vendored. Do not edit it by hand: put local changes in an overlay.
 - Source digest: sha256:9250751e22409f10e8dfb97f458759d7b6bfd379e658f0828aa69cc3a93ce278
 - Local overlays:
   - `overlays/speckit-tasks/10-workspace.md` (sha256 9819b8bedacec508)
+  - `overlays/speckit-tasks/20-steps.md` (sha256 8cf8de3a216bc946)
 
 Refresh with `python scripts/sync_upstream_skills.py --update spec-kit`; verify with `--check`.

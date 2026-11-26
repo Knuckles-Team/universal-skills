@@ -35,6 +35,9 @@ window.
 
 ## Steps
 
+1. Locate releases by invoking `$web-search` with the indicator list and lookback. Verify that `macro_source_packet` has a source and value for each indicator.
+2. Normalize releases by invoking `$quant-data-ingest` with `macro_source_packet`. Verify that `normalized_macro_series` is stored in Timeseries Memory with one series per indicator.
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs to locate the latest
@@ -48,6 +51,14 @@ Invoke `$quant-data-ingest` with `macro_source_packet` to normalize
 the releases into the Timeseries Memory backend.
 
 Expected: `normalized_macro_series`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Indicator not found | Not yet released or name ambiguous | Use the official name and geography in `$web-search`. |
+| Series misaligned | Mixed frequencies | Normalize frequency in the ingest step. |
+| Request to forecast a regime shift | Out of scope | Decline, since the workflow does not interpret or forecast. |
 
 ## Output
 

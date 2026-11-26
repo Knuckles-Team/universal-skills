@@ -2,11 +2,7 @@
 name: mcp-service-secret-onboarding
 skill_type: workflow
 description: >-
-  Onboard or rotate a fleet MCP service's auth secret end-to-end: provision a Keycloak
-  service-account client, store the secret in OpenBao, inject it into the service's
-  Portainer stack (reconciling the drifted stored compose) and redeploy, then verify the
-  served call works. Use when an MCP service 401s on missing/stale admin credentials, when
-  rotating a client secret, or when wiring a new service-account into the fleet.
+  Onboard or rotate a fleet MCP service auth secret end to end: provision a Keycloak service-account client, store the secret in OpenBao, inject it into the Portainer stack and redeploy, then verify the served call. Use when an MCP service returns 401 on missing or stale admin credentials, when rotating a client secret, or when wiring a new service account. Do NOT use for human logins.
 domain: infrastructure-workflows
 agent: infrastructure_operator
 team_config:
@@ -33,6 +29,8 @@ metadata:
 
 # MCP Service Secret Onboarding Workflow
 
+Scope: Onboard or rotate a fleet MCP service's auth secret end-to-end: provision a Keycloak service-account client, store the secret in OpenBao, inject it into the service's Portainer stack (reconciling the drifted stored compose) and redeploy, then verify the served call works. Use when an MCP service 401s on missing/stale admin credentials, when rotating a client secret, or when wiring a new service-account into the fleet.
+
 **CONCEPT:INFRA-002**
 
 Deliver a service-account secret to a fleet MCP service end-to-end so the served process
@@ -40,6 +38,11 @@ authenticates instead of 401-ing: provision the Keycloak client, store the secre
 vault, inject it into the Portainer stack, redeploy, and verify.
 
 ## Steps
+
+1. Provision the service-account client with `kc_clients` and `kc_realms` (skill `keycloak-client-onboarder`). Verify that `client_secret` is returned and the client has `serviceAccountsEnabled=true`.
+2. Write the credentials with `open_kv` to `apps/<service>` (skill `secret-vault-manager`). Verify that reading `apps/<service>` returns `client_id`, `client_secret` and `realm`.
+3. Inject the env vars with `portainer_stack_env.py --compose-file <repo compose> --set-json` (skill `portainer-sync-agent`). Verify that the redeployed stack shows the `- VAR=${VAR}` lines in its stored compose.
+4. Confirm the service with `pt_docker` (skill `analyze-portainer-health`). Verify that the service is 1/1 and a served call such as list-realms returns 200 before and after the token TTL.
 
 ### Step 0: Provision Identity [skill: keycloak-client-onboarder]
 **Agent**: `identity-agent`
@@ -78,6 +81,14 @@ Confirm the service converged (1/1) and exec a served call that exercises the ne
 credential (e.g. a Keycloak admin list-realms) — it must return 200 before and after the
 realm's short token TTL, proving the refresh path works.
 Expected: `verification_result`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Service still returns 401 | Stored compose drifted and lacks the env lines | Re-run `portainer_stack_env.py` with `--compose-file` pointing at the repo compose and redeploy |
+| Secret appears in process args | Secret passed on the command line | Rotate the secret in Keycloak and re-inject it via `--set-json` |
+| Call works then fails after TTL | Service account lacks refresh path or role | Grant the needed role to the service account in `kc_users` and redeploy |
 
 ## Output
 - Service authenticating with a self-refreshing service-account token (no more 401s)

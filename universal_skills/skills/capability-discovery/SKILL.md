@@ -31,6 +31,11 @@ Discovery workflow that probes available capabilities across MCP servers. Tests 
 
 ## Steps
 
+1. Probe the transcription capability of the audio transcriber server by asking for the `transcribe_audio` tool description (Step 0). Verify that the reply mentions both `transcribe` and `audio`.
+2. Probe the data science server for its tools and parameters through the `analyzer-agent` tools `graph_analyze` and `tun_tm_security` (Step 1). Verify that the reply names a `dataset` parameter and at least one tool.
+3. Probe the research paper server for its available sources via `tun_tm_remote` and `tun_tm_inventory` (Step 2). Verify that the reply lists at least one `source`.
+4. Persist the discovered capability map with `graph_write` (Step 3). Verify that the written nodes are returned by a `graph_query` lookup for the workflow run.
+
 ### Step 0: Audio Transcriber
 **Agent**: `scanner-agent`
 **Tools**: `tun_tm_system, tun_tm_remote`
@@ -58,6 +63,15 @@ Expected: `source`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| A probe returns an empty capability list | The target MCP server is not registered or is unreachable from the agent | Check the server entry in the MCP config, restart the server process, and rerun only the failed probe step after the config is corrected |
+| Reply lacks the expected keywords (`transcribe`, `dataset`, `source`) | The server exposes the tool under a different name or version | Compare against the server's tool list, update the expected keywords in the Step to the real tool name, and record the mismatch in the report |
+| `graph_write` is rejected | The arbora KG is unreachable or the agent lacks write scope | Confirm arbora is reachable with `graph_query`, grant the write scope, and resubmit Step 3 |
+
 
 ## Output
 - Capability Discovery results persisted in KG

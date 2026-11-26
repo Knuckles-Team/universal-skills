@@ -32,6 +32,11 @@ for transparent, data-driven reviews.
 
 ## Steps
 
+1. Gather OKRs via `graph_query` with cascadesTo traversal. Verify that individual OKRs have `okrProgress`.
+2. Compute metrics with `graph_query` and `data_science_mcp`. Verify that completion rate and benchmarks exist.
+3. Generate the review with `graph_write` and `document_tools`. Verify that the document includes the OKR scorecard.
+4. Persist a `PerformanceReview` node. Verify that `graph_query` shows the `reviewedIn` edge.
+
 ### Step 0: Gather OKR Progress
 **Agent**: `hr-coordinator`
 **Tools**: `graph_query`
@@ -71,6 +76,14 @@ Create PerformanceReview node linked to:
 - Employee via reviewedIn edge
 - OKR nodes via measuresGoal edges
 - Next review cycle via scheduledFor
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No OKRs | Employee unlinked | Create the missing employee-to-OKR links in the KG with `graph_write`, then re-run `graph_query` |
+| Missing peer scores | None submitted | Record peer review scores as unavailable in the document and proceed |
+| Rating unapproved | Manager missing | Hold the review in draft and route it to the manager for sign-off before writing `PerformanceReview` with `graph_write` |
 
 ## Output
 - Performance review document (PDF/MD)

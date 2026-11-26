@@ -29,6 +29,11 @@ Interacts with Home Assistant using home-assistant-agent to read device states, 
 
 ## Steps
 
+1. Read device states and calendar events with `home_assistant_states` (`list_states`) and `home_assistant_calendar` (`get_calendar_events`). Verify that `sensor_states` and `calendar_schedules` are non-empty.
+2. Trigger the scene or service with `home_assistant_services` (`call_service`). Verify that `service_call_logs` shows a success response for each call.
+3. Re-read the affected entity with `home_assistant_states` (`list_states`). Verify that its state matches the intended scene.
+4. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: collect-home-state [skill: home-assistant-agent]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -49,6 +54,14 @@ Expected: `automation_results, service_call_logs`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `list_states` returns nothing | Home Assistant URL or token is not configured | Set the Home Assistant URL and long-lived token in the agent environment and call `home_assistant_states` again. |
+| `call_service` is rejected | Wrong domain, service name or entity id | Look up the entity in `list_states`, correct the service data, and call `home_assistant_services` with it. |
+| Entity state does not change | Device is offline or unavailable | Check the entity state for `unavailable`, restore the device connection, and re-run the service call. |
 
 ## Output
 - Smart Home Automation Orchestrator results persisted in KG

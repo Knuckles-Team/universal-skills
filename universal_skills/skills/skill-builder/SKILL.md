@@ -35,6 +35,23 @@ one procedure and a multi-skill workflow is unclear. Read
 [references/output-patterns.md](references/output-patterns.md) only when the skill
 needs a stable output format.
 
+## Steps
+
+1. Decide that the capability is one atomic skill and pick a kebab-case name of at most 64 characters. Verify with `ls universal_skills/*/<name>` that the name is not already taken.
+2. Scaffold with `python universal_skills/skills/skill-builder/scripts/init_skill.py <name> --path universal_skills/<domain> --description "<what it does. Use when ...>" --resources references`. Verify that `ls universal_skills/<domain>/<name>` shows `SKILL.md` and only the requested resource folders.
+3. Replace the generated instruction with the minimal domain procedure, and add scripts only for fragile operations. Verify that `grep -rn "TOD[O]\|depends_on\|### Step" universal_skills/<domain>/<name>` prints nothing.
+4. Package with `python universal_skills/skills/skill-builder/scripts/package_skill.py universal_skills/<domain>/<name> dist`. Verify that `ls dist` shows the new `.skill` archive and that the packager reported no validation errors.
+5. Run the repository atomicity and portability checks, for example `python scripts/check_atomicity.py --strict`. Verify that they exit 0.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `init_skill.py` rejects the `--path` | The path points at a workflow domain or a nested folder | Use a direct child of `universal_skills` that is not a `-workflows` domain, or build a workflow with `skill-workflow-builder` |
+| Packager rejects the skill | It holds workflow metadata, DAG headings, placeholders, symlinks or files like `.env` | Remove the offending items named in the error and package again |
+| Description fails validation | It is over 1024 characters, has angle brackets, or lacks `Use when` | Rewrite it to state what the skill does and an explicit `Use when` trigger without `<` or `>` |
+| The skill keeps growing steps for several capabilities | It is a composition, not an atomic skill | Split it, and move the ordered composition to a `<domain>-workflows` skill |
+
 ## Scaffold an atomic skill
 
 Run the initializer from the repository root. Point `--path` at one direct child

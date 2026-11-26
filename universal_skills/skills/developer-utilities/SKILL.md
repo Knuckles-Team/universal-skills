@@ -66,3 +66,22 @@ python scripts/generator_tools.py uuid
 python scripts/crypto_tools.py hash-text --text "hello world" --algorithm "sha256"
 python scripts/network_tools.py subnet --cidr "192.168.1.0/24"
 ```
+
+## Steps
+
+1. Choose the script that matches the task.
+   Run `ls scripts/`. Verify that the right one (`dev_tools.py`, `converter_tools.py`, `generator_tools.py`, `crypto_tools.py`, `network_tools.py`) exists.
+2. List the subcommands for the script.
+   Run `python scripts/dev_tools.py --help`. Verify that the subcommand you need appears.
+3. Run the subcommand with its flags.
+   Run for example `python scripts/network_tools.py subnet --cidr 192.168.1.0/24`. Verify that the output is the expected value.
+4. Cross-check the result for the task.
+   For a conversion, run the inverse command, such as `python scripts/converter_tools.py base64 --help`. Verify that the round trip returns the input.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `argument required` or unknown subcommand | Wrong flag name for the subcommand | Run `python scripts/<tool>.py <subcommand> --help` and use the listed flags |
+| `ModuleNotFoundError` | A dependency is not installed | Install the named package with `pip install <package>` and rerun |
+| Hash or token output is unexpected | Wrong algorithm or input quoting | Quote the input and set `--algorithm` explicitly, then compare with a known test vector |

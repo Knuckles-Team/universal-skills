@@ -33,6 +33,12 @@ Crawls web news, evaluates social posts sentiment spikes, fuses sentiment signal
 
 ## Steps
 
+1. Scrape recent news, blogs and academic articles with `graph_query` and `sx_search`. Verify that `raw-news-and-publications-logs` has timestamps for each item.
+2. Monitor social platforms for ticker sentiment spikes with `graph_analyze`. Verify that `raw-social-mentions-counts` has counts per ticker and time bucket.
+3. Fuse the news and social signals into one sentiment score with `graph_query` and `graph_analyze`. Verify that `fused-sentiment-signals` covers each ticker present in both inputs.
+4. Backtest the fused signal on history with `graph_write` and `document_tools`. Verify that `sentiment-backtest-metrics` reports Sharpe and drawdown.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Web News Scraper
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `sentiment-backtest-metrics`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| News scrape returns nothing | The feeds are blocked or the tickers are misspelled | Fix the tickers and query another source with `sx_search`. |
+| Fused signal is empty | News and social inputs share no tickers or timestamps | Align the time buckets of both inputs and re-run the fusion with `graph_analyze`. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
+| `graph_orchestrate` cannot run the DAG | arbora is unreachable | Skip the offload and execute the steps natively in dependency order as described under `## Execution`. |
 
 ## Output
 - Sentiment Alpha Pipeline results persisted in KG

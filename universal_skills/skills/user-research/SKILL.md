@@ -19,6 +19,21 @@ Systematically uncover customer insights to ensure we build products that solve 
 
 ---
 
+## Steps
+
+1. Write the interview guide to a file with `cat > research/interview-guide.md`, covering hypothesis, screener, opening, focus areas and closing. Verify that `grep -c -E "Hypothesis|Screener|Opening|Focus Areas|Closing" research/interview-guide.md` prints at least 5.
+2. Draft the job statements in `research/jtbd.md` using the formula "When I [situation], I want to [motivation], so I can [expected outcome]". Verify that `grep -c "When I" research/jtbd.md` is at least the number of jobs you identified.
+3. Build the proto-personas and journey map in `research/personas.md` after the interviews. Verify that `grep -n -E "Top Goals|Top Frustrations|Phases" research/personas.md` lists every persona and the journey phases.
+4. Synthesize the memo into `research/memo.md` with themes, quotes and confidence scores. Verify that `grep -c -i "confidence" research/memo.md` is at least 1 and that every theme cites a quote.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Participants answer "yes" to everything | Leading questions such as "Would you use this?" | Rewrite them in `research/interview-guide.md` as "Tell me about the last time you tried to [action]" and re-run the affected interviews. |
+| Personas read as demographics | Jobs were not mapped first | Go back to `research/jtbd.md`, state the functional, emotional and social job for each persona, then regenerate `research/personas.md`. |
+| Insights rest on one or two interviews | Sample too small to support the theme | Mark the theme with a low confidence score in `research/memo.md` and schedule more interviews in the same segment. |
+
 ## 1. Discovery Interview Preparation
 
 Before talking to users, define a structured research plan.

@@ -23,30 +23,22 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "home-assistant-agent": {
-      "command": "home-assistant-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "HOME_ASSISTANT_URL": "${HOME_ASSISTANT_URL}",
-        "HOME_ASSISTANT_TOKEN": "${HOME_ASSISTANT_TOKEN}",
-        "CONFIGTOOL": "${ CONFIGTOOL:-True }",
-        "STATESTOOL": "${ STATESTOOL:-True }",
-        "SERVICESTOOL": "${ SERVICESTOOL:-True }",
-        "EVENTSTOOL": "${ EVENTSTOOL:-True }",
-        "HISTORYTOOL": "${ HISTORYTOOL:-True }",
-        "LOGBOOKTOOL": "${ LOGBOOKTOOL:-True }",
-        "CALENDARTOOL": "${ CALENDARTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: home-assistant-agent
+command: home-assistant-agent --transport stdio
+env:
+  HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL}
+  HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN}
+  CONFIGTOOL: ${ CONFIGTOOL:-True }
+  STATESTOOL: ${ STATESTOOL:-True }
+  SERVICESTOOL: ${ SERVICESTOOL:-True }
+  EVENTSTOOL: ${ EVENTSTOOL:-True }
+  HISTORYTOOL: ${ HISTORYTOOL:-True }
+  LOGBOOKTOOL: ${ LOGBOOKTOOL:-True }
+  CALENDARTOOL: ${ CALENDARTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -58,30 +50,22 @@ home-assistant-agent --transport sse --host 0.0.0.0 --port 8000
 
 Only STATESTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "home-assistant-agent": {
-      "command": "home-assistant-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "HOME_ASSISTANT_URL": "${HOME_ASSISTANT_URL}",
-        "HOME_ASSISTANT_TOKEN": "${HOME_ASSISTANT_TOKEN}",
-        "CONFIGTOOL": "False",
-        "STATESTOOL": "True",
-        "SERVICESTOOL": "False",
-        "EVENTSTOOL": "False",
-        "HISTORYTOOL": "False",
-        "LOGBOOKTOOL": "False",
-        "CALENDARTOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: home-assistant-agent
+command: home-assistant-agent --transport stdio
+env:
+  HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL}
+  HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN}
+  CONFIGTOOL: False
+  STATESTOOL: True
+  SERVICESTOOL: False
+  EVENTSTOOL: False
+  HISTORYTOOL: False
+  LOGBOOKTOOL: False
+  CALENDARTOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

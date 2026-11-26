@@ -52,3 +52,19 @@ For each distinct hypothesis, return:
 Do not retrieve market data, implement the signal, run a backtest, rank securities,
 recommend an investment, or place an order. The output is a research specification,
 not evidence that the factor works outside the cited study.
+
+## Steps
+
+1. Collect the audited paper or evidence packet and list its claim identifiers with `grep -n "claim" <packet-file>`. Verify that every claim you intend to use has a stable claim or source ID in the output.
+2. Extract each distinct hypothesis with the fields in the Output contract: signal inputs, formula, direction, timing, lag, horizon, universe and costs. Verify that each hypothesis has a unique ID and cites source claim IDs, for example `grep -c "hypothesis_id" <output-file>` equals the number of hypotheses.
+3. Mark every missing definition as unresolved instead of choosing a convention. Verify that `grep -n "NEEDS_CLARIFICATION" <output-file>` lists each hypothesis with an open input and names that input.
+4. Assign each hypothesis a status of `READY`, `NEEDS_CLARIFICATION` or `NOT_TESTABLE` and add falsification thresholds and leakage risks. Verify that `grep -Ec "READY|NEEDS_CLARIFICATION|NOT_TESTABLE" <output-file>` is at least the hypothesis count and that no data retrieval, backtest or trade recommendation appears in the output.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Hypothesis cannot cite a claim ID | The packet lacks stable identifiers | Return the packet to the audit step for citation IDs and set the hypothesis to `NEEDS_CLARIFICATION`. |
+| Timing or lag is not stated in the source | The paper omits the information timestamp | List the missing field as unresolved and do not pick a default convention. |
+| Output reads as an investable claim | Association was turned into causal language | Rewrite using the paper's stated population, period and limitations and remove any recommendation. |
+| A request asks for a backtest or data pull | Out of scope for this skill | Decline that part and hand the `READY` specification to the data-ingestion and backtest skills. |

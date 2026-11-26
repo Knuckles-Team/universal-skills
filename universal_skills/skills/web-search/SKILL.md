@@ -66,6 +66,22 @@ limits come from `AgentConfig`/XDG configuration (`TLS_PROFILE_REF`,
 `verify=False` or `--insecure` shortcut and do not persist endpoint or credential
 material.
 
+## Steps
+
+1. Choose a provider from the environment you have. Verify that `env | grep -E "GOOGLE_API_KEY|GOOGLE_CX|BING_API_KEY|SEARXNG_URL"` lists the variables the chosen provider needs, or choose DuckDuckGo when it prints nothing.
+2. Run the search with `python scripts/search.py --query "your search query"`, or a provider script such as `python scripts/search_duckduckgo.py --query "your search query" --max-results 5 --json`. Verify that the output contains titles, snippets and URLs.
+3. Narrow the result set by rerunning with a more precise query and a small `--max-results`. Verify that the number of results printed does not exceed the limit you passed.
+4. Cite the sources you use. Verify that every URL you quote appears verbatim in the script output, for example with `grep -F "<url>"` on a saved copy.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Google or Bing script errors on authentication | `GOOGLE_API_KEY`, `GOOGLE_CX` or `BING_API_KEY` is missing | Export the missing variable, or switch to `python scripts/search_duckduckgo.py --query "..."` which needs no key. |
+| Searxng script cannot connect | `SEARXNG_URL` is unset or points to an unreachable instance | Set `SEARXNG_URL` to a reachable instance such as a self-hosted one and rerun. |
+| No results from DuckDuckGo | Rate limiting or the `duckduckgo-search` package is missing | Run `pip install duckduckgo-search` and then use another provider script such as `search_searxng.py`. |
+| TLS or private-host error | The outbound policy blocked the endpoint | Set the approved TLS profile or host through `AgentConfig` (`SOURCE_HTTP_*`); there is no `--insecure` option. |
+
 ## Best Practices
 - Prefer DuckDuckGo if no API keys are available in the environment.
 - Use specific search providers securely by providing the required API keys as environment variables.

@@ -43,6 +43,13 @@ candidate-selection criteria, data constraints, and backtest assumptions.
 
 ## Steps
 
+1. Collect candidate papers by invoking `$scholarx-operations` with the workflow inputs. Verify that `paper_source_packet` is non-empty and lists at least one paper with a source identifier.
+2. Audit the evidence by invoking `$citation-auditor` on `paper_source_packet`. Verify that `evidence_audit` has a supported or unsupported verdict for every cited claim.
+3. Extract comparable factors by invoking `$factor-hypothesis-extractor` with `paper_source_packet` and `evidence_audit`. Verify that each entry in `candidate_factor_hypotheses` cites a paper from the packet.
+4. Obtain market data by invoking `$quant-data-ingest` with `candidate_factor_hypotheses`. Verify that `normalized_market_dataset` covers the requested universe and date range.
+5. Backtest the candidates by invoking `$qlib-backtester` with the hypotheses and dataset. Verify that `backtest_report` states its assumptions and limitations, and that no live trade is recommended.
+
+
 ### Step 0: scholarx-operations [skill: scholarx-operations]
 
 Invoke `$scholarx-operations` with the workflow inputs.
@@ -75,6 +82,15 @@ Invoke `$qlib-backtester` with `candidate_factor_hypotheses`,
 `normalized_market_dataset`, and the workflow inputs.
 
 Expected: `backtest_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `paper_source_packet` is empty | Source filters or date range are too narrow for ScholarX | Widen the date range or drop a source filter, then re-invoke `$scholarx-operations` with the revised inputs |
+| Hypotheses lack evidence links | `evidence_audit` rejected the cited claims | Drop the unsupported papers from the packet and re-invoke `$factor-hypothesis-extractor` on the audited subset |
+| Dataset misses the requested universe | `$quant-data-ingest` could not resolve some instruments | Correct the ticker list or data constraints in the inputs and re-run Step 3 for the missing instruments only |
+| Backtest fails to start | `normalized_market_dataset` has gaps or the wrong frequency | Re-ingest with the frequency the factor definition requires, and confirm the report lists the new date coverage |
 
 ## Output
 

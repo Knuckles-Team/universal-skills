@@ -33,6 +33,13 @@ Compute momentum, fundamental quality, and news sentiment factor signals in para
 
 ## Steps
 
+1. Compute technical factors by running Step 1 with `graph_query` and `sx_search` on the tick logs. Verify that `technical-factors` contains momentum, RSI and mean-reversion columns with no empty series.
+2. Compute fundamental factors by running Step 2 with `graph_analyze` on filing data. Verify that `fundamental-factors` includes PE, debt-to-equity and gross margin for each instrument.
+3. Compute sentiment factors by running Step 3 with `graph_query` and `graph_analyze` on news and transcripts. Verify that `sentiment-factors` has a score per instrument and date.
+4. Fuse the three factor sets by running Step 4 with `graph_write` and `document_tools`. Verify that `optimized-portfolio-weights` sum to the target exposure and that the correlation test removed collinear factors.
+5. Persist the outputs by running Step 5 with `graph_write`. Verify that a `graph_query` for the new nodes returns the optimized portfolio.
+
+
 ### Step 1: Technical Alpha
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +74,15 @@ Expected: `optimized-portfolio-weights`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| A factor series is empty | Tick logs or filings missing for the universe | Narrow the universe to instruments with data and re-run that factor's step |
+| Fusion fails on collinearity | Two factors are near-duplicates | Drop the weaker factor from the fusion inputs and re-run Step 4 |
+| Optimizer returns infeasible weights | Risk budget is too tight | Relax the risk budget constraint in the Step 4 inputs and re-solve |
+| KG write rejected | Required typed node metadata missing | Add the missing fields named in the Step 5 text and call `graph_write` again |
 
 ## Output
 - Alpha Factor Mining results persisted in KG

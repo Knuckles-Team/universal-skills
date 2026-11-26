@@ -33,6 +33,12 @@ Routes tax calculations to data-science-mcp for computation.
 
 ## Steps
 
+1. Query payroll data via `graph_query`. Verify that employees, hours, PTO and deductions are returned.
+2. Compute withholdings with `data_science_mcp`. Verify that federal, state, FICA and FUTA/SUTA figures exist for each employee.
+3. Validate FLSA rules with `graph_query`. Verify that the compliance result flags no violations.
+4. Execute payroll with `graph_write` after human sign-off. Verify that paystubs and `PayrollRecord` nodes exist.
+5. Report with the `arbora` agent. Verify that KPIs are updated.
+
 ### Step 0: Query Payroll Data
 **Agent**: `accounting-agent`
 **Tools**: `graph_query`
@@ -84,6 +90,14 @@ KG persistence:
 - PayrollRecord nodes with full tax breakdown
 - Link to Employee, PayPeriod, and CompensationBand
 - Update KPIs: total payroll expense, effective tax rate, benefits cost ratio
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Missing hours | ERP gap | Correct the hours in the ERP source and re-run `graph_query` before computing withholdings |
+| Compliance violation | Below minimum wage | Raise pay to the legal minimum in the ERP and re-run the FLSA validation |
+| No sign-off | Authority missing | Stop before Step 3 and obtain signing authority before executing payroll |
 
 ## Output
 - PayrollRecord nodes in KG for all employees

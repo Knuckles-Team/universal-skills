@@ -2,15 +2,7 @@
 name: knowledge-assimilation
 skill_type: workflow
 description: >-
-  Universal Knowledge Assimilation Engine — the "Master Control Program" for
-  autonomous self-evolution. Discovers content from X, ScholarX, and GitHub,
-  classifies it via the UniversalKnowledgeClassifier, ingests high-value
-  content into the Knowledge Graph, and triggers comparative-analysis +
-  SDD generation when evolution potential is detected. Extends the pull-based
-  meristem-evolution skill with push-based evolution from incoming content.
-  Triggers on "assimilate knowledge", "knowledge assimilation", "ingest and evolve",
-  "push-based evolution", "discover and ingest", "x research pipeline",
-  "self-evolve from X", "run assimilation".
+  Push-based knowledge assimilation: discover content from X, ScholarX and GitHub, classify it, ingest high-value items into the Knowledge Graph, and trigger comparative-analysis and SDD generation when evolution potential is found. Use when asked to assimilate knowledge, ingest and evolve, or run assimilation. Do NOT use for pull-based evolution alone (meristem-evolution).
 domain: research-workflows
 license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
@@ -24,6 +16,8 @@ requires: ['arbora', 'meristem']
 ---
 
 # Universal Knowledge Assimilation Engine
+
+Scope: Universal Knowledge Assimilation Engine — the "Master Control Program" for autonomous self-evolution. Discovers content from X, ScholarX, and GitHub, classifies it via the UniversalKnowledgeClassifier, ingests high-value content into the Knowledge Graph, and triggers comparative-analysis + SDD generation when evolution potential is detected. Extends the pull-based meristem-evolution skill with push-based evolution from incoming content. Triggers on "assimilate knowledge", "knowledge assimilation", "ingest and evolve", "push-based evolution", "discover and ingest", "x research pipeline", "self-evolve from X", "run assimilation".
 
 Multi-source content discovery → classify → ingest → evolve pipeline.
 Extends the pull-based `meristem-evolution` skill with a **push-based**
@@ -194,6 +188,30 @@ For each analyzed EvolutionCandidate with actionable gaps:
 Expected: SDD plans ready for review, evolution cycle logged in KG
 Depends On: Step 3
 
+## Steps
+
+A concise run order for the Execution Steps above.
+
+1. Scout content from X, ScholarX, GitHub and pending candidates, as detailed in Step 0, starting with `mcp_arbora_graph_query` for pending `EvolutionCandidate` nodes.
+   Verify that content items from at least 2 sources came back with metadata.
+2. Classify every item with the UniversalKnowledgeClassifier (Step 1), using `browse_x_post` with `auto_ingest=True` for X posts.
+   Verify that each item has an action of `skip`, `decay`, `ingest` or `ingest_and_evolve` and an importance score.
+3. Ingest the `ingest` and `ingest_and_evolve` items (Step 2) with `mcp_arbora_graph_ingest`.
+   Verify with a `mcp_arbora_graph_query` for the new node ids that each item exists and has an `ABOUT` edge to its concepts.
+4. Analyze each evolution candidate against meristem (Step 3) with `mcp_arbora_graph_analyze` action `relevance_sweep`.
+   Verify that every candidate has a gap analysis and that its status is now `analyzed`.
+5. Generate the SDD plan for actionable gaps and log the cycle (Step 4) with `mcp_arbora_graph_write` node type `EvolutionCycle`.
+   Verify that the plan was presented for review without auto-executing and that the `EvolutionCycle` node id was returned.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Only one source returns content | `x_search`, ScholarX or the GitHub MCP tool is unreachable | Re-run the failed source's query on its own, and if it still fails continue with the remaining sources and note the gap in the `EvolutionCycle` node |
+| `mcp_arbora_graph_ingest` errors on a path | The downloaded paper path or repo URL is wrong | Re-run `mcp_scholarx-mcp_sx_storage` action `download` and pass the exact returned path as `target_path` |
+| Nothing reaches `ingest_and_evolve` | Items scored below 0.6 evolution potential | Log the cycle with `candidates_created: 0` and widen the Step 0 queries instead of forcing candidates |
+| Plan would execute without review | Auto-execute was enabled | Stop, present the plan for explicit user approval, and only then hand it to `sdd-implementer` |
+
 ## Tiered Memory Strategy
 
 | Content Tier | Action | KG Node Type | Decay Behavior |
@@ -231,8 +249,8 @@ Both pipelines share downstream tools: `comparative-analysis`, `sdd-implementer`
 
 - `meristem-evolution` — pull-based evolution capability owned by the
   `meristem` package and available only when that package provides it.
-- [research-scanner](../research-scanner/SKILL.md) — Paper discovery
-- [comparative-analysis](../comparative-analysis/SKILL.md) — Feature extraction
+- `research-scanner` — Paper discovery
+- `comparative-analysis` — Feature extraction
 - Package-specific X and assimilation implementation guides are owned by
   `meristem` under `docs/guides/`; they are not bundled with this workflow.
 

@@ -36,6 +36,21 @@ python scripts/generate_agents_md.py <project-path>
 ### Options
 - `<project-path>`: (Required) Path to the root directory of the project to document.
 
+## Steps
+
+1. Confirm the target is a project root with `ls <project-path>/pyproject.toml`. Verify that the file is listed, since metadata extraction reads it.
+2. Generate the file with `python scripts/generate_agents_md.py <project-path>`. Verify that the command exits 0 and prints no traceback.
+3. Inspect the result with `grep -n "^## " <project-path>/AGENTS.md`. Verify that the sections from the AGENTS.md Standard below (commands, structure, boundaries, When Stuck) are present.
+4. Review the file tree and commands by reading `<project-path>/AGENTS.md`. Verify that the project name matches `pyproject.toml` and that no noise directories such as `.git` or `__pycache__` appear.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `FileNotFoundError` for `pyproject.toml` | Path is not a Python project root | Pass the directory that contains `pyproject.toml`, or add a minimal one before re-running the script. |
+| Existing AGENTS.md content lost | Script rewrote the file | Restore it with `git checkout -- AGENTS.md` and merge by hand, or generate into a copy first. |
+| Tree view is huge or noisy | Generated or vendored directories in the project | Delete or ignore the directories in the project, then regenerate. |
+
 ## AGENTS.md Standard
 
 The generated `AGENTS.md` follows the emerging open standard for AI agent documentation:

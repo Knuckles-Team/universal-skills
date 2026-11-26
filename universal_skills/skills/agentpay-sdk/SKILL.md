@@ -3,14 +3,7 @@ name: agentpay-sdk
 domain: finance
 skill_type: skill
 description: >-
-  Install and operate the AgentPay SDK. Trigger this when an agent needs to
-  install `agentpay`, explain AgentPay SDK capabilities without probing the
-  machine first, set up or reuse a wallet, check funding, generate funding
-  instructions or a QR, guide the user through policy changes in the TUI or exact
-  admin CLI when explicitly requested, route manual approvals to the local admin
-  approval commands, execute transfers, approvals, or broadcasts using the current
-  CLI behavior instead of stale examples, or use supported plugin-backed merchant
-  payment flows when explicitly relevant.
+  Install and operate the AgentPay SDK. Use when an agent must install agentpay, set up or reuse a wallet, check funding, route approvals to the admin CLI, or execute transfers and broadcasts with the current CLI behavior. Do NOT use for stale CLI examples or for payments outside the AgentPay SDK.
 license: MIT
 tags: [agentpay sdk]
 metadata:
@@ -19,6 +12,8 @@ metadata:
 ---
 
 # AgentPay SDK
+
+Scope: Install and operate the AgentPay SDK. Trigger this when an agent needs to install `agentpay`, explain AgentPay SDK capabilities without probing the machine first, set up or reuse a wallet, check funding, generate funding instructions or a QR, guide the user through policy changes in the TUI or exact admin CLI when explicitly requested, route manual approvals to the local admin approval commands, execute transfers, approvals, or broadcasts using the current CLI behavior instead of stale examples, or use supported plugin-backed merchant payment flows when explicitly relevant.
 
 Use this skill as an operator playbook. Do not make the user design command flows or policy objects from scratch.
 
@@ -110,6 +105,24 @@ AgentPay uses a self-custodial local daemon wallet.
 13. Before any outbound action, check funding.
 14. If funding is missing, stop and ask the user to top up the wallet.
 15. Only then run the exact current CLI command.
+
+## Steps
+
+1. Check the install and config with `agentpay config show --json`. Verify that the command prints JSON and exits 0, otherwise install with the one-click bootstrap from Ground Truth.
+2. Check wallet status with `agentpay wallet --json`. Verify that the output shows a wallet address, otherwise ask the user to run `agentpay admin setup` locally on macOS.
+3. Check the balances for the value asset and the gas asset (default `xrp` on `xrpl`). Verify that the balance covers the amount before continuing, otherwise stop and give funding instructions.
+4. Preview the action without broadcasting, for example `agentpay transfer-native` or `agentpay bitrefill buy` without `--broadcast`. Verify that the preview shows the expected recipient, amount and network.
+5. Execute by re-running the same command with `--broadcast` only when the user wants to pay now. Verify that the output reports a transaction hash or a manual-approval request.
+6. If approval is pending, list it with `agentpay admin list-manual-approval-requests`. Verify that the request is shown, and tell the user to approve it locally while the original command keeps running.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `agentpay wallet --json` reports no wallet | First-run setup never completed or the daemon is gone | Ask the user to run `agentpay admin setup` locally on macOS, or `agentpay admin setup --restore-wallet-from <PATH>` if they have a backup. |
+| Broadcast fails for insufficient funds or gas | Wallet unfunded for value or gas | Stop and give the wallet address, network, asset and funding URI or QR from the Funding Rule. |
+| Original `--broadcast` command already exited after approval | Process was closed while waiting for approval | Run `agentpay admin resume-manual-approval-request --approval-request-id <UUID>`. |
+| Setup or TUI commands unavailable on Linux | Managed daemon bootstrap is macOS-only | Tell the user the packaged runtime stops before wallet bootstrap and use a macOS host for setup. |
 
 ## Funding Rule
 

@@ -3,12 +3,7 @@ name: security-tools-security-threat-model
 domain: infrastructure
 skill_type: skill
 description: >-
-  Repository-grounded threat modeling that enumerates trust boundaries, assets,
-  attacker capabilities, abuse paths, and mitigations, and writes a concise
-  Markdown threat model. Trigger only when the user explicitly asks to threat
-  model a codebase or path, enumerate threats/abuse paths, or perform AppSec
-  threat modeling. Do not trigger for general architecture summaries, code review,
-  or non-security design work.
+  Repository-grounded threat modeling that enumerates trust boundaries, assets, attacker capabilities, abuse paths, and mitigations, and writes a concise Markdown threat model. Trigger only when the user explicitly asks to threat model a codebase or path, enumerate threats/abuse paths, or perform AppSec threat modeling.
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
@@ -16,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Threat Model Source Code Repo
+
+Scope: Repository-grounded threat modeling that enumerates trust boundaries, assets, attacker capabilities, abuse paths, and mitigations, and writes a concise Markdown threat model. Trigger only when the user explicitly asks to threat model a codebase or path, enumerate threats/abuse paths, or perform AppSec threat modeling. Do not trigger for general architecture summaries, code review, or non-security design work.
 
 Deliver an actionable AppSec-grade threat model that is specific to the repository or a project path, not a generic checklist. Anchor every architectural claim to evidence in the repo and keep assumptions explicit. Prioritizing realistic attacker goals and concrete impacts over generic checklists.
 
@@ -27,6 +24,23 @@ Deliver an actionable AppSec-grade threat model that is specific to the reposito
 - Any existing repository summary or architecture spec.
 - Use prompts in `references/prompt-template.md` to generate a repository summary.
 - Follow the required output contract in `references/prompt-template.md`. Use it verbatim when possible.
+
+## Steps
+
+1. Collect the repo root, in-scope paths and deployment context, and read the output contract with `sed -n 1,200p references/prompt-template.md`. Verify that scope and exposure are written down before analysis starts.
+2. Map components, entrypoints and data stores from the repo with `grep -rn "route\|listen\|argparse" <in-scope path>`. Verify that every component you cite has a file path as evidence.
+3. Enumerate trust boundaries, assets, attacker capabilities and abuse paths, drafting them in `<repo-or-dir-name>-threat-model.md`. Verify that `grep -n -i "boundar\|asset" <repo-or-dir-name>-threat-model.md` finds both, and verify that each threat names an asset, a boundary and a stated assumption.
+4. Ask the user 1-3 questions on the assumptions that drive ranking and list the open ones under an Assumptions heading in `<repo-or-dir-name>-threat-model.md`. Verify that the user answered or that each open assumption is recorded before the report.
+5. Write the report to `<repo-or-dir-name>-threat-model.md`. Verify with `grep -c "^## " <repo-or-dir-name>-threat-model.md` that the sections match `references/prompt-template.md`, and that runtime and CI/dev are separated.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `references/prompt-template.md` is missing | The reference files were not shipped with the skill copy | Follow the section list in the Workflow below and state in the report that the template was unavailable |
+| Threats read like a generic checklist | Claims are not anchored to repo evidence | Delete unsupported items and cite a file path for each remaining threat |
+| The user does not answer the assumption questions | Context is unavailable | List the unresolved assumptions in the report and mark dependent mitigations as conditional |
+| Scope covers CI, tests and examples as runtime | Runtime and tooling were not separated | Re-map entrypoints and exclude out-of-scope paths explicitly |
 
 ## Workflow
 

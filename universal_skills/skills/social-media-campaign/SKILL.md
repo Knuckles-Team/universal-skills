@@ -38,6 +38,12 @@ Provide the campaign objective, audience, channel constraints, and voice guide.
 
 ## Steps
 
+1. Build the outline by invoking `$content-outline-builder` with the campaign inputs. Verify that `approved_outline` is returned.
+2. Draft posts by invoking `$content-draft-writer` with `approved_outline`. Verify that `post_drafts` has one draft per planned post.
+3. Edit the copy by invoking `$copy-editor` with `post_drafts`. Verify that `edited_posts` is returned for every draft.
+4. Render visuals by invoking `$canvas-design` with `edited_posts`. Verify that `campaign_visual_assets` lists one asset per post.
+5. Run `$publication-preflight` on the posts and assets. Verify that `readiness_decision` is returned and that nothing was posted or scheduled.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs.
@@ -70,6 +76,14 @@ Invoke `$publication-preflight` with `edited_posts`,
 `campaign_visual_assets`, and the publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `approved_outline` is rejected or empty | Objective or audience input is missing | Supply the campaign objective, audience and voice guide, and re-invoke `$content-outline-builder`. |
+| `$canvas-design` yields no assets | `edited_posts` was empty or malformed | Re-invoke `$copy-editor` to regenerate `edited_posts`, and pass its output to `$canvas-design`. |
+| `readiness_decision` is a fail | Posts or assets violate channel constraints | Read the failed checks in the decision, fix the named posts with `$copy-editor`, and re-run `$publication-preflight`. |
 
 ## Output
 

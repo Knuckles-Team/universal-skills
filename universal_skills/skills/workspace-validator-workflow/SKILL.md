@@ -53,6 +53,24 @@ If bumping and pushing was approved, verify that every project is on the `main` 
 Expected: push_and_publish_results
 Depends On: Step 4
 
+## Steps
+
+1. Clarify the run parameters with the user, deciding whether `rm_projects_validate` runs validate-only or with `auto_bump`. Verify that the choice is recorded before submitting anything.
+2. Submit validation with the `rm_projects_validate` tool, adding `auto_bump=true`, `auto_push=true` and `bump_part` only when requested. Verify that the response returns a job id.
+3. Poll with `rm_projects_validate_status` using `job_id` and inspect `ls ${MERISTEM_WORKSPACE_ROOT}/reports/` for the newest `validation-reports-<ts>` folder. Verify that per-project `summary_*.md` files appear and triage them while the run continues.
+4. Remediate findings with `rm_projects_validate(failed_only=true)` reruns and root-cause fixes. Verify that the failed set shrinks to 0.
+5. Run the final regression sweep with `rm_projects_validate` on all repositories with no filtering. Verify that the report shows 0 failures.
+6. When approved, call `rm_workspace_maintain` for the bump and `rm_git_phased_push` for the push. Verify that the push results list every project and that all were on `main` beforehand.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Validation returns no job id | The repository-manager MCP server is not connected | Check that `repository-manager-mcp` is configured in the client, reconnect it, and resubmit `rm_projects_validate`. |
+| Final sweep fails after remediation passed | A fix in one repo regressed a dependent | Read `failed_details`, fix the dependent, rerun with `failed_only=true`, then repeat the full sweep. |
+| Push is refused | A project is on a branch other than `main` | List branches with `rm_workspace_list_branches`, ask the user how to proceed, and only then rerun the release. |
+| Lint errors silenced with `_` prefixes | Error Resolution Policy was ignored | Revert the renames and fix the root cause, either completing the feature or removing dead code. |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

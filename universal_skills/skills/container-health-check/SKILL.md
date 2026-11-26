@@ -33,6 +33,12 @@ Full Docker infrastructure health assessment. Lists containers, images, volumes,
 
 ## Steps
 
+1. List all running containers with their status via `container-manager-mcp` (Step 0). Verify that the output includes a `container` name and `status` for each entry.
+2. List all Docker images with sizes and tags (Step 1). Verify that every row carries an `image` and a `tag`.
+3. List the Docker volumes and networks (Step 2). Verify that both a `volume` list and a `network` list are returned.
+4. Fetch the logs of one running container via `container-manager-mcp` (Step 3). Verify that the output contains log lines for the named container.
+5. Persist the findings with `graph_write` (Step 4). Verify that `graph_query` returns the stored health-check node.
+
 ### Step 0: list-containers [skill: container-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -67,6 +73,15 @@ Expected: `log`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Container list is empty | The tool points at the wrong Docker context or host | Run `docker context ls`, select the right context, and rerun Step 0 against it |
+| Log fetch returns nothing | The chosen container is stopped or produces no output | Pick a running container from the Step 0 list and call Step 3 again with its name |
+| `graph_write` fails | arbora is unreachable | Confirm access with `graph_query` and resubmit Step 4 once it responds |
+
 
 ## Output
 - Container Health Check results persisted in KG

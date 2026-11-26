@@ -23,30 +23,22 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "wger-agent": {
-      "command": "wger-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "WGER_INSTANCE": "${WGER_INSTANCE}",
-        "WGER_ACCESS_TOKEN": "${WGER_ACCESS_TOKEN}",
-        "USERTOOL": "${ USERTOOL:-True }",
-        "BODYTOOL": "${ BODYTOOL:-True }",
-        "ROUTINETOOL": "${ ROUTINETOOL:-True }",
-        "WORKOUTTOOL": "${ WORKOUTTOOL:-True }",
-        "NUTRITIONTOOL": "${ NUTRITIONTOOL:-True }",
-        "ROUTINECONFIGTOOL": "${ ROUTINECONFIGTOOL:-True }",
-        "EXERCISETOOL": "${ EXERCISETOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: wger-agent
+command: wger-mcp --transport stdio
+env:
+  WGER_INSTANCE: ${WGER_INSTANCE}
+  WGER_ACCESS_TOKEN: ${WGER_ACCESS_TOKEN}
+  USERTOOL: ${ USERTOOL:-True }
+  BODYTOOL: ${ BODYTOOL:-True }
+  ROUTINETOOL: ${ ROUTINETOOL:-True }
+  WORKOUTTOOL: ${ WORKOUTTOOL:-True }
+  NUTRITIONTOOL: ${ NUTRITIONTOOL:-True }
+  ROUTINECONFIGTOOL: ${ ROUTINECONFIGTOOL:-True }
+  EXERCISETOOL: ${ EXERCISETOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 
@@ -58,30 +50,22 @@ wger-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 
 Only BODYTOOL enabled:
 
-```json
-{
-  "mcpServers": {
-    "wger-agent": {
-      "command": "wger-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "WGER_INSTANCE": "${WGER_INSTANCE}",
-        "WGER_ACCESS_TOKEN": "${WGER_ACCESS_TOKEN}",
-        "USERTOOL": "False",
-        "BODYTOOL": "True",
-        "ROUTINETOOL": "False",
-        "WORKOUTTOOL": "False",
-        "NUTRITIONTOOL": "False",
-        "ROUTINECONFIGTOOL": "False",
-        "EXERCISETOOL": "False"
-      }
-    }
-  }
-}
+```text
+server: wger-agent
+command: wger-mcp --transport stdio
+env:
+  WGER_INSTANCE: ${WGER_INSTANCE}
+  WGER_ACCESS_TOKEN: ${WGER_ACCESS_TOKEN}
+  USERTOOL: False
+  BODYTOOL: True
+  ROUTINETOOL: False
+  WORKOUTTOOL: False
+  NUTRITIONTOOL: False
+  ROUTINECONFIGTOOL: False
+  EXERCISETOOL: False
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## CLI Usage
 

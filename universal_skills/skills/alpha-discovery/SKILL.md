@@ -36,6 +36,22 @@ Tool: `emerald_signals_fuse(ticker=...)`
 Store AlphaFactor and TradingSignal nodes in KG.
 Tool: `graph_write(action="add_node", node_type="AlphaFactor", ...)`
 
+## Steps
+
+1. Fetch the universe data with `emerald_exchange_get_historical(symbol=..., period="1y")`. Verify that the response contains rows for every symbol requested.
+2. Score alpha factors with `emerald_signals_alpha(ticker=...)`. Verify that each factor carries IC and IR values.
+3. Classify the regime with `emerald_signals_regime(ticker=...)`. Verify that the result is one of Bull, Bear, Sideways or Crisis.
+4. Fuse the signals with `emerald_signals_fuse(ticker=...)`. Verify that the output has one fused signal per ticker.
+5. Persist results with `graph_write(action="add_node", node_type="AlphaFactor", ...)`. Verify that a read-back such as `graph_query` returns the new `AlphaFactor` and `TradingSignal` nodes.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Historical data call returns empty | Wrong symbol or period, or the market-data connector is down | Check the symbol spelling and re-call `emerald_exchange_get_historical` with a shorter `period` such as `3mo`. |
+| Fusion has too few inputs | Alpha or regime step failed for the ticker | Re-run steps 2 and 3 for that ticker before calling `emerald_signals_fuse`. |
+| `graph_write` is rejected | arbora unreachable or node_type not in the ontology | Confirm the arbora MCP server responds, and use the exact `AlphaFactor` / `TradingSignal` node types. |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

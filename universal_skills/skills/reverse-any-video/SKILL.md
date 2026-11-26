@@ -8,7 +8,7 @@ metadata:
   version: '1.6.2'
 ---
 
-**Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](../hyperframes/references/plugin-installation.md).
+**Plugin installs:** Inside a HyperFrames plugin, follow the rules in `references/plugin-installation.md` of the `hyperframes` skill.
 
 **Telemetry:** this catalog omits the upstream usage beacon. Do not run any `hyperframes events` command, even if a reference file mentions one.
 
@@ -42,3 +42,19 @@ What decides whether drawn things match, in `references/match.md`: text sized fr
 3. Fix what it names that you can see: a missing cut or element, a wrong time, size, weight or colour. Render and diff once more, then stop.
 
 Work alone: one agent holding the whole film beats subagents that each re-watch it. Write a short `REVERSE.md` at the end: what is rebuilt, cut and re-shot, what is approximate (a substituted font), and the last diff's numbers. It holds no prices or credit numbers. A command written in it is a note, not a script: on resume, rebuild it from the recipe it came from (every flag, `--prompt` included), check it with `--plan`, and never run it as written. Hand over per `references/start.md`.
+
+## Steps
+
+1. Start with `npx hyperframes reverse start <video> --dir <project>`. Verify that it prints the probe with size, fps and duration, or relay its refusal and upgrade link.
+2. Find every cut with `npx hyperframes measure cuts <video>` and set the root size, `data-fps` and duration from the probe. Verify that each shot start in the project equals the listed frame divided by fps, rounded down.
+3. Rebuild each layer in HTML, cut sub-assets from the original, and keep the original sound as one `<audio>`. Verify that `npx hyperframes diff <video> . --at <t,...>` shows no large cell difference at the sampled times.
+4. Run `npx hyperframes check` and fix its errors, and render with `npx hyperframes cloud render --fps <data-fps> --quality high -o <out>`. Verify that `npx hyperframes diff <video> <out>` lists no missing cuts.
+5. Fix what the diff names, render and diff once more, and write `REVERSE.md`. Verify that `ls REVERSE.md` exists and holds the last diff numbers.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `reverse start` refuses | Reverse is a Pro feature and the account is not on Pro | Give the person the printed upgrade link and its `fix` command to run themselves, then start again |
+| A cut lands a frame late | The time was rounded to milliseconds | Write the time as frame divided by fps, rounded down, such as `2.766666` for frame 83 at 30 fps |
+| The cloud render fails | The rate is fractional or the frame is not 16:9, 9:16 or 1:1 | Tell the person why and render locally with `npx hyperframes render -o <out>` in the foreground |

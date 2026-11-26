@@ -31,6 +31,12 @@ Automatically retrieves issues assigned to the current user, flags tickets older
 
 ## Steps
 
+1. Query assigned and stale issues with the `atlassian_jira_issue` tool using JQL `assignee = currentUser() AND statusCategory != Done` and `assignee = currentUser() AND updated <= -7d`. Verify that `assigned_issues` and `stale_issues` each contain keys, summaries and updated dates.
+2. Present the dashboard of active and stale issues to the user and ask for progress notes. Verify that `progress_inputs` records a user reply for each stale issue or an explicit skip.
+3. Draft updates with the `atlassian_jira_comment` tool, or draft new backlog tickets. Verify that `update_results` shows each comment as created or as a draft awaiting approval.
+4. Persist the results with `graph_write`. Verify that a `graph_query` for the new nodes returns the issue keys.
+
+
 ### Step 0: Atlassian Assigned-Issue Query [skill: atlassian-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -58,6 +64,15 @@ Expected: `update_results, draft_tickets`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| JQL returns no issues | User identity not resolved by the Atlassian server | Run the query with an explicit assignee account id instead of `currentUser()` |
+| Comment creation denied | Account lacks comment permission on the project | Save the text as a draft for the user to post and note the permission gap in the report |
+| Stale list too large | Many tickets untouched for over 7 days | Group by project and ask the user to pick the top issues before drafting updates |
+| `graph_write` fails | Missing typed node metadata | Add the issue key and status fields and repeat the write |
 
 ## Output
 - Atlassian Assigned Issues Manager results persisted in KG

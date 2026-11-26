@@ -33,6 +33,12 @@ OS and hardware information sweep across all inventory hosts. Collects CPU, memo
 
 ## Steps
 
+1. List inventory hosts with the `discovery-agent` using `tun_tm_hosts`. Verify that the host list shows a connectivity status for each host.
+2. Collect CPU, memory, disk and OS details from every reachable host. Verify that `cpu`, `memory`, `disk` and `os` values are returned for each.
+3. Detect accelerators with `lspci` or `nvidia-smi` on every reachable host. Verify that `gpu` and `driver` values are returned or recorded as absent.
+4. Update the Knowledge Graph with `HardwareNode` and `GPUAccelerator` nodes linked by `HAS_ACCELERATOR`. Verify that `graph_query` returns the updated nodes.
+5. Persist the run with `graph_write`. Verify that the typed result nodes are returned by `graph_query`.
+
 ### Step 0: Tunnel Manager Mcp
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -67,6 +73,14 @@ Expected: `update, hardware, gpu`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Host shown unreachable | Tunnel or SSH problem | Check the host with `tun_tm_system` and rerun for that host after fixing connectivity. |
+| GPU details missing | Driver tools not installed | Record the host as having no accelerator, or install `pciutils` and rerun the detection. |
+| Node not updated in the graph | `graph_write` failed or the node key mismatched | Read the write error and correct the node identifier before writing again. |
 
 ## Output
 - Hardware Sweep results persisted in KG

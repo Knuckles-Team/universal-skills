@@ -52,6 +52,27 @@ python scripts/mysql_query.py <connection_name> "<sql_query>" [--json] [--explai
 python scripts/mssql_query.py <connection_name> "<sql_query>" [--json] [--explain]
 ```
 
+## Steps
+
+1. Locate or create `connections.json`.
+   Run `ls connections.json` and copy `connections.example.json` if missing. Verify that the needed alias exists and that credentials came from the user, not guesses.
+2. List configured databases for the dialect.
+   Run `python scripts/postgres_query.py --list` (or `mysql_query.py` / `mssql_query.py`). Verify that the target alias appears in the output.
+3. Explore the schema before querying.
+   Run `python scripts/postgres_query.py --db <alias> --tables`. Verify that the expected tables are listed.
+4. Run a bounded read query.
+   Run `python scripts/postgres_query.py --db <alias> --query "SELECT * FROM <table>" --limit 20`. Verify that rows return and the count respects the limit.
+5. Gate any write query.
+   Use the same script with `--query "UPDATE ... WHERE ..."` only after confirming the `WHERE` clause. Verify that a follow-up `SELECT` shows only the intended rows changed.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `Database '<alias>' not found` | Alias missing from `connections.json` | Run `--list`, then fix the alias or add the entry from `connections.example.json` |
+| Write query is blocked | Safety analysis blocks state-changing SQL without approval | Follow the script's prompt, confirm with the user, and narrow the `WHERE` clause |
+| Connection refused or authentication failed | Wrong host, port, or credentials | Ask the user to confirm the credentials, test with `--list`, and never guess passwords |
+
 ## Best Practices
 1. **Explore First**: Start by describing the database schema. Example: `SELECT table_name FROM information_schema.tables WHERE table_schema='public';`
 2. **Limit Rows**: Always use `LIMIT N` or `TOP N` on initial `SELECT` queries to avoid massive outputs crashing your context window.

@@ -90,6 +90,24 @@ digraph process {
 }
 ```
 
+## Steps
+
+1. Confirm you are not on main by running `git branch --show-current`. Verify that the output is a feature branch, otherwise set up an isolated worktree first.
+2. Read the plan with `grep -n "^### Task" <plan-file>` to extract every task. Verify that each task is listed and recorded in the todo list with its full text.
+3. Check the three prompt templates exist with `ls implementer-prompt.md spec-reviewer-prompt.md code-quality-reviewer-prompt.md`. Verify that all three are listed.
+4. Dispatch one implementer subagent for the next task using `implementer-prompt.md` with the full task text pasted in. Verify that the subagent reports tests passing and a commit before you continue.
+5. Dispatch the spec reviewer using `spec-reviewer-prompt.md`, and only after it approves dispatch the quality reviewer using `code-quality-reviewer-prompt.md`. Verify that both reviews end approved, and loop the fixes until they do.
+6. After the last task, dispatch a final reviewer and inspect the history with `git log --oneline`. Verify that every plan task has a matching commit.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Subagent edits conflict | Several implementers were dispatched in parallel | Dispatch implementers one at a time and reconcile the conflicting files with `git diff`. |
+| Subagent misses requirements | It was told to read the plan file instead of receiving the task text | Re-dispatch with the full task text and scene-setting context pasted into the prompt. |
+| Review finds issues repeatedly | Fixes were not re-reviewed or the wrong reviewer ran first | Have the same implementer fix the issues and re-run the spec review before the quality review. |
+| Subagent failed the task | Context became polluted | Dispatch a fresh fix subagent with specific instructions rather than fixing by hand. |
+
 ## Prompt Templates
 
 - `./implementer-prompt.md` - Dispatch implementer subagent

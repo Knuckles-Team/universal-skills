@@ -29,6 +29,10 @@ Prepares a live stream broadcast title, updates style details, announces the liv
 
 ## Steps
 
+1. Update the broadcast title, welcome message and style with `owncast_objects` and `owncast_internal`. Verify that `stream_status` returns the new title.
+2. Announce the stream and post a welcome chat message with `owncast_external` and `owncast_chat`. Verify that `system_chat_post` is returned.
+3. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Social Media Influencer
 **Agent**: `content-creator`
 **Tools**: `graph_query, document_tools`
@@ -49,6 +53,14 @@ Expected: `system_chat_post, notification`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Owncast calls return 401 | Admin credentials are missing or wrong | Set the Owncast admin password or token in the agent environment and repeat the `owncast_internal` call. |
+| Title does not update | Stream server is unreachable | Check the Owncast URL with `curl -sI <owncast-url>` and fix the configured host before re-running. |
+| Chat post is missing | Chat is disabled in Owncast | Enable chat in the Owncast admin and call `owncast_chat` again. |
 
 ## Output
 - Social Media Influencer results persisted in KG

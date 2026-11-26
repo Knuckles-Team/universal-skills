@@ -31,6 +31,11 @@ Fetches a Confluence wiki page, saves it locally as a standard markdown file, an
 
 ## Steps
 
+1. Fetch the Confluence page by ID or by space key and title with the `atlassian_confluence_page` tool (Step 0). Verify that `confluence_page_data` contains the page title and a non-empty body.
+2. Present the page summary to the user and ask for a save path in the workspace (Step 1). Verify that `save_path` is a writable workspace path whose parent exists per `ls`.
+3. Write the markdown to `save_path` and ingest it with `mcp_arbora_graph_ingest` (Step 2). Verify that the file exists and that `ingestion_job_status` reports success.
+4. Persist the typed nodes and edges for the ingested page with `graph_write` (Step 3). Verify that `graph_query` returns the new page node with its source link.
+
 ### Step 0: Atlassian Agent
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -58,6 +63,15 @@ Expected: `ingestion_job_status`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `atlassian_confluence_page` returns 404 or empty content | Wrong page ID or space key, or the account lacks view access | Re-resolve the page by space key and title, confirm the account permissions in Confluence, and call the tool again with the corrected identifier |
+| Save path rejected | The chosen directory is outside the workspace or missing | Create the directory with `mkdir -p` inside the workspace and pass the new path to Step 2 |
+| `ingestion_job_status` shows failed | The markdown has malformed front-matter or arbora is down | Open the saved file and fix the front-matter, check arbora with `graph_query`, and call `mcp_arbora_graph_ingest` on the path again |
+
 
 ## Output
 - Confluence Knowledge Ingester results persisted in KG

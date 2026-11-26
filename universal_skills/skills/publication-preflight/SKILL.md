@@ -33,6 +33,22 @@ Check only criteria relevant to the artifact and channel:
 
 Do not infer legal clearance, consent, or approval from silence.
 
+## Steps
+
+1. Identify the artifact, channel and destination from the request. Verify with `ls -l <artifact>` that the file exists and is readable.
+2. Inspect the artifact against the gate criteria above. Verify with `grep -rniE "TOD[O]|DRAFT|lorem ipsum|FIXME" <artifact>` that no draft markers remain.
+3. Check every link and citation. Verify with `grep -oE "https?://[^ )\"]+" <artifact>` that each URL is listed and each resolves to the intended destination.
+4. Confirm rights, approvals and accessibility records with `grep -niE "license|credit|approved|alt=" <artifact>`. Verify that each has explicit evidence and no approval is inferred from silence.
+5. Return the `PASS`, `WARN` or `BLOCK` decision as specified in the output contract. Verify that each check lists status, evidence and the smallest corrective action.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Link cannot be checked | Network access blocked or a login wall | Mark the check WARN with the URL listed and ask the owner to confirm manually |
+| No approval evidence | Approval was not recorded in the artifact or request | Return BLOCK naming the missing approver and ask for explicit sign-off |
+| Artifact changed during review | The file was edited after inspection | Rerun the checks on the latest version and report its modified time |
+
 ## Output contract
 
 Return an overall `PASS`, `WARN`, or `BLOCK`, then list each check with status,

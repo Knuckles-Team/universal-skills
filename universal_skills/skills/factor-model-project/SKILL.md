@@ -22,6 +22,13 @@ beta, size, value). See `quant-career-docs/reference/strategies.md`.
 
 ## Steps
 
+1. Fetch the factor data with `data-science-mcp` from Kenneth French's library. Verify that `factor-returns` has Mkt-RF, SMB, HML and RF columns with an aligned date index.
+2. Pull asset returns via yfinance with `data-science-mcp`. Verify that `excess-returns` equals returns minus RF and covers the same dates.
+3. Regress excess returns on the factors with OLS in statsmodels. Verify that `factor-loadings` includes coefficients, t-stats and R-squared.
+4. Interpret the loadings. Verify that `factor-interpretation` states the market, size and value tilt and what the model does not explain.
+5. Publish the repository to GitHub with a README and a `what didn't work` section. Verify that `github-repo-url` loads.
+6. Persist the project with `graph_write`. Verify that `graph_query` returns the project node linked to the portfolio.
+
 ### Step 1: fetch-french-factors
 **Agent**: `quant_researcher`
 **Tools**: `data-science-mcp`
@@ -64,6 +71,14 @@ Expected: `github-repo-url`
 **Tools**: `graph_write`
 
 Persist the project and factor loadings as typed nodes linked to the portfolio.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Date indices do not align | Monthly factors against daily returns | Resample the returns to monthly frequency before regression. |
+| Regression has very low R-squared | Wrong asset or window | Check the asset ticker and sample window, and report the result honestly. |
+| Push to GitHub fails | Missing credentials or repo name clash | Run `gh auth status` and choose an unused repo name before pushing again. |
 
 ## Output
 - A reproduced Fama-French 3-factor regression with interpreted loadings

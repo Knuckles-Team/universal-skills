@@ -33,6 +33,13 @@ Automatically scans local containers, pulls crash logs, and designs remediation 
 
 ## Steps
 
+1. Scan containers with `cm_container_operations` `list_containers` using `all_containers`. Verify that `local_containers_list` includes stopped containers.
+2. Filter stopped or unhealthy containers and ask the user to confirm. Verify that `selected_containers` is recorded.
+3. Fetch logs with `cm_container_operations` `get_container_logs` using `tail`. Verify that `container_logs` is non-empty for each selected container.
+4. Check compose state with `cm_compose_operations` `ps`. Verify that `compose_states` lists each stack.
+5. Fuse logs and states into a remediation plan. Verify that `remediation_plan` names a root cause per failed container.
+6. Persist with `graph_write`. Verify that `graph_query` returns the new nodes.
+
 ### Step 0: scan-local-containers [skill: container-manager-mcp]
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -74,6 +81,14 @@ Expected: `remediation_plan`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No failed containers | All healthy | Report no action needed and stop. |
+| Logs empty | `tail` too small or the container never started | Increase `tail` and inspect `docker inspect` for the exit code. |
+| Compose `ps` shows nothing | No compose project in this context | Check the project directory and context and rerun. |
 
 ## Output
 - Local Container Troubleshooter results persisted in KG

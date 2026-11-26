@@ -37,6 +37,11 @@ requirements.
 
 ## Steps
 
+1. Invoke `$content-outline-builder` with the workflow inputs and the episode transcript. Verify that the result contains a non-empty `approved_outline`.
+2. Invoke `$content-draft-writer` with the inputs, transcript and `approved_outline`. Verify that the result contains a non-empty `show_notes_draft`.
+3. Invoke `$copy-editor` with `show_notes_draft` and the inputs. Verify that the result contains a non-empty `edited_show_notes`.
+4. Invoke `$publication-preflight` with `edited_show_notes` and the publication requirements. Verify that the result contains a non-empty `readiness_decision`.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs and the
@@ -64,6 +69,14 @@ Invoke `$publication-preflight` with `edited_show_notes` and the
 publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Outline misses topics | Transcript truncated or empty | Check the transcript length with `wc -w` on the source file and re-invoke `$content-outline-builder` with the complete text |
+| Notes drift from the transcript | Writer ran without the transcript | Re-invoke `$content-draft-writer` with the transcript and `approved_outline` |
+| Preflight blocks the notes | Publication requirements unmet | Fix the items listed in `readiness_decision` and re-run `$publication-preflight` |
 
 ## Output
 

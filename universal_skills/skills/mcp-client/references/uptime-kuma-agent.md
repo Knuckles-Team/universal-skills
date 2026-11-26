@@ -18,25 +18,17 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "uptime-kuma-agent": {
-      "command": "uptime-kuma-agent",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "UPTIME_KUMA_URL": "${UPTIME_KUMA_URL}",
-        "UPTIME_KUMA_TOKEN": "${UPTIME_KUMA_TOKEN}",
-        "MONITORSTOOL": "${ MONITORSTOOL:-True }",
-        "STATUSTOOL": "${ STATUSTOOL:-True }"
-      }
-    }
-  }
-}
+```text
+server: uptime-kuma-agent
+command: uptime-kuma-agent --transport stdio
+env:
+  UPTIME_KUMA_URL: ${UPTIME_KUMA_URL}
+  UPTIME_KUMA_TOKEN: ${UPTIME_KUMA_TOKEN}
+  MONITORSTOOL: ${ MONITORSTOOL:-True }
+  STATUSTOOL: ${ STATUSTOOL:-True }
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 

@@ -16,23 +16,15 @@
 
 ## Stdio Connection (Default)
 
-```json
-{
-  "mcpServers": {
-    "ansible-tower-mcp": {
-      "command": "ansible-tower-mcp",
-      "args": [
-        "--transport",
-        "stdio"
-      ],
-      "env": {
-        "ANSIBLE_TOWER_URL": "${ANSIBLE_TOWER_URL}",
-        "ANSIBLE_TOWER_TOKEN": "${ANSIBLE_TOWER_TOKEN}"
-      }
-    }
-  }
-}
+```text
+server: ansible-tower-mcp
+command: ansible-tower-mcp --transport stdio
+env:
+  ANSIBLE_TOWER_URL: ${ANSIBLE_TOWER_URL}
+  ANSIBLE_TOWER_TOKEN: ${ANSIBLE_TOWER_TOKEN}
 ```
+
+Register this command and environment in the server list of the MCP client in use.
 
 ## HTTP Connection
 

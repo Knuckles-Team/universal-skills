@@ -31,6 +31,11 @@ Cross-system health and resource check combining system metrics with Langfuse ob
 
 ## Steps
 
+1. Collect memory, CPU and disk with `tun_tm_system`. Verify that the output contains memory and CPU readings.
+2. Check Langfuse health and list datasets using the `langfuse-mcp` tools. Verify that the health endpoint reports OK.
+3. List recent traces with the `langfuse-mcp` trace tool. Verify that at least one trace with a status is returned.
+4. Persist results with `graph_write` as typed nodes and edges. Verify that a `graph_query` lookup of the new nodes returns the persisted records.
+
 ### Step 0: Systems Manager
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -58,6 +63,14 @@ Expected: `trace`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Langfuse health check fails | Wrong host or keys | Fix the Langfuse host and API keys in the agent environment and call the health tool again. |
+| Trace list is empty | No recent activity or wrong project | Select the correct project or widen the time range and list traces again. |
+| System stats call errors | SSH host unreachable | Check the host with `tun_tm_hosts` and restore connectivity. |
 
 ## Output
 - System Observability Sweep results persisted in KG

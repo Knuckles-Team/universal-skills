@@ -31,6 +31,11 @@ Automatically lists active social integrations, discovers slot availabilities, p
 
 ## Steps
 
+1. List active integrations and recommended slots with `postiz_integrations` using the `list_integrations` or `check_connection` actions. Verify that `active_integrations` is non-empty.
+2. Collect the post body, media URLs and schedule from the user after presenting the channels and slots. Verify that `post_content` and `release_time` are provided and the user approved them.
+3. Create and schedule the post with `postiz_posts` and `postiz_uploads`. Verify that `post_creation_result` contains a post identifier and the scheduled time.
+4. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: Postiz Integration Discovery [skill: postiz-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -58,6 +63,15 @@ Expected: `post_creation_result`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| No active integrations returned | The channel connection expired | Reconnect the channel in Postiz and confirm it with `postiz_integrations` using `check_connection`. |
+| Media upload fails | The file URL is unreachable or the format is unsupported | Provide a reachable URL in a supported format and repeat the upload with `postiz_uploads`. |
+| Post scheduled in the past | The `release_time` is earlier than the current time | Ask the user for a future time from the recommended slots and schedule again with `postiz_posts`. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Postiz Scheduler results persisted in KG

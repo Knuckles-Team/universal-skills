@@ -3,13 +3,7 @@ name: dependency-modernizer
 domain: development
 skill_type: skill
 description: >-
-  Bump every PyPI-resolvable dependency in one or many repos' pyproject.toml
-  files to its newest version on PyPI, preserving comments and formatting via
-  a tomlkit round-trip edit, while safely leaving workspace/intra-repo
-  members, CVE-pinned security floors, and complex (direct-URL/VCS or
-  marker-qualified) specs untouched. Use when the user asks to modernize,
-  refresh, or bump dependencies to the latest version across one repository
-  or a whole fleet of repositories.
+  Bump every PyPI-resolvable dependency in pyproject.toml files to its newest version, preserving formatting via a tomlkit round trip and leaving workspace members, CVE-pinned floors, and URL/VCS/marker specs untouched. Use when asked to modernize, refresh, or bump dependencies across one repository or a fleet. Do NOT use for non-PyPI ecosystems.
 license: MIT
 tags: [dependencies, pyproject, pypi, modernization, fleet, tomlkit]
 metadata:
@@ -18,6 +12,8 @@ metadata:
 ---
 
 # Dependency Modernizer
+
+Scope: Bump every PyPI-resolvable dependency in one or many repos' pyproject.toml files to its newest version on PyPI, preserving comments and formatting via a tomlkit round-trip edit, while safely leaving workspace/intra-repo members, CVE-pinned security floors, and complex (direct-URL/VCS or marker-qualified) specs untouched. Use when the user asks to modernize, refresh, or bump dependencies to the latest version across one repository or a whole fleet of repositories.
 
 Resolve every dependency in one or many `pyproject.toml` files to its newest
 version on PyPI and rewrite the specifier to `>=<latest>`, dropping any upper
@@ -94,6 +90,27 @@ patterns (e.g. `agent-packages/agents/*`) — any set of repos.
 
 Exit code is `1` if any `errors` were recorded (path or per-package), `0`
 otherwise — the run itself never aborts partway through the batch.
+
+## Steps
+
+1. Install the requirement and select the repositories.
+   Run `pip install tomlkit` and `ls <repo>/pyproject.toml`. Verify that `python -c "import tomlkit"` exits 0.
+2. Preview the bump.
+   Run `python scripts/bump_dependencies.py <repo> --dry-run`. Verify that the JSON summary lists each `package`, `from`, and `to`, and that nothing is written (`git status --short`).
+3. Review the skipped and error counts.
+   Read the summary. Verify that workspace members, CVE-pinned entries, and complex specs are counted as skipped and that `errors` is empty or understood.
+4. Write the bump.
+   Run `python scripts/bump_dependencies.py <repo> --no-dry-run`. Verify that `git diff -- pyproject.toml` shows only specifier changes with comments intact.
+5. Reconcile separately.
+   Run `uv lock` then the repository's test suite. Verify that both pass, otherwise adjust specifiers.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Package listed in `errors` | PyPI name 404 or network failure | Check the name on PyPI with `pip index versions <name>`, fix or add `--skip <name>`, and rerun |
+| Lock resolution fails after bump | New floor conflicts with a preserved cap or transitive pin | Edit the specifier in `pyproject.toml` or rerun with a different `--keep-caps` choice, then run `uv lock` again |
+| `tomlkit` import error message | Requirement not installed | Run `pip install tomlkit` in the environment running the script |
 
 ## Examples
 

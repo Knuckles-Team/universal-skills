@@ -33,6 +33,12 @@ Collects pricing indicators, extracts structural features, fits Hidden Markov Mo
 
 ## Steps
 
+1. Collect tick volumes, bid-ask spreads and rolling volatilities with `graph_query` and `sx_search`. Verify that `market-regime-raw-data` spans a continuous period without gaps.
+2. Normalize features and compute volatility and trend indicators with `graph_analyze`. Verify that `structured-regime-features` has no NaN values.
+3. Fit a Hidden Markov Model with `graph_query` and `graph_analyze` to classify market state. Verify that `hmm-state-classifications` assigns a state to every period.
+4. Modify strategy parameters from the detected state using `graph_write`. Verify that `adapted-parameters-configs` records the state that triggered each change.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Data Collector
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `adapted-parameters-configs`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Raw data has gaps | The source skipped sessions | Fill the gap with another `sx_search` source or trim the period to the continuous range. |
+| HMM fails to converge | Too many states for the data volume | Reduce the number of states in the `graph_analyze` inputs and refit. |
+| States flip every period | Features are too noisy | Smooth the features with a longer rolling window and refit. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Regime Detection Pipeline results persisted in KG

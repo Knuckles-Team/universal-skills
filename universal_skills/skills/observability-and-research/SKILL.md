@@ -31,6 +31,11 @@ Combined observability check with research discovery. Validates Langfuse is heal
 
 ## Steps
 
+1. Inventory Langfuse with the `langfuse-mcp` tools for health, score configs and datasets. Verify that `health`, `score` and `dataset` are returned.
+2. Search for papers with `sx_search` and the scholarx MCP on LLM observability. Verify that `paper` entries are returned.
+3. List Langfuse projects with the `langfuse-mcp` tools. Verify that `project` is non-empty.
+4. Persist results with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 0: Langfuse Configuration Inventory [skill: langfuse-mcp]
 **Agent**: `search-agent`
 **Tools**: `sx_search, graph_query`
@@ -58,6 +63,14 @@ Expected: `project`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Langfuse health fails | Wrong host or key | Check the Langfuse endpoint and keys, then call the health tool again |
+| No papers | Query too narrow | Broaden the `sx_search` query |
+| Empty project list | Key lacks scope | Replace the Langfuse key with an organization-level key and list projects again |
 
 ## Output
 - Observability And Research results persisted in KG

@@ -38,6 +38,11 @@ requirements.
 
 ## Steps
 
+1. Build the outline with `$content-outline-builder` using the campaign objective and audience. Verify that `approved_outline` is non-empty and matches the objective.
+2. Draft the campaign with `$content-draft-writer` using `approved_outline`. Verify that `campaign_draft` follows the voice guide.
+3. Edit the draft with `$copy-editor`. Verify that `edited_campaign` is returned with the edits applied.
+4. Run `$publication-preflight` on `edited_campaign`. Verify that `readiness_decision` is recorded and that the campaign was neither sent nor scheduled.
+
 ### Step 0: content-outline-builder [skill: content-outline-builder]
 
 Invoke `$content-outline-builder` with the workflow inputs.
@@ -63,6 +68,14 @@ Invoke `$publication-preflight` with `edited_campaign` and the
 publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Draft drifts from the voice guide | Voice guide omitted from the inputs | Re-invoke `$content-draft-writer` with the voice guide and `approved_outline`. |
+| `readiness_decision` blocks the campaign | Preflight found missing publication requirements | Fix the cited items via `$copy-editor` and rerun `$publication-preflight`. |
+| Campaign was sent unintentionally | Sending logic added to the workflow | Remove the sending step, because this workflow only returns `edited_campaign` and `readiness_decision`. |
 
 ## Output
 

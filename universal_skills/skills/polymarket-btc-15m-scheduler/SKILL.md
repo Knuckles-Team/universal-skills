@@ -48,6 +48,23 @@ Expected: submitted_prediction_order
 Export trading metrics and runtime statistics to the centralized Redis/Grafana dashboard
 Expected: exported_metrics_success
 
+## Steps
+
+1. Pull 15m BTC/USD candles via `mcp_market_data`. Verify that the `ohlcv_candles` output covers a contiguous window with no missing 15m bars.
+2. Compute moving averages, variance and z-scores via `mcp_signals`. Verify that `computed_signals` contains no NaN values.
+3. Run the 7-phase up/down algorithm via `mcp_strategy`. Verify that `up_down_prediction` carries a direction and a confidence value.
+4. Derive stop-loss and take-profit thresholds via `mcp_risk`. Verify that `validated_risk_parameters` are positive and consistent with current volatility.
+5. Submit the CLOB limit order via `mcp_orders`. Verify that `submitted_prediction_order` returns an order id and a live or filled status.
+6. Export metrics through `infrastructure-orchestrator`. Verify that `exported_metrics_success` is true and the dashboard shows the new datapoint.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Candle gaps in `ohlcv_candles` | Market-data feed dropped bars or the window crossed a contract rollover | Re-request the window from `mcp_market_data` with a wider start time and abort the cycle if gaps persist |
+| Order rejected by CLOB | Stale signature, insufficient balance, or price outside tick bounds | Rebuild the order with fresh parameters from Step 4 and confirm balance via `mcp_portfolio` before resubmitting |
+| Metrics export fails | Redis or Grafana endpoint unreachable | Check the endpoint with `infrastructure-orchestrator` health output and re-export the cached metrics once it is back |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.

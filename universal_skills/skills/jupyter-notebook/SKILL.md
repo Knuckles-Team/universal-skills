@@ -32,13 +32,12 @@ Prefer the bundled templates and the helper script for consistent structure and 
 - If the request is instructional, step-by-step, or audience-specific, choose `tutorial`.
 - If editing an existing notebook, treat it as a refactor: preserve intent and improve structure.
 
-## Workflow
-1. Lock the intent.
-Identify the notebook kind: `experiment` or `tutorial`.
-Capture the objective, audience, and what "done" looks like.
+## Steps
 
-2. Scaffold from the template.
-Use the helper script to avoid hand-authoring raw notebook JSON.
+1. Lock the intent by choosing the notebook kind, `experiment` or `tutorial`, and writing down the objective, audience and definition of done.
+   Verify that the kind matches the Decision tree above.
+2. Scaffold from the template with the helper script instead of hand-authoring raw notebook JSON.
+   Verify that `ls output/jupyter-notebook/` lists the new `.ipynb` file.
 
 ```bash
 uv run --python 3.12 python scripts/new_notebook.py \
@@ -54,24 +53,22 @@ uv run --python 3.12 python scripts/new_notebook.py \
   --out output/jupyter-notebook/intro-to-embeddings.ipynb
 ```
 
-3. Fill the notebook with small, runnable steps.
-Keep each code cell focused on one step.
-Add short markdown cells that explain the purpose and expected result.
-Avoid large, noisy outputs when a short summary works.
+3. Fill the notebook with small, runnable cells, each focused on one step and preceded by a short markdown cell.
+   Verify with `python3 -c "import json,sys; json.load(open(sys.argv[1]))" <notebook>.ipynb` that the file is still valid JSON.
+4. Apply the right pattern from `references/experiment-patterns.md` or `references/tutorial-patterns.md`.
+   Verify that the notebook follows the section order that reference describes.
+5. When editing an existing notebook, make targeted edits and preserve the structure (read `references/notebook-structure.md` before touching raw JSON).
+   Verify with `git diff --stat <notebook>.ipynb` that only the intended cells changed.
+6. Run the notebook top to bottom with `jupyter nbconvert --to notebook --execute <notebook>.ipynb --output /tmp/check.ipynb` and walk the final pass in `references/quality-checklist.md`.
+   Verify that the command exits 0, or say explicitly that execution was not possible and how to validate locally.
 
-4. Apply the right pattern.
-For experiments, follow `references/experiment-patterns.md`.
-For tutorials, follow `references/tutorial-patterns.md`.
+## Failure recovery
 
-5. Edit safely when working with existing notebooks.
-Preserve the notebook structure; avoid reordering cells unless it improves the top-to-bottom story.
-Prefer targeted edits over full rewrites.
-If you must edit raw JSON, review `references/notebook-structure.md` first.
-
-6. Validate the result.
-Run the notebook top-to-bottom when the environment allows.
-If execution is not possible, say so explicitly and call out how to validate locally.
-Use the final pass checklist in `references/quality-checklist.md`.
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| `new_notebook.py` cannot find a template | Run from the wrong directory | Run it from this skill's directory so `assets/experiment-template.ipynb` resolves, or pass the absolute script path |
+| `nbconvert` reports a missing kernel or module | `jupyterlab` and `ipykernel` are not installed | Run `uv pip install jupyterlab ipykernel`, then re-run the nbconvert command |
+| Notebook fails to open after a raw edit | Invalid JSON from a hand edit | Validate with `python3 -c "import json,sys; json.load(open(sys.argv[1]))" <notebook>.ipynb`, fix the reported line using `references/notebook-structure.md` |
 
 ## Templates and helper script
 - Templates live in `assets/experiment-template.ipynb` and `assets/tutorial-template.ipynb`.

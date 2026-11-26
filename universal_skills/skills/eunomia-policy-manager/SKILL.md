@@ -3,14 +3,7 @@ name: eunomia-policy-manager
 domain: infrastructure
 skill_type: skill
 description: >-
-  Manage Eunomia authorization policies for the MCP server fleet. Lists,
-  creates, pushes, and deletes policies on the centralized Eunomia remote
-  authorization server. Use when the user says "list policies", "show
-  eunomia policies", "push policies", "create mcp policy", "delete policy",
-  "audit authorization", "eunomia status", or needs to inspect or modify
-  the authorization rules governing MCP tool execution. Do NOT use for
-  Eunomia server deployment — use infrastructure-orchestrator for that.
-  Do NOT use for Keycloak SSO or OpenBao secrets — use dedicated skills.
+  Manage Eunomia authorization policies for the MCP server fleet. Use when the user says "list policies", "show eunomia policies", "push policies", "create mcp policy", "delete policy", "audit authorization", "eunomia status", or needs to inspect or modify the authorization rules governing MCP tool execution. Do NOT use for Eunomia server deployment — use infrastructure-orchestrator for that.
 license: MIT
 tags: [eunomia, authorization, policies, mcp, security, governance]
 metadata:
@@ -19,6 +12,8 @@ metadata:
 ---
 
 # Eunomia Policy Manager Skill
+
+Scope: Manage Eunomia authorization policies for the MCP server fleet. Lists, creates, pushes, and deletes policies on the centralized Eunomia remote authorization server. Use when the user says "list policies", "show eunomia policies", "push policies", "create mcp policy", "delete policy", "audit authorization", "eunomia status", or needs to inspect or modify the authorization rules governing MCP tool execution. Do NOT use for Eunomia server deployment — use infrastructure-orchestrator for that. Do NOT use for Keycloak SSO or OpenBao secrets — use dedicated skills.
 
 Atomic operations for managing authorization policies on the centralized Eunomia remote server that governs MCP tool execution.
 
@@ -88,6 +83,22 @@ The script:
 2. Validates each against the `eunomia_sdk.client.schemas.Policy` Pydantic model.
 3. Deletes any existing policy with the same name (idempotent upsert).
 4. Creates the policy on the remote server via `client.create_policy()`.
+
+## Steps
+
+1. Resolve the Eunomia connection through AgentConfig and confirm the SDK with `python -c "import eunomia_sdk"`. Verify that the command exits with no error and that the endpoint value is available at runtime.
+2. List the current server policies with `python scripts/list_policies.py --endpoint <runtime endpoint>`. Verify that the output prints `Successfully retrieved N policies` with each name and default effect.
+3. To change policies, generate files with `python scripts/create_policies.py` and edit them under `services/eunomia/policies/`. Verify that `ls services/eunomia/policies/*.json` lists one file per service and `python -m json.tool <file>` parses.
+4. Push with `python scripts/push_policies.py --endpoint <runtime endpoint>` and re-list. Verify that `python scripts/list_policies.py --endpoint <runtime endpoint>` now shows the pushed policy names and rules.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Connection refused | Endpoint unresolved or server down | Run the AgentConfig connection check for the Eunomia profile and fix the profile, without disabling TLS. |
+| `ModuleNotFoundError: eunomia_sdk` | SDK not installed | Run `pip install eunomia-sdk` and rerun step 1. |
+| Push reports a Pydantic validation error | Policy JSON does not match the `Policy` schema | Fix the field named in the error (see the Policy JSON Schema section) and rerun the push. |
+| Policy missing after push | File was not in `POLICY_DIR` | Check `--policy-dir` points at the directory holding the JSON files and push again. |
 
 ## Policy JSON Schema
 

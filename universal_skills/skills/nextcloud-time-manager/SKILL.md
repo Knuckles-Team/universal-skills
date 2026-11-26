@@ -31,6 +31,11 @@ Connects to Nextcloud using nextcloud-agent, retrieves latest calendar events an
 
 ## Steps
 
+1. Retrieve calendars and tasks with `nextcloud_calendar` `list_calendars`, `list_calendar_events` and `nextcloud_files` `list_files`. Verify that `calendars`, `events` and `tasks` are returned.
+2. Summarize the schedule to the user and ask for changes. Verify that `user_schedule_instructions` is recorded with the user's confirmation.
+3. Apply changes with `nextcloud_calendar` `create_calendar_event` and `nextcloud_files` write tools. Verify that re-listing with `list_calendar_events` shows the change.
+4. Persist the results with `graph_write`. Verify that a `graph_query` returns the new nodes.
+
 ### Step 0: Nextcloud Schedule Retrieval [skill: nextcloud-agent]
 **Agent**: `intake-agent`
 **Tools**: `graph_query, nc_files`
@@ -58,6 +63,14 @@ Expected: `nextcloud_sync_results`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Calendar list is empty | Wrong Nextcloud credentials | Check the nextcloud-agent credentials and reconnect |
+| Event not created | Invalid date format | Use ISO 8601 times and call `create_calendar_event` again |
+| Duplicate tasks | Mutation applied twice | List with `list_files` first and update the existing record |
 
 ## Output
 - Nextcloud Time Manager results persisted in KG

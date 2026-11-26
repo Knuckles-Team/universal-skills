@@ -33,6 +33,13 @@ Pulls daily benchmark indices, calculates active share tracking error, decompose
 
 ## Steps
 
+1. Fetch benchmark and holdings returns by running Step 1 with `graph_query` and `sx_search`. Verify that `benchmark-price-returns` has aligned daily dates for holdings and the index.
+2. Compute tracking error by running Step 2 with `graph_analyze`. Verify that `rolling-tracking-errors` contains both tracking error and active share values.
+3. Attribute returns by running Step 3 with `graph_analyze`. Verify that `style-returns-attribution` splits asset selection from style effects and the parts sum to the active return.
+4. Dispatch drift alerts by running Step 4 with `document_tools`. Verify that `portfolio-drift-verdicts` lists each bound checked and whether it was breached.
+5. Persist the outputs by running Step 5 with `graph_write`. Verify that a `graph_query` for the new nodes returns the verdicts.
+
+
 ### Step 1: Benchmark Returns Collector
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +74,15 @@ Expected: `portfolio-drift-verdicts`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Return series misaligned | Holdings and index have different trading calendars | Reindex both series to the shared dates before Step 2 and drop non-overlapping days |
+| Tracking error is NaN | Fewer observations than the rolling window | Shorten the window or extend the lookback and re-run Step 2 |
+| Attribution does not sum | Style factors incomplete | Add the missing style factor returns and re-run Step 3 |
+| Alerts not dispatched | Alert channel not configured | Confirm the delivery tool is available and write the verdicts to the report instead |
 
 ## Output
 - Benchmark Tracking Error results persisted in KG

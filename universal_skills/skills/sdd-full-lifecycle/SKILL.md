@@ -30,6 +30,13 @@ metadata:
 
 ## Steps
 
+1. Write the specification with `$speckit-specify` from the workflow request. Verify that `specification` exists under a tracked `specs/<stable-id>/` directory.
+2. Produce the design plan with `$speckit-plan` from `specification`. Verify that `specs/<stable-id>/plan.md` is present, since the workflow must stop before task planning if the design is absent.
+3. Generate tasks with `$speckit-tasks` from `specification`, `plan.md` and the design artifacts. Verify that `tasks` lists each requirement with an owner file.
+4. Analyze the artifacts for consistency with `$speckit-analyze`. Verify that `verified_specification` reports no unresolved gaps between spec, plan and tasks.
+5. Implement the tasks with `$sdd-implementer` using `verified_specification` and `tasks`. Verify that `implementation_result` lists each completed task.
+6. Run the tests with `$automated-test-runner` on `implementation_result`. Verify that `test_result` reports all tests passed.
+
 ### Step 0: speckit-specify [skill: speckit-specify]
 
 Invoke `$speckit-specify` with the workflow request.
@@ -65,6 +72,15 @@ Expected: `implementation_result`
 Invoke `$automated-test-runner` with `implementation_result`.
 
 Expected: `test_result`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Task planning cannot start | `plan.md` or design artifacts are absent | Run the repository's Spec Kit plan command to create `specs/<stable-id>/plan.md` and re-run `$speckit-tasks`. |
+| Analysis reports gaps | Tasks do not cover a requirement | Add the missing task through `$speckit-tasks` and re-run `$speckit-analyze`. |
+| Tests fail after implementation | A task was implemented incorrectly | Read the failing test in `test_result`, fix the cited task with `$sdd-implementer`, and re-run `$automated-test-runner`. |
+| A step violates the constitution | Output conflicts with `.specify/memory/constitution.md` | Adjust the artifact to satisfy the cited article and repeat the step. |
 
 ## Execution
 

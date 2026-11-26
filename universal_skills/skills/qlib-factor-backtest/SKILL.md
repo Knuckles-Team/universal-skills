@@ -34,6 +34,9 @@ Provide the factor definition(s), asset universe, and date range.
 
 ## Steps
 
+1. Ingest market data for the universe and date range with `$quant-data-ingest`. Verify that `normalized_market_dataset` covers every asset in the universe for the full range.
+2. Backtest the supplied factor definitions with `$qlib-backtester` using `normalized_market_dataset`. Verify that `backtest_report` contains performance metrics for each factor.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -47,6 +50,14 @@ Invoke `$qlib-backtester` with `normalized_market_dataset` and the
 supplied factor definition(s).
 
 Expected: `backtest_report`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Assets are missing from the dataset | Symbols are unsupported or have no history | Correct the symbols in the inputs and re-run `$quant-data-ingest`. |
+| Factor definition fails to evaluate | The expression references a field not in the dataset | Rewrite the factor to use fields listed in `normalized_market_dataset` and re-run `$qlib-backtester`. |
+| Report has no results for a factor | The date range is too short for the factor lookback | Extend the date range in the inputs and repeat both steps. |
 
 ## Output
 

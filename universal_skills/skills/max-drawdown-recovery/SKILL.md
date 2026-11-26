@@ -37,6 +37,10 @@ recovery hypothesis to vet.
 
 ## Steps
 
+1. Invoke `$quant-data-ingest` with the universe and date range. Verify that the result contains a non-empty `normalized_market_dataset`.
+2. Invoke `$qlib-backtester` with `normalized_market_dataset` and the strategy definition. Verify that the result contains a non-empty `backtest_report`.
+3. Invoke `$trading-debate` with `backtest_report` and the candidate recovery hypothesis. Verify that the result contains a non-empty `recovery_hypothesis_verdict`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -57,6 +61,14 @@ Invoke `$trading-debate` with `backtest_report` and the candidate
 recovery hypothesis to run the TradingAgents swarm debate.
 
 Expected: `recovery_hypothesis_verdict`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Ingest step returns nothing | The universe, date range or data backend is missing or misspelled | Re-check the workflow inputs against the supplied universe and date range, correct the symbol list, and re-invoke `$quant-data-ingest` with the fixed inputs |
+| No drawdown episodes surfaced | Date range too short or strategy never trades | Widen the date range or review the strategy definition, and re-run `$qlib-backtester` |
+| Debate returns no verdict | Hypothesis was not stated or `backtest_report` was empty | Supply the hypothesis as an explicit sentence and pass the full `backtest_report` to `$trading-debate` |
 
 ## Output
 

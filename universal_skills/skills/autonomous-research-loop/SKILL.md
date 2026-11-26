@@ -3,12 +3,7 @@ name: autonomous-research-loop
 domain: agent-tools
 skill_type: skill
 description: >-
-  Runs one propose-only self-evolution "golden loop" cycle over the Knowledge Graph.
-  Use when the user wants to "run the research loop", "evolve the knowledge graph",
-  "find and address open topics", "propose specs/teams from the KG", or "self-improve the codebase".
-  Intake of unresolved topics → acquire related sources → ADDRESSES-resolve (converge) →
-  optional distil spec DRAFTS into .specify/ → synthesize a team PROPOSAL. Never auto-merges
-  or executes anything — every artifact is a draft/proposal a human reviews.
+  Runs one propose-only self-evolution "golden loop" cycle over the Knowledge Graph. Use when the user wants to "run the research loop", "evolve the knowledge graph", "find and address open topics", "propose specs/teams from the KG", or "self-improve the codebase". Never auto-merges or executes anything — every artifact is a draft/proposal a human reviews.
 license: MIT
 tags: [knowledge-graph, research, self-evolution, golden-loop, propose-only, orchestration]
 metadata:
@@ -17,6 +12,8 @@ metadata:
 ---
 
 # Autonomous Research Loop (propose-only)
+
+Scope: Runs one propose-only self-evolution "golden loop" cycle over the Knowledge Graph. Use when the user wants to "run the research loop", "evolve the knowledge graph", "find and address open topics", "propose specs/teams from the KG", or "self-improve the codebase". Intake of unresolved topics → acquire related sources → ADDRESSES-resolve (converge) → optional distil spec DRAFTS into .specify/ → synthesize a team PROPOSAL. Never auto-merges or executes anything — every artifact is a draft/proposal a human reviews.
 
 Drives the KG's self-evolution **golden loop** — one cycle of:
 
@@ -48,6 +45,22 @@ KG_DAEMON_ROLE=client python -c \
   "from meristem.knowledge_graph.research.golden_loop import run_golden_loop_cycle; \
    import json; print(json.dumps(run_golden_loop_cycle(max_topics=5), default=str, indent=2))"
 ```
+
+## Steps
+
+1. Check the prerequisites by confirming the graph backend responds, for example with `graph_query` on a trivial label count. Verify that it returns without a connection error and that embeddings exist.
+2. Run one cycle with `graph_orchestrate(action="golden_loop", max_topics=5)`. Verify that the call returns the JSON report with `topics_intake` and `topics_resolved` fields.
+3. Inspect the report for `errors` and `spec_drafts`. Verify that `errors` is empty and any `spec_drafts` paths exist under `.specify/specs/kg-distilled/` with `ls`.
+4. Confirm the loop converged by re-running with `max_topics=5`. Verify that resolved topics no longer appear in `topics_intake`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `topics_intake` is always 0 | No unresolved `Concept` topics | Ingest new concepts into the KG, then re-run the cycle. |
+| Acquire finds no sources | Embeddings not backfilled | Wait for the host daemon `embed_backfill` thread to finish, then re-run. |
+| Direct python run cannot reach the graph | `KG_DAEMON_ROLE=client` not set or backend unreachable | Export `KG_DAEMON_ROLE=client`, confirm the backend is up, and re-run the `run_golden_loop_cycle` command. |
+| No spec drafts written | Distil disabled | Set `KG_GOLDEN_DISTILL=1` and re-run. |
 
 ## Always-on daemon (optional)
 

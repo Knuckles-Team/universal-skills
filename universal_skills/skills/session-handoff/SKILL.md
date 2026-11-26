@@ -1,13 +1,7 @@
 ---
 name: session-handoff
 description: >-
-  Create and restore comprehensive context handoff documents for agent session
-  transfers. Use when context is getting full, a major task milestone is complete,
-  work is pausing, or when resuming from a previous session. Triggers include
-  "create handoff", "save state", "context is full", "I need to pause", "load
-  handoff", "resume where we left off", or proactively after 5+ file edits or
-  complex multi-step work. Do NOT use for project documentation — this is for
-  agent-to-agent context preservation.
+  Create and restore comprehensive context handoff documents for agent session transfers. Use when context is getting full, a major task milestone is complete, work is pausing, or when resuming from a previous session. Do NOT use for project documentation — this is for agent-to-agent context preservation.
 license: MIT
 metadata:
   domain: core
@@ -17,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Session Handoff
+
+Scope: Create and restore comprehensive context handoff documents for agent session transfers. Use when context is getting full, a major task milestone is complete, work is pausing, or when resuming from a previous session. Triggers include "create handoff", "save state", "context is full", "I need to pause", "load handoff", "resume where we left off", or proactively after 5+ file edits or complex multi-step work. Do NOT use for project documentation — this is for agent-to-agent context preservation.
 
 Create comprehensive handoff documents that enable a fresh agent to seamlessly continue work with zero ambiguity. Solves the long-running agent context exhaustion problem.
 
@@ -50,6 +46,14 @@ Use the local handoff file below only when the door is unreachable.
 
 ## Steps
 
+1. Pick the mode (create or resume) from the user's request. Verify that exactly one branch is chosen: `generate_scaffold` for create or `locate_handoffs` for resume.
+2. Create the scaffold with `python scripts/create_handoff.py <task-slug>`. Verify that a new `.agent/handoffs/YYYY-MM-DD-HHMMSS-<slug>.md` file exists via `ls .agent/handoffs/`.
+3. Fill every section and validate with `python scripts/validate_handoff.py <handoff-file>`. Verify that the report shows no secrets and a score of at least 70.
+4. Persist the handoff to the graph with the `kg_memory_store` tool and `memory_type=episodic`. Verify that `kg_memory_recall` with `memory_type=episodic` returns the handoff.
+5. In resume mode, list candidates with `python scripts/list_handoffs.py`. Verify that the intended handoff file appears in the output.
+6. Assess freshness with `python scripts/check_staleness.py <handoff-file>`. Verify that the output states a staleness level (FRESH, SLIGHTLY_STALE, STALE or VERY_STALE).
+7. Start work from the Immediate Next Steps list using `references/resume-checklist.md`. Verify that `git status` matches the branch and files recorded in the handoff.
+
 ### Step 1: mode_selection
 Determine which mode applies to the current session:
 - **Creating a handoff?** User wants to save current state, pause work, or context is getting full.
@@ -81,10 +85,10 @@ Find available handoffs if in RESUME mode using either local filesystem or the K
 ### Step 4: complete_and_validate [depends_on: generate_scaffold]
 Open the generated file, fill in all sections, and run the validation script to verify completeness and security:
 - Open the generated file and fill in all `[TODO: ...]` sections. Prioritize:
-  1. **Current State Summary** — What is happening right now
-  2. **Important Context** — Critical info the next agent MUST know
-  3. **Immediate Next Steps** — Clear, actionable first steps (numbered)
-  4. **Decisions Made** — Choices with rationale, not just outcomes
+  - **Current State Summary** — What is happening right now
+  - **Important Context** — Critical info the next agent MUST know
+  - **Immediate Next Steps** — Clear, actionable first steps (numbered)
+  - **Decisions Made** — Choices with rationale, not just outcomes
   Use `references/handoff-template.md` for guidance.
 - Execute validation:
   ```bash
@@ -117,11 +121,11 @@ Persist the validated handoff to both local markdown and Arbora:
 ### Step 7: begin_execution [depends_on: verify_staleness_context]
 Load the verified context and begin working on the immediate next steps list:
 - Follow `references/resume-checklist.md`:
-  1. Verify project directory and git branch match
-  2. Check if blockers from the handoff have been resolved
-  3. Validate assumptions still hold (run a quick `git status`)
-  4. Review modified files for conflicts
-  5. Check environment state (services running, env vars set)
+  - Verify project directory and git branch match
+  - Check if blockers from the handoff have been resolved
+  - Validate assumptions still hold (run a quick `git status`)
+  - Review modified files for conflicts
+  - Check environment state (services running, env vars set)
 - Start with **Immediate Next Steps** item #1 from the handoff document. Reference:
   - "Critical Files" section for important file locations
   - "Key Patterns Discovered" for conventions to follow
@@ -129,6 +133,17 @@ Load the verified context and begin working on the immediate next steps list:
 - As you work: mark completed items in "Pending Work", add new discoveries to relevant sections, and for long sessions create a new handoff with `--continues-from` to chain them.
 
 ---
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `scripts/validate_handoff.py` reports secrets | Token or key pasted into the handoff | Remove the value, reference its location instead, and re-run `python scripts/validate_handoff.py <file>`. |
+| Validation score below 70 | `[TODO: ...]` placeholders remain | Run `grep -n "TODO" <file>`, fill each section, then re-validate. |
+| `scripts/list_handoffs.py` lists nothing | `.agent/handoffs/` was lost | Use `kg_memory_recall` with `memory_type` `episodic` to find the handoff by context. |
+
+---
+
 
 ## Storage Location
 

@@ -80,6 +80,23 @@ The builder writes:
 Use `--root <path-to-universal_skills>` for another checkout. Use `--interactive`
 instead of `--steps-json` to collect bindings without inline step prose.
 
+## Steps
+
+1. Write the DAG as a JSON list of `skill` or `mcp_tool` nodes and list the available catalog skills with `ls universal_skills/skills | grep -c .`. Verify that every `skill` name you plan to use appears under `universal_skills/skills/`.
+2. Scaffold the workflow with `python universal_skills/skills/skill-workflow-builder/scripts/build_workflow.py scaffold <name> --domain <domain>-workflows --description "<trigger-complete text>" --steps-json '<json>'`. Verify that the command exits 0 and creates `universal_skills/<domain>-workflows/<name>/SKILL.md`.
+3. Check the generated team file with `cat universal_skills/<domain>-workflows/<name>/references/team.yaml`. Verify that it exists and names every specialist used in the DAG.
+4. Validate with `python universal_skills/skills/skill-workflow-builder/scripts/build_workflow.py validate universal_skills/<domain>-workflows/<name>/SKILL.md`. Verify that it reports no missing bindings, broken dependencies or cycles.
+5. Inspect existing workflows with `python universal_skills/skills/skill-workflow-builder/scripts/build_workflow.py list`. Verify that the new workflow is listed with its domain and step count.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Builder rejects a node as unowned or missing | The `skill` name is not in the local catalog and has no `package` | Correct the name against `ls universal_skills/skills`, or add `package` and pass `--requires <distribution>` |
+| Ambiguous binding error | A node sets both `skill` and `mcp_tool` | Remove one key so each node binds exactly one target |
+| Cycle or broken dependency reported | `depends_on` names a later or unknown node | Rewrite `depends_on` to earlier node ids or `Step N` references and rerun `validate` |
+| `validate` reports team.yaml mismatch | The frontmatter team configuration was edited by hand | Delete the edit and regenerate with `scaffold`, or copy the frontmatter `team_config` into `references/team.yaml` exactly |
+
 ## Validate
 
 Validate both generated layers and every binding:

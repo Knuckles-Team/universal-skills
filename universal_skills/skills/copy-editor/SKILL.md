@@ -30,6 +30,27 @@ authorial constraints.
   resolving them through unsourced rewriting.
 - Do not add claims, examples, statistics, endorsements, or links not present in the draft.
 
+## Steps
+
+1. Read the draft and the style guide before editing.
+   Run `wc -w draft.md` and `ls`. Verify that you know the voice rules and the sensitivity level.
+2. Apply edits within the boundaries to a working copy.
+   Run `cp draft.md draft.edited.md` first. Verify that the original file is unchanged.
+3. Normalize terminology and conventions.
+   Use `grep -n -i "<variant spelling>" draft.edited.md` for each inconsistent term. Verify that every variant resolves to one form.
+4. Confirm citations and quotations survived intact.
+   Run `diff <(grep -o "\[[^]]*\]" draft.md) <(grep -o "\[[^]]*\]" draft.edited.md)`. Verify that the diff is empty.
+5. Write the change note listing structural edits, ambiguities, conflicts, and approvals needed.
+   Run `grep -n -i "flag" change-note.md`. Verify that every flagged factual concern is listed rather than rewritten.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Citation anchors changed after editing | Over-aggressive rewriting | Restore them from `draft.md` and redo the edit around the anchor |
+| Draft states a doubtful fact | Possible factual or legal error | Flag it in the change note for the author and leave the sentence unchanged |
+| Style guide conflicts with the author's voice | Competing rules | List the conflict in the change note and ask for a ruling before changing |
+
 ## Output
 
 Return the edited draft and a short change note covering material structural edits,

@@ -1,15 +1,8 @@
 ---
 name: ecosystem-bootstrap
 skill_type: workflow
-description: >
-  Self-deploying bootstrap workflow that unfolds the complete meristem
-  ecosystem on a fresh machine. Resolves the canonical deployment profile
-  (tiny/single-node-prod/enterprise), installs system dependencies via
-  systems-manager-mcp, deploys core infrastructure (Docker, Portainer, Technitium DNS),
-  service containers (wger, mealie, Jellyfin, etc.), and all MCP server
-  containers as streamable-http Docker deployments. Transitions from
-  container-manager-mcp to Portainer once deployed. Registers the full
-  deployment topology in the Knowledge Graph.
+description: >-
+  Self-deploying bootstrap workflow that unfolds the complete meristem ecosystem on a fresh machine. Transitions from container-manager-mcp to Portainer once deployed. Registers the full deployment topology in the Knowledge Graph.
 domain: infrastructure-workflows
 tags:
   - bootstrap
@@ -35,12 +28,21 @@ metadata:
 
 # Ecosystem Bootstrap Workflow
 
+Scope: Self-deploying bootstrap workflow that unfolds the complete meristem ecosystem on a fresh machine. Resolves the canonical deployment profile (tiny/single-node-prod/enterprise), installs system dependencies via systems-manager-mcp, deploys core infrastructure (Docker, Portainer, Technitium DNS), service containers (wger, mealie, Jellyfin, etc.), and all MCP server containers as streamable-http Docker deployments. Transitions from container-manager-mcp to Portainer once deployed. Registers the full deployment topology in the Knowledge Graph.
+
 Self-deploying bootstrap that unfolds meristem and the full agent
 ecosystem on a fresh machine or server. Walks through deployment profile
 selection, prerequisite installation, core infrastructure, service containers,
 MCP server containers, DNS routing, and Knowledge Graph registration.
 
 ## Steps
+
+1. Select the deployment profile by asking the user for `tiny`, `single-node-prod` or `enterprise` plus host and DNS answers. Verify that `deployment_profile` holds one of the three canonical names.
+2. Install prerequisites with `systems_manager_execute` on the target host. Verify that `docker --version`, `git --version` and `python3 --version` all print versions.
+3. Deploy core infrastructure with `container_manager_docker` using `docker_create_container` on the `agent-net` network. Verify that `docker ps` lists the Portainer and Technitium containers.
+4. Confirm Portainer with `portainer_authenticate` and `portainer_get_endpoints`. Verify that a local Docker endpoint appears in the response.
+5. Deploy platform and MCP services through Portainer stacks and add DNS with `add_record`. Verify that every enabled stack reports healthy and `record_count` matches the services deployed.
+6. Register the topology with `graph_write` as `DeploymentManifest` nodes. Verify that a `graph_query` for `DeploymentManifest` returns the new `manifest_node_id`.
 
 ### Step 0: select-deployment-profile [skill: user-interaction]
 
@@ -51,12 +53,12 @@ MCP server containers, DNS routing, and Knowledge Graph registration.
 > `meristem/deploy/mcp-fleet.registry.yml`.
 
 Present the deployment profile questionnaire to the user. Ask:
-1. **Deployment profile**: tiny, single-node-prod, or enterprise
-2. **Target host**: localhost, remote SSH host (via tunnel-manager), or multi-node cluster
-3. **DNS profile reference**: AgentConfig connection/policy reference for service routing
-4. **GPU availability**: whether to deploy GPU-accelerated services (data-science-mcp, CUDA models)
-5. **External services**: which cloud services are already configured (Jira, ServiceNow, GitHub, etc.)
-6. **Storage paths**: data volume mount points for persistent storage
+- **Deployment profile**: tiny, single-node-prod, or enterprise
+- **Target host**: localhost, remote SSH host (via tunnel-manager), or multi-node cluster
+- **DNS profile reference**: AgentConfig connection/policy reference for service routing
+- **GPU availability**: whether to deploy GPU-accelerated services (data-science-mcp, CUDA models)
+- **External services**: which cloud services are already configured (Jira, ServiceNow, GitHub, etc.)
+- **Storage paths**: data volume mount points for persistent storage
 Expected: deployment_profile, target_host, dns_domain, gpu_available, external_services, storage_config
 
 ### Step 1: systems-manager-mcp
@@ -133,6 +135,15 @@ Present the deployment summary dashboard to the user:
 - Next steps: run `full-infrastructure-discovery` to populate detailed container metrics
 Expected: deployment_report, user_acknowledgment
 Depends On: Step 8
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `docker --version` fails after Step 1 | Docker Engine install did not complete on the target host | Re-run the install via `systems_manager_execute`, then confirm with `docker --version` before continuing. |
+| Portainer unreachable on port 9443 | Container not started or `agent-net` missing | Run `docker ps` for the Portainer container and recreate it with `docker_create_container` on `agent-net`. |
+| Profile questionnaire answers rejected | Legacy profile name used | Use only `tiny`, `single-node-prod` or `enterprise`; check `meristem/deploy/mcp-fleet.registry.yml`. |
+
 
 ## Execution
 

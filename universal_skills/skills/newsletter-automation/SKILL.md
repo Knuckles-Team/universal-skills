@@ -40,6 +40,13 @@ publication requirements.
 
 ## Steps
 
+1. Invoke `$web-search` with the topic and audience. Verify that the result contains a non-empty `source_packet`.
+2. Invoke `$content-outline-builder` with the workflow inputs and `source_packet`. Verify that the result contains a non-empty `approved_outline`.
+3. Invoke `$content-draft-writer` with the inputs, `source_packet` and `approved_outline`. Verify that the result contains a non-empty `sourced_draft`.
+4. Invoke `$citation-auditor` with `sourced_draft` and `source_packet`. Verify that the result contains a non-empty `citation_audit`.
+5. Invoke `$copy-editor` with `sourced_draft`, `citation_audit` and the inputs. Verify that the result contains a non-empty `edited_draft`.
+6. Invoke `$publication-preflight` with `edited_draft`, `citation_audit` and the publication requirements. Verify that the result contains a non-empty `readiness_decision`.
+
 ### Step 0: web-search [skill: web-search]
 
 Invoke `$web-search` with the workflow inputs.
@@ -79,6 +86,14 @@ Invoke `$publication-preflight` with `edited_draft`,
 `citation_audit`, and the publication requirements.
 
 Expected: `readiness_decision`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Draft cites claims absent from the packet | Sources were not passed to the writer | Re-invoke `$content-draft-writer` with `source_packet` and `approved_outline` |
+| Citation audit flags dead links | Sources moved | Replace flagged links using `$web-search` and re-run `$citation-auditor` |
+| Preflight blocks the issue | Publication requirements unmet | Fix the items listed in `readiness_decision` and re-run `$publication-preflight` |
 
 ## Output
 

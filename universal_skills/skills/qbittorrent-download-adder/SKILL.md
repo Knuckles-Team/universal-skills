@@ -29,6 +29,10 @@ Prompts the user for a torrent/magnet download link and custom save parameters, 
 
 ## Steps
 
+1. Ask the user for the magnet link or torrent URL, save category and queue priority. Verify that `download_link` and `save_category` are provided and confirmed.
+2. Add the torrent with `qbittorrent_torrents` using the `add_new_torrent` action. Verify that `addition_result` reports success and that `get_torrent_list` shows the new torrent.
+3. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 0: User Interaction
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -49,6 +53,14 @@ Expected: `addition_result`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Add action is rejected | The magnet link or URL is malformed | Ask the user for a corrected link and call `qbittorrent_torrents` with `add_new_torrent` again. |
+| Torrent does not appear in the list | The category or save path does not exist | Create or correct the category and repeat the add. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Qbittorrent Download Adder results persisted in KG

@@ -31,6 +31,12 @@ Comprehensive AI research survey combining paper search with data science capabi
 
 ## Steps
 
+1. Search recent agent papers by invoking `$scholarx-mcp` with the `sx_search` tool for large language model agents published in 2025-2026. Verify that the result lists papers with titles and years.
+2. Profile a sample dataset by calling the `describe_dataset` tool on the iris dataset. Verify that the output reports the dataset's features and row count.
+3. Search knowledge-graph reasoning papers by invoking `$scholarx-mcp` with `sx_search` for retrieval augmented generation. Verify that the result contains papers distinct from Step 0.
+4. Persist the results with `graph_write` as typed nodes linked to existing entities. Verify that a `graph_query` for the new nodes returns them with their metadata.
+
+
 ### Step 0: ScholarX Agent-Paper Search [skill: scholarx-mcp]
 **Agent**: `search-agent`
 **Tools**: `sx_search, graph_query`
@@ -58,6 +64,15 @@ Expected: `knowledge, graph`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `sx_search` returns no papers | Query too specific or ScholarX server unreachable | Broaden the query terms and confirm the `scholarx-mcp` server responds before re-searching |
+| `describe_dataset` errors | Data science MCP server is not registered | Check that the data science MCP server is listed in the active MCP configuration and restart it |
+| `graph_write` rejects the nodes | Node types or required metadata are missing | Add the typed labels and metadata fields named in the Step 3 text and write again |
+| Parallel steps return partial results | One search step timed out | Re-run only the failed step with a shorter query and merge its output into the report |
 
 ## Output
 - Ai Research Survey results persisted in KG

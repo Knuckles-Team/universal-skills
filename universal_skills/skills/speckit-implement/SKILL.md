@@ -247,3 +247,20 @@ Report final status with summary of completed work.
 ## Delivery practice
 
 Follow the [delivery practice reference](https://github.com/Knuckles-Team/pipelines/blob/main/reference/delivery-practice.md) for waiting, branches, merge holds, worktree safety and verification. The [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) holds the binding articles: XXVIII (merges and releases), XXIX (checks tell the truth), XVIII (landed means reachable), XXV (small units) and XXXII (written text is self-evident: every pull request, review or issue comment and commit message states what changed, why, the behaviour impact and how it was verified, in plain words, with no hostname, private domain, local path, internal tool, private repository, workflow jargon or private handoff pointer, and every spec row ID beside its one-line meaning).
+
+## Steps
+
+1. Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` from the repository root. Verify that the JSON has absolute `FEATURE_DIR` and `AVAILABLE_DOCS` paths and that `tasks.md` exists.
+2. Check `FEATURE_DIR/checklists/` for incomplete items with `grep -rc '^- \[ \]' <FEATURE_DIR>/checklists/`. Verify that every file reports 0, or ask the user before continuing.
+3. Verify the ignore files for the detected stack, for example with `git check-ignore -v node_modules`. Verify that build output and dependency folders are ignored.
+4. Execute the tasks phase by phase, honoring `[P]` parallel markers, and tick each finished task `[X]` in `tasks.md`. Verify that `grep -c '^- \[X\]' <FEATURE_DIR>/tasks.md` rises after each phase.
+5. Run the repository gate `uvx pre-commit run --all-files` and the bound tests. Verify that the gate exits 0 and that every test is bound to its row with `spec: <ID>`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| The prerequisites script fails | `tasks.md` is missing | Run `speckit-tasks` first, then re-run the script |
+| A checklist item is unchecked | A requirement gap is still open | Stop, ask the user whether to proceed, or fix the gap in the spec before coding |
+| A task fails midway | A dependency or test is broken | Fix the cause, keep the task unticked, and re-run its test with the repository test command before continuing |
+| The gate rejects the commit | The `Spec:` trailer is missing or a test is unbound | Add `Spec: <IDs>` directly above the `Co-Authored-By:` trailer and bind the test with `# spec: <ID>` |

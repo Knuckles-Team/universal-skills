@@ -33,6 +33,12 @@ Pulls daily assets returns, computes Value-at-Risk parameters, extracts maximum 
 
 ## Steps
 
+1. Fetch daily rolling returns for active holdings with `graph_query` and `sx_search`. Verify that `historical-daily-returns` includes every active holding up to the latest trading day.
+2. Compute parametric and Monte Carlo VaR with `graph_analyze`. Verify that `value-at-risk-metrics` reports both methods and the confidence level.
+3. Measure rolling drawdown, Sharpe and Sortino with `graph_query` and `graph_analyze`. Verify that `drawdown-and-performance-stats` covers the same window as the VaR step.
+4. Compile the metrics and update the dashboard files using `graph_write` and `document_tools`. Verify that `fused-risk-tearsheet` shows the refreshed timestamp and both metric sets.
+5. Persist the results as typed nodes and edges with `graph_write`. Verify that a follow-up `graph_query` returns the new nodes linked to existing domain entities.
+
 ### Step 1: Portfolio Returns Fetcher
 **Agent**: `data-fetcher`
 **Tools**: `graph_query, sx_search`
@@ -67,6 +73,15 @@ Expected: `fused-risk-tearsheet`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Returns end before the latest day | The data source lags | Refresh the source with `sx_search` or label the dashboard with the actual last date. |
+| VaR methods disagree widely | Short return history skews the Monte Carlo run | Lengthen the history and recompute with `graph_analyze`. |
+| Dashboard file is not updated | The write step lacked the dashboard path | Supply the dashboard target path to `document_tools` and write again. |
+| `graph_write` persistence is rejected | A node has no type or no link target | Re-issue `graph_write` with a typed node and an edge to an entity located first with `graph_query`. |
 
 ## Output
 - Risk Dashboard Refresh results persisted in KG

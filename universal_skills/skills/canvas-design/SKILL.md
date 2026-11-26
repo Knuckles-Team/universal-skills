@@ -97,6 +97,22 @@ const svg = `
 
 ---
 
+## Steps
+
+1. Plan the composition by writing the canvas size and coordinate system, for example `grep -n "const w\|const h" design.js`. Verify that width, height and padding are defined once.
+2. Implement the background and foundational shapes in `design.js` or an `.svg` file. Verify that `node --check design.js` reports no syntax errors for JavaScript output.
+3. Layer in typography and final effects, checking font usage with `grep -n "font" design.js`. Verify that every text element uses a font and size defined in the design principles.
+4. Export a self-contained HTML or SVG file and preview it, for example `agent-browser open file://$PWD/design.html`. Verify that the rendered output matches the planned layout.
+5. Save a PNG with `agent-browser screenshot design.png`. Verify that `ls -l design.png` shows a non-empty file.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Text clipped or overlapping | Positions hard-coded instead of derived from width and height | Compute positions from `w`, `h` and `padding` as in the OG image example. |
+| Blank canvas | Script runs before the canvas element exists or an exception occurred | Move the script after the canvas element and check the browser console for the error. |
+| Font falls back to default | Font not loaded before drawing | Use a web-safe font or wait for `document.fonts.ready` before drawing text. |
+
 ## Example: OG Image Generator Template
 
 ```javascript

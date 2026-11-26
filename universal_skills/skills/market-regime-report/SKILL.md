@@ -35,6 +35,10 @@ Provide the regime-classification factor set, asset universe, and date range.
 
 ## Steps
 
+1. Invoke `$quant-data-ingest` with the universe and date range. Verify that the result contains a non-empty `normalized_market_dataset`.
+2. Invoke `$qlib-backtester` with `normalized_market_dataset` and the regime-classification factor set. Verify that the result contains a non-empty `regime_backtest_report`.
+3. Invoke `$document-converter` with `regime_backtest_report`. Verify that the result contains a non-empty `regime_report_document`.
+
 ### Step 0: quant-data-ingest [skill: quant-data-ingest]
 
 Invoke `$quant-data-ingest` with the workflow inputs to ingest market
@@ -55,6 +59,14 @@ Invoke `$document-converter` with `regime_backtest_report` to render
 it as a formatted Markdown/PDF report.
 
 Expected: `regime_report_document`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Ingest step returns nothing | The universe, date range or data backend is missing or misspelled | Re-check the workflow inputs against the supplied universe and date range, correct the symbol list, and re-invoke `$quant-data-ingest` with the fixed inputs |
+| Backtest fails to start | Factor set references fields absent from the dataset | Compare factor names against the dataset columns and fix the factor definition before re-invoking `$qlib-backtester` |
+| Report renders blank | `regime_backtest_report` was empty or the wrong format | Confirm the backtest output is non-empty and request Markdown output from `$document-converter` |
 
 ## Output
 

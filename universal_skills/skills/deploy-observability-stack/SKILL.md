@@ -33,6 +33,12 @@ Deploys Prometheus, Grafana, and Loki in parallel and synthesizes dashboard inte
 
 ## Steps
 
+1. Deploy the Prometheus container to scrape system and container metrics (Step 1). Verify that `docker ps` lists the Prometheus container as running and that `prometheus-running` is reported.
+2. Deploy Grafana with the Prometheus and Loki data sources auto-registered, through `pt_stack` and `cnt_cm_compose_operations` (Step 2). Verify that `docker ps` shows Grafana running and that its data sources list both.
+3. Deploy the Loki log aggregation server and sidecars with `pt_docker` and `cnt_cm_container_operations` (Step 3). Verify that `docker ps` shows Loki running and `loki-running` is reported.
+4. Configure the default health dashboards and alert rules in Grafana and Prometheus (Step 4, `promtool check rules <file>`). Verify that a Grafana dashboard query returns Prometheus samples and that Loki returns recent log lines.
+5. Persist the deployment with `graph_write` (Step 5). Verify that `graph_query` returns the stored observability node.
+
 ### Step 1: Prometheus Setup
 **Agent**: `discovery-agent`
 **Tools**: `tun_tm_system, tun_tm_hosts`
@@ -67,6 +73,16 @@ Expected: `system-integrated`
 
 Persist workflow results as nodes and edges in the Knowledge Graph.
 Create appropriate typed nodes with metadata and link to existing domain entities.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Grafana starts but shows no data | A data source URL points at the wrong container hostname | Edit the data source to the service name on the shared network and use "Save and test" until it reports success |
+| Container exits at start | Port conflict or an invalid config mount | Read `docker logs <container>` for the error, fix the port or config path in the compose file, and redeploy the stack |
+| Loki receives no logs | The sidecar is not on the same network as Loki | Attach the sidecar to the Loki network and restart it, then check Loki again |
+| Alert rules do not load | The rules file has a syntax error | Validate the file with `promtool check rules <file>` and reload Prometheus |
+
 
 ## Output
 - Deploy Observability Stack results persisted in KG

@@ -3,17 +3,7 @@ name: automated-credential-rotation
 domain: infrastructure
 skill_type: skill
 description: >-
-  Holistically and safely rotate fleet secrets (GitHub/GitLab PATs, Keycloak
-  OIDC client secrets, database passwords, LLM/API keys, OTEL/Langfuse keys,
-  registry creds) with OpenBao as the source of truth. Rotates at the provider,
-  writes the new value to OpenBao, propagates to consumers (Portainer stack env,
-  Keycloak, meristem config), verifies, and revokes the old — never
-  echoing a secret value. Dry-run first; supports a 6-month rotation policy. Use
-  when asked to rotate credentials/secrets/tokens/keys, set up periodic rotation,
-  respond to a leaked credential, or audit secret age. Ties into
-  meristem-deployment and agent-os-genesis. Do NOT use for OS/SSH login or
-  BMC passwords (use rotate-credentials) or one-off vault writes (use
-  secret-vault-manager).
+  Rotate fleet secrets (PATs, Keycloak client secrets, database passwords, API keys, registry creds) with OpenBao as source of truth: rotate at the provider, write to OpenBao, propagate, verify, revoke the old. Use when rotating credentials, responding to a leak, or auditing secret age. Do NOT use for OS/SSH/BMC passwords (rotate-credentials) or one-off vault writes (secret-vault-manager).
 license: MIT
 tags: [infra, security, credentials, secrets, rotation, openbao, keycloak, portainer, policy]
 metadata:
@@ -22,6 +12,8 @@ metadata:
 ---
 
 # Automated Credential Rotation
+
+Scope: Holistically and safely rotate fleet secrets (GitHub/GitLab PATs, Keycloak OIDC client secrets, database passwords, LLM/API keys, OTEL/Langfuse keys, registry creds) with OpenBao as the source of truth. Rotates at the provider, writes the new value to OpenBao, propagates to consumers (Portainer stack env, Keycloak, meristem config), verifies, and revokes the old — never echoing a secret value. Dry-run first; supports a 6-month rotation policy. Use when asked to rotate credentials/secrets/tokens/keys, set up periodic rotation, respond to a leaked credential, or audit secret age. Ties into meristem-deployment and agent-os-genesis. Do NOT use for OS/SSH login or BMC passwords (use rotate-credentials) or one-off vault writes (use secret-vault-manager).
 
 ## Overview
 
@@ -58,6 +50,24 @@ This skill *orchestrates existing tools* — it doesn't reinvent them:
 - **catalog**: a list of secrets to manage (see `references/catalog.example.json`).
   Each entry: `{name, type, provider, bao_path, consumers[], cadence_days, verify}`.
 - **scope**: a secret name, a type, or `all`. **mode**: `dry-run` (default) | `execute`.
+
+## Steps
+
+1. Build the dry-run plan with `python scripts/rotation_lib.py plan --catalog catalog.json`. Verify that the plan lists every consumer and contains no secret values.
+2. Rotate at the provider after approval, generating values with `python scripts/rotation_lib.py gen --kind password`. Verify that the provider accepts the new credential.
+3. Store it with `openbao_write_secret mount_path=secret secret_path=<bao_path> ...`. Verify that `kv2_get` returns a version greater than before.
+4. Propagate to each consumer, for example `port__stack action=update_stack`. Verify that each consumer is recorded as updated or partial.
+5. Check consumers with their auth path such as the MCP `/health` endpoint. Verify that each returns healthy with the new secret before continuing.
+6. Revoke the old credential at the provider and write the audit with `rotation_lib.audit_record(...)`. Verify that the run report lists rotated, partial and failed counts with names only.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| OpenBao version did not increase | Write went to the wrong mount or path | Re-check `bao_path` in the catalog and re-run `openbao_write_secret`, then confirm with `kv2_get`. |
+| Consumer fails verification | Consumer still holds the old value | Restart the consumer service, and if it still fails roll back to the prior KV2 version and keep the old credential. |
+| A secret value appears in output | Text was not passed through the redactor | Pass output through `python scripts/rotation_lib.py redact` and rotate the exposed secret again. |
+| One consumer update fails | Per-consumer error such as a bad stack env | Record it as partial, continue with the other consumers, and retry only the failed one. |
 
 ## Workflow (per secret — same flow every time)
 

@@ -3,14 +3,7 @@ name: rotate-fleet-passwords
 domain: infrastructure
 skill_type: skill
 description: >-
-  Set one unified OS-account password across many hosts over SSH (and optionally the
-  in-band iDRAC/BMC user), verifying each and reporting a per-host summary. Use when the
-  user wants to rotate/unify/change login passwords across a fleet, set a shared recovery
-  credential, onboard hosts to a common password, or rotate BMC passwords. Triggers:
-  "rotate passwords", "unified password across hosts", "change my password everywhere",
-  "set a shared console password", "rotate the OpenBao agent-apps-rw token". Do NOT use for
-  SSH key distribution (use ssh-bootstrap), arbitrary app/secret-store secrets (use
-  secret-vault-manager), or single-host one-off passwd.
+  Set one unified OS-account password across many hosts over SSH, and optionally the iDRAC/BMC user, verifying each host and reporting a per-host summary. Use to rotate, unify, or change login passwords across a fleet or rotate BMC passwords. Do NOT use for SSH key distribution (ssh-bootstrap), app secrets (secret-vault-manager), or a single-host passwd.
 license: MIT
 tags: [infra, security, credentials, password, ssh, ipmi, idrac, fleet, rotation, openbao, vault, token]
 metadata:
@@ -19,6 +12,8 @@ metadata:
 ---
 
 # Rotate Credentials
+
+Scope: Set one unified OS-account password across many hosts over SSH (and optionally the in-band iDRAC/BMC user), verifying each and reporting a per-host summary. Use when the user wants to rotate/unify/change login passwords across a fleet, set a shared recovery credential, onboard hosts to a common password, or rotate BMC passwords. Triggers: "rotate passwords", "unified password across hosts", "change my password everywhere", "set a shared console password", "rotate the OpenBao agent-apps-rw token". Do NOT use for SSH key distribution (use ssh-bootstrap), arbitrary app/secret-store secrets (use secret-vault-manager), or single-host one-off passwd.
 
 Set a single **unified password** for an OS account (`--user`, required) across an entire
 fleet over SSH, verify each host, and report OK/FAILED per host. Optionally rotate the
@@ -40,6 +35,25 @@ host — unreachable / sudo-prompting / crashing hosts are reported and skipped.
   verify, optional `ipmitool` BMC rotation). Idempotent, fail-soft.
 - `references/usage.md` — invocations, safety model, host quirks, recovery. **Read it**
   before a fleet-wide rotation or when a host reports FAILED.
+
+## Steps
+
+1. Choose the hosts and the account, using `--hosts "ip1 ip2"` or `--inventory ~/.config/arbora/inventory.yaml` plus `--user <account>`. Verify that `ssh -o BatchMode=yes <host> sudo -n true` succeeds on a sample host, proving key access and passwordless sudo.
+2. Preview with `scripts/rotate-credentials.sh --generate --inventory ~/.config/arbora/inventory.yaml --dry-run`. Verify that the printed host list matches the intended fleet and that nothing changed.
+3. Rotate with `scripts/rotate-credentials.sh --generate --inventory ~/.config/arbora/inventory.yaml --user <account>` and add `--idrac` when the BMC user is in scope. Verify that the summary line reads `=== rotated N OK, M failed ===` with M equal to 0.
+4. Protect the credential record. If `--out <file>` was used, verify with `git check-ignore <file>` that the file is gitignored.
+5. Re-run only failed hosts with `scripts/rotate-credentials.sh --user <account> --password <same password> --hosts "<failed hosts>"`. Verify that the second summary shows every host OK.
+6. For the OpenBao `agent-apps-rw` token, follow the runbook below and verify with the `lookup-self` call that policies show `agent-apps-rw` and the canary read-back prints `ok`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+| --- | --- | --- |
+| Host reports FAILED with a sudo prompt | The `--ssh-user` lacks passwordless sudo on that host | Add a NOPASSWD sudoers entry for the SSH user on the host, then re-run for that host with the same `--password` |
+| Host reports FAILED as unreachable | Network, SSH key or host-down problem | Fix key access (see `ssh-bootstrap`) or power the host up, then re-run for that host only |
+| iDRAC rotation succeeds but BMC login fails with the full password | IPMI user passwords cap at 16 bytes | Re-run with a 16-character `--password` for hosts using `--idrac` |
+| `passwd -S` does not show `P` after rotation | The password tools crashed on that host | Read `references/usage.md` quirks, fix the host and re-run, because SSH keys are unaffected and only console login is at risk |
+| OpenBao canary write returns 403 | The token lacks `apps/data/*` or the wrong mount was used | Re-mint with `policies=["agent-apps-rw"]` and use the `apps` mount path `/v1/apps/data/...` |
 
 ## Procedure
 

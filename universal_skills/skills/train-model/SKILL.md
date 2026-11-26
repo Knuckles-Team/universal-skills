@@ -37,6 +37,15 @@ goes live. Backed by the `data-science-mcp` trainer + corpus engine and the
 
 ## Steps
 
+1. Gather objective, base model, corpus and eval sets with `graph_orchestrate`. Verify that `pre_flight_config_artifacts` names a model and a serving role.
+2. Build, curate and decontaminate the corpus with `build_training_dataset`, `curate_corpus`, `dedup_corpus` and `decontaminate_corpus`. Verify that `dataset_lineage` emits a `DatasetVersion` with a fingerprint.
+3. Train the tokenizer if pretraining, using `train_tokenizer`. Verify that a saved tokenizer file exists, or the step was skipped for fine-tuning.
+4. Run base training with `train_sft` or `pretrain_model`. Verify that `train_model_artifacts` reports a checkpoint path.
+5. Evaluate with `run_interpretability_suite` and `evaluate_model`. Verify that the gate decision is advance, repeat or abort.
+6. Align with `train_dpo` or `train_grpo`, or use `train_reward` and `train_ppo`. Verify that the evaluation shows no safety or grounding regression.
+7. Merge adapters with `merge_adapters_ties` and run the final evaluation. Verify that the final gate decision is advance.
+8. Register the checkpoint with `graph_orchestrate` as a `ModelDefinition`. Verify that the model is bound to its serving role.
+
 ### Step 1: Pre Flight Config
 **Agent**: `ml_orchestrator`
 **Tools**: `graph_orchestrate`
@@ -159,6 +168,15 @@ Register the final checkpoint as a `ModelDefinition` bound to the target serving
 (the deploy seam — it goes live with no hot-path edit) and summarise the whole run,
 linking corpus → tokenizer → pretrain/SFT → reward → PPO via the run lineage.
 Expected: `register_model_artifacts`
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Eval gate returns abort | Checkpoint is worse than base | Inspect the evaluation report, fix the data or hyperparameters, and repeat the training step. |
+| Training runs out of GPU memory | Batch or model too large | Use QLoRA, reduce the batch size, or enable gradient checkpointing and restart. |
+| Decontamination removes most records | Corpus overlaps the eval sets | Source new data or choose different held-out eval sets, and re-run `decontaminate_corpus`. |
+| Reward accuracy is below 0.65 | Weak preference pairs | Improve the `{prompt, chosen, rejected}` data and retrain with `train_reward`. |
 
 ## Output
 - A trained, evaluated checkpoint registered to a serving role

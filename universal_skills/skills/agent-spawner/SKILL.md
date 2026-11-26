@@ -39,3 +39,17 @@ Never put credentials in arguments. The child uses strict tool guards and MCP
 isolation, emits no prompt/name/path/endpoint details, and relies on the shared
 transport profile. Use Arbora delegation when policy, capability provenance,
 or trace-linked skill execution is required.
+
+## Steps
+
+1. Confirm the AgentConfig catalogs resolve by running `python scripts/spawn_agent.py --help`. Verify that usage prints with `--prompt`, `--provider` and `--model-id` options.
+2. Write a bounded prompt and run `python scripts/spawn_agent.py --prompt "<bounded task>"`. Verify that the child exits 0 and prints a result.
+3. If a specific model is needed, run `python scripts/spawn_agent.py --provider <provider> --model-id <id> --prompt "<task>"` using an id from the deployment catalog. Verify that the run does not report an unknown model.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Unknown provider or model error | `--model-id` is not in the `CHAT_MODELS` catalog | Pick an id that exists in the AgentConfig catalog, or omit the flags to use the default. |
+| Unrecognized argument error | Retired flags such as API keys, base URLs or dotenv paths were passed | Remove them and configure credentials and endpoints through AgentConfig and XDG configuration. |
+| No MCP tools available to the child | `MCP_CONFIG` or `MCP_URL` not set in AgentConfig | Set them in the AgentConfig configuration and re-run. |

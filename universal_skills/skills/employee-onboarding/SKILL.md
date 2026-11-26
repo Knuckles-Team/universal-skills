@@ -35,6 +35,13 @@ Handles I-9, W-4, payroll setup, benefits enrollment, and account provisioning.
 
 ## Steps
 
+1. Collect the new hire details with the `hr-coordinator` agent. Verify that name, position, department, start date, salary and FLSA classification are all recorded.
+2. Generate the employment documents with the `document-generator` agent using `document_tools`. Verify that the offer letter, I-9, W-4 and state withholding form exist.
+3. Configure payroll with the `payroll-agent` using `graph_query` and `graph_write`. Verify that a `PayrollRecord` node is returned by `graph_query`.
+4. Enroll benefits with the `benefits-agent` using `graph_write`. Verify that `BenefitsPlan` enrollment edges exist for the employee.
+5. Register the employee in the Knowledge Graph with the `arbora` agent. Verify that the `W2Employee` node links to the `I9Verification` and `W4Form` nodes.
+6. Provision accounts with the `systems-provisioner` using `systems_manager`. Verify that the email and Git accounts are confirmed active.
+
 ### Step 0: Gather New Hire Information
 **Agent**: `hr-coordinator`
 
@@ -97,6 +104,14 @@ Provision employee accounts:
 - Communication tools (Slack/Matrix/etc.)
 - Project management (Plane) access
 - VPN/SSH access (if applicable)
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| I-9 not completed in 3 business days | Documents not collected from the hire | Escalate to the `hr-coordinator` agent and complete the I-9 per the US Compliance Checklist. |
+| Payroll node missing | ERP adapter write failed | Re-run `graph_write` for `PayrollRecord` after confirming ERP connectivity. |
+| Account provisioning fails | Systems manager lacks permission | Check the error from `systems_manager` and have an admin grant access, then provision the failed account only. |
 
 ## US Compliance Checklist
 - [ ] I-9 completed within 3 business days of hire

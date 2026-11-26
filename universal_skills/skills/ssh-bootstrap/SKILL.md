@@ -55,6 +55,22 @@ source-to-target trust edge with non-interactive authentication. A partial resul
 must identify failed opaque host references without exposing their addresses or
 accounts, and must not be described as complete.
 
+## Steps
+
+1. Confirm the five AgentConfig references resolve (`inventory_ref`, `remote_profile_ref`, `key_profile_ref`, optional `target_selector_ref` and `concurrency_policy_ref`). Verify that tunnel-manager returns a privacy-safe connectivity summary for them, and stop if any reference is unresolved.
+2. Present the summary to the owner with target count, current trust count, scope, key-policy digest and host-key-policy digest. Verify that explicit approval was given before any key or `authorized_keys` change.
+3. Run `mcp_tm_inventory` with `action="mesh_bootstrap"` through the resolved profiles. Verify that the provider reports every approved source-to-target trust edge as authenticated non-interactively.
+4. Record only the retained output (counts, status, digests, timestamps and an opaque run reference) and scan it with `grep -nEi 'ssh-ed25519|password|@' <retained-output>`. Verify that nothing retained contains a hostname, address, username, path or key material.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Reference cannot be resolved | A named AgentConfig reference is missing or misspelled | Ask the owner to define it in AgentConfig and rerun step 1; never pass raw endpoints or credentials |
+| Result is partial | Some trust edges failed authentication | Report status as partial with the opaque failed references, fix the host-key or key policy, and rerun `mesh_bootstrap` for those targets only |
+| Provider asks for a password | Host does not yet trust the key and no governed credential exists | Stop and obtain a governed secret-provider reference; do not fall back to `sshpass` or a password file |
+| Host-key verification fails | Changed or unknown host key under a strict policy | Have the owner confirm the new key out of band and update the host-key policy, rather than disabling verification |
+
 ## Retained output
 
 Return only target and trust-edge counts, success/partial/failure status, key and

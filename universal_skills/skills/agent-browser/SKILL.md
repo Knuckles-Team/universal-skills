@@ -3,13 +3,7 @@ name: agent-browser
 domain: agent-tools
 skill_type: skill
 description: >-
-  Browser automation CLI for AI agents using the agent-browser tool. Use when the
-  user needs to interact with websites including navigating pages, filling forms,
-  clicking buttons, taking screenshots, extracting data, testing web apps, or
-  automating any browser task. Triggers include requests to "open a website",
-  "fill out a form", "click a button", "take a screenshot", "scrape data from a
-  page", "test this web app", "login to a site", "automate browser actions", or
-  any task requiring programmatic web interaction.
+  Browser automation CLI for AI agents using the agent-browser tool. Use when the user needs to interact with websites including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task.
 license: MIT
 tags: [browser, automation, playwright, web-scraping, testing, screenshots]
 metadata:
@@ -17,6 +11,8 @@ metadata:
   author: Knuckles-Team
 ---
 # Browser Automation with agent-browser
+
+Scope: Browser automation CLI for AI agents using the agent-browser tool. Use when the user needs to interact with websites including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to "open a website", "fill out a form", "click a button", "take a screenshot", "scrape data from a page", "test this web app", "login to a site", "automate browser actions", or any task requiring programmatic web interaction.
 
 ## Overview
 
@@ -71,6 +67,24 @@ If you only need the binary on PATH (no env persistence), run it as a subprocess
   mode`; `close --all` (and, if needed, killing the CDP Chromium) clears it.
 
 ---
+
+## Steps
+
+1. Bootstrap the CLI with `bash <skill-dir>/bootstrap.sh`. Verify that `agent-browser --help` prints usage and exits 0.
+2. Reset any stale daemon with `agent-browser close --all`. Verify that the next `agent-browser open <url>` starts without a "Multiple targets" error.
+3. Navigate with `agent-browser open <url>` and `agent-browser wait --load networkidle`. Verify that `agent-browser get url` returns the expected URL.
+4. Capture interactive refs with `agent-browser snapshot -i`. Verify that the output lists `@e` refs for the elements you need.
+5. Interact using the refs, for example `agent-browser fill @e1 "text"` and `agent-browser click @e3`. Verify that a fresh `agent-browser snapshot -i` shows the changed page state.
+6. Extract or capture results with `agent-browser screenshot` or `agent-browser get text @e1`. Verify that the output file exists or the text matches what the page shows.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `agent-browser: command not found` | CLI not installed or `PNPM_HOME` not on PATH | Run `source ./bootstrap.sh` from the skill folder, which runs `pnpm add -g agent-browser` and exports PATH. |
+| `Multiple targets are not supported in headless mode` | Stale daemon or leftover CDP Chromium | Run `agent-browser close --all`, and if it persists kill the Chromium by its unique `--user-data-dir` path. |
+| Click or fill fails with unknown ref | Page changed since the last snapshot, so refs are stale | Run `agent-browser snapshot -i` again and use the new `@e` refs. |
+| Shell session dies with exit 144 | `pkill -f agent-browser` matched the agent's own command line | Never use that pattern. Use `agent-browser close --all` instead. |
 
 ## Core Workflow
 

@@ -74,6 +74,22 @@ Understand the "Health" of a digital product.
 
 ---
 
+## Steps
+
+1. Capture the product, market and time horizon. Verify with `grep -n "TAM" SKILL.md` that you will apply the sizing formulas from section 2.
+2. Run PESTEL and SWOT from section 1 on the initiative and list entries under `PESTEL:` and `SWOT:` headings. Verify that each PESTEL factor and each SWOT quadrant has at least one entry.
+3. Size TAM, SAM and SOM per section 2 as `TAM >= SAM >= SOM`. Verify that SOM is no larger than SAM and SAM no larger than TAM, and that every assumption has a cited source.
+4. Write the positioning statement using the section 3 formula (`For [target audience] who ...`). Verify that all bracketed fields are filled in.
+5. Compute the SaaS metrics in section 4 with `python3 -c "print(ltv/cac)"` on the real values. Verify that LTV/CAC and the Rule of 40 are reported with the inputs.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Market size unsupported | Top-down numbers without sources | Add a bottom-up cross-check and cite a source for each input |
+| Positioning statement is generic | Competitor and differentiation unspecified | Name the primary competitor and one concrete differentiator, then rewrite |
+| LTV/CAC below 3.0 | High acquisition cost or low retention | Report it as a risk and show a sensitivity table for CAC and churn |
+
 ## Best Practices
 
 - **Validate Assumptions**: Market sizing is only as good as its underlying assumptions. Document your sources.

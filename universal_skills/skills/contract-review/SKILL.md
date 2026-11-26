@@ -36,6 +36,12 @@ precedent → validate compliance → generate report with recommendations.
 
 ## Steps
 
+1. Parse the contract PDF or DOCX into structured text with `document_tools` (Step 0). Verify that the parsed output lists section headings, numbered clauses and definitions.
+2. Extract and classify clauses against `ontology_legal.ttl:ContractClause` with `graph_analyze` (Step 1). Verify that each clause carries a HIGH, MEDIUM or LOW risk label.
+3. Check precedent with `graph_query` and `sx_search` for similar contracts, case law and statutes (Step 2). Verify that each cited precedent resolves to a KG node or a search result.
+4. Validate the clauses against applicable law and governance documents using `graph_query` (Step 3). Verify that the output is a compliance checklist with a pass or fail per requirement.
+5. Generate the review report and persist the Contract node with `graph_write` (Step 4). Verify that `graph_query` returns the Contract node with `hasClause` edges and that the report carries a 0.0-1.0 risk score.
+
 ### Step 0: Parse Contract Document
 **Agent**: `document-parser`
 **Tools**: `document_tools`
@@ -93,6 +99,16 @@ Generate structured review:
 - Compliance checklist
 
 Persist to KG: Contract node with hasClause edges to extracted clauses.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Parsed text is empty or garbled | The PDF is a scanned image without a text layer | Run OCR on the file with `document_tools` and parse the OCR output instead |
+| No precedent found | The KG holds no similar contracts or `sx_search` is unavailable | Widen the query to the clause type alone, check the search server is up, and record "no precedent" in the report |
+| Clause lacks a risk rating | The clause matched no `ContractClause` class | Classify it manually against the ten listed clause types and mark it for human review |
+| `graph_write` rejected | The Contract node violates the ontology or arbora is unreachable | Fix the node properties to match `ontology_legal.ttl`, confirm access with `graph_query`, and resubmit |
+
 
 ## Output
 - Contract review report (PDF/MD)

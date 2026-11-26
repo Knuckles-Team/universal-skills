@@ -27,6 +27,25 @@ from interpretations that still require confirmation.
 - Domain notes defining business meaning, calculations, units, codes, and known limitations.
 - Data-classification and retention requirements when available.
 
+## Steps
+
+1. Collect the schema, profile, and owner notes.
+   Run `ls` on the supplied files. Verify that dataset ID, version or fingerprint, owner, and source are recorded.
+2. Extract physical fields from the profile.
+   Run `python -c "import json;print(list(json.load(open('profile.json'))['columns']))"` or read the schema file. Verify that the list is complete.
+3. Write field entries from the Output contract using only owner-confirmed meaning.
+   Verify that `grep -c "^| " dictionary.md` covers every field and that inferred items are labeled.
+4. Add dataset-level grain, keys, time semantics, lineage, retention, and unresolved questions.
+   Run `grep -n -i "unresolved" dictionary.md`. Verify that each unresolved question names an owner.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Column name does not reveal meaning | No domain note exists | Label it unconfirmed and route a question to the named owner |
+| Profile and schema disagree | Schema drifted from data | Record both and list the discrepancy as an open question |
+| Sensitivity class missing | Classification not supplied | Mark unknown and ask governance for the class |
+
 ## Output contract
 
 For each field, record name, business definition, physical type, logical type, unit

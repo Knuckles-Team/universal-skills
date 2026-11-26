@@ -42,6 +42,22 @@ Expected: submitted_copy_order
 Update Supabase historical trade ledger with local execution prices and order status
 Expected: updated_ledger_record
 
+## Steps
+
+1. Poll the tracked wallet addresses via `mcp_signals`. Verify that `whale_trade_event` contains a wallet, market, side and size.
+2. Record the detection with `record-detected-trade` (`database-tools`). Verify that a query on the trades table returns exactly one row for the event id.
+3. Size the copy trade with `mcp_risk`. Verify that `validated_trade_sizing` stays within the balance and allocation percentage.
+4. Place the mirrored order via `mcp_orders`. Verify that `submitted_copy_order` has an order id and status.
+5. Update the ledger with `record-copy-execution` (`database-tools`). Verify that the row now holds the execution price and order status.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Duplicate copy orders | Event not deduplicated in the database | Check for the existing row from Step 2 before sizing, and cancel the extra order |
+| Trade sized to zero | Allocation cap or balance too low | Review the limits in `mcp_risk` and skip the event if capital is insufficient |
+| Ledger update fails | Database connection or schema error | Verify credentials with `database-tools`, then rewrite the row from the saved order result |
+
 ## Execution
 
 Run this workflow as a dependency-ordered DAG. Steps with no unmet `depends_on` run in parallel; dependents run after their prerequisites complete.
