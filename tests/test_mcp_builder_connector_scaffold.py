@@ -365,6 +365,9 @@ def test_ontology_rolls_up_to_a_core_class_and_never_imports_the_parent(connecto
     parent = rdflib.URIRef("https://knuckles-team.github.io/ontology/core#Concept")
     for cls in classes:
         assert (cls, RDFS.subClassOf, parent) in graph
+        # An engine that still serves the shared namespace needs its own parent,
+        # or onboarding refuses the pack as ONTOLOGY_ORPHAN.
+        assert (cls, RDFS.subClassOf, rdflib.URIRef("http://knuckles.team/kg#Concept")) in graph
 
 
 def _git_repo(connector: Path, base: Path) -> Path:

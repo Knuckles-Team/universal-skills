@@ -86,3 +86,13 @@ def test_the_scaffold_ontology_template_has_no_orphans():
     assert contract.skill_front_matter_problem(
         scaffold.SKILL.format(short="x", Display="X", short_snake="x"), "x-operations"
     ) is None
+
+
+@pytest.mark.spec("US-MCP-BUILDER-R011.19")
+@pytest.mark.parametrize("module", ["scaffold_connector", "scaffold_wrap"])
+def test_both_scaffold_ontologies_name_the_parent_of_either_engine(module):
+    import importlib
+
+    template = importlib.import_module(module).ONTOLOGY
+    assert "rdfs:subClassOf core:{core}, kg:{core} ;" in template
+    assert "@prefix kg: <http://knuckles.team/kg#> ." in template

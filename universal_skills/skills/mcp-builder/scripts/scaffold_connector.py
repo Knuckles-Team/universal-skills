@@ -374,14 +374,18 @@ observed.
 
 ONTOLOGY = """@prefix : <https://knuckles-team.github.io/ontology/connector/{short}#> .
 @prefix core: <https://knuckles-team.github.io/ontology/core#> .
+@prefix kg: <http://knuckles.team/kg#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 # {Display} classes. Every class extends a core class of the parent ontology
-# through rdfs:subClassOf. The pack never imports the parent ontology.
+# through rdfs:subClassOf. The pack never imports the parent ontology. Each root
+# class names the parent catalog of an engine that serves the organization base
+# (core:) and of one that still serves the shared kg: namespace, so onboarding
+# does not refuse the pack as ONTOLOGY_ORPHAN on either engine.
 
 :{Class}Item a owl:Class ;
-    rdfs:subClassOf core:{core} ;
+    rdfs:subClassOf core:{core}, kg:{core} ;
     rdfs:label "{Display} Item" ;
     rdfs:comment "An item served by the {Display} API." .
 
