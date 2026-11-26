@@ -1,0 +1,33 @@
+goal: Turn open flags into the smallest knowledge edits and send each edit as a proposal.
+outputs:
+  - One proposal for each target that holds open flags.
+  - The report state ready when every flag has a proposal.
+required_tool_actions: [knowledge.curation.inputs, knowledge.curation.propose]
+forbidden_tool_actions: [knowledge.flag.resolve, skills.tier.promote]
+target_agents: [arbora, claude, codex]
+target_models: [standard-model, compact-model]
+steps:
+  - objective: Read the curation inputs.
+    command: knowledge.curation.inputs
+    verify: The answer lists open flags, linked traces and source changes.
+    on_failure: Stop with the report state "not due" when the answer is CURATION_NOT_DUE.
+  - objective: Group the flags by target.
+    command: group the flag ids by target ref
+    verify: Each flag id sits in exactly one group.
+    on_failure: Put a flag with no target ref in its own group and note it in the report.
+  - objective: Read the linked traces and the raw source of each target.
+    command: read each trace ref and each source named by the target
+    verify: You can quote the source text that supports or refutes each flag.
+    on_failure: Report the flag as "unsupported" and make no edit for it when no source supports it.
+  - objective: Decide the smallest edit that fixes every flag of the group.
+    command: write the edit as the changed lines only
+    verify: The edit changes nothing that no flag and no source change supports.
+    on_failure: Cut the edit back to the lines that a flag or a source change supports.
+  - objective: Send one proposal for each target.
+    command: knowledge.curation.propose
+    verify: The answer accepts the proposal and returns a proposal id.
+    on_failure: Read the refusal code in the table below and apply its recovery.
+  - objective: Stop when every flag has a proposal.
+    command: list each flag id with its proposal id
+    verify: No flag id lacks a proposal id.
+    on_failure: Return to the group of the missing flag and send its proposal.

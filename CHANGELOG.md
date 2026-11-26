@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Skill specs compile into `SKILL.md`, test prompts and per-model overlays with `scripts/compile_skill_spec.py`, which has a `--check` mode and a pre-commit hook (US-CONTENT-R009).
+- Skill linters for numbered steps, verification and error recovery, and for stage budgets and key placement (US-CONTENT-R010, US-CONTENT-R011).
+- Skills `knowledge-flag`, `skill-friction`, `find-skills`, `knowledge-curator` and `skill-eval-author` (US-CONTENT-R012 to R015).
+
 ## [1.6.2]
 
 ### Fixed
