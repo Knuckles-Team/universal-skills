@@ -89,6 +89,8 @@ def rewrite(text: str) -> str:
     if span is None:
         return text
     start, end, original = span
+    if len(original) <= MAX_DESCRIPTION and not any(c in line for line in front for c in UNSAFE):
+        return text
     summary = fit_description(clean(original))
     new_front = [*front[:start], "description: >-", f"  {summary}", *front[end:]]
     if any(c in line for line in new_front for c in UNSAFE):
