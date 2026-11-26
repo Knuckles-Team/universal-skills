@@ -40,3 +40,35 @@ Governing spec: [spec.md](spec.md).
 | T-026.1 | `US-CONTENT-R007.4` | `tests/test_harness_portable_skills.py::test_install_removes_renamed_skills` | A full install into a directory holding old-name skills removes them, keeps current skills and keeps an old name that is a current skill. |
 | T-027 | `US-CONTENT-R006` | `tests/test_codebase_untangle_skill.py::test_skill_states_the_procedure_the_categories_and_the_gates` | The test finds the seven steps in order, the categories and the gate names. |
 | T-028 | `US-CONTENT-R008` | `tests/test_verify_claim_skill.py::test_skill_states_the_loop_in_order_and_is_neutral` | The test finds the six steps in order, the sorry rule and no host, domain or path. |
+| T-036 | `US-CONTENT-R009` | `tests/test_skill_spec_compile.py::test_compile_journey` | A skill spec compiles into SKILL.md and test prompts (rollup) (planned) |
+| T-037 | `US-CONTENT-R009.1` | `tests/test_skill_spec_compile.py::test_spec_model_refuses_unknown_keys` | Model: the skill spec (planned) |
+| T-038 | `US-CONTENT-R009.2` | `tests/test_skill_spec_compile.py::test_compile_is_deterministic_and_keeps_outside_text` | Behavior: deterministic compile (planned) |
+| T-039 | `US-CONTENT-R009.3` | `tests/test_skill_spec_compile.py::test_check_names_stale_skills_after_a_model_change` | Wiring: per-model recompile (planned) |
+| T-040 | `US-CONTENT-R009.4` | `tests/test_skill_spec_compile.py::test_each_refusal_code_writes_nothing` | Refusal (planned) |
+| T-041 | `US-CONTENT-R009.5` | `tests/test_skill_spec_compile.py::test_digest_binds_the_spec` | Evidence (planned) |
+| T-042 | `US-CONTENT-R009.6` | `tests/test_skill_spec_compile.py::test_always_on_skills_compile_to_the_committed_files` | Hot-path proof (planned) |
+| T-043 | `US-CONTENT-R010` | `tests/test_check_skill_steps.py::test_linter_journey` | A skill linter checks steps, verification and error recovery (rollup) (planned) |
+| T-044 | `US-CONTENT-R010.1` | `tests/test_check_skill_steps.py::test_each_step_finding_has_its_code_and_line` | Behavior: steps (planned) |
+| T-045 | `US-CONTENT-R010.2` | `tests/test_check_skill_steps.py::test_vague_recovery_fails_and_concrete_recovery_passes` | Behavior: error-recovery table (planned) |
+| T-046 | `US-CONTENT-R010.3` | `tests/test_check_skill_steps.py::test_hook_entry_exists_and_runs_over_changed_skills` | Wiring (planned) |
+| T-047 | `US-CONTENT-R010.4` | `tests/test_check_skill_steps.py::test_exit_codes_and_line_format` | Refusal and exit codes (planned) |
+| T-048 | `US-CONTENT-R010.5` | `tests/test_check_skill_steps.py::test_new_knowledge_skills_pass_clean` | Hot-path proof (planned) |
+| T-049 | `US-CONTENT-R011` | `tests/test_check_skill_budgets.py::test_budget_journey` | Skills load in stages and stay within size budgets (rollup) (planned) |
+| T-050 | `US-CONTENT-R011.1` | `tests/test_check_skill_budgets.py::test_each_budget_code_fires_once` | Behavior: budgets (planned) |
+| T-051 | `US-CONTENT-R011.2` | `tests/test_check_skill_budgets.py::test_new_keys_live_under_metadata_only` | Behavior: frontmatter keys (planned) |
+| T-052 | `US-CONTENT-R011.3` | `tests/test_check_skill_budgets.py::test_mcp_json_in_a_skill_fails` | Refusal: connector files (planned) |
+| T-053 | `US-CONTENT-R011.4` | `tests/test_check_skill_budgets.py::test_new_skills_are_within_budget` | Hot-path proof (planned) |
+| T-054 | `US-CONTENT-R012` | `tests/test_knowledge_skills.py::test_always_on_skills_journey` | Two always-on skills let any agent flag knowledge and file friction (rollup) (planned) |
+| T-055 | `US-CONTENT-R012.1` | `tests/test_knowledge_skills.py::test_flag_skill_states_the_steps_and_the_curator_rule` | Content: knowledge-flag (planned) |
+| T-056 | `US-CONTENT-R012.2` | `tests/test_knowledge_skills.py::test_friction_skill_states_the_steps` | Content: skill-friction (planned) |
+| T-057 | `US-CONTENT-R012.3` | `tests/test_knowledge_skills.py::test_registration_neutral_text_and_always_on_count` | Registration and neutrality (planned) |
+| T-058 | `US-CONTENT-R013` | `tests/test_find_skills_skill.py::test_find_skills_journey` | A find-skills skill finds skills by quality and by peer use (rollup) (planned) |
+| T-059 | `US-CONTENT-R013.1` | `tests/test_find_skills_skill.py::test_steps_in_order_and_cohort_rule` | Content (planned) |
+| T-060 | `US-CONTENT-R013.2` | `tests/test_find_skills_skill.py::test_registration_and_linters` | Registration (planned) |
+| T-061 | `US-CONTENT-R014` | `tests/test_curator_skill.py::test_curator_journey` | A curator skill defines the background curator agent (rollup) (planned) |
+| T-062 | `US-CONTENT-R014.1` | `tests/test_curator_skill.py::test_steps_codes_and_prohibitions` | Content: procedure (planned) |
+| T-063 | `US-CONTENT-R014.2` | `tests/test_curator_skill.py::test_data_access_section_names_source_query_and_columns` | Content: data-access guidance entries (planned) |
+| T-064 | `US-CONTENT-R014.3` | `tests/test_curator_skill.py::test_registration_and_compile` | Registration (planned) |
+| T-065 | `US-CONTENT-R015` | `tests/test_skill_eval_author_skill.py::test_eval_author_journey` | An eval-authoring skill teaches case mix, calibration and ablation (rollup) (planned) |
+| T-066 | `US-CONTENT-R015.1` | `tests/test_skill_eval_author_skill.py::test_steps_band_rules_and_codes` | Content (planned) |
+| T-067 | `US-CONTENT-R015.2` | `tests/test_skill_eval_author_skill.py::test_registration_and_linters` | Registration (planned) |
