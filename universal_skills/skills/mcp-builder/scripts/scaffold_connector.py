@@ -13,7 +13,7 @@ only the connector-owned references to them.
 Output is deterministic: the same arguments yield byte-identical files, and
 no date, user or host name is written.
 
-The generated package requires scion-sdk>=0.11.2 (`Connector`, `run`,
+The generated package requires scion-sdk>=0.13.0 (`Connector`, `run`,
 `load_declaration`, `client_factory` and the pytest conformance plugin).
 """
 
@@ -27,8 +27,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # the scaffold_* helper modules
 
-SDK_FLOOR = "0.11.2"
-SDK_CAP = "0.12"
+SDK_FLOOR = "0.13.0"
+SDK_CAP = "0.14"
 CORE_CLASS = "Concept"  # a class of the parent ontology (core-foundation)
 VERBS = (
     ("get", "GET", "readOnlyHint", "Read one {thing} by id."),

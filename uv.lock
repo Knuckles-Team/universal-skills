@@ -2154,7 +2154,7 @@ wheels = [
 
 [[package]]
 name = "medulla"
-version = "3.3.4"
+version = "3.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2163,9 +2163,9 @@ dependencies = [
     { name = "pyoxigraph" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/d6/c9897305c120d6be6e19c16a440738c2b6a86b321a5a69599200f630f663/medulla-3.3.4-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:e236b53c2d70b52e9a7ee94c4c3d0e65502ca63edea6d0bf9695388c4d5c24f0", size = 104288870, upload-time = "2026-11-17T10:49:38.657Z" },
-    { url = "https://files.pythonhosted.org/packages/30/5d/4d1e97c971d4469b4ea72ca59242caab4a339cf6c553cbab2568ebae0135/medulla-3.3.4-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:92b95ac8dd93ed47aebdcfd8234a3680349efa19a00b520afd537912000e1053", size = 96943266, upload-time = "2026-11-17T08:59:53.687Z" },
-    { url = "https://files.pythonhosted.org/packages/26/64/5de9bda4d88b49495773b49a31fc799d023a012f13ac7c1477429dc36428/medulla-3.3.4-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:1462647a578bf8f9baa9b0d2a85fd26a4016969e9e1a1f48e98ff5cbfe393b38", size = 87493349, upload-time = "2026-11-17T12:31:08.082Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/ad/691b46203c8c24543ed8f45b81b51c27da3ab4b33d23d747195532b8e30e/medulla-3.3.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:17d18218081195d83172d0a2989ac686723a977d20d6dec4e8cda6fbf8f93dfe", size = 104288232, upload-time = "2026-11-23T19:46:13.688Z" },
+    { url = "https://files.pythonhosted.org/packages/56/40/ba55f667c34345e19a4939d22ef88bb35ba77046b8aa71dd9b0574ff540a/medulla-3.3.5-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:7606d030bbf9a7f1969c6c719a18595ded4a61357fe1577e41b3937019e0ba0a", size = 96996180, upload-time = "2026-11-23T18:07:04.05Z" },
+    { url = "https://files.pythonhosted.org/packages/32/79/7f3e6fef0f5318b259cdd3056a8b4d1a1ecfee6e67b2e9f75ab28bb30248/medulla-3.3.5-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:cd416a7c53e4615afe15bb4ffb42b3a68f3c0fd001b27baf938d9b9478a4c763", size = 87469688, upload-time = "2026-11-23T12:49:45.596Z" },
 ]
 
 [[package]]
@@ -3473,6 +3473,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyparsing"
+version = "3.3.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz", hash = "sha256:928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36", size = 1050487, upload-time = "2026-09-20T20:59:05.609Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl", hash = "sha256:ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4", size = 126420, upload-time = "2026-09-20T20:59:04.025Z" },
+]
+
+[[package]]
 name = "pypdf"
 version = "6.19.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3789,6 +3798,18 @@ wheels = [
 ]
 
 [[package]]
+name = "rdflib"
+version = "7.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyparsing" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/f5/18bb77b7af9526add0c727a3b2048959847dc5fb030913e2918bf384fec3/rdflib-7.6.0.tar.gz", hash = "sha256:6c831288d5e4a5a7ece85d0ccde9877d512a3d0f02d7c06455d00d6d0ea379df", size = 4943826, upload-time = "2026-02-13T07:15:55.938Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/c2/6604a71269e0c1bd75656d5a001432d16f2cc5b8c057140ec797155c295e/rdflib-7.6.0-py3-none-any.whl", hash = "sha256:30c0a3ebf4c0e09215f066be7246794b6492e054e782d7ac2a34c9f70a15e0dd", size = 615416, upload-time = "2026-02-13T07:15:46.487Z" },
+]
+
+[[package]]
 name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4082,7 +4103,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.11.3"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -4094,10 +4115,11 @@ dependencies = [
     { name = "medulla" },
     { name = "pydantic" },
     { name = "pyyaml" },
+    { name = "rdflib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/f6/8ed99aae71c476c6de3ffb3111cb274a26ca0b758389e928d8424aa07c9f/scion_sdk-0.11.3.tar.gz", hash = "sha256:b0818765792a6c63ba0ab5a0ef46580eb9f27c7bb357e09c8145cd647a6759bd", size = 1266647, upload-time = "2026-11-19T17:44:09.42Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/18/b4b81965308d5e8c0117f2772baba44e83861df5a458420bcf7f6933190d/scion_sdk-0.13.0.tar.gz", hash = "sha256:f35d1b0abd117074d9aec5856a7f9f0096d9b46c77ed48f3b7e262b53f1b5652", size = 1579196, upload-time = "2026-11-27T22:49:19.512Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/f4/86be5f2075f7c8c85b59d40f944c6ba19c18912f9ef57e26fec9b08019e0/scion_sdk-0.11.3-py3-none-any.whl", hash = "sha256:49fdbc9149bc322a7ded544acccc48e1b1b837a424a698644edf1930ccad2f35", size = 1225153, upload-time = "2026-11-19T17:44:08.033Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/eb/9e0d750cd5a213d1339996d51baa8ae1d147ee4a0a4b71e91cd2025e0028/scion_sdk-0.13.0-py3-none-any.whl", hash = "sha256:2e793540feb653c41bf6174c42bd14b27da3b964c89d958b66f136416d4dd5fe", size = 1431777, upload-time = "2026-11-27T22:49:18.046Z" },
 ]
 
 [package.optional-dependencies]
@@ -4812,7 +4834,7 @@ requires-dist = [
     { name = "requests", marker = "extra == 'web-search'", specifier = ">=2.34.2" },
     { name = "rfc3339-validator", marker = "extra == 'test'", specifier = ">=0.1.4" },
     { name = "rfc3986-validator", marker = "extra == 'test'", specifier = ">=0.1.1" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.11.2,<0.12" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.13.0,<0.14" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=80.9.0,<83.0.0" },
     { name = "sqlparse", marker = "extra == 'developer-utilities'", specifier = ">=0.5.5" },
     { name = "toml", marker = "extra == 'developer-utilities'", specifier = ">=0.10.2" },
