@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Read first to make, edit, animate or render any video with HyperFrames (HTML rendered to video), including launch films, explainers, music videos, charts, maps, vertical clips, title cards, captions and overlays. Holds the render contract, the work loop and what each kind of video needs.
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow [plugin execution rules](references/plugin-installation.md).

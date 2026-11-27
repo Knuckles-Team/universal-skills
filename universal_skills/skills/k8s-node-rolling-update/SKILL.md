@@ -18,7 +18,7 @@ team_config:
 tags: [infra, kubernetes, rolling-update, patching, drain, cordon, node-maintenance]
 concept: CONCEPT:INFRA-001
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # Kubernetes node rolling update

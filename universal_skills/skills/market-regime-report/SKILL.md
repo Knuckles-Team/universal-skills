@@ -21,7 +21,7 @@ team_config:
 tags: [finance, regime, reporting]
 concept: CONCEPT:EE-011
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 

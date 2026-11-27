@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Build a HyperFrames slideshow to present live - slides, fragment reveals, branching hotspots and presenter mode with speaker notes, served by `hyperframes present` - or turn an existing page into one. Use when the person wants a deck or presentation rather than a rendered video.
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow the rules in `references/plugin-installation.md` of the `hyperframes` skill.

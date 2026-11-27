@@ -7,7 +7,7 @@ domain: research-workflows
 license: MIT
 tags: [evolution, assimilation, knowledge-graph, x-search, research, self-evolution, pipeline]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
   concepts:
     - CONCEPT:KG-2.7

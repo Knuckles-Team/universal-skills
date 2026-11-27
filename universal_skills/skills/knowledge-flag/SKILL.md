@@ -7,7 +7,7 @@ description: >-
   problem. The curator changes the knowledge.
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   spec_digest: 'aa6ad38f2ad8db2e2ff2a5ebcf4ea58d0a47190cd24607aae5082e96b67d148a'
   domain: development
   skill_type: skill

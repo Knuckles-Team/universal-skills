@@ -6,7 +6,7 @@ description: Implements verified Spec Kit tasks from tracked specs/<stable-id>/t
 license: MIT
 tags: [sdd implementer]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 

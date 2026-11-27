@@ -21,7 +21,7 @@ team_config:
     payment-processor: [graph_write]
 concept: KG-2.12
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # Payroll Processing Workflow

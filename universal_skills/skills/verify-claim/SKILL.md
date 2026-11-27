@@ -8,6 +8,7 @@ description: >-
   claim's standing depends on a machine-checked proof.
 license: MIT
 metadata:
+  version: '1.7.0'
   domain: research
   skill_type: skill
   tags: [verification, lean, proof, claims, evidence, arbora]

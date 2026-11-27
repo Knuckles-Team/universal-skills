@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [system, host, process, zombie, runaway, swap, cpu, diagnostics, ops, ssh]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 requires:
   - tunnel-manager-mcp

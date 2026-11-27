@@ -7,7 +7,7 @@ description: >-
   the task.
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   spec_digest: 'f7ad243703ac3b681e621aca58043d36db93dc9e234ac54bfcc9f7473094c475'
   domain: development
   skill_type: skill

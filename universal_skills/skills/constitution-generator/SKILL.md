@@ -6,7 +6,7 @@ description: Creates or updates constitution.md with project governance rules an
 license: MIT
 tags: [constitution generator]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 

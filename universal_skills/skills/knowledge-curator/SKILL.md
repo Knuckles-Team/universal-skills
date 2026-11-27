@@ -7,7 +7,7 @@ description: >-
   entry directly.
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   spec_digest: 'b9e5301c45ef419d6d1ab09dda8743ae63adf9c985fdf9ce68787216659532ec'
   domain: development
   skill_type: skill

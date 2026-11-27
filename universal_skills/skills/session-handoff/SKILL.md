@@ -4,10 +4,10 @@ description: >-
   Create and restore comprehensive context handoff documents for agent session transfers. Use when context is getting full, a major task milestone is complete, work is pausing, or when resuming from a previous session. Do NOT use for project documentation — this is for agent-to-agent context preservation.
 license: MIT
 metadata:
+  version: '1.7.0'
   domain: core
   skill_type: skill
   tags: [handoff, context, session, resumption, continuity, memory]
-  version: '1.6.2'
   author: Knuckles-Team
 ---
 # Session Handoff
