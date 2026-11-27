@@ -59,7 +59,7 @@ A maintainer generates or completes a connector and gets tool-use contracts, lin
 
 ## Assumptions
 
-- The SDK floor is 0.11.2 and the generated dependency stays below 0.12.
+- The SDK floor is 0.13.0 and the generated dependency stays below 0.14.
 - The pipelines gates and the core ontology revision are fetched by the tests and need no local checkout.
 - Existing connectors are migrated by their own repositories, not by this scaffold.
 
