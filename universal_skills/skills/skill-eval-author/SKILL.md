@@ -7,7 +7,7 @@ description: >-
   or when an ablation result needs a reading.
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   spec_digest: '0266e1fcf421bc00883750874ebaea2ac422df24b83c7318f7c2734180d1ee3e'
   domain: development
   skill_type: skill

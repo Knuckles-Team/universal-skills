@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [security, threat-modeling, guidelines, docs]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Threat Model Source Code Repo

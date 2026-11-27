@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [web, search, duckduckgo, google, bing, searxng]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Web Search

@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [artifacts, frontend, docs, design-system]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.

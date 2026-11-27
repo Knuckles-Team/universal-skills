@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [c4, architecture, mermaid, diagrams, system-design, documentation]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # C4 Architecture Documentation

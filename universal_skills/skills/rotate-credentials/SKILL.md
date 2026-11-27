@@ -14,7 +14,7 @@ requires:
   - systems-manager-mcp
   - tunnel-manager-mcp
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # Rotate host credentials

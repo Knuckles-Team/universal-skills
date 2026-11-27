@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [communications, announcements, memos, all-hands, status-updates, async]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Internal Communications

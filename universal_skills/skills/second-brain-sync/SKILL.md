@@ -7,7 +7,7 @@ domain: research-workflows
 license: MIT
 tags: [research, second-brain, personal-kb, knowledge-graph, provenance, fact-extraction, epistemic]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
   concepts:
     - CONCEPT:MERISTEM-KG.enrichment.atomic-triple-extraction

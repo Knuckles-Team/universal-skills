@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [medulla, rust, architecture, authorization, anti-sprawl, mutation-batch, gates, cargo]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Medulla Development

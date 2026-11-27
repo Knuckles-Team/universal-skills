@@ -9,7 +9,7 @@ description: >-
 license: MIT
 tags: [security, appsec, threat-model, ownership, sentry, errors, analysis]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Security Tools

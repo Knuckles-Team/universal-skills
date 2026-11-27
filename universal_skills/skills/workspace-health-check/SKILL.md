@@ -20,7 +20,7 @@ team_config:
 tags: ['workspace', 'health', 'systems', 'cross-domain']
 concept: CONCEPT:DEV-001
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # Workspace Health Check Workflow

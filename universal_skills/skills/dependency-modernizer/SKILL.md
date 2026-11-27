@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [dependencies, pyproject, pypi, modernization, fleet, tomlkit]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 

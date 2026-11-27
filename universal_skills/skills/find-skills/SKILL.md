@@ -7,7 +7,7 @@ description: >-
   installs nothing by itself.
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   spec_digest: 'f2638cc85d979af47b7568478dd0cf86cb715fef4fd6f5c37cce912b73d9590a'
   domain: development
   skill_type: skill

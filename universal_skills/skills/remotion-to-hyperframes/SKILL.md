@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: Bring existing video code or footage into HyperFrames and verify it frame by frame against the original - Remotion first, also Motion Canvas, Lottie, Three.js, p5.js, canvas or plain HTML/CSS animation, or renders from Manim, After Effects or Blender. Use to port, convert, migrate or reuse work made with another tool.
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow the rules in `references/plugin-installation.md` of the `hyperframes` skill.

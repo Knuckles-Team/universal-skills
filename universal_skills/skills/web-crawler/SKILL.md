@@ -10,7 +10,7 @@ description: >-
 tags: [web, crawler, documentation, scrape, extract, markdown, sitemap, knowledge-graph, arbora, ingest]
 license: MIT
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
 ---
 # Web Crawler Skill

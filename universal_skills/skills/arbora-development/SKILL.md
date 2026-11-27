@@ -10,7 +10,7 @@ description: >-
 license: MIT
 tags: [arbora, development, public-contribution]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # Arbora ecosystem development

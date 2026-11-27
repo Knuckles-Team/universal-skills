@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skill linters for numbered steps, verification and error recovery, and for stage budgets and key placement (US-CONTENT-R010, US-CONTENT-R011).
 - Skills `knowledge-flag`, `skill-friction`, `find-skills`, `knowledge-curator` and `skill-eval-author` (US-CONTENT-R012 to R015).
 
+## [1.7.0]
+
+### Changed
+- Require `scion-sdk[mcp]>=0.13.0,<0.14`, in the package, the lock, the CI install and the `mcp-builder` scaffold (US-MCP-BUILDER-R011.16). A connector now serves the content digest of its wheel at `connector://release` and the runner checks it against the digest the release pipeline recorded; there is no signing material to carry.
+
 ## [1.6.2]
 
 ### Fixed

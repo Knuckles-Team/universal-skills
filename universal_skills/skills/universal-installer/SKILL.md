@@ -7,7 +7,7 @@ description: >-
 license: MIT
 tags: [skills, ontologies, prompts, mcp, installer, deployment, agent-tools]
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
   supersedes: skill-installer
 ---

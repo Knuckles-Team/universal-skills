@@ -9,7 +9,7 @@ tags: [finance, trading, strategy, lifecycle]
 team_config: trading_department
 agent: chief_trading_officer
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
   author: Knuckles-Team
   concept: 'CONCEPT:KG-2.6'
 infrastructure:

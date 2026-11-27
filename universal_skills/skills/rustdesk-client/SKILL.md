@@ -5,7 +5,7 @@ skill_type: skill
 description: >-
   Installs and configures the self-hosted RustDesk client on Debian/Ubuntu hosts. Triggers on "install rustdesk client", "setup remote desktop", "configure rustdesk", "deploy rustdesk client", "install remote access". Do NOT use for Windows or non-Debian environments.
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 # RustDesk Client Installation Skill

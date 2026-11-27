@@ -5,7 +5,7 @@ skill_type: skill
 license: Apache-2.0
 description: HyperFrames CLI - scaffold, check frames, edit timelines, preview, render, share and project history; read JSON and recover from failures.
 metadata:
-  version: '1.6.2'
+  version: '1.7.0'
 ---
 
 **Plugin installs:** Inside a HyperFrames plugin, follow the rules in `references/plugin-installation.md` of the `hyperframes` skill.

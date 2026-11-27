@@ -4,10 +4,10 @@ description: >-
   Canopy is arbora's front door: the live architecture website and the entry point to the ecosystem through arbora's MCP door. Use it to reach every operation, connector tool, skill and agent from this coding harness with the six intent tools find, ask, why, write, act and manage.
 license: MIT
 metadata:
+  version: '1.7.0'
   domain: core
   skill_type: skill
   tags: [arbora, door, mcp, intent-tools, workstream]
-  version: '1.6.2'
 ---
 # Canopy
 
