@@ -72,3 +72,4 @@ Governing spec: [spec.md](spec.md).
 | T-065 | `US-CONTENT-R015` | `tests/test_skill_eval_author_skill.py::test_eval_author_journey` | An eval-authoring skill teaches case mix, calibration and ablation (rollup) (planned) |
 | T-066 | `US-CONTENT-R015.1` | `tests/test_skill_eval_author_skill.py::test_steps_band_rules_and_codes` | Content (planned) |
 | T-067 | `US-CONTENT-R015.2` | `tests/test_skill_eval_author_skill.py::test_registration_and_linters` | Registration (planned) |
+| T-068 | `US-CONTENT-R016` | `tests/test_state_machine_census.py::test_census_policy_declares_existing_paths` | The table declares existing paths, a supported language and mode `staged`. |
