@@ -71,3 +71,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T065 [US5] US-CONTENT-R015 An eval-authoring skill teaches case mix, calibration and ablation (rollup)
 - [ ] T066 [US5] US-CONTENT-R015.1 Content
 - [ ] T067 [US5] US-CONTENT-R015.2 Registration
+- [ ] T068 [US5] US-CONTENT-R016 The shared state-machine census runs on this repository in staged mode.
